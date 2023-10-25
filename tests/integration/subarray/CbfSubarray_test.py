@@ -747,7 +747,7 @@ class TestCbfSubarray:
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    test_proxies.receptor_utils.receptor_id_to_int[
+                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                         t["receptor_id"]
                                     ]
                                     == r
@@ -959,7 +959,7 @@ class TestCbfSubarray:
                         # TODO currently only one receptor supported
                         assert (
                             searchBeam["receptor_ids"][0][1]
-                            == test_proxies.receptor_utils.receptor_id_to_int[
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
                         )
@@ -997,7 +997,7 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["PST-BF"][sub_id][
                                 fsp_id
                             ].receptors[0]
-                            == test_proxies.receptor_utils.receptor_id_to_int[
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                 beam["receptor_ids"][0]
                             ]
                         )
@@ -1420,7 +1420,7 @@ class TestCbfSubarray:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_int[
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
                             receptor_id
                         ],
                     ]
@@ -1466,7 +1466,7 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights:
                 for receptor in weights["timing_beam_weights"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_int[
+                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
@@ -1916,7 +1916,7 @@ class TestCbfSubarray:
                 vcc_receptors_num = []
                 for receptor in vcc_receptors:
                     vcc_receptors_num.append(
-                        test_proxies.receptor_utils.receptor_id_to_int[
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
                             receptor
                         ]
                     )
@@ -1936,7 +1936,7 @@ class TestCbfSubarray:
                             # receptor as pair of str and int for comparison
                             this_input_delay_model_obj["receptor"] = [
                                 entry["receptor"],
-                                test_proxies.receptor_utils.receptor_id_to_int[
+                                test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                     entry["receptor"]
                                 ],
                             ]
@@ -1991,7 +1991,7 @@ class TestCbfSubarray:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_int[
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
                             receptor_id
                         ],
                     ]
@@ -2165,7 +2165,7 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["jones_matrix"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_int[
+                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     for frequency_slice in receptor["jones_matrix_details"]:

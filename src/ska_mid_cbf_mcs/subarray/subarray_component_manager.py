@@ -483,7 +483,7 @@ class CbfSubarrayComponentManager(
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptor_id_to_int[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[receptor_id],
                     ]
                 t = Thread(
                     target=self._update_delay_model,
@@ -560,7 +560,7 @@ class CbfSubarrayComponentManager(
                         receptor_id = matrix["receptor"]
                         matrix["receptor"] = [
                             receptor_id,
-                            self._receptor_utils.receptor_id_to_int[
+                            self._receptor_utils.receptor_id_to_vcc_id[
                                 receptor_id
                             ],
                         ]
@@ -644,7 +644,7 @@ class CbfSubarrayComponentManager(
                     receptor_id = weights["receptor"]
                     weights["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptor_id_to_int[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[receptor_id],
                     ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
@@ -1335,7 +1335,7 @@ class CbfSubarrayComponentManager(
                             if "receptor_ids" not in searchBeam:
                                 searchBeam[
                                     "receptor_ids"
-                                ] = self._receptor_utils.receptor_id_to_int[
+                                ] = self._receptor_utils.receptor_id_to_vcc_id[
                                     self._receptors[0]
                                 ]
 
@@ -1432,7 +1432,7 @@ class CbfSubarrayComponentManager(
                                         return (False, msg)
                             else:
                                 timingBeam["receptor_ids"] = [
-                                    self._receptor_utils.receptor_id_to_int[
+                                    self._receptor_utils.receptor_id_to_vcc_id[
                                         receptor
                                     ]
                                     for receptor in self._receptors
@@ -1633,7 +1633,7 @@ class CbfSubarrayComponentManager(
                     for tdc_dest in search_window["tdc_destination_address"]:
                         tdc_dest["receptor_id"] = [
                             tdc_dest["receptor_id"],
-                            self._receptor_utils.receptor_id_to_int[
+                            self._receptor_utils.receptor_id_to_vcc_id[
                                 tdc_dest["receptor_id"]
                             ],
                         ]
@@ -1755,7 +1755,7 @@ class CbfSubarrayComponentManager(
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
-                    self._receptor_utils.receptor_id_to_int[receptor],
+                    self._receptor_utils.receptor_id_to_vcc_id[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors
@@ -1799,7 +1799,7 @@ class CbfSubarrayComponentManager(
                         searchBeam["receptor_ids"] = [
                             [
                                 receptor,
-                                self._receptor_utils.receptor_id_to_int[
+                                self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
@@ -1811,7 +1811,7 @@ class CbfSubarrayComponentManager(
                         ):
                             searchBeam["receptor_ids"][i] = [
                                 receptor,
-                                self._receptor_utils.receptor_id_to_int[
+                                self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
@@ -1825,7 +1825,7 @@ class CbfSubarrayComponentManager(
                         timingBeam["receptor_ids"] = [
                             [
                                 receptor,
-                                self._receptor_utils.receptor_id_to_int[
+                                self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
@@ -1837,7 +1837,7 @@ class CbfSubarrayComponentManager(
                         ):
                             timingBeam["receptor_ids"][i] = [
                                 receptor,
-                                self._receptor_utils.receptor_id_to_int[
+                                self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
@@ -2354,7 +2354,7 @@ class CbfSubarrayComponentManager(
 
         # CIP-1724 Using receptors dictionary to access receptor int instead
         # receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
-        receptor_int = self._receptor_utils.receptor_id_to_int[receptor]
+        receptor_int = self._receptor_utils.receptor_id_to_vcc_id[receptor]
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
