@@ -642,7 +642,8 @@ class FspCorrSubarrayComponentManager(
         print(configuration)
 
         # Subtract 1 from sub_id so that if 1 comes from top level, 0 is sent to HPS
-        configuration["sub_id"] = configuration["sub_id"] - 1
+        if "sub_id" in configuration:
+            configuration["sub_id"] = configuration["sub_id"] - 1
 
         # construct HPS ConfigureScan input
         sample_rates = configuration.pop("fs_sample_rates")
