@@ -1839,7 +1839,7 @@ class TestCbfSubarray:
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
 
-        print(f"{delay_model_all}")
+        print(f"delay_model_all: {delay_model_all}")
 
         # Get the DM Python object input to the DM test
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
@@ -1913,13 +1913,6 @@ class TestCbfSubarray:
                 time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
-                vcc_receptors_num = []
-                for receptor in vcc_receptors:
-                    vcc_receptors_num.append(
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor
-                        ]
-                    )
                 for jj, rec in enumerate(vcc_receptors):
                     # get the vcc device proxy (dp) corresponding to i_rec
                     this_vcc = (
@@ -1942,7 +1935,7 @@ class TestCbfSubarray:
                             ]
                             break
 
-                    logging.debug(f"vcc delay model: {vcc_dp.delayModel}")
+                    print(f"vcc delay model {this_vcc}: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc
