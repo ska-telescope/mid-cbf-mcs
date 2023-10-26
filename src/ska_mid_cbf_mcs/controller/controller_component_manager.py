@@ -673,7 +673,7 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
                 rec_id = self._receptor_utils.vcc_id_to_receptor_id[vcc_id]
-                rec_id_int = self._receptor_utils.receptor_id_to_int[rec_id]
+                rec_id_int = self._receptor_utils.receptor_id_to_vcc_id[rec_id]
                 self._logger.info(
                     f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
                 )

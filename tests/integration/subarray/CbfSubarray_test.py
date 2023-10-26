@@ -1834,7 +1834,7 @@ class TestCbfSubarray:
 
         # Read the input delay model Json string from file:
         with open(data_file_path + delay_model_file_name) as f_in:
-            delay_model_all = f_in.read()  # .replace("\n", "")
+            delay_model_all = f_in.read().replace("\n", "")
 
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
@@ -1845,8 +1845,6 @@ class TestCbfSubarray:
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
             delay_model_all_obj, vcc_receptors
         )
-
-        print(f"delay_model_for_test_all_obj: {delay_model_for_test_all_obj}")
 
         # to speed up the testing we use 4s between
         # delayModel updates (instead of the operational 10s)
@@ -1913,12 +1911,6 @@ class TestCbfSubarray:
                 test_proxies.tm.delayModel = input_delay_model
 
                 time.sleep(10)
-
-                # TODO: remove
-                for xx in range(1, test_proxies.num_vcc + 1):
-                    print(
-                        f"vcc delay model {xx}: {test_proxies.vcc[xx].delayModel}"
-                    )
 
                 # check the delay model was correctly updated for vcc
                 for jj, rec in enumerate(vcc_receptors):
