@@ -100,7 +100,9 @@ class TalonDxComponentManager:
             ]
             results = [f.result() for f in futures]
 
-        self.logger.info(f"self.proxies:\n{self.proxies.join(', ')}")
+        self.logger.info("self.proxies:")
+        for key, value in self.proxies.items():
+            self.logger.info(f"{key}: {value}")
 
         if any(r[0] == ResultCode.FAILED for r in results):
             self.logger.error(f"Talon configure thread results: {results}")
@@ -526,7 +528,9 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
-            self.logger.info(f"self.proxies:\n{self.proxies.join(', ')}")
+            self.logger.info("self.proxies:")
+            for key, value in self.proxies.items():
+                self.logger.info(f"{key}: {value}")
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(self._shutdown_talon_thread, talon_cfg)
