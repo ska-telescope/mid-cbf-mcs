@@ -115,7 +115,7 @@ class TestVcc:
         json_str = f.read().replace("\n", "")
         configuration = json.loads(json_str)
         f.close()
-        
+
         band_configuration = {
             "frequency_band": configuration["frequency_band"],
             "dish_sample_rate": configuration["dish_sample_rate"],
