@@ -400,7 +400,13 @@ class TestVccComponentManager:
             set(["1", "2", "3", "4", "5a", "5b"])
             - set(configuration["frequency_band"])
         )
-        vcc_component_manager.configure_band(other_freq_bands[0])
+        vcc_component_manager.configure_band(
+            {
+                "frequency_band": other_freq_bands[0],
+                "dish_sample_rate": configuration["dish_sample_rate"],
+                "samples_per_frame": configuration["samples_per_frame"],
+            }
+        )
         assert (
             vcc_component_manager.frequency_band
             == freq_band_dict()[other_freq_bands[0]]["band_index"]

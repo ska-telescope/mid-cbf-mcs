@@ -703,12 +703,12 @@ class Vcc(CspSubElementObsDevice):
 
     @command(dtype_in="DevString", doc_in="Frequency band string.")
     @DebugIt()
-    def ConfigureBand(self, freq_band_name: str) -> Tuple[ResultCode, str]:
+    def ConfigureBand(self, band_config: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
 
-        :param freq_band_name: the frequency band name
+        :param band_config: json string containing: the frequency band name, dish sample rate, and number of samples per frame
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -716,7 +716,7 @@ class Vcc(CspSubElementObsDevice):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("ConfigureBand")
-        (result_code, message) = command(freq_band_name)
+        (result_code, message) = command(band_config)
         return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
