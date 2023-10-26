@@ -314,6 +314,7 @@ class TalonLRU(SKABaseDevice):
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
+                self.logger.info("acquired power_switch_lock - about to execute device.component_manager.off()")
                 self.is_allowed()
                 return device.component_manager.off()
 

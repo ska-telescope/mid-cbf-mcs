@@ -434,7 +434,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
 
             try:
-                self._proxy_talondx_board1.set_timeout_millis(10000)
+                self._proxy_talondx_board2.set_timeout_millis(10000)
                 self._proxy_talondx_board2.Off()
             except tango.DevFailed as df:
                 self._logger.warn(
