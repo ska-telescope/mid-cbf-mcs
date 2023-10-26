@@ -806,7 +806,9 @@ class ControllerComponentManager(CbfComponentManager):
         try:
             self._logger.info(f"Turning off LRU {lru_fqdn}")
             off_result_code, off_result_msg = proxy.Off()
-            self._logger.info(f"Turning off LRU {lru_fqdn} result code: {off_result_code}; message: {off_result_msg}")
+            self._logger.info(
+                f"Turning off LRU {lru_fqdn} result code: {off_result_code}; message: {off_result_msg}"
+            )
         except tango.DevFailed as e:
             self._logger.error(e)
             return (False, lru_fqdn)
