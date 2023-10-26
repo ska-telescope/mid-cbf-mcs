@@ -121,7 +121,7 @@ class TestVcc:
             "dish_sample_rate": configuration["dish_sample_rate"],
             "samples_per_frame": configuration["samples_per_frame"],
         }
-        device_under_test.ConfigureBand(band_configuration)
+        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
         device_under_test.ConfigureScan(json_str)
         assert device_under_test.obsState == ObsState.READY
@@ -248,7 +248,7 @@ class TestVcc:
             "dish_sample_rate": configuration["dish_sample_rate"],
             "samples_per_frame": configuration["samples_per_frame"],
         }
-        device_under_test.ConfigureBand(band_configuration)
+        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
         (result_code, _) = device_under_test.ConfigureScan(json_str)
         time.sleep(CONST_WAIT_TIME)
