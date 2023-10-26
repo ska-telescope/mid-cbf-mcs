@@ -1912,6 +1912,10 @@ class TestCbfSubarray:
 
                 time.sleep(10)
 
+                # TODO: remove
+                for xx in range(1, test_proxies.num_vcc + 1):
+                    print(f"vcc delay model {xx}: {test_proxies.vcc[xx].delayModel}")
+
                 # check the delay model was correctly updated for vcc
                 for jj, rec in enumerate(vcc_receptors):
                     # get the vcc device proxy (dp) corresponding to i_rec
