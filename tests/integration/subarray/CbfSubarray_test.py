@@ -1834,7 +1834,7 @@ class TestCbfSubarray:
 
         # Read the input delay model Json string from file:
         with open(data_file_path + delay_model_file_name) as f_in:
-            delay_model_all = f_in.read().replace("\n", "")
+            delay_model_all = f_in.read()  # .replace("\n", "")
 
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
@@ -1845,6 +1845,8 @@ class TestCbfSubarray:
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
             delay_model_all_obj, vcc_receptors
         )
+
+        print(f"delay_model_for_test_all_obj: {delay_model_for_test_all_obj}")
 
         # to speed up the testing we use 4s between
         # delayModel updates (instead of the operational 10s)
@@ -1905,8 +1907,8 @@ class TestCbfSubarray:
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # Write this one delay_model JSON object to the TM emulator
-                logging.debug(
-                    f"Writing delay model to TM emulator: {input_delay_model}"
+                print(
+                    f"Writing delay model {i_dm} to TM emulator: {input_delay_model}"
                 )
                 test_proxies.tm.delayModel = input_delay_model
 
