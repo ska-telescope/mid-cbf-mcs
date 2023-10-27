@@ -445,8 +445,7 @@ class TalonBoard(SKABaseDevice):
     # ----------
 
     def _communication_status_changed(
-        self: TalonBoard,
-        communication_status: CommunicationStatus,
+        self: TalonBoard, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -467,8 +466,7 @@ class TalonBoard(SKABaseDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: TalonBoard,
-        power_mode: PowerMode,
+        self: TalonBoard, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

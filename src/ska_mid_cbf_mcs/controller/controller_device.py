@@ -259,7 +259,7 @@ class CbfController(SKAController):
             # # initialize attribute values
             device._command_progress = 0
 
-            # TODO remove when ugrading base class from 0.11.3
+            # TODO remove when upgrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
 
             message = "CbfController Init command completed OK"
@@ -495,8 +495,7 @@ class CbfController(SKAController):
     # Callbacks
     # ----------
     def _communication_status_changed(
-        self: CbfController,
-        communication_status: CommunicationStatus,
+        self: CbfController, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -517,8 +516,7 @@ class CbfController(SKAController):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: CbfController,
-        power_mode: PowerMode,
+        self: CbfController, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

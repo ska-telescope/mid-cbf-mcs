@@ -78,8 +78,7 @@ def unique_id() -> str:
 
 @pytest.fixture()
 def mock_component_manager(
-    mocker: pytest_mock.mocker,
-    unique_id: str,
+    mocker: pytest_mock.mocker, unique_id: str
 ) -> unittest.mock.Mock:
     """
     Return a mock component manager.

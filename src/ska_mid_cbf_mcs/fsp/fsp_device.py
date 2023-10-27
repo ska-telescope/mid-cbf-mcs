@@ -75,13 +75,7 @@ class Fsp(SKACapability):
         access=AttrWriteType.READ,
         label="Function mode",
         doc="Function mode; an int in the range [0, 4]",
-        enum_labels=[
-            "IDLE",
-            "CORRELATION",
-            "PSS",
-            "PST",
-            "VLBI",
-        ],
+        enum_labels=["IDLE", "CORRELATION", "PSS", "PST", "VLBI"],
     )
 
     subarrayMembership = attribute(
@@ -350,7 +344,7 @@ class Fsp(SKACapability):
             device.set_change_event("functionMode", True, True)
             device.set_change_event("subarrayMembership", True, True)
 
-            # TODO remove when ugrading base class from 0.11.3
+            # TODO remove when upgrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
 
             return (result_code, message)
@@ -740,8 +734,7 @@ class Fsp(SKACapability):
     # Callbacks
     # ----------
     def _communication_status_changed(
-        self: Fsp,
-        communication_status: CommunicationStatus,
+        self: Fsp, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -762,8 +755,7 @@ class Fsp(SKACapability):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: Fsp,
-        power_mode: PowerMode,
+        self: Fsp, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

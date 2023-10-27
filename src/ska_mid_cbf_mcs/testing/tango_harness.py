@@ -82,20 +82,13 @@ DeviceConfigType = TypedDict(
 
 MdtcDeviceInfoType = TypedDict(
     "MdtcDeviceInfoType",
-    {
-        "name": str,
-        "properties": PropertiesType,
-        "memorized": MemorizedType,
-    },
+    {"name": str, "properties": PropertiesType, "memorized": MemorizedType},
 )
 
 
 MdtcInfoType = TypedDict(
     "MdtcInfoType",
-    {
-        "class": Type[SKABaseDevice],
-        "devices": List[MdtcDeviceInfoType],
-    },
+    {"class": Type[SKABaseDevice], "devices": List[MdtcDeviceInfoType]},
 )
 
 
@@ -330,10 +323,7 @@ class TangoHarness:
         """
         raise NotImplementedError("TangoHarness is abstract.")
 
-    def get_device(
-        self: TangoHarness,
-        fqdn: str,
-    ) -> CbfDeviceProxy:
+    def get_device(self: TangoHarness, fqdn: str) -> CbfDeviceProxy:
         """
         Create and return a proxy to the device at the given FQDN.
 
@@ -450,10 +440,7 @@ class BaseTangoHarness(TangoHarness):
         """
         return list(self._fqdns)
 
-    def get_device(
-        self: BaseTangoHarness,
-        fqdn: str,
-    ) -> CbfDeviceProxy:
+    def get_device(self: BaseTangoHarness, fqdn: str) -> CbfDeviceProxy:
         """
         Create and return a proxy to the device at the given FQDN.
 
@@ -488,10 +475,7 @@ class ClientProxyTangoHarness(BaseTangoHarness):
             self._proxy_map = dict(device_info.proxy_map)
         super().__init__(device_info, logger, *args, **kwargs)
 
-    def get_device(
-        self: ClientProxyTangoHarness,
-        fqdn: str,
-    ) -> CbfDeviceProxy:
+    def get_device(self: ClientProxyTangoHarness, fqdn: str) -> CbfDeviceProxy:
         """
         Create and return a proxy to the device at the given FQDN.
 

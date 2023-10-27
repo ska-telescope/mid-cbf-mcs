@@ -51,18 +51,10 @@ class PowerSwitch(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    PowerSwitchModel = device_property(
-        dtype="str",
-    )
-    PowerSwitchIp = device_property(
-        dtype="str",
-    )
-    PowerSwitchLogin = device_property(
-        dtype="str",
-    )
-    PowerSwitchPassword = device_property(
-        dtype="str",
-    )
+    PowerSwitchModel = device_property(dtype="str")
+    PowerSwitchIp = device_property(dtype="str")
+    PowerSwitchLogin = device_property(dtype="str")
+    PowerSwitchPassword = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -154,8 +146,7 @@ class PowerSwitch(SKABaseDevice):
     # ---------
 
     def _communication_status_changed(
-        self: PowerSwitch,
-        communication_status: CommunicationStatus,
+        self: PowerSwitch, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -183,8 +174,7 @@ class PowerSwitch(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: PowerSwitch,
-        power_mode: PowerMode,
+        self: PowerSwitch, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
