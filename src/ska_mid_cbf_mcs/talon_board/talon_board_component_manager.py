@@ -370,7 +370,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_power_mode(PowerMode.OFF)
         self._logger.info(f"current time: {datetime.now(timezone.utc)}")
 
         for ev in self._talon_sysid_events:
@@ -386,7 +385,12 @@ class TalonBoardComponentManager(CbfComponentManager):
                     f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
                 )
                 self._proxies[self._talon_status_fqdn].remove_event(name, id)
+
         self._logger.info(f"current time: {datetime.now(timezone.utc)}")
+
+        # Now that the talon board is done unsubscribing from events, turn the PowerMode to OFF
+        self.update_component_power_mode(PowerMode.OFF)
+
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(
