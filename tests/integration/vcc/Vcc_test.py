@@ -176,8 +176,8 @@ class TestVcc:
 
         band_configuration = {
             "frequency_band": configuration["frequency_band"],
-            "dish_sample_rate": configuration["dish_sample_rate"],
-            "samples_per_frame": configuration["samples_per_frame"],
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
         }
         test_proxies.vcc[vcc_id].ConfigureBand(json.dumps(band_configuration))
         time.sleep(2)
