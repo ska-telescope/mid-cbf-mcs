@@ -653,7 +653,7 @@ class ControllerComponentManager(CbfComponentManager):
 
                 # sleep for a few seconds, to let the talon_lrus finish
                 self._logger.info(
-                    f"sleep for 5 seconds to let the talon_lru device server finish what it's doing"
+                    "sleep for 5 seconds to let the talon_lru device server finish what it's doing"
                 )
                 sleep(5)
 
