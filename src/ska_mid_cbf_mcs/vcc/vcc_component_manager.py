@@ -510,8 +510,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     json_string = f.read()
 
             args = json.loads(json_string)
-            args.update({"dish_sample_rate": band_config["dish_sample_rate"]},
-                        {"samples_per_frame": band_config["samples_per_frame"]})
+            args.update(
+                {"dish_sample_rate": band_config["dish_sample_rate"]},
+                {"samples_per_frame": band_config["samples_per_frame"]},
+            )
             json_string = json.dumps(args)
 
             idx = self._freq_band_index[self._freq_band_name]

@@ -161,8 +161,8 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(
             {
                 "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": configuration["dish_sample_rate"],
-                "samples_per_frame": configuration["samples_per_frame"],
+                "dish_sample_rate": 999999,
+                "samples_per_frame": 18,
             }
         )
 
@@ -243,8 +243,8 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(
             {
                 "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": configuration["dish_sample_rate"],
-                "samples_per_frame": configuration["samples_per_frame"],
+                "dish_sample_rate": 999999,
+                "samples_per_frame": 18,
             }
         )
 
@@ -320,8 +320,8 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(
             {
                 "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": configuration["dish_sample_rate"],
-                "samples_per_frame": configuration["samples_per_frame"],
+                "dish_sample_rate": 999999,
+                "samples_per_frame": 18,
             }
         )
         assert (
@@ -403,8 +403,8 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(
             {
                 "frequency_band": other_freq_bands[0],
-                "dish_sample_rate": configuration["dish_sample_rate"],
-                "samples_per_frame": configuration["samples_per_frame"],
+                "dish_sample_rate": 999999,
+                "samples_per_frame": 18,
             }
         )
         assert (
@@ -454,8 +454,8 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(
             {
                 "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": configuration["dish_sample_rate"],
-                "samples_per_frame": configuration["samples_per_frame"],
+                "dish_sample_rate": 999999,
+                "samples_per_frame": 18,
             }
         )
         vcc_component_manager.configure_scan(json_string)
