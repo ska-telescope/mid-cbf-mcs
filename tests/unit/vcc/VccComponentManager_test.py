@@ -104,7 +104,9 @@ class TestVccComponentManager:
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
 
-        (result_code, _) = vcc_component_manager.configure_band(json.dumps(argin))
+        (result_code, _) = vcc_component_manager.configure_band(
+            json.dumps(argin)
+        )
         assert result_code == ResultCode.OK
 
         # Check for band configuration
@@ -158,12 +160,14 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.configure_band(json.dumps(
-            {
-                "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            })
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": configuration["frequency_band"],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
         )
 
         vcc_component_manager.configure_scan(json_str)
@@ -240,12 +244,14 @@ class TestVccComponentManager:
         configuration = json.loads(config)
         f.close()
 
-        vcc_component_manager.configure_band(json.dumps(
-            {
-                "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            })
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": configuration["frequency_band"],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
         )
 
         vcc_component_manager.configure_scan(config)
@@ -317,12 +323,14 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.configure_band(json.dumps(
-            {
-                "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            })
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": configuration["frequency_band"],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
         )
         assert (
             vcc_component_manager.frequency_band
@@ -400,12 +408,14 @@ class TestVccComponentManager:
             set(["1", "2", "3", "4", "5a", "5b"])
             - set(configuration["frequency_band"])
         )
-        vcc_component_manager.configure_band(json.dumps(
-            {
-                "frequency_band": other_freq_bands[0],
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            })
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": other_freq_bands[0],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
         )
         assert (
             vcc_component_manager.frequency_band
@@ -451,12 +461,14 @@ class TestVccComponentManager:
         json_string = f.read().replace("\n", "")
         f.close()
         configuration = json.loads(json_string)
-        vcc_component_manager.configure_band(json.dumps(
-            {
-                "frequency_band": configuration["frequency_band"],
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            })
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": configuration["frequency_band"],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
         )
         vcc_component_manager.configure_scan(json_string)
 
