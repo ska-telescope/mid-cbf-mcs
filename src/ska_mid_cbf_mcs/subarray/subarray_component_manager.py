@@ -1537,7 +1537,7 @@ class CbfSubarrayComponentManager(
             else:
                 return (
                     ResultCode.FAILED,
-                    f"Invalid receptor {receptor_id}. RemoveReceptors command failed.",
+                    f"Invalid receptor {receptor_id}. ConfigureScan command failed.",
                 )
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
