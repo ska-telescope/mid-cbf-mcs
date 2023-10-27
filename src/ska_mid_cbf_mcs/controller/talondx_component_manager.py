@@ -93,6 +93,8 @@ class TalonDxComponentManager:
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        # initialize proxies here, so that the threads don't overwrite each other
+        self.proxies = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
@@ -100,7 +102,8 @@ class TalonDxComponentManager:
             ]
             results = [f.result() for f in futures]
 
-        if self.proxies is not None:
+        # proxies only has one of the talon boards here...
+        if hasattr(self, "proxies"):
             self.logger.info("self.proxies:")
             for key, value in self.proxies.items():
                 self.logger.info(f"{key}: {value}")
@@ -449,7 +452,6 @@ class TalonDxComponentManager:
         """
         # Create device proxies for the HPS master devices
         ret = ResultCode.OK
-        self.proxies = {}
 
         fqdn = talon_cfg["ds_hps_master_fqdn"]
 
@@ -529,7 +531,7 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
-            if self.proxies is not None:
+            if hasattr(self, "proxies"):
                 self.logger.info("self.proxies:")
                 for key, value in self.proxies.items():
                     self.logger.info(f"{key}: {value}")
