@@ -14,7 +14,8 @@ from __future__ import annotations
 import json
 import logging
 import os
-from time import sleep
+
+# from time import sleep
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -652,10 +653,10 @@ class ControllerComponentManager(CbfComponentManager):
                     return (ResultCode.FAILED, log_msg)
 
                 # sleep for a few seconds, to let the talon_lrus finish
-                self._logger.info(
-                    "sleep for 5 seconds to let the talon_lru device server finish what it's doing"
-                )
-                sleep(5)
+                # self._logger.info(
+                #     "sleep for 5 seconds to let the talon_lru device server finish what it's doing"
+                # )
+                # sleep(5)
 
                 # check final device states
                 op_state_error_list = []
