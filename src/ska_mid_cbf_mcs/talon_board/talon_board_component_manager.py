@@ -371,7 +371,12 @@ class TalonBoardComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self.update_component_power_mode(PowerMode.OFF)
-        self._logger.info(f"current time: {datetime.now()}")
+        curr_time = float(
+            datetime.datetime.utcnow()
+            .replace(tzinfo=datetime.timezone.utc)
+            .timestamp()
+        )
+        self._logger.info(f"current time: {curr_time}")
 
         for ev in self._talon_sysid_events:
             for name, id in ev.items():
@@ -386,7 +391,12 @@ class TalonBoardComponentManager(CbfComponentManager):
                     f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
                 )
                 self._proxies[self._talon_status_fqdn].remove_event(name, id)
-        self._logger.info(f"current time: {datetime.now()}")
+        curr_time = float(
+            datetime.datetime.utcnow()
+            .replace(tzinfo=datetime.timezone.utc)
+            .timestamp()
+        )
+        self._logger.info(f"current time: {curr_time}")
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(

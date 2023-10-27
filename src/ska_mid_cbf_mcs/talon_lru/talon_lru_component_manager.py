@@ -429,8 +429,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             try:
                 self._proxy_talondx_board1.set_timeout_millis(10000)
                 result_code, msg = self._proxy_talondx_board1.Off()
+                curr_time = float(
+                    datetime.datetime.utcnow()
+                    .replace(tzinfo=datetime.timezone.utc)
+                    .timestamp()
+                )
                 self._logger.info(
-                    f"current time: {datetime.now()}, talondx_board1.Off(): {result_code}, {msg}"
+                    f"current time: {curr_time}, talondx_board1.Off(): {result_code}, {msg}"
                 )
             except tango.DevFailed as df:
                 self._logger.warn(
@@ -440,8 +445,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             try:
                 self._proxy_talondx_board2.set_timeout_millis(10000)
                 result_code, msg = self._proxy_talondx_board2.Off()
+                curr_time = float(
+                    datetime.datetime.utcnow()
+                    .replace(tzinfo=datetime.timezone.utc)
+                    .timestamp()
+                )
                 self._logger.info(
-                    f"current time: {datetime.now()}, talondx_board2.Off(): {result_code}, {msg}"
+                    f"current time: {curr_time}, talondx_board2.Off(): {result_code}, {msg}"
                 )
             except tango.DevFailed as df:
                 self._logger.warn(

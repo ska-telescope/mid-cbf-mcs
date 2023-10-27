@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from time import sleep
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -649,6 +650,9 @@ class ControllerComponentManager(CbfComponentManager):
                 lru_off_status, log_msg = self._turn_off_lrus()
                 if not lru_off_status:
                     return (ResultCode.FAILED, log_msg)
+
+                # sleep for a few seconds, to let the talon_lrus finish
+                sleep(5)
 
                 # check final device states
                 op_state_error_list = []
