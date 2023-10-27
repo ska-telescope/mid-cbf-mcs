@@ -3601,11 +3601,7 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-telmodel"
-<<<<<<< HEAD
-version = "1.9.0"
-=======
 version = "1.9.1"
->>>>>>> 0c2d2a1a8ddaead971d1a935277b421100373899
 description = "SKA telescope model library"
 optional = false
 python-versions = ">=3.10.0,<4.0.0"
