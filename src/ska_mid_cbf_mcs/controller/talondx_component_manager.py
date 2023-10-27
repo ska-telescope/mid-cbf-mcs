@@ -93,6 +93,8 @@ class TalonDxComponentManager:
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        # Initialize proxies dict outside of the configure_talon_thread, so that the thread for each talon doesn't overwrite the previous one
+        self.proxies = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
@@ -444,7 +446,6 @@ class TalonDxComponentManager:
         """
         # Create device proxies for the HPS master devices
         ret = ResultCode.OK
-        self.proxies = {}
 
         fqdn = talon_cfg["ds_hps_master_fqdn"]
 
