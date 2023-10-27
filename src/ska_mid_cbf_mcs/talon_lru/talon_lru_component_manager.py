@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 from typing import Callable, List, Optional, Tuple
 
@@ -429,7 +430,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_talondx_board1.set_timeout_millis(10000)
                 result_code, msg = self._proxy_talondx_board1.Off()
                 self._logger.info(
-                    f"talondx_board1.Off(): {result_code}, {msg}"
+                    f"current time: {datetime.now()}, talondx_board1.Off(): {result_code}, {msg}"
                 )
             except tango.DevFailed as df:
                 self._logger.warn(
@@ -440,7 +441,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_talondx_board2.set_timeout_millis(10000)
                 result_code, msg = self._proxy_talondx_board2.Off()
                 self._logger.info(
-                    f"talondx_board2.Off(): {result_code}, {msg}"
+                    f"current time: {datetime.now()}, talondx_board2.Off(): {result_code}, {msg}"
                 )
             except tango.DevFailed as df:
                 self._logger.warn(
