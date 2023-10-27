@@ -24,12 +24,7 @@ __all__ = ["main"]
 
 def main(args=None, **kwargs):
     return run(
-        classes=(
-            FspCorrSubarray,
-            FspPssSubarray,
-            FspPstSubarray,
-            Fsp,
-        ),
+        classes=(FspCorrSubarray, FspPssSubarray, FspPstSubarray, Fsp),
         args=args,
         **kwargs
     )

@@ -48,29 +48,17 @@ class TalonLRU(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    TalonDxBoard1 = device_property(
-        dtype="str",
-    )
+    TalonDxBoard1 = device_property(dtype="str")
 
-    TalonDxBoard2 = device_property(
-        dtype="str",
-    )
+    TalonDxBoard2 = device_property(dtype="str")
 
-    PDU1 = device_property(
-        dtype="str",
-    )
+    PDU1 = device_property(dtype="str")
 
-    PDU1PowerOutlet = device_property(
-        dtype="str",
-    )
+    PDU1PowerOutlet = device_property(dtype="str")
 
-    PDU2 = device_property(
-        dtype="str",
-    )
+    PDU2 = device_property(dtype="str")
 
-    PDU2PowerOutlet = device_property(
-        dtype="str",
-    )
+    PDU2PowerOutlet = device_property(dtype="str")
 
     PDUCommandTimeout = device_property(dtype="str")
 
@@ -79,13 +67,11 @@ class TalonLRU(SKABaseDevice):
     # ----------
 
     PDU1PowerMode = attribute(
-        dtype="uint16",
-        doc="Power mode of the Talon LRU PDU 1",
+        dtype="uint16", doc="Power mode of the Talon LRU PDU 1"
     )
 
     PDU2PowerMode = attribute(
-        dtype="uint16",
-        doc="Power mode of the Talon LRU PDU 2",
+        dtype="uint16", doc="Power mode of the Talon LRU PDU 2"
     )
 
     # ---------------
@@ -141,8 +127,7 @@ class TalonLRU(SKABaseDevice):
     # ----------
 
     def _communication_status_changed(
-        self: TalonLRU,
-        communication_status: CommunicationStatus,
+        self: TalonLRU, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -163,8 +148,7 @@ class TalonLRU(SKABaseDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: TalonLRU,
-        power_mode: PowerMode,
+        self: TalonLRU, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

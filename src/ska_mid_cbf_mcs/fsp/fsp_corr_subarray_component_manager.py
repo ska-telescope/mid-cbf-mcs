@@ -333,7 +333,7 @@ class FspCorrSubarrayComponentManager(
         if not self._simulation_mode:
             if self._proxy_hps_fsp_corr_controller is None:
                 self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
-                    self._hps_fsp_corr_controller_fqdn,
+                    self._hps_fsp_corr_controller_fqdn
                 )
         else:
             self._proxy_hps_fsp_corr_controller = (
@@ -666,8 +666,7 @@ class FspCorrSubarrayComponentManager(
         )
 
     def scan(
-        self: FspCorrSubarrayComponentManager,
-        scan_id: int,
+        self: FspCorrSubarrayComponentManager, scan_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Performs the Scan() command functionality
