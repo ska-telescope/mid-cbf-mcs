@@ -10,8 +10,8 @@ enabled: true
 system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
-engineeringConsoleVersion: 0.7.10
-signalVerificationVersion: 0.1.6
+engineeringConsoleVersion: 0.8.7
+signalVerificationVersion: 0.2.1
 
 labels:
   app: ska-mid-cbf-mcs
