@@ -564,8 +564,7 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            component_manager = self.target
-            return component_manager.on()
+            return self.target.component_manager.on()
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -582,8 +581,7 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            component_manager = self.target
-            return component_manager.off()
+            return self.target.component_manager.off()
 
 
 # ----------

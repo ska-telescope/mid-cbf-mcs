@@ -444,6 +444,14 @@ class TalonLRUComponentManager(CbfComponentManager):
                         ResultCode.FAILED,
                         f"Failed to turn off Talon boards: {result[1]}",
                     )
+                elif result[0] == ResultCode.OK:
+                    self._logger.info(
+                        f"Talon board successfully turned off: {result[1]}"
+                    )
+                else:
+                    self._logger.warn(
+                        f"Talon board turned off with result code {result[0]}, message: {result[1]}"
+                    )
 
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
@@ -473,7 +481,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             result = talondx_board_proxy.Off()
             if result is not None:
                 self._logger.info(
-                    f"current time: {datetime.now(timezone.utc)}; talondx_board_proxy.Off(): {result[0]}, {result[1]}"
+                    f"current time: {datetime.now(timezone.utc)}; talon board {board_id} Off(): {result[0]}, {result[1]}"
                 )
         except tango.DevFailed as df:
             self._logger.warn(
