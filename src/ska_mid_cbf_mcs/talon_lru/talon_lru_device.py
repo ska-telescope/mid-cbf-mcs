@@ -193,7 +193,13 @@ class TalonLRU(SKABaseDevice):
         current device state. This is a callback that gets called whenever simulationMode
         changes in the power switch devices.
         """
+        self.logger.info(
+            "_check_power_mode(): Trying to acquire _power_switch_lock"
+        )
         with self._power_switch_lock:
+            self.logger.info(
+                "acquired power_switch_lock - about to execute component_manager.check_power_mode(self.get_state())"
+            )
             self.component_manager.check_power_mode(self.get_state())
 
     # --------
