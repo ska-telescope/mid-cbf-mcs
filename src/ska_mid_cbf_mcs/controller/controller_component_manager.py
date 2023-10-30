@@ -14,8 +14,8 @@ from __future__ import annotations
 import json
 import logging
 import os
-
-# from time import sleep
+from datetime import datetime, timezone
+from time import sleep
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -672,11 +672,32 @@ class ControllerComponentManager(CbfComponentManager):
                             self._logger.info(
                                 f"Polling {fqdn} State() for tango.DevState.OFF"
                             )
-                            poll(
-                                lambda: proxy.State() == tango.DevState.OFF,
-                                timeout=const.DEFAULT_TIMEOUT,
-                                step=0.5,
+
+                            start_time = float(
+                                datetime.now(timezone.utc).timestamp()
                             )
+                            max_wait_time_s = 5
+                            # Give the device proxy up to 5 seconds to unblock itself.
+                            while (
+                                float(datetime.now(timezone.utc).timestamp())
+                                - start_time
+                            ) < max_wait_time_s:
+                                try:
+                                    poll(
+                                        lambda: proxy.State()
+                                        == tango.DevState.OFF,
+                                        timeout=const.DEFAULT_TIMEOUT,
+                                        step=0.5,
+                                    )
+                                    self._logger.info(
+                                        f"Successfully read the State() of {fqdn}"
+                                    )
+                                    break
+                                except tango.DevFailed as dev_failed_ex:
+                                    self._logger.error(
+                                        f"Polling {fqdn} failed: {dev_failed_ex.msg}. Retrying..."
+                                    )
+                                sleep(1)
                         except TimeoutError:
                             # append error if timed out waiting for device OFF
                             op_state_error_list.append([fqdn, proxy.State()])
