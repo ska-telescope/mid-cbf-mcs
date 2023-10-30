@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 from datetime import datetime, timezone
 from typing import Callable, List, Optional, Tuple
@@ -425,29 +426,24 @@ class TalonLRUComponentManager(CbfComponentManager):
                         self._logger.info("PDU 2 successfully turned off.")
 
             # Stop monitoring talon board telemetries and fault status
-            try:
-                self._proxy_talondx_board1.set_timeout_millis(10000)
-                result = self._proxy_talondx_board1.Off()
-                if result is not None:
-                    self._logger.info(
-                        f"current time: {datetime.now(timezone.utc)}; talondx_board1.Off(): {result[0]}, {result[1]}"
+            talondx_board_proxies_by_id = {
+                1: self._proxy_talondx_board1,
+                2: self._proxy_talondx_board2,
+            }
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(
+                        self._turn_off_boards, board_id, proxy_talondx_board
                     )
-            except tango.DevFailed as df:
-                self._logger.warn(
-                    f"Talon board {self._talons[0]} OFF command failed: {df}"
-                )
-
-            try:
-                self._proxy_talondx_board2.set_timeout_millis(10000)
-                result = self._proxy_talondx_board2.Off()
-                if result is not None:
-                    self._logger.info(
-                        f"current time: {datetime.now(timezone.utc)}; talondx_board2.Off(): {result[0]}, {result[1]}"
+                    for board_id, proxy_talondx_board in talondx_board_proxies_by_id.items()
+                ]
+                results = [f.result() for f in futures]
+            for result in results:
+                if result[0] == ResultCode.FAILED:
+                    return (
+                        ResultCode.FAILED,
+                        f"Failed to turn off Talon boards: {result[1]}",
                     )
-            except tango.DevFailed as df:
-                self._logger.warn(
-                    f"Talon board {self._talons[1]} OFF command failed: {df}"
-                )
 
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
@@ -468,6 +464,29 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
+
+    def _turn_off_boards(
+        self: TalonLRUComponentManager, board_id, talondx_board_proxy
+    ):
+        try:
+            talondx_board_proxy.set_timeout_millis(10000)
+            result = talondx_board_proxy.Off()
+            if result is not None:
+                self._logger.info(
+                    f"current time: {datetime.now(timezone.utc)}; talondx_board_proxy.Off(): {result[0]}, {result[1]}"
+                )
+        except tango.DevFailed as df:
+            self._logger.warn(
+                f"Talon board {board_id} OFF command failed: {df}"
+            )
+            return (
+                ResultCode.FAILED,
+                f"_turn_off_boards FAILED on Talon board {board_id}",
+            )
+        return (
+            ResultCode.OK,
+            f"_turn_off_boards completed OK on Talon board {board_id}",
+        )
 
     def standby(
         self: TalonLRUComponentManager,
