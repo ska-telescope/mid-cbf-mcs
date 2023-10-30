@@ -695,7 +695,7 @@ class ControllerComponentManager(CbfComponentManager):
                                     break
                                 except tango.DevFailed as dev_failed_ex:
                                     self._logger.error(
-                                        f"Polling {fqdn} failed: {dev_failed_ex.msg}. Retrying..."
+                                        f"Polling {fqdn} failed: {dev_failed_ex}. Retrying..."
                                     )
                                 sleep(1)
                         except TimeoutError:
