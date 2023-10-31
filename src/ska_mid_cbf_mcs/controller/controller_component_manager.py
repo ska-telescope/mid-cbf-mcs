@@ -654,22 +654,30 @@ class ControllerComponentManager(CbfComponentManager):
                 op_state_error_list = []
                 obs_state_error_list = []
                 for fqdn, proxy in self._proxies.items():
+                    self._logger.info(f"Checking final state of device {fqdn}")
                     # power switch device state is always ON as long as it is
                     # communicating and monitoring the PDU; does not implement
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
                         try:
-                            self._logger.info(
-                                f"Polling {fqdn} State() for tango.DevState.OFF"
-                            )
+                            # TODO CIP-TBD The cbfcontroller is sometimes
+                            # unable to read the State() of the talon_lru
+                            # device server due to an error trying to
+                            # acquire the serialization monitor. As a temporary
+                            # workaround, the cbfcontroller will log these
+                            # errors if they occur but continue polling.
                             poll(
                                 lambda: proxy.State() == tango.DevState.OFF,
+                                ignore_exceptions=(tango.DevFailed),
+                                log_error=logging.ERROR,
                                 timeout=const.DEFAULT_TIMEOUT,
                                 step=0.5,
                             )
+                        # If the poll timed out while waiting
+                        # for proxy.State() == tango.DevState.OFF,
+                        # it throws a TimeoutError
                         except TimeoutError:
-                            # append error if timed out waiting for device OFF
                             op_state_error_list.append([fqdn, proxy.State()])
 
                     if fqdn in self._fqdn_subarray:
