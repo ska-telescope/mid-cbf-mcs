@@ -450,7 +450,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 return
 
             self._logger.info(
-                "Initializing VCC Controller constant parameters"
+                f"Initializing VCC Controller constant parameters: {param_init}"
             )
             self._vcc_controller_proxy.InitCommonParameters(
                 json.dumps(param_init)
@@ -527,6 +527,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     f"{VCC_PARAM_PATH}internal_params_default.json", "r"
                 ) as f:
                     json_string = f.read()
+
+            self._logger.info(f"VCC internal parameters: {json_string}")
 
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:
