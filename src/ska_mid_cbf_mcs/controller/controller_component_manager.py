@@ -652,12 +652,6 @@ class ControllerComponentManager(CbfComponentManager):
                 if not lru_off_status:
                     return (ResultCode.FAILED, log_msg)
 
-                # sleep for a few seconds, to let the talon_lrus finish
-                # self._logger.info(
-                #     "sleep for 5 seconds to let the talon_lru device server finish what it's doing"
-                # )
-                # sleep(5)
-
                 # check final device states
                 op_state_error_list = []
                 obs_state_error_list = []
@@ -669,15 +663,18 @@ class ControllerComponentManager(CbfComponentManager):
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
                         try:
-                            self._logger.info(
-                                f"Polling {fqdn} State() for tango.DevState.OFF"
-                            )
-
+                            # TODO CIP-TBD The cbfcontroller is sometimes
+                            # unable to read the State() of the talon_lru
+                            # device server due to a timeout error trying to
+                            # acquire the serialization monitor. As a temporary
+                            # workaround, the cbfcontroller will keep trying to
+                            # poll the device server for up to 5 seconds, to
+                            # allow it some time to unblock itself.
                             start_time = float(
                                 datetime.now(timezone.utc).timestamp()
                             )
                             max_wait_time_s = 5
-                            # Give the device proxy up to 5 seconds to unblock itself.
+
                             while (
                                 float(datetime.now(timezone.utc).timestamp())
                                 - start_time
@@ -686,16 +683,16 @@ class ControllerComponentManager(CbfComponentManager):
                                     poll(
                                         lambda: proxy.State()
                                         == tango.DevState.OFF,
-                                        timeout=const.DEFAULT_TIMEOUT,
+                                        timeout=0,
                                         step=0.5,
                                     )
                                     self._logger.info(
-                                        f"Successfully read the State() of {fqdn}"
+                                        f"Successfully polled {fqdn} State()"
                                     )
                                     break
                                 except tango.DevFailed as dev_failed_ex:
                                     self._logger.error(
-                                        f"Polling {fqdn} failed: {dev_failed_ex}. Retrying..."
+                                        f"Checking {fqdn} failed:\n{dev_failed_ex}\nRetrying..."
                                     )
                                 sleep(1)
                         except TimeoutError:
