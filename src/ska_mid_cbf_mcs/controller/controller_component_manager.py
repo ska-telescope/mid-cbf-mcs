@@ -667,7 +667,6 @@ class ControllerComponentManager(CbfComponentManager):
                             poll(
                                 lambda: proxy.State() == tango.DevState.OFF,
                                 ignore_exceptions=(tango.DevFailed),
-                                log=self._logger,
                                 log_error=logging.ERROR,
                                 timeout=const.DEFAULT_TIMEOUT,
                                 step=0.5,
@@ -701,7 +700,7 @@ class ControllerComponentManager(CbfComponentManager):
                     #             poll(
                     #                 lambda: proxy.State()
                     #                 == tango.DevState.OFF,
-                    #                 timeout=0,
+                    #                 timeout=const.DEFAULT_TIMEOUT,
                     #                 step=0.5,
                     #             )
                     #             self._logger.info(
@@ -720,7 +719,7 @@ class ControllerComponentManager(CbfComponentManager):
                     #             )
                     #         sleep(1)
                     # if not read_state_was_successful:
-                    #     # throw error if
+                    #     raise Exception
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState
