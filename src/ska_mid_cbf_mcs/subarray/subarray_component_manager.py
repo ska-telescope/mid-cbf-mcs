@@ -784,6 +784,9 @@ class CbfSubarrayComponentManager(
             ]:
                 if group.get_size() > 0:
                     try:
+                        self._logger.info(
+                            "about to perform GoToIdle on the vcc and fsps"
+                        )
                         group.command_inout("GoToIdle")
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
@@ -1933,6 +1936,7 @@ class CbfSubarrayComponentManager(
 
                 try:
                     # reset subarrayMembership Vcc attribute:
+                    self._logger.info("Reset subarrayMembership Vcc attribute")
                     vccProxy.subarrayMembership = 0
                     self._logger.debug(
                         f"VCC {vccID} subarray_id: "
@@ -1991,6 +1995,9 @@ class CbfSubarrayComponentManager(
 
                 try:
                     # reset subarrayMembership Vcc attribute:
+                    self._logger.info(
+                        "reset the subarrayMembership Vcc attribute"
+                    )
                     vccProxy.subarrayMembership = 0
                     self._logger.debug(
                         f"VCC {vccID} subarray_id: "
@@ -2202,6 +2209,7 @@ class CbfSubarrayComponentManager(
         """
         Restart to EMPTY from abort/fault.
         """
+        self._logger.info("restarting the subarray")
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self.obs_faulty:
@@ -2211,13 +2219,17 @@ class CbfSubarrayComponentManager(
 
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
+        # this already sends the VCC to idle...
+        self._logger.info("about to deconfigure the subarray")
         self.deconfigure()
 
         # send Vcc devices to IDLE, remove all assigned VCCs
         if self._group_vcc.get_size() > 0:
+            self._logger.info("about to perform ObsReset on the VCC")
             self._group_vcc.command_inout("ObsReset")
 
         # remove all assigned VCCs to return to EMPTY
+        self._logger.info("about to remove all receptors")
         self.remove_all_receptors()
 
         try:
@@ -2257,6 +2269,7 @@ class CbfSubarrayComponentManager(
 
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
+        self._logger.info("about to deconfigure from inside obsreset")
         self.deconfigure()
 
         try:

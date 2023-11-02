@@ -1061,6 +1061,7 @@ class Vcc(CspSubElementObsDevice):
             device = self.target
 
             # Reset all values intialized in InitCommand.do():
+            self.logger.info("about to deconfigure the VCC")
             device.component_manager.deconfigure()
 
             if device._obs_state == ObsState.IDLE:

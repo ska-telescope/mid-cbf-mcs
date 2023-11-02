@@ -771,6 +771,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_simulators[idx].ObsReset()
             else:
                 try:
+                    self._logger.info(
+                        "about to perform ObsReset on the VCC band"
+                    )
                     self._band_proxies[idx].ObsReset()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
