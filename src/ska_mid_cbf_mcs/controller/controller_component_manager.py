@@ -612,53 +612,6 @@ class ControllerComponentManager(CbfComponentManager):
         # TODO
         return True
 
-    def _validate_sys_param(
-        self: ControllerComponentManager,
-        sys_param,
-    ) -> Tuple[ResultCode, str]:
-        dish_dict = sys_param["dish_parameters"]
-        dish_id_set = set()
-        vcc_id_set = set()
-        for dish_id, v in dish_dict.items():
-            # Dish ID must be SKA001-133, MKT000-063
-            if dish_id[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "SKA":
-                id = int(dish_id[ReceptorUtils.DISH_TYPE_STR_LEN :])
-                if (
-                    id < ReceptorUtils.SKA_DISH_INSTANCE_MIN
-                    or id > ReceptorUtils.SKA_DISH_INSTANCE_MAX
-                ):
-                    return (ResultCode.FAILED, "Invalid Dish ID")
-            elif dish_id[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "MKT":
-                id = int(dish_id[ReceptorUtils.DISH_TYPE_STR_LEN :])
-                if (
-                    id < ReceptorUtils.MKT_DISH_INSTANCE_MIN
-                    or id > ReceptorUtils.MKT_DISH_INSTANCE_MAX
-                ):
-                    return (ResultCode.FAILED, "Invalid Dish ID")
-            else:
-                return (ResultCode.FAILED, "Invalid Dish ID")
-
-            # Dish ID must be unique
-            if dish_id not in dish_id_set:
-                dish_id_set.add(dish_id)
-            else:
-                return (ResultCode.FAILED, f"Duplicated Dish ID {dish_id}")
-
-            # VCC ID must be an integer in 1 - 197 (TODO: confirm)
-            if v["vcc"] < 1 or v["vcc"] > 197:
-                return (ResultCode.FAILED, f"Invalid VCC ID {v['vcc']}")
-
-            # VCC ID must be unique
-            if v["vcc"] not in vcc_id_set:
-                vcc_id_set.add(v["vcc"])
-            else:
-                return (ResultCode.FAILED, f"Duplicated VCC ID {v['vcc']}")
-
-            # k values must be an integer in 1 - 2222
-            if v["k"] < 1 or v["k"] > 2222:
-                return (ResultCode.FAILED, f"Invalid k value {v['k']}")
-        return (ResultCode.OK, "")
-
     def _update_sys_param(
         self: ControllerComponentManager,
         params: str,
