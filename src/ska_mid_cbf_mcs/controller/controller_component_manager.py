@@ -654,14 +654,16 @@ class ControllerComponentManager(CbfComponentManager):
                 op_state_error_list = []
                 obs_state_error_list = []
                 for fqdn, proxy in self._proxies.items():
-                    self._logger.info(f"Checking final state of device {fqdn}")
+                    self._logger.debug(
+                        f"Checking final state of device {fqdn}"
+                    )
                     # power switch device state is always ON as long as it is
                     # communicating and monitoring the PDU; does not implement
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
                         try:
-                            # TODO CIP-TBD The cbfcontroller is sometimes
+                            # TODO CIP-1899 The cbfcontroller is sometimes
                             # unable to read the State() of the talon_lru
                             # device server due to an error trying to
                             # acquire the serialization monitor. As a temporary
@@ -670,7 +672,7 @@ class ControllerComponentManager(CbfComponentManager):
                             poll(
                                 lambda: proxy.State() == tango.DevState.OFF,
                                 ignore_exceptions=(tango.DevFailed),
-                                log_error=logging.ERROR,
+                                log_error=logging.WARNING,
                                 timeout=const.DEFAULT_TIMEOUT,
                                 step=0.5,
                             )
