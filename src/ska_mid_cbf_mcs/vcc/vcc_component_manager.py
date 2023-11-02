@@ -577,6 +577,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
+        self._logger.info(
+            f"vcc controller obs_state at start of deconfigure(): {self._vcc_controller_proxy.obs_state}"
+        )
+
         self._doppler_phase_correction = [0 for _ in range(4)]
         self._jones_matrix = ""
         self._delay_model = ""
@@ -588,7 +592,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._freq_band_name = ""
         self._config_id = ""
         self._scan_id = 0
-
         if self._vcc_controller_proxy.obs_state == ObsState.READY:
             if self._simulation_mode:
                 self._vcc_controller_simulator.Unconfigure()
@@ -607,6 +610,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     )
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
+        self._logger.info(
+            f"vcc controller obs_state at end of deconfigure(): {self._vcc_controller_proxy.obs_state}"
+        )
 
     def configure_scan(
         self: VccComponentManager, argin: str
