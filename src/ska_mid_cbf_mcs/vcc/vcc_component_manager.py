@@ -589,21 +589,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
         self._scan_id = 0
 
-        if self._vcc_controller_proxy.obsstate == ObsState.READY:
+        if self._vcc_controller_proxy.obs_state == ObsState.READY:
             if self._simulation_mode:
                 self._vcc_controller_simulator.Unconfigure()
             else:
                 try:
                     self._logger.info(
-                        f"vcc controller obsstate before Unconfigure: {self._vcc_controller_proxy.obsstate}"
+                        f"vcc controller obs_state before Unconfigure: {self._vcc_controller_proxy.obs_state}"
                     )
                     self._vcc_controller_proxy.Unconfigure()
                     self._logger.info(
-                        f"vcc controller obsstate after Unconfigure success: {self._vcc_controller_proxy.obsstate}"
+                        f"vcc controller obs_state after Unconfigure success: {self._vcc_controller_proxy.obs_state}"
                     )
                 except tango.DevFailed as df:
                     self._logger.info(
-                        f"vcc controller obsstate after Unconfigure fail: {self._vcc_controller_proxy.obsstate}"
+                        f"vcc controller obs_state after Unconfigure fail: {self._vcc_controller_proxy.obs_state}"
                     )
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
