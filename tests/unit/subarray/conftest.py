@@ -159,6 +159,9 @@ def mock_component_manager(
     def _end_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "EndScan command completed OK")
 
+    def _update_sys_param() -> None:
+        return
+
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: mock._component_power_mode_changed_callback(
         PowerMode.ON
@@ -184,6 +187,7 @@ def mock_component_manager(
     )
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda: _end_scan()
+    mock.update_sys_param.side_effect = lambda argin: _update_sys_param()
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 

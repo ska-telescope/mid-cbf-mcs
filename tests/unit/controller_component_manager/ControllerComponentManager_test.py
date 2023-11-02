@@ -11,6 +11,9 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
+# Path
+import os
+
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -18,6 +21,8 @@ from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
 )
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
+
+json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestControllerComponentManager:
@@ -123,3 +128,27 @@ class TestControllerComponentManager:
 
         (result_code, _) = controller_component_manager.standby()
         assert result_code == ResultCode.OK
+
+    def test_InvalidSysParam(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        with open(json_file_path + "sys_param_dup_vcc.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.FAILED
+
+        with open(json_file_path + "sys_param_invalid_rec_id.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.FAILED
