@@ -578,7 +578,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
         self._logger.info(
-            f"vcc controller obs_state at start of deconfigure(): {self._vcc_controller_proxy.obs_state}"
+            f"vcc controller obs_state at start of deconfigure(): {self._vcc_controller_proxy.read_attribute('ObsState')}"
         )
 
         self._doppler_phase_correction = [0 for _ in range(4)]
@@ -598,20 +598,20 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             else:
                 try:
                     self._logger.info(
-                        f"vcc controller obs_state before Unconfigure: {self._vcc_controller_proxy.obs_state}"
+                        f"vcc controller obs_state before Unconfigure: {self._vcc_controller_proxy.read_attribute('ObsState')}"
                     )
                     self._vcc_controller_proxy.Unconfigure()
                     self._logger.info(
-                        f"vcc controller obs_state after Unconfigure success: {self._vcc_controller_proxy.obs_state}"
+                        f"vcc controller obs_state after Unconfigure success: {self._vcc_controller_proxy.read_attribute('ObsState')}"
                     )
                 except tango.DevFailed as df:
                     self._logger.info(
-                        f"vcc controller obs_state after Unconfigure fail: {self._vcc_controller_proxy.obs_state}"
+                        f"vcc controller obs_state after Unconfigure fail: {self._vcc_controller_proxy.read_attribute('ObsState')}"
                     )
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
         self._logger.info(
-            f"vcc controller obs_state at end of deconfigure(): {self._vcc_controller_proxy.obs_state}"
+            f"vcc controller obs_state at end of deconfigure(): {self._vcc_controller_proxy.read_attribute('ObsState')}"
         )
 
     def configure_scan(
