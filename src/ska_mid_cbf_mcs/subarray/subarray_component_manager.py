@@ -1512,7 +1512,7 @@ class CbfSubarrayComponentManager(
                 receptor_int = self._receptor_utils.receptors[receptor_id]
                 # find the k value for this receptor
                 # array of k values is 0 index, so index of array value is receptor_int - 1
-                freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
+                freq_offset_k = self._receptor_utils.receptor_id_to_k[receptor_id]
                 dish_sample_rate = self._calculate_dish_sample_rate(
                     freq_band_dict()[common_configuration["frequency_band"]],
                     freq_offset_k,
