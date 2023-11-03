@@ -467,6 +467,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 ) as f:
                     json_string = f.read()
 
+            self._logger.info(f"VCC internal parameters: {json_string}")
+
             args = json.loads(json_string)
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             args.update(
