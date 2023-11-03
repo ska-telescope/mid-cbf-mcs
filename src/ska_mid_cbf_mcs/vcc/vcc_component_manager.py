@@ -101,46 +101,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._receptor_id = receptor_id
 
     @property
-    def frequency_offset_k(self: VccComponentManager) -> int:
-        """
-        Frequency Offset K-value for this receptor
-
-        :return: the frequency offset k-value
-        """
-        return self._frequency_offset_k
-
-    @frequency_offset_k.setter
-    def frequency_offset_k(
-        self: VccComponentManager, frequency_offset_k: int
-    ) -> None:
-        """
-        Set the frequency offset k-value.
-
-        :param frequency_offset_k: Frequency offset k-value
-        """
-        self._frequency_offset_k = frequency_offset_k
-
-    @property
-    def frequency_offset_delta_f(self: VccComponentManager) -> int:
-        """
-        Frequency Offset Delta-F Value for this receptor
-
-        :return: the frequency offset delta-f value
-        """
-        return self._frequency_offset_delta_f
-
-    @frequency_offset_delta_f.setter
-    def frequency_offset_delta_f(
-        self: VccComponentManager, frequency_offset_delta_f: int
-    ) -> None:
-        """
-        Set the frequency offset delta-f value.
-
-        :param frequency_offset_delta_f: Frequency offset delta-f value
-        """
-        self._frequency_offset_delta_f = frequency_offset_delta_f
-
-    @property
     def frequency_band(self: VccComponentManager) -> int:
         """
         Frequency Band
@@ -263,8 +223,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # Initialize attribute values
         self._receptor_id = 0
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
 
         self._scan_id = 0
         self._config_id = ""
