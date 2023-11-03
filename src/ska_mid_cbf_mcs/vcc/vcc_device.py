@@ -395,48 +395,6 @@ class Vcc(CspSubElementObsDevice):
         self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
-    def read_frequencyOffsetK(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetK_read) ENABLED START #
-        """
-        Read the frequencyOffsetK attribute.
-
-        :return: the frequency offset k-value
-        :rtype: int
-        """
-        return self.component_manager.frequency_offset_k
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_read
-
-    def write_frequencyOffsetK(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetK_write) ENABLED START #
-        """
-        Write the frequencyOffsetK attribute.
-
-        :param value: the frequency offset k-value
-        """
-        self.component_manager.frequency_offset_k = value
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_write
-
-    def read_frequencyOffsetDeltaF(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_read) ENABLED START #
-        """
-        Read the frequencyOffsetDeltaF attribute.
-
-        :return: the frequency offset delta-f value
-        :rtype: int
-        """
-        return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_read
-
-    def write_frequencyOffsetDeltaF(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_write) ENABLED START #
-        """
-        Write the frequencyOffsetDeltaF attribute.
-
-        :param value: the frequency offset delta-f value
-        """
-        self.component_manager.frequency_offset_delta_f = value
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_write
-
     def read_frequencyBand(self: Vcc) -> tango.DevEnum:
         # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
         """
