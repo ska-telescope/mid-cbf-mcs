@@ -22,7 +22,7 @@ import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 
 # Data file path
@@ -35,8 +35,6 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-    receptor_utils = ReceptorUtils(const.MAX_VCC)
-
     @pytest.mark.parametrize("sub_id", [1])
     def test_Connect(
         self: TestCbfSubarray, test_proxies: pytest.fixture, sub_id: int
@@ -79,6 +77,13 @@ class TestCbfSubarray:
         sleep_time_s = 1
 
         device_under_test = test_proxies.subarray[sub_id]
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        device_under_test.sysParam = sp
+
+        sys_param = json.loads(sp)
+        test_proxies.receptor_utils = ReceptorUtils(sys_param)
 
         device_under_test.On()
 
@@ -164,12 +169,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptors[:-1]
+                    for r in receptors[:-1]
                 ]
             )
 
@@ -184,8 +187,8 @@ class TestCbfSubarray:
             ] == receptors
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_to_vcc[
-                        self.receptor_utils.receptors[receptors[-1]]
+                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                        receptors[-1]
                     ]
                 ].subarrayMembership
                 == sub_id
@@ -201,8 +204,8 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[receptor]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            receptor
                         ]
                     ].subarrayMembership
                     == sub_id
@@ -210,12 +213,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
-                    for i in receptors_to_remove
+                    for r in receptors_to_remove
                 ]
             )
 
@@ -233,8 +234,8 @@ class TestCbfSubarray:
             for receptor in receptors_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[receptor]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            receptor
                         ]
                     ].subarrayMembership
                     == 0
@@ -311,12 +312,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
-                    for i in receptors
+                    for r in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -339,12 +338,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
-                    for i in receptors
+                    for r in receptors
                 ]
             )
 
@@ -421,12 +418,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
-                    for i in receptors
+                    for r in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -527,12 +522,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptors
+                    for r in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -549,12 +542,10 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[
-                            self.receptor_utils.receptors[i]
-                        ]
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
-                    for i in receptors
+                    for r in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -677,54 +668,33 @@ class TestCbfSubarray:
 
             # check the rest of the configured attributes of VCCs
             for r in vcc_receptors:
+                assert test_proxies.vcc[r].frequencyBand == band_index
+                assert test_proxies.vcc[r].subarrayMembership == sub_id
                 assert (
-                    test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[r]
-                    ].frequencyBand
-                    == band_index
-                )
-                assert (
-                    test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[r]
-                    ].subarrayMembership
-                    == sub_id
-                )
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].configID
+                    test_proxies.vcc[r].configID
                     == configuration["common"]["config_id"]
                 )
                 if "band_5_tuning" in configuration["common"]:
                     for idx, band in enumerate(
                         configuration["common"]["band_5_tuning"]
                     ):
-                        assert (
-                            test_proxies.vcc[
-                                test_proxies.receptor_to_vcc[r]
-                            ].band5Tuning[idx]
-                            == band
-                        )
+                        assert test_proxies.vcc[r].band5Tuning[idx] == band
                 if "frequency_band_offset_stream1" in configuration["cbf"]:
                     assert (
-                        test_proxies.vcc[
-                            test_proxies.receptor_to_vcc[r]
-                        ].frequencyBandOffsetStream1
+                        test_proxies.vcc[r].frequencyBandOffsetStream1
                         == configuration["cbf"][
                             "frequency_band_offset_stream1"
                         ]
                     )
                 if "frequency_band_offset_stream2" in configuration["cbf"]:
                     assert (
-                        test_proxies.vcc[
-                            test_proxies.receptor_to_vcc[r]
-                        ].frequencyBandOffsetStream2
+                        test_proxies.vcc[r].frequencyBandOffsetStream2
                         == configuration["cbf"][
                             "frequency_band_offset_stream2"
                         ]
                     )
                 if "rfi_flagging_mask" in configuration["cbf"]:
-                    assert test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[r]
-                    ].rfiFlaggingMask == str(
+                    assert test_proxies.vcc[r].rfiFlaggingMask == str(
                         configuration["cbf"]["rfi_flagging_mask"]
                     )
 
@@ -736,58 +706,48 @@ class TestCbfSubarray:
                 ):
                     for r in vcc_receptors:
                         assert (
-                            test_proxies.vccSw[
-                                test_proxies.receptor_to_vcc[r]
-                            ][idx + 1].tdcEnable
+                            test_proxies.vccSw[r][idx + 1].tdcEnable
                             == search_window["tdc_enable"]
                         )
                         # TODO implement VCC SW functionality and
                         # correct power states
                         if search_window["tdc_enable"]:
                             assert (
-                                test_proxies.vccSw[
-                                    test_proxies.receptor_to_vcc[r]
-                                ][idx + 1].State()
+                                test_proxies.vccSw[r][idx + 1].State()
                                 == DevState.DISABLE
                             )
                         else:
                             assert (
-                                test_proxies.vccSw[
-                                    test_proxies.receptor_to_vcc[r]
-                                ][idx + 1].State()
+                                test_proxies.vccSw[r][idx + 1].State()
                                 == DevState.DISABLE
                             )
                         assert (
-                            test_proxies.vccSw[
-                                test_proxies.receptor_to_vcc[r]
-                            ][idx + 1].searchWindowTuning
+                            test_proxies.vccSw[r][idx + 1].searchWindowTuning
                             == search_window["search_window_tuning"]
                         )
                         if "tdc_num_bits" in search_window:
                             assert (
-                                test_proxies.vccSw[
-                                    test_proxies.receptor_to_vcc[r]
-                                ][idx + 1].tdcNumBits
+                                test_proxies.vccSw[r][idx + 1].tdcNumBits
                                 == search_window["tdc_num_bits"]
                             )
                         if "tdc_period_before_epoch" in search_window:
                             assert (
-                                test_proxies.vccSw[
-                                    test_proxies.receptor_to_vcc[r]
-                                ][idx + 1].tdcPeriodBeforeEpoch
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodBeforeEpoch
                                 == search_window["tdc_period_before_epoch"]
                             )
                         if "tdc_period_after_epoch" in search_window:
                             assert (
-                                test_proxies.vccSw[
-                                    test_proxies.receptor_to_vcc[r]
-                                ][idx + 1].tdcPeriodAfterEpoch
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodAfterEpoch
                                 == search_window["tdc_period_after_epoch"]
                             )
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    self.receptor_utils.receptors[
+                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                         t["receptor_id"]
                                     ]
                                     == r
@@ -795,9 +755,9 @@ class TestCbfSubarray:
                                     tdcDestAddr = t["tdc_destination_address"]
                                     assert (
                                         list(
-                                            test_proxies.vccSw[
-                                                test_proxies.receptor_to_vcc[r]
-                                            ][idx + 1].tdcDestinationAddress
+                                            test_proxies.vccSw[r][
+                                                idx + 1
+                                            ].tdcDestinationAddress
                                         )
                                         == tdcDestAddr
                                     )
@@ -837,7 +797,9 @@ class TestCbfSubarray:
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
-                            self.receptor_utils.receptors[r]
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
                             for r in config_fsp_receptors_sorted
                         ]
                         assert all(
@@ -851,7 +813,9 @@ class TestCbfSubarray:
                         receptors_sorted = receptors
                         receptors_sorted.sort()
                         fsp_receptors_num = [
-                            self.receptor_utils.receptors[r]
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
                             for r in receptors_sorted
                         ]
                         assert all(
@@ -995,7 +959,7 @@ class TestCbfSubarray:
                         # TODO currently only one receptor supported
                         assert (
                             searchBeam["receptor_ids"][0][1]
-                            == self.receptor_utils.receptors[
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
                         )
@@ -1033,7 +997,7 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["PST-BF"][sub_id][
                                 fsp_id
                             ].receptors[0]
-                            == self.receptor_utils.receptors[
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                 beam["receptor_ids"][0]
                             ]
                         )
@@ -1164,10 +1128,7 @@ class TestCbfSubarray:
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1202,10 +1163,7 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1462,7 +1420,9 @@ class TestCbfSubarray:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        self.receptor_utils.receptors[receptor_id],
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                 input_delay_model = json.dumps(input_delay_model_obj)
 
@@ -1506,7 +1466,7 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights:
                 for receptor in weights["timing_beam_weights"]:
-                    rec_id = self.receptor_utils.receptors[
+                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
@@ -1607,8 +1567,10 @@ class TestCbfSubarray:
 
             vcc_ids = [None for _ in range(num_receptors)]
             for receptor_id, ii in zip(receptors, range(num_receptors)):
-                vcc_ids[ii] = test_proxies.receptor_to_vcc[
-                    self.receptor_utils.receptors[receptor_id]
+                vcc_ids[
+                    ii
+                ] = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    receptor_id
                 ]
 
             test_proxies.subarray[sub_id].AddReceptors(receptors)
@@ -1877,7 +1839,7 @@ class TestCbfSubarray:
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
 
-        print(f"{delay_model_all}")
+        print(f"delay_model_all: {delay_model_all}")
 
         # Get the DM Python object input to the DM test
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
@@ -1943,43 +1905,37 @@ class TestCbfSubarray:
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # Write this one delay_model JSON object to the TM emulator
-                logging.debug(
-                    f"Writing delay model to TM emulator: {input_delay_model}"
+                print(
+                    f"Writing delay model {i_dm} to TM emulator: {input_delay_model}"
                 )
                 test_proxies.tm.delayModel = input_delay_model
 
                 time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
-                vcc_receptors_num = []
-                for receptor in vcc_receptors:
-                    vcc_receptors_num.append(
-                        self.receptor_utils.receptors[receptor]
-                    )
-                for jj, i_rec in enumerate(vcc_receptors_num):
+                for jj, rec in enumerate(vcc_receptors):
                     # get the vcc device proxy (dp) corresponding to i_rec
-                    this_vcc = test_proxies.receptor_to_vcc[i_rec]
+                    this_vcc = (
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[rec]
+                    )
                     vcc_dp = test_proxies.vcc[this_vcc]
 
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
                     for entry in input_delay_model_obj["delay_details"]:
-                        if (
-                            self.receptor_utils.receptors[entry["receptor"]]
-                            == i_rec
-                        ):
+                        if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             # receptor as pair of str and int for comparison
                             this_input_delay_model_obj["receptor"] = [
                                 entry["receptor"],
-                                self.receptor_utils.receptors[
+                                test_proxies.receptor_utils.receptor_id_to_vcc_id[
                                     entry["receptor"]
                                 ],
                             ]
                             break
 
-                    logging.debug(f"vcc delay model: {vcc_dp.delayModel}")
+                    print(f"vcc delay model {this_vcc}: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc
@@ -2028,7 +1984,9 @@ class TestCbfSubarray:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
-                        self.receptor_utils.receptors[receptor_id],
+                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
@@ -2200,14 +2158,16 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["jones_matrix"]:
-                    rec_id = self.receptor_utils.receptors[
+                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     for frequency_slice in receptor["jones_matrix_details"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
-                            vcc_id = test_proxies.receptor_to_vcc[rec_id]
+                            vcc_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                receptor["receptor"]
+                            ]
                             fs_id = frequency_slice["fsid"]
                             try:
                                 assert (
@@ -2427,10 +2387,7 @@ class TestCbfSubarray:
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -2493,18 +2450,12 @@ class TestCbfSubarray:
                         == scan_id
                     )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].scanID
-                    == scan_id
-                )
+                assert test_proxies.vcc[r].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.SCANNING
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -2661,10 +2612,7 @@ class TestCbfSubarray:
                     == ObsState.READY
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.READY
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -2685,10 +2633,7 @@ class TestCbfSubarray:
                     == ObsState.ABORTED
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.ABORTED
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
@@ -2714,10 +2659,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             # ------------------- #
             # abort from SCANNING #
@@ -2770,10 +2712,7 @@ class TestCbfSubarray:
                     == ObsState.SCANNING
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.SCANNING
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -2794,10 +2733,7 @@ class TestCbfSubarray:
                     == ObsState.ABORTED
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.ABORTED
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
@@ -2818,10 +2754,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             # Clean up
             wait_time_s = 3
@@ -2933,10 +2866,7 @@ class TestCbfSubarray:
                     == ObsState.ABORTED
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.ABORTED
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
             # Restart: receptors should be empty
             test_proxies.subarray[sub_id].Restart()
@@ -2958,10 +2888,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             # ---------------- #
             # abort from READY #
@@ -2993,10 +2920,7 @@ class TestCbfSubarray:
                     == ObsState.READY
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.READY
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3017,10 +2941,7 @@ class TestCbfSubarray:
                     == ObsState.ABORTED
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.ABORTED
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
             # Restart
             test_proxies.subarray[sub_id].Restart()
@@ -3042,10 +2963,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             # ------------------- #
             # abort from SCANNING #
@@ -3093,10 +3011,7 @@ class TestCbfSubarray:
                     == ObsState.SCANNING
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.SCANNING
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3117,10 +3032,7 @@ class TestCbfSubarray:
                     == ObsState.ABORTED
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.ABORTED
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
             # Restart
             wait_time_s = 3
@@ -3143,10 +3055,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             test_proxies.off()
 
@@ -3276,10 +3185,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             test_proxies.off()
 
@@ -3388,10 +3294,7 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
 
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.off()

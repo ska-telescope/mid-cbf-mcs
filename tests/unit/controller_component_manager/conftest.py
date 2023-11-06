@@ -125,7 +125,6 @@ def controller_component_manager(
         component_power_mode_changed_callback=component_power_mode_changed_callback,
         component_fault_callback=component_fault_callback,
     )
-    component_manager._vcc_to_receptor = {1: 1, 2: 36, 3: 63, 4: 100}
     return component_manager
 
 

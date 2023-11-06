@@ -21,18 +21,20 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Tango Commands
 ------------------------------
 
-+---------+---------------+--------------------+--------------------------------------------------------+
-| Command | Parameters    | Return type        | Action                                                 |
-+=========+===============+====================+========================================================+
-| Off     | None          | (ResultCode, str)  | | Set power state to OFF for controller and            |
-|         |               |                    | | subordinate devices (subarrays, VCCs, FSPs)          |
-|         |               |                    | | Turn off power to all hardware                       |
-|         |               |                    | | See also :ref:`Off Sequence`                         |
-+---------+---------------+--------------------+--------------------------------------------------------+
-| Standby | None          | (ResultCode, str)  | None                                                   |
-+---------+---------------+--------------------+--------------------------------------------------------+
-| On      | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
-+---------+---------------+--------------------+--------------------------------------------------------+
++--------------+---------------+--------------------+--------------------------------------------------------+
+| Command      | Parameters    | Return type        | Action                                                 |
++==============+===============+====================+========================================================+
+| Off          | None          | (ResultCode, str)  | | Set power state to OFF for controller and            |
+|              |               |                    | | subordinate devices (subarrays, VCCs, FSPs)          |
+|              |               |                    | | Turn off power to all hardware                       |
+|              |               |                    | | See also :ref:`Off Sequence`                         |
++--------------+---------------+--------------------+--------------------------------------------------------+
+| InitSysParam | str           | (ResultCode, str)  | Initialize Dish ID to VCC ID mapping and k values      |
++--------------+---------------+--------------------+--------------------------------------------------------+
+| Standby      | None          | (ResultCode, str)  | None                                                   |
++--------------+---------------+--------------------+--------------------------------------------------------+
+| On           | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
++--------------+---------------+--------------------+--------------------------------------------------------+
 
 CbfSubarray Tango Commands
 ----------------------------

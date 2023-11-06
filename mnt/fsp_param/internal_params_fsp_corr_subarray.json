@@ -4,7 +4,7 @@
         "num_lsq_points": 10,
         "fo_fill_threshold": 3000,
         "fo_low_threshold": 512,
-        "set_input_sample_rate": 220000000,
+        "set_input_sample_rate": 220001100,
         "set_output_sample_rate": 220200960
     },
     "fine_channelizer":{
