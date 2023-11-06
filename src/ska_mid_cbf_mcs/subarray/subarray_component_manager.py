@@ -1506,7 +1506,10 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
         for receptor_id in self._receptors:
-            if receptor_id in self._receptor_utils.receptor_id_to_vcc_id.keys():
+            if (
+                receptor_id
+                in self._receptor_utils.receptor_id_to_vcc_id.keys()
+            ):
                 vccID = self._receptor_utils.receptor_id_to_vcc_id[receptor_id]
                 vccProxy = self._proxies_vcc[vccID - 1]
                 freq_offset_k = self._receptor_utils.receptor_id_to_k[
