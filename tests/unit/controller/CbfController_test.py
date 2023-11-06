@@ -23,7 +23,8 @@ from tango import DevState
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.dirname(os.path.abspath(__file__))  # Path
+json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # SKA imports
 
@@ -60,7 +61,9 @@ class TestCbfController:
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
+    @pytest.mark.parametrize(
+        "command", ["On", "Off", "Standby", "InitSysParam"]
+    )
     def test_Commands(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
@@ -89,6 +92,11 @@ class TestCbfController:
         elif command == "Standby":
             expected_state = DevState.STANDBY
             result = device_under_test.Standby()
+        elif command == "InitSysParam":
+            expected_state = device_under_test.State()  # no change expected
+            with open(json_file_path + "sys_param_4_boards.json") as f:
+                sp = f.read()
+            result = device_under_test.InitSysParam(sp)
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK

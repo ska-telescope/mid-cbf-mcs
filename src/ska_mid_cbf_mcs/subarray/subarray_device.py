@@ -154,11 +154,11 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Frequency offset (k) of all 197 receptors as an array of ints.",
     )
 
-    frequencyOffsetDeltaF = attribute(
-        dtype="int",
+    sysParam = attribute(
+        dtype="str",
         access=AttrWriteType.READ_WRITE,
-        label="Frequency offset (delta f)",
-        doc="Frequency offset (delta f)",
+        label="sys_param",
+        doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
     )
 
     simulationMode = attribute(
@@ -429,17 +429,26 @@ class CbfSubarray(CspSubElementSubarray):
         self.component_manager.frequency_offset_k = value
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
-    def read_frequencyOffsetDeltaF(self: CbfSubarray) -> int:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f)"""
-        return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
+    def read_sysParam(self: CbfSubarray) -> str:
+        # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
+        """
+        Return the sys param string in json format
 
-    def write_frequencyOffsetDeltaF(self: CbfSubarray, value: int) -> None:
-        # PROTECTED REGION ID(CbfSubarray.frequencyOffsetDeltaF_write) ENABLED START #
-        """Set the frequencyOffsetDeltaF attribute"""
-        self.component_manager.frequency_offset_delta_f = value
-        # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetDeltaF_write
+        :return: the sys param string in json format
+        :rtype: str
+        """
+        return self.component_manager._sys_param_str
+        # PROTECTED REGION END #    //  CbfSubarray.receptors_read
+
+    def write_sysParam(self: CbfSubarray, value: str) -> None:
+        # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        """
+        Set the sys param string in json format
+
+        :param value: the sys param string in json format
+        """
+        self.component_manager.update_sys_param(value)
+        # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
     # --------
     # Commands

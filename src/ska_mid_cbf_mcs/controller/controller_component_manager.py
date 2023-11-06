@@ -28,6 +28,7 @@ from ska_tango_base.control_model import (
 )
 
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -75,7 +76,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param talon_board_fqdns_all: FQDNS of all the Talon board devices
         :param power_switch_fqdns_all: FQDNS of all the power switch devices
         :param lru_timeout: Timeout in seconds for Talon LRU device proxies
-        :talondx_component_manager: component manager for the Talon LRU
+        :param talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
         :param hw_config_path: path to the directory containing the hardware
@@ -117,7 +118,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._get_max_capabilities = get_num_capabilities
 
-        self._vcc_to_receptor = {}
+        self._sys_param = ""
+        self._receptor_utils = None
 
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
@@ -128,10 +130,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._max_capabilities = ""
 
         self._proxies = {}
-
-        # Initialize attribute values
-        self.frequency_offset_k = [0] * const.DEFAULT_COUNT_VCC
-        self.frequency_offset_delta_f = [0] * const.DEFAULT_COUNT_VCC
 
         super().__init__(
             logger=logger,
@@ -324,10 +322,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
-
-        # set the default frequency offset k and deltaF in the subarrays
-        self._update_freq_offset_k(self.frequency_offset_k)
-        self._update_freq_offset_deltaF(self.frequency_offset_delta_f)
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
@@ -751,29 +745,92 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-    def _update_freq_offset_k(
-        self: ControllerComponentManager, freq_offset_k: List[int]
-    ) -> None:
-        # store the attribute
-        self.frequency_offset_k = freq_offset_k
+    def init_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Validate and save the Dish ID - VCC ID mapping and k values.
 
-        # write the frequency offset k to each of the subarrays
-        for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_attribute(
-                "frequencyOffsetK", freq_offset_k
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self._logger.debug(f"Received sys params {params}")
+
+        if not self._check_sys_param_schemas(params):
+            return (
+                ResultCode.FAILED,
+                "Failed to validate against json schema",
             )
 
-    def _update_freq_offset_deltaF(
-        self: ControllerComponentManager, freq_offset_deltaF: List[int]
-    ) -> None:
-        # store the attribute
-        self.frequency_offset_delta_f = freq_offset_deltaF
+        self._logger.info("Validated sys params against json schemas")
 
-        # TODO: deltaF is a single value of 1800Hz, and should not be a list of values for each receptor
-        for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_attribute(
-                "frequencyOffsetDeltaF", freq_offset_deltaF[0]
+        sys_param = json.loads(params)
+
+        # store the attribute
+        try:
+            self._receptor_utils = ReceptorUtils(sys_param)
+        except ValueError as e:
+            self._logger.error(e)
+            return (ResultCode.FAILED, "Invalid sys params")
+
+        self._sys_param = params
+
+        # send sys params to the subarrays
+        try:
+            self._update_sys_param(params)
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (
+                ResultCode.FAILED,
+                "Failed to update subarrays with sys params",
             )
+
+        self._logger.info("Updated subarrays with sys params")
+
+        return (
+            ResultCode.OK,
+            "CbfController InitSysParam command completed OK",
+        )
+
+    def _check_sys_param_schemas(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> bool:
+        # TODO
+        return True
+
+    def _update_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> None:
+        # write the sys param to each of the subarrays
+        for fqdn in self._fqdn_subarray:
+            self._proxies[fqdn].write_attribute("sysParam", params)
+
+        # set VCC values
+        for fqdn in self._fqdn_vcc:
+            proxy = self._proxies[fqdn]
+            try:
+                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                rec_id = self._receptor_utils.vcc_id_to_receptor_id[vcc_id]
+                rec_id_int = self._receptor_utils.receptor_id_to_vcc_id[rec_id]
+                self._logger.info(
+                    f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
+                )
+                proxy.receptorID = rec_id_int
+                proxy.frequencyOffsetK = self._receptor_utils.receptor_id_to_k[
+                    rec_id
+                ]
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failure in connection to {fqdn}; {item.reason}"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
 
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
         try:

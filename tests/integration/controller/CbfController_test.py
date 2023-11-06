@@ -9,6 +9,7 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
+import os
 import socket
 
 import pytest
@@ -17,6 +18,7 @@ import pytest
 from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
 )
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from tango import DevState
 
@@ -24,6 +26,8 @@ from tango import DevState
 
 
 # Local imports
+
+json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 @pytest.mark.usefixtures("test_proxies")
@@ -82,6 +86,13 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
+        json_file_path = (
+            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        )
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        test_proxies.controller.InitSysParam(sp)
+
         # send the On command
         test_proxies.controller.On()
 
@@ -113,6 +124,26 @@ class TestCbfController:
                 sleep_time_s,
             )
             assert test_proxies.subarray[i].State() == DevState.ON
+
+    def test_InitSysParam_Condition(self, test_proxies):
+        """
+        Test that InitSysParam can only be used when
+        the controller op state is OFF
+        """
+        state = test_proxies.controller.State()
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        result = test_proxies.controller.InitSysParam(sp)
+        state_after = test_proxies.controller.State()
+
+        # InitSysParam should not change state
+        assert state == state_after
+
+        # InitSysParam can only be called when controller is in OFF state
+        if state != DevState.OFF:
+            assert result[0] == ResultCode.FAILED
+        else:
+            assert result[0] == ResultCode.OK
 
     def test_Off(self, test_proxies):
         """

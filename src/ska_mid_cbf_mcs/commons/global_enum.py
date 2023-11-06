@@ -21,6 +21,7 @@ class Const:
         self.NUM_CHANNEL_GROUPS = 20
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
+        self.DELTA_F = 1800  # Hz
 
         # TODO - remove the consts in MHZ/GHz eventually
         self.FREQUENCY_SLICE_BW_HZ = 200 * 10**6
@@ -114,7 +115,8 @@ NOTES:
 1) calculate the dish_sample_rate [Hz] as:
 dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
 
-where k (receptor dependent) and deltaF [Hz] are obtained from LMC via the CbfControl device.
+where k (receptor dependent) is obtained from LMC via the CbfControl device.
+deltaF is fixed at 1800Hz
 
 2) calculate the input sample rate to the FSP, fs_sample_rate [Hz] as:
 fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
