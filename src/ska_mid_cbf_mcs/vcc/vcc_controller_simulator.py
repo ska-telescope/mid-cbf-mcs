@@ -57,21 +57,9 @@ class VccControllerSimulator:
 
         self._state = tango.DevState.INIT
 
-        self._sample_rate = 0
-        self._samples_per_frame = 0
         self._frequency_band = 0
 
     # Properties that match the Tango attributes in the band devices
-    @property
-    def sample_rate(self) -> List[float]:
-        """Return the sample rate attribute."""
-        return self._sample_rate
-
-    @property
-    def samples_per_frame(self) -> List[float]:
-        """Return the samples per frame attribute."""
-        return self._samples_per_frame
-
     @property
     def frequencyBand(self) -> int:
         """Return the frequency band attribute."""
@@ -81,26 +69,6 @@ class VccControllerSimulator:
     def State(self: VccControllerSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state
-
-    def InitCommonParameters(
-        self: VccControllerSimulator, json_str: str
-    ) -> None:
-        """
-        Initialize the common/constant parameters of this VCC device. These
-        parameters hold the same value across all bands for one receptor, and
-        do not change during scan configuration.
-
-        :param json_str: JSON-formatted string containing the parameters
-        """
-        params = json.loads(json_str)
-        self._sample_rate = params["dish_sample_rate"]
-        self._samples_per_frame = params["samples_per_frame"]
-
-        # Initialize the band devices
-        for band_device in self._band_devices:
-            band_device.InitCommonParameters(json_str)
-
-        self._state = tango.DevState.ON
 
     def ConfigureBand(
         self: VccControllerSimulator, frequency_band: int

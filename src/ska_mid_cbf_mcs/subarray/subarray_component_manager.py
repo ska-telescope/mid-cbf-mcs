@@ -1505,20 +1505,24 @@ class CbfSubarrayComponentManager(
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
+        # Prepare args for ConfigureBand
         for receptor_id in self._receptors:
             if (
                 receptor_id
                 in self._receptor_utils.receptor_id_to_vcc_id.keys()
             ):
+                # Fetch K-value based on receptor_id
                 vccID = self._receptor_utils.receptor_id_to_vcc_id[receptor_id]
                 vccProxy = self._proxies_vcc[vccID - 1]
                 freq_offset_k = self._receptor_utils.receptor_id_to_k[
                     receptor_id
                 ]
+                # Calculate dish sample rate
                 dish_sample_rate = self._calculate_dish_sample_rate(
                     freq_band_dict()[common_configuration["frequency_band"]],
                     freq_offset_k,
                 )
+                # Fetch samples per frame for this freq band
                 samples_per_frame = freq_band_dict()[
                     common_configuration["frequency_band"]
                 ]["num_samples_per_frame"]

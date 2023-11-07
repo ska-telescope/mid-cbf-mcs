@@ -643,7 +643,7 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.configure_band(argin)
 
-    @command(dtype_in="DevString", doc_in="Frequency band string.")
+    @command(dtype_in="DevString", doc_in="Band config string.")
     @DebugIt()
     def ConfigureBand(self, band_config: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
