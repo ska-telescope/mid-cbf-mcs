@@ -2376,11 +2376,9 @@ class CbfSubarrayComponentManager(
         )
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)
-        fs_sample_rate = (
+        fs_sample_rate = int(
             dish_sample_rate * vcc_oversampling_factor / total_num_fs
         )
-        # convert fs_sample_rate to MHz
-        fs_sample_rate = fs_sample_rate / mhz_to_hz
         fs_sample_rate_for_band = {
             "receptor_id": receptor_int,
             "fs_sample_rate": fs_sample_rate,
