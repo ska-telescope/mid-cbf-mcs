@@ -1,4 +1,4 @@
-name: powerswitch
+name: ds-powerswitch
 function: power-switch
 domain: mid-csp-cbf
 command: "PowerSwitch"
