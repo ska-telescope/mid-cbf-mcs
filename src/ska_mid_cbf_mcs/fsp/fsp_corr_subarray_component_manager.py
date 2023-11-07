@@ -96,7 +96,6 @@ class FspCorrSubarrayComponentManager(
         ]
         self._vis_destination_address = {
             "outputHost": [],
-            "outputMac": [],
             "outputPort": [],
         }
         self._fsp_channel_offset = 0
@@ -717,7 +716,6 @@ class FspCorrSubarrayComponentManager(
         ]
         self._vis_destination_address = {
             "outputHost": [],
-            "outputMac": [],
             "outputPort": [],
         }
         self._fsp_channel_offset = 0

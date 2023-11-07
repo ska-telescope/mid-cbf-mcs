@@ -1282,7 +1282,7 @@ class CbfSubarrayComponentManager(
                             self._logger.error(msg)
                             return (False, msg)
 
-                    # TODO: validate destination addresses: outputHost, outputMac, outputPort
+                    # TODO: validate destination addresses: outputHost, outputPort
 
                 # PSS-BF #
 
