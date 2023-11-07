@@ -548,12 +548,14 @@ class TalonDxComponentManager:
             hps_master.shutdown(3)
         except tango.DevFailed as df:
             for item in df.args:
-                self.logger.error(
+                self.logger.warning(
                     f"Exception while sending shutdown command"
                     f" to {hps_master_fqdn} device: {str(item.reason)}"
                 )
             # TODO: determine behaviour here; the shutdown command will
             # inevitably throw an exception, as the device is shut off
+            # there may be a more elegant way to handle the expected shutdown
+            # for CIP-1673 just logging a warning here
 
         # wait for linux shutdown
         time.sleep(const.DEFAULT_TIMEOUT)

@@ -448,219 +448,48 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
-            (result_code, message) = (ResultCode.OK, [])
             # Check if CBF Controller is on
             if self._on:
+                (result_code, message) = (ResultCode.OK, [])
+
                 # reset subarray observing state to EMPTY
                 for subarray in [
                     self._proxies[fqdn] for fqdn in self._fqdn_subarray
                 ]:
-                    try:
-                        # first check if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
-                        if subarray.obsState in [
-                            ObsState.RESOURCING,
-                            ObsState.RESTARTING,
-                        ]:
-                            try:
-                                poll(
-                                    lambda: subarray.obsState
-                                    not in [
-                                        ObsState.RESOURCING,
-                                        ObsState.RESTARTING,
-                                    ],
-                                    timeout=const.DEFAULT_TIMEOUT,
-                                    step=0.5,
-                                )
-                            except TimeoutError:
-                                # raise exception if timed out waiting to exit RESOURCING/RESTARTING
-                                log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                                self._logger.error(log_msg)
-                                message.append(log_msg)
-                                raise TimeoutError()
-
-                        # if subarray not in EMPTY then we need to ABORT and RESTART
-                        if subarray.obsState != ObsState.EMPTY:
-                            # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
-                            if subarray.obsState in [
-                                ObsState.ABORTING,
-                                ObsState.RESETTING,
-                            ]:
-                                try:
-                                    poll(
-                                        lambda: subarray.obsState
-                                        not in [
-                                            ObsState.ABORTING,
-                                            ObsState.RESETTING,
-                                        ],
-                                        timeout=const.DEFAULT_TIMEOUT,
-                                        step=0.5,
-                                    )
-                                except TimeoutError:
-                                    # raise exception if timed out waiting to exit ABORTING/RESETTING
-                                    log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                                    self._logger.error(log_msg)
-                                    message.append(log_msg)
-                                    raise TimeoutError()
-
-                            # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
-                            if subarray.obsState not in [
-                                ObsState.FAULT,
-                                ObsState.ABORTED,
-                            ]:
-                                subarray.Abort()
-                                if subarray.obsState != ObsState.ABORTED:
-                                    try:
-                                        poll(
-                                            lambda: subarray.obsState
-                                            == ObsState.ABORTED,
-                                            timeout=const.DEFAULT_TIMEOUT,
-                                            step=0.5,
-                                        )
-                                    except TimeoutError:
-                                        # raise exception if timed out waiting to exit ABORTING
-                                        log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
-                                        self._logger.error(log_msg)
-                                        message.append(log_msg)
-                                        raise TimeoutError()
-
-                            # finally, subarray may be restarted to EMPTY
-                            subarray.Restart()
-                            if subarray.obsState != ObsState.EMPTY:
-                                try:
-                                    poll(
-                                        lambda: subarray.obsState
-                                        == ObsState.EMPTY,
-                                        timeout=const.DEFAULT_TIMEOUT,
-                                        step=0.5,
-                                    )
-                                except TimeoutError:
-                                    # raise exception if timed out waiting to exit RESTARTING
-                                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
-                                    self._logger.error(log_msg)
-                                    message.append(log_msg)
-                                    raise TimeoutError()
-                    except TimeoutError:
-                        result_code = ResultCode.FAILED
-                    except tango.DevFailed as df:
-                        for item in df.args:
-                            log_msg = f"Failed to send {subarray} to ObsState.EMPTY; {item.reason}"
-                            self._logger.error(log_msg)
-                            message.append(log_msg)
+                    (subarray_empty, log_msg) = self._subarray_to_empty(
+                        subarray
+                    )
+                    if not subarray_empty:
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
                         result_code = ResultCode.FAILED
 
-                try:
-                    self._group_subarray.command_inout("Off")
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = f"Failed to turn off subarray group proxy; {item.reason}"
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
-                    result_code = ResultCode.FAILED
-
-                try:
-                    self._group_vcc.command_inout("Off")
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
-                    result_code = ResultCode.FAILED
-
-                try:
-                    self._group_fsp.command_inout("Off")
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
+                # turn off subelements
+                (subelement_off, log_msg) = self._turn_off_subelements()
+                message.extend(log_msg)
+                if not subelement_off:
                     result_code = ResultCode.FAILED
 
                 # HPS master shutdown
                 result = self._talondx_component_manager.shutdown()
                 if result == ResultCode.FAILED:
-                    message = "HPS Master shutdown failed."
-                    return (ResultCode.FAILED, message)
-
-                # turn off LRUs
-                if (
-                    self._talondx_component_manager.simulation_mode
-                    == SimulationMode.FALSE
-                ):
-                    if len(self._fqdn_talon_lru) == 0:
-                        with open(
-                            os.path.join(
-                                os.getcwd(),
-                                self._talondx_config_path,
-                                "talondx-config.json",
-                            )
-                        ) as f:
-                            talondx_config_json = json.load(f)
-
-                        for config_command in talondx_config_json[
-                            "config_commands"
-                        ]:
-                            target = config_command["target"]
-                            for lru_id, lru_config in self._hw_config[
-                                "talon_lru"
-                            ].items():
-                                talon1 = lru_config["TalonDxBoard1"]
-                                talon2 = lru_config["TalonDxBoard2"]
-                                if target in [talon1, talon2]:
-                                    self._fqdn_talon_lru.append(
-                                        f"mid_csp_cbf/talon_lru/{lru_id}"
-                                    )
-
-                        # TODO: handle subscribed events for missing LRUs
-                else:
-                    # use a hard-coded example fqdn talon lru for simulation mode
-                    self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+                    # if HPS master shutdown failed, continue with attempting to
+                    # shut off power outlets via LRU device
+                    log_msg = "HPS Master shutdown failed."
+                    self._logger.warning(log_msg)
+                    message.append(log_msg)
 
                 # Turn off all the LRUs currently in use
-                lru_off_status, log_msg = self._turn_off_lrus()
-                if not lru_off_status:
-                    return (ResultCode.FAILED, log_msg)
+                (lru_off, log_msg) = self._turn_off_lrus()
+                if not lru_off:
+                    message.append(log_msg)
+                    result_code = ResultCode.FAILED
 
                 # check final device states
-                op_state_error_list = []
-                obs_state_error_list = []
-                for fqdn, proxy in self._proxies.items():
-                    self._logger.debug(
-                        f"Checking final state of device {fqdn}"
-                    )
-                    # power switch device state is always ON as long as it is
-                    # communicating and monitoring the PDU; does not implement
-                    # On/Off commands, rather TurnOn/OffOutlet commands to
-                    # target specific outlets
-                    if fqdn not in self._fqdn_power_switch:
-                        try:
-                            # TODO CIP-1899 The cbfcontroller is sometimes
-                            # unable to read the State() of the talon_lru
-                            # device server due to an error trying to
-                            # acquire the serialization monitor. As a temporary
-                            # workaround, the cbfcontroller will log these
-                            # errors if they occur but continue polling.
-                            poll(
-                                lambda: proxy.State() == tango.DevState.OFF,
-                                ignore_exceptions=(tango.DevFailed),
-                                log_error=logging.WARNING,
-                                timeout=const.DEFAULT_TIMEOUT,
-                                step=0.5,
-                            )
-                        # If the poll timed out while waiting
-                        # for proxy.State() == tango.DevState.OFF,
-                        # it throws a TimeoutError
-                        except TimeoutError:
-                            op_state_error_list.append([fqdn, proxy.State()])
-
-                    if fqdn in self._fqdn_subarray:
-                        obs_state = proxy.obsState
-                        if obs_state != ObsState.EMPTY:
-                            obs_state_error_list.append((fqdn, obs_state))
-
-                    if fqdn in self._fqdn_vcc:
-                        obs_state = proxy.obsState
-                        if obs_state != ObsState.IDLE:
-                            obs_state_error_list.append((fqdn, obs_state))
+                (
+                    op_state_error_list,
+                    obs_state_error_list,
+                ) = self._check_subsystem_off()
 
                 if len(op_state_error_list) > 0:
                     for fqdn, state in op_state_error_list:
@@ -679,7 +508,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._on = False
                 if result_code == ResultCode.OK:
                     message.append("CbfController Off command completed OK")
-                return (result_code, " ;".join(message))
+                return (result_code, "; ".join(message))
 
             # TODO: CIP-1814
             else:
@@ -856,6 +685,38 @@ class ControllerComponentManager(CbfComponentManager):
     def _turn_off_lrus(
         self: ControllerComponentManager,
     ) -> (bool, str):
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.FALSE
+        ):
+            if len(self._fqdn_talon_lru) == 0:
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
+
+                for config_command in talondx_config_json["config_commands"]:
+                    target = config_command["target"]
+                    for lru_id, lru_config in self._hw_config[
+                        "talon_lru"
+                    ].items():
+                        talon1 = lru_config["TalonDxBoard1"]
+                        talon2 = lru_config["TalonDxBoard2"]
+                        if target in [talon1, talon2]:
+                            self._fqdn_talon_lru.append(
+                                f"mid_csp_cbf/talon_lru/{lru_id}"
+                            )
+
+                # TODO: handle subscribed events for missing LRUs
+        else:
+            # use a hard-coded example fqdn talon lru for simulation mode
+            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+
+        # turn off LRUs
         results = [
             self._lru_off(
                 self._proxies[fqdn],
@@ -871,3 +732,211 @@ class ControllerComponentManager(CbfComponentManager):
                 failed_lrus.append(fqdn)
                 out_status = False
         return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
+
+    def _subarray_to_empty(
+        self: ControllerComponentManager, subarray: CbfDeviceProxy
+    ) -> (bool, str):
+        """
+        Restart subarray observing state model to ObsState.EMPTY
+        """
+        # if subarray is READY go to IDLE
+        if subarray.obsState == ObsState.READY:
+            subarray.GoToIdle()
+            if subarray.obsState != ObsState.IDLE:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.IDLE,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutError:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                return (False, log_msg)
+
+        # if subarray is IDLE go to EMPTY by removing all receptors
+        if subarray.obsState == ObsState.IDLE:
+            subarray.RemoveAllReceptors()
+            if subarray.obsState != ObsState.EMPTY:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.EMPTY,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutError:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                return (False, log_msg)
+
+        # wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
+        if subarray.obsState in [
+            ObsState.RESOURCING,
+            ObsState.RESTARTING,
+        ]:
+            try:
+                poll(
+                    lambda: subarray.obsState
+                    not in [
+                        ObsState.RESOURCING,
+                        ObsState.RESTARTING,
+                    ],
+                    timeout=const.DEFAULT_TIMEOUT,
+                    step=0.5,
+                )
+            except TimeoutError:
+                # raise exception if timed out waiting to exit RESOURCING/RESTARTING
+                log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
+                self._logger.error(log_msg)
+                return (False, log_msg)
+
+        # if subarray not in EMPTY then we need to ABORT and RESTART
+        if subarray.obsState != ObsState.EMPTY:
+            # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
+            if subarray.obsState in [
+                ObsState.ABORTING,
+                ObsState.RESETTING,
+            ]:
+                try:
+                    poll(
+                        lambda: subarray.obsState
+                        not in [
+                            ObsState.ABORTING,
+                            ObsState.RESETTING,
+                        ],
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutError:
+                    # raise exception if timed out waiting to exit ABORTING/RESETTING
+                    log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
+                    self._logger.error(log_msg)
+                return (False, log_msg)
+
+            # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
+            if subarray.obsState not in [
+                ObsState.FAULT,
+                ObsState.ABORTED,
+            ]:
+                subarray.Abort()
+                if subarray.obsState != ObsState.ABORTED:
+                    try:
+                        poll(
+                            lambda: subarray.obsState == ObsState.ABORTED,
+                            timeout=const.DEFAULT_TIMEOUT,
+                            step=0.5,
+                        )
+                    except TimeoutError:
+                        # raise exception if timed out waiting to exit ABORTING
+                        log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
+                        self._logger.error(log_msg)
+                return (False, log_msg)
+
+            # finally, subarray may be restarted to EMPTY
+            subarray.Restart()
+            if subarray.obsState != ObsState.EMPTY:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.EMPTY,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutError:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                return (False, log_msg)
+
+        return (
+            True,
+            f"Subarray {subarray} succesfully set to ObsState.EMPTY; subarray.obsState = {subarray.obsState}",
+        )
+
+    def _turn_off_subelements(
+        self: ControllerComponentManager,
+    ) -> (bool, List[str]):
+        result = True
+        message = []
+        try:
+            self._group_subarray.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = (
+                    f"Failed to turn off subarray group proxy; {item.reason}"
+                )
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        try:
+            self._group_vcc.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        try:
+            self._group_fsp.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        if result:
+            message.append(
+                "Successfully issued off command to all subelements."
+            )
+        return (result, message)
+
+    def _check_subelements_off(
+        self: ControllerComponentManager,
+    ) -> (List[str], List[str]):
+        """
+        Verify that the subelements are in DevState.OFF, ObsState.EMPTY/IDLE
+        """
+        op_state_error_list = []
+        obs_state_error_list = []
+        for fqdn, proxy in self._proxies.items():
+            self._logger.debug(f"Checking final state of device {fqdn}")
+            # power switch device state is always ON as long as it is
+            # communicating and monitoring the PDU; does not implement
+            # On/Off commands, rather TurnOn/OffOutlet commands to
+            # target specific outlets
+            if fqdn not in self._fqdn_power_switch:
+                try:
+                    # TODO CIP-1899 The cbfcontroller is sometimes
+                    # unable to read the State() of the talon_lru
+                    # device server due to an error trying to
+                    # acquire the serialization monitor. As a temporary
+                    # workaround, the cbfcontroller will log these
+                    # errors if they occur but continue polling.
+                    poll(
+                        lambda: proxy.State() == tango.DevState.OFF,
+                        ignore_exceptions=(tango.DevFailed),
+                        log_error=logging.WARNING,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                # If the poll timed out while waiting
+                # for proxy.State() == tango.DevState.OFF,
+                # it throws a TimeoutError
+                except TimeoutError:
+                    op_state_error_list.append([fqdn, proxy.State()])
+
+            if fqdn in self._fqdn_subarray:
+                obs_state = proxy.obsState
+                if obs_state != ObsState.EMPTY:
+                    obs_state_error_list.append((fqdn, obs_state))
+
+            if fqdn in self._fqdn_vcc:
+                obs_state = proxy.obsState
+                if obs_state != ObsState.IDLE:
+                    obs_state_error_list.append((fqdn, obs_state))
+
+        return (op_state_error_list, obs_state_error_list)

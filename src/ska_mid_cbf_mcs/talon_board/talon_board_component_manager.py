@@ -149,6 +149,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.stop_communicating"
         )
         super().stop_communicating()
+        # update component power mode to unknown when monitoring communications
+        # to the component (talon board here) are halted
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
