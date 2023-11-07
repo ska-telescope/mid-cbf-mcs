@@ -489,7 +489,7 @@ class ControllerComponentManager(CbfComponentManager):
                 (
                     op_state_error_list,
                     obs_state_error_list,
-                ) = self._check_subsystem_off()
+                ) = self._check_subelements_off()
 
                 if len(op_state_error_list) > 0:
                     for fqdn, state in op_state_error_list:
