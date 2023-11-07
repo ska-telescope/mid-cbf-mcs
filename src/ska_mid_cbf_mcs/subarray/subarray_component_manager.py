@@ -1312,6 +1312,7 @@ class CbfSubarrayComponentManager(
                                 searchBeamID = (
                                     fsp_pss_subarray_proxy.searchBeamID
                                 )
+                                fspID = fsp_pss_subarray_proxy.FspID
                                 if searchBeamID is None:
                                     pass
                                 else:
@@ -1325,6 +1326,15 @@ class CbfSubarrayComponentManager(
                                             fsp_pss_subarray_proxy.obsState
                                             == ObsState.IDLE
                                         ):
+                                            pass
+                                        elif (
+                                            fsp_pss_subarray_proxy.obsState
+                                            == ObsState.READY
+                                            and fspID == fsp["fsp_id"]
+                                        ):
+                                            self._logger.info(
+                                                f"the searchBeamID {searchBeam['search_beam_id']} is already being used on this fspSubarray."
+                                            )
                                             pass
                                         else:
                                             msg = (
@@ -1415,6 +1425,15 @@ class CbfSubarrayComponentManager(
                                             fsp_pst_subarray_proxy.obsState
                                             == ObsState.IDLE
                                         ):
+                                            pass
+                                        elif (
+                                            fsp_pss_subarray_proxy.obsState
+                                            == ObsState.READY
+                                            and fspID == fsp["fsp_id"]
+                                        ):
+                                            self._logger.info(
+                                                f"the timingBeamID {timingBeam['timing_beam_id']} is already being used on this fspSubarray."
+                                            )
                                             pass
                                         else:
                                             msg = (
