@@ -3420,7 +3420,10 @@ class TestCbfSubarray:
             )
 
             # check that the subarray got a new name
-            assert test_proxies.subarray[sub_id].subarray_name == new_subarray_name
+            assert (
+                test_proxies.subarray[sub_id].subarray_name
+                == new_subarray_name
+            )
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for r in vcc_receptors:
