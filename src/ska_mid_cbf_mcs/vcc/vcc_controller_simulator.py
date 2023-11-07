@@ -16,9 +16,6 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import json
-from typing import List
-
 import tango
 
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
