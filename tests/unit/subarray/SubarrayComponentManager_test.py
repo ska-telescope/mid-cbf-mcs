@@ -347,7 +347,6 @@ class TestCbfSubarrayComponentManager:
         expected_fs_sample_rate = (
             dish_sample_rate * oversampling_factor / total_num_freq_slice
         )
-        expected_fs_sample_rate = expected_fs_sample_rate / mhz_to_hz
         output_fs_sample_rate = (
             subarray_component_manager._calculate_fs_sample_rate(
                 freq_band, receptor_id

@@ -245,10 +245,6 @@ class TestFspCorrSubarray:
             == configuration["output_host"]
         )
         assert (
-            list(vis_destination_addr["outputMac"])
-            == configuration["output_mac"]
-        )
-        assert (
             list(vis_destination_addr["outputPort"])
             == configuration["output_port"]
         )

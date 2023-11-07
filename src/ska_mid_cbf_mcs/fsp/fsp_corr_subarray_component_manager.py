@@ -580,15 +580,6 @@ class FspCorrSubarrayComponentManager(
                 "outputHost"
             ] = const.DEFAULT_OUTPUT_HOST
 
-        if "output_mac" in configuration:
-            self._vis_destination_address["outputMac"] = configuration[
-                "output_mac"
-            ]
-        elif self._vis_destination_address["outputMac"] == []:
-            self._vis_destination_address[
-                "outputMac"
-            ] = const.DEFAULT_OUTPUT_MAC
-
         if "output_port" in configuration:
             self._vis_destination_address["outputPort"] = configuration[
                 "output_port"
