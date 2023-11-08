@@ -20,6 +20,7 @@ import tango
 import yaml
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_telmodel.csp.schema import get_csp_initsysparams_schema
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -609,7 +610,16 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         params: str,
     ) -> bool:
-        # TODO
+        # Validate sys_params against the telescope model
+        sys_params_schema = get_csp_initsysparams_schema(
+            version=params["interface"], strict=True
+        )
+        try:
+            sys_params_schema.validate(params)
+            self._logger.info("sys_params are valid!")
+        except Exception as e:
+            msg = f"sys_params validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            return (False, msg)
         return True
 
     def _update_sys_param(
