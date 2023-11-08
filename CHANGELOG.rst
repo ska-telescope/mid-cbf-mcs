@@ -10,8 +10,12 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.11.8
+*****
+* Created defaults for VCC internal gains values
+
 0.11.7
-******
+*****
 * Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame.
 
 0.11.6
@@ -22,7 +26,7 @@ Development
 *****
 
 0.11.4-0.11.2
-********
+*****
 * Changed scan_id from string to integer
 
 0.11.1
