@@ -116,7 +116,12 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        device_under_test.ConfigureBand(configuration["frequency_band"])
+        band_configuration = {
+            "frequency_band": configuration["frequency_band"],
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
+        }
+        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
         device_under_test.ConfigureScan(json_str)
         assert device_under_test.obsState == ObsState.READY
@@ -238,7 +243,12 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        device_under_test.ConfigureBand(configuration["frequency_band"])
+        band_configuration = {
+            "frequency_band": configuration["frequency_band"],
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
+        }
+        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
         (result_code, _) = device_under_test.ConfigureScan(json_str)
         time.sleep(CONST_WAIT_TIME)
