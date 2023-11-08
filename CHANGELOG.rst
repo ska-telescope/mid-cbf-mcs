@@ -10,6 +10,14 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.11.6
+********
+* Increase Artifacts PVC size to 1Gi (from 250Mi)
+
+0.11.1
+******
+* Fixed subarray GoToIdle to issue GoToIdle to VCC and FSP devices
+
 0.10.17
 ********
 * Increased hps master timeout to support DDR calibration health check
@@ -19,7 +27,3 @@ Development
 0.10.18
 ********
 * Changed PDU config for LRU1 and LRU2
-
-0.11.6
-********
-* Increase Artifacts PVC size to 1Gi (from 250Mi)
