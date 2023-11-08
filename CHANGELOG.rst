@@ -35,9 +35,20 @@ Development
 
 0.11.0
 *****
+* Added binderhub support
+* Added tango operator support
+* Changed files for ST-1771
+  * Updated .make directory
+  * Switched from requirements to poetry
+  * Updated CI file to add new jobs for dev environment deployment
+  * Charts were updated including templates
+* Removed gemnasium scan job
+* Removed legacy jobs
 
 0.10.19
 *****
+* Fixed CAR release issues with 0.10.18 release
+* No changes to codebase
 
 0.10.18
 *****
