@@ -20,6 +20,10 @@ Development
 ********
 * Changed PDU config for LRU1 and LRU2
 
+0.11.2-0.11.4
+********
+* Changed scan_id from string to integer
+
 0.11.6
 ********
 * Increase Artifacts PVC size to 1Gi (from 250Mi)
