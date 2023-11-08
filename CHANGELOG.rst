@@ -21,7 +21,7 @@ Development
 0.11.5
 *****
 
-0.11.2-0.11.4
+0.11.4-0.11.2
 ********
 * Changed scan_id from string to integer
 
