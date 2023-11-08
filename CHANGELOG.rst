@@ -19,3 +19,7 @@ Development
 0.10.18
 ********
 * Changed PDU config for LRU1 and LRU2
+
+0.11.6
+********
+* Increase Artifacts PVC size to 1Gi (from 250Mi)
