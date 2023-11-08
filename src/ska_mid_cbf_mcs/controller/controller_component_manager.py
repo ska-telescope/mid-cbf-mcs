@@ -18,7 +18,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
-from polling2 import poll, TimeoutException
+from polling2 import TimeoutException, poll
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
