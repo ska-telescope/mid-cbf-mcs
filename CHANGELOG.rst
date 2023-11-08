@@ -14,10 +14,6 @@ Development
 ******
 * Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame.
 
-0.11.2-0.11.4
-********
-* Changed scan_id from string to integer
-
 0.11.6
 *****
 * Increase Artifacts PVC size to 1Gi (from 250Mi)
@@ -25,14 +21,9 @@ Development
 0.11.5
 *****
 
-0.11.4
-*****
-
-0.11.3
-*****
-
-0.11.2
-*****
+0.11.2-0.11.4
+********
+* Changed scan_id from string to integer
 
 0.11.1
 *****
