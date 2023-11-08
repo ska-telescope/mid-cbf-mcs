@@ -20,6 +20,12 @@ Development
 ********
 * Changed PDU config for LRU1 and LRU2
 
+0.11.5
+********
+* Added InitSysParam command to controller
+* Refactored reception utils to handle Dish VCC mapping
+* Increased HPS master configure timeout
+
 0.11.6
 ********
 * Increase Artifacts PVC size to 1Gi (from 250Mi)
