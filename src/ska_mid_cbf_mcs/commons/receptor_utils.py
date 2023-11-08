@@ -9,11 +9,7 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import json
-import re
-from typing import Dict, List, Tuple
-
-RECEPTOR_ID_DICT_PATH = "mnt/receptor_id_dict/"
+from typing import List, Tuple
 
 
 class ReceptorUtils:
@@ -43,38 +39,29 @@ class ReceptorUtils:
 
     DISH_TYPE_STR_LEN = 3
 
-    @property
-    def receptors(self: ReceptorUtils) -> Dict[str, int]:
-        """Return the receptor ID str to int translation dictionary."""
-        return self._receptor_id_dict
-
-    def __init__(self: ReceptorUtils, num_vcc: int) -> None:
+    def __init__(self: ReceptorUtils, mapping) -> None:
         """
         Initialize a new instance.
 
-        :param num_vcc: number of VCCs in the system
+        :param mapping: dict mapping the receptor ID and VCC ID.
         """
-        # load the receptor ID dictionary from specified JSON file
-        receptor_id_dict_file_name = (
-            f"{RECEPTOR_ID_DICT_PATH}receptor_id_dict_{num_vcc}r.json"
-        )
+        result = self.is_valid_dish_vcc_mapping(mapping)
+        if not result[0]:
+            raise ValueError(result[1])
 
-        with open(receptor_id_dict_file_name, "r") as f:
-            self._receptor_id_dict = json.loads(f.read())
+        self.receptor_id_to_vcc_id = {}
+        self.vcc_id_to_receptor_id = {}
+        self.receptor_id_to_k = {}
+        self.receptor_id_to_int = {}
 
-        if len(self._receptor_id_dict) != num_vcc:
-            raise ValueError(
-                f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_id_dict_file_name} ; {num_vcc} VCCs currently available."
-            )
-        # CIP-1724 Removing validation so that we can use receptor numbers 1,2,3,4 for dish IDS SKA001,036,063,100 but can still comply with 4 receptor lanes
+        dish_dict = mapping["dish_parameters"]
+        for r, v in dish_dict.items():
+            self.receptor_id_to_vcc_id[r] = v["vcc"]
+            self.vcc_id_to_receptor_id[v["vcc"]] = r
+            self.receptor_id_to_k[r] = v["k"]
+            self.receptor_id_to_int[r] = self._receptor_id_str_to_int(r)
 
-        # for receptor_id_str, receptor_id_int in self._receptor_id_dict.items():
-        #    if receptor_id_int != self.receptor_id_str_to_int(receptor_id_str):
-        #        raise ValueError(
-        #            f"Encountered an incorrect entry for DISH ID {receptor_id_str}: {receptor_id_int} (should be {self.receptor_id_str_to_int(receptor_id_str)})"
-        #        )
-
-    def receptor_id_str_to_int(self: ReceptorUtils, receptor_id: str) -> int:
+    def _receptor_id_str_to_int(self: ReceptorUtils, receptor_id: str) -> int:
         """
         Convert DISH/receptor ID mnemonic string to integer.
 
@@ -82,14 +69,6 @@ class ReceptorUtils:
 
         :return: the DISH/receptor ID as a sequential integer (1 to 197)
         """
-
-        # check whether the receptor ID is valid
-        result = ReceptorUtils.is_Valid_Receptor_Id(receptor_id)
-        if not result[0]:
-            msg = result[1]
-            raise ValueError(msg)
-
-        # convert the receptor ID to a str
         receptor_prefix = receptor_id[: self.DISH_TYPE_STR_LEN]
         receptor_number = receptor_id[self.DISH_TYPE_STR_LEN :]
 
@@ -102,49 +81,45 @@ class ReceptorUtils:
                 f"Incorrect DISH type prefix. Prefix must be {self.SKA_DISH_TYPE_STR} or {self.MKT_DISH_TYPE_STR}."
             )
 
-    def receptor_id_int_to_str(self: ReceptorUtils, receptor_id: int) -> str:
+    @staticmethod
+    def is_valid_dish_vcc_mapping(mapping) -> Tuple[bool, str]:
         """
-        Convert DISH/receptor ID integer to mnemonic string.
+        Checks if the dish vcc mapping is valid. The checks include:
+        - dish IDs are valid and unique
+        - vcc IDs are valid and unique
+        - k values are integers in range of 1-2222
 
-        :param receptor_id: the DISH/receptor ID as an integer
-
-        :return: the DISH/receptor ID mnemonic as a string
+        :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
-        if receptor_id not in range(
-            self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1
-        ):
-            raise ValueError(
-                f"Incorrect receptor instance. ID should be in the range {self.RECEPTOR_ID_MIN} to {self.RECEPTOR_ID_MAX}."
-            )
+        dish_dict = mapping["dish_parameters"]
+        dish_id_set = set()
+        vcc_id_set = set()
+        for dish_id, v in dish_dict.items():
+            # Dish ID must be SKA001-133, MKT000-063
+            result = ReceptorUtils.is_Valid_Receptor_Id(dish_id)
+            if not result[0]:
+                return (False, result[1])
 
-        if receptor_id in range(
-            self.MKT_DISH_INSTANCE_MIN + self.MKT_DISH_INSTANCE_OFFSET,
-            self.MKT_DISH_INSTANCE_MAX + self.MKT_DISH_INSTANCE_OFFSET + 1,
-        ):
-            return self.MKT_DISH_TYPE_STR + str(
-                receptor_id - self.MKT_DISH_INSTANCE_OFFSET
-            ).zfill(self.DISH_TYPE_STR_LEN)
+            # Dish ID must be unique
+            if dish_id not in dish_id_set:
+                dish_id_set.add(dish_id)
+            else:
+                return (False, f"Duplicated Dish ID {dish_id}")
 
-        if receptor_id in range(
-            self.SKA_DISH_INSTANCE_MIN + self.SKA_DISH_INSTANCE_OFFSET,
-            self.SKA_DISH_INSTANCE_MAX + self.SKA_DISH_INSTANCE_OFFSET + 1,
-        ):
-            return self.SKA_DISH_TYPE_STR + str(
-                receptor_id - self.SKA_DISH_INSTANCE_OFFSET
-            ).zfill(self.DISH_TYPE_STR_LEN)
+            # VCC ID must be an integer in 1 - 197
+            if v["vcc"] < 1 or v["vcc"] > 197:
+                return (False, f"Invalid VCC ID {v['vcc']}")
 
-    def receptor_id_dict(self: ReceptorUtils) -> Dict[str, int]:
-        """
-        Output DISH ID string mnemonic to int in a dictionary.
+            # VCC ID must be unique
+            if v["vcc"] not in vcc_id_set:
+                vcc_id_set.add(v["vcc"])
+            else:
+                return (False, f"Duplicated VCC ID {v['vcc']}")
 
-        :return: the DISH/receptor ID translation as a dictionary
-        """
-        return {
-            self.receptor_id_int_to_str(receptor): receptor
-            for receptor in range(
-                self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1
-            )
-        }
+            # k values must be an integer in 1 - 2222
+            if v["k"] < 1 or v["k"] > 2222:
+                return (False, f"Invalid k value {v['k']}")
+        return (True, "")
 
     @staticmethod
     def are_Valid_Receptor_Ids(argin: List[str]) -> Tuple[bool, str]:
@@ -180,15 +155,25 @@ class ReceptorUtils:
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
         # The receptor ID must be in the range of SKA[001-133] or MKT[000-063]
-        pattern = "^(SKA(00[1-9]|0[1-9][0-9]|1[0-2][0-9]|13[0-3]))$|^(MKT(0[0-5][0-9]|06[0-3]))$"
-        if re.match(pattern, argin):
-            msg = "Receptor ID is valid"
-            return (True, msg)
+        fail_msg = (
+            f"Receptor ID {argin} is not valid. It must be SKA001-SKA133"
+            " or MKT000-MKT063. Spaces before, after, or in the middle"
+            " of the ID are not accepted."
+        )
+        if argin[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "SKA":
+            id = int(argin[ReceptorUtils.DISH_TYPE_STR_LEN :])
+            if (
+                id < ReceptorUtils.SKA_DISH_INSTANCE_MIN
+                or id > ReceptorUtils.SKA_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
+        elif argin[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "MKT":
+            id = int(argin[ReceptorUtils.DISH_TYPE_STR_LEN :])
+            if (
+                id < ReceptorUtils.MKT_DISH_INSTANCE_MIN
+                or id > ReceptorUtils.MKT_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
         else:
-            # receptor ID is not a valid ID
-            msg = (
-                f"Receptor ID {argin} is not valid. It must be SKA001-SKA133"
-                " or MKT000-MKT063. Spaces before, after, or in the middle"
-                " of the ID are not accepted."
-            )
-            return (False, msg)
+            return (False, fail_msg)
+        return (True, "Receptor ID is valid")

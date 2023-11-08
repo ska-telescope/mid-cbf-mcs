@@ -72,6 +72,10 @@ class TestCbfSubarrayComponentManager:
         """
         subarray_component_manager.start_communicating()
 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
+
         subarray_component_manager.add_receptors(receptors)
 
         assert [
@@ -100,9 +104,15 @@ class TestCbfSubarrayComponentManager:
         """
         subarray_component_manager.start_communicating()
 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
+
         # assign VCCs to a different subarray, then attempt assignment
         for receptor in receptors[:-1]:
-            vcc_id = subarray_component_manager._receptor_to_vcc[receptor]
+            vcc_id = subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[
+                receptor
+            ]
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
             vcc_proxy.subarrayMembership = (
                 subarray_component_manager.subarray_id + 1
@@ -112,7 +122,11 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
-        vcc_id = subarray_component_manager._receptor_to_vcc[receptors[-1]]
+        vcc_id = (
+            subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[
+                receptors[-1]
+            ]
+        )
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
@@ -137,6 +151,10 @@ class TestCbfSubarrayComponentManager:
         :param receptors: receptor IDs to use in test.
         """
         subarray_component_manager.start_communicating()
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
 
         # try removing receptors before assignment
         assert subarray_component_manager.receptors == []
@@ -169,6 +187,10 @@ class TestCbfSubarrayComponentManager:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         subarray_component_manager.start_communicating()
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
 
         # try removing receptors before assignment
         result = subarray_component_manager.remove_all_receptors()
@@ -206,13 +228,16 @@ class TestCbfSubarrayComponentManager:
         """
         subarray_component_manager.start_communicating()
 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
+
         f = open(data_file_path + config_file_name)
         config_string = f.read().replace("\n", "")
         f.close()
         config_json = json.loads(config_string)
 
         subarray_component_manager.add_receptors(receptors)
-        subarray_component_manager.frequency_offset_k = [11] * 197
 
         result = subarray_component_manager.validate_input(config_string)
         assert result[0]
@@ -278,12 +303,21 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "freq_band, \
         receptor_id, \
-        freq_offset_k, \
         sample_rate_const_for_band, \
         base_dish_sample_rate_for_bandMHz",
         [
-            ("1", "SKA100", [0] * 197, 1, 3960),
-            ("3", "SKA100", [11] * 197, 0.8, 3168),
+            (
+                "1",
+                "SKA100",
+                1,
+                3960,
+            ),
+            (
+                "3",
+                "SKA100",
+                0.8,
+                3168,
+            ),
         ],
     )
     def test_calculate_fs_sample_rate(
@@ -293,27 +327,27 @@ class TestCbfSubarrayComponentManager:
         receptor_id: str,
         sample_rate_const_for_band: float,
         base_dish_sample_rate_for_bandMHz: int,
-        freq_offset_k: List[int],
     ) -> None:
         """
         Test calculate_fs_sample_rate.
         """
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
 
+        sys_param = json.loads(sp)
+        freq_offset_k = sys_param["dish_parameters"][receptor_id]["k"]
         mhz_to_hz = 1000000
         total_num_freq_slice = 20
         freq_offset_delta_f = 1800
         oversampling_factor = 10 / 9
         dish_sample_rate = (base_dish_sample_rate_for_bandMHz * mhz_to_hz) + (
-            sample_rate_const_for_band * freq_offset_k[0] * freq_offset_delta_f
+            sample_rate_const_for_band * freq_offset_k * freq_offset_delta_f
         )
         expected_fs_sample_rate = (
             dish_sample_rate * oversampling_factor / total_num_freq_slice
         )
         expected_fs_sample_rate = expected_fs_sample_rate / mhz_to_hz
-        subarray_component_manager.frequency_offset_k = freq_offset_k
-        subarray_component_manager.frequency_offset_delta_f = (
-            freq_offset_delta_f
-        )
         output_fs_sample_rate = (
             subarray_component_manager._calculate_fs_sample_rate(
                 freq_band, receptor_id
