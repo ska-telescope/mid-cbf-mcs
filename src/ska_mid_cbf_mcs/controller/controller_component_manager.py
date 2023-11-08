@@ -18,7 +18,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
-from polling2 import poll
+from polling2 import poll, TimeoutException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -746,11 +746,11 @@ class ControllerComponentManager(CbfComponentManager):
                         timeout=const.DEFAULT_TIMEOUT,
                         step=0.5,
                     )
-                except TimeoutError:
+                except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
                     self._logger.error(log_msg)
-                return (False, log_msg)
+                    return (False, log_msg)
 
         # if subarray is IDLE go to EMPTY by removing all receptors
         if subarray.obsState == ObsState.IDLE:
@@ -762,11 +762,11 @@ class ControllerComponentManager(CbfComponentManager):
                         timeout=const.DEFAULT_TIMEOUT,
                         step=0.5,
                     )
-                except TimeoutError:
+                except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
                     self._logger.error(log_msg)
-                return (False, log_msg)
+                    return (False, log_msg)
 
         # wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
         if subarray.obsState in [
@@ -783,7 +783,7 @@ class ControllerComponentManager(CbfComponentManager):
                     timeout=const.DEFAULT_TIMEOUT,
                     step=0.5,
                 )
-            except TimeoutError:
+            except TimeoutException:
                 # raise exception if timed out waiting to exit RESOURCING/RESTARTING
                 log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
                 self._logger.error(log_msg)
@@ -806,11 +806,11 @@ class ControllerComponentManager(CbfComponentManager):
                         timeout=const.DEFAULT_TIMEOUT,
                         step=0.5,
                     )
-                except TimeoutError:
+                except TimeoutException:
                     # raise exception if timed out waiting to exit ABORTING/RESETTING
                     log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
                     self._logger.error(log_msg)
-                return (False, log_msg)
+                    return (False, log_msg)
 
             # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
             if subarray.obsState not in [
@@ -825,11 +825,11 @@ class ControllerComponentManager(CbfComponentManager):
                             timeout=const.DEFAULT_TIMEOUT,
                             step=0.5,
                         )
-                    except TimeoutError:
+                    except TimeoutException:
                         # raise exception if timed out waiting to exit ABORTING
                         log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
                         self._logger.error(log_msg)
-                return (False, log_msg)
+                        return (False, log_msg)
 
             # finally, subarray may be restarted to EMPTY
             subarray.Restart()
@@ -840,11 +840,11 @@ class ControllerComponentManager(CbfComponentManager):
                         timeout=const.DEFAULT_TIMEOUT,
                         step=0.5,
                     )
-                except TimeoutError:
+                except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
                     self._logger.error(log_msg)
-                return (False, log_msg)
+                    return (False, log_msg)
 
         return (
             True,
@@ -922,8 +922,8 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                 # If the poll timed out while waiting
                 # for proxy.State() == tango.DevState.OFF,
-                # it throws a TimeoutError
-                except TimeoutError:
+                # it throws a TimeoutException
+                except TimeoutException:
                     op_state_error_list.append([fqdn, proxy.State()])
 
             if fqdn in self._fqdn_subarray:
