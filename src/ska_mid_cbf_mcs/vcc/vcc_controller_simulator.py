@@ -57,7 +57,7 @@ class VccControllerSimulator:
 
         self._state = tango.DevState.INIT
 
-        ## FIXME
+        # FIXME
         self._frequency_offset_k = 0
         self._frequency_offset_delta_f = 0
         ##
@@ -65,7 +65,7 @@ class VccControllerSimulator:
         self._frequency_band = 0
 
     # Properties that match the Tango attributes in the band devices
-    ## FIXME
+    # FIXME
     @property
     def frequencyOffsetK(self) -> List[float]:
         """Return the frequency offset K attribute."""
@@ -88,7 +88,7 @@ class VccControllerSimulator:
         """Get the current state of the device"""
         return self._state
 
-    ## FIXME
+    # FIXME
     def InitCommonParameters(
         self: VccControllerSimulator, json_str: str
     ) -> None:

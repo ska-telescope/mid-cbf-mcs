@@ -46,7 +46,7 @@ class VccBandSimulator:
         self._state = tango.DevState.INIT
         self._obs_state = ObsState.IDLE
 
-        ## FIXME temp undo of CIP-1765
+        # FIXME temp undo of CIP-1765
         self._frequency_offset_k = 0
         self._frequency_offset_delta_f = 0
         ##
@@ -66,7 +66,7 @@ class VccBandSimulator:
         """Return the Obs state attribute."""
         return self._obs_state
 
-    ## FIXME temp undo of CIP-1765
+    # FIXME temp undo of CIP-1765
     @property
     def frequencyOffsetK(self) -> List[float]:
         """Return the frequency offset K attribute."""
@@ -117,7 +117,7 @@ class VccBandSimulator:
         """Get the current state of the device"""
         return self._state
 
-    ## FIXME temp undo of CIP-1765
+    # FIXME temp undo of CIP-1765
     def InitCommonParameters(self: VccBandSimulator, json_str: str) -> None:
         """
         Initialize the common/constant parameters of this VCC device. These

@@ -628,7 +628,7 @@ class ControllerComponentManager(CbfComponentManager):
                     f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
                 )
                 proxy.receptorID = rec_id_int
-                ## FIXME: temp undo of CIP-1765
+                # FIXME: temp undo of CIP-1765
                 proxy.frequencyOffsetK = self._receptor_utils.receptor_id_to_k[
                     rec_id
                 ]

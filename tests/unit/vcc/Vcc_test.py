@@ -116,7 +116,7 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        ## FIXME
+        # FIXME
         device_under_test.ConfigureBand(configuration["frequency_band"])
         # band_configuration = {
         #     "frequency_band": configuration["frequency_band"],
@@ -245,7 +245,7 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        ## FIXME
+        # FIXME
         device_under_test.ConfigureBand(configuration["frequency_band"])
         # band_configuration = {
         #     "frequency_band": configuration["frequency_band"],

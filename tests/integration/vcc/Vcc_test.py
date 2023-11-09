@@ -174,7 +174,7 @@ class TestVcc:
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
-        ## FIXME
+        # FIXME
         frequency_band = configuration["frequency_band"]
         test_proxies.vcc[vcc_id].ConfigureBand(frequency_band)
 
@@ -187,7 +187,7 @@ class TestVcc:
         time.sleep(2)
         assert (
             test_proxies.vcc[vcc_id].frequencyBand
-            == freq_band_dict()[frequency_band]["band_index"]  ## FIXME
+            == freq_band_dict()[frequency_band]["band_index"]  # FIXME
         )
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)

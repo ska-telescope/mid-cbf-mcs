@@ -51,7 +51,7 @@ class TestVccComponentManager:
         vcc_component_manager.stop_communicating()
         assert not vcc_component_manager.connected
 
-    ## FIXME
+    # FIXME
     # @pytest.mark.parametrize(
     #     "argin",
     #     [
@@ -95,7 +95,7 @@ class TestVccComponentManager:
         vcc_component_manager: VccComponentManager,
         mock_vcc_controller: unittest.mock.Mock,
         mock_vcc_band: unittest.mock.Mock,
-        frequency_band: str,  ## FIXME
+        frequency_band: str,  # FIXME
     ) -> None:
         """
         Test band configuration.
@@ -107,7 +107,7 @@ class TestVccComponentManager:
         """
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
-        ## FIXME
+        # FIXME
         mock_vcc_controller.InitCommonParameters.assert_next_call(
             '{"frequency_offset_k": 0, "frequency_offset_delta_f": 1800}'
         )
@@ -122,7 +122,7 @@ class TestVccComponentManager:
 
         # Check for band configuration
         mock_vcc_controller.ConfigureBand.assert_next_call(
-            freq_band_dict()[frequency_band]["band_index"]  ## FIXME
+            freq_band_dict()[frequency_band]["band_index"]  # FIXME
         )
 
         internal_params_file_name = (
@@ -130,7 +130,7 @@ class TestVccComponentManager:
         )
         with open(internal_params_file_name, "r") as f:
             json_string = f.read()
-            ## FIXME
+            # FIXME
             # args = json.loads(json_string)
             # args.update({"dish_sample_rate": argin["dish_sample_rate"]})
             # args.update({"samples_per_frame": argin["samples_per_frame"]})
@@ -166,7 +166,7 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        ## FIXME
+        # FIXME
         vcc_component_manager.configure_band(configuration["frequency_band"])
         # vcc_component_manager.configure_band(
         #     json.dumps(
@@ -252,7 +252,7 @@ class TestVccComponentManager:
         configuration = json.loads(config)
         f.close()
 
-        ## FIXME
+        # FIXME
         vcc_component_manager.configure_band(configuration["frequency_band"])
         # vcc_component_manager.configure_band(
         #     json.dumps(
@@ -333,7 +333,7 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        ## FIXME
+        # FIXME
         vcc_component_manager.configure_band(configuration["frequency_band"])
         # vcc_component_manager.configure_band(
         #     json.dumps(
@@ -420,7 +420,7 @@ class TestVccComponentManager:
             set(["1", "2", "3", "4", "5a", "5b"])
             - set(configuration["frequency_band"])
         )
-        ## FIXME
+        # FIXME
         vcc_component_manager.configure_band(configuration["frequency_band"])
         # vcc_component_manager.configure_band(
         #     json.dumps(
@@ -475,7 +475,7 @@ class TestVccComponentManager:
         json_string = f.read().replace("\n", "")
         f.close()
         configuration = json.loads(json_string)
-        ## FIXME
+        # FIXME
         vcc_component_manager.configure_band(configuration["frequency_band"])
         # vcc_component_manager.configure_band(
         #     json.dumps(
@@ -539,7 +539,7 @@ class TestVccComponentManager:
         f.close()
         assert result_code == ResultCode.OK
 
-    ## FIXME
+    # FIXME
     @pytest.mark.parametrize(
         "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
     )
@@ -583,7 +583,7 @@ class TestVccComponentManager:
         vcc_component_manager: VccComponentManager,
         mock_vcc_controller: unittest.mock.Mock,
         mock_vcc_band: unittest.mock.Mock,
-        frequency_band: str,  ## FIXME
+        frequency_band: str,  # FIXME
     ) -> None:
         """
         Test Vcc's Abort and ObsReset commands.
@@ -597,7 +597,7 @@ class TestVccComponentManager:
             vcc_component_manager,
             mock_vcc_controller,
             mock_vcc_band,
-            frequency_band,  ## FIXME
+            frequency_band,  # FIXME
         )
 
         (result_code, _) = vcc_component_manager.abort()

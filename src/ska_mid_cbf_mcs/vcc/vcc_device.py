@@ -84,7 +84,7 @@ class Vcc(CspSubElementObsDevice):
         doc="Subarray membership",
     )
 
-    ## FIXME
+    # FIXME
     frequencyOffsetK = attribute(
         dtype="int",
         access=AttrWriteType.READ_WRITE,
@@ -405,7 +405,7 @@ class Vcc(CspSubElementObsDevice):
         self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
-    ## FIXME
+    # FIXME
     def read_frequencyOffsetK(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyOffsetK_read) ENABLED START #
         """

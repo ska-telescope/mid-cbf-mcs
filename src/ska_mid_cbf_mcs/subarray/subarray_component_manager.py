@@ -1505,7 +1505,7 @@ class CbfSubarrayComponentManager(
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
-        ## FIXME: temp undo of CIP-1765
+        # FIXME: temp undo of CIP-1765
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
         self._group_vcc.command_inout("ConfigureBand", data)
@@ -2402,7 +2402,7 @@ class CbfSubarrayComponentManager(
         freq_offset_k = self._receptor_utils.receptor_id_to_k[receptor]
         freq_band_info = freq_band_dict()[freq_band]
 
-        ## FIXME
+        # FIXME
         base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
         sample_rate_const = freq_band_info["sample_rate_const"]
 

@@ -101,7 +101,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         self._receptor_id = receptor_id
 
-    ## FIXME
+    # FIXME
     @property
     def frequency_offset_k(self: VccComponentManager) -> int:
         """
@@ -247,7 +247,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # Initialize attribute values
         self._receptor_id = 0
-        self._frequency_offset_k = 0  ## FIXME
+        self._frequency_offset_k = 0  # FIXME
 
         self._scan_id = 0
         self._config_id = ""
@@ -408,7 +408,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     for fqdn in self._vcc_band_fqdn
                 ]
 
-                self._init_vcc_controller_parameters()  ## FIXME
+                self._init_vcc_controller_parameters()  # FIXME
 
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
@@ -419,7 +419,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
-    ## FIXME
+    # FIXME
     def _init_vcc_controller_parameters(self: VccComponentManager) -> None:
         """
         Initialize the set of parameters in the VCC Controller device that
@@ -488,7 +488,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return (ResultCode.OK, "Standby command completed OK")
 
     def configure_band(
-        self: VccComponentManager, freq_band_name: str  ## FIXME
+        self: VccComponentManager, freq_band_name: str  # FIXME
     ) -> Tuple[ResultCode, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
@@ -505,7 +505,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
         try:
-            ## FIXME
+            # FIXME
             # band_config = json.loads(argin)
             # freq_band_name = band_config["frequency_band"]
 
@@ -541,7 +541,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
             self._logger.info(f"VCC internal parameters: {json_string}")
 
-            ## FIXME
+            # FIXME
             # args = json.loads(json_string)
             # args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             # args.update(
