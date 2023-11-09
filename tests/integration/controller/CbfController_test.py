@@ -9,6 +9,7 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
+import json
 import os
 import socket
 
@@ -19,7 +20,7 @@ from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
 )
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode
+from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
 # Standard imports
@@ -27,7 +28,7 @@ from tango import DevState
 
 # Local imports
 
-json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 @pytest.mark.usefixtures("test_proxies")
@@ -86,10 +87,10 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        json_file_path = (
+        data_file_path = (
             os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
         )
-        with open(json_file_path + "sys_param_4_boards.json") as f:
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         test_proxies.controller.InitSysParam(sp)
 
@@ -131,7 +132,7 @@ class TestCbfController:
         the controller op state is OFF
         """
         state = test_proxies.controller.State()
-        with open(json_file_path + "sys_param_4_boards.json") as f:
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         result = test_proxies.controller.InitSysParam(sp)
         state_after = test_proxies.controller.State()
@@ -194,6 +195,223 @@ class TestCbfController:
                     assert (
                         test_proxies.fspSubarray[i][j][k].State()
                         == DevState.OFF
+                    )
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        receptors, \
+        vcc_receptors",
+        [
+            (
+                "ConfigureScan_controller.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            )
+        ],
+    )
+    def test_Off_GoToIdle_RemoveAllReceptors(
+        self, test_proxies, config_file_name, receptors, vcc_receptors
+    ):
+        """
+        Test the "Off" command resetting the subelement observing state machines.
+        """
+
+        wait_time_s = 5
+        sleep_time_s = 0.1
+
+        # turn system on
+        self.test_On(test_proxies)
+
+        # load scan config
+        f = open(data_file_path + config_file_name)
+        json_string = f.read().replace("\n", "")
+        f.close()
+        configuration = json.loads(json_string)
+
+        sub_id = int(configuration["common"]["subarray_id"])
+
+        # Off from IDLE to test RemoveAllReceptors path
+        # add receptors
+        test_proxies.subarray[sub_id].AddReceptors(receptors)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.IDLE,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # send the Off command
+        test_proxies.controller.Off()
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        )
+
+        assert test_proxies.controller.State() == DevState.OFF
+        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].State() == DevState.OFF
+            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
+            assert test_proxies.vcc[i].obsState == ObsState.IDLE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for func in ["CORR", "PSS-BF", "PST-BF"]:
+            for sub in range(1, test_proxies.num_sub + 1):
+                for fsp in range(1, test_proxies.num_fsp + 1):
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].State()
+                        == DevState.OFF
+                    )
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].obsState
+                        == ObsState.IDLE
+                    )
+
+        # turn system on
+        self.test_On(test_proxies)
+
+        # Off from READY to test GoToIdle path
+        # add receptors
+        test_proxies.subarray[sub_id].AddReceptors(receptors)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.IDLE,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # configure scan
+        test_proxies.subarray[sub_id].ConfigureScan(json_string)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # send the Off command
+        test_proxies.controller.Off()
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        )
+
+        assert test_proxies.controller.State() == DevState.OFF
+        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].State() == DevState.OFF
+            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
+            assert test_proxies.vcc[i].obsState == ObsState.IDLE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for func in ["CORR", "PSS-BF", "PST-BF"]:
+            for sub in range(1, test_proxies.num_sub + 1):
+                for fsp in range(1, test_proxies.num_fsp + 1):
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].State()
+                        == DevState.OFF
+                    )
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].obsState
+                        == ObsState.IDLE
+                    )
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors, \
+        vcc_receptors",
+        [
+            (
+                "ConfigureScan_controller.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            )
+        ],
+    )
+    def test_Off_Abort(
+        self,
+        test_proxies,
+        config_file_name,
+        scan_file_name,
+        receptors,
+        vcc_receptors,
+    ):
+        """
+        Test the "Off" command resetting the subelement observing state machines.
+        """
+        wait_time_s = 5
+        sleep_time_s = 1
+
+        self.test_On(test_proxies)
+
+        # load scan config
+        f = open(data_file_path + config_file_name)
+        json_string = f.read().replace("\n", "")
+        f.close()
+        configuration = json.loads(json_string)
+        sub_id = int(configuration["common"]["subarray_id"])
+
+        # Off from SCANNING to test Abort path
+        # add receptors
+        test_proxies.subarray[sub_id].AddReceptors(receptors)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.IDLE,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # configure scan
+        test_proxies.subarray[sub_id].ConfigureScan(json_string)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # send the Scan command
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        f2.close()
+        test_proxies.subarray[sub_id].Scan(json_string_scan)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.SCANNING,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # send the Off command
+        test_proxies.controller.Off()
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        )
+
+        assert test_proxies.controller.State() == DevState.OFF
+        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].State() == DevState.OFF
+            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
+            assert test_proxies.vcc[i].obsState == ObsState.IDLE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for func in ["CORR", "PSS-BF", "PST-BF"]:
+            for sub in range(1, test_proxies.num_sub + 1):
+                for fsp in range(1, test_proxies.num_fsp + 1):
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].State()
+                        == DevState.OFF
+                    )
+                    assert (
+                        test_proxies.fspSubarray[func][sub][fsp].obsState
+                        == ObsState.IDLE
                     )
 
     def test_Standby(self, test_proxies):
