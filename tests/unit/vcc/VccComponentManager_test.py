@@ -51,47 +51,51 @@ class TestVccComponentManager:
         vcc_component_manager.stop_communicating()
         assert not vcc_component_manager.connected
 
+    ## FIXME
+    # @pytest.mark.parametrize(
+    #     "argin",
+    #     [
+    #         {
+    #             "frequency_band": "1",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "2",
+    #             "dish_sample_rate": 999999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "3",
+    #             "dish_sample_rate": 999999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "4",
+    #             "dish_sample_rate": 999999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "5a",
+    #             "dish_sample_rate": 999999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "5b",
+    #             "dish_sample_rate": 999999,
+    #             "samples_per_frame": 18,
+    #         },
+    #     ],
+    # )
     @pytest.mark.parametrize(
-        "argin",
-        [
-            {
-                "frequency_band": "1",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "2",
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "3",
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "4",
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "5a",
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "5b",
-                "dish_sample_rate": 999999,
-                "samples_per_frame": 18,
-            },
-        ],
+        "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
     )
     def test_configure_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
         mock_vcc_controller: unittest.mock.Mock,
         mock_vcc_band: unittest.mock.Mock,
-        argin: dict,
+        frequency_band: str,  ## FIXME
     ) -> None:
         """
         Test band configuration.
@@ -103,15 +107,22 @@ class TestVccComponentManager:
         """
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
-
-        (result_code, _) = vcc_component_manager.configure_band(
-            json.dumps(argin)
+        ## FIXME
+        mock_vcc_controller.InitCommonParameters.assert_next_call(
+            '{"frequency_offset_k": 0, "frequency_offset_delta_f": 1800}'
         )
+
+        (result_code, _) = vcc_component_manager.configure_band(frequency_band)
+
+        # (result_code, _) = vcc_component_manager.configure_band(
+        #     json.dumps(argin)
+        # )
+        ##
         assert result_code == ResultCode.OK
 
         # Check for band configuration
         mock_vcc_controller.ConfigureBand.assert_next_call(
-            freq_band_dict()[argin["frequency_band"]]["band_index"]
+            freq_band_dict()[frequency_band]["band_index"]  ## FIXME
         )
 
         # Check for internal parameter configuration
@@ -120,15 +131,16 @@ class TestVccComponentManager:
             + "internal_params_receptor"
             + str(vcc_component_manager.receptor_id)
             + "_band"
-            + argin["frequency_band"]
+            + frequency_band  ## FIXME
             + ".json"
         )
         with open(internal_params_file_name, "r") as f:
             json_string = f.read()
-            args = json.loads(json_string)
-            args.update({"dish_sample_rate": argin["dish_sample_rate"]})
-            args.update({"samples_per_frame": argin["samples_per_frame"]})
-            json_string = json.dumps(args)
+            ## FIXME
+            # args = json.loads(json_string)
+            # args.update({"dish_sample_rate": argin["dish_sample_rate"]})
+            # args.update({"samples_per_frame": argin["samples_per_frame"]})
+            # json_string = json.dumps(args)
         mock_vcc_band.SetInternalParameters.assert_next_call(json_string)
 
     @pytest.mark.parametrize(
@@ -160,15 +172,17 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.configure_band(
-            json.dumps(
-                {
-                    "frequency_band": configuration["frequency_band"],
-                    "dish_sample_rate": 999999,
-                    "samples_per_frame": 18,
-                }
-            )
-        )
+        ## FIXME
+        vcc_component_manager.configure_band(configuration["frequency_band"])
+        # vcc_component_manager.configure_band(
+        #     json.dumps(
+        #         {
+        #             "frequency_band": configuration["frequency_band"],
+        #             "dish_sample_rate": 999999,
+        #             "samples_per_frame": 18,
+        #         }
+        #     )
+        # )
 
         vcc_component_manager.configure_scan(json_str)
 
@@ -244,15 +258,17 @@ class TestVccComponentManager:
         configuration = json.loads(config)
         f.close()
 
-        vcc_component_manager.configure_band(
-            json.dumps(
-                {
-                    "frequency_band": configuration["frequency_band"],
-                    "dish_sample_rate": 999999,
-                    "samples_per_frame": 18,
-                }
-            )
-        )
+        ## FIXME
+        vcc_component_manager.configure_band(configuration["frequency_band"])
+        # vcc_component_manager.configure_band(
+        #     json.dumps(
+        #         {
+        #             "frequency_band": configuration["frequency_band"],
+        #             "dish_sample_rate": 999999,
+        #             "samples_per_frame": 18,
+        #         }
+        #     )
+        # )
 
         vcc_component_manager.configure_scan(config)
 
@@ -323,15 +339,17 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.configure_band(
-            json.dumps(
-                {
-                    "frequency_band": configuration["frequency_band"],
-                    "dish_sample_rate": 999999,
-                    "samples_per_frame": 18,
-                }
-            )
-        )
+        ## FIXME
+        vcc_component_manager.configure_band(configuration["frequency_band"])
+        # vcc_component_manager.configure_band(
+        #     json.dumps(
+        #         {
+        #             "frequency_band": configuration["frequency_band"],
+        #             "dish_sample_rate": 999999,
+        #             "samples_per_frame": 18,
+        #         }
+        #     )
+        # )
         assert (
             vcc_component_manager.frequency_band
             == freq_band_dict()[configuration["frequency_band"]]["band_index"]
@@ -408,15 +426,17 @@ class TestVccComponentManager:
             set(["1", "2", "3", "4", "5a", "5b"])
             - set(configuration["frequency_band"])
         )
-        vcc_component_manager.configure_band(
-            json.dumps(
-                {
-                    "frequency_band": other_freq_bands[0],
-                    "dish_sample_rate": 999999,
-                    "samples_per_frame": 18,
-                }
-            )
-        )
+        ## FIXME
+        vcc_component_manager.configure_band(configuration["frequency_band"])
+        # vcc_component_manager.configure_band(
+        #     json.dumps(
+        #         {
+        #             "frequency_band": configuration["frequency_band"],
+        #             "dish_sample_rate": 999999,
+        #             "samples_per_frame": 18,
+        #         }
+        #     )
+        # )
         assert (
             vcc_component_manager.frequency_band
             == freq_band_dict()[other_freq_bands[0]]["band_index"]
@@ -461,15 +481,17 @@ class TestVccComponentManager:
         json_string = f.read().replace("\n", "")
         f.close()
         configuration = json.loads(json_string)
-        vcc_component_manager.configure_band(
-            json.dumps(
-                {
-                    "frequency_band": configuration["frequency_band"],
-                    "dish_sample_rate": 999999,
-                    "samples_per_frame": 18,
-                }
-            )
-        )
+        ## FIXME
+        vcc_component_manager.configure_band(configuration["frequency_band"])
+        # vcc_component_manager.configure_band(
+        #     json.dumps(
+        #         {
+        #             "frequency_band": configuration["frequency_band"],
+        #             "dish_sample_rate": 999999,
+        #             "samples_per_frame": 18,
+        #         }
+        #     )
+        # )
         vcc_component_manager.configure_scan(json_string)
 
         # Use callable 'Scan'  API
@@ -523,47 +545,51 @@ class TestVccComponentManager:
         f.close()
         assert result_code == ResultCode.OK
 
+    ## FIXME
     @pytest.mark.parametrize(
-        "argin",
-        [
-            {
-                "frequency_band": "1",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "2",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "3",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "4",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "5a",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-            {
-                "frequency_band": "5b",
-                "dish_sample_rate": 99999,
-                "samples_per_frame": 18,
-            },
-        ],
+        "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
     )
+    # @pytest.mark.parametrize(
+    #     "argin",
+    #     [
+    #         {
+    #             "frequency_band": "1",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "2",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "3",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "4",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "5a",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #         {
+    #             "frequency_band": "5b",
+    #             "dish_sample_rate": 99999,
+    #             "samples_per_frame": 18,
+    #         },
+    #     ],
+    # )
     def test_abort_obs_reset(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
         mock_vcc_controller: unittest.mock.Mock,
         mock_vcc_band: unittest.mock.Mock,
-        argin: dict,
+        frequency_band: str,  ## FIXME
     ) -> None:
         """
         Test Vcc's Abort and ObsReset commands.
@@ -577,7 +603,7 @@ class TestVccComponentManager:
             vcc_component_manager,
             mock_vcc_controller,
             mock_vcc_band,
-            argin,
+            frequency_band,  ## FIXME
         )
 
         (result_code, _) = vcc_component_manager.abort()
