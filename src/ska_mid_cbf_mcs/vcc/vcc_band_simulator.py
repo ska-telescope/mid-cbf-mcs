@@ -46,9 +46,6 @@ class VccBandSimulator:
         self._state = tango.DevState.INIT
         self._obs_state = ObsState.IDLE
 
-        self._sample_rate = 0
-        self._frame_rate = 0
-        self._stream_rate = 0
         self._vcc_gain = []
 
         self._config_id = ""
@@ -64,21 +61,6 @@ class VccBandSimulator:
     def obsState(self) -> List[float]:
         """Return the Obs state attribute."""
         return self._obs_state
-
-    @property
-    def sample_rate(self) -> List[float]:
-        """Return the sample rate attribute."""
-        return self._sample_rate
-
-    @property
-    def frame_rate(self) -> List[float]:
-        """Return the frame rate attribute."""
-        return self._frame_rate
-
-    @property
-    def stream_rate(self) -> List[float]:
-        """Return the stream rate attribute."""
-        return self._stream_rate
 
     @property
     def vccGain(self) -> List[float]:
@@ -117,20 +99,6 @@ class VccBandSimulator:
     def State(self: VccBandSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state
-
-    def InitCommonParameters(self: VccBandSimulator, json_str: str) -> None:
-        """
-        Initialize the common/constant parameters of this VCC device. These
-        parameters hold the same value across all bands for one receptor, and
-        do not change during scan configuration.
-
-        :param json_str: JSON-formatted string containing the parameters
-        """
-        params = json.loads(json_str)
-        self._sample_rate = params["sample_rate"]
-        self._frame_rate = params["frame_rate"]
-        self._stream_rate = params["stream_rate"]
-        self._state = tango.DevState.DISABLE
 
     def SetInternalParameters(self: VccBandSimulator, json_str: str) -> None:
         """

@@ -147,8 +147,7 @@ class CbfSubarrayComponentManager(
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
-        # TODO: pull max capabilities from controller?
-        self._receptor_utils = ReceptorUtils(num_vcc=const.MAX_VCC)
+        self._receptor_utils = None
 
         self._component_op_fault_callback = component_fault_callback
         self._component_obs_fault_callback = component_obs_fault_callback
@@ -172,12 +171,11 @@ class CbfSubarrayComponentManager(
         self.obs_faulty = False
 
         # initialize attribute values
+        self._sys_param_str = ""
         self._receptors = []
         self._frequency_band = 0
         self._config_id = ""
         self._scan_id = 0
-        self.frequency_offset_k = []
-        self.frequency_offset_delta_f = 0
 
         # store list of fsp configurations being used for each function mode
         self._corr_config = []
@@ -215,7 +213,6 @@ class CbfSubarrayComponentManager(
         self._controller_max_capabilities = {}
         self._count_vcc = 0
         self._count_fsp = 0
-        self._receptor_to_vcc = {}
 
         # proxies to subordinate devices
         self._proxies_vcc = []
@@ -270,27 +267,6 @@ class CbfSubarrayComponentManager(
                 )
                 self._count_vcc = int(self._controller_max_capabilities["VCC"])
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
-
-                # CIP-1724 Temporary work around to use 4 receptor lanes along with the Dish IDs
-                # recommended by Sonja
-                # for (
-                #    receptor_vcc_pair
-                # ) in self._proxy_cbf_controller.receptorToVcc:
-                #    receptor_vcc_pair = receptor_vcc_pair.split(":")
-                #    self._receptor_to_vcc[
-                #        self._receptor_utils.receptor_id_int_to_str(
-                #            int(receptor_vcc_pair[0])
-                #        )
-                #    ] = int(receptor_vcc_pair[1])
-                self._receptor_to_vcc = {
-                    "SKA001": 1,
-                    "SKA036": 2,
-                    "SKA063": 3,
-                    "SKA100": 4,
-                }
-                self._logger.info(
-                    f"Receptor to VCC mapping: {self._receptor_to_vcc}"
-                )
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
@@ -415,6 +391,17 @@ class CbfSubarrayComponentManager(
             "Operating state Standby invalid for CbfSubarray."
         )
 
+    def update_sys_param(
+        self: CbfSubarrayComponentManager, sys_param_str: str
+    ) -> None:
+        self._logger.debug(f"Received sys param: {sys_param_str}")
+        self._sys_param_str = sys_param_str
+        sys_param = json.loads(sys_param_str)
+        self._receptor_utils = ReceptorUtils(sys_param)
+        self._logger.info(
+            "Updated dish ID to VCC ID and frequency offset k mapping"
+        )
+
     @check_communicating
     def _doppler_phase_correction_event_callback(
         self: CbfSubarrayComponentManager,
@@ -496,7 +483,9 @@ class CbfSubarrayComponentManager(
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptors[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                 t = Thread(
                     target=self._update_delay_model,
@@ -573,7 +562,9 @@ class CbfSubarrayComponentManager(
                         receptor_id = matrix["receptor"]
                         matrix["receptor"] = [
                             receptor_id,
-                            self._receptor_utils.receptors[receptor_id],
+                            self._receptor_utils.receptor_id_to_vcc_id[
+                                receptor_id
+                            ],
                         ]
                     t = Thread(
                         target=self._update_jones_matrix,
@@ -655,7 +646,9 @@ class CbfSubarrayComponentManager(
                     receptor_id = weights["receptor"]
                     weights["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptors[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
@@ -1346,7 +1339,7 @@ class CbfSubarrayComponentManager(
                             if "receptor_ids" not in searchBeam:
                                 searchBeam[
                                     "receptor_ids"
-                                ] = self._receptor_utils.receptors[
+                                ] = self._receptor_utils.receptor_id_to_vcc_id[
                                     self._receptors[0]
                                 ]
 
@@ -1443,7 +1436,9 @@ class CbfSubarrayComponentManager(
                                         return (False, msg)
                             else:
                                 timingBeam["receptor_ids"] = [
-                                    self._receptor_utils.receptors[receptor]
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ]
                                     for receptor in self._receptors
                                 ]
 
@@ -1510,9 +1505,41 @@ class CbfSubarrayComponentManager(
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
-        data = tango.DeviceData()
-        data.insert(tango.DevString, common_configuration["frequency_band"])
-        self._group_vcc.command_inout("ConfigureBand", data)
+        # Prepare args for ConfigureBand
+        for receptor_id in self._receptors:
+            if (
+                receptor_id
+                in self._receptor_utils.receptor_id_to_vcc_id.keys()
+            ):
+                # Fetch K-value based on receptor_id
+                vccID = self._receptor_utils.receptor_id_to_vcc_id[receptor_id]
+                vccProxy = self._proxies_vcc[vccID - 1]
+                freq_offset_k = self._receptor_utils.receptor_id_to_k[
+                    receptor_id
+                ]
+                # Calculate dish sample rate
+                dish_sample_rate = self._calculate_dish_sample_rate(
+                    freq_band_dict()[common_configuration["frequency_band"]],
+                    freq_offset_k,
+                )
+                # Fetch samples per frame for this freq band
+                samples_per_frame = freq_band_dict()[
+                    common_configuration["frequency_band"]
+                ]["num_samples_per_frame"]
+
+                args = {
+                    "frequency_band": common_configuration["frequency_band"],
+                    "dish_sample_rate": int(dish_sample_rate),
+                    "samples_per_frame": int(samples_per_frame),
+                }
+                data = tango.DeviceData()
+                data.insert(tango.DevString, json.dumps(args))
+                vccProxy.command_inout("ConfigureBand", data)
+            else:
+                return (
+                    ResultCode.FAILED,
+                    f"Invalid receptor {receptor_id}. ConfigureScan command failed.",
+                )
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         if self._frequency_band in [4, 5]:
@@ -1642,7 +1669,7 @@ class CbfSubarrayComponentManager(
                     for tdc_dest in search_window["tdc_destination_address"]:
                         tdc_dest["receptor_id"] = [
                             tdc_dest["receptor_id"],
-                            self._receptor_utils.receptors[
+                            self._receptor_utils.receptor_id_to_vcc_id[
                                 tdc_dest["receptor_id"]
                             ],
                         ]
@@ -1764,7 +1791,7 @@ class CbfSubarrayComponentManager(
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
-                    self._receptor_utils.receptors[receptor],
+                    self._receptor_utils.receptor_id_to_vcc_id[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors
@@ -1789,7 +1816,12 @@ class CbfSubarrayComponentManager(
                 fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
-                        [receptor, self._receptor_utils.receptors[receptor]]
+                        [
+                            receptor,
+                            self._receptor_utils.receptor_id_to_vcc_id[
+                                receptor
+                            ],
+                        ]
                     )
 
                 self._corr_config.append(fsp)
@@ -1803,7 +1835,9 @@ class CbfSubarrayComponentManager(
                         searchBeam["receptor_ids"] = [
                             [
                                 receptor,
-                                self._receptor_utils.receptors[receptor],
+                                self._receptor_utils.receptor_id_to_vcc_id[
+                                    receptor
+                                ],
                             ]
                             for receptor in self._receptors
                         ]
@@ -1813,7 +1847,9 @@ class CbfSubarrayComponentManager(
                         ):
                             searchBeam["receptor_ids"][i] = [
                                 receptor,
-                                self._receptor_utils.receptors[receptor],
+                                self._receptor_utils.receptor_id_to_vcc_id[
+                                    receptor
+                                ],
                             ]
                 self._pss_config.append(fsp)
                 self._pss_fsp_list.append(fsp["fsp_id"])
@@ -1825,7 +1861,9 @@ class CbfSubarrayComponentManager(
                         timingBeam["receptor_ids"] = [
                             [
                                 receptor,
-                                self._receptor_utils.receptors[receptor],
+                                self._receptor_utils.receptor_id_to_vcc_id[
+                                    receptor
+                                ],
                             ]
                             for receptor in self._receptors
                         ]
@@ -1835,7 +1873,9 @@ class CbfSubarrayComponentManager(
                         ):
                             timingBeam["receptor_ids"][i] = [
                                 receptor,
-                                self._receptor_utils.receptors[receptor],
+                                self._receptor_utils.receptor_id_to_vcc_id[
+                                    receptor
+                                ],
                             ]
                 self._pst_config.append(fsp)
                 self._pst_fsp_list.append(fsp["fsp_id"])
@@ -1917,8 +1957,13 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
             if receptor_id in self._receptors:
-                if receptor_id in self._receptor_to_vcc.keys():
-                    vccID = self._receptor_to_vcc[receptor_id]
+                if (
+                    receptor_id
+                    in self._receptor_utils.receptor_id_to_vcc_id.keys()
+                ):
+                    vccID = self._receptor_utils.receptor_id_to_vcc_id[
+                        receptor_id
+                    ]
                 else:
                     return (
                         ResultCode.FAILED,
@@ -1975,8 +2020,13 @@ class CbfSubarrayComponentManager(
                     f"Attempting to remove receptor {receptor_id}"
                 )
 
-                if receptor_id in self._receptor_to_vcc.keys():
-                    vccID = self._receptor_to_vcc[receptor_id]
+                if (
+                    receptor_id
+                    in self._receptor_utils.receptor_id_to_vcc_id.keys()
+                ):
+                    vccID = self._receptor_utils.receptor_id_to_vcc_id[
+                        receptor_id
+                    ]
                 else:
                     self._logger.warning(
                         f"Invalid receptor {receptor_id}. Skipping."
@@ -2030,15 +2080,24 @@ class CbfSubarrayComponentManager(
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
             self._logger.info(
-                f"receptor to vcc keys: {self._receptor_to_vcc.keys()}"
+                f"receptor to vcc keys: {self._receptor_utils.receptor_id_to_vcc_id.keys()}"
             )
 
-            if receptor_id in self._receptor_to_vcc.keys():
-                vccID = self._receptor_to_vcc[receptor_id]
+            if (
+                receptor_id
+                in self._receptor_utils.receptor_id_to_vcc_id.keys()
+            ):
+                vccID = self._receptor_utils.receptor_id_to_vcc_id[receptor_id]
             else:
                 return (
                     ResultCode.FAILED,
                     f"Invalid receptor {receptor_id}. AddReceptors command failed.",
+                )
+
+            if vccID > const.MAX_VCC:
+                return (
+                    ResultCode.FAILED,
+                    f"VCC ID {vccID} is not supported. AddReceptors command failed.",
                 )
 
             vccProxy = self._proxies_vcc[vccID - 1]
@@ -2331,22 +2390,19 @@ class CbfSubarrayComponentManager(
 
         # CIP-1724 Using receptors dictionary to access receptor int instead
         # receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
-        receptor_int = self._receptor_utils.receptors[receptor]
+        receptor_int = self._receptor_utils.receptor_id_to_vcc_id[receptor]
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
-        freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
+        freq_offset_k = self._receptor_utils.receptor_id_to_k[receptor]
         freq_band_info = freq_band_dict()[freq_band]
 
-        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
-        sample_rate_const = freq_band_info["sample_rate_const"]
         total_num_fs = freq_band_info["total_num_FSs"]
 
-        # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
-        # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
-        dish_sample_rate = (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
+        dish_sample_rate = self._calculate_dish_sample_rate(
+            freq_band_info, freq_offset_k
         )
+
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)
         fs_sample_rate = (
@@ -2373,3 +2429,13 @@ class CbfSubarrayComponentManager(
             )
 
         return output_sample_rates
+
+    def _calculate_dish_sample_rate(
+        self: CbfSubarrayComponentManager, freq_band_info, freq_offset_k
+    ):
+        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+        sample_rate_const = freq_band_info["sample_rate_const"]
+
+        return (base_dish_sample_rate_MH * mhz_to_hz) + (
+            sample_rate_const * freq_offset_k * const.DELTA_F
+        )

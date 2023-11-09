@@ -651,7 +651,7 @@ class FspCorrSubarrayComponentManager(
         self._get_capability_proxies()
 
         try:
-            self._logger.debug(
+            self._logger.info(
                 f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}"
             )
             self._proxy_hps_fsp_corr_controller.ConfigureScan(

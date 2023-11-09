@@ -18,7 +18,6 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
-import time
 from typing import Callable, List, Optional, Tuple
 
 # tango imports
@@ -100,46 +99,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param receptor_id: Receptor ID
         """
         self._receptor_id = receptor_id
-
-    @property
-    def frequency_offset_k(self: VccComponentManager) -> int:
-        """
-        Frequency Offset K-value for this receptor
-
-        :return: the frequency offset k-value
-        """
-        return self._frequency_offset_k
-
-    @frequency_offset_k.setter
-    def frequency_offset_k(
-        self: VccComponentManager, frequency_offset_k: int
-    ) -> None:
-        """
-        Set the frequency offset k-value.
-
-        :param frequency_offset_k: Frequency offset k-value
-        """
-        self._frequency_offset_k = frequency_offset_k
-
-    @property
-    def frequency_offset_delta_f(self: VccComponentManager) -> int:
-        """
-        Frequency Offset Delta-F Value for this receptor
-
-        :return: the frequency offset delta-f value
-        """
-        return self._frequency_offset_delta_f
-
-    @frequency_offset_delta_f.setter
-    def frequency_offset_delta_f(
-        self: VccComponentManager, frequency_offset_delta_f: int
-    ) -> None:
-        """
-        Set the frequency offset delta-f value.
-
-        :param frequency_offset_delta_f: Frequency offset delta-f value
-        """
-        self._frequency_offset_delta_f = frequency_offset_delta_f
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
@@ -264,8 +223,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # Initialize attribute values
         self._receptor_id = 0
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
 
         self._scan_id = 0
         self._config_id = ""
@@ -426,7 +383,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     for fqdn in self._vcc_band_fqdn
                 ]
 
-            self._init_vcc_controller_parameters()
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)
@@ -435,58 +391,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.info("Completed VccComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
-
-    def _init_vcc_controller_parameters(self: VccComponentManager) -> None:
-        """
-        Initialize the set of parameters in the VCC Controller device that
-        are common to all bands and will not change during scan configuration.
-        """
-        # Calculate sample, frame, and stream rates from deltaF and K
-        sample_rate = (
-            const.BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000
-            + self._frequency_offset_k * self._frequency_offset_delta_f
-        )
-        frame_rate = round(sample_rate / const.NUM_SAMPLES_PER_FRAME)
-        stream_rate = (
-            3.96e9 + self._frequency_offset_k * 1800
-        ) / const.NUM_SAMPLES_PER_FRAME
-
-        param_init = {
-            "sample_rate": sample_rate,
-            "frame_rate": frame_rate,
-            "stream_rate": stream_rate,
-        }
-
-        if self._simulation_mode:
-            self._logger.info(
-                "Initializing VCC Controller constant parameters"
-            )
-            self._vcc_controller_simulator.InitCommonParameters(
-                json.dumps(param_init)
-            )
-
-        else:
-            # Wait for VCC Controller
-            for i in range(6):
-                try:
-                    self._vcc_controller_proxy.ping()
-                    break
-                except tango.DevFailed:
-                    time.sleep(5)
-
-            # Skip this if the device has already been initialized
-            if self._vcc_controller_proxy.State() != tango.DevState.INIT:
-                self._logger.info(
-                    "VCC Controller parameters already initialized"
-                )
-                return
-
-            self._logger.info(
-                "Initializing VCC Controller constant parameters"
-            )
-            self._vcc_controller_proxy.InitCommonParameters(
-                json.dumps(param_init)
-            )
 
     def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
         """
@@ -513,7 +417,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return (ResultCode.OK, "Standby command completed OK")
 
     def configure_band(
-        self: VccComponentManager, freq_band_name: str
+        self: VccComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
@@ -530,6 +434,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
         try:
+            band_config = json.loads(argin)
+            freq_band_name = band_config["frequency_band"]
+
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
             frequency_band = freq_band_dict()[freq_band_name]["band_index"]
@@ -552,13 +459,22 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 with open(internal_params_file_name, "r") as f:
                     json_string = f.read()
             except FileNotFoundError:
-                self._logger.error(
+                self._logger.info(
                     f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
                 )
                 with open(
                     f"{VCC_PARAM_PATH}internal_params_default.json", "r"
                 ) as f:
                     json_string = f.read()
+
+            self._logger.info(f"VCC internal parameters: {json_string}")
+
+            args = json.loads(json_string)
+            args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
+            args.update(
+                {"samples_per_frame": band_config["samples_per_frame"]}
+            )
+            json_string = json.dumps(args)
 
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:
