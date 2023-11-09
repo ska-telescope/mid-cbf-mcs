@@ -125,14 +125,8 @@ class TestVccComponentManager:
             freq_band_dict()[frequency_band]["band_index"]  ## FIXME
         )
 
-        # Check for internal parameter configuration
         internal_params_file_name = (
-            vcc_param_path
-            + "internal_params_receptor"
-            + str(vcc_component_manager.receptor_id)
-            + "_band"
-            + frequency_band  ## FIXME
-            + ".json"
+            vcc_param_path + "internal_params_default.json"
         )
         with open(internal_params_file_name, "r") as f:
             json_string = f.read()
