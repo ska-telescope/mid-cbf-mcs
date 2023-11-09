@@ -90,7 +90,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-venv1
 
 # Spyder project settings
 .spyderproject
@@ -126,7 +125,6 @@ mnt/talondx-config/*
 # docs folder (copied content during document generation)
 docs/src/README.md
 docs/src/diagrams/*.~vsdx
-docs/share
 
 # OS things
 .DS_Store

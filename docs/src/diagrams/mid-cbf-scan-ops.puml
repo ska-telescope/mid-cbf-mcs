@@ -11,7 +11,7 @@ BoxBorderColor LightBlue
 BoxBackgroundColor #F0FFFF
 }
 
-title TMC and Mid_CBF.LMC Scan Sequence\nHigh Level
+title TMC and Mid_CBF.LMC Scan Sequence\n
 
 participant "\nTMC" as tmc
 participant "CSP_Mid\n.LMC" as lmc
@@ -21,9 +21,12 @@ participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 end box
 
-note over controller        : OpState: ON
+lmc         -> controller   : write frequencyOffsetK(ints)
+controller  -> subarray     : write frequencyOffsetK(ints)
+lmc         -> controller   : write frequencyOffsetDeltaF(int)
+controller  -> subarray     : write frequencyOffsetDeltaF(int)
 lmc         -> subarray     : AddReceptors(strs)
-subarray    -> subarray     : ObsState: IDLE
+subarray    -> subarray     : obs state IDLE
 subarray   --> lmc          : success
 lmc         -> subarray     : ConfigureScan(json_str)
 subarray    -> tmc          : unsubscribe all events
@@ -44,19 +47,19 @@ group Timing beam subscription point
 subarray    -> tmc          : subscribe timing beam weights
 end group
 
-subarray    -> subarray     : ObsState: READY
+subarray    -> subarray     : obs state READY
 subarray   --> lmc          : success
 
 lmc         -> subarray     : Scan()
-subarray    -> subarray     : ObsState: SCANNING
+subarray    -> subarray     : obs state SCANNING
 subarray   --> lmc          : success
 
 lmc         -> subarray     : EndScan()
-subarray    -> subarray     : ObsState: READY
+subarray    -> subarray     : obs state READY
 subarray   --> lmc          : success
 
 lmc         -> subarray     : RemoveAllReceptors()
-subarray    -> subarray     : ObsState: EMPTY
+subarray    -> subarray     : obs state EMPTY
 subarray   --> lmc          : success
 
 @enduml

@@ -15,6 +15,5 @@
             }
         ]
     },
-    "python.linting.pylintEnabled": true,
-    "cmake.configureOnOpen": false
+    "python.linting.pylintEnabled": true
 }

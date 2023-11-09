@@ -74,14 +74,6 @@ when the Off command is called. Return calls are not shown.
 
 .. uml:: ../../diagrams/off-command-sequence.puml
 
-InitSysParam Sequence
-++++++++++++++++++++++
-
-The sequence diagram below shows the main sequence of calls in MCS
-to initialize the system parameters.
-
-.. uml:: ../../diagrams/initsysparam-command.puml
-
 Configure Scan Sequence
 ++++++++++++++++++++++++
 
