@@ -15,7 +15,7 @@ skinparam collections {
 }
 skinparam responseMessageBelowArrow true
 
-title InitSysParam Command Sequence\n
+title System Parameters Command Sequence\n
 
 participant "CSP_Mid\n.LMC" as lmc
 
