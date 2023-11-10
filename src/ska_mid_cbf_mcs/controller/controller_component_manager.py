@@ -337,11 +337,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.info("Trying to execute ON Command")
 
         if self._receptor_utils is None:
-            tango.Except.throw_exception(
-                "Command failed",
-                "Dish VCC mapping has not been provided.",
-                "On execution",
-            )
+            log_msg = "Dish-VCC mapping has not been provided."
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
 
         # Check if connection to device proxies has been established
         if self._connected:
