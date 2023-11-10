@@ -394,7 +394,7 @@ class CbfSubarrayComponentManager(
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
-        self._logger.debug(f"Received sys param: {sys_param_str}")
+        self._logger.info(f"Received sys param: {sys_param_str}")
         self._sys_param_str = sys_param_str
         sys_param = json.loads(sys_param_str)
         self._receptor_utils = ReceptorUtils(sys_param)
@@ -425,7 +425,7 @@ class CbfSubarrayComponentManager(
                     "dopplerPhaseCorrection", value
                 )
                 log_msg = f"Value of {name} is {value}"
-                self._logger.debug(log_msg)
+                self._logger.info(log_msg)
             except Exception as e:
                 self._logger.error(str(e))
         else:
@@ -447,7 +447,7 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("Entering _delay_model_event_callback()")
+        self._logger.info("Entering _delay_model_event_callback()")
 
         if value is not None:
             if not self._ready:
@@ -508,7 +508,7 @@ class CbfSubarrayComponentManager(
         :param model: delay model
         """
         # This method is always called on a separate thread
-        self._logger.debug("CbfSubarray._update_delay_model")
+        self._logger.info("CbfSubarray._update_delay_model")
 
         log_msg = f"Updating delay model ...{model}"
         self._logger.info(log_msg)
@@ -538,7 +538,7 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("CbfSubarray._jones_matrix_event_callback")
+        self._logger.info("CbfSubarray._jones_matrix_event_callback")
 
         if value is not None:
             if not self._ready:
@@ -587,7 +587,7 @@ class CbfSubarrayComponentManager(
         :param matrix: Jones matrix value
         """
         # This method is always called on a separate thread
-        self._logger.debug("CbfSubarray._update_jones_matrix")
+        self._logger.info("CbfSubarray._update_jones_matrix")
 
         log_msg = f"Updating Jones Matrix {matrix}"
         self._logger.info(log_msg)
@@ -617,7 +617,7 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("CbfSubarray._timing_beam_weights_event_callback")
+        self._logger.info("CbfSubarray._timing_beam_weights_event_callback")
 
         if value is not None:
             if not self._ready:
@@ -678,7 +678,7 @@ class CbfSubarrayComponentManager(
         :param weights: beam weights value
         """
         # This method is always called on a separate thread
-        self._logger.debug("CbfSubarray._update_timing_beam_weights")
+        self._logger.info("CbfSubarray._update_timing_beam_weights")
 
         log_msg = f"Updating timing beam weights {weights}"
         self._logger.info(log_msg)
@@ -1496,14 +1496,14 @@ class CbfSubarrayComponentManager(
 
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
-        self._logger.debug(f"config_id: {self._config_id}")
+        self._logger.info(f"config_id: {self._config_id}")
 
         # Configure frequencyBand.
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         self._frequency_band = frequency_bands.index(
             common_configuration["frequency_band"]
         )
-        self._logger.debug(f"frequency_band: {self._frequency_band}")
+        self._logger.info(f"frequency_band: {self._frequency_band}")
 
         # Prepare args for ConfigureBand
         for receptor_id in self._receptors:
@@ -1676,7 +1676,7 @@ class CbfSubarrayComponentManager(
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
-                self._logger.debug(
+                self._logger.info(
                     f"configuring search window: {json.dumps(search_window)}"
                 )
                 self._group_vcc.command_inout("ConfigureSearchWindow", data)
@@ -1706,7 +1706,7 @@ class CbfSubarrayComponentManager(
             # change FSP subarray membership
             data = tango.DeviceData()
             data.insert(tango.DevUShort, self._subarray_id)
-            self._logger.debug(data)
+            self._logger.info(data)
             self._group_fsp.command_inout("RemoveSubarrayMembership", data)
             self._group_fsp.remove_all()
 
@@ -1953,9 +1953,9 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._receptors,}")
+        self._logger.info(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
-            self._logger.debug(f"Attempting to remove receptor {receptor_id}")
+            self._logger.info(f"Attempting to remove receptor {receptor_id}")
             if receptor_id in self._receptors:
                 if (
                     receptor_id
@@ -1972,20 +1972,20 @@ class CbfSubarrayComponentManager(
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
-                self._logger.debug(
-                    f"size of group vcc members before remove: {self._group_vcc.get_size()}"
+                self._logger.info(
+                    f"size of group vcc members before remove receptors: {self._group_vcc.get_size()}"
                 )
                 self._receptors.remove(receptor_id)
                 self._group_vcc.remove(vccFQDN)
-                self._logger.debug(
-                    f"size of group vcc members after remove: {self._group_vcc.get_size()}"
+                self._logger.info(
+                    f"size of group vcc members after remove receptors: {self._group_vcc.get_size()}"
                 )
                 del self._proxies_assigned_vcc[receptor_id]
 
                 try:
                     # reset subarrayMembership Vcc attribute:
                     vccProxy.subarrayMembership = 0
-                    self._logger.debug(
+                    self._logger.info(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
@@ -2000,9 +2000,9 @@ class CbfSubarrayComponentManager(
 
         if len(self._receptors) == 0:
             self.update_component_resources(False)
-            self._logger.debug("No receptors remaining.")
+            self._logger.info("No receptors remaining.")
         else:
-            self._logger.debug(f"receptors remaining: {*self._receptors,}")
+            self._logger.info(f"receptors remaining: {*self._receptors,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -2019,10 +2019,10 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._receptors,}")
+        self._logger.info(f"current receptors: {*self._receptors,}")
         if len(self._receptors) > 0:
             for receptor_id in self._receptors:
-                self._logger.debug(
+                self._logger.info(
                     f"Attempting to remove receptor {receptor_id}"
                 )
 
@@ -2041,14 +2041,20 @@ class CbfSubarrayComponentManager(
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
+                self._logger.info(
+                    f"size of group vcc members before remove receptors IN remove all receptors: {self._group_vcc.get_size()}"
+                )
                 self._receptors.remove(receptor_id)
                 self._group_vcc.remove(vccFQDN)
+                self._logger.info(
+                    f"size of group vcc members after remove receptors IN remove all receptors: {self._group_vcc.get_size()}"
+                )
                 del self._proxies_assigned_vcc[receptor_id]
 
                 try:
                     # reset subarrayMembership Vcc attribute:
                     vccProxy.subarrayMembership = 0
-                    self._logger.debug(
+                    self._logger.info(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
@@ -2057,7 +2063,8 @@ class CbfSubarrayComponentManager(
                     self._component_obs_fault_callback(True)
                     return (ResultCode.FAILED, msg)
 
-            self._logger.debug("No receptors remaining.")
+            self._logger.info("No receptors remaining.")
+            self._logger.info(f"group vcc size is now {self._group_vcc.get_size()}")
             self.update_component_resources(False)
 
             return (ResultCode.OK, "RemoveAllReceptors completed OK")
@@ -2081,9 +2088,9 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._receptors,}")
+        self._logger.info(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
-            self._logger.debug(f"Attempting to add receptor {receptor_id}")
+            self._logger.info(f"Attempting to add receptor {receptor_id}")
 
             self._logger.info(
                 f"receptor to vcc keys: {self._receptor_utils.receptor_id_to_vcc_id.keys()}"
@@ -2108,13 +2115,13 @@ class CbfSubarrayComponentManager(
 
             vccProxy = self._proxies_vcc[vccID - 1]
 
-            self._logger.debug(
+            self._logger.info(
                 f"receptor_id = {receptor_id}, vccProxy.receptor_id = "
                 + f"{vccProxy.receptorID}"
             )
 
             vccSubarrayID = vccProxy.subarrayMembership
-            self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+            self._logger.info(f"VCC {vccID} subarray_id: {vccSubarrayID}")
 
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
             self._logger.info(
@@ -2146,7 +2153,7 @@ class CbfSubarrayComponentManager(
                     try:
                         # change subarray membership of vcc
                         vccProxy.subarrayMembership = self._subarray_id
-                        self._logger.debug(
+                        self._logger.info(
                             f"VCC {vccID} subarray_id: "
                             + f"{vccProxy.subarrayMembership}"
                         )
@@ -2163,7 +2170,7 @@ class CbfSubarrayComponentManager(
                     )
                     self._logger.warning(msg)
 
-        self._logger.debug(f"receptors after adding: {*self._receptors,}")
+        self._logger.info(f"receptors after adding: {*self._receptors,}")
 
         return (ResultCode.OK, "AddReceptors completed OK")
 
@@ -2301,7 +2308,7 @@ class CbfSubarrayComponentManager(
                 # change FSP subarray membership
                 data = tango.DeviceData()
                 data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
+                self._logger.info(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
                 self._group_fsp.remove_all()
@@ -2343,7 +2350,7 @@ class CbfSubarrayComponentManager(
                 # change FSP subarray membership
                 data = tango.DeviceData()
                 data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
+                self._logger.info(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
                 self._group_fsp.remove_all()
@@ -2358,7 +2365,7 @@ class CbfSubarrayComponentManager(
 
         :param resourced: whether the component is resourced.
         """
-        self._logger.debug(f"update_component_resources({resourced})")
+        self._logger.info(f"update_component_resources({resourced})")
         if resourced:
             # perform "component_resourced" if not previously resourced
             if not self._resourced:
@@ -2376,7 +2383,7 @@ class CbfSubarrayComponentManager(
 
         :param configured: whether the component is configured.
         """
-        self._logger.debug(f"update_component_configuration({configured})")
+        self._logger.info(f"update_component_configuration({configured})")
         if configured:
             # perform "component_configured" if not previously configured
             if not self._ready:
@@ -2410,7 +2417,7 @@ class CbfSubarrayComponentManager(
         )
 
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
-        self._logger.debug(log_msg)
+        self._logger.info(log_msg)
         fs_sample_rate = (
             dish_sample_rate * vcc_oversampling_factor / total_num_fs
         )

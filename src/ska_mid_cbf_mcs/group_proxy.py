@@ -180,13 +180,13 @@ class CbfGroupProxy:
 
         :param fqdn: FQDN of the device to be proxied.
         """
-        self._logger.debug(f"in remove, fqdns are: {self.__dict__['_fqdns']}")
-        self._logger.debug(f"fqdn(s) to remove:{fqdn}")
+        self._logger.info(f"in remove, fqdns are: {self.__dict__['_fqdns']}")
+        self._logger.info(f"fqdn(s) to remove:{fqdn}")
         if fqdn in self._fqdns:
-            self._logger.debug(f"...removing fqdn {fqdn}")
+            self._logger.info(f"...removing fqdn {fqdn}")
             self.__dict__["_fqdns"].remove(fqdn)
             self.__dict__["_group"].remove(fqdn)
-        self._logger.debug(
+        self._logger.info(
             f"end of remove, fqdns are: {self.__dict__['_fqdns']}"
         )
 
