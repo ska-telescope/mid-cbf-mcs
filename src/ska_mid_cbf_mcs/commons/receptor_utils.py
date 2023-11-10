@@ -84,41 +84,24 @@ class ReceptorUtils:
     @staticmethod
     def is_valid_dish_vcc_mapping(mapping) -> Tuple[bool, str]:
         """
-        Checks if the dish vcc mapping is valid. The checks include:
-        - dish IDs are valid and unique
-        - vcc IDs are valid and unique
-        - k values are integers in range of 1-2222
+        Checks if the dish vcc mapping is valid.
+        The telescope model schema already validates:
+            - dish IDs are valid and unique (stored in a dict - no duplicates)
+            - vcc IDs are valid (in range 1-197)
+            - k values are valid (in range 1-2222)
+
+        This function just needs to verify that the vcc IDs are unique.
 
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
         dish_dict = mapping["dish_parameters"]
-        dish_id_set = set()
         vcc_id_set = set()
-        for dish_id, v in dish_dict.items():
-            # Dish ID must be SKA001-133, MKT000-063
-            result = ReceptorUtils.is_Valid_Receptor_Id(dish_id)
-            if not result[0]:
-                return (False, result[1])
-
-            # Dish ID must be unique
-            if dish_id not in dish_id_set:
-                dish_id_set.add(dish_id)
-            else:
-                return (False, f"Duplicated Dish ID {dish_id}")
-
-            # VCC ID must be an integer in 1 - 197
-            if v["vcc"] < 1 or v["vcc"] > 197:
-                return (False, f"Invalid VCC ID {v['vcc']}")
-
-            # VCC ID must be unique
+        for _, v in dish_dict.items():
+            # Verify that the VCC IDs are unique
             if v["vcc"] not in vcc_id_set:
                 vcc_id_set.add(v["vcc"])
             else:
                 return (False, f"Duplicated VCC ID {v['vcc']}")
-
-            # k values must be an integer in 1 - 2222
-            if v["k"] < 1 or v["k"] > 2222:
-                return (False, f"Invalid k value {v['k']}")
         return (True, "")
 
     @staticmethod

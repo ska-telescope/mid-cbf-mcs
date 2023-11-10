@@ -20,7 +20,7 @@ import tango
 import yaml
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
-from ska_telmodel.csp.schema import get_csp_initsysparams_schema
+from ska_telmodel.csp.schema import get_midcbf_initsysparam_schema
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -611,7 +611,7 @@ class ControllerComponentManager(CbfComponentManager):
         params: str,
     ) -> bool:
         # Validate sys_params against the telescope model
-        sys_params_schema = get_csp_initsysparams_schema(
+        sys_params_schema = get_midcbf_initsysparam_schema(
             version=params["interface"], strict=True
         )
         try:
