@@ -2021,7 +2021,7 @@ class CbfSubarrayComponentManager(
         """
         self._logger.debug(f"current receptors: {*self._receptors,}")
         if len(self._receptors) > 0:
-            for receptor_id in self._receptors[:]:
+            for receptor_id in self._receptors:
                 self._logger.debug(
                     f"Attempting to remove receptor {receptor_id}"
                 )
