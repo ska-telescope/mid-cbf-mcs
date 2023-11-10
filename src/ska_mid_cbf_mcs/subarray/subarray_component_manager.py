@@ -1972,8 +1972,14 @@ class CbfSubarrayComponentManager(
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
+                self._logger.debug(
+                    f"size of group vcc members before remove: {self._group_vcc.get_size()}"
+                )
                 self._receptors.remove(receptor_id)
                 self._group_vcc.remove(vccFQDN)
+                self._logger.debug(
+                    f"size of group vcc members after remove: {self._group_vcc.get_size()}"
+                )
                 del self._proxies_assigned_vcc[receptor_id]
 
                 try:
