@@ -182,6 +182,7 @@ class CbfGroupProxy:
         """
         self._logger.info(f"in remove, fqdns are: {self.__dict__['_fqdns']}")
         self._logger.info(f"fqdn(s) to remove:{fqdn}")
+        self._logger.info(f"self fqdns is : {self._fqdns}")
         if fqdn in self._fqdns:
             self._logger.info(f"...removing fqdn {fqdn}")
             self.__dict__["_fqdns"].remove(fqdn)
