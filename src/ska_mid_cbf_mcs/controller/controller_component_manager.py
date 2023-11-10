@@ -336,6 +336,13 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger.info("Trying to execute ON Command")
 
+        if self._receptor_utils is None:
+            tango.Except.throw_exception(
+                "Command failed",
+                "Dish VCC mapping has not been provided.",
+                "On execution",
+            )
+
         # Check if connection to device proxies has been established
         if self._connected:
             # Check if CBF Controller is already on
@@ -583,6 +590,7 @@ class ControllerComponentManager(CbfComponentManager):
         try:
             self._receptor_utils = ReceptorUtils(sys_param)
         except ValueError as e:
+            self._receptor_utils = None
             self._logger.error(e)
             return (ResultCode.FAILED, "Invalid sys params")
 
