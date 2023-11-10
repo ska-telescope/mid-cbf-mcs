@@ -85,10 +85,11 @@ class ReceptorUtils:
     def is_valid_dish_vcc_mapping(mapping) -> Tuple[bool, str]:
         """
         Checks if the dish vcc mapping is valid.
-        The telescope model schema already validates:
-            - dish IDs are valid and unique (stored in a dict - no duplicates)
-            - vcc IDs are valid (in range 1-197)
-            - k values are valid (in range 1-2222)
+        The telescope model schema already validated:
+            - dish IDs are valid: SKA001-133 or MKT000-063
+            - dish IDs are unique: they're stored in a dict, so no duplicates
+            - vcc IDs are valid: in range [1-197]
+            - k values are valid: in range [1-2222]
 
         This function just needs to verify that the vcc IDs are unique.
 
