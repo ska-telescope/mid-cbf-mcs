@@ -2064,7 +2064,9 @@ class CbfSubarrayComponentManager(
                     return (ResultCode.FAILED, msg)
 
             self._logger.info("No receptors remaining.")
-            self._logger.info(f"group vcc size is now {self._group_vcc.get_size()}")
+            self._logger.info(
+                f"group vcc size is now {self._group_vcc.get_size()}"
+            )
             self.update_component_resources(False)
 
             return (ResultCode.OK, "RemoveAllReceptors completed OK")
