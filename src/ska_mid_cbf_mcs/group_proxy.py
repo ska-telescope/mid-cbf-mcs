@@ -156,10 +156,12 @@ class CbfGroupProxy:
             """
             group = group_connection_factory(self._name)
             group.add(fqdn)
-            self.__dict__["_fqdns"].extend(fqdn)
+            self.__dict__["_fqdns"].append(fqdn)
             return group
 
         self._logger.info(f"fqdn to add: {fqdn}")
+        # When we add the fqdn to the list of fqdns, it's expecting the fqdn to
+        # to be in a list
         self._logger.info(f"self._fqdns: {self._fqdns}")
 
         if self._group is None:
@@ -173,7 +175,7 @@ class CbfGroupProxy:
                 )
         else:
             self.__dict__["_group"].add(fqdn)
-            self.__dict__["_fqdns"].extend(fqdn)
+            self.__dict__["_fqdns"].append(fqdn)
 
         self._logger.info(f"self._fqdns after add: {self._fqdns}")
 
