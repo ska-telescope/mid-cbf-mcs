@@ -13,7 +13,7 @@ __all__ = ["CbfGroupProxy"]
 
 import logging
 import threading
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Callable, Optional, Type
 
 import backoff
 import tango
@@ -92,13 +92,11 @@ class CbfGroupProxy:
         self.__dict__["_change_event_subscription_ids"] = {}
         self.__dict__["_change_event_callbacks"] = {}
 
-    def add(
-        self: CbfGroupProxy, fqdns: List[str], max_time: float = 120.0
-    ) -> None:
+    def add(self: CbfGroupProxy, fqdn: str, max_time: float = 120.0) -> None:
         """
         Adds connections to the devices that we want to proxy to the group.
 
-        :param fqdn: FQDNs of the devices to be proxied
+        :param fqdn: FQDN of the device to be proxied
         :param max_time: the maximum time, in seconds, to wait for a
             connection to be established. The default is 120 i.e. two
             minutes. If set to 0 or None, a single connection attempt is
@@ -157,9 +155,12 @@ class CbfGroupProxy:
             :return: a proxy for the device
             """
             group = group_connection_factory(self._name)
-            group.add(fqdns)
-            self.__dict__["_fqdns"].extend(fqdns)
+            group.add(fqdn)
+            self.__dict__["_fqdns"].extend(fqdn)
             return group
+
+        self._logger.info(f"fqdn to add: {fqdn}")
+        self._logger.info(f"self._fqdns: {self._fqdns}")
 
         if self._group is None:
             if max_time:
@@ -171,18 +172,24 @@ class CbfGroupProxy:
                     self._group_connection_factory
                 )
         else:
-            self.__dict__["_group"].add(fqdns)
-            self.__dict__["_fqdns"].extend(fqdns)
+            self.__dict__["_group"].add(fqdn)
+            self.__dict__["_fqdns"].extend(fqdn)
 
-    def remove(self: CbfGroupProxy, fqdn: List[str]) -> None:
+        self._logger.info(f"self._fqdns after add: {self._fqdns}")
+
+    def remove(self: CbfGroupProxy, fqdn: str) -> None:
         """
         Remove a device from the group.
 
         :param fqdn: FQDN of the device to be proxied.
         """
+
+        self._logger.info(f"fqdn to remove: {fqdn}")
+        self._logger.info(f"self._fqdns: {self._fqdns}")
         if fqdn in self._fqdns:
             self.__dict__["_fqdns"].remove(fqdn)
             self.__dict__["_group"].remove(fqdn)
+        self._logger.info(f"self._fqdns after remove: {self._fqdns}")
 
     def remove_all(self: CbfGroupProxy) -> None:
         """
