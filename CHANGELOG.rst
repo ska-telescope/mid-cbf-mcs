@@ -31,6 +31,7 @@ Development
 
 0.11.1
 *****
+* Fixed subarray GoToIdle to issue GoToIdle to VCC and FSP devices
 
 0.11.0
 *****

@@ -46,6 +46,10 @@ class VccBandSimulator:
         self._state = tango.DevState.INIT
         self._obs_state = ObsState.IDLE
 
+        # FIXME temp undo of CIP-1765
+        self._frequency_offset_k = 0
+        self._frequency_offset_delta_f = 0
+        ##
         self._vcc_gain = []
 
         self._config_id = ""
@@ -61,6 +65,19 @@ class VccBandSimulator:
     def obsState(self) -> List[float]:
         """Return the Obs state attribute."""
         return self._obs_state
+
+    # FIXME temp undo of CIP-1765
+    @property
+    def frequencyOffsetK(self) -> List[float]:
+        """Return the frequency offset K attribute."""
+        return self._frequency_offset_k
+
+    @property
+    def frequencyOffsetDeltaF(self) -> List[float]:
+        """Return the frequency offset delta_f attribute."""
+        return self._frequency_offset_delta_f
+
+    ##
 
     @property
     def vccGain(self) -> List[float]:
@@ -99,6 +116,22 @@ class VccBandSimulator:
     def State(self: VccBandSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state
+
+    # FIXME temp undo of CIP-1765
+    def InitCommonParameters(self: VccBandSimulator, json_str: str) -> None:
+        """
+        Initialize the common/constant parameters of this VCC device. These
+        parameters hold the same value across all bands for one receptor, and
+        do not change during scan configuration.
+
+        :param json_str: JSON-formatted string containing the parameters
+        """
+        params = json.loads(json_str)
+        self._frequency_offset_k = params["frequency_offset_k"]
+        self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
+        self._state = tango.DevState.DISABLE
+
+    ##
 
     def SetInternalParameters(self: VccBandSimulator, json_str: str) -> None:
         """

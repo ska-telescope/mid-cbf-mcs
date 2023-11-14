@@ -174,16 +174,20 @@ class TestVcc:
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
-        band_configuration = {
-            "frequency_band": configuration["frequency_band"],
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
-        test_proxies.vcc[vcc_id].ConfigureBand(json.dumps(band_configuration))
+        # FIXME
+        frequency_band = configuration["frequency_band"]
+        test_proxies.vcc[vcc_id].ConfigureBand(frequency_band)
+
+        # band_configuration = {
+        #     "frequency_band": configuration["frequency_band"],
+        #     "dish_sample_rate": 999999,
+        #     "samples_per_frame": 18,
+        # }
+        # test_proxies.vcc[vcc_id].ConfigureBand(json.dumps(band_configuration))
         time.sleep(2)
         assert (
             test_proxies.vcc[vcc_id].frequencyBand
-            == freq_band_dict()[configuration["frequency_band"]]["band_index"]
+            == freq_band_dict()[frequency_band]["band_index"]  # FIXME
         )
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
