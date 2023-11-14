@@ -12,7 +12,7 @@ Development
 
 0.12.0
 *****
-* Refactored controller OffCommand to issue gracefule shutdown to HPS and reset subarray observing state
+* Refactored controller OffCommand to issue graceful shutdown to HPS and reset subarray observing state
 
 0.11.8
 *****
