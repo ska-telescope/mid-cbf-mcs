@@ -997,7 +997,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         result = {
             "outputLink": 0,
             "outputHost": "",
-            "outputMac": "",
             "outputPort": 0,
         }
         # Get output link by finding the first element[1] that's greater than argin
@@ -1016,14 +1015,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
             else:
                 break
         result["outputHost"] = host
-
-        mac = ""
-        for element in self._vis_destination_address["outputMac"]:
-            if argin >= element[0]:
-                mac = element[1]
-            else:
-                break
-        result["outputMac"] = mac
 
         # Port is different. the array is given as [[start_channel, start_value, increment],[start_channel, start_value, increment],.....]
         # value = start_value + (channel - start_channel)*increment

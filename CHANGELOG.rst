@@ -27,7 +27,10 @@ Development
 * Increase Artifacts PVC size to 1Gi (from 250Mi)
 
 0.11.5
-*****
+********
+* Added InitSysParam command to controller
+* Refactored reception utils to handle Dish VCC mapping
+* Increased HPS master configure timeout
 
 0.11.4-0.11.2
 *****

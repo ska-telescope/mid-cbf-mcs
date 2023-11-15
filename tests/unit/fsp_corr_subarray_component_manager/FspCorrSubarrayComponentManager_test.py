@@ -125,7 +125,6 @@ class TestFspCorrSubarrayComponentManager:
             )
         assert fsp_corr_subarray_component_manager.vis_destination_address == {
             "outputHost": [],
-            "outputMac": [],
             "outputPort": [],
         }
         assert fsp_corr_subarray_component_manager.fsp_channel_offset == 0

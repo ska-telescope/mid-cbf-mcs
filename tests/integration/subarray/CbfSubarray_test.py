@@ -909,7 +909,7 @@ class TestCbfSubarray:
                                 == fsp["output_link_map"][i][j]
                             )
 
-                    if "output_host" and "output_mac" and "output_port" in fsp:
+                    if "output_host" and "output_port" in fsp:
                         assert str(
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
@@ -920,7 +920,6 @@ class TestCbfSubarray:
                                     fsp["output_host"][0],
                                     fsp["output_host"][1],
                                 ],
-                                "outputMac": [fsp["output_mac"][0]],
                                 "outputPort": [
                                     fsp["output_port"][0],
                                     fsp["output_port"][1],

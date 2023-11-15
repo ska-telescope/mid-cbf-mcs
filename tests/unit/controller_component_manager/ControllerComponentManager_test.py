@@ -81,11 +81,36 @@ class TestControllerComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert controller_component_manager._connected is True
+
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.OK
+
         assert controller_component_manager._on is False
 
         (result_code, _) = controller_component_manager.on()
         assert controller_component_manager._on is True
         assert result_code == ResultCode.OK
+
+    def test_On_No_SysParam(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test on().
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        assert controller_component_manager._on is False
+
+        (result_code, _) = controller_component_manager.on()
+        assert result_code == ResultCode.FAILED
 
     def test_Off(
         self: TestControllerComponentManager,
@@ -100,6 +125,11 @@ class TestControllerComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert controller_component_manager._connected is True
+
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.OK
 
         (result_code, _) = controller_component_manager.on()
         assert controller_component_manager._on is True

@@ -32,7 +32,6 @@ class Const:
         self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10**9, 5.18 * 10**9)
 
         self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
-        self.DEFAULT_OUTPUT_MAC = [[0, "06-00-00-00-00-01"]]
         self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
 
         self.MAX_VCC = 4
