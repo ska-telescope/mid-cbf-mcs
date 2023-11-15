@@ -57,6 +57,7 @@ class VccControllerSimulator:
         self._frequency_band = 0
 
     # Properties that match the Tango attributes in the band devices
+
     @property
     def frequencyBand(self) -> int:
         """Return the frequency band attribute."""

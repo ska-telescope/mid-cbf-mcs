@@ -950,6 +950,8 @@ class TestCbfSubarray:
                             fsp_id
                         ].searchBeams
                     ):
+                        # TODO: bug in FSP seems that searchBeams not cleared
+                        #  from previous scan configs even after deconfigure
                         searchBeam = json.loads(sBeam)
                         assert (
                             searchBeam["search_beam_id"]

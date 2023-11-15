@@ -35,12 +35,13 @@ class Const:
         self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
 
         self.MAX_VCC = 4
-
         self.MAX_SUBARRAY = 16
 
         self.DEFAULT_COUNT_VCC = 197
         self.DEFAULT_COUNT_FSP = 27
         self.DEFAULT_COUNT_SUBARRAY = 16
+
+        self.DEFAULT_TIMEOUT = 4
 
 
 const = Const()

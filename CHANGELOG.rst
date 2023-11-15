@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.0
+*****
+* Refactored controller OffCommand to issue graceful shutdown to HPS and reset subarray observing state
+
 0.11.8
 *****
 * Created defaults for VCC internal gains values
@@ -34,6 +38,7 @@ Development
 
 0.11.1
 *****
+* Fixed subarray GoToIdle to issue GoToIdle to VCC and FSP devices
 
 0.11.0
 *****

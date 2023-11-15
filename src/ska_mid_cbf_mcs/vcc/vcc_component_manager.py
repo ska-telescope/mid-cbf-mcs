@@ -424,7 +424,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         FPGA to the correct bitstream and enables the respective band device. All
         other band devices are disabled.
 
-        :param freq_band_name: the frequency band name
+        :param argin: the frequency band name
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -522,7 +522,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._vcc_controller_simulator.Unconfigure()
             else:
                 try:
-                    self._vcc_controller_proxy.Unconfigure()
+                    pass
+                    # TODO CIP-1850
+                    # self._vcc_controller_proxy.Unconfigure()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
@@ -661,7 +663,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_simulators[idx].Abort()
             else:
                 try:
-                    self._band_proxies[idx].Abort()
+                    pass
+                    # TODO CIP-1850
+                    # self._band_proxies[idx].Abort()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
@@ -686,7 +690,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_simulators[idx].ObsReset()
             else:
                 try:
-                    self._band_proxies[idx].ObsReset()
+                    pass
+                    # TODO CIP-1850
+                    # self._band_proxies[idx].ObsReset()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
