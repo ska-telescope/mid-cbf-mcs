@@ -128,6 +128,11 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.OK
+
         (result_code, _) = controller_component_manager.on()
         assert controller_component_manager._on is True
 
