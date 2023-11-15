@@ -363,7 +363,6 @@ class TestVccComponentManager:
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]
     )
-    @pytest.mark.skip(reason="Intermittent failure in the pipeline")
     def test_configure_scan_invalid_frequency_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
@@ -387,25 +386,29 @@ class TestVccComponentManager:
 
         configuration = json.loads(json_str)
         freq_band = freq_band_dict()[configuration["frequency_band"]]
+        freq_band_index = freq_band["band_index"]
 
         # Try without configuring the band first
         (result_code, msg) = vcc_component_manager.configure_scan(json_str)
         assert result_code == ResultCode.FAILED
         assert (
             msg == f"Error in Vcc.ConfigureScan; scan configuration "
-            f"frequency band {freq_band} not the same as enabled band device 0"
+            f"frequency band {freq_band_index} not the same as enabled band "
+            f"device 0"
         )
+
         mock_vcc_band.ConfigureScan.assert_not_called()
 
         # Configure the band to something different
         other_freq_bands = list(
             set(["1", "2", "3", "4", "5a", "5b"])
-            - set(configuration["frequency_band"])
+            - set([configuration["frequency_band"]])
         )
+
         vcc_component_manager.configure_band(
             json.dumps(
                 {
-                    "frequency_band": configuration["frequency_band"],
+                    "frequency_band": other_freq_bands[0],
                     "dish_sample_rate": 999999,
                     "samples_per_frame": 18,
                 }
@@ -420,7 +423,7 @@ class TestVccComponentManager:
         assert result_code == ResultCode.FAILED
         assert (
             msg == f"Error in Vcc.ConfigureScan; scan configuration "
-            f"frequency band {freq_band} not the same as enabled band device "
+            f"frequency band {freq_band_index} not the same as enabled band device "
             f"{vcc_component_manager.frequency_band}"
         )
         mock_vcc_band.ConfigureScan.assert_not_called()
