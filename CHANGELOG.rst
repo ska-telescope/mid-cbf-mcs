@@ -10,6 +10,12 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.1
+*****
+* Removed hardcoded input sample rate. 
+* Changed fs_sample_rate to integer and in Hz
+* Added check for missing Dish ID - VCC mapping during On command
+
 0.12.0
 *****
 * Refactored controller OffCommand to issue graceful shutdown to HPS and reset subarray observing state
