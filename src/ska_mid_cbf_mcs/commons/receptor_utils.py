@@ -45,9 +45,6 @@ class ReceptorUtils:
 
         :param mapping: dict mapping the receptor ID and VCC ID.
         """
-        result = self.is_valid_dish_vcc_mapping(mapping)
-        if not result[0]:
-            raise ValueError(result[1])
 
         self.receptor_id_to_vcc_id = {}
         self.vcc_id_to_receptor_id = {}
@@ -80,30 +77,6 @@ class ReceptorUtils:
             raise ValueError(
                 f"Incorrect DISH type prefix. Prefix must be {self.SKA_DISH_TYPE_STR} or {self.MKT_DISH_TYPE_STR}."
             )
-
-    @staticmethod
-    def is_valid_dish_vcc_mapping(mapping) -> Tuple[bool, str]:
-        """
-        Checks if the dish vcc mapping is valid.
-        The telescope model schema already validated:
-            - dish IDs are valid: SKA001-133 or MKT000-063
-            - dish IDs are unique: they're stored in a dict, so no duplicates
-            - vcc IDs are valid: in range [1-197]
-            - k values are valid: in range [1-2222]
-
-        This function just needs to verify that the vcc IDs are unique.
-
-        :return: the result(bool) and message(str) as a Tuple(result, msg)
-        """
-        dish_dict = mapping["dish_parameters"]
-        vcc_id_set = set()
-        for _, v in dish_dict.items():
-            # Verify that the VCC IDs are unique
-            if v["vcc"] not in vcc_id_set:
-                vcc_id_set.add(v["vcc"])
-            else:
-                return (False, f"Duplicated VCC ID {v['vcc']}")
-        return (True, "")
 
     @staticmethod
     def are_Valid_Receptor_Ids(argin: List[str]) -> Tuple[bool, str]:

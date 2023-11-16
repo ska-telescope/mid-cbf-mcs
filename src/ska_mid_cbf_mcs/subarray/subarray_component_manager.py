@@ -34,10 +34,7 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from ska_telmodel.csp.schema import (
-    get_csp_delaymodel_schema,
-    get_csp_scan_schema,
-)
+from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
@@ -465,12 +462,12 @@ class CbfSubarrayComponentManager(
                 self._last_received_delay_model = value
                 delay_model_json = json.loads(value)
 
-                # Validate delay_model against the telescope model
-                delay_model_schema = get_csp_delaymodel_schema(
-                    version=delay_model_json["interface"], strict=True
-                )
+                # Validate delay_model_json against the telescope model
                 try:
-                    delay_model_schema.validate(delay_model_json)
+                    telmodel_validate(
+                        version=delay_model_json["interface"],
+                        config=delay_model_json,
+                    )
                     self._logger.info("Delay model is valid!")
                 except Exception as e:
                     # TODO: Once the delay model epoch int type issue from CIP-1749 is resolved, raise the exception instead of just logging the error
@@ -2145,11 +2142,8 @@ class CbfSubarrayComponentManager(
         """
 
         # Validate scan_json against the telescope model
-        scan_schema = get_csp_scan_schema(
-            version=argin["interface"], strict=True
-        )
         try:
-            scan_schema.validate(argin)
+            telmodel_validate(version=argin["interface"], config=argin)
             self._logger.info("Scan is valid!")
         except Exception as e:
             msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
