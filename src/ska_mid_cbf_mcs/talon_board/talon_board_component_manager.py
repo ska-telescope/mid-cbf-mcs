@@ -140,7 +140,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         super().start_communicating()
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerMode.OFF)
         self.connected = True
 
     def stop_communicating(self) -> None:
@@ -149,7 +149,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.stop_communicating"
         )
         super().stop_communicating()
-        self.update_component_power_mode(PowerMode.OFF)
+        # update component power mode to unknown when monitoring communications
+        # to the component (talon board here) are halted
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     def _get_devices_in_server(self, server: str):
@@ -234,106 +236,130 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
 
         if self._talon_sysid_fqdn is not None:
-            e = self._proxies[
-                self._talon_sysid_fqdn
-            ].add_change_event_callback(
-                attribute_name="version",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "version": self._proxies[
+                    self._talon_sysid_fqdn
+                ].add_change_event_callback(
+                    attribute_name="version",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_sysid_events.append(e)
-            e = self._proxies[
-                self._talon_sysid_fqdn
-            ].add_change_event_callback(
-                attribute_name="Bitstream",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "Bitstream": self._proxies[
+                    self._talon_sysid_fqdn
+                ].add_change_event_callback(
+                    attribute_name="Bitstream",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_sysid_events.append(e)
 
         # Talon Status attributes
         self._talon_status_events = []
 
         if self._talon_status_fqdn is not None:
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="iopll_locked_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="fs_iopll_locked_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "fs_iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="fs_iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="comms_iopll_locked_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "comms_iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="comms_iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="system_clk_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "system_clk_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="system_clk_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="emif_bl_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "emif_bl_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_bl_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="emif_br_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "emif_br_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_br_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="emif_tr_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "emif_tr_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_tr_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="e100g_0_pll_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "e100g_0_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="e100g_0_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="e100g_1_pll_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "e100g_1_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="e100g_1_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
-            e = self._proxies[
-                self._talon_status_fqdn
-            ].add_change_event_callback(
-                attribute_name="slim_pll_fault",
-                callback=self._attr_change_callback,
-                stateless=True,
-            )
+            e = {
+                "slim_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="slim_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
             self._talon_status_events.append(e)
         # TODO: Add attributes as needed
 
@@ -346,8 +372,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_power_mode(PowerMode.OFF)
-
         for ev in self._talon_sysid_events:
             for name, id in ev.items():
                 self._logger.info(
@@ -362,6 +386,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
                 self._proxies[self._talon_status_fqdn].remove_event(name, id)
 
+        self.update_component_power_mode(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(

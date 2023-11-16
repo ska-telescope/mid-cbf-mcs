@@ -29,12 +29,15 @@ CbfController Tango Commands
 |              |               |                    | | Turn off power to all hardware                       |
 |              |               |                    | | See also :ref:`Off Sequence`                         |
 +--------------+---------------+--------------------+--------------------------------------------------------+
-| InitSysParam | str           | (ResultCode, str)  | Initialize Dish ID to VCC ID mapping and k values      |
+| InitSysParam | JSON str*     | (ResultCode, str)  | | Initialize Dish ID to VCC ID mapping and k values    |
+|              |               |                    | | See also :ref:`InitSysParam Sequence`                |
 +--------------+---------------+--------------------+--------------------------------------------------------+
 | Standby      | None          | (ResultCode, str)  | None                                                   |
 +--------------+---------------+--------------------+--------------------------------------------------------+
 | On           | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
 +--------------+---------------+--------------------+--------------------------------------------------------+
+
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
 
 CbfSubarray Tango Commands
 ----------------------------
@@ -97,7 +100,7 @@ CbfSubarray Tango Commands
 | Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                                  |
 +----------------------+---------------+--------------------+-------------------------------------------------+
    
-* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
 
 
 

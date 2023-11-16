@@ -18,8 +18,14 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
+from polling2 import TimeoutException, poll
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    ObsState,
+    PowerMode,
+    SimulationMode,
+)
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -91,9 +97,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._connected = False  # to device proxies
 
-        # TODO: CIP-1569
-        # Temporarily commenting out the self._on
-        # self._on = False  # CBF controller itself
+        self._on = False  # CBF controller itself
 
         (
             self._fqdn_vcc,
@@ -194,6 +198,13 @@ class ControllerComponentManager(CbfComponentManager):
             in list(self._hw_config["power_switch"].keys())
         ]
 
+        self._logger.debug(f"fqdn VCC: {self._fqdn_vcc}")
+        self._logger.debug(f"fqdn FSP: {self._fqdn_fsp}")
+        self._logger.debug(f"fqdn subarray: {self._fqdn_subarray}")
+        self._logger.debug(f"fqdn Talon board: {self._fqdn_talon_board}")
+        self._logger.debug(f"fqdn Talon LRU: {self._fqdn_talon_lru}")
+        self._logger.debug(f"fqdn power switch: {self._fqdn_power_switch}")
+
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
             self._group_vcc.add(self._fqdn_vcc)
@@ -291,7 +302,7 @@ class ControllerComponentManager(CbfComponentManager):
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn} device"
-                    self._logger.info(log_msg)
+                    self._logger.debug(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
@@ -336,94 +347,92 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger.info("Trying to execute ON Command")
 
+        if self._receptor_utils is None:
+            log_msg = "Dish-VCC mapping has not been provided."
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
         # Check if connection to device proxies has been established
         if self._connected:
             # Check if CBF Controller is already on
-            # TODO: CIP-1569
-            # Temporarily commenting out check for redundant ON command
-            # until the Off command is fully implemented.
-            # Uncomment the "if not self._on:" and indent everything after it
-            # until the corresponding else for CIP-1569.
-            #
-            # if not self._on:
-            #
+            if not self._on:
+                # Power on all the Talon boards if not in SimulationMode
+                # TODO: There are two VCCs per LRU. Need to check the number of
+                #       VCCs turned on against the number of LRUs powered on
+                if (
+                    self._talondx_component_manager.simulation_mode
+                    == SimulationMode.FALSE
+                ):
+                    # read in list of LRUs from configuration JSON
+                    with open(
+                        os.path.join(
+                            os.getcwd(),
+                            self._talondx_config_path,
+                            "talondx-config.json",
+                        )
+                    ) as f:
+                        talondx_config_json = json.load(f)
 
-            # Power on all the Talon boards if not in SimulationMode
-            # TODO: There are two VCCs per LRU. Need to check the number of
-            #       VCCs turned on against the number of LRUs powered on
-            if (
-                self._talondx_component_manager.simulation_mode
-                == SimulationMode.FALSE
-            ):
-                # read in list of LRUs from configuration JSON
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
+                    self._fqdn_talon_lru = []
+                    for config_command in talondx_config_json[
+                        "config_commands"
+                    ]:
+                        target = config_command["target"]
+                        for lru_id, lru_config in self._hw_config[
+                            "talon_lru"
+                        ].items():
+                            lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
+                            talon1 = lru_config["TalonDxBoard1"]
+                            talon2 = lru_config["TalonDxBoard2"]
+                            if (
+                                target in [talon1, talon2]
+                                and lru_fqdn not in self._fqdn_talon_lru
+                            ):
+                                self._fqdn_talon_lru.append(lru_fqdn)
+
+                    # TODO: handle subscribed events for missing LRUs
+                else:
+                    # use a hard-coded example fqdn talon lru for simulation mode
+                    self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+
+                # Turn on all the LRUs with the boards we need
+                lru_on_status, log_msg = self._turn_on_lrus()
+                if not lru_on_status:
+                    return (ResultCode.FAILED, log_msg)
+
+                # Configure all the Talon boards
+                if (
+                    self._talondx_component_manager.configure_talons()
+                    == ResultCode.FAILED
+                ):
+                    log_msg = "Failed to configure Talon boards"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                try:
+                    # Set the Simulation mode of the Subarray to the simulation mode of the controller
+                    self._group_subarray.write_attribute(
+                        "simulationMode",
+                        self._talondx_component_manager.simulation_mode,
                     )
-                ) as f:
-                    talondx_config_json = json.load(f)
+                    self._group_subarray.command_inout("On")
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = (
+                            f"Failed to turn on group proxies; {item.reason}"
+                        )
+                        self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
 
-                self._fqdn_talon_lru = []
-                for config_command in talondx_config_json["config_commands"]:
-                    target = config_command["target"]
-                    for lru_id, lru_config in self._hw_config[
-                        "talon_lru"
-                    ].items():
-                        lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
-                        talon1 = lru_config["TalonDxBoard1"]
-                        talon2 = lru_config["TalonDxBoard2"]
-                        if (
-                            target in [talon1, talon2]
-                            and lru_fqdn not in self._fqdn_talon_lru
-                        ):
-                            self._fqdn_talon_lru.append(lru_fqdn)
+                self._on = True
+                message = "CbfController On command completed OK"
+                return (ResultCode.OK, message)
 
-                # TODO: handle subscribed events for missing LRUs
+            # TODO: CIP-1814
             else:
-                # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
-
-            # Turn on all the LRUs with the boards we need
-            lru_on_status, log_msg = self._turn_on_lrus()
-            if not lru_on_status:
-                return (ResultCode.FAILED, log_msg)
-
-            # Configure all the Talon boards
-            if (
-                self._talondx_component_manager.configure_talons()
-                == ResultCode.FAILED
-            ):
-                log_msg = "Failed to configure Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            try:
-                # Set the Simulation mode of the Subarray to the simulation mode of the controller
-                self._group_subarray.write_attribute(
-                    "simulationMode",
-                    self._talondx_component_manager.simulation_mode,
-                )
-                self._group_subarray.command_inout("On")
-            except tango.DevFailed:
-                log_msg = "Failed to turn on group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            # TODO: CIP-1569
-            # Uncomment out the "self._on = True" when OFF command implemented.
-            # self._on = True
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
-
-            # TODO: CIP-1569
-            # Corresponding ELSE to handle redundant ON command.
-            # Uncomment out the following 4 lines when OFF command implemented.
-            # else:
-            #    log_msg = "CbfController is already ON. Disregarding redundant command."
-            #    self._logger.warning(log_msg)
-            #    return (ResultCode.OK, log_msg)
+                log_msg = "CbfController is already ON. Disregarding redundant command."
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
@@ -445,79 +454,72 @@ class ControllerComponentManager(CbfComponentManager):
         # Check if connection to device proxies has been established
         if self._connected:
             # Check if CBF Controller is on
-            # TODO: CIP-1569
-            # Temporarily commenting out check for redundant Off command
-            # until the Off command is fully implemented.
-            # Uncomment the "if self._on:" and indent everything after it
-            # until the corresponding else for CIP-1569.
-            #
-            # if self._on:
-            #
+            if self._on:
+                (result_code, message) = (ResultCode.OK, [])
 
-            if (
-                self._talondx_component_manager.simulation_mode
-                == SimulationMode.FALSE
-            ):
-                if len(self._fqdn_talon_lru) == 0:
-                    with open(
-                        os.path.join(
-                            os.getcwd(),
-                            self._talondx_config_path,
-                            "talondx-config.json",
-                        )
-                    ) as f:
-                        talondx_config_json = json.load(f)
+                # reset subarray observing state to EMPTY
+                for subarray in [
+                    self._proxies[fqdn] for fqdn in self._fqdn_subarray
+                ]:
+                    (subarray_empty, log_msg) = self._subarray_to_empty(
+                        subarray
+                    )
+                    if not subarray_empty:
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
+                        result_code = ResultCode.FAILED
 
-                    for config_command in talondx_config_json[
-                        "config_commands"
-                    ]:
-                        target = config_command["target"]
-                        for lru_id, lru_config in self._hw_config[
-                            "talon_lru"
-                        ].items():
-                            talon1 = lru_config["TalonDxBoard1"]
-                            talon2 = lru_config["TalonDxBoard2"]
-                            if target in [talon1, talon2]:
-                                self._fqdn_talon_lru.append(
-                                    f"mid_csp_cbf/talon_lru/{lru_id}"
-                                )
+                # turn off subelements
+                (subelement_off, log_msg) = self._turn_off_subelements()
+                message.extend(log_msg)
+                if not subelement_off:
+                    result_code = ResultCode.FAILED
 
-                    # TODO: handle subscribed events for missing LRUs
+                # HPS master shutdown
+                result = self._talondx_component_manager.shutdown()
+                if result == ResultCode.FAILED:
+                    # if HPS master shutdown failed, continue with attempting to
+                    # shut off power outlets via LRU device
+                    log_msg = "HPS Master shutdown failed."
+                    self._logger.warning(log_msg)
+                    message.append(log_msg)
+
+                # Turn off all the LRUs currently in use
+                (lru_off, log_msg) = self._turn_off_lrus()
+                if not lru_off:
+                    message.append(log_msg)
+                    result_code = ResultCode.FAILED
+
+                # check final device states
+                (
+                    op_state_error_list,
+                    obs_state_error_list,
+                ) = self._check_subelements_off()
+
+                if len(op_state_error_list) > 0:
+                    for fqdn, state in op_state_error_list:
+                        log_msg = f"{fqdn} failed to turn OFF, current state: {state}"
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
+                    result_code = ResultCode.FAILED
+
+                if len(obs_state_error_list) > 0:
+                    for fqdn, obs_state in obs_state_error_list:
+                        log_msg = f"{fqdn} failed to restart, current obsState: {obs_state}"
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
+                    result_code = ResultCode.FAILED
+
+                self._on = False
+                if result_code == ResultCode.OK:
+                    message.append("CbfController Off command completed OK")
+                return (result_code, "; ".join(message))
+
+            # TODO: CIP-1814
             else:
-                # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
-
-            try:
-                self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
-                for fqdn in self._fqdn_talon_lru:
-                    self._proxies[fqdn].Off()
-            except tango.DevFailed:
-                log_msg = "Failed to power off Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            try:
-                self._group_subarray.command_inout("Off")
-                self._group_vcc.command_inout("Off")
-                self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            # TODO: CIP-1569
-            # Uncomment out the "self._on = False" when OFF command implemented.
-            # self._on = False
-            message = "CbfController Off command completed OK"
-            return (ResultCode.OK, message)
-
-            # TODO: CIP-1569
-            # Corresponding ELSE to handle redundant OFF command.
-            # Uncomment out the following 4 lines when OFF command fully implemented.
-            # else:
-            #    log_msg = "CbfController is already OFF. Disregarding redundant command."
-            #    self._logger.warning(log_msg)
-            #    return (ResultCode.OK, log_msg)
+                log_msg = "CbfController is already OFF. Disregarding redundant command."
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
@@ -583,6 +585,7 @@ class ControllerComponentManager(CbfComponentManager):
         try:
             self._receptor_utils = ReceptorUtils(sys_param)
         except ValueError as e:
+            self._receptor_utils = None
             self._logger.error(e)
             return (ResultCode.FAILED, "Invalid sys params")
 
@@ -670,3 +673,273 @@ class ControllerComponentManager(CbfComponentManager):
                 failed_lrus.append(fqdn)
                 out_status = False
         return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
+
+    def _lru_off(self, proxy, lru_fqdn) -> (bool, str):
+        try:
+            self._logger.info(f"Turning off LRU {lru_fqdn}")
+            proxy.Off()
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned off: {lru_fqdn}")
+        return (True, None)
+
+    def _turn_off_lrus(
+        self: ControllerComponentManager,
+    ) -> (bool, str):
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.FALSE
+        ):
+            if len(self._fqdn_talon_lru) == 0:
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
+
+                for config_command in talondx_config_json["config_commands"]:
+                    target = config_command["target"]
+                    for lru_id, lru_config in self._hw_config[
+                        "talon_lru"
+                    ].items():
+                        talon1 = lru_config["TalonDxBoard1"]
+                        talon2 = lru_config["TalonDxBoard2"]
+                        if target in [talon1, talon2]:
+                            self._fqdn_talon_lru.append(
+                                f"mid_csp_cbf/talon_lru/{lru_id}"
+                            )
+
+                # TODO: handle subscribed events for missing LRUs
+        else:
+            # use a hard-coded example fqdn talon lru for simulation mode
+            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+
+        # turn off LRUs
+        results = [
+            self._lru_off(
+                self._proxies[fqdn],
+                fqdn,
+            )
+            for fqdn in self._fqdn_talon_lru
+        ]
+
+        failed_lrus = []
+        out_status = True
+        for status, fqdn in results:
+            if not status:
+                failed_lrus.append(fqdn)
+                out_status = False
+        return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
+
+    def _subarray_to_empty(
+        self: ControllerComponentManager, subarray: CbfDeviceProxy
+    ) -> (bool, str):
+        """
+        Restart subarray observing state model to ObsState.EMPTY
+        """
+        # if subarray is READY go to IDLE
+        if subarray.obsState == ObsState.READY:
+            subarray.GoToIdle()
+            if subarray.obsState != ObsState.IDLE:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.IDLE,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutException:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                    return (False, log_msg)
+
+        # if subarray is IDLE go to EMPTY by removing all receptors
+        if subarray.obsState == ObsState.IDLE:
+            subarray.RemoveAllReceptors()
+            if subarray.obsState != ObsState.EMPTY:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.EMPTY,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutException:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                    return (False, log_msg)
+
+        # wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
+        if subarray.obsState in [
+            ObsState.RESOURCING,
+            ObsState.RESTARTING,
+        ]:
+            try:
+                poll(
+                    lambda: subarray.obsState
+                    not in [
+                        ObsState.RESOURCING,
+                        ObsState.RESTARTING,
+                    ],
+                    timeout=const.DEFAULT_TIMEOUT,
+                    step=0.5,
+                )
+            except TimeoutException:
+                # raise exception if timed out waiting to exit RESOURCING/RESTARTING
+                log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
+                self._logger.error(log_msg)
+                return (False, log_msg)
+
+        # if subarray not in EMPTY then we need to ABORT and RESTART
+        if subarray.obsState != ObsState.EMPTY:
+            # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
+            if subarray.obsState in [
+                ObsState.ABORTING,
+                ObsState.RESETTING,
+            ]:
+                try:
+                    poll(
+                        lambda: subarray.obsState
+                        not in [
+                            ObsState.ABORTING,
+                            ObsState.RESETTING,
+                        ],
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutException:
+                    # raise exception if timed out waiting to exit ABORTING/RESETTING
+                    log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
+                    self._logger.error(log_msg)
+                    return (False, log_msg)
+
+            # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
+            if subarray.obsState not in [
+                ObsState.FAULT,
+                ObsState.ABORTED,
+            ]:
+                subarray.Abort()
+                if subarray.obsState != ObsState.ABORTED:
+                    try:
+                        poll(
+                            lambda: subarray.obsState == ObsState.ABORTED,
+                            timeout=const.DEFAULT_TIMEOUT,
+                            step=0.5,
+                        )
+                    except TimeoutException:
+                        # raise exception if timed out waiting to exit ABORTING
+                        log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
+                        self._logger.error(log_msg)
+                        return (False, log_msg)
+
+            # finally, subarray may be restarted to EMPTY
+            subarray.Restart()
+            if subarray.obsState != ObsState.EMPTY:
+                try:
+                    poll(
+                        lambda: subarray.obsState == ObsState.EMPTY,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                except TimeoutException:
+                    # raise exception if timed out waiting to exit RESTARTING
+                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                    self._logger.error(log_msg)
+                    return (False, log_msg)
+
+        return (
+            True,
+            f"Subarray {subarray} succesfully set to ObsState.EMPTY; subarray.obsState = {subarray.obsState}",
+        )
+
+    def _turn_off_subelements(
+        self: ControllerComponentManager,
+    ) -> (bool, List[str]):
+        result = True
+        message = []
+        try:
+            self._group_subarray.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = (
+                    f"Failed to turn off subarray group proxy; {item.reason}"
+                )
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        try:
+            self._group_vcc.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        try:
+            self._group_fsp.command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        if result:
+            message.append(
+                "Successfully issued off command to all subelements."
+            )
+        return (result, message)
+
+    def _check_subelements_off(
+        self: ControllerComponentManager,
+    ) -> (List[str], List[str]):
+        """
+        Verify that the subelements are in DevState.OFF, ObsState.EMPTY/IDLE
+        """
+        op_state_error_list = []
+        obs_state_error_list = []
+        for fqdn, proxy in self._proxies.items():
+            self._logger.debug(f"Checking final state of device {fqdn}")
+            # power switch device state is always ON as long as it is
+            # communicating and monitoring the PDU; does not implement
+            # On/Off commands, rather TurnOn/OffOutlet commands to
+            # target specific outlets
+            if fqdn not in self._fqdn_power_switch:
+                try:
+                    # TODO CIP-1899 The cbfcontroller is sometimes
+                    # unable to read the State() of the talon_lru
+                    # device server due to an error trying to
+                    # acquire the serialization monitor. As a temporary
+                    # workaround, the cbfcontroller will log these
+                    # errors if they occur but continue polling.
+                    poll(
+                        lambda: proxy.State() == tango.DevState.OFF,
+                        ignore_exceptions=(tango.DevFailed),
+                        log_error=logging.WARNING,
+                        timeout=const.DEFAULT_TIMEOUT,
+                        step=0.5,
+                    )
+                # If the poll timed out while waiting
+                # for proxy.State() == tango.DevState.OFF,
+                # it throws a TimeoutException
+                except TimeoutException:
+                    op_state_error_list.append([fqdn, proxy.State()])
+
+            if fqdn in self._fqdn_subarray:
+                obs_state = proxy.obsState
+                if obs_state != ObsState.EMPTY:
+                    obs_state_error_list.append((fqdn, obs_state))
+
+            if fqdn in self._fqdn_vcc:
+                obs_state = proxy.obsState
+                if obs_state != ObsState.IDLE:
+                    obs_state_error_list.append((fqdn, obs_state))
+
+        return (op_state_error_list, obs_state_error_list)
