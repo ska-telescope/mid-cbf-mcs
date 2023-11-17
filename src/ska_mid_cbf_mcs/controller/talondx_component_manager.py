@@ -26,6 +26,7 @@ from scp import SCPClient, SCPException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 __all__ = ["TalonDxComponentManager"]
@@ -72,7 +73,7 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-        # Simulation mode does not do anything yet
+        # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 
@@ -92,6 +93,8 @@ class TalonDxComponentManager:
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        # Initialize proxies dict outside of the configure_talon_thread, so that the thread for each talon doesn't overwrite the previous one
+        self.proxies = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
@@ -99,35 +102,39 @@ class TalonDxComponentManager:
             ]
             results = [f.result() for f in futures]
 
-        if any(r == ResultCode.FAILED for r in results):
+        if any(r[0] == ResultCode.FAILED for r in results):
+            self.logger.error(f"Talon configure thread results: {results}")
             return ResultCode.FAILED
 
         return ResultCode.OK
 
     def _configure_talon_thread(
         self: TalonDxComponentManager, talon_cfg
-    ) -> ResultCode:
+    ) -> tuple(ResultCode, str):
         if self._configure_talon_networking(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_configure_talon_networking FAILED")
 
         if self._copy_binaries_and_bitstream(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_copy_binaries_and_bitstream FAILED")
 
         if self._start_hps_master(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_start_hps_master FAILED")
 
         if (
             self._create_hps_master_device_proxies(talon_cfg)
             == ResultCode.FAILED
         ):
-            return ResultCode.FAILED
+            return (
+                ResultCode.FAILED,
+                "_create_hps_master_device_proxies FAILED",
+            )
 
         if self._configure_hps_master(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_configure_hps_master FAILED")
 
         target = talon_cfg["target"]
         self.logger.info(f"Completed configuring talon board {target}")
-        return ResultCode.OK
+        return (ResultCode.OK, "_configure_talon_thread completed OK")
 
     def _setup_tango_host_file(
         self: TalonDxComponentManager,
@@ -439,7 +446,6 @@ class TalonDxComponentManager:
         """
         # Create device proxies for the HPS master devices
         ret = ResultCode.OK
-        self.proxies = {}
 
         fqdn = talon_cfg["ds_hps_master_fqdn"]
 
@@ -503,3 +509,58 @@ class TalonDxComponentManager:
             ret = ResultCode.FAILED
 
         return ret
+
+    def shutdown(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
+        """
+        Shutdown the DsHpsMaster device with shutdown code 3.
+        For reference, shutdown command codes:
+            0. Child Tango DSs only
+            1. Child and HPS Master Tango DSs
+            2. Child and HPS Master Tango DSs, reboot Talon DX board
+            3. Child and HPS Master Tango DSs, shut down Talon DX board
+        :return: ResultCode.OK if all configure commands were sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        if self.simulation_mode == SimulationMode.FALSE:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(self._shutdown_talon_thread, talon_cfg)
+                    for talon_cfg in self.talondx_config["config_commands"]
+                ]
+                results = [f.result() for f in futures]
+
+            if any(r[0] == ResultCode.FAILED for r in results):
+                self.logger.error(f"Talon shutdown thread results: {results}")
+                ret = ResultCode.FAILED
+
+        return ret
+
+    def _shutdown_talon_thread(
+        self: TalonDxComponentManager, talon_cfg
+    ) -> tuple(ResultCode, str):
+        # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
+        hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
+        hps_master = self.proxies[hps_master_fqdn]
+        try:
+            hps_master.shutdown(3)
+        except tango.DevFailed as df:
+            for item in df.args:
+                self.logger.warning(
+                    f"Exception while sending shutdown command"
+                    f" to {hps_master_fqdn} device: {str(item.reason)}"
+                )
+            # TODO: determine behaviour here; the shutdown command will
+            # inevitably throw an exception, as the device is shut off
+            # there may be a more elegant way to handle the expected shutdown
+            # for CIP-1673 just logging a warning here
+
+        # wait for linux shutdown
+        time.sleep(const.DEFAULT_TIMEOUT)
+
+        return (
+            ResultCode.OK,
+            f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
+        )

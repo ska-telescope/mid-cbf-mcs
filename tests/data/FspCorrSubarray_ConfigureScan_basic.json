@@ -23,7 +23,6 @@
         [11160, 64], [11904, 68], [12648, 72], 
         [13392, 76], [14136, 80]], 
     "output_host": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], 
-    "output_mac": [[0, "06-00-00-00-00-01"]], 
     "output_port": [[0, 9000, 1], [8184, 9000, 1]], 
     "config_id": "band:5a, fsp1, 744 channels average factor 8", 
     "frequency_band": "5a", 
@@ -33,7 +32,7 @@
     "fs_sample_rates":[
         {
             "receptor_id": 1,
-            "fs_sample_rate": 220
+            "fs_sample_rate": 220011300
         }
     ]
 }

@@ -16,9 +16,6 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import json
-from typing import List
-
 import tango
 
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
@@ -57,20 +54,9 @@ class VccControllerSimulator:
 
         self._state = tango.DevState.INIT
 
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
         self._frequency_band = 0
 
     # Properties that match the Tango attributes in the band devices
-    @property
-    def frequencyOffsetK(self) -> List[float]:
-        """Return the frequency offset K attribute."""
-        return self._frequency_offset_k
-
-    @property
-    def frequencyOffsetDeltaF(self) -> List[float]:
-        """Return the frequency offset delta_f attribute."""
-        return self._frequency_offset_delta_f
 
     @property
     def frequencyBand(self) -> int:
@@ -81,26 +67,6 @@ class VccControllerSimulator:
     def State(self: VccControllerSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state
-
-    def InitCommonParameters(
-        self: VccControllerSimulator, json_str: str
-    ) -> None:
-        """
-        Initialize the common/constant parameters of this VCC device. These
-        parameters hold the same value across all bands for one receptor, and
-        do not change during scan configuration.
-
-        :param json_str: JSON-formatted string containing the parameters
-        """
-        params = json.loads(json_str)
-        self._frequency_offset_k = params["frequency_offset_k"]
-        self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
-
-        # Initialize the band devices
-        for band_device in self._band_devices:
-            band_device.InitCommonParameters(json_str)
-
-        self._state = tango.DevState.ON
 
     def ConfigureBand(
         self: VccControllerSimulator, frequency_band: int
