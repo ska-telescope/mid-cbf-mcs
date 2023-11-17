@@ -79,7 +79,7 @@ class TestCbfSubarray:
         device_under_test = test_proxies.subarray[sub_id]
 
         with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = json.load(f)
+            sp = f.read()
         device_under_test.sysParam = sp
 
         sys_param = json.loads(sp)
