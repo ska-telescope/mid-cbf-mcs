@@ -573,7 +573,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"Received sys params {params}")
 
         init_sys_param_json = json.loads(params)
-        passed, msg = self._validate_init_sys_param(params)
+        passed, msg = self._validate_init_sys_param(init_sys_param_json)
         if not passed:
             return (
                 ResultCode.FAILED,
@@ -607,7 +607,9 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> Tuple:
         # Validate init_sys_param against the telescope model
         try:
-            telmodel_validate(version=params["interface"], config=params)
+            telmodel_validate(
+                version=params["interface"], config=params, strictness=2
+            )
             msg = "init_sys_param validation against ska-telmodel schema was successful!"
             self._logger.info(msg)
         except Exception as e:

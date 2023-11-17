@@ -11,8 +11,6 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
-import json
-
 # Path
 import os
 
@@ -85,10 +83,8 @@ class TestControllerComponentManager:
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
-            init_sys_param_json = json.load(f)
-        (result_code, _) = controller_component_manager.init_sys_param(
-            init_sys_param_json
-        )
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.OK
 
         assert controller_component_manager._on is False
@@ -131,10 +127,8 @@ class TestControllerComponentManager:
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
-            init_sys_param_json = json.load(f)
-        (result_code, _) = controller_component_manager.init_sys_param(
-            init_sys_param_json
-        )
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.OK
 
         (result_code, _) = controller_component_manager.on()
@@ -175,15 +169,11 @@ class TestControllerComponentManager:
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "sys_param_dup_vcc.json") as f:
-            init_sys_param_json = json.load(f)
-        (result_code, _) = controller_component_manager.init_sys_param(
-            init_sys_param_json
-        )
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED
 
         with open(json_file_path + "sys_param_invalid_rec_id.json") as f:
-            init_sys_param_json = json.load(f)
-        (result_code, _) = controller_component_manager.init_sys_param(
-            init_sys_param_json
-        )
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED

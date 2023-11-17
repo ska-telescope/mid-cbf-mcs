@@ -717,6 +717,7 @@ class CbfSubarray(CspSubElementSubarray):
                 telmodel_validate(
                     version=full_configuration["interface"],
                     config=full_configuration,
+                    strictness=2,
                 )
                 self.logger.info("Scan configuration is valid!")
             except Exception as e:
