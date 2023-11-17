@@ -91,8 +91,8 @@ class TestCbfController:
             os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
         )
         with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
-        test_proxies.controller.InitSysParam(sp)
+            init_sys_param_json = json.load(f)
+        test_proxies.controller.InitSysParam(init_sys_param_json)
 
         # send the On command
         test_proxies.controller.On()
@@ -133,8 +133,8 @@ class TestCbfController:
         """
         state = test_proxies.controller.State()
         with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
-        result = test_proxies.controller.InitSysParam(sp)
+            init_sys_param_json = json.load(f)
+        result = test_proxies.controller.InitSysParam(init_sys_param_json)
         state_after = test_proxies.controller.State()
 
         # InitSysParam should not change state
