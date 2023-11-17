@@ -470,7 +470,7 @@ class CbfSubarrayComponentManager(
                         strictness=2,
                     )
                     self._logger.info("Delay model is valid!")
-                except Exception as e:
+                except ValueError as e:
                     # TODO: Once the delay model epoch int type issue from CIP-1749 is resolved, raise the exception instead of just logging the error
                     msg = f"Delay model validation against the telescope model failed with the following exception:\n {str(e)}."
                     self._logger.error(msg)
@@ -2180,7 +2180,7 @@ class CbfSubarrayComponentManager(
                 version=argin["interface"], config=argin, strictness=2
             )
             self._logger.info("Scan is valid!")
-        except Exception as e:
+        except ValueError as e:
             msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
             return (False, msg)
 

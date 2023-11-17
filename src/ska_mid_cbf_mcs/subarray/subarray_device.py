@@ -720,7 +720,7 @@ class CbfSubarray(CspSubElementSubarray):
                     strictness=2,
                 )
                 self.logger.info("Scan configuration is valid!")
-            except Exception as e:
+            except ValueError as e:
                 msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
                 self.logger.error(msg)
 

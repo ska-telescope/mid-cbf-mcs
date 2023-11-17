@@ -612,7 +612,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             msg = "init_sys_param validation against ska-telmodel schema was successful!"
             self._logger.info(msg)
-        except Exception as e:
+        except ValueError as e:
             msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
             self._logger.error(msg)
             return (False, msg)
