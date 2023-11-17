@@ -26,6 +26,7 @@ from ska_tango_base.control_model import (
     PowerMode,
     SimulationMode,
 )
+from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -118,7 +119,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._get_max_capabilities = get_num_capabilities
 
-        self._sys_param = ""
+        self._init_sys_param = ""
         self._receptor_utils = None
 
         # TODO: component manager should not be passed into component manager ?
@@ -571,55 +572,57 @@ class ControllerComponentManager(CbfComponentManager):
         """
         self._logger.debug(f"Received sys params {params}")
 
-        if not self._check_sys_param_schemas(params):
+        init_sys_param_json = json.loads(params)
+        passed, msg = self._validate_init_sys_param(init_sys_param_json)
+        if not passed:
             return (
                 ResultCode.FAILED,
-                "Failed to validate against json schema",
+                msg,
             )
 
-        self._logger.info("Validated sys params against json schemas")
-
-        sys_param = json.loads(params)
-
         # store the attribute
-        try:
-            self._receptor_utils = ReceptorUtils(sys_param)
-        except ValueError as e:
-            self._receptor_utils = None
-            self._logger.error(e)
-            return (ResultCode.FAILED, "Invalid sys params")
+        self._receptor_utils = ReceptorUtils(init_sys_param_json)
+        self._init_sys_param = params
 
-        self._sys_param = params
-
-        # send sys params to the subarrays
+        # send init_sys_param to the subarrays
         try:
-            self._update_sys_param(params)
+            self._update_init_sys_param(params)
         except tango.DevFailed as e:
             self._logger.error(e)
             return (
                 ResultCode.FAILED,
-                "Failed to update subarrays with sys params",
+                "Failed to update subarrays with init_sys_param",
             )
 
-        self._logger.info("Updated subarrays with sys params")
+        self._logger.info("Updated subarrays with init_sys_param")
 
         return (
             ResultCode.OK,
             "CbfController InitSysParam command completed OK",
         )
 
-    def _check_sys_param_schemas(
+    def _validate_init_sys_param(
         self: ControllerComponentManager,
-        params: str,
-    ) -> bool:
-        # TODO
-        return True
+        params: dict,
+    ) -> Tuple:
+        # Validate init_sys_param against the telescope model
+        try:
+            telmodel_validate(
+                version=params["interface"], config=params, strictness=2
+            )
+            msg = "init_sys_param validation against ska-telmodel schema was successful!"
+            self._logger.info(msg)
+        except ValueError as e:
+            msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            self._logger.error(msg)
+            return (False, msg)
+        return (True, msg)
 
-    def _update_sys_param(
+    def _update_init_sys_param(
         self: ControllerComponentManager,
         params: str,
     ) -> None:
-        # write the sys param to each of the subarrays
+        # write the init_sys_param to each of the subarrays
         for fqdn in self._fqdn_subarray:
             self._proxies[fqdn].write_attribute("sysParam", params)
 
