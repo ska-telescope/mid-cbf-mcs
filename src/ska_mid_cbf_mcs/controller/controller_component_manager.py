@@ -27,6 +27,7 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from ska_telmodel.schema import validate as telmodel_validate
+
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
