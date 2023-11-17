@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.2
+******
+* CIP-1764 Added telmodel schema validation against the InitSysParam command 
+
 0.12.1
 *****
 * Removed hardcoded input sample rate. 
