@@ -79,6 +79,7 @@ class InfluxdbQueryClient:
             url=f"http://{self._hostname}:{self._influx_port}",
             token=self._influx_auth_token,
             org=self._influx_org,
+            timeout=20000,
         ) as client:
             res = await asyncio.gather(
                 self._query_temperatures(client),

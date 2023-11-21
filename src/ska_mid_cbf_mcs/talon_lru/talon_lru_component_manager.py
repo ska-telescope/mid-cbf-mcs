@@ -477,7 +477,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     ):
         try:
             talondx_board_proxy.set_timeout_millis(
-                10000
+                3000
             )  # TODO: is 10 needed?
             talondx_board_proxy.Off()
         except tango.DevFailed as df:
