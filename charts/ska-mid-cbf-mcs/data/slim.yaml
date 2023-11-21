@@ -1,10 +1,10 @@
 name: slim
 function: slim
 domain: mid-csp-cbf
-command: "SLIM"
-instances: ["slim"]
+command: "SLIMMesh"
+instances: ["mesh"]
 depends_on:
-  - device: mid_csp_cbf/sub_elt/controller
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -18,9 +18,9 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "SLIM"
+  name: "SLIMMesh"
   instances:
-  - name: "slim"
+  - name: "mesh"
     classes:
     - name: "SLIMMesh"
       devices:
@@ -34,6 +34,8 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
+            - "simulationMode"
+            - "3000"
       - name: "mid_csp_cbf/slim/slim-vis"
         properties:
           - name: "polled_attr"
@@ -44,3 +46,10 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
+            - "simulationMode"
+            - "3000"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

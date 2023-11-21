@@ -16,7 +16,7 @@ import logging
 from typing import Callable, List, Optional, Tuple
 
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -45,6 +45,7 @@ class MeshComponentManager(CbfComponentManager):
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
         Initialise a new instance.
@@ -59,10 +60,13 @@ class MeshComponentManager(CbfComponentManager):
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
             component fault
+        :param simulation_mode: simulation mode identifies if the real power switch
+                driver or the simulator should be used
         """
+        self.connected = False
+        self._simulation_mode = simulation_mode
         self._mesh_configured = False
         self._config_str = ""
-        self.connected = False
 
         super().__init__(
             logger=logger,
