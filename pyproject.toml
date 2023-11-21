@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-cbf-mcs"
-version = "0.11.8"
+version = "0.12.2"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
@@ -38,13 +38,14 @@ requests = "2.28.0"
 ska-tango-base = "0.11.4"
 ska-ser-logging = "^0.4.1+0a677a67"
 ska-ser-log-transactions = "^0.2.2+ae0f5c92"
-ska-telmodel = "^1.9.1"
+ska-telmodel = "^1.10.0"
 nbmake = "^1.4.3"
 nbqa = "^1.7.0"
 jupyterhub = "^4.0.2"
 jupyterlab = "^4.0.6"
 notebook = "^7.0.4"
 pylint-junit = "^0.3.2"
+polling2 = "^0.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"

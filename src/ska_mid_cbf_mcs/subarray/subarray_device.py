@@ -24,7 +24,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from ska_telmodel.csp.schema import get_csp_config_schema
+from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -713,13 +713,14 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate full_configuration against the telescope model
-            configure_scan_schema = get_csp_config_schema(
-                version=full_configuration["interface"], strict=True
-            )
             try:
-                configure_scan_schema.validate(full_configuration)
+                telmodel_validate(
+                    version=full_configuration["interface"],
+                    config=full_configuration,
+                    strictness=2,
+                )
                 self.logger.info("Scan configuration is valid!")
-            except Exception as e:
+            except ValueError as e:
                 msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
                 self.logger.error(msg)
 
