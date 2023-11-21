@@ -39,6 +39,11 @@ def parse_links_yaml(yaml_str: str):
     return links
 
 
+# Constants
+class SLIMConst:
+    MAX_NUM_LINKS = 16  # AA0.5
+
+
 # TODO: REMOVE
 if __name__ == "__main__":
     with open("test.yaml") as f:

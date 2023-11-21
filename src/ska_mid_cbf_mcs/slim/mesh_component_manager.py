@@ -23,7 +23,8 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.slim.slim_common import parse_links_yaml
-from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
+
+# from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
 __all__ = ["MeshComponentManager"]
 

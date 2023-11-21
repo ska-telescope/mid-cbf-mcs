@@ -24,6 +24,7 @@ from tango.server import attribute, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.mesh_manager import MeshManager
+from ska_mid_cbf_mcs.slim.slim_common import SLIMConst
 
 __all__ = ["SLIMMesh", "main"]
 
@@ -58,6 +59,12 @@ class SLIMMesh(SKABaseDevice):
         res = self.component_manager.get_configuration_string()
         return res
 
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=SLIMConst.MAX_NUM_LINKS,
+        label="Mesh status summary",
+        doc="Returns a list of status of each link. True if OK. False if the link is in a bad state.",
+    )
     def MeshStatusSummary(self: SLIMMesh) -> List[bool]:
         """
         Returns a list of status of each link. True if OK. False if the link is in a bad state.
@@ -67,6 +74,12 @@ class SLIMMesh(SKABaseDevice):
         res = self.component_manager.get_status_summary()
         return res
 
+    @attribute(
+        dtype=(float,),
+        max_dim_x=SLIMConst.MAX_NUM_LINKS,
+        label="Bit error rate",
+        doc="Returns the bit error rate of each link in a list",
+    )
     def BitErrorRate(self: SLIMMesh) -> List[float]:
         """
         Returns the bit error rate of each link in a list
@@ -118,17 +131,27 @@ class SLIMMesh(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return MeshManager(
-            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
-            pdus=[self.PDU1, self.PDU2],
-            pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
-            pdu_cmd_timeout=int(self.PDUCommandTimeout),
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
-            check_power_mode_callback=self._check_power_mode,
         )
+
+    class InitCommand(SKABaseDevice.InitCommand):
+        """
+        A class for the init_device() "command".
+        """
+
+        def do(self: SLIMMesh.InitCommand) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return super().do()
 
     class OnCommand(SKABaseDevice.OnCommand):
         """

@@ -2,7 +2,7 @@ name: slim
 function: slim
 domain: mid-csp-cbf
 command: "SLIM"
-instances: ["slim-fs, slim-vis"]
+instances: ["slim"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "SLIM"
   instances:
-  - name: "slim-fs"
+  - name: "slim"
     classes:
     - name: "SLIMMesh"
       devices:
@@ -34,10 +34,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "slim-vis"
-    classes:
-    - name: "SLIMMesh"
-      devices:
       - name: "mid_csp_cbf/slim/slim-vis"
         properties:
           - name: "polled_attr"
