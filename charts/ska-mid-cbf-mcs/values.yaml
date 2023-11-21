@@ -73,6 +73,10 @@ deviceServers:
     enabled: true
     file: "data/talonboard.yaml"
 
+  slim:
+    enabled: true
+    file: "data/slim.yaml"
+
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"

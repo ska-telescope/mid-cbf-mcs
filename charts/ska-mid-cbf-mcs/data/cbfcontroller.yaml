@@ -87,6 +87,10 @@ server:
             values:
             - "mid_csp_cbf/power_switch/001"
             - "mid_csp_cbf/power_switch/002"
+          - name: "SLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-fs"
+            - "mid_csp_cbf/slim/slim-vis"
           - name: "LruTimeout"
             values:
             - "30"
