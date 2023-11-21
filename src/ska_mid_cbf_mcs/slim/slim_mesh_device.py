@@ -229,7 +229,6 @@ class SLIMMesh(SKABaseDevice):
 
             return (result_code, message)
 
-
     # ---------
     # Callbacks
     # ---------
