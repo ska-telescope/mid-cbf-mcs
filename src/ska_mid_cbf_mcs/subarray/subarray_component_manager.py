@@ -2255,8 +2255,11 @@ class CbfSubarrayComponentManager(
                     self._logger.info(
                         f"results from call to Abort on {group}:"
                     )
-                    for res in result_seq:
-                        self._logger.info(res.get_data())
+                    try:
+                        for res in result_seq:
+                            self._logger.info(res.get_data())
+                    except TypeError as ex:
+                        self._logger.warning(f"Error trying to parse Abort results; {ex}")
                 # TODO this is a problem because group.command_inout doesn't throw any errors
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
