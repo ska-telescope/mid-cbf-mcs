@@ -159,8 +159,8 @@ class CbfGroupProxy:
             self.__dict__["_fqdns"].append(fqdn)
             return group
 
-        self._logger.info(f"fqdn to add: {fqdn}")
-        self._logger.info(f"self._fqdns before add: {self._fqdns}")
+        self._logger.debug(f"fqdn to add: {fqdn}")
+        self._logger.debug(f"self._fqdns before add: {self._fqdns}")
 
         if self._group is None:
             if max_time:
@@ -175,7 +175,7 @@ class CbfGroupProxy:
             self.__dict__["_group"].add(fqdn)
             self.__dict__["_fqdns"].append(fqdn)
 
-        self._logger.info(f"self._fqdns after add: {self._fqdns}")
+        self._logger.debug(f"self._fqdns after add: {self._fqdns}")
 
     def remove(self: CbfGroupProxy, fqdn: str) -> None:
         """
@@ -184,19 +184,22 @@ class CbfGroupProxy:
         :param fqdn: FQDN of the device to be proxied.
         """
 
-        self._logger.info(f"fqdn to remove: {fqdn}")
-        self._logger.info(f"self._fqdns before remove: {self._fqdns}")
+        self._logger.debug(f"fqdn to remove: {fqdn}")
+        self._logger.debug(f"self._fqdns before remove: {self._fqdns}")
         if fqdn in self._fqdns:
             self.__dict__["_fqdns"].remove(fqdn)
             self.__dict__["_group"].remove(fqdn)
-        self._logger.info(f"self._fqdns after remove: {self._fqdns}")
+        self._logger.debug(f"self._fqdns after remove: {self._fqdns}")
 
     def remove_all(self: CbfGroupProxy) -> None:
         """
         Remove all devices from the group.
         """
+        # The first time looping through self._fqdns, it always misses one fqdn.
+        # Adding a while-loop outside of the for-loop catches the remaining
+        # fqdn and removes it in the second pass-through
         while len(self._fqdns) > 0:
-            self._logger.info(
+            self._logger.debug(
                 f"Removing all fqdns from self._fqdns. Current size is {len(self._fqdns)}"
             )
             for fqdn in self._fqdns:

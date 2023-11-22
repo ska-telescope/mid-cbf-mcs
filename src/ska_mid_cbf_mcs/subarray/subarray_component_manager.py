@@ -1698,7 +1698,7 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
-                self._logger.info(
+                self._logger.debug(
                     "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
                 )
                 group.remove_all()
@@ -1709,7 +1709,7 @@ class CbfSubarrayComponentManager(
             data.insert(tango.DevUShort, self._subarray_id)
             self._logger.debug(data)
             self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-            self._logger.info("removing all fqdns from group_fsp:")
+            self._logger.debug("removing all fqdns from group_fsp:")
             self._group_fsp.remove_all()
 
         for fsp in configuration["fsp"]:
@@ -2252,17 +2252,18 @@ class CbfSubarrayComponentManager(
             if group.get_size() > 0:
                 try:
                     result_seq = group.command_inout("Abort")
-                    self._logger.info(
-                        f"results from call to Abort on {group}:"
-                    )
+                    self._logger.info("Results from AbortCommand:")
                     try:
                         for res in result_seq:
                             self._logger.info(res.get_data())
+                    # When the python-tests are run, the AbortCommand returns a
+                    # non-iterable Mock object. Catch this and log a warning.
                     except TypeError as ex:
                         self._logger.warning(
                             f"Error trying to parse Abort results; {ex}"
                         )
-                # TODO this is a problem because group.command_inout doesn't throw any errors
+                # FIXME group.command_inout doesn't throw any errors, so this
+                # try/except block (and others like this) are basically useless
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._logger.error(f"Error in Abort; {msg}")
@@ -2301,7 +2302,7 @@ class CbfSubarrayComponentManager(
             ]:
                 if group.get_size() > 0:
                     group.command_inout("ObsReset")
-                    self._logger.info(
+                    self._logger.debug(
                         "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
                     )
                     group.remove_all()
@@ -2313,7 +2314,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._logger.info("removing all fqdns from group_fsp:")
+                self._logger.debug("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
@@ -2347,7 +2348,7 @@ class CbfSubarrayComponentManager(
             ]:
                 if group.get_size() > 0:
                     group.command_inout("ObsReset")
-                    self._logger.info(
+                    self._logger.debug(
                         "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
                     )
                     group.remove_all()
@@ -2359,7 +2360,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._logger.info("removing all fqdns from group_fsp:")
+                self._logger.debug("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
