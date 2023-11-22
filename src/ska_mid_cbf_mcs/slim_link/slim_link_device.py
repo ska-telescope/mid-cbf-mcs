@@ -63,7 +63,7 @@ class SlimLink(SKABaseDevice):
         doc="Indicator for whether link is active or inactive",
     )
 
-    # TODO CIP-1768 determine enum_labels and how many attributes we need for the status
+    # TODO: CIP-1768 determine enum_labels and how many attributes we need for the status
     slim_link_status = attribute(
         dtype="DevEnum",
         access=AttrWriteType.READ,
