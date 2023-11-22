@@ -825,7 +825,7 @@ class CbfSubarrayComponentManager(
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
         except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+            msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
             return (False, msg)
 
         # Validate dopplerPhaseCorrSubscriptionPoint.
@@ -1698,6 +1698,9 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
+                self._logger.info(
+                    "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                )
                 group.remove_all()
 
         if self._group_fsp.get_size() > 0:
@@ -1706,6 +1709,7 @@ class CbfSubarrayComponentManager(
             data.insert(tango.DevUShort, self._subarray_id)
             self._logger.debug(data)
             self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+            self._logger.info("removing all fqdns from group_fsp:")
             self._group_fsp.remove_all()
 
         for fsp in configuration["fsp"]:
@@ -2247,7 +2251,13 @@ class CbfSubarrayComponentManager(
         ]:
             if group.get_size() > 0:
                 try:
-                    group.command_inout("Abort")
+                    result_seq = group.command_inout("Abort")
+                    self._logger.info(
+                        f"results from call to Abort on {group}:"
+                    )
+                    for res in result_seq:
+                        self._logger.info(res.get_data())
+                # TODO this is a problem because group.command_inout doesn't throw any errors
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._logger.error(f"Error in Abort; {msg}")
@@ -2286,6 +2296,9 @@ class CbfSubarrayComponentManager(
             ]:
                 if group.get_size() > 0:
                     group.command_inout("ObsReset")
+                    self._logger.info(
+                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                    )
                     group.remove_all()
 
             if self._group_fsp.get_size() > 0:
@@ -2295,6 +2308,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._logger.info("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
@@ -2328,6 +2342,9 @@ class CbfSubarrayComponentManager(
             ]:
                 if group.get_size() > 0:
                     group.command_inout("ObsReset")
+                    self._logger.info(
+                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                    )
                     group.remove_all()
 
             if self._group_fsp.get_size() > 0:
@@ -2337,6 +2354,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._logger.info("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)

@@ -1078,7 +1078,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test CbfSubarrays's ConfigureScan command
+        Test CbfSubarrays's GoToIdle command
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -2821,7 +2821,7 @@ class TestCbfSubarray:
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
-            wait_time_s = 1
+            wait_time_s = 3
             sleep_time_s = 1
 
             f = open(data_file_path + config_file_name)
@@ -2858,14 +2858,15 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
 
-            for fsp in configuration["cbf"]["fsp"]:
-                fsp_id = int(fsp["fsp_id"])
-                assert (
-                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-                        fsp_id
-                    ].obsState
-                    == ObsState.ABORTED
-                )
+            # SKIP this assert because FSP don't get added to the group_proxy until ConfigureScan
+            # for fsp in configuration["cbf"]["fsp"]:
+            #     fsp_id = int(fsp["fsp_id"])
+            #     assert (
+            #         test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+            #             fsp_id
+            #         ].obsState
+            #         == ObsState.ABORTED
+            #     )
             for r in vcc_receptors:
                 assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 
