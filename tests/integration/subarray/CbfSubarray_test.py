@@ -2821,7 +2821,7 @@ class TestCbfSubarray:
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
-            wait_time_s = 3
+            wait_time_s = 1
             sleep_time_s = 1
 
             f = open(data_file_path + config_file_name)
