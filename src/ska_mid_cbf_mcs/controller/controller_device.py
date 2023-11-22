@@ -63,9 +63,15 @@ class CbfController(SKAController):
 
     PowerSwitch = device_property(dtype=("str",))
 
+    SLIM = device_property(dtype=("str",))
+
     TalonDxConfigPath = device_property(dtype=("str"))
 
     HWConfigPath = device_property(dtype=("str"))
+
+    FsSLIMConfigPath = device_property(dtype=("str"))
+
+    VisSLIMConfigPath = device_property(dtype=("str"))
 
     LruTimeout = device_property(dtype=("str"))
 
@@ -257,10 +263,13 @@ class CbfController(SKAController):
             talon_lru_fqdns_all=self.TalonLRU,
             talon_board_fqdns_all=self.TalonBoard,
             power_switch_fqdns_all=self.PowerSwitch,
+            slim_fqdns_all=self.SLIM,
             lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
+            fs_slim_config_path=self.FsSLIMConfigPath,
+            vis_slim_config_path=self.VisSLIMConfigPath,
             logger=self.logger,
             push_change_event=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,

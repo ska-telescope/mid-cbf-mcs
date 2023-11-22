@@ -53,10 +53,13 @@ class ControllerComponentManager(CbfComponentManager):
         talon_lru_fqdns_all: List[str],
         talon_board_fqdns_all: List[str],
         power_switch_fqdns_all: List[str],
+        slim_fqdns_all: List[str],
         lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
         talondx_config_path: str,
         hw_config_path: str,
+        fs_slim_config_path: str,
+        vis_slim_config_path: str,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -76,12 +79,17 @@ class ControllerComponentManager(CbfComponentManager):
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
         :param talon_board_fqdns_all: FQDNS of all the Talon board devices
         :param power_switch_fqdns_all: FQDNS of all the power switch devices
+        :param slim_fqdns_all: FQDNs of all the SLIM devices
         :param lru_timeout: Timeout in seconds for Talon LRU device proxies
         :param talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
-        :param hw_config_path: path to the directory containing the hardware
-                               configuration file
+        :param hw_config_path: path to the yaml file containing the hardware
+                               configuration
+        :param fs_slim_config_path: path to the yaml file containing the
+                                    frequency slice SLIM configuration files
+        :param vis_slim_config_path: path to the yaml file containing the
+                                    visibilities SLIM configuration files
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -115,6 +123,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
         self._talon_board_fqdns_all = talon_board_fqdns_all
         self._power_switch_fqdns_all = power_switch_fqdns_all
+        self._fqdn_slim = slim_fqdns_all
         self._lru_timeout = lru_timeout
 
         self._get_max_capabilities = get_num_capabilities
@@ -127,6 +136,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._talondx_config_path = talondx_config_path
         self._hw_config_path = hw_config_path
+        self._fs_slim_config_path = fs_slim_config_path
+        self._vis_slim_config_path = vis_slim_config_path
 
         self._max_capabilities = ""
 
@@ -205,6 +216,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"fqdn Talon board: {self._fqdn_talon_board}")
         self._logger.debug(f"fqdn Talon LRU: {self._fqdn_talon_lru}")
         self._logger.debug(f"fqdn power switch: {self._fqdn_power_switch}")
+        self._logger.debug(f"fqdn power switch: {self._fqdn_slim}")
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -319,6 +331,25 @@ class ControllerComponentManager(CbfComponentManager):
             # establish proxy connection to component
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
+        # Establish connection to SLIM devices
+        for fqdn in self._fqdn_slim:
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = f"Trying connection to {fqdn} device"
+                    self._logger.debug(log_msg)
+                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    self._proxies[fqdn] = proxy
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = (
+                            "Failure in connection to "
+                            + fqdn
+                            + " device: "
+                            + str(item.reason)
+                        )
+                        self._logger.error(log_msg)
+            self._proxies[fqdn].adminMode = AdminMode.ONLINE
+
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
@@ -423,6 +454,36 @@ class ControllerComponentManager(CbfComponentManager):
                             f"Failed to turn on group proxies; {item.reason}"
                         )
                         self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                # Configure SLIM Mesh devices
+                try:
+                    for fqdn in self._fqdn_slim:
+                        self._proxies[fqdn].write_attribute(
+                            "simulationMode",
+                            self._talondx_component_manager.simulation_mode,
+                        )
+
+                    with open(self._fs_slim_config_path) as f:
+                        fs_slim_config = f.read()
+                    self._proxies[self._fqdn_slim[0]].command_inout(
+                        "Configure", fs_slim_config
+                    )
+
+                    with open(self._vis_slim_config_path) as f:
+                        vis_slim_config = f.read()
+                    self._proxies[self._fqdn_slim[1]].command_inout(
+                        "Configure", vis_slim_config
+                    )
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = (
+                            f"Failed to turn on group proxies; {item.reason}"
+                        )
+                        self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+                except OSError as e:
+                    log_msg = f"Failed to read SLIM configuration file: {e}"
                     return (ResultCode.FAILED, log_msg)
 
                 self._on = True

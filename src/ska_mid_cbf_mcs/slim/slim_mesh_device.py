@@ -17,11 +17,12 @@ from __future__ import annotations
 from typing import List, Optional, Tuple
 
 # tango imports
+import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import AttrWriteType
-from tango.server import attribute, run
+from tango import AttrWriteType, DebugIt
+from tango.server import attribute, command, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.mesh_component_manager import MeshComponentManager
@@ -228,6 +229,20 @@ class SLIMMesh(SKABaseDevice):
                 self.logger.error(message)
 
             return (result_code, message)
+
+    @command(
+        dtype_in="DevString",
+        doc_in="placeholder",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def Configure(self: SLIMMesh, argin: str) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SLIMMesh.Configure) ENABLED START #
+        handler = self.get_command_object("Configure")
+        return_code, message = handler(argin)
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SLIMMesh.Configure
 
     # ---------
     # Callbacks

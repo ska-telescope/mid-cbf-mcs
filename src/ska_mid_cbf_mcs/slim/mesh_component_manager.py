@@ -68,6 +68,8 @@ class MeshComponentManager(CbfComponentManager):
         self._mesh_configured = False
         self._config_str = ""
 
+        self._dp_links = []  # SLIM Link Device proxies
+
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
@@ -126,7 +128,7 @@ class MeshComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
         return (ResultCode.OK, "")
 
-    def configure(self, config: str) -> Tuple[ResultCode, str]:
+    def configure(self, config_str) -> Tuple[ResultCode, str]:
         """
         Configure command. Parses the mesh configuration
 
@@ -138,8 +140,8 @@ class MeshComponentManager(CbfComponentManager):
         """
 
         # each element is [tx_fqdn, rx_fqdn]
-        self.links_list_ = parse_links_yaml(config)
-        self._config_str = config
+        self._config_str = config_str
+        self.links_list_ = parse_links_yaml(self._config_str)
 
         rc, msg = self.initialize_links()
 
