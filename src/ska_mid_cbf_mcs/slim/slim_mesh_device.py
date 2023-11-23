@@ -219,10 +219,8 @@ class SLIMMesh(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            self.logger.info("Entering SLIMMesh.ConfigureCommand")
-            (result_code, message) = self.target.component_manager.configure(
-                argin
-            )
+            component_manager = self.target
+            (result_code, message) = component_manager.configure(argin)
             if result_code == ResultCode.OK:
                 self.logger.info("Mesh Configure completed successfully")
             elif result_code == ResultCode.FAILED:
@@ -232,7 +230,7 @@ class SLIMMesh(SKABaseDevice):
 
     @command(
         dtype_in="DevString",
-        doc_in="placeholder",
+        doc_in="mesh configuration as a string in YAML format",
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )

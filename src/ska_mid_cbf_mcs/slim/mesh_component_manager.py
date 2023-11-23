@@ -13,8 +13,11 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Callable, List, Optional, Tuple
 
+import tango
+import yaml
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
@@ -22,7 +25,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.slim.slim_common import parse_links_yaml
 
 # from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
@@ -98,6 +100,15 @@ class MeshComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
+    @property
+    def is_communicating(self) -> bool:
+        """
+        Returns whether or not the SLIM mesh can be communicated with.
+
+        :return: whether the SLIM mesh is communicating
+        """
+        return self.connected and self._mesh_configured
+
     def on(self) -> Tuple[ResultCode, str]:
         """
         On command. Currently just returns OK. The device
@@ -141,18 +152,23 @@ class MeshComponentManager(CbfComponentManager):
 
         # each element is [tx_fqdn, rx_fqdn]
         self._config_str = config_str
-        self.links_list_ = parse_links_yaml(self._config_str)
+        self._links_list = self._parse_links_yaml(self._config_str)
 
         rc, msg = self.initialize_links()
 
         if rc is not ResultCode.OK:
+            self._logger.error("Failed to Parse the SLIM Mesh config.")
             return (rc, msg)
 
         self._mesh_configured = True
+        return (rc, msg)
 
     def initialize_links(self) -> Tuple[ResultCode, str]:
+        self._logger.info(
+            f"Creating {len(self._links_list)} links: {self._links_list}"
+        )
         # try:
-        #     for txrx in self.links_list_:
+        #     for txrx in self._links_list:
         #         link = SLIMLink(tx_fqdn=txrx[0], rx_fqdn=txrx[1])
         #         link.connect()
         # except tango.DevFailed:
@@ -171,3 +187,43 @@ class MeshComponentManager(CbfComponentManager):
     def get_bit_error_rate(self) -> List[float]:
         ber = []
         return ber
+
+    def _parse_link(self, txt: str):
+        """
+        Each link is in the format of "tx_fqdn -> rx_fqdn". If the
+        link is disabled, then the text ends with [x].
+        """
+        tmp = re.sub(r"[\s\t]", "", txt)  # removes all whitespaces
+
+        # ignore disabled links or lines without the expected format
+        if tmp.endswith("[x]") or ("->" not in tmp):
+            return None
+        txrx = tmp.split("->")
+        if len(txrx) != 2:
+            raise RuntimeError(f"Failed to parse {txt}")
+        return txrx
+
+    def _parse_links_yaml(self, yaml_str: str):
+        """
+        parse a yaml string containing the mesh links.
+
+        :param yaml_str: the string defining the mesh links
+
+        :return: a list of [Tx FQDN, Rx FQDN]
+        """
+        links = list()
+        try:
+            data = yaml.safe_load(yaml_str)
+        except yaml.YAMLError as e:
+            self._logger.error(f"Failed to load YAML: {e}")
+            tango.Except.throw_exception(
+                "SLIMMesh_Parse_YAML",
+                "Cannot parse SLIM configuration YAML",
+                "_parse_links_yaml()",
+            )
+        for k, v in data.items():
+            for line in v:
+                txrx = self._parse_link(line)
+                if txrx is not None:
+                    links.append(txrx)
+        return links
