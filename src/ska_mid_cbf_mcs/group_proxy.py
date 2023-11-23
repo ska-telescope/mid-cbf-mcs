@@ -195,14 +195,11 @@ class CbfGroupProxy:
         """
         Remove all devices from the group.
         """
-        # The first time looping through self._fqdns, it always misses one fqdn.
-        # Adding a while-loop outside of the for-loop catches the remaining
-        # fqdn and removes it in the second pass-through
-        while len(self._fqdns) > 0:
+        if len(self._fqdns) > 0:
             self._logger.debug(
                 f"Removing all fqdns from self._fqdns. Current size is {len(self._fqdns)}"
             )
-            for fqdn in self._fqdns:
+            for fqdn in self._fqdns.copy():
                 self.remove(fqdn)
         else:
             self._logger.warning("Group is empty.")

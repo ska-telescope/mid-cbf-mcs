@@ -341,6 +341,7 @@ def mock_vcc_group() -> unittest.mock.Mock:
     builder.add_command("ConfigureBand", None)
     builder.add_command("UpdateDelayModel", None)
     builder.add_command("UpdateJonesMatrix", None)
+    builder.add_command("Abort", [Mock_GroupCmdReply()])
     return builder()
 
 
@@ -392,6 +393,7 @@ def mock_fsp_subarray_group() -> unittest.mock.Mock:
     builder.add_command("On", None)
     builder.add_command("Off", None)
     builder.add_command("GoToIdle", None)
+    builder.add_command("Abort", [Mock_GroupCmdReply()])
     return builder()
 
 
@@ -573,3 +575,12 @@ def push_change_event_callback(
     :return: a mock change event callback
     """
     return push_change_event_callback_factory()
+
+
+class Mock_GroupCmdReply:
+    """
+    Mock GroupCmdReply for parsing results of group.command_inout calls
+    """
+
+    def get_data(self):
+        return "Mock_GroupCmdReply get_data()"
