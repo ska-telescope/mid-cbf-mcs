@@ -333,15 +333,16 @@ def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
-    builder.add_command("ConfigureScan", None)
-    builder.add_command("ConfigureSearchWindow", None)
-    builder.add_command("GoToIdle", None)
-    builder.add_command("Scan", None)
-    builder.add_command("EndScan", None)
+    builder.add_command("ConfigureScan", [Mock_GroupCmdReply()])
+    builder.add_command("ConfigureSearchWindow", [Mock_GroupCmdReply()])
+    builder.add_command("GoToIdle", [Mock_GroupCmdReply()])
+    builder.add_command("Scan", [Mock_GroupCmdReply()])
+    builder.add_command("EndScan", [Mock_GroupCmdReply()])
     builder.add_command("ConfigureBand", None)
-    builder.add_command("UpdateDelayModel", None)
-    builder.add_command("UpdateJonesMatrix", None)
+    builder.add_command("UpdateDelayModel", [Mock_GroupCmdReply()])
+    builder.add_command("UpdateJonesMatrix", [Mock_GroupCmdReply()])
     builder.add_command("Abort", [Mock_GroupCmdReply()])
+    builder.add_command("ObsReset", [Mock_GroupCmdReply()])
     return builder()
 
 
@@ -354,6 +355,9 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_command("UpdateDelayModel", [Mock_GroupCmdReply()])
+    builder.add_command("UpdateJonesMatrix", [Mock_GroupCmdReply()])
+    builder.add_command("UpdateTimingBeamWeights", [Mock_GroupCmdReply()])
     return builder()
 
 
@@ -362,7 +366,7 @@ def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
-    builder.add_command("RemoveSubarrayMembership", None)
+    builder.add_command("RemoveSubarrayMembership", [Mock_GroupCmdReply()])
     builder.add_command("UpdateDelayModel", None)
     builder.add_command("UpdateJonesMatrix", None)
     builder.add_command("UpdateBeamWeights", None)
@@ -392,8 +396,11 @@ def mock_fsp_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
-    builder.add_command("GoToIdle", None)
+    builder.add_command("GoToIdle", [Mock_GroupCmdReply()])
     builder.add_command("Abort", [Mock_GroupCmdReply()])
+    builder.add_command("Scan", [Mock_GroupCmdReply()])
+    builder.add_command("EndScan", [Mock_GroupCmdReply()])
+    builder.add_command("ObsReset", [Mock_GroupCmdReply()])
     return builder()
 
 
@@ -579,7 +586,8 @@ def push_change_event_callback(
 
 class Mock_GroupCmdReply:
     """
-    Mock GroupCmdReply for parsing results of group.command_inout calls
+    Mock GroupCmdReply to enable parsing the
+    results of group.command_inout calls.
     """
 
     def get_data(self):
