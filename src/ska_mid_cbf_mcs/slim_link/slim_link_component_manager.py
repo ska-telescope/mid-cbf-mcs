@@ -74,44 +74,20 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def debug_tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The idle control word value tx by hashing the link's tx fqdn.
+        The idle control word value tx generates by hashing the tx's fqdn.
 
         :return: the tx idle control word.
         """
         return self._debug_tx_idle_ctrl_word
 
-    @debug_tx_idle_ctrl_word.setter
-    def debug_tx_idle_ctrl_word(
-        self: SlimLinkComponentManager, debug_tx_idle_ctrl_word: int
-    ) -> None:
-        """
-        Set the tx idle control word value.
-
-        :param debug_tx_idle_ctrl_word: The tx idle control word.
-        """
-        self._debug_tx_idle_ctrl_word = debug_tx_idle_ctrl_word
-
     @property
     def debug_rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        Mirrors the SLIM Rx's idle_ctrl_word attr.
-        Reading this register will return the last idle control word captured from the datastream.
+        The last idle control word read by rx from the datastream.
 
         :return: the rx idle control word.
         """
         return self._debug_rx_idle_ctrl_word
-
-    @debug_rx_idle_ctrl_word.setter
-    def debug_rx_idle_ctrl_word(
-        self: SlimLinkComponentManager, debug_rx_idle_ctrl_word: int
-    ) -> None:
-        """
-        Mirrors the SLIM Rx's idle_ctrl_word attr.
-        Writing this register will change the idle control word used for error comparison.
-
-        :param debug_rx_idle_ctrl_word: The rx idle control word.
-        """
-        self._debug_rx_idle_ctrl_word = debug_rx_idle_ctrl_word
 
     @property
     def bit_error_rate(self: SlimLinkComponentManager) -> float:
@@ -121,17 +97,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: The bit error rate.
         """
         return self._bit_error_rate
-
-    @bit_error_rate.setter
-    def bit_error_rate(
-        self: SlimLinkComponentManager, bit_error_rate: float
-    ) -> None:
-        """
-        Sets the bit error rate in 66b-word-errors per second.
-
-        :param bit_error_rate: The bit error rate.
-        """
-        self._bit_error_rate = bit_error_rate
 
     @property
     def link_occupancy(self: SlimLinkComponentManager) -> float[2]:
@@ -143,18 +108,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         return self._link_occupancy
 
-    @link_occupancy.setter
-    def link_occupancy(
-        self: SlimLinkComponentManager, link_occupancy: float[2]
-    ) -> None:
-        """
-        Sets the link occupancy array. [0] the tx side, [1] the rx side
-        Ideally they should be the same.
-
-        :param link_occupancy: The link occupancy array.
-        """
-        self._link_occupancy = link_occupancy
-
+    @property
     def read_counters(self: SlimLinkComponentManager) -> int[7]:
         """
         An array holding the counter values from the tx and rx devices in the order:
@@ -170,24 +124,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         return self._read_counters
 
-    @read_counters.setter
-    def read_counters(
-        self: SlimLinkComponentManager, read_counters: int[7]
-    ) -> None:
-        """
-        Sets the read_counters array in the order:
-        [0] rx_word_count
-        [1] rx_packet_count
-        [2] rx_idle_word_count
-        [3] rx_idle_error_count
-        [4] tx_word_count
-        [5] tx_packet_count
-        [6] tx_idle_word_count
-
-        :param read_counters: The read_counters array.
-        """
-        self._read_counters = read_counters
-
     @property
     def block_lost_cdr_lost_count(self: SlimLinkComponentManager) -> int[2]:
         """
@@ -196,18 +132,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: The block_lost_cdr_lost_count array.
         """
         return self._block_lost_cdr_lost_count
-
-    @block_lost_cdr_lost_count.setter
-    def block_lost_cdr_lost_count(
-        self: SlimLinkComponentManager, block_lost_cdr_lost_count: int[2]
-    ) -> None:
-        """
-        Sets the block_lost_cdr_lost_count array.
-        [0] = block lost count, and [1] = cdr lost count.
-
-        :param block_lost_cdr_lost_count: The block_lost_cdr_lost_count array.
-        """
-        self._block_lost_cdr_lost_count = block_lost_cdr_lost_count
 
     @property
     def link_healthy(self: SlimLinkComponentManager) -> bool:
@@ -373,8 +297,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             serial_loopback_enable = False
             self._rx_device_proxy.initialize_connection(serial_loopback_enable)
 
-            self._rx_device_proxy.write_attribute(
-                "idle_ctrl_word", self._debug_rx_idle_ctrl_word
+            self._debug_rx_idle_ctrl_word = (
+                self._rx_device_proxy.read_attribute("idle_ctrl_word")
             )
 
             self._logger.info(
