@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.3
+******
+* CIP-1933 Fixed the group_proxy implementation
+
 0.12.2
 ******
 * CIP-1764 Added telmodel schema validation against the InitSysParam command 
