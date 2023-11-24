@@ -300,20 +300,23 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_corr_subarray = self._get_device_proxy(
                 "FSP Subarray Corr", is_group=True
             )
-            for fqdn in list(self._fsp_corr_subarray_fqdns_all):
-                self._group_fsp_corr_subarray.add(fqdn)
+            if self._group_fsp_corr_subarray is not None:
+                for fqdn in list(self._fsp_corr_subarray_fqdns_all):
+                    self._group_fsp_corr_subarray.add(fqdn)
         if self._group_fsp_pss_subarray is None:
             self._group_fsp_pss_subarray = self._get_device_proxy(
                 "FSP Subarray Pss", is_group=True
             )
-            for fqdn in list(self._fsp_pss_subarray_fqdns_all):
-                self._group_fsp_pss_subarray.add(fqdn)
+            if self._group_fsp_pss_subarray is not None:
+                for fqdn in list(self._fsp_pss_subarray_fqdns_all):
+                    self._group_fsp_pss_subarray.add(fqdn)
         if self._group_fsp_pst_subarray is None:
             self._group_fsp_pst_subarray = self._get_device_proxy(
                 "FSP Subarray Pst", is_group=True
             )
-            for fqdn in list(self._fsp_pst_subarray_fqdns_all):
-                self._group_fsp_pst_subarray.add(fqdn)
+            if self._group_fsp_pst_subarray is not None:
+                for fqdn in list(self._fsp_pst_subarray_fqdns_all):
+                    self._group_fsp_pst_subarray.add(fqdn)
 
     @check_communicating
     def remove_subarray_membership(
