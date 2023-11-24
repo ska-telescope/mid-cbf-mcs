@@ -12,11 +12,11 @@
 from __future__ import annotations
 
 import os
-import tango
 from typing import List
+from unittest import mock
 
 import pytest
-from unittest import mock
+import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
@@ -120,14 +120,16 @@ class TestFspComponentManager:
         :param fsp_component_manager: the fsp component
             manager under test.
         """
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
 
         (result_code, _) = fsp_component_manager.off()
-        assert(result_code == ResultCode.FAILED)
+        assert result_code == ResultCode.FAILED
 
         (result_code, _) = fsp_component_manager.on()
-        assert(result_code == ResultCode.FAILED)
+        assert result_code == ResultCode.FAILED
 
     def test_DeviceProxyError(
         self: TestFspComponentManager,
@@ -140,16 +142,29 @@ class TestFspComponentManager:
         :param fsp_component_manager: the fsp component
             manager under test.
         """
-        assert(fsp_component_manager.communication_status != CommunicationStatus.ESTABLISHED)
-        obj = lambda: None
-        obj.reason = 'someReason'
-        with mock.patch('ska_mid_cbf_mcs.group_proxy.CbfGroupProxy.__init__', side_effect=tango.DevFailed(obj)):
+        assert (
+            fsp_component_manager.communication_status
+            != CommunicationStatus.ESTABLISHED
+        )
+
+        class Df(object):
+            pass
+
+        obj = Df()
+        obj.reason = "someReason"
+        with mock.patch(
+            "ska_mid_cbf_mcs.group_proxy.CbfGroupProxy.__init__",
+            side_effect=tango.DevFailed(obj),
+        ):
             fsp_component_manager.start_communicating()
-            assert(fsp_component_manager.communication_status == CommunicationStatus.ESTABLISHED)
+            assert (
+                fsp_component_manager.communication_status
+                == CommunicationStatus.ESTABLISHED
+            )
 
     def test_RepeatPowerCommands(
-            self: TestFspComponentManager,
-            fsp_component_manager: FspComponentManager,
+        self: TestFspComponentManager,
+        fsp_component_manager: FspComponentManager,
     ) -> None:
         """
         Test Repeat on/off commands do not change communication status
@@ -160,12 +175,15 @@ class TestFspComponentManager:
         initial_status = fsp_component_manager.communication_status
 
         fsp_component_manager.start_communicating()
-        assert(initial_status == CommunicationStatus.ESTABLISHED)
-        assert(fsp_component_manager.communication_status == CommunicationStatus.ESTABLISHED)
+        assert initial_status == CommunicationStatus.ESTABLISHED
+        assert (
+            fsp_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
 
     def test_SimulationMode(
-            self: TestFspComponentManager,
-            fsp_component_manager: FspComponentManager,
+        self: TestFspComponentManager,
+        fsp_component_manager: FspComponentManager,
     ) -> None:
         """
         Test Fsp simulation mode
@@ -173,10 +191,10 @@ class TestFspComponentManager:
         :param fsp_component_manager: the fsp component manager under test.
         """
         fsp_component_manager.simulation_mode = SimulationMode.TRUE
-        assert(fsp_component_manager.simulation_mode == SimulationMode.TRUE)
+        assert fsp_component_manager.simulation_mode == SimulationMode.TRUE
 
         fsp_component_manager.simulation_mode = SimulationMode.FALSE
-        assert(fsp_component_manager.simulation_mode == SimulationMode.FALSE)
+        assert fsp_component_manager.simulation_mode == SimulationMode.FALSE
 
     def test_FunctionModeError(
         self: TestFspComponentManager,
@@ -187,20 +205,22 @@ class TestFspComponentManager:
 
         :param fsp_component_manager: the fsp component manager under test.
         """
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
         (rcode, _) = fsp_component_manager.set_function_mode(FspModes.IDLE)
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
         (rcode, _) = fsp_component_manager.set_function_mode("NON-MODE")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
     @pytest.mark.parametrize("mode", ["IDLE", "CORR", "PST-BF"])
     def test_FunctionMode(
         self: TestFspComponentManager,
         fsp_component_manager: FspComponentManager,
-        mode: str
+        mode: str,
     ) -> None:
         """
         Test Fsp function mode with valid modes
@@ -210,7 +230,7 @@ class TestFspComponentManager:
         """
         fsp_component_manager.start_communicating()
         (rcode, _) = fsp_component_manager.set_function_mode(mode)
-        assert(rcode == ResultCode.OK)
+        assert rcode == ResultCode.OK
 
     @pytest.mark.parametrize("sub_ids", [([3, 4, 15]), ([1])])
     def test_AddRemoveSubarrayMembership(
@@ -241,7 +261,7 @@ class TestFspComponentManager:
         # add fsp to all but last test subarray
         for sub_id in sub_ids[:-1]:
             (rcode, _) = fsp_component_manager.add_subarray_membership(sub_id)
-            assert(rcode == ResultCode.OK)
+            assert rcode == ResultCode.OK
         for idx, sub_id in enumerate(sub_ids[:-1]):
             assert (
                 list(fsp_component_manager.subarray_membership)[idx]
@@ -333,8 +353,10 @@ class TestFspComponentManager:
                     fsp_component_manager.function_mode == FspModes.VLBI.value
                 )
 
-            (rcode, _) = fsp_component_manager.update_jones_matrix(jones_matrix)
-            assert(rcode == ResultCode.OK)
+            (rcode, _) = fsp_component_manager.update_jones_matrix(
+                jones_matrix
+            )
+            assert rcode == ResultCode.OK
 
             # verify the Jones Matrix was updated successfully
             assert jones_matrix == fsp_component_manager.jones_matrix
@@ -348,15 +370,17 @@ class TestFspComponentManager:
 
         :param fsp_component_manager: the fsp component manager under test.
         """
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
         (rcode, _) = fsp_component_manager.update_jones_matrix("some-input")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
         fsp_component_manager.set_function_mode(FspModes.CORR)
         (rcode, _) = fsp_component_manager.update_jones_matrix("some-input")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
     @pytest.mark.parametrize(
         "delay_model_file_name, \
@@ -423,30 +447,31 @@ class TestFspComponentManager:
                 )
 
             (rcode, _) = fsp_component_manager.update_delay_model(delay_model)
-            assert(rcode == ResultCode.OK)
+            assert rcode == ResultCode.OK
 
             # verify the delay model was updated successfully
             assert delay_model == fsp_component_manager.delay_model
 
     def test_UpdateDelayModelError(
         self: TestFspComponentManager,
-        fsp_component_manager : FspComponentManager,
+        fsp_component_manager: FspComponentManager,
     ) -> None:
         """
         Test Fsp's UpdateDelayModel command errors
 
         :param fsp_component_manager: the fsp component manager under test.
         """
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
         (rcode, _) = fsp_component_manager.update_delay_model("input")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
         fsp_component_manager.set_function_mode(FspModes.VLBI)
         (rcode, _) = fsp_component_manager.update_delay_model("input")
-        assert(rcode == ResultCode.FAILED)
-
+        assert rcode == ResultCode.FAILED
 
     @pytest.mark.parametrize(
         "timing_beam_weights_file_name, \
@@ -499,8 +524,10 @@ class TestFspComponentManager:
         f.close()
 
         # update the weights
-        (rcode, _) = fsp_component_manager.update_timing_beam_weights(timing_beam_weights)
-        assert(rcode == ResultCode.OK)
+        (rcode, _) = fsp_component_manager.update_timing_beam_weights(
+            timing_beam_weights
+        )
+        assert rcode == ResultCode.OK
 
         # verify the timing beam weights were updated successfully
         assert timing_beam_weights == fsp_component_manager.timing_beam_weights
@@ -515,15 +542,17 @@ class TestFspComponentManager:
         :param fsp_component_manager: the fsp component manager under test.
         """
         # for these two lines, have a function that sets up the bad state + reuse
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
         (rcode, _) = fsp_component_manager.update_timing_beam_weights("input")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
         fsp_component_manager.set_function_mode(FspModes.CORR)
         (rcode, _) = fsp_component_manager.update_timing_beam_weights("input")
-        assert(rcode == ResultCode.FAILED)
+        assert rcode == ResultCode.FAILED
 
     def test_GetFspCorrConfgiId(
         self: TestFspComponentManager,
@@ -534,12 +563,14 @@ class TestFspComponentManager:
 
         :param fsp_component_manager: the fsp component manager under test.
         """
-        fsp_component_manager.update_communication_status(CommunicationStatus.ESTABLISHED)
+        fsp_component_manager.update_communication_status(
+            CommunicationStatus.ESTABLISHED
+        )
         fsp_component_manager._connected = False
         result = fsp_component_manager.get_fsp_corr_config_id()
-        assert(result == "")
+        assert result == ""
 
         fsp_component_manager.start_communicating()
         fsp_component_manager.on()
         result = fsp_component_manager.get_fsp_corr_config_id()
-        assert(result != "")
+        assert result != ""
