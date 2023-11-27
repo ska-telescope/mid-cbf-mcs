@@ -1,0 +1,55 @@
+name: slim
+function: slim
+domain: mid-csp-cbf
+command: "SlimLink"
+instances: ["link"]
+depends_on:
+    - device: sys/database/2
+readinessProbe:
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+livenessProbe:
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+server:
+    name: "SlimLink"
+    instances:
+    - name: "link"
+        classes:
+        - name: "SlimLink"
+        devices:
+        - name: "mid_csp_cbf/slim/slim-link-0"
+            properties:
+            - name: "polled_attr"
+                values:
+                - "state"
+                - "1000"
+                - "healthstate"
+                - "3000"
+                - "adminmode"
+                - "3000"
+                - "simulationMode"
+                - "3000"
+        - name: "mid_csp_cbf/slim/slim-link-1"
+            properties:
+            - name: "polled_attr"
+                values:
+                - "state"
+                - "1000"
+                - "healthstate"
+                - "3000"
+                - "adminmode"
+                - "3000"
+                - "simulationMode"
+                - "3000"
+image:
+    registry: "{{.Values.midcbf.image.registry}}"
+    image: "{{.Values.midcbf.image.image}}"
+    tag: "{{.Values.midcbf.image.tag}}"
+    pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

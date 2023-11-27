@@ -11,26 +11,21 @@
 
 from __future__ import annotations
 
-import logging
-from typing import List, Optional
+from typing import Optional, Tuple
 
 # tango imports
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.base.base_device import (
-    _LMC_TO_PYTHON_LOGGING_LEVEL,
-    _Log4TangoLoggingLevel,
-)
-from ska_tango_base.control_model import LoggingLevel, PowerMode
-from ska_tango_base.faults import LoggingLevelError
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from tango import AttrWriteType
-from tango.server import command, run, attribute
+from ska_tango_base.commands import ResponseCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
-from ska_mid_cbf_mcs.slim_link.slim_link_component_manager import (
+from ska_tango_base.control_model import PowerMode, SimulationMode
+from tango import AttrWriteType, DebugIt
+from tango.server import attribute, command, run
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )
 
@@ -54,7 +49,7 @@ class SlimLink(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
-    
+
     txDeviceName = attribute(
         dtype="DevString",
         access=AttrWriteType.READ_WRITE,
@@ -106,12 +101,19 @@ class SlimLink(SKABaseDevice):
             [6] tx_idle_word_count
         """,
     )
-    
     linkHealthy = attribute(
         dtype="DevBoolean",
         access=AttrWriteType.READ_WRITE,
         label="The health of the link summarized as a boolean",
         doc="The health of the link summarized as a boolean",
+    )
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
 
     # TODO: Are these needed??
@@ -139,43 +141,13 @@ class SlimLink(SKABaseDevice):
     # ---------------
     # General methods
     # ---------------
-    def init_command_objects(self: SlimLink) -> None:
-        """
-        Sets up the command objects
-        """
-        super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.logger)
-
-        # self.register_command_object("On", self.OnCommand(*device_args))
-
-        # self.register_command_object("Off", self.OffCommand(*device_args))
-        
-        self.register_command_object(
-            "connectToSLIMRx", self.ConnectToSLIMRx(*device_args)
-        )
-        
-        self.register_command_object(
-            "connectToSLIMTx", self.ConnectToSLIMTx(*device_args)
-        )
-        
-        self.register_command_object(
-            "verifyConnection", self.VerifyConnection(*device_args)
-        )
-        
-        self.register_command_object(
-            "disconnectFromSLIMTx", self.DisconnectFromSLIMTx(*device_args)
-        )
-        
-        self.register_command_object(
-            "disconnectFromSLIMRx", self.DisconnectFromSLIMRx(*device_args)
-        )
-        
-        self.register_command_object(
-            "clearCounters", self.ClearCounters(*device_args)
-        )
-        
     def create_component_manager(self: SlimLink) -> SlimLinkComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device
+        """
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
@@ -189,7 +161,35 @@ class SlimLink(SKABaseDevice):
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
         )
-        
+
+    def init_command_objects(self: SlimLink) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
+
+        device_args = (self.component_manager, self.logger)
+        self.register_command_object(
+            "ConnectToSlimRx", self.ConnectToSlimRxCommand(*device_args)
+        )
+        self.register_command_object(
+            "ConnectToSlimTx", self.ConnectToSlimTxCommand(*device_args)
+        )
+        self.register_command_object(
+            "CerifyConnection", self.VerifyConnectionCommand(*device_args)
+        )
+        self.register_command_object(
+            "DisconnectFromSlimTx",
+            self.DisconnectFromSlimTxCommand(*device_args),
+        )
+        self.register_command_object(
+            "DisconnectFromSlimRx",
+            self.DisconnectFromSlimRxCommand(*device_args),
+        )
+        self.register_command_object(
+            "ClearCounters", self.ClearCountersCommand(*device_args)
+        )
+
     def always_executed_hook(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
@@ -203,7 +203,7 @@ class SlimLink(SKABaseDevice):
     # ----------
     # Callbacks
     # ----------
-    
+
     def _communication_status_changed(
         self: SlimLink, communication_status: CommunicationStatus
     ) -> None:
@@ -264,11 +264,11 @@ class SlimLink(SKABaseDevice):
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
-            
+
     # -----------------
     # Attribute Methods
     # -----------------
-    
+
     def read_txDeviceName(self: SlimLink) -> str:
         # PROTECTED REGION ID(SlimLink.txDeviceName_read) ENABLED START #
         """
@@ -289,7 +289,7 @@ class SlimLink(SKABaseDevice):
         """
         self.component_manager.tx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.txDeviceName_write
-        
+
     def read_rxDeviceName(self: SlimLink) -> str:
         # PROTECTED REGION ID(SlimLink.rxDeviceName_read) ENABLED START #
         """
@@ -310,7 +310,7 @@ class SlimLink(SKABaseDevice):
         """
         self.component_manager.rx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.rxDeviceName_write
-    
+
     def read_debugTxIdleCtrlWord(self: SlimLink) -> int:
         # PROTECTED REGION ID(SlimLink.debugTxIdleCtrlWord_read) ENABLED START #
         """
@@ -321,7 +321,7 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.debug_tx_idle_ctrl_word
         # PROTECTED REGION END #    //  SlimLink.debugTxIdleCtrlWord_read
-        
+
     def read_debugRxIdleCtrlWord(self: SlimLink) -> int:
         # PROTECTED REGION ID(SlimLink.debugRxIdleCtrlWord_read) ENABLED START #
         """
@@ -343,7 +343,7 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.bit_error_rate
         # PROTECTED REGION END #    //  SlimLink.bitErrorRate_read
-        
+
     def read_linkOccupancy(self: SlimLink) -> float:
         # PROTECTED REGION ID(SlimLink.linkOccupancy_read) ENABLED START #
         """
@@ -354,7 +354,7 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.link_occupancy
         # PROTECTED REGION END #    //  SlimLink.linkOccupancy_read
-        
+
     def read_readCounters(self: SlimLink) -> int[7]:
         # PROTECTED REGION ID(SlimLink.readCounters_read) ENABLED START #
         """
@@ -365,7 +365,7 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.read_counters
         # PROTECTED REGION END #    //  SlimLink.readCounters_read
-        
+
     def read_blockLostCdrLostCount(self: SlimLink) -> int[2]:
         # PROTECTED REGION ID(SlimLink.blockLostCdrLostCount_read) ENABLED START #
         """
@@ -376,7 +376,7 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.block_lost_cdr_lost_count
         # PROTECTED REGION END #    //  SlimLink.blockLostCdrLostCount_read
-        
+
     def read_linkHealthy(self: SlimLink) -> bool:
         # PROTECTED REGION ID(SlimLink.linkHealthy_read) ENABLED START #
         """
@@ -415,66 +415,211 @@ class SlimLink(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            return super().do()
+            (result_code, message) = super().do()
 
-    # class OnCommand(SKABaseDevice.OnCommand):
-    #     """
-    #     The command class for the On command.
+            device = self.target
+            device.write_simulationMode(True)
 
-    #     Initializes HPS device proxies and starts listening to
-    #     attribute change events
-    #     """
+            return (result_code, message)
 
-    #     def do(self: SlimLink.OnCommand) -> Tuple[ResultCode, str]:
-    #         """
-    #         Implement On command functionality.
-
-    #         :return: A Tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         """
-    #         component_manager = self.target
-    #         return component_manager.on()
-
-    # class OffCommand(SKABaseDevice.OffCommand):
-    #     """
-    #     The command class for the Off command.
-
-    #     Stops listening to attribute change events
-    #     """
-
-    #     def do(self: SlimLink.OffCommand) -> Tuple[ResultCode, str]:
-    #         """
-    #         Implement Off command functionality.
-
-    #         :return: A Tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         """
-    #         component_manager = self.target
-    #         return component_manager.off()
-    
     class ConnectToSlimTxCommand(ResponseCommand):
         """
-        A class for the Vcc's ConfigureBand() command.
+        The command class for the ConnectToSlimTx command.
 
-        Turn on the corresponding band device and disable all the others.
+        Connect to a SLIM Tx HPS device.
         """
 
         def do(
-            self: SlimLink.ConnectToSlimTxCommandCommand, argin: str
+            self: SlimLink.ConnectToSlimTxCommand,
         ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for ConfigureBand() command functionality.
-
-            :param freq_band_name: the frequency band name
+            Implement ConnectToSlimTx command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
-            :rtype: (ResultCode, str)
             """
-            return self.target.component_manager.connect_to_slim_tx(argin)
+            component_manager = self.target
+
+            # FIXME: Need?
+            # power_mode = component_manager.get_outlet_power_mode(argin)
+            # if power_mode != PowerMode.ON:
+            #     return (
+            #         ResultCode.FAILED,
+            #         f"Power on failed, outlet is in power mode {power_mode}",
+            #     )
+
+            return component_manager.connect_to_slim_tx()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def ConnectToSlimTx(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.ConnectToSlimTx) ENABLED START #
+        handler = self.get_command_object("ConnectToSlimTx")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.ConnectToSlimTx
+
+    class ConnectToSlimRxCommand(ResponseCommand):
+        """
+        The command class for the ConnectToSlimRx command.
+
+        Connect to a SLIM Rx HPS device.
+        """
+
+        def do(
+            self: SlimLink.ConnectToSlimRxCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Implement ConnectToSlimRx command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            component_manager = self.target
+            return component_manager.connect_to_slim_rx()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def ConnectToSlimRx(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.ConnectToSlimRx) ENABLED START #
+        handler = self.get_command_object("ConnectToSlimRx")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.ConnectToSlimRx
+
+    class VerifyConnectionCommand(ResponseCommand):
+        """
+        The command class for the VerifyConnection command.
+
+        Run several health checks on the SLIM Link.
+        """
+
+        def do(
+            self: SlimLink.VerifyConnectionCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Implement VerifyConnection command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            component_manager = self.target
+            return component_manager.verify_connection()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def VerifyConnection(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.VerifyConnection) ENABLED START #
+        handler = self.get_command_object("VerifyConnection")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.VerifyConnection
+
+    class DisconnectFromSlimTxCommand(ResponseCommand):
+        """
+        The command class for the DisconnectFromSlimTx command.
+
+        Disconnect from a SLIM Tx HPS device.
+        """
+
+        def do(
+            self: SlimLink.DisconnectFromSlimTxCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Implement DisconnectFromSlimTx command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            component_manager = self.target
+            return component_manager.disconnect_from_slim_tx()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def DisconnectFromSlimTx(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.DisconnectFromSlimTx) ENABLED START #
+        handler = self.get_command_object("DisconnectFromSlimTx")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.DisconnectFromSlimTx
+
+    class DisconnectFromSlimRxCommand(ResponseCommand):
+        """
+        The command class for the DisconnectFromSlimRx command.
+
+        Disconnect from a SLIM Rx HPS device.
+        """
+
+        def do(
+            self: SlimLink.DisconnectFromSlimRxCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Implement DisconnectFromSlimRx command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            component_manager = self.target
+            return component_manager.disconnect_from_slim_rx()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def DisconnectFromSlimRx(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.DisconnectFromSlimRx) ENABLED START #
+        handler = self.get_command_object("DisconnectFromSlimRx")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.DisconnectFromSlimRx
+
+    class ClearCountersCommand(ResponseCommand):
+        """
+        The command class for the ClearCounters command.
+
+        Clear the read counters array on Tx and Rx sides of the SLIM Link.
+        """
+
+        def do(self: SlimLink.ClearCountersCommand) -> Tuple[ResultCode, str]:
+            """
+            Implement ClearCounters command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            component_manager = self.target
+            return component_manager.clear_counters()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def ClearCounters(self: SlimLink) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimLink.ClearCounters) ENABLED START #
+        handler = self.get_command_object("ClearCounters")
+        return_code, message = handler()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  SlimLink.ClearCounters
 
 
 # ----------
