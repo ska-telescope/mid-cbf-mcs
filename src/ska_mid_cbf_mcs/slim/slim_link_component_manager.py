@@ -240,23 +240,16 @@ class SlimLinkComponentManager(CbfComponentManager):
                 fqdn=self._rx_device_name, logger=self._logger
             )
             self._logger.info("Tx and Rx proxies instantiated.")
-        # FIXME: this throw may be unneccessary?
         except tango.DevFailed as df:
             self._logger.error(df.args[0].desc)
-            self.update_component_fault(True)
-            tango.Except.throw_exception(
-                "Command failed",
-                "Error in proxy instantiation.",
-                "start_communicating()",
-                tango.ErrSeverity.ERR,
+            self.update_component_power_mode(PowerMode.UNKNOWN)
+            self.update_communication_status(
+                CommunicationStatus.NOT_ESTABLISHED
             )
+            self.update_component_fault(True)
+            raise ConnectionError("Error in proxy connection.") from df
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        # FIXME: Double check correct power mode. Inconsistent bw DS's
-        # # ... Do i even need power mode?
-        self.update_component_power_mode(PowerMode.ON)
-        # # FIXME: This was in CSP inherited DS but may not be needed in SKABaseDevices?
-        # self.update_component_fault(False)
         self.connected = True
 
     def stop_communicating(self: SlimLinkComponentManager) -> None:
@@ -296,7 +289,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             return ResultCode.OK, result_msg
         except tango.DevFailed as df:
             self._logger.error(df.args[0].desc)
-            # TODO: setstate()??
             self.update_component_fault(True)
             return ResultCode.FAILED, (
                 "Connection to SLIM TX HPS device failed: "
@@ -333,7 +325,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             return ResultCode.OK, result_msg
         except tango.DevFailed as df:
             self._logger.error(df.args[0].desc)
-            # TODO: setstate()??
             self.update_component_fault(True)
             return ResultCode.FAILED, (
                 "Connection to SLIM RX HPS device failed: "
@@ -366,10 +357,10 @@ class SlimLinkComponentManager(CbfComponentManager):
                 ber = self._rx_device_proxy.read_attribute("bit_error_rate")
                 block_lost_count = counters[BLOCK_LOST_COUNT_INDEX]
                 cdr_lost_count = counters[CDR_LOST_COUNT_INDEX]
-                check1, check2, check3, check4 = True
+                error_flag = False
 
                 if rx_idle_ctrl_word != expected_idle_ctrl_word:
-                    check1 = False
+                    error_flag = True
                     result_msg = (
                         "Invalid connection between TX and RX device: "
                         + self._link_name
@@ -377,7 +368,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     )
                     error_msg += "Expected and received idle control word do not match. "
                 if block_lost_count != 0:
-                    check2 = False
+                    error_flag = True
                     result_msg = (
                         "Invalid connection between TX and RX device: "
                         + self._link_name
@@ -385,7 +376,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     )
                     error_msg += "block_lost_count not zero. "
                 if cdr_lost_count != 0:
-                    check3 = False
+                    error_flag = True
                     result_msg = (
                         "Invalid connection between TX and RX device: "
                         + self._link_name
@@ -393,7 +384,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     )
                     error_msg += "cdr_lost_count not zero. "
                 if ber > BER_PASS_THRESHOLD:
-                    check4 = False
+                    error_flag = True
                     result_msg = (
                         "Invalid connection between TX and RX device: "
                         + self._link_name
@@ -404,7 +395,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                         + BER_PASS_THRESHOLD
                         + ". "
                     )
-                if check1 and check2 and check3 and check4:
+                if not error_flag:
                     self._link_healthy = True
                     return ResultCode.OK, result_msg
                 else:

@@ -116,28 +116,6 @@ class SlimLink(SKABaseDevice):
         "to True while the real devices always set simulationMode to False.",
     )
 
-    # TODO: Are these needed??
-    # slim_link_is_active = attribute(
-    #     dtype="bool",
-    #     access=AttrWriteType.READ_WRITE,
-    #     label="Indicator for whether link is active or inactive",
-    #     doc="Indicator for whether link is active or inactive",
-    # )
-
-    # # TODO: CIP-1768 determine enum_labels and how many attributes we need for the status
-    # slim_link_status = attribute(
-    #     dtype="DevEnum",
-    #     access=AttrWriteType.READ,
-    #     label="Slim link status",
-    #     doc="Slim link status from polling Tx-Rx HPS devices",
-    #     enum_labels=[
-    #         "1",
-    #         "2",
-    #         "3",
-    #         "4",
-    #     ],
-    # )
-
     # ---------------
     # General methods
     # ---------------
@@ -152,7 +130,7 @@ class SlimLink(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return SlimLinkComponentManager(
-            debug_tx_idle_ctrl_word=self.TxDeviceName,
+            tx_device_name=self.TxDeviceName,
             rx_device_name=self.RxDeviceName,
             serial_loopback=self.SerialLoopback,
             logger=self.logger,
@@ -440,15 +418,6 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-
-            # FIXME: Need?
-            # power_mode = component_manager.get_outlet_power_mode(argin)
-            # if power_mode != PowerMode.ON:
-            #     return (
-            #         ResultCode.FAILED,
-            #         f"Power on failed, outlet is in power mode {power_mode}",
-            #     )
-
             return component_manager.connect_to_slim_tx()
 
     @command(

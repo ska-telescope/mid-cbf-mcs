@@ -77,6 +77,10 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
+  slimlink:
+    enabled: true
+    file: "data/slimlink.yaml"
+
 nodeSelector: {}
 
 affinity: {}

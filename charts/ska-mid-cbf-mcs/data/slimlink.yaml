@@ -1,8 +1,8 @@
-name: slim
-function: slim
+name: slimlink
+function: slimlink
 domain: mid-csp-cbf
 command: "SlimLink"
-instances: ["link"]
+instances: ["link0"]
 depends_on:
     - device: sys/database/2
 readinessProbe:
@@ -20,11 +20,11 @@ livenessProbe:
 server:
     name: "SlimLink"
     instances:
-    - name: "link"
+    - name: "vcc-fsp-1"
         classes:
         - name: "SlimLink"
         devices:
-        - name: "mid_csp_cbf/slim/slim-link-0"
+        - name: "mid_csp_cbf/vcc-fsp-1/slim-link-0"
             properties:
             - name: "polled_attr"
                 values:
@@ -36,7 +36,43 @@ server:
                 - "3000"
                 - "simulationMode"
                 - "3000"
-        - name: "mid_csp_cbf/slim/slim-link-1"
+    - name: "vcc-fsp-2"
+        classes:
+        - name: "SlimLink"
+        devices:
+        - name: "mid_csp_cbf/vcc-fsp-2/slim-link-0"
+            properties:
+            - name: "polled_attr"
+                values:
+                - "state"
+                - "1000"
+                - "healthstate"
+                - "3000"
+                - "adminmode"
+                - "3000"
+                - "simulationMode"
+                - "3000"
+    - name: "vcc-fsp-3"
+        classes:
+        - name: "SlimLink"
+        devices:
+        - name: "mid_csp_cbf/vcc-fsp-3/slim-link-0"
+            properties:
+            - name: "polled_attr"
+                values:
+                - "state"
+                - "1000"
+                - "healthstate"
+                - "3000"
+                - "adminmode"
+                - "3000"
+                - "simulationMode"
+                - "3000"
+    - name: "vcc-fsp-4"
+        classes:
+        - name: "SlimLink"
+        devices:
+        - name: "mid_csp_cbf/vcc-fsp-4/slim-link-0"
             properties:
             - name: "polled_attr"
                 values:
