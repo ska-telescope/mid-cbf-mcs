@@ -81,7 +81,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._tx_device_proxy = None
         self._rx_device_proxy = None
 
-        self.link_healthy(False)
+        self._link_healthy = False
 
         # FIXME: Driver and/or simulator???
         self.slim_link_simulator = SlimLinkSimulator(
@@ -248,17 +248,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         return self._link_healthy
 
-    @link_healthy.setter
-    def link_healthy(
-        self: SlimLinkComponentManager, link_healthy: bool
-    ) -> None:
-        """
-        Sets the link_healthy attribute
-
-        :param link_healthy: The link_healthy value.
-        """
-        self._link_healthy = link_healthy
-
     def start_communicating(self: SlimLinkComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
 
@@ -386,7 +375,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         )
 
         if self._simulation_mode == SimulationMode.FALSE:
-            self.link_healthy(False)
+            self._link_healthy = False
             if (self._tx_device_proxy is not None) and (
                 self._rx_device_proxy is not None
             ):
@@ -441,7 +430,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                             + ". "
                         )
                     if not error_flag:
-                        self.link_healthy(True)
+                        self._link_healthy = True
                         return ResultCode.OK, result_msg
                     else:
                         self._logger.error(result_msg + error_msg)
@@ -469,7 +458,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.disconnectFromSlimTx()  -  "
             + self._link_name
         )
-        self.link_healthy(False)
+        self._link_healthy = False
         if self._simulation_mode == SimulationMode.FALSE:
             try:
                 if self._tx_device_proxy is not None:
@@ -500,7 +489,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.disconnectFromSlimRx()  -  "
             + self._link_name
         )
-        self.link_healthy(False)
+        self._link_healthy = False
         if self._simulation_mode == SimulationMode.FALSE:
             try:
                 if self._rx_device_proxy is not None:

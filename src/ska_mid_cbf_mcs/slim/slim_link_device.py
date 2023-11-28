@@ -107,7 +107,7 @@ class SlimLink(SKABaseDevice):
     )
     linkHealthy = attribute(
         dtype="DevBoolean",
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="The health of the link summarized as a boolean",
         doc="The health of the link summarized as a boolean",
     )
@@ -358,16 +358,6 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.link_healthy
         # PROTECTED REGION END #    //  SlimLink.linkHealthy_read
-
-    def write_linkHealthy(self: SlimLink, value: bool) -> None:
-        # PROTECTED REGION ID(SlimLink.linkHealthy_write) ENABLED START #
-        """
-        Write the linkHealthy attribute.
-
-        :param value: the linkHealthy value.
-        """
-        self.component_manager.link_healthy = value
-        # PROTECTED REGION END #    //  SlimLink.linkHealthy_write
 
     # --------
     # Commands
