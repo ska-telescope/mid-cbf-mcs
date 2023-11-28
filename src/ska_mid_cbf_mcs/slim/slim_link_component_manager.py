@@ -21,9 +21,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.slim.slim_link_simulator import (
-    SlimLinkSimulator,
-)
+from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
 
 BLOCK_LOST_COUNT_INDEX = 0
 CDR_LOST_COUNT_INDEX = 1
@@ -74,8 +72,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._simulation_mode = simulation_mode
 
         # Initialize device attributes.
-        self._tx_device_name = tx_device_name
         self._rx_device_name = rx_device_name
+        self._tx_device_name = tx_device_name
         self._link_name = f"{tx_device_name}->{rx_device_name}"
 
         self._serial_loopback = serial_loopback
@@ -83,7 +81,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._tx_device_proxy = None
         self._rx_device_proxy = None
 
-        self._link_healthy = False
+        self.link_healthy(False)
 
         # FIXME: Driver and/or simulator???
         self.slim_link_simulator = SlimLinkSimulator(
@@ -98,7 +96,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-        self._logger.info(f"Attempting to link {self._link_name}")
+        self._logger.info(f"Attempting to create link: {self._link_name}")
 
     @property
     def tx_device_name(self: SlimLinkComponentManager) -> str:
@@ -153,8 +151,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             else:
                 raise TypeError("No device proxy set for Slim Tx device.")
         else:
-            #FIXME: talk to simulator.
-            return #something
+            return self.slim_link_simulator.tx_idle_ctrl_word
 
     @property
     def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
@@ -163,7 +160,13 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :return: the rx idle control word.
         """
-        return self._rx_idle_ctrl_word
+        if self._simulation_mode == SimulationMode.FALSE:
+            if self._rx_device_proxy is not None:
+                return self._rx_device_proxy.idle_ctrl_word
+            else:
+                raise TypeError("No device proxy set for Slim Rx device.")
+        else:
+            return self.slim_link_simulator.rx_idle_ctrl_word
 
     @property
     def bit_error_rate(self: SlimLinkComponentManager) -> float:
@@ -172,7 +175,13 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :return: The bit error rate.
         """
-        return self._bit_error_rate
+        if self._simulation_mode == SimulationMode.FALSE:
+            if self._rx_device_proxy is not None:
+                return self._rx_device_proxy.bit_error_rate
+            else:
+                raise TypeError("No device proxy set for Slim Tx device.")
+        else:
+            return self.slim_link_simulator.bit_error_rate
 
     @property
     def read_counters(self: SlimLinkComponentManager) -> int[7]:
@@ -188,7 +197,27 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :return: The read_counters array.
         """
-        return self._read_counters
+        if self._simulation_mode == SimulationMode.FALSE:
+            if (self._tx_device_proxy is not None) and (
+                self._rx_device_proxy is not None
+            ):
+                tx_counts = self._tx_device_proxy.read_counters
+                rx_counts = self._rx_device_proxy.read_counters
+                return [
+                    rx_counts[0],
+                    rx_counts[1],
+                    rx_counts[2],
+                    rx_counts[3],
+                    tx_counts[0],
+                    tx_counts[1],
+                    tx_counts[2],
+                ]
+            else:
+                raise TypeError(
+                    "No device proxy set for Slim Tx and/or Rx device."
+                )
+        else:
+            return self.slim_link_simulator.read_counters
 
     @property
     def block_lost_cdr_lost_count(self: SlimLinkComponentManager) -> int[2]:
@@ -197,7 +226,17 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :return: The block_lost_cdr_lost_count array.
         """
-        return self._block_lost_cdr_lost_count
+        if self._simulation_mode == SimulationMode.FALSE:
+            if self._rx_device_proxy is not None:
+                rx_counts = self._rx_device_proxy.read_counters
+                return [
+                    rx_counts[4],
+                    rx_counts[5],
+                ]
+            else:
+                raise TypeError("No device proxy set for Slim Rx device.")
+        else:
+            return self.slim_link_simulator.block_lost_cdr_lost_count
 
     @property
     def link_healthy(self: SlimLinkComponentManager) -> bool:
@@ -233,24 +272,23 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        # FIXME: if not self._simulation_mode:
-
-        try:
-            self._tx_device_proxy = CbfDeviceProxy(
-                fqdn=self._tx_device_name, logger=self._logger
-            )
-            self._rx_device_proxy = CbfDeviceProxy(
-                fqdn=self._rx_device_name, logger=self._logger
-            )
-            self._logger.info("Tx and Rx proxies instantiated.")
-        except tango.DevFailed as df:
-            self._logger.error(df.args[0].desc)
-            self.update_component_power_mode(PowerMode.UNKNOWN)
-            self.update_communication_status(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.update_component_fault(True)
-            raise ConnectionError("Error in proxy connection.") from df
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                self._tx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._tx_device_name, logger=self._logger
+                )
+                self._rx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._rx_device_name, logger=self._logger
+                )
+                self._logger.info("Tx and Rx proxies instantiated.")
+            except tango.DevFailed as df:
+                self._logger.error(df.args[0].desc)
+                self.update_component_power_mode(PowerMode.UNKNOWN)
+                self.update_communication_status(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                self.update_component_fault(True)
+                raise ConnectionError("Error in proxy connection.") from df
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.connected = True
@@ -264,8 +302,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
-        # FIXME: if not self._simulation_mode:
-
     def connect_to_slim_tx(
         self: SlimLinkComponentManager,
     ) -> tuple[ResultCode, str]:
@@ -273,33 +309,33 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.connect_to_slim_tx()  -  "
             + self._link_name
         )
-        # FIXME:
-        # if self._simulation_mode:
-        #     self._tx_idle_ctrl_word, result_msg = self.slim_link_simulator.connect_to_slim_tx()
-        #     return ResultCode.OK, result_msg
-        # else:
-        try:
-            self.disconnect_from_slim_tx()
-            ping = self._tx_device_proxy.ping()
 
-            self._tx_idle_ctrl_word = self._tx_device_proxy.idle_ctrl_word
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                self.disconnect_from_slim_tx()
+                ping = self._tx_device_proxy.ping()
 
-            result_msg = (
-                "Connection to SLIM TX HPS device successful: "
-                + self._tx_device_name
-                + "; device ping took "
-                + ping
-                + " microseconds"
-            )
-            self._logger.info(result_msg)
-            return ResultCode.OK, result_msg
-        except tango.DevFailed as df:
-            self._logger.error(df.args[0].desc)
-            self.update_component_fault(True)
-            return ResultCode.FAILED, (
-                "Connection to SLIM TX HPS device failed: "
-                + self._tx_device_name
-            )
+                self._tx_idle_ctrl_word = self.tx_idle_ctrl_word
+
+                result_msg = (
+                    "Connection to SLIM TX HPS device successful: "
+                    + self.tx_device_name
+                    + "; device ping took "
+                    + ping
+                    + " microseconds"
+                )
+                self._logger.info(result_msg)
+                return ResultCode.OK, result_msg
+            # FIXME: Do I need to catch TypeError too?
+            except tango.DevFailed as df:
+                self._logger.error(df.args[0].desc)
+                self.update_component_fault(True)
+                return ResultCode.FAILED, (
+                    "Connection to SLIM TX HPS device failed: "
+                    + self.tx_device_name
+                )
+        else:
+            return ResultCode.OK, self.slim_link_simulator.connect_to_slim_tx()
 
     def connect_to_slim_rx(
         self: SlimLinkComponentManager,
@@ -308,37 +344,38 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.connect_to_slim_rx()  -  "
             + self._link_name
         )
-        # FIXME:
-        # if self._simulation_mode:
-        #     self._rx_idle_ctrl_word, result_msg = self.slim_link_simulator.connect_to_slim_rx()
-        #     return ResultCode.OK, result_msg
-        # else:
-        try:
-            self.disconnect_from_slim_rx()
-            ping = self._rx_device_proxy.ping()
 
-            # Take SLIM Rx out of serial loopback
-            serial_loopback_enable = False
-            self._rx_device_proxy.initialize_connection(serial_loopback_enable)
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                self.disconnect_from_slim_rx()
+                ping = self._rx_device_proxy.ping()
 
-            self._rx_idle_ctrl_word = self._rx_device_proxy.idle_ctrl_word
+                # Take SLIM Rx out of serial loopback
+                serial_loopback_enable = False
+                self._rx_device_proxy.initialize_connection(
+                    serial_loopback_enable
+                )
 
-            result_msg = (
-                "Connection to SLIM RX Tango DS successful: "
-                + self._rx_device_name
-                + "; device ping took "
-                + ping
-                + " microseconds"
-            )
-            self._logger.info(result_msg)
-            return ResultCode.OK, result_msg
-        except tango.DevFailed as df:
-            self._logger.error(df.args[0].desc)
-            self.update_component_fault(True)
-            return ResultCode.FAILED, (
-                "Connection to SLIM RX HPS device failed: "
-                + self._rx_device_name
-            )
+                self._rx_idle_ctrl_word = self.rx_idle_ctrl_word
+
+                result_msg = (
+                    "Connection to SLIM RX Tango DS successful: "
+                    + self.rx_device_name
+                    + "; device ping took "
+                    + ping
+                    + " microseconds"
+                )
+                self._logger.info(result_msg)
+                return ResultCode.OK, result_msg
+            except tango.DevFailed as df:
+                self._logger.error(df.args[0].desc)
+                self.update_component_fault(True)
+                return ResultCode.FAILED, (
+                    "Connection to SLIM RX HPS device failed: "
+                    + self.rx_device_name
+                )
+        else:
+            return ResultCode.OK, self.slim_link_simulator.connect_to_slim_rx()
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -347,80 +384,83 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.verify_connection()  -  "
             + self._link_name
         )
-        # FIXME:
-        # if self._simulation_mode:
-        #     self._link_healthy, result_msg = self.slim_link_simulator.verify_connection()
-        #     return ResultCode.OK, result_msg
-        # else:
 
-        self._link_healthy = False
-        if self._tx_device_proxy and self._rx_device_proxy:
-            result_msg = (
-                "Valid connection between TX and RX devices: "
-                + self._link_name
-                + "! "
-            )
-            error_msg = ""
-
-            try:
-                expected_idle_ctrl_word = self._tx_idle_ctrl_word
-                rx_idle_ctrl_word = self._rx_idle_ctrl_word
-                counters = self.get_block_lost_cdr_lost_count()
-                
-                ber = self.get_bit_error_rate()
-                block_lost_count = counters[BLOCK_LOST_COUNT_INDEX]
-                cdr_lost_count = counters[CDR_LOST_COUNT_INDEX]
-                error_flag = False
-
-                if self._rx_idle_ctrl_word != self._tx_idle_ctrl_word:
-                    error_flag = True
-                    result_msg = (
-                        "Invalid connection between TX and RX device: "
-                        + self._link_name
-                        + "! "
-                    )
-                    error_msg += "Expected and received idle control word do not match. "
-                if block_lost_count != 0:
-                    error_flag = True
-                    result_msg = (
-                        "Invalid connection between TX and RX device: "
-                        + self._link_name
-                        + "! "
-                    )
-                    error_msg += "block_lost_count not zero. "
-                if cdr_lost_count != 0:
-                    error_flag = True
-                    result_msg = (
-                        "Invalid connection between TX and RX device: "
-                        + self._link_name
-                        + "! "
-                    )
-                    error_msg += "cdr_lost_count not zero. "
-                if ber > BER_PASS_THRESHOLD:
-                    error_flag = True
-                    result_msg = (
-                        "Invalid connection between TX and RX device: "
-                        + self._link_name
-                        + "! "
-                    )
-                    error_msg += (
-                        "bit-error-rate higher than "
-                        + BER_PASS_THRESHOLD
-                        + ". "
-                    )
-                if not error_flag:
-                    self._link_healthy = True
-                    return ResultCode.OK, result_msg
-                else:
-                    self._logger.error(result_msg + error_msg)
+        if self._simulation_mode == SimulationMode.FALSE:
+            self.link_healthy(False)
+            if (self._tx_device_proxy is not None) and (
+                self._rx_device_proxy is not None
+            ):
+                result_msg = (
+                    "Valid connection between TX and RX devices: "
+                    + self._link_name
+                    + "! "
+                )
+                error_msg = ""
+                try:
+                    error_flag = False
+                    if self.rx_idle_ctrl_word != self.tx_idle_ctrl_word:
+                        error_flag = True
+                        result_msg = (
+                            "Invalid connection between TX and RX device: "
+                            + self._link_name
+                            + "! "
+                        )
+                        error_msg += "Expected and received idle control word do not match. "
+                    if (
+                        self.block_lost_cdr_lost_count[BLOCK_LOST_COUNT_INDEX]
+                        != 0
+                    ):
+                        error_flag = True
+                        result_msg = (
+                            "Invalid connection between TX and RX device: "
+                            + self._link_name
+                            + "! "
+                        )
+                        error_msg += "block_lost_count not zero. "
+                    if (
+                        self.block_lost_cdr_lost_count[CDR_LOST_COUNT_INDEX]
+                        != 0
+                    ):
+                        error_flag = True
+                        result_msg = (
+                            "Invalid connection between TX and RX device: "
+                            + self._link_name
+                            + "! "
+                        )
+                        error_msg += "cdr_lost_count not zero. "
+                    if self.bit_error_rate > BER_PASS_THRESHOLD:
+                        error_flag = True
+                        result_msg = (
+                            "Invalid connection between TX and RX device: "
+                            + self._link_name
+                            + "! "
+                        )
+                        error_msg += (
+                            "bit-error-rate higher than "
+                            + BER_PASS_THRESHOLD
+                            + ". "
+                        )
+                    if not error_flag:
+                        self.link_healthy(True)
+                        return ResultCode.OK, result_msg
+                    else:
+                        self._logger.error(result_msg + error_msg)
+                        return ResultCode.FAILED, (result_msg + error_msg)
+                except tango.DevFailed as df:
+                    self._logger.error(df.args[0].desc)
                     return ResultCode.FAILED, (result_msg + error_msg)
-            except tango.DevFailed as df:
-                self._logger.error(df.args[0].desc)
-                return ResultCode.FAILED, (result_msg + error_msg)
+            else:
+                result_msg = (
+                    "Could not reach Tx or Rx proxy: " + self._link_name
+                )
+                self._logger.error(result_msg)
+                return ResultCode.FAILED, result_msg
         else:
-            result_msg = "Could not reach Tx or Rx proxy: " + self._link_name
-            self._logger.error(result_msg)
-            return ResultCode.FAILED, result_msg
+            (
+                self._link_healthy,
+                result_msg,
+            ) = self.slim_link_simulator.verify_connection()
+            return ResultCode.OK, result_msg
 
     def disconnect_from_slim_tx(
         self: SlimLinkComponentManager,
@@ -429,28 +469,29 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.disconnectFromSlimTx()  -  "
             + self._link_name
         )
-        # FIXME:
-        # if self._simulation_mode:
-        #     self._link_healthy, result_msg = self.slim_link_simulator.disconnect_from_slim_tx()
-        #     return ResultCode.OK, result_msg
-        # else:
-        try:
-            if self._tx_device_proxy is not None:
-                self._tx_device_proxy = None
-                self._tx_device_name = None
-                self.clear_counters()
-                self._link_healthy = False
-                result_msg = "Disconnected from SLIM Tx device."
-            else:
-                result_msg = "No SLIM Tx device was connected."
-            return ResultCode.OK, result_msg
-        except tango.DevFailed:
-            result_msg = (
-                "Disconnection from SLIM TX Tango DS failed: "
-                + self._tx_device_name
+        self.link_healthy(False)
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                if self._tx_device_proxy is not None:
+                    self._tx_device_proxy = None
+                    self._tx_device_name = None
+                    self.clear_counters()
+                    result_msg = "Disconnected from SLIM Tx device."
+                else:
+                    result_msg = "No SLIM Tx device was connected."
+                return ResultCode.OK, result_msg
+            except tango.DevFailed:
+                result_msg = (
+                    "Disconnection from SLIM TX Tango DS failed: "
+                    + self._tx_device_name
+                )
+                self._logger.error(result_msg)
+                return ResultCode.FAILED, result_msg
+        else:
+            return (
+                ResultCode.OK,
+                self.slim_link_simulator.disconnect_from_slim_tx(),
             )
-            self._logger.error(result_msg)
-            return ResultCode.FAILED, result_msg
 
     def disconnect_from_slim_rx(
         self: SlimLinkComponentManager,
@@ -459,29 +500,35 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.disconnectFromSlimRx()  -  "
             + self._link_name
         )
-        try:
-            if self._rx_device_proxy is not None:
-                # Put SLIM Rx back in serial loopback
-                self._serial_loopback = True
-                self._rx_device_proxy.initialize_connection(
-                    self._serial_loopback
-                )
+        self.link_healthy(False)
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                if self._rx_device_proxy is not None:
+                    # Put SLIM Rx back in serial loopback
+                    self._serial_loopback = True
+                    self._rx_device_proxy.initialize_connection(
+                        self._serial_loopback
+                    )
 
-                self._rx_device_proxy = None
-                self._rx_device_name = None
-                self.clear_counters()
-                self._link_healthy = False
-                result_msg = "Disconnected from SLIM Rx device."
-            else:
-                result_msg = "No SLIM Rx device was connected."
-            return ResultCode.OK, result_msg
-        except tango.DevFailed:
-            result_msg = (
-                "Disconnection from SLIM RX Tango DS failed: "
-                + self._rx_device_name
+                    self._rx_device_proxy = None
+                    self._rx_device_name = None
+                    self.clear_counters()
+                    result_msg = "Disconnected from SLIM Rx device."
+                else:
+                    result_msg = "No SLIM Rx device was connected."
+                return ResultCode.OK, result_msg
+            except tango.DevFailed:
+                result_msg = (
+                    "Disconnection from SLIM RX Tango DS failed: "
+                    + self._rx_device_name
+                )
+                self._logger.error(result_msg)
+                return ResultCode.FAILED, result_msg
+        else:
+            return (
+                ResultCode.OK,
+                self.slim_link_simulator.disconnect_from_slim_rx(),
             )
-            self._logger.error(result_msg)
-            return ResultCode.FAILED, result_msg
 
     def clear_counters(
         self: SlimLinkComponentManager,
@@ -490,42 +537,16 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.clearCounters()  -  "
             + self._link_name
         )
-        try:
-            self._tx_device_proxy.clear_read_counters()
-            self._rx_device_proxy.clear_read_counters()
-            self._read_counters = [0] * 7
-            result_msg = "Counters cleared!"
-            return ResultCode.OK, result_msg
-        except tango.DevFailed:
-            result_msg = "Clearing counters failed: " + self._link_name
-            self._logger.error(result_msg)
-            return ResultCode.FAILED, result_msg
-
-    def get_block_lost_cdr_lost_count(self: SlimLinkComponentManager,
-    ) -> None:
-        self._block_lost_cdr_lost_count = [
-            self._rx_device_proxy.read_counters[4],
-            self._rx_device_proxy.read_counters[5]
-        ]
-        return self._block_lost_cdr_lost_count
-        
-    def get_read_counters(self: SlimLinkComponentManager,
-    ) -> None:
-        tx_counts = self._tx_device_proxy.read_counters
-        rx_counts = self._rx_device_proxy.read_counters
-        
-        self._read_counters = [
-            rx_counts[0],
-            rx_counts[1],
-            rx_counts[2],
-            rx_counts[3],
-            tx_counts[0],
-            tx_counts[1],
-            tx_counts[2],
-        ]
-        return self._read_counters
-    
-    def get_bit_error_rate(self: SlimLinkComponentManager,
-    ) -> None:
-        self._bit_error_rate = self._rx_device_proxy.bit_error_rate
-        return self._bit_error_rate
+        self._read_counters = [0] * 7
+        if self._simulation_mode == SimulationMode.FALSE:
+            try:
+                self._tx_device_proxy.clear_read_counters()
+                self._rx_device_proxy.clear_read_counters()
+                result_msg = "Counters cleared!"
+                return ResultCode.OK, result_msg
+            except tango.DevFailed:
+                result_msg = "Clearing counters failed: " + self._link_name
+                self._logger.error(result_msg)
+                return ResultCode.FAILED, result_msg
+        else:
+            return ResultCode.OK, self.slim_link_simulator.clear_counters()

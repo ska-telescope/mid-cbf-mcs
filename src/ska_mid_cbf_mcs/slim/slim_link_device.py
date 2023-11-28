@@ -152,13 +152,13 @@ class SlimLink(SKABaseDevice):
 
         device_args = (self.component_manager, self.logger)
         self.register_command_object(
-            "ConnectToSlimRx", self.ConnectToSlimRxCommand(*device_args)
-        )
-        self.register_command_object(
             "ConnectToSlimTx", self.ConnectToSlimTxCommand(*device_args)
         )
         self.register_command_object(
-            "CerifyConnection", self.VerifyConnectionCommand(*device_args)
+            "ConnectToSlimRx", self.ConnectToSlimRxCommand(*device_args)
+        )
+        self.register_command_object(
+            "VerifyConnection", self.VerifyConnectionCommand(*device_args)
         )
         self.register_command_object(
             "DisconnectFromSlimTx",
