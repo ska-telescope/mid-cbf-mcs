@@ -21,6 +21,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.slim.slim_link_simulator import (
+    SlimLinkSimulator,
+)
 
 BLOCK_LOST_COUNT_INDEX = 0
 CDR_LOST_COUNT_INDEX = 1
@@ -73,7 +76,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         # Initialize device attributes.
         self._tx_device_name = tx_device_name
         self._rx_device_name = rx_device_name
-        self._link_name = f"{tx_device_name} -> {rx_device_name}"
+        self._link_name = f"{tx_device_name}->{rx_device_name}"
 
         self._serial_loopback = serial_loopback
 
@@ -82,7 +85,10 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         self._link_healthy = False
 
-        # FIXME: Driver and.or simulator???
+        # FIXME: Driver and/or simulator???
+        self.slim_link_simulator = SlimLinkSimulator(
+            link_name="SlimLink/Sim/tx->SlimLink/Sim/rx", logger=logger
+        )
 
         super().__init__(
             logger=logger,
@@ -135,22 +141,29 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._rx_device_name = rx_device_name
 
     @property
-    def debug_tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
+    def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
         The idle control word value tx generates by hashing the tx's fqdn.
 
         :return: the tx idle control word.
         """
-        return self._debug_tx_idle_ctrl_word
+        if self._simulation_mode == SimulationMode.FALSE:
+            if self._tx_device_proxy is not None:
+                return self._tx_device_proxy.idle_ctrl_word
+            else:
+                raise TypeError("No device proxy set for Slim Tx device.")
+        else:
+            #FIXME: talk to simulator.
+            return #something
 
     @property
-    def debug_rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
+    def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
         The last idle control word read by rx from the datastream.
 
         :return: the rx idle control word.
         """
-        return self._debug_rx_idle_ctrl_word
+        return self._rx_idle_ctrl_word
 
     @property
     def bit_error_rate(self: SlimLinkComponentManager) -> float:
@@ -160,16 +173,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: The bit error rate.
         """
         return self._bit_error_rate
-
-    @property
-    def link_occupancy(self: SlimLinkComponentManager) -> float[2]:
-        """
-        An array holding the link occupancy percentages on [0] the tx side, [1] the rx side.
-        Ideally they should be the same.
-
-        :return: The link occupancy array.
-        """
-        return self._link_occupancy
 
     @property
     def read_counters(self: SlimLinkComponentManager) -> int[7]:
@@ -230,7 +233,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        # FIXME: if not self._simulation_mode
+        # FIXME: if not self._simulation_mode:
 
         try:
             self._tx_device_proxy = CbfDeviceProxy(
@@ -270,13 +273,16 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.connect_to_slim_tx()  -  "
             + self._link_name
         )
+        # FIXME:
+        # if self._simulation_mode:
+        #     self._tx_idle_ctrl_word, result_msg = self.slim_link_simulator.connect_to_slim_tx()
+        #     return ResultCode.OK, result_msg
+        # else:
         try:
             self.disconnect_from_slim_tx()
             ping = self._tx_device_proxy.ping()
 
-            self._debug_tx_idle_ctrl_word = (
-                self._tx_device_proxy.read_attribute("idle_ctrl_word")
-            )
+            self._tx_idle_ctrl_word = self._tx_device_proxy.idle_ctrl_word
 
             result_msg = (
                 "Connection to SLIM TX HPS device successful: "
@@ -302,6 +308,11 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.connect_to_slim_rx()  -  "
             + self._link_name
         )
+        # FIXME:
+        # if self._simulation_mode:
+        #     self._rx_idle_ctrl_word, result_msg = self.slim_link_simulator.connect_to_slim_rx()
+        #     return ResultCode.OK, result_msg
+        # else:
         try:
             self.disconnect_from_slim_rx()
             ping = self._rx_device_proxy.ping()
@@ -310,9 +321,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             serial_loopback_enable = False
             self._rx_device_proxy.initialize_connection(serial_loopback_enable)
 
-            self._debug_rx_idle_ctrl_word = (
-                self._rx_device_proxy.read_attribute("idle_ctrl_word")
-            )
+            self._rx_idle_ctrl_word = self._rx_device_proxy.idle_ctrl_word
 
             result_msg = (
                 "Connection to SLIM RX Tango DS successful: "
@@ -338,6 +347,11 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.verify_connection()  -  "
             + self._link_name
         )
+        # FIXME:
+        # if self._simulation_mode:
+        #     self._link_healthy, result_msg = self.slim_link_simulator.verify_connection()
+        #     return ResultCode.OK, result_msg
+        # else:
 
         self._link_healthy = False
         if self._tx_device_proxy and self._rx_device_proxy:
@@ -349,17 +363,16 @@ class SlimLinkComponentManager(CbfComponentManager):
             error_msg = ""
 
             try:
-                expected_idle_ctrl_word = self._debug_tx_idle_ctrl_word
-                rx_idle_ctrl_word = self._debug_rx_idle_ctrl_word
-                counters = self._rx_device_proxy.read_attribute(
-                    "block_lost_cdr_lost_count"
-                )
-                ber = self._rx_device_proxy.read_attribute("bit_error_rate")
+                expected_idle_ctrl_word = self._tx_idle_ctrl_word
+                rx_idle_ctrl_word = self._rx_idle_ctrl_word
+                counters = self.get_block_lost_cdr_lost_count()
+                
+                ber = self.get_bit_error_rate()
                 block_lost_count = counters[BLOCK_LOST_COUNT_INDEX]
                 cdr_lost_count = counters[CDR_LOST_COUNT_INDEX]
                 error_flag = False
 
-                if rx_idle_ctrl_word != expected_idle_ctrl_word:
+                if self._rx_idle_ctrl_word != self._tx_idle_ctrl_word:
                     error_flag = True
                     result_msg = (
                         "Invalid connection between TX and RX device: "
@@ -416,10 +429,16 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.disconnectFromSlimTx()  -  "
             + self._link_name
         )
+        # FIXME:
+        # if self._simulation_mode:
+        #     self._link_healthy, result_msg = self.slim_link_simulator.disconnect_from_slim_tx()
+        #     return ResultCode.OK, result_msg
+        # else:
         try:
             if self._tx_device_proxy is not None:
                 self._tx_device_proxy = None
                 self._tx_device_name = None
+                self.clear_counters()
                 self._link_healthy = False
                 result_msg = "Disconnected from SLIM Tx device."
             else:
@@ -450,6 +469,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
                 self._rx_device_proxy = None
                 self._rx_device_name = None
+                self.clear_counters()
                 self._link_healthy = False
                 result_msg = "Disconnected from SLIM Rx device."
             else:
@@ -480,3 +500,32 @@ class SlimLinkComponentManager(CbfComponentManager):
             result_msg = "Clearing counters failed: " + self._link_name
             self._logger.error(result_msg)
             return ResultCode.FAILED, result_msg
+
+    def get_block_lost_cdr_lost_count(self: SlimLinkComponentManager,
+    ) -> None:
+        self._block_lost_cdr_lost_count = [
+            self._rx_device_proxy.read_counters[4],
+            self._rx_device_proxy.read_counters[5]
+        ]
+        return self._block_lost_cdr_lost_count
+        
+    def get_read_counters(self: SlimLinkComponentManager,
+    ) -> None:
+        tx_counts = self._tx_device_proxy.read_counters
+        rx_counts = self._rx_device_proxy.read_counters
+        
+        self._read_counters = [
+            rx_counts[0],
+            rx_counts[1],
+            rx_counts[2],
+            rx_counts[3],
+            tx_counts[0],
+            tx_counts[1],
+            tx_counts[2],
+        ]
+        return self._read_counters
+    
+    def get_bit_error_rate(self: SlimLinkComponentManager,
+    ) -> None:
+        self._bit_error_rate = self._rx_device_proxy.bit_error_rate
+        return self._bit_error_rate

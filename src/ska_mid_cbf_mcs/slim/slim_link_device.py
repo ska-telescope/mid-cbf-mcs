@@ -62,13 +62,13 @@ class SlimLink(SKABaseDevice):
         label="FQDN of the link's Rx device",
         doc="FQDN of the link's Rx device",
     )
-    debugTxIdleCtrlWord = attribute(
+    txIdleCtrlWord = attribute(
         dtype="DevULong64",
         access=AttrWriteType.READ,
         label="Idle control word read by the link's Tx device",
         doc="Idle control word read by the link's Tx device",
     )
-    debugRxIdleCtrlWord = attribute(
+    rxIdleCtrlWord = attribute(
         dtype="DevULong64",
         access=AttrWriteType.READ,
         label="Idle control word read by the link's Rx device",
@@ -79,12 +79,6 @@ class SlimLink(SKABaseDevice):
         access=AttrWriteType.READ,
         label="Bit Error Rate (BER) calculated by the link's Rx device",
         doc="Bit Error Rate (BER) calculated by the link's Rx device",
-    )
-    linkOccupancy = attribute(
-        dtype="DevFloat",
-        access=AttrWriteType.READ,
-        label="Link occupancy calculated by the link's Rx device",
-        doc="Link occupancy calculated by the link's Rx device",
     )
     readCounters = attribute(
         dtype="DevLong64Array",
@@ -99,6 +93,16 @@ class SlimLink(SKABaseDevice):
             [4] tx_word_count
             [5] tx_packet_count
             [6] tx_idle_word_count
+        """,
+    )
+    blockLostCdrLostCount = attribute(
+        dtype="DevLong64Array",
+        access=AttrWriteType.READ,
+        label="Array holding additional debug counts from Rx device",
+        doc="""
+            An array holding additional counter values from rx device in the order:
+            [0] rx_block_lost_count
+            [1] rx_cdr_lost_count
         """,
     )
     linkHealthy = attribute(
@@ -289,27 +293,27 @@ class SlimLink(SKABaseDevice):
         self.component_manager.rx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.rxDeviceName_write
 
-    def read_debugTxIdleCtrlWord(self: SlimLink) -> int:
-        # PROTECTED REGION ID(SlimLink.debugTxIdleCtrlWord_read) ENABLED START #
+    def read_txIdleCtrlWord(self: SlimLink) -> int:
+        # PROTECTED REGION ID(SlimLink.txIdleCtrlWord_read) ENABLED START #
         """
-        Read the debugTxIdleCtrlWord attribute.
+        Read the TxIdleCtrlWord attribute.
 
         :return: the tx device's idle ctrl word.
         :rtype: int
         """
-        return self.component_manager.debug_tx_idle_ctrl_word
-        # PROTECTED REGION END #    //  SlimLink.debugTxIdleCtrlWord_read
+        return self.component_manager.tx_idle_ctrl_word
+        # PROTECTED REGION END #    //  SlimLink.txIdleCtrlWord_read
 
-    def read_debugRxIdleCtrlWord(self: SlimLink) -> int:
-        # PROTECTED REGION ID(SlimLink.debugRxIdleCtrlWord_read) ENABLED START #
+    def read_rxIdleCtrlWord(self: SlimLink) -> int:
+        # PROTECTED REGION ID(SlimLink.rxIdleCtrlWord_read) ENABLED START #
         """
-        Read the debugRxIdleCtrlWord attribute.
+        Read the rxIdleCtrlWord attribute.
 
         :return: the rx device's idle ctrl word.
         :rtype: int
         """
-        return self.component_manager.debug_rx_idle_ctrl_word
-        # PROTECTED REGION END #    //  SlimLink.debugRxIdleCtrlWord_read
+        return self.component_manager.rx_idle_ctrl_word
+        # PROTECTED REGION END #    //  SlimLink.rxIdleCtrlWord_read
 
     def read_bitErrorRate(self: SlimLink) -> float:
         # PROTECTED REGION ID(SlimLink.bitErrorRate_read) ENABLED START #
@@ -321,17 +325,6 @@ class SlimLink(SKABaseDevice):
         """
         return self.component_manager.bit_error_rate
         # PROTECTED REGION END #    //  SlimLink.bitErrorRate_read
-
-    def read_linkOccupancy(self: SlimLink) -> float:
-        # PROTECTED REGION ID(SlimLink.linkOccupancy_read) ENABLED START #
-        """
-        Read the linkOccupancy attribute.
-
-        :return: the linkOccupancy value.
-        :rtype: float
-        """
-        return self.component_manager.link_occupancy
-        # PROTECTED REGION END #    //  SlimLink.linkOccupancy_read
 
     def read_readCounters(self: SlimLink) -> int[7]:
         # PROTECTED REGION ID(SlimLink.readCounters_read) ENABLED START #

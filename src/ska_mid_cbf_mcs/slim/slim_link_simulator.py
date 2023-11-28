@@ -145,103 +145,43 @@ class SlimLinkSimulator:
 
     def connect_to_slim_tx(
         self: SlimLinkSimulator,
-    ) -> tuple[ResultCode, str]:
-        self._logger.debug(
-            "Entering SlimLinkSimulator.connect_to_slim_tx()  -  "
-            + self._link_name
-        )
-        ping = 10
-        self._debug_tx_idle_ctrl_word = 0xDECAFBAD
+    ) -> tuple[int, str]:
+        self._tx_idle_ctrl_word = 0xDECAFBAD
         result_msg = (
-            "Connection to SLIM TX Simulator successful: "
+            "Connection to SLIM TX simulator successful: "
             + self._tx_device_name
-            + "; device ping took "
-            + ping
-            + " microseconds"
         )
-        self._logger.info(result_msg)
-        return ResultCode.OK, result_msg
+        return self._tx_idle_ctrl_word, result_msg
     
     def connect_to_slim_rx(
         self: SlimLinkSimulator,
-    ) -> tuple[ResultCode, str]:
-        self._logger.debug(
-            "Entering SlimLinkSimulator.connect_to_slim_rx()  -  "
-            + self._link_name
-        )
-        ping = 11
-        self._debug_rx_idle_ctrl_word = 0xDECAFBAD
+    ) -> tuple[int, str]:
+        self._rx_idle_ctrl_word = 0xDECAFBAD
         result_msg = (
-            "Connection to SLIM RX Simulator successful: "
+            "Connection to SLIM RX simulator successful: "
             + self._rx_device_name
-            + "; device ping took "
-            + ping
-            + " microseconds"
         )
-        self._logger.info(result_msg)
-        return ResultCode.OK, result_msg
+        return self._rx_idle_ctrl_word, result_msg
     
     def verify_connection(
         self: SlimLinkSimulator,
     ) -> tuple[ResultCode, str]:
-        self._logger.debug(
-            "Entering SlimLinkSimulator.verify_connection()  -  "
+        self._link_healthy = True
+        result_msg = (
+            "Valid connection between TX and RX simulators: "
             + self._link_name
+            + "! "
         )
+        return self._link_healthy, result_msg
 
-        error_msg = ""
+    def disconnect_from_slim_tx(
+        self: SlimLinkSimulator,
+    ) -> str:
+        self._tx_device_name = None
+        self.clear_counters()
         self._link_healthy = False
-        expected_idle_ctrl_word = self._debug_tx_idle_ctrl_word
-        rx_idle_ctrl_word = self._debug_rx_idle_ctrl_word
-        counters = self._block_lost_cdr_lost_count
-        ber = self._bit_error_rate
-        
-        block_lost_count = counters[BLOCK_LOST_COUNT_INDEX]
-        cdr_lost_count = counters[CDR_LOST_COUNT_INDEX]
-        error_flag = False
-
-        if rx_idle_ctrl_word != expected_idle_ctrl_word:
-            error_flag = True
-            result_msg = (
-                "Invalid connection between TX and RX device: "
-                + self._link_name
-                + "! "
-            )
-            error_msg += "Expected and received idle control word do not match. "
-        if block_lost_count != 0:
-            error_flag = True
-            result_msg = (
-                "Invalid connection between TX and RX device: "
-                + self._link_name
-                + "! "
-            )
-            error_msg += "block_lost_count not zero. "
-        if cdr_lost_count != 0:
-            error_flag = True
-            result_msg = (
-                "Invalid connection between TX and RX device: "
-                + self._link_name
-                + "! "
-            )
-            error_msg += "cdr_lost_count not zero. "
-        if ber > BER_PASS_THRESHOLD:
-            error_flag = True
-            result_msg = (
-                "Invalid connection between TX and RX device: "
-                + self._link_name
-                + "! "
-            )
-            error_msg += (
-                "bit-error-rate higher than "
-                + BER_PASS_THRESHOLD
-                + ". "
-            )
-        if not error_flag:
-            self._link_healthy = True
-            return ResultCode.OK, result_msg
-        else:
-            self._logger.error(result_msg + error_msg)
-            return ResultCode.FAILED, (result_msg + error_msg)
+        result_msg = result_msg = "Disconnected from SLIM Tx simulator."
+        return result_msg
 
 
     def turn_on_outlet(
