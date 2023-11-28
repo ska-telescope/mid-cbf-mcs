@@ -2,7 +2,7 @@
 
 This directory contains parameter files that store internal parameters for each VCC in the system.
 These parameters need to be passed down to each HPS-level VCC device, and are unique per receptor per band.
-The file naming structure is: internal\_params\_receptor\<n\>\_band\<m\>.json. If the file cannot be found for
+The file naming structure is: internal\_params\_receptor<n\>\_band<m\>.json. If the file cannot be found for
 the corresponding receptor and band, the internal\_params\_default.json file is used instead.
 When the band is configured during a scan configuration, a parameter file is passed down to the respective
 HPS VCC band device for configuration of the signal processing chain.
