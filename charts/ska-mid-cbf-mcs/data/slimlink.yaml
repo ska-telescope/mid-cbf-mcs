@@ -36,8 +36,6 @@ server:
             - "3000"
             - "simulationMode"
             - "3000"
-            - "linkHealthy"
-            - "10000"
       - name: "mid_csp_cbf/vcc-fsp-1/slim-link-1"
         properties:
           - name: "polled_attr"
@@ -50,8 +48,6 @@ server:
             - "3000"
             - "simulationMode"
             - "3000"
-            - "linkHealthy"
-            - "10000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

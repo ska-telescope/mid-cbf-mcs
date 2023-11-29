@@ -26,7 +26,6 @@ from tango.server import attribute, command, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.mesh_component_manager import MeshComponentManager
-from ska_mid_cbf_mcs.slim.slim_common import SLIMConst
 
 __all__ = ["SlimMesh", "main"]
 
@@ -37,6 +36,8 @@ class SlimMesh(SKABaseDevice):
     """
 
     # PROTECTED REGION ID(SlimMesh.class_variable) ENABLED START #
+    MAX_NUM_LINKS = 16
+
     # PROTECTED REGION END #    //  SlimMesh.class_variable
 
     # -----------------
@@ -63,7 +64,7 @@ class SlimMesh(SKABaseDevice):
 
     @attribute(
         dtype=(bool,),
-        max_dim_x=SLIMConst.MAX_NUM_LINKS,
+        max_dim_x=MAX_NUM_LINKS,
         label="Mesh status summary",
         doc="Returns a list of status of each link. True if OK. False if the link is in a bad state.",
     )
@@ -78,7 +79,7 @@ class SlimMesh(SKABaseDevice):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=SLIMConst.MAX_NUM_LINKS,
+        max_dim_x=MAX_NUM_LINKS,
         label="Bit error rate",
         doc="Returns the bit error rate of each link in a list",
     )
