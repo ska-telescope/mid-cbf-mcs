@@ -2,7 +2,7 @@ name: slimlink
 function: slimlink
 domain: mid-csp-cbf
 command: "SlimLink"
-instances: ["link0"]
+instances: ["vcc-fsp-1"]
 depends_on:
     - device: sys/database/2
 readinessProbe:
@@ -23,32 +23,32 @@ server:
     - name: "vcc-fsp-1"
         classes:
         - name: "SlimLink"
-        devices:
-        - name: "mid_csp_cbf/vcc-fsp-1/slim-link-0"
-            properties:
-            - name: "polled_attr"
-                values:
-                - "state"
-                - "1000"
-                - "healthstate"
-                - "3000"
-                - "adminmode"
-                - "3000"
-                - "simulationMode"
-                - "3000"
-                - "linkHealthy"
-                - "10000"
-        - name: "mid_csp_cbf/vcc-fsp-1/slim-link-1"
-            properties:
-            - name: "polled_attr"
-                values:
-                - "state"
-                - "1000"
-                - "healthstate"
-                - "3000"
-                - "adminmode"
-                - "3000"
-                - "simulationMode"
-                - "3000"
-                - "linkHealthy"
-                - "10000"
+            devices:
+            - name: "mid_csp_cbf/vcc-fsp-1/slim-link-0"
+                properties:
+                - name: "polled_attr"
+                    values:
+                    - "state"
+                    - "1000"
+                    - "healthstate"
+                    - "3000"
+                    - "adminmode"
+                    - "3000"
+                    - "simulationMode"
+                    - "3000"
+                    - "linkHealthy"
+                    - "10000"
+            - name: "mid_csp_cbf/vcc-fsp-1/slim-link-1"
+                properties:
+                - name: "polled_attr"
+                    values:
+                    - "state"
+                    - "1000"
+                    - "healthstate"
+                    - "3000"
+                    - "adminmode"
+                    - "3000"
+                    - "simulationMode"
+                    - "3000"
+                    - "linkHealthy"
+                    - "10000"
