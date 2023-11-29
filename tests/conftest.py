@@ -17,6 +17,9 @@ from __future__ import absolute_import, annotations
 
 import json
 import logging
+
+# Path
+import os
 import time
 import unittest
 from typing import Any, Callable, Dict, Generator, List, Set, cast
@@ -577,6 +580,14 @@ def init_proxies_fixture():
                 self.wait_timeout_dev(
                     [self.controller], DevState.OFF, wait_time_s, sleep_time_s
                 )
+
+            # Run InitSysParam command before turning on the MCS
+            data_file_path = (
+                os.path.dirname(os.path.abspath(__file__)) + "/data/"
+            )
+            with open(data_file_path + "sys_param_4_boards.json") as f:
+                sp = f.read()
+            self.controller.InitSysParam(sp)
 
             self.controller.On()
             self.wait_timeout_dev(

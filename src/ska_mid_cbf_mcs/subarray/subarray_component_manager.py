@@ -774,12 +774,10 @@ class CbfSubarrayComponentManager(
                 self._group_fsp_pst_subarray,
             ]:
                 if group.get_size() > 0:
-                    try:
-                        group.command_inout("GoToIdle")
-                    except tango.DevFailed as df:
-                        msg = str(df.args[0].desc)
-                        self._logger.error(f"Error in GoToIdle; {msg}")
-                        self._component_obs_fault_callback(True)
+                    results = group.command_inout("GoToIdle")
+                    self._logger.info("Results from GoToIdle:")
+                    for res in results:
+                        self._logger.info(res.get_data())
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -825,7 +823,7 @@ class CbfSubarrayComponentManager(
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
         except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+            msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
             return (False, msg)
 
         # Validate dopplerPhaseCorrSubscriptionPoint.
@@ -1698,6 +1696,9 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
+                self._logger.debug(
+                    "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                )
                 group.remove_all()
 
         if self._group_fsp.get_size() > 0:
@@ -1706,6 +1707,7 @@ class CbfSubarrayComponentManager(
             data.insert(tango.DevUShort, self._subarray_id)
             self._logger.debug(data)
             self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+            self._logger.debug("removing all fqdns from group_fsp:")
             self._group_fsp.remove_all()
 
         for fsp in configuration["fsp"]:
@@ -2194,12 +2196,10 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
-                try:
-                    group.command_inout("Scan", data)
-                except tango.DevFailed as df:
-                    msg = str(df.args[0].desc)
-                    self._logger.error(f"Error in Scan; {msg}")
-                    self._component_obs_fault_callback(True)
+                results = group.command_inout("Scan", data)
+                self._logger.info("Results from Scan:")
+                for res in results:
+                    self._logger.info(res.get_data())
 
         self._scan_id = scan_id
         self._component_scanning_callback(True)
@@ -2223,12 +2223,10 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
-                try:
-                    group.command_inout("EndScan")
-                except tango.DevFailed as df:
-                    msg = str(df.args[0].desc)
-                    self._logger.error(f"Error in EndScan; {msg}")
-                    self._component_obs_fault_callback(True)
+                results = group.command_inout("EndScan")
+                self._logger.info("Results from EndScan:")
+                for res in results:
+                    self._logger.info(res.get_data())
 
         self._scan_id = 0
         self._component_scanning_callback(False)
@@ -2246,12 +2244,10 @@ class CbfSubarrayComponentManager(
             self._group_fsp_pst_subarray,
         ]:
             if group.get_size() > 0:
-                try:
-                    group.command_inout("Abort")
-                except tango.DevFailed as df:
-                    msg = str(df.args[0].desc)
-                    self._logger.error(f"Error in Abort; {msg}")
-                    self._component_obs_fault_callback(True)
+                results = group.command_inout("Abort")
+                self._logger.info("Results from Abort:")
+                for res in results:
+                    self._logger.info(res.get_data())
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
@@ -2285,7 +2281,13 @@ class CbfSubarrayComponentManager(
                 self._group_fsp_pst_subarray,
             ]:
                 if group.get_size() > 0:
-                    group.command_inout("ObsReset")
+                    results = group.command_inout("ObsReset")
+                    self._logger.info("Results from ObsReset:")
+                    for res in results:
+                        self._logger.info(res.get_data())
+                    self._logger.debug(
+                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                    )
                     group.remove_all()
 
             if self._group_fsp.get_size() > 0:
@@ -2295,6 +2297,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._logger.debug("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
@@ -2327,7 +2330,13 @@ class CbfSubarrayComponentManager(
                 self._group_fsp_pst_subarray,
             ]:
                 if group.get_size() > 0:
-                    group.command_inout("ObsReset")
+                    results = group.command_inout("ObsReset")
+                    self._logger.info("Results from ObsReset:")
+                    for res in results:
+                        self._logger.info(res.get_data())
+                    self._logger.debug(
+                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
+                    )
                     group.remove_all()
 
             if self._group_fsp.get_size() > 0:
@@ -2337,6 +2346,7 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._logger.debug("removing all fqdns from group_fsp:")
                 self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
