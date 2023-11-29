@@ -1,8 +1,8 @@
 apiVersion: v2
 name: ska-mid-cbf-mcs
 description: A Helm chart for deploying the CSP_Mid.LMC CBF prototype on Kubernetes
-version: 0.12.3
-appVersion: 0.12.3
+version: 0.12.4
+appVersion: 0.12.4
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 dependencies:
 - name: ska-tango-util
