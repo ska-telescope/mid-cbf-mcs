@@ -1,8 +1,8 @@
-name: slim
-function: slim
+name: slimlink
+function: slimlink
 domain: mid-csp-cbf
-command: "SlimMesh"
-instances: ["mesh"]
+command: "SlimLink"
+instances: ["vcc-fsp-1"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -18,13 +18,13 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "SlimMesh"
+  name: "SlimLink"
   instances:
-  - name: "mesh"
+  - name: "vcc-fsp-1"
     classes:
-    - name: "SlimMesh"
+    - name: "SlimLink"
       devices:
-      - name: "mid_csp_cbf/slim/slim-fs"
+      - name: "mid_csp_cbf/vcc-fsp-1/slim-link-0"
         properties:
           - name: "polled_attr"
             values:
@@ -36,7 +36,9 @@ server:
             - "3000"
             - "simulationMode"
             - "3000"
-      - name: "mid_csp_cbf/slim/slim-vis"
+            - "linkHealthy"
+            - "10000"
+      - name: "mid_csp_cbf/vcc-fsp-1/slim-link-1"
         properties:
           - name: "polled_attr"
             values:
@@ -48,6 +50,8 @@ server:
             - "3000"
             - "simulationMode"
             - "3000"
+            - "linkHealthy"
+            - "10000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

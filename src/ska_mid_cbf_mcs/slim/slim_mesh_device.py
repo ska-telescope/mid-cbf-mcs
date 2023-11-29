@@ -28,16 +28,16 @@ from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.mesh_component_manager import MeshComponentManager
 from ska_mid_cbf_mcs.slim.slim_common import SLIMConst
 
-__all__ = ["SLIMMesh", "main"]
+__all__ = ["SlimMesh", "main"]
 
 
-class SLIMMesh(SKABaseDevice):
+class SlimMesh(SKABaseDevice):
     """
     TANGO device class for controlling and monitoring the SLIM mesh
     """
 
-    # PROTECTED REGION ID(SLIMMesh.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  SLIMMesh.class_variable
+    # PROTECTED REGION ID(SlimMesh.class_variable) ENABLED START #
+    # PROTECTED REGION END #    //  SlimMesh.class_variable
 
     # -----------------
     # Device Properties
@@ -52,7 +52,7 @@ class SLIMMesh(SKABaseDevice):
         label="Mesh configuration",
         doc="Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured",
     )
-    def MeshConfiguration(self: SLIMMesh) -> str:
+    def MeshConfiguration(self: SlimMesh) -> str:
         """
         Read the FPGA bitstream version of the Talon-DX board.
 
@@ -67,7 +67,7 @@ class SLIMMesh(SKABaseDevice):
         label="Mesh status summary",
         doc="Returns a list of status of each link. True if OK. False if the link is in a bad state.",
     )
-    def MeshStatusSummary(self: SLIMMesh) -> List[bool]:
+    def MeshStatusSummary(self: SlimMesh) -> List[bool]:
         """
         Returns a list of status of each link. True if OK. False if the link is in a bad state.
 
@@ -82,7 +82,7 @@ class SLIMMesh(SKABaseDevice):
         label="Bit error rate",
         doc="Returns the bit error rate of each link in a list",
     )
-    def BitErrorRate(self: SLIMMesh) -> List[float]:
+    def BitErrorRate(self: SlimMesh) -> List[float]:
         """
         Returns the bit error rate of each link in a list
 
@@ -103,17 +103,17 @@ class SLIMMesh(SKABaseDevice):
     # ---------------
     # General methods
     # ---------------
-    def always_executed_hook(self: SLIMMesh) -> None:
-        # PROTECTED REGION ID(SLIMMesh.always_executed_hook) ENABLED START #
+    def always_executed_hook(self: SlimMesh) -> None:
+        # PROTECTED REGION ID(SlimMesh.always_executed_hook) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  SLIMMesh.always_executed_hook
+        # PROTECTED REGION END #    //  SlimMesh.always_executed_hook
 
-    def delete_device(self: SLIMMesh) -> None:
-        # PROTECTED REGION ID(SLIMMesh.delete_device) ENABLED START #
+    def delete_device(self: SlimMesh) -> None:
+        # PROTECTED REGION ID(SlimMesh.delete_device) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  SLIMMesh.delete_device
+        # PROTECTED REGION END #    //  SlimMesh.delete_device
 
-    def init_command_objects(self: SLIMMesh) -> None:
+    def init_command_objects(self: SlimMesh) -> None:
         """
         Sets up the command objects
         """
@@ -129,7 +129,7 @@ class SLIMMesh(SKABaseDevice):
     # Commands
     # --------
 
-    def create_component_manager(self: SLIMMesh) -> MeshComponentManager:
+    def create_component_manager(self: SlimMesh) -> MeshComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -155,7 +155,7 @@ class SLIMMesh(SKABaseDevice):
         A class for the init_device() "command".
         """
 
-        def do(self: SLIMMesh.InitCommand) -> tuple[ResultCode, str]:
+        def do(self: SlimMesh.InitCommand) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -175,7 +175,7 @@ class SLIMMesh(SKABaseDevice):
         The command class for the On command.
         """
 
-        def do(self: SLIMMesh.OnCommand) -> Tuple[ResultCode, str]:
+        def do(self: SlimMesh.OnCommand) -> Tuple[ResultCode, str]:
             """
             Implement On command functionality.
 
@@ -191,7 +191,7 @@ class SLIMMesh(SKABaseDevice):
         The command class for the Off command.
         """
 
-        def do(self: SLIMMesh.OffCommand) -> Tuple[ResultCode, str]:
+        def do(self: SlimMesh.OffCommand) -> Tuple[ResultCode, str]:
             """
             Implement Off command functionality.
 
@@ -208,7 +208,7 @@ class SLIMMesh(SKABaseDevice):
         """
 
         def do(
-            self: SLIMMesh.ConfigureCommand, argin: str
+            self: SlimMesh.ConfigureCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Configure command. Configures the SLIM mesh as provided in the input string.
@@ -235,19 +235,19 @@ class SLIMMesh(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def Configure(self: SLIMMesh, argin: str) -> tango.DevVarLongStringArray:
-        # PROTECTED REGION ID(SLIMMesh.Configure) ENABLED START #
+    def Configure(self: SlimMesh, argin: str) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(SlimMesh.Configure) ENABLED START #
         handler = self.get_command_object("Configure")
         return_code, message = handler(argin)
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  SLIMMesh.Configure
+        # PROTECTED REGION END #    //  SlimMesh.Configure
 
     # ---------
     # Callbacks
     # ---------
 
     def _communication_status_changed(
-        self: SLIMMesh, communication_status: CommunicationStatus
+        self: SlimMesh, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -275,7 +275,7 @@ class SLIMMesh(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: SLIMMesh, power_mode: PowerMode
+        self: SlimMesh, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -298,7 +298,7 @@ class SLIMMesh(SKABaseDevice):
 
             self.op_state_model.perform_action(action_map[power_mode])
 
-    def _component_fault(self: SLIMMesh, faulty: bool) -> None:
+    def _component_fault(self: SlimMesh, faulty: bool) -> None:
         """
         Handle component fault
         """
@@ -310,7 +310,7 @@ class SLIMMesh(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def write_simulationMode(self: SLIMMesh, value: SimulationMode) -> None:
+    def write_simulationMode(self: SlimMesh, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device. When simulation mode is set to
         True, the power switch software simulator is used in place of the hardware.
@@ -329,9 +329,9 @@ class SLIMMesh(SKABaseDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(SLIMMesh.main) ENABLED START #
-    return run((SLIMMesh,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  SLIMMesh.main
+    # PROTECTED REGION ID(SlimMesh.main) ENABLED START #
+    return run((SlimMesh,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  SlimMesh.main
 
 
 if __name__ == "__main__":

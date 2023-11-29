@@ -217,7 +217,7 @@ class MeshComponentManager(CbfComponentManager):
         except yaml.YAMLError as e:
             self._logger.error(f"Failed to load YAML: {e}")
             tango.Except.throw_exception(
-                "SLIMMesh_Parse_YAML",
+                "SlimMesh_Parse_YAML",
                 "Cannot parse SLIM configuration YAML",
                 "_parse_links_yaml()",
             )
