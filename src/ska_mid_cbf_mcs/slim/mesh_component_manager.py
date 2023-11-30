@@ -25,6 +25,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
@@ -40,6 +41,7 @@ class MeshComponentManager(CbfComponentManager):
 
     def __init__(
         self: MeshComponentManager,
+        link_fqdns: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -52,6 +54,7 @@ class MeshComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
+        :param link_fqdns: FQDNs of the SLIM link devices
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -69,8 +72,11 @@ class MeshComponentManager(CbfComponentManager):
         self._simulation_mode = simulation_mode
         self._mesh_configured = False
         self._config_str = ""
+        self._links_list = []
 
-        self._dp_links = []  # SLIM Link Device proxies
+        # SLIM Link Device proxies
+        self._link_fqdns = link_fqdns
+        self._dp_links = []
 
         super().__init__(
             logger=logger,
@@ -89,6 +95,15 @@ class MeshComponentManager(CbfComponentManager):
             return
 
         super().start_communicating()
+
+        self._logger.info(f"Link FQDNs: {self._link_fqdns}")  # todo: remove
+
+        if len(self._dp_links) == 0 and self._link_fqdns is not None:
+            self._dp_links = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                for fqdn in self._link_fqdns
+            ]
+
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = True
@@ -154,7 +169,7 @@ class MeshComponentManager(CbfComponentManager):
         self._config_str = config_str
         self._links_list = self._parse_links_yaml(self._config_str)
 
-        rc, msg = self.initialize_links()
+        rc, msg = self._initialize_links()
 
         if rc is not ResultCode.OK:
             self._logger.error("Failed to Parse the SLIM Mesh config.")
@@ -163,30 +178,22 @@ class MeshComponentManager(CbfComponentManager):
         self._mesh_configured = True
         return (rc, msg)
 
-    def initialize_links(self) -> Tuple[ResultCode, str]:
-        self._logger.info(
-            f"Creating {len(self._links_list)} links: {self._links_list}"
-        )
-        # try:
-        #     for txrx in self._links_list:
-        #         link = SLIMLink(tx_fqdn=txrx[0], rx_fqdn=txrx[1])
-        #         link.connect()
-        # except tango.DevFailed:
-        #     log_msg = "Failed to initialize SLIM links"
-        #     self._logger.error(log_msg)
-        #     return (ResultCode.FAILED, log_msg)
-        return (ResultCode.OK, "")
-
     def get_configuration_string(self) -> str:
         return self._config_str
 
     def get_status_summary(self) -> List[bool]:
         summary = []
+        for idx, txrx in enumerate(self._links_list):
+            link_health = self._dp_links[idx].linkHealthy
+            summary.append(link_health)
         return summary
 
     def get_bit_error_rate(self) -> List[float]:
-        ber = []
-        return ber
+        bers = []
+        for idx, txrx in enumerate(self._links_list):
+            ber = self._dp_links[idx].bitErrorRate
+            bers.append(ber)
+        return bers
 
     def _parse_link(self, txt: str):
         """
@@ -200,7 +207,7 @@ class MeshComponentManager(CbfComponentManager):
             return None
         txrx = tmp.split("->")
         if len(txrx) != 2:
-            raise RuntimeError(f"Failed to parse {txt}")
+            return None
         return txrx
 
     def _parse_links_yaml(self, yaml_str: str):
@@ -227,3 +234,24 @@ class MeshComponentManager(CbfComponentManager):
                 if txrx is not None:
                     links.append(txrx)
         return links
+
+    def _initialize_links(self) -> Tuple[ResultCode, str]:
+        self._logger.info(
+            f"Creating {len(self._links_list)} links: {self._links_list}"
+        )
+        if len(self._links_list) == 0:
+            msg = "No active links are defined in the mesh configuration"
+            self._logger.warn(msg)
+            return (ResultCode.OK, msg)
+        try:
+            for idx, txrx in enumerate(self._links_list):
+                self._dp_links[idx].txDeviceName = txrx[0]
+                self._dp_links[idx].rxDeviceName = txrx[1]
+                rc, msg = self._dp_links[idx].command_inout("ConnectTxRx")
+        except tango.DevFailed as df:
+            msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
+            self._logger.error(msg)
+            return (ResultCode.FAILED, msg)
+        msg = "Successfully set up SLIM links"
+        self._logger.info(msg)
+        return (ResultCode.OK, msg)

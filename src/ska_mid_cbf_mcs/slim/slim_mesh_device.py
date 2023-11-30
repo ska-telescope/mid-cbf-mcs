@@ -22,7 +22,7 @@ from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
-from tango.server import attribute, command, run
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.mesh_component_manager import MeshComponentManager
@@ -36,13 +36,14 @@ class SlimMesh(SKABaseDevice):
     """
 
     # PROTECTED REGION ID(SlimMesh.class_variable) ENABLED START #
-    MAX_NUM_LINKS = 16
+    MAX_NUM_LINKS = 16  # AA 0.5
 
     # PROTECTED REGION END #    //  SlimMesh.class_variable
 
     # -----------------
     # Device Properties
     # -----------------
+    Links = device_property(dtype=("str",))
 
     # ----------
     # Attributes
@@ -144,6 +145,7 @@ class SlimMesh(SKABaseDevice):
 
         # Simulation mode default true
         return MeshComponentManager(
+            link_fqdns=self.Links,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,

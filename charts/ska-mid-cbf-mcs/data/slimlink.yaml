@@ -2,7 +2,7 @@ name: slimlink
 function: slimlink
 domain: mid-csp-cbf
 command: "SlimLink"
-instances: ["vcc-fsp-1"]
+instances: ["fs-links", "vis-links"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,11 +20,11 @@ livenessProbe:
 server:
   name: "SlimLink"
   instances:
-  - name: "vcc-fsp-1"
+  - name: "fs-links"
     classes:
     - name: "SlimLink"
       devices:
-      - name: "mid_csp_cbf/vcc-fsp-1/slim-link-0"
+      - name: "mid_csp_cbf/fs_links/000"
         properties:
           - name: "polled_attr"
             values:
@@ -36,7 +36,227 @@ server:
             - "3000"
             - "simulationMode"
             - "3000"
-      - name: "mid_csp_cbf/vcc-fsp-1/slim-link-1"
+      - name: "mid_csp_cbf/fs_links/001"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/002"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/003"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/004"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/005"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/006"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/007"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/008"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/009"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/010"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/011"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/012"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/013"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/014"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/fs_links/015"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+  - name: "vis-links"
+    classes:
+    - name: "SlimLink"
+      devices:
+      - name: "mid_csp_cbf/vis_links/000"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/vis_links/001"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/vis_links/002"
+        properties:
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/vis_links/003"
         properties:
           - name: "polled_attr"
             values:
