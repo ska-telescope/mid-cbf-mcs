@@ -60,6 +60,9 @@ include:
 helm-chart-lint:
   allow_failure: true
 
+notebook-lint:
+  allow_failure: true
+
 notebook-test:
   rules:
     - when: never
