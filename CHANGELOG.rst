@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.5
+******
+* CIP-1870 decreased timeout for talon_board_proxy and influxdb client
+* CIP-1967 Changed fo_validity_interval to 0.01 - it was incorrectly set to 0.001
 
 0.12.4
 ******
