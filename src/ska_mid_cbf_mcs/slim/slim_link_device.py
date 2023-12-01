@@ -92,9 +92,9 @@ class SlimLink(SKABaseDevice):
         doc="Bit Error Rate (BER) calculated by the link's Rx device",
     )
 
-    readCounters = attribute(
-        dtype=(int,),
-        max_dim_x=7,
+    counters = attribute(
+        dtype=("DevULong64",),
+        max_dim_x=9,
         access=AttrWriteType.READ,
         label="TxRx Counters",
         doc="""
@@ -327,16 +327,15 @@ class SlimLink(SKABaseDevice):
         return self.component_manager.bit_error_rate
         # PROTECTED REGION END #    //  SlimLink.bitErrorRate_read
 
-    def read_readCounters(self: SlimLink) -> int[9]:
-        # PROTECTED REGION ID(SlimLink.readCounters_read) ENABLED START #
+    def read_counters(self: SlimLink) -> list[tango.DevULong64]:
+        # PROTECTED REGION ID(SlimLink.counters_read) ENABLED START #
         """
-        Read the readCounters attribute.
+        Read the counters attribute.
 
-        :return: the readCounters array.
-        :rtype: int[9]
+        :return: the counters array.
         """
-        return self.component_manager.read_counters
-        # PROTECTED REGION END #    //  SlimLink.readCounters_read
+        return self.component_manager.read_counters()
+        # PROTECTED REGION END #    //  SlimLink.counters_read
 
     def read_healthState(self: SlimLink):
         # PROTECTED REGION ID(SlimLink.healthState_read) ENABLED START #

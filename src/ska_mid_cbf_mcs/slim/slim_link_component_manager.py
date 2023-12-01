@@ -201,7 +201,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         self._simulation_mode = value
 
-    def read_counters(self: SlimLinkComponentManager) -> int[9]:
+    def read_counters(
+        self: SlimLinkComponentManager,
+    ) -> list[tango.DevULong64]:
         """
         An array holding the counter values from the tx and rx devices in the order:
         [0] rx_word_count
@@ -230,8 +232,10 @@ class SlimLinkComponentManager(CbfComponentManager):
                 "read_counters()",
             )
 
-        tx_counts = self._tx_device_proxy.read_counters()
-        rx_counts = self._rx_device_proxy.read_counters()
+        tx_counts = self._tx_device_proxy.read_counters
+        rx_counts = self._rx_device_proxy.read_counters
+        self._logger.info(f"tx_counts = {tx_counts}")
+        self._logger.info(f"rx_counts = {rx_counts}")
         return [
             rx_counts[0],
             rx_counts[1],

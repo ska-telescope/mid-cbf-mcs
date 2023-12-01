@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 
+import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState
 
@@ -110,7 +111,7 @@ class SlimLinkSimulator:
         """
         return 8.000e-12
 
-    def read_counters(self: SlimLinkSimulator) -> int[9]:
+    def read_counters(self: SlimLinkSimulator) -> list[tango.DevULong64]:
         """
         An array holding the counter values from the tx and rx devices in the order:
         [0] rx_word_count

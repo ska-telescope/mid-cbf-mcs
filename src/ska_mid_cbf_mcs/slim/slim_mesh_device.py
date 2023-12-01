@@ -341,9 +341,10 @@ class SlimMesh(SKABaseDevice):
 
     def read_simulationMode(self: SlimMesh) -> SimulationMode:
         """
-        Reads simulation mode. Overrides the base class implementation. 
+        Reads simulation mode. Overrides the base class implementation.
         """
         return self.component_manager._simulation_mode
+
 
 # ----------
 # Run server

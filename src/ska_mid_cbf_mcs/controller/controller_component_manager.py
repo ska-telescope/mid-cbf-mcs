@@ -216,7 +216,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"fqdn Talon board: {self._fqdn_talon_board}")
         self._logger.debug(f"fqdn Talon LRU: {self._fqdn_talon_lru}")
         self._logger.debug(f"fqdn power switch: {self._fqdn_power_switch}")
-        self._logger.debug(f"fqdn power switch: {self._fqdn_slim}")
+        self._logger.debug(f"fqdn SLIM mesh: {self._fqdn_slim}")
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -458,12 +458,15 @@ class ControllerComponentManager(CbfComponentManager):
 
                 # Configure SLIM Mesh devices
                 try:
-                    self._logger.info(f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}")
+                    self._logger.info(
+                        f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
+                    )
                     for fqdn in self._fqdn_slim:
                         self._proxies[fqdn].write_attribute(
                             "simulationMode",
                             self._talondx_component_manager.simulation_mode,
                         )
+                        self._proxies[fqdn].command_inout("On")
 
                     with open(self._fs_slim_config_path) as f:
                         fs_slim_config = f.read()
@@ -952,6 +955,16 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result = False
+
+        try:
+            for fqdn in self._fqdn_slim:
+                self._proxies[fqdn].command_inout("Off")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn off SLIM proxy; {item.reason}"
                 self._logger.error(log_msg)
                 message.append(log_msg)
             result = False

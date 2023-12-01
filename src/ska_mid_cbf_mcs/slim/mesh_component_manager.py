@@ -190,6 +190,9 @@ class MeshComponentManager(CbfComponentManager):
             dp.write_attribute("simulationMode", self._simulation_mode)
             dp.write_attribute("adminMode", AdminMode.ONLINE)
 
+        if self._mesh_configured:
+            self._disconnect_links()
+
         rc, msg = self._initialize_links()
 
         if rc is not ResultCode.OK:
@@ -287,10 +290,10 @@ class MeshComponentManager(CbfComponentManager):
     def _disconnect_links(self) -> Tuple[ResultCode, str]:
         self._logger.info(
             f"Disconnecting {len(self._active_links)} links: {self._active_links}"
-        )        
+        )
         if len(self._active_links) == 0:
             msg = "No active links are defined in the mesh configuration"
-            self._logger.warn(msg)
+            self._logger.info(msg)
             return (ResultCode.OK, msg)
         try:
             for idx, txrx in enumerate(self._active_links):
