@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import HealthState
 
 __all__ = ["SlimLinkSimulator"]
 
@@ -143,17 +144,21 @@ class SlimLinkSimulator:
             200000,
             300000,
         ]
+        self._link_enabled = True
         return ResultCode.OK, "Connection to SLIM TX simulator successful"
 
     def verify_connection(
         self: SlimLinkSimulator,
-    ) -> tuple[ResultCode, str]:
-        return ResultCode.OK, "Connection ok"
+    ) -> HealthState:
+        if self._link_enabled:
+            return HealthState.OK
+        return HealthState.UNKNOWN
 
     def disconnect_slim_tx_rx(
         self: SlimLinkSimulator,
     ) -> tuple[ResultCode, str]:
         self.clear_counters()
+        self._link_enabled = False
         result_msg = "Disconnected from SLIM Tx simulator."
         return ResultCode.OK, result_msg
 

@@ -19,7 +19,12 @@ from typing import Callable, List, Optional, Tuple
 import tango
 import yaml
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    PowerMode,
+    SimulationMode,
+)
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -72,7 +77,9 @@ class MeshComponentManager(CbfComponentManager):
         self._simulation_mode = simulation_mode
         self._mesh_configured = False
         self._config_str = ""
-        self._links_list = []
+
+        # a list of [tx_fqdn, rx_fqdn] for active links.
+        self._active_links = []
 
         # SLIM Link Device proxies
         self._link_fqdns = link_fqdns
@@ -103,6 +110,8 @@ class MeshComponentManager(CbfComponentManager):
                 CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                 for fqdn in self._link_fqdns
             ]
+        for dp in self._dp_links:
+            dp.adminMode = AdminMode.ONLINE
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_power_mode(PowerMode.OFF)
@@ -112,6 +121,8 @@ class MeshComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self._logger.info("Entering MeshComponentManager.stop_communicating")
         super().stop_communicating()
+        for dp in self._dp_links:
+            dp.adminMode = AdminMode.OFFLINE
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
@@ -152,6 +163,8 @@ class MeshComponentManager(CbfComponentManager):
         """
         self._logger.debug("Entering MeshComponentManager.off")
         self.update_component_power_mode(PowerMode.OFF)
+        if self._mesh_configured:
+            self._disconnect_links()
         return (ResultCode.OK, "")
 
     def configure(self, config_str) -> Tuple[ResultCode, str]:
@@ -167,7 +180,15 @@ class MeshComponentManager(CbfComponentManager):
 
         # each element is [tx_fqdn, rx_fqdn]
         self._config_str = config_str
-        self._links_list = self._parse_links_yaml(self._config_str)
+        self._active_links = self._parse_links_yaml(self._config_str)
+
+        self._logger.info(
+            f"Setting simulation mode = {self._simulation_mode} to {len(self._dp_links)} links"
+        )
+        for dp in self._dp_links:
+            dp.write_attribute("adminMode", AdminMode.OFFLINE)
+            dp.write_attribute("simulationMode", self._simulation_mode)
+            dp.write_attribute("adminMode", AdminMode.ONLINE)
 
         rc, msg = self._initialize_links()
 
@@ -175,22 +196,28 @@ class MeshComponentManager(CbfComponentManager):
             self._logger.error("Failed to Parse the SLIM Mesh config.")
             return (rc, msg)
 
-        self._mesh_configured = True
         return (rc, msg)
 
     def get_configuration_string(self) -> str:
         return self._config_str
 
-    def get_status_summary(self) -> List[bool]:
+    def get_link_names(self) -> List[str]:
+        names = []
+        for idx, txrx in enumerate(self._active_links):
+            name = self._dp_links[idx].linkName
+            names.append(name)
+        return names
+
+    def get_health_summary(self) -> List[HealthState]:
         summary = []
-        for idx, txrx in enumerate(self._links_list):
-            link_health = self._dp_links[idx].linkHealthy
+        for idx, txrx in enumerate(self._active_links):
+            link_health = self._dp_links[idx].healthState
             summary.append(link_health)
         return summary
 
     def get_bit_error_rate(self) -> List[float]:
         bers = []
-        for idx, txrx in enumerate(self._links_list):
+        for idx, txrx in enumerate(self._active_links):
             ber = self._dp_links[idx].bitErrorRate
             bers.append(ber)
         return bers
@@ -237,14 +264,14 @@ class MeshComponentManager(CbfComponentManager):
 
     def _initialize_links(self) -> Tuple[ResultCode, str]:
         self._logger.info(
-            f"Creating {len(self._links_list)} links: {self._links_list}"
+            f"Creating {len(self._active_links)} links: {self._active_links}"
         )
-        if len(self._links_list) == 0:
+        if len(self._active_links) == 0:
             msg = "No active links are defined in the mesh configuration"
             self._logger.warn(msg)
             return (ResultCode.OK, msg)
         try:
-            for idx, txrx in enumerate(self._links_list):
+            for idx, txrx in enumerate(self._active_links):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
                 rc, msg = self._dp_links[idx].command_inout("ConnectTxRx")
@@ -254,4 +281,25 @@ class MeshComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, msg)
         msg = "Successfully set up SLIM links"
         self._logger.info(msg)
+        self._mesh_configured = True
+        return (ResultCode.OK, msg)
+
+    def _disconnect_links(self) -> Tuple[ResultCode, str]:
+        self._logger.info(
+            f"Disconnecting {len(self._active_links)} links: {self._active_links}"
+        )        
+        if len(self._active_links) == 0:
+            msg = "No active links are defined in the mesh configuration"
+            self._logger.warn(msg)
+            return (ResultCode.OK, msg)
+        try:
+            for idx, txrx in enumerate(self._active_links):
+                rc, msg = self._dp_links[idx].command_inout("DisconnectTxRx")
+        except tango.DevFailed as df:
+            msg = f"Failed to disconnect SLIM links: {df.args[0].desc}"
+            self._logger.error(msg)
+            return (ResultCode.FAILED, msg)
+        msg = "Disconnected SLIM links"
+        self._logger.info(msg)
+        self._mesh_configured = False
         return (ResultCode.OK, msg)

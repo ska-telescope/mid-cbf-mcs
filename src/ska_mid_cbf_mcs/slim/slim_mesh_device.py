@@ -20,7 +20,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -56,26 +56,41 @@ class SlimMesh(SKABaseDevice):
     )
     def MeshConfiguration(self: SlimMesh) -> str:
         """
-        Read the FPGA bitstream version of the Talon-DX board.
+        Returns the Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured
 
-        :return: the FPGA bitstream version
+        :return: the Mesh configuration in a YAML string
         """
         res = self.component_manager.get_configuration_string()
         return res
 
     @attribute(
-        dtype=(bool,),
+        dtype=(str,),
         max_dim_x=MAX_NUM_LINKS,
-        label="Mesh status summary",
-        doc="Returns a list of status of each link. True if OK. False if the link is in a bad state.",
+        label="Link Names",
+        doc="Returns the names of the active links. Inactive links return empty string.",
     )
-    def MeshStatusSummary(self: SlimMesh) -> List[bool]:
+    def LinkNames(self: SlimMesh) -> List[bool]:
         """
-        Returns a list of status of each link. True if OK. False if the link is in a bad state.
+        Returns the names of the active links. Inactive links return empty string.
 
-        :return: a list of link status
+        :return: a list of link names
         """
-        res = self.component_manager.get_status_summary()
+        res = self.component_manager.get_link_names()
+        return res
+
+    @attribute(
+        dtype=(HealthState,),
+        max_dim_x=MAX_NUM_LINKS,
+        label="Mesh health summary",
+        doc="Returns a list of health state of each link. True if OK. False if the link is in a bad state.",
+    )
+    def HealthSummary(self: SlimMesh) -> List[HealthState]:
+        """
+        Returns a list of health state of each link.
+
+        :return: a list of health state
+        """
+        res = self.component_manager.get_health_summary()
         return res
 
     @attribute(
@@ -315,16 +330,20 @@ class SlimMesh(SKABaseDevice):
 
     def write_simulationMode(self: SlimMesh, value: SimulationMode) -> None:
         """
-        Set the simulation mode of the device. When simulation mode is set to
-        True, the power switch software simulator is used in place of the hardware.
-        When simulation mode is set to False, the real power switch driver is used.
+        Overrides the base class implementation. Additionally set the
+        simulation mode of link devices to the same value.
 
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
         super().write_simulationMode(value)
-        self.component_manager.simulation_mode = value
+        self.component_manager._simulation_mode = value
 
+    def read_simulationMode(self: SlimMesh) -> SimulationMode:
+        """
+        Reads simulation mode. Overrides the base class implementation. 
+        """
+        return self.component_manager._simulation_mode
 
 # ----------
 # Run server

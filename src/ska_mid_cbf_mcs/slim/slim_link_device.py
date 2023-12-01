@@ -64,6 +64,13 @@ class SlimLink(SKABaseDevice):
         doc="FQDN of the link's Rx device",
     )
 
+    linkName = attribute(
+        dtype="DevString",
+        access=AttrWriteType.READ,
+        label="Link Name",
+        doc="Link name made up of the Tx and Rx FQDNs",
+    )
+
     txIdleCtrlWord = attribute(
         dtype="DevULong64",
         access=AttrWriteType.READ,
@@ -102,13 +109,6 @@ class SlimLink(SKABaseDevice):
             [7] tx_packet_count
             [8] tx_idle_word_count
         """,
-    )
-
-    linkHealthy = attribute(
-        dtype="DevBoolean",
-        access=AttrWriteType.READ,
-        label="Link health indicator",
-        doc="The health of the link summarized as a boolean",
     )
 
     simulationMode = attribute(
@@ -283,6 +283,17 @@ class SlimLink(SKABaseDevice):
         self.component_manager.rx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.rxDeviceName_write
 
+    def read_linkName(self: SlimLink) -> str:
+        # PROTECTED REGION ID(SlimLink.linkName_read) ENABLED START #
+        """
+        Read the linkName attribute.
+
+        :return: the link name. Empty if not active.
+        :rtype: str
+        """
+        return self.component_manager.link_name
+        # PROTECTED REGION END #    //  SlimLink.linkName_read
+
     def read_txIdleCtrlWord(self: SlimLink) -> int:
         # PROTECTED REGION ID(SlimLink.txIdleCtrlWord_read) ENABLED START #
         """
@@ -327,16 +338,29 @@ class SlimLink(SKABaseDevice):
         return self.component_manager.read_counters
         # PROTECTED REGION END #    //  SlimLink.readCounters_read
 
-    def read_linkHealthy(self: SlimLink) -> bool:
-        # PROTECTED REGION ID(SlimLink.linkHealthy_read) ENABLED START #
+    def read_healthState(self: SlimLink):
+        # PROTECTED REGION ID(SlimLink.healthState_read) ENABLED START #
         """
-        Read the linkHealthy attribute.
+        Read the Health State of the device. This overrides the ska-tango-base
+        implementation.
 
-        :return: the linkHealthy value.
-        :rtype: bool
+        :return: Health State of the device.
         """
-        return self.component_manager.link_healthy
-        # PROTECTED REGION END #    //  SlimLink.linkHealthy_read
+        self._health_state = self.component_manager.verify_connection()
+        return self._health_state
+        # PROTECTED REGION END #    //  SlimLink.healthState_read
+
+    def write_simulationMode(self, value):
+        # PROTECTED REGION ID(SlimLink.simulationMode_write) ENABLED START #
+        """
+        Set the Simulation Mode of the device. This overrides the ska-tango-base
+        implementation.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+        # PROTECTED REGION END #    //  SlimLink.simulationMode_write
 
     # --------
     # Commands

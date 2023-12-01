@@ -458,6 +458,7 @@ class ControllerComponentManager(CbfComponentManager):
 
                 # Configure SLIM Mesh devices
                 try:
+                    self._logger.info(f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}")
                     for fqdn in self._fqdn_slim:
                         self._proxies[fqdn].write_attribute(
                             "simulationMode",
