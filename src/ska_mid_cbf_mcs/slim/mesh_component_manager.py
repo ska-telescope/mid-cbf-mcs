@@ -204,6 +204,13 @@ class MeshComponentManager(CbfComponentManager):
     def get_configuration_string(self) -> str:
         return self._config_str
 
+    def get_link_fqdns(self) -> List[str]:
+        fqdns = []
+        for idx, txrx in enumerate(self._active_links):
+            fqdn = self._link_fqdns[idx]
+            fqdns.append(fqdn)
+        return fqdns
+
     def get_link_names(self) -> List[str]:
         names = []
         for idx, txrx in enumerate(self._active_links):
@@ -240,6 +247,23 @@ class MeshComponentManager(CbfComponentManager):
             return None
         return txrx
 
+    def _validate_mesh_config(self, links: list) -> None:
+        """
+        checks if the requested SLIM mesh configuration is valid.
+        Throws tango exception if it is not.
+        """
+        tx_set = set([x[0] for x in links])
+        rx_set = set([y[1] for y in links])
+        if len(tx_set) != len(rx_set) or len(tx_set) != len(links):
+            msg = "Tx and Rx devices must be unique in the configuration."
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "SlimMesh_Validate_",
+                msg,
+                "_validate_mesh_config()",
+            )
+        return
+
     def _parse_links_yaml(self, yaml_str: str):
         """
         parse a yaml string containing the mesh links.
@@ -263,6 +287,9 @@ class MeshComponentManager(CbfComponentManager):
                 txrx = self._parse_link(line)
                 if txrx is not None:
                     links.append(txrx)
+        self._validate_mesh_config(
+            links
+        )  # throws exception if validation fails
         return links
 
     def _initialize_links(self) -> Tuple[ResultCode, str]:

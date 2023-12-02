@@ -66,12 +66,27 @@ class SlimMesh(SKABaseDevice):
     @attribute(
         dtype=(str,),
         max_dim_x=MAX_NUM_LINKS,
-        label="Link Names",
-        doc="Returns the names of the active links. Inactive links return empty string.",
+        label="Link FQDNs",
+        doc="the Tango device FQDN of the active links.",
     )
-    def LinkNames(self: SlimMesh) -> List[bool]:
+    def LinkFQDNs(self: SlimMesh) -> List[str]:
         """
-        Returns the names of the active links. Inactive links return empty string.
+        Returns the Tango device FQDN of the active links
+
+        :return: a list of FQDNs
+        """
+        res = self.component_manager.get_link_fqdns()
+        return res
+
+    @attribute(
+        dtype=(str,),
+        max_dim_x=MAX_NUM_LINKS,
+        label="Link Names",
+        doc="Returns the names of the active links.",
+    )
+    def LinkNames(self: SlimMesh) -> List[str]:
+        """
+        Returns the names of the active links.
 
         :return: a list of link names
         """
