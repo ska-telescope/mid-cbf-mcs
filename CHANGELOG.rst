@@ -10,6 +10,15 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.5
+******
+* CIP-1870 decreased timeout for talon_board_proxy and influxdb client
+* CIP-1967 Changed fo_validity_interval to 0.01 - it was incorrectly set to 0.001
+
+0.12.4
+******
+* CIP-1957 Removed problematic vcc gain file (mnt/vcc_param/internal_params_receptor1_band1_.json)
+
 0.12.3
 ******
 * CIP-1933 Fixed the group_proxy implementation
