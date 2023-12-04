@@ -538,8 +538,3 @@ class TestFspComponentManager:
         fsp_component_manager._connected = False
         result = fsp_component_manager.get_fsp_corr_config_id()
         assert result == ""
-
-        #fsp_component_manager.start_communicating()
-        #fsp_component_manager.on()
-        #result = fsp_component_manager.get_fsp_corr_config_id()
-        #assert result != ""
