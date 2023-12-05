@@ -13,10 +13,8 @@ from __future__ import annotations
 
 import os
 from typing import List
-from unittest import mock
 
 import pytest
-import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
