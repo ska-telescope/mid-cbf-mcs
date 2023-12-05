@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-cbf-mcs"
-version = "0.12.5"
+version = "0.12.6"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
