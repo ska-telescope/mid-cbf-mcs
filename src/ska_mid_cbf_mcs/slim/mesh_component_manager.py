@@ -148,7 +148,7 @@ class MeshComponentManager(CbfComponentManager):
         """
         self._logger.debug("Entering MeshComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
-        return (ResultCode.OK, "")
+        return (ResultCode.OK, "On command completed OK")
 
     def off(self) -> Tuple[ResultCode, str]:
         """
@@ -165,7 +165,7 @@ class MeshComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
         if self._mesh_configured:
             self._disconnect_links()
-        return (ResultCode.OK, "")
+        return (ResultCode.OK, "Off command completed OK")
 
     def configure(self, config_str) -> Tuple[ResultCode, str]:
         """
@@ -305,6 +305,9 @@ class MeshComponentManager(CbfComponentManager):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
                 rc, msg = self._dp_links[idx].command_inout("ConnectTxRx")
+
+                # poll link health every 20 seconds
+                self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
             self._logger.error(msg)
@@ -324,6 +327,7 @@ class MeshComponentManager(CbfComponentManager):
             return (ResultCode.OK, msg)
         try:
             for idx, txrx in enumerate(self._active_links):
+                self._dp_links[idx].stop_poll_command("VerifyConnection")
                 rc, msg = self._dp_links[idx].command_inout("DisconnectTxRx")
         except tango.DevFailed as df:
             msg = f"Failed to disconnect SLIM links: {df.args[0].desc}"

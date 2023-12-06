@@ -34,6 +34,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimLinkComponentManager,
+        update_health_state: Callable[[HealthState], None],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -47,6 +48,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         Initialize a new instance.
 
         :param logger: a logger for this object to use
+        :param update_health_state: method to call when link health state changes
         :param push_change_event_callback: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -70,6 +72,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._link_enabled = False  # True when tx rx are connected
 
         self.slim_link_simulator = SlimLinkSimulator(logger=logger)
+
+        self._update_health_state = update_health_state
 
         super().__init__(
             logger=logger,
@@ -234,8 +238,8 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         tx_counts = self._tx_device_proxy.read_counters
         rx_counts = self._rx_device_proxy.read_counters
-        self._logger.info(f"tx_counts = {tx_counts}")
-        self._logger.info(f"rx_counts = {rx_counts}")
+        self._logger.debug(f"tx_counts = {tx_counts}")
+        self._logger.debug(f"rx_counts = {rx_counts}")
         return [
             rx_counts[0],
             rx_counts[1],
@@ -326,7 +330,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def verify_connection(
         self: SlimLinkComponentManager,
-    ) -> HealthState:
+    ) -> tuple[ResultCode, str]:
         """
         Performs a health check on the SLIM link. No check is done if the link
         is not active, and the health state UNKNOWN will be returned.
@@ -347,8 +351,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._tx_device_proxy is None)
             or (self._rx_device_proxy is None)
         ):
-            self._logger.debug("Tx and Rx devices have not been connected.")
-            return HealthState.UNKNOWN
+            msg = "Tx and Rx devices have not been connected."
+            self._logger.debug(msg)
+            self._update_health_state(HealthState.UNKNOWN)
+            return ResultCode.OK, msg
 
         error_msg = ""
         error_flag = False
@@ -368,16 +374,19 @@ class SlimLinkComponentManager(CbfComponentManager):
             if self.bit_error_rate > BER_PASS_THRESHOLD:
                 error_flag = True
                 error_msg += (
-                    "bit-error-rate higher than " + BER_PASS_THRESHOLD + ". "
+                    f"bit-error-rate higher than {BER_PASS_THRESHOLD}. "
                 )
         except tango.DevFailed as df:
             error_msg = f"verify_connection() failed: {df.args[0].desc}"
             self._logger.error(error_msg)
-            return HealthState.FAILED
+            self._update_health_state(HealthState.FAILED)
+            return ResultCode.FAILED, error_msg
         if error_flag:
-            self._logger.error(f"Link failed health check: {error_msg}")
-            return HealthState.FAILED
-        return HealthState.OK
+            self._logger.warn(f"Link failed health check: {error_msg}")
+            self._update_health_state(HealthState.FAILED)
+            return ResultCode.OK, error_msg
+        self._update_health_state(HealthState.OK)
+        return ResultCode.OK, "Link health check OK"
 
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,

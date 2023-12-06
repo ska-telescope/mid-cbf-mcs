@@ -152,8 +152,8 @@ class SlimLinkSimulator:
         self: SlimLinkSimulator,
     ) -> HealthState:
         if self._link_enabled:
-            return HealthState.OK
-        return HealthState.UNKNOWN
+            return ResultCode.OK, "link is healthy"
+        return ResultCode.OK, "link is not active"
 
     def disconnect_slim_tx_rx(
         self: SlimLinkSimulator,
