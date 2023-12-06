@@ -34,10 +34,10 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
-__all__ = ["MeshComponentManager"]
+__all__ = ["SlimMeshComponentManager"]
 
 
-class MeshComponentManager(CbfComponentManager):
+class SlimMeshComponentManager(CbfComponentManager):
     """
     Manages a Serial Lightweight Interconnect Mesh (SLIM).
 
@@ -45,7 +45,7 @@ class MeshComponentManager(CbfComponentManager):
     """
 
     def __init__(
-        self: MeshComponentManager,
+        self: SlimMeshComponentManager,
         link_fqdns: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
@@ -95,7 +95,7 @@ class MeshComponentManager(CbfComponentManager):
 
     def start_communicating(self) -> None:
         """Establish communication with the component, then start monitoring."""
-        self._logger.info("Entering MeshComponentManager.start_communicating")
+        self._logger.info("Entering SlimMeshComponentManager.start_communicating")
 
         if self.connected:
             self._logger.info("Already communicating.")
@@ -119,7 +119,7 @@ class MeshComponentManager(CbfComponentManager):
 
     def stop_communicating(self) -> None:
         """Stop communication with the component."""
-        self._logger.info("Entering MeshComponentManager.stop_communicating")
+        self._logger.info("Entering SlimMeshComponentManager.stop_communicating")
         super().stop_communicating()
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
@@ -146,7 +146,7 @@ class MeshComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("Entering MeshComponentManager.on")
+        self._logger.debug("Entering SlimMeshComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "")
 
@@ -161,7 +161,7 @@ class MeshComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("Entering MeshComponentManager.off")
+        self._logger.debug("Entering SlimMeshComponentManager.off")
         self.update_component_power_mode(PowerMode.OFF)
         if self._mesh_configured:
             self._disconnect_links()

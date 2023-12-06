@@ -20,7 +20,7 @@ from ska_tango_base.commands import ResponseCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, run
 
@@ -430,13 +430,11 @@ class SlimLink(SKABaseDevice):
 
         def do(
             self: SlimLink.VerifyConnectionCommand,
-        ) -> Tuple[ResultCode, str]:
+        ) -> HealthState:
             """
             Implement VerifyConnection command functionality.
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
+            :return: The HealthState enum describing the link's status.
             """
             component_manager = self.target
             return component_manager.verify_connection()

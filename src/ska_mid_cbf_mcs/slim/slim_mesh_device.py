@@ -25,7 +25,7 @@ from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.slim.mesh_component_manager import MeshComponentManager
+from ska_mid_cbf_mcs.slim.slim_mesh_component_manager import SlimMeshComponentManager
 
 __all__ = ["SlimMesh", "main"]
 
@@ -161,7 +161,7 @@ class SlimMesh(SKABaseDevice):
     # Commands
     # --------
 
-    def create_component_manager(self: SlimMesh) -> MeshComponentManager:
+    def create_component_manager(self: SlimMesh) -> SlimMeshComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -174,7 +174,7 @@ class SlimMesh(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         # Simulation mode default true
-        return MeshComponentManager(
+        return SlimMeshComponentManager(
             link_fqdns=self.Links,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
