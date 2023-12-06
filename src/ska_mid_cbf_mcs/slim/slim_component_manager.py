@@ -34,10 +34,10 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
-__all__ = ["SlimMeshComponentManager"]
+__all__ = ["SlimComponentManager"]
 
 
-class SlimMeshComponentManager(CbfComponentManager):
+class SlimComponentManager(CbfComponentManager):
     """
     Manages a Serial Lightweight Interconnect Mesh (SLIM).
 
@@ -45,7 +45,7 @@ class SlimMeshComponentManager(CbfComponentManager):
     """
 
     def __init__(
-        self: SlimMeshComponentManager,
+        self: SlimComponentManager,
         link_fqdns: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
@@ -95,7 +95,7 @@ class SlimMeshComponentManager(CbfComponentManager):
 
     def start_communicating(self) -> None:
         """Establish communication with the component, then start monitoring."""
-        self._logger.info("Entering SlimMeshComponentManager.start_communicating")
+        self._logger.info("Entering SlimComponentManager.start_communicating")
 
         if self.connected:
             self._logger.info("Already communicating.")
@@ -119,7 +119,7 @@ class SlimMeshComponentManager(CbfComponentManager):
 
     def stop_communicating(self) -> None:
         """Stop communication with the component."""
-        self._logger.info("Entering SlimMeshComponentManager.stop_communicating")
+        self._logger.info("Entering SlimComponentManager.stop_communicating")
         super().stop_communicating()
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
@@ -129,9 +129,9 @@ class SlimMeshComponentManager(CbfComponentManager):
     @property
     def is_communicating(self) -> bool:
         """
-        Returns whether or not the SLIM mesh can be communicated with.
+        Returns whether or not the SLIM can be communicated with.
 
-        :return: whether the SLIM mesh is communicating
+        :return: whether the SLIM is communicating
         """
         return self.connected and self._mesh_configured
 
@@ -146,7 +146,7 @@ class SlimMeshComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("Entering SlimMeshComponentManager.on")
+        self._logger.debug("Entering SlimComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "")
 
@@ -161,7 +161,7 @@ class SlimMeshComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("Entering SlimMeshComponentManager.off")
+        self._logger.debug("Entering SlimComponentManager.off")
         self.update_component_power_mode(PowerMode.OFF)
         if self._mesh_configured:
             self._disconnect_links()
@@ -196,7 +196,7 @@ class SlimMeshComponentManager(CbfComponentManager):
         rc, msg = self._initialize_links()
 
         if rc is not ResultCode.OK:
-            self._logger.error("Failed to Parse the SLIM Mesh config.")
+            self._logger.error("Failed to Parse the SLIM config.")
             return (rc, msg)
 
         return (rc, msg)
@@ -249,7 +249,7 @@ class SlimMeshComponentManager(CbfComponentManager):
 
     def _validate_mesh_config(self, links: list) -> None:
         """
-        checks if the requested SLIM mesh configuration is valid.
+        checks if the requested SLIM configuration is valid.
         Throws tango exception if it is not.
         """
         tx_set = set([x[0] for x in links])
@@ -258,7 +258,7 @@ class SlimMeshComponentManager(CbfComponentManager):
             msg = "Tx and Rx devices must be unique in the configuration."
             self._logger.error(msg)
             tango.Except.throw_exception(
-                "SlimMesh_Validate_",
+                "Slim_Validate_",
                 msg,
                 "_validate_mesh_config()",
             )
@@ -278,7 +278,7 @@ class SlimMeshComponentManager(CbfComponentManager):
         except yaml.YAMLError as e:
             self._logger.error(f"Failed to load YAML: {e}")
             tango.Except.throw_exception(
-                "SlimMesh_Parse_YAML",
+                "Slim_Parse_YAML",
                 "Cannot parse SLIM configuration YAML",
                 "_parse_links_yaml()",
             )
