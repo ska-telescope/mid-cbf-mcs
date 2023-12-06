@@ -310,6 +310,7 @@ def mock_power_switch() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     return builder()
 
+
 @pytest.fixture()
 def mock_slim_mesh() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
@@ -319,6 +320,7 @@ def mock_slim_mesh() -> unittest.mock.Mock:
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
+
 
 @pytest.fixture()
 def initial_mocks(
