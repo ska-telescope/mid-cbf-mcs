@@ -15,10 +15,8 @@ from __future__ import annotations
 import os
 import time
 
-import pytest
-import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState
+from ska_tango_base.control_model import AdminMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -50,7 +48,6 @@ class TestSlimLink:
         """
         assert device_under_test.State() == DevState.DISABLE
 
-
     def test_Status(
         self: TestSlimLink, device_under_test: CbfDeviceProxy
     ) -> None:
@@ -63,7 +60,6 @@ class TestSlimLink:
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
-
     def test_adminMode(
         self: TestSlimLink, device_under_test: CbfDeviceProxy
     ) -> None:
@@ -75,8 +71,7 @@ class TestSlimLink:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-        
-        
+
     def test_adminModeOnline(
         self: TestSlimLink,
         device_under_test: CbfDeviceProxy,
@@ -85,7 +80,6 @@ class TestSlimLink:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.UNKNOWN
-
 
     def test_ConnectTxRx(
         self: TestSlimLink,
@@ -101,8 +95,7 @@ class TestSlimLink:
         self.test_adminModeOnline(device_under_test)
         result = device_under_test.ConnectTxRx()
         assert result[0][0] == ResultCode.OK
-        
-    
+
     def test_VerifyConnection(
         self: TestSlimLink,
         device_under_test: CbfDeviceProxy,
@@ -115,9 +108,9 @@ class TestSlimLink:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         self.test_adminModeOnline(device_under_test)
-        assert device_under_test.VerifyConnection() == HealthState.OK
-    
-    
+        result = device_under_test.VerifyConnection()
+        assert result[0][0] == ResultCode.OK
+
     def test_DisconnectTxRx(
         self: TestSlimLink,
         device_under_test: CbfDeviceProxy,
@@ -132,8 +125,7 @@ class TestSlimLink:
         self.test_adminModeOnline(device_under_test)
         result = device_under_test.DisconnectTxRx()
         assert result[0][0] == ResultCode.OK
-        
-        
+
     def test_ClearCounters(
         self: TestSlimLink,
         device_under_test: CbfDeviceProxy,

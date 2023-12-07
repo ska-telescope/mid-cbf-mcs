@@ -439,7 +439,7 @@ class SlimLink(SKABaseDevice):
 
         def do(
             self: SlimLink.VerifyConnectionCommand,
-        ) -> HealthState:
+        ) -> Tuple[ResultCode, str]:
             """
             Implement VerifyConnection command functionality.
 

@@ -14,9 +14,7 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
@@ -70,7 +68,6 @@ class TestSlimLinkComponentManager:
             == CommunicationStatus.DISABLED
         )
 
-
     @pytest.mark.parametrize(
         "tx_name, \
         rx_name",
@@ -94,14 +91,14 @@ class TestSlimLinkComponentManager:
         )
 
         slim_link_component_manager.start_communicating()
-        
+
         assert slim_link_component_manager.tx_device_name == ""
         assert slim_link_component_manager.tx_device_name == ""
-        
+
         slim_link_component_manager.tx_device_name = tx_name
         slim_link_component_manager.rx_device_name = rx_name
-        
+
         result = slim_link_component_manager.connect_slim_tx_rx()
-        
+
         # assert tx_idle_ctrl_word == rx_idle_ctrl_word
         assert result[0] == ResultCode.OK

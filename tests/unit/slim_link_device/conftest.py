@@ -15,8 +15,6 @@
 from __future__ import annotations
 
 import unittest
-
-# Standard imports
 from typing import Dict, Optional, Type
 
 import pytest
@@ -24,14 +22,13 @@ import pytest_mock
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode
+from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
-# from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import (
     DeviceToLoadType,
     TangoHarness,
@@ -108,29 +105,30 @@ def mock_component_manager(
             CommunicationStatus.ESTABLISHED
         )
         # mock._component_power_mode_changed_callback(PowerMode.OFF)
-    
+
     def _connect_slim_tx_rx(mock: unittest.mock.Mock) -> None:
         mock.message = "SlimLink ConnectTxRx command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _verify_connection(mock: unittest.mock.Mock) -> None:
         mock.message = "SlimLink VerifyConnection command completed OK"
-        return HealthState.OK
-    
+        return (ResultCode.OK, mock.message)
+
     def _disconnect_slim_tx_rx(mock: unittest.mock.Mock) -> None:
         mock.message = "SlimLink DisconnectTxRx command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _clear_counters(mock: unittest.mock.Mock) -> None:
         mock.message = "SlimLink ClearCounters command completed OK"
         return (ResultCode.OK, mock.message)
 
-
     mock.connect_slim_tx_rx.side_effect = lambda: _connect_slim_tx_rx(mock)
     mock.verify_connection.side_effect = lambda: _verify_connection(mock)
-    mock.disconnect_slim_tx_rx.side_effect = lambda: _disconnect_slim_tx_rx(mock)
+    mock.disconnect_slim_tx_rx.side_effect = lambda: _disconnect_slim_tx_rx(
+        mock
+    )
     mock.clear_counters.side_effect = lambda: _clear_counters(mock)
-    
+
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
@@ -180,7 +178,7 @@ def patched_slim_link_device_class(
 
 @pytest.fixture()
 def initial_mocks(
-    mock_controller: unittest.mock.Mock
+    mock_controller: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -192,6 +190,3 @@ def initial_mocks(
     return {
         "mid_csp_cbf/sub_elt/controller": mock_controller,
     }
-
-
-

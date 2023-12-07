@@ -291,7 +291,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         self._logger.debug(
             "Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  "
-            + self._tx_device_name + "->" + self._rx_device_name
+            + self._tx_device_name
+            + "->"
+            + self._rx_device_name
         )
 
         if self._simulation_mode == SimulationMode.TRUE:

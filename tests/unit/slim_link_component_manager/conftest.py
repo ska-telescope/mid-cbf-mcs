@@ -21,10 +21,11 @@ import unittest
 from typing import Callable, Dict
 
 import pytest
-
 from ska_tango_base.control_model import SimulationMode
 
-from ska_mid_cbf_mcs.slim.slim_link_component_manager import SlimLinkComponentManager
+from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
+    SlimLinkComponentManager,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
     MockChangeEventCallback,
@@ -156,13 +157,16 @@ def push_change_event_callback(
 @pytest.fixture()
 def mock_tx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    
+
     builder.add_attribute("idle_ctrl_word", 0x12345678)
-    builder.add_command("read_counters", [
+    builder.add_command(
+        "read_counters",
+        [
             100000,
             200000,
             300000,
-        ])
+        ],
+    )
     builder.add_command("clear_read_counters", None)
     return builder()
 
@@ -170,18 +174,21 @@ def mock_tx() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_rx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    
+
     builder.add_attribute("idle_ctrl_word", 0)
     builder.add_attribute("bit_error_rate", 3e-12)
     builder.add_command("initialize_connection", None)
-    builder.add_command("read_counters", [
+    builder.add_command(
+        "read_counters",
+        [
             100000,
             200000,
             300000,
             0,
             0,
             0,
-        ])
+        ],
+    )
     builder.add_command("clear_read_counters", None)
     return builder()
 
