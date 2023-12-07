@@ -80,10 +80,12 @@ class TestSlimLinkComponentManager:
         rx_name: str,
     ) -> None:
         """
-        Test the slim link component manager's connect_tx_rxn command.
+        Test the slim link component manager's connect_tx_rx command.
 
         :param slim_link_component_manager: the slim link component
             manager under test.
+        :param tx_name: fqdn of the slim-tx mock device
+        :param rx_name: fqdn of the slim-rx mock device
         """
         assert (
             slim_link_component_manager.communication_status
@@ -99,6 +101,76 @@ class TestSlimLinkComponentManager:
         slim_link_component_manager.rx_device_name = rx_name
 
         result = slim_link_component_manager.connect_slim_tx_rx()
+        assert result[0] == ResultCode.OK
 
-        # assert tx_idle_ctrl_word == rx_idle_ctrl_word
+    def test_verify_connection(
+        self: TestSlimLinkComponentManager,
+        slim_link_component_manager: SlimLinkComponentManager,
+    ) -> None:
+        """
+        Test the slim link component manager's verify_connection command.
+
+        :param slim_link_component_manager: the slim link component
+            manager under test.
+        """
+        assert (
+            slim_link_component_manager.communication_status
+            == CommunicationStatus.DISABLED
+        )
+
+        self.test_connect_tx_rx(
+            slim_link_component_manager,
+            "mid_csp_cbf/slim-tx-rx/tx-test",
+            "mid_csp_cbf/slim-tx-rx/rx-test",
+        )
+
+        result = slim_link_component_manager.verify_connection()
+        assert result[0] == ResultCode.OK
+
+    def test_disconnect_tx_rx(
+        self: TestSlimLinkComponentManager,
+        slim_link_component_manager: SlimLinkComponentManager,
+    ) -> None:
+        """
+        Test the slim link component manager's disconnect_tx_rx command.
+
+        :param slim_link_component_manager: the slim link component
+            manager under test.
+        """
+        assert (
+            slim_link_component_manager.communication_status
+            == CommunicationStatus.DISABLED
+        )
+
+        self.test_connect_tx_rx(
+            slim_link_component_manager,
+            "mid_csp_cbf/slim-tx-rx/tx-test",
+            "mid_csp_cbf/slim-tx-rx/rx-test",
+        )
+
+        result = slim_link_component_manager.disconnect_slim_tx_rx()
+        assert result[0] == ResultCode.OK
+
+    def test_clear_counters(
+        self: TestSlimLinkComponentManager,
+        slim_link_component_manager: SlimLinkComponentManager,
+    ) -> None:
+        """
+        Test the slim link component manager's clear_counters command.
+
+        :param slim_link_component_manager: the slim link component
+            manager under test.
+        """
+        assert (
+            slim_link_component_manager.communication_status
+            == CommunicationStatus.DISABLED
+        )
+
+        self.test_connect_tx_rx(
+            slim_link_component_manager,
+            "mid_csp_cbf/slim-tx-rx/tx-test",
+            "mid_csp_cbf/slim-tx-rx/rx-test",
+        )
+
+        result = slim_link_component_manager.clear_counters()
         assert result[0] == ResultCode.OK

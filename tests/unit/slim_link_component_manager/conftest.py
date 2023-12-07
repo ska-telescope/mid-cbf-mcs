@@ -21,7 +21,7 @@ import unittest
 from typing import Callable, Dict
 
 import pytest
-from ska_tango_base.control_model import SimulationMode
+from ska_tango_base.control_model import HealthState, SimulationMode
 
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
@@ -41,6 +41,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 @pytest.fixture()
 def slim_link_component_manager(
+    update_health_state: Callable[[HealthState], None],
     logger: logging.Logger,
     tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
@@ -57,12 +58,13 @@ def slim_link_component_manager(
     """
 
     return SlimLinkComponentManager(
-        logger,
-        push_change_event_callback,
-        communication_status_changed_callback,
-        component_power_mode_changed_callback,
-        component_fault_callback,
-        SimulationMode.FALSE,
+        update_health_state=update_health_state,
+        logger=logger,
+        push_change_event_callback=push_change_event_callback,
+        communication_status_changed_callback=communication_status_changed_callback,
+        component_power_mode_changed_callback=component_power_mode_changed_callback,
+        component_fault_callback=component_fault_callback,
+        simulation_mode=SimulationMode.FALSE,
     )
 
 
@@ -155,11 +157,26 @@ def push_change_event_callback(
 
 
 @pytest.fixture()
+def update_health_state() -> Callable[[HealthState], None]:
+    """
+    Return a mock HealthState
+
+    :return: a mock HealthState
+    """
+    return HealthState.OK, None
+
+
+@pytest.fixture()
 def mock_tx() -> unittest.mock.Mock:
+    """
+    Return a mock device proxy for slim tx
+
+    :return: a mock slim-tx device
+    """
     builder = MockDeviceBuilder()
 
     builder.add_attribute("idle_ctrl_word", 0x12345678)
-    builder.add_command(
+    builder.add_attribute(
         "read_counters",
         [
             100000,
@@ -173,12 +190,16 @@ def mock_tx() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def mock_rx() -> unittest.mock.Mock:
+    """
+    Return a mock device proxy for slim rx
+
+    :return: a mock slim-rx device
+    """
     builder = MockDeviceBuilder()
 
     builder.add_attribute("idle_ctrl_word", 0)
     builder.add_attribute("bit_error_rate", 3e-12)
-    builder.add_command("initialize_connection", None)
-    builder.add_command(
+    builder.add_attribute(
         "read_counters",
         [
             100000,
@@ -189,6 +210,7 @@ def mock_rx() -> unittest.mock.Mock:
             0,
         ],
     )
+    builder.add_command("initialize_connection", None)
     builder.add_command("clear_read_counters", None)
     return builder()
 
