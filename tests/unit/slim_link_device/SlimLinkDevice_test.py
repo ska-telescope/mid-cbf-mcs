@@ -84,7 +84,7 @@ class TestSlimLink:
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        assert device_under_test.State() == DevState.UNKNOWN
 
 
     def test_ConnectTxRx(
@@ -98,7 +98,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline()
+        self.test_adminModeOnline(device_under_test)
         result = device_under_test.ConnectTxRx()
         assert result[0][0] == ResultCode.OK
         
@@ -114,7 +114,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline()
+        self.test_adminModeOnline(device_under_test)
         assert device_under_test.VerifyConnection() == HealthState.OK
     
     
@@ -129,7 +129,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline()
+        self.test_adminModeOnline(device_under_test)
         result = device_under_test.DisconnectTxRx()
         assert result[0][0] == ResultCode.OK
         
@@ -145,6 +145,6 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline()
+        self.test_adminModeOnline(device_under_test)
         result = device_under_test.ClearCounters()
         assert result[0][0] == ResultCode.OK

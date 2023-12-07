@@ -171,7 +171,7 @@ def mock_tx() -> unittest.mock.Mock:
 def mock_rx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     
-    builder.add_attribute("idle_ctrl_word", 0) # should not set this so that in test I can assert rx_word == tx_word after call??
+    builder.add_attribute("idle_ctrl_word", 0)
     builder.add_attribute("bit_error_rate", 3e-12)
     builder.add_command("initialize_connection", None)
     builder.add_command("read_counters", [

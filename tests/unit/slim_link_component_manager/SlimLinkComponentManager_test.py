@@ -72,10 +72,9 @@ class TestSlimLinkComponentManager:
 
 
     @pytest.mark.parametrize(
-        "tx_name",
-        [("mid_csp_cbf/slim-tx-rx/tx-test")],
-        "rx_name",
-        [("mid_csp_cbf/slim-tx-rx/rx-test")],
+        "tx_name, \
+        rx_name",
+        [("mid_csp_cbf/slim-tx-rx/tx-test", "mid_csp_cbf/slim-tx-rx/rx-test")],
     )
     def test_connect_tx_rx(
         self: TestSlimLinkComponentManager,
@@ -105,4 +104,4 @@ class TestSlimLinkComponentManager:
         result = slim_link_component_manager.connect_slim_tx_rx()
         
         # assert tx_idle_ctrl_word == rx_idle_ctrl_word
-        assert result[0][0] == ResultCode.OK
+        assert result[0] == ResultCode.OK
