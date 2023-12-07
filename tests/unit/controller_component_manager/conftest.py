@@ -312,6 +312,17 @@ def mock_power_switch() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_slim_mesh() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_result_command("On", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
     mock_vcc_group: unittest.mock.Mock,
@@ -322,6 +333,7 @@ def initial_mocks(
     mock_talon_board: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
     mock_power_switch: unittest.mock.Mock,
+    mock_slim_mesh: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -362,6 +374,8 @@ def initial_mocks(
         "mid_csp_cbf/talon_lru/004": mock_talon_lru,
         "mid_csp_cbf/power_switch/001": mock_power_switch,
         "mid_csp_cbf/power_switch/002": mock_power_switch,
+        "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
+        "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,

@@ -134,6 +134,7 @@ class SlimLink(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return SlimLinkComponentManager(
+            update_health_state=self._update_health_state,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
@@ -236,6 +237,15 @@ class SlimLink(SKABaseDevice):
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
+
+    def _update_health_state(self: SlimLink, state: HealthState) -> None:
+        """
+        Update the device's health state
+        """
+        if self._health_state != state:
+            self.logger.info(f"Updating health state to {state}")
+            self._health_state = state
+            self.push_change_event("healthState", self._health_state)
 
     # -----------------
     # Attribute Methods
@@ -345,7 +355,6 @@ class SlimLink(SKABaseDevice):
 
         :return: Health State of the device.
         """
-        self._health_state = self.component_manager.verify_connection()
         return self._health_state
         # PROTECTED REGION END #    //  SlimLink.healthState_read
 
