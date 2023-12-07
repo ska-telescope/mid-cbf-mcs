@@ -80,9 +80,16 @@ class TalonDxLogConsumer(SKABaseDevice):
         logging_device = tango.DeviceProxy(device_name)
         logging_device.add_logging_target(f"device::{self.get_name()}")
 
-        self.Log(['1650964795495', 'INFO', f"device::{self.get_name()}",
-        f"TangoUtils::DeviceAttributeToCorbaAny() - Current logging targets: {logging_device.get_logging_target(self)}",
-        '', ''])
+        self.Log(
+            [
+                "1650964795495",
+                "INFO",
+                f"device::{self.get_name()}",
+                f"TangoUtils::DeviceAttributeToCorbaAny() - Current logging targets: {logging_device.get_logging_target(self)}",
+                "",
+                "",
+            ]
+        )
 
     @command(
         dtype_in=str, doc_in="name of the device to remove logging target"
