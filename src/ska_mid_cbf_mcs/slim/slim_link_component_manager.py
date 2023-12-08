@@ -355,7 +355,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         ):
             msg = "Tx and Rx devices have not been connected."
             self._logger.debug(msg)
-            self._update_health_state = HealthState.OK
+            self._update_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, msg
 
         error_msg = ""
@@ -381,13 +381,13 @@ class SlimLinkComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             error_msg = f"verify_connection() failed: {df.args[0].desc}"
             self._logger.error(error_msg)
-            self._update_health_state = HealthState.OK
+            self._update_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
             self._logger.warn(f"Link failed health check: {error_msg}")
-            self._update_health_state = HealthState.OK
+            self._update_health_state(HealthState.FAILED)
             return ResultCode.OK, error_msg
-        self._update_health_state = HealthState.OK
+        self._update_health_state(HealthState.OK)
         return ResultCode.OK, "Link health check OK"
 
     def disconnect_slim_tx_rx(

@@ -10,7 +10,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for SlimLinkComponentManager unit tests."""
+"""This module contains pytest-specific test harness for Slim unit tests."""
 
 from __future__ import annotations
 
@@ -18,13 +18,14 @@ from __future__ import annotations
 import logging
 import os
 import unittest
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 import pytest
-from ska_tango_base.control_model import HealthState, SimulationMode
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import SimulationMode
 
-from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
-    SlimLinkComponentManager,
+from ska_mid_cbf_mcs.slim.slim_component_manager import (
+    SlimComponentManager,
 )
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
@@ -40,25 +41,25 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.fixture()
-def slim_link_component_manager(
-    update_health_state: MockCallable,
+def slim_component_manager(
+    link_fqdns: List[str],
     logger: logging.Logger,
     tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
     component_fault_callback: MockCallable,
-) -> SlimLinkComponentManager:
+) -> SlimComponentManager:
     """
-    Return a SlimLink component manager.
+    Return a Slim component manager.
 
     :param logger: the logger fixture
 
-    :return: a SlimLink component manager.
+    :return: a Slim component manager.
     """
 
-    return SlimLinkComponentManager(
-        update_health_state=update_health_state,
+    return SlimComponentManager(
+        link_fqdns=link_fqdns,
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
@@ -157,79 +158,85 @@ def push_change_event_callback(
 
 
 @pytest.fixture()
-def update_health_state(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
+def link_fqdns() -> unittest.mock.Mock:
     """
-    Return a mock HealthState
+    Return a mock list of slim link fqdns
 
-    :return: a mock HealthState
+    :return: a mock list of slim link fqdns
     """
-    return mock_callback_factory()
+    return [
+        "mid_csp_cbf/fs_links/000",
+        "mid_csp_cbf/fs_links/001",
+        "mid_csp_cbf/fs_links/002",
+        "mid_csp_cbf/fs_links/003",
+        "mid_csp_cbf/fs_links/004",
+        "mid_csp_cbf/fs_links/005",
+        "mid_csp_cbf/fs_links/006",
+        "mid_csp_cbf/fs_links/007",
+        "mid_csp_cbf/fs_links/008",
+        "mid_csp_cbf/fs_links/009",
+        "mid_csp_cbf/fs_links/010",
+        "mid_csp_cbf/fs_links/011",
+        "mid_csp_cbf/fs_links/012",
+        "mid_csp_cbf/fs_links/013",
+        "mid_csp_cbf/fs_links/014",
+        "mid_csp_cbf/fs_links/015"
+    ]
 
 
 @pytest.fixture()
-def mock_tx() -> unittest.mock.Mock:
+def mesh_config() -> unittest.mock.Mock:
     """
-    Return a mock device proxy for slim tx
+    Return a mock slim configuration string
 
-    :return: a mock slim-tx device
+    :return: a mock slim configuration
     """
-    builder = MockDeviceBuilder()
-
-    builder.add_attribute("idle_ctrl_word", 0x12345678)
-    builder.add_attribute(
-        "read_counters",
-        [
-            100000,
-            200000,
-            300000,
-        ],
-    )
-    builder.add_command("clear_read_counters", None)
-    return builder()
+    with open ("./mnt/slim/fs_slim_config.yaml", 'r') as mesh_config:
+        return mesh_config.read()
 
 
 @pytest.fixture()
-def mock_rx() -> unittest.mock.Mock:
+def mock_link() -> unittest.mock.Mock:
     """
-    Return a mock device proxy for slim rx
+    Return a mock device proxy for a slim link
 
     :return: a mock slim-rx device
     """
     builder = MockDeviceBuilder()
 
-    builder.add_attribute("idle_ctrl_word", 0)
-    builder.add_attribute("bit_error_rate", 3e-12)
-    builder.add_attribute(
-        "read_counters",
-        [
-            100000,
-            200000,
-            300000,
-            0,
-            0,
-            0,
-        ],
-    )
-    builder.add_command("initialize_connection", None)
-    builder.add_command("clear_read_counters", None)
+    builder.add_command("ConnectTxRx", (ResultCode.OK, "Connected Tx Rx successfully"))
+    builder.add_command("VerifyConnection", (ResultCode.OK, "Link health check OK"))
+    builder.add_command("DisconnectTxRx", (ResultCode.OK, "Disconnected Tx Rx"))
+    builder.add_command("ClearCounters", (ResultCode.OK, "Counters cleared!"))
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
-    mock_tx: unittest.mock.Mock, mock_rx: unittest.mock.Mock
+    mock_link: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_tx: a mock slim-tx that is powered off.
-    :param mock_rx: a mock slim-rx that is powered off.
+    :param mock_link: a mock SlimLink.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/slim-tx-rx/tx-test": mock_tx,
-        "mid_csp_cbf/slim-tx-rx/rx-test": mock_rx,
+        "mid_csp_cbf/fs_links/000" : mock_link,
+        "mid_csp_cbf/fs_links/001" : mock_link,
+        "mid_csp_cbf/fs_links/002" : mock_link,
+        "mid_csp_cbf/fs_links/003" : mock_link,
+        "mid_csp_cbf/fs_links/004" : mock_link,
+        "mid_csp_cbf/fs_links/005" : mock_link,
+        "mid_csp_cbf/fs_links/006" : mock_link,
+        "mid_csp_cbf/fs_links/007" : mock_link,
+        "mid_csp_cbf/fs_links/008" : mock_link,
+        "mid_csp_cbf/fs_links/009" : mock_link,
+        "mid_csp_cbf/fs_links/010" : mock_link,
+        "mid_csp_cbf/fs_links/011" : mock_link,
+        "mid_csp_cbf/fs_links/012" : mock_link,
+        "mid_csp_cbf/fs_links/013" : mock_link,
+        "mid_csp_cbf/fs_links/014" : mock_link,
+        "mid_csp_cbf/fs_links/015" : mock_link
     }
