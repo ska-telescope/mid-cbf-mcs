@@ -34,7 +34,7 @@ class LogComponentManager(BaseComponentManager):
         logger.propagate = False
         handlers = logger.handlers
         message = f"Current Handlers (Before INIT): {''.join(handlers)}"
-        self.log('1650964795495', 'ERROR', 'ska003/elt/master', message)
+        self.log("1650964795495", "ERROR", "ska003/elt/master", message)
         super().__init__(logger, None, None)
         self.logger = logger
 
@@ -63,7 +63,7 @@ class LogComponentManager(BaseComponentManager):
         self.logger.addFilter(TangoDeviceTagsFilter())
         handlers = self.logger.handlers
         message = f"Current Handlers (After INIT): {''.join(handlers)}"
-        self.log('1650964795495', 'ERROR', 'ska003/elt/master', message)
+        self.log("1650964795495", "ERROR", "ska003/elt/master", message)
 
     def log(
         self,
