@@ -71,14 +71,8 @@
         "mid_csp_cbf/power_switch/001",
         "mid_csp_cbf/power_switch/002"
     ],
-    "fqdn_fs_slim": 
-    [
-        "mid_csp_cbf/slim/slim-fs"
-    ],
-    "fqdn_vis_slim": 
-    [
-        "mid_csp_cbf/slim/slim-vis"
-    ],
+    "fqdn_fs_slim": "mid_csp_cbf/slim/slim-fs",
+    "fqdn_vis_slim": "mid_csp_cbf/slim/slim-vis",
     "count_vcc": 8,
     "count_fsp": 4,
     "count_subarray": 3,
