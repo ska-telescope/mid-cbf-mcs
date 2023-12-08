@@ -54,7 +54,7 @@ class Slim(SKABaseDevice):
         label="Mesh configuration",
         doc="Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured",
     )
-    def MeshConfiguration(self: Slim) -> str:
+    def meshConfiguration(self: Slim) -> str:
         """
         Returns the Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured
 
@@ -69,7 +69,7 @@ class Slim(SKABaseDevice):
         label="Link FQDNs",
         doc="the Tango device FQDN of the active links.",
     )
-    def LinkFQDNs(self: Slim) -> List[str]:
+    def linkFQDNs(self: Slim) -> List[str]:
         """
         Returns the Tango device FQDN of the active links
 
@@ -84,7 +84,7 @@ class Slim(SKABaseDevice):
         label="Link Names",
         doc="Returns the names of the active links.",
     )
-    def LinkNames(self: Slim) -> List[str]:
+    def linkNames(self: Slim) -> List[str]:
         """
         Returns the names of the active links.
 
@@ -99,7 +99,7 @@ class Slim(SKABaseDevice):
         label="Mesh health summary",
         doc="Returns a list of health state of each link. True if OK. False if the link is in a bad state.",
     )
-    def HealthSummary(self: Slim) -> List[HealthState]:
+    def healthSummary(self: Slim) -> List[HealthState]:
         """
         Returns a list of health state of each link.
 
@@ -114,7 +114,7 @@ class Slim(SKABaseDevice):
         label="Bit error rate",
         doc="Returns the bit error rate of each link in a list",
     )
-    def BitErrorRate(self: Slim) -> List[float]:
+    def bitErrorRate(self: Slim) -> List[float]:
         """
         Returns the bit error rate of each link in a list
 

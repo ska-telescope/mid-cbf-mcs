@@ -105,13 +105,12 @@ class SlimComponentManager(CbfComponentManager):
 
         self._logger.info(f"Link FQDNs: {self._link_fqdns}")  # todo: remove
 
+        self._dp_links = []
         if len(self._dp_links) == 0 and self._link_fqdns is not None:
-            self._dp_links = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._link_fqdns
-            ]
-        for dp in self._dp_links:
-            dp.adminMode = AdminMode.ONLINE
+            for fqdn in self._link_fqdns:
+                dp = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                dp.adminMode = AdminMode.ONLINE
+                self._dp_links.append(dp)
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_power_mode(PowerMode.OFF)

@@ -123,6 +123,8 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :param rx_device_name: The rx device name.
         """
+        if self._simulation_mode:
+            self.slim_link_simulator.rx_device_name = rx_device_name
         self._rx_device_name = rx_device_name
 
     @property

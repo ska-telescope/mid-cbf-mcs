@@ -413,10 +413,7 @@ class SlimLink(SKABaseDevice):
             """
             component_manager = self.target
 
-            (result_code, msg) = component_manager.connect_slim_tx_rx()
-            if result_code is not ResultCode.OK:
-                return (result_code, msg)
-            return (ResultCode.OK, "ConnectTxRx completed.")
+            return component_manager.connect_slim_tx_rx()
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -479,11 +476,7 @@ class SlimLink(SKABaseDevice):
             """
             component_manager = self.target
 
-            (result_code, msg) = component_manager.disconnect_slim_tx_rx()
-            if result_code is not ResultCode.OK:
-                return (result_code, msg)
-
-            return (ResultCode.OK, "DisconnectTxRx completed.")
+            return component_manager.disconnect_slim_tx_rx()
 
     @command(
         dtype_out="DevVarLongStringArray",

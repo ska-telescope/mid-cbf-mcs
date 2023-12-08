@@ -53,7 +53,8 @@ class ControllerComponentManager(CbfComponentManager):
         talon_lru_fqdns_all: List[str],
         talon_board_fqdns_all: List[str],
         power_switch_fqdns_all: List[str],
-        slim_fqdns_all: List[str],
+        fs_slim_fqdn: str,
+        vis_slim_fqdn: str,
         lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
         talondx_config_path: str,
@@ -79,7 +80,8 @@ class ControllerComponentManager(CbfComponentManager):
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
         :param talon_board_fqdns_all: FQDNS of all the Talon board devices
         :param power_switch_fqdns_all: FQDNS of all the power switch devices
-        :param slim_fqdns_all: FQDNs of all the SLIM devices
+        :param fs_slim_fqdn: FQDN of the frequency slice SLIM
+        :param vis_slim_fqdn: FQDN of the visibilities SLIM
         :param lru_timeout: Timeout in seconds for Talon LRU device proxies
         :param talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
@@ -123,7 +125,8 @@ class ControllerComponentManager(CbfComponentManager):
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
         self._talon_board_fqdns_all = talon_board_fqdns_all
         self._power_switch_fqdns_all = power_switch_fqdns_all
-        self._fqdn_slim = slim_fqdns_all
+        self._fs_slim_fqdn = fs_slim_fqdn
+        self._vis_slim_fqdn = vis_slim_fqdn
         self._lru_timeout = lru_timeout
 
         self._get_max_capabilities = get_num_capabilities
@@ -216,7 +219,8 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"fqdn Talon board: {self._fqdn_talon_board}")
         self._logger.debug(f"fqdn Talon LRU: {self._fqdn_talon_lru}")
         self._logger.debug(f"fqdn power switch: {self._fqdn_power_switch}")
-        self._logger.debug(f"fqdn SLIM mesh: {self._fqdn_slim}")
+        self._logger.debug(f"fqdn FS SLIM mesh: {self._fs_slim_fqdn}")
+        self._logger.debug(f"fqdn VIS SLIM mesh: {self._vis_slim_fqdn}")
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -332,7 +336,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
         # Establish connection to SLIM devices
-        for fqdn in self._fqdn_slim:
+        for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn} device"
@@ -461,7 +465,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._logger.info(
                         f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
                     )
-                    for fqdn in self._fqdn_slim:
+                    for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
                         self._proxies[fqdn].write_attribute(
                             "simulationMode",
                             self._talondx_component_manager.simulation_mode,
@@ -470,19 +474,19 @@ class ControllerComponentManager(CbfComponentManager):
 
                     with open(self._fs_slim_config_path) as f:
                         fs_slim_config = f.read()
-                    self._proxies[self._fqdn_slim[0]].command_inout(
+                    self._proxies[self._fs_slim_fqdn].command_inout(
                         "Configure", fs_slim_config
                     )
 
                     with open(self._vis_slim_config_path) as f:
                         vis_slim_config = f.read()
-                    self._proxies[self._fqdn_slim[1]].command_inout(
+                    self._proxies[self._vis_slim_fqdn].command_inout(
                         "Configure", vis_slim_config
                     )
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
-                            f"Failed to turn on group proxies; {item.reason}"
+                            f"Failed to configure SLIM links; {item.reason}"
                         )
                         self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
@@ -960,7 +964,7 @@ class ControllerComponentManager(CbfComponentManager):
             result = False
 
         try:
-            for fqdn in self._fqdn_slim:
+            for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
                 self._proxies[fqdn].command_inout("Off")
         except tango.DevFailed as df:
             for item in df.args:
