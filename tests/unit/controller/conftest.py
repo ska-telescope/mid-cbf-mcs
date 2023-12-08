@@ -253,6 +253,18 @@ def mock_talon_lru() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_slim_mesh() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_result_command("On", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
+    builder.add_result_command("Configure", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
     mock_vcc_group: unittest.mock.Mock,
@@ -261,6 +273,7 @@ def initial_mocks(
     mock_subarray: unittest.mock.Mock,
     mock_subarray_group: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
+    mock_slim_mesh: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
@@ -272,6 +285,7 @@ def initial_mocks(
     :param mock_subarray: a mock CbfSubarray that is powered off.
     :param mock_subarray_group: a mock CbfSubarray tango.Group.
     :param mock_talon_lru: a mock TalonLRU that is powered off.
+    :param mock_slim_mesh: a mock SLIM Mesh that is powered off.
 
     :return: a dictionary of proxy mocks to pre-register.
     """
@@ -298,4 +312,6 @@ def initial_mocks(
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,
+        "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
+        "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
     }
