@@ -32,8 +32,6 @@ class LogComponentManager(BaseComponentManager):
         :rtype: LogComponentManager
         """
         logger.propagate = False
-        message = f"Current Handlers (Before INIT): {logger.handlers}"
-        self.log("1650964795495", "ERROR", "ska003/elt/master", message)
         super().__init__(logger, None, None)
         self.logger = logger
 
