@@ -94,7 +94,8 @@ def controller_component_manager(
     talon_lru = configuration["fqdn_talon_lru"]
     talon_board = configuration["fqdn_talon_board"]
     power_switch = configuration["fqdn_power_switch"]
-    slim = configuration["fqdn_slim"]
+    fs_slim = configuration["fqdn_fs_slim"]
+    vis_slim = configuration["fqdn_vis_slim"]
 
     def mock_get_num_capabilities():
         num_capabilities = {
@@ -118,7 +119,8 @@ def controller_component_manager(
         talon_lru_fqdns_all=talon_lru,
         talon_board_fqdns_all=talon_board,
         power_switch_fqdns_all=power_switch,
-        slim_fqdns_all=slim,
+        fs_slim_fqdn=fs_slim,
+        vis_slim_fqdn=vis_slim,
         lru_timeout=20,
         talondx_component_manager=talondx_component_manager,
         talondx_config_path=talondx_config_path,
