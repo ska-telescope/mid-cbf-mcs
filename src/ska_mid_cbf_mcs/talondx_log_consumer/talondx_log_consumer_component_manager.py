@@ -31,8 +31,8 @@ class LogComponentManager(BaseComponentManager):
         :return: An instance of LogComponentManager
         :rtype: LogComponentManager
         """
-        super().__init__(logger, None, None)
         logger.propagate = False
+        super().__init__(logger, None, None)
         self.logger = logger
 
         class TangoDeviceTagsFilter(logging.Filter):
