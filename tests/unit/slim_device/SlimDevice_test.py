@@ -13,9 +13,9 @@ from __future__ import annotations
 
 # Standard imports
 import os
-import pytest
 import time
 
+import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from tango import DevState
@@ -37,9 +37,7 @@ class TestSlim:
     Test class for Slim tests.
     """
 
-    def test_State(
-        self: TestSlim, device_under_test: CbfDeviceProxy
-    ) -> None:
+    def test_State(self: TestSlim, device_under_test: CbfDeviceProxy) -> None:
         """
         Test State
 
@@ -49,9 +47,7 @@ class TestSlim:
         """
         assert device_under_test.State() == DevState.DISABLE
 
-    def test_Status(
-        self: TestSlim, device_under_test: CbfDeviceProxy
-    ) -> None:
+    def test_Status(self: TestSlim, device_under_test: CbfDeviceProxy) -> None:
         """
         Test Status
 
@@ -81,7 +77,6 @@ class TestSlim:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
-
 
     # @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     # def test_Power_Commands(
@@ -113,7 +108,7 @@ class TestSlim:
     #     time.sleep(CONST_WAIT_TIME)
     #     assert result[0][0] == ResultCode.OK
     #     assert device_under_test.State() == expected_state
-        
+
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./mnt/slim/fs_slim_config.yaml")],
@@ -121,7 +116,7 @@ class TestSlim:
     def test_Configure(
         self: TestSlim,
         device_under_test: CbfDeviceProxy,
-        mesh_config_filename: str
+        mesh_config_filename: str,
     ) -> None:
         """
         Test the Configure() command
@@ -131,6 +126,6 @@ class TestSlim:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         self.test_adminModeOnline(device_under_test)
-        with open (mesh_config_filename, 'r') as mesh_config:
+        with open(mesh_config_filename, "r") as mesh_config:
             result = device_under_test.Configure(mesh_config.read())
             assert result[0] == ResultCode.OK

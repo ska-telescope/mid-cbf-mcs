@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Dict, Optional, Type
+from typing import Optional, Type
 
 import pytest
 import pytest_mock
@@ -174,4 +174,3 @@ def patched_slim_link_device_class(
             return mock_component_manager
 
     return PatchedSlimLink
-

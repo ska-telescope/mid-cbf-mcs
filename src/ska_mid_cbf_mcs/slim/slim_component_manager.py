@@ -40,8 +40,6 @@ __all__ = ["SlimComponentManager"]
 class SlimComponentManager(CbfComponentManager):
     """
     Manages a Serial Lightweight Interconnect Mesh (SLIM).
-
-    :param defn_str: a string of a yaml defining the links in the mesh
     """
 
     def __init__(
@@ -59,17 +57,12 @@ class SlimComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
-        :param link_fqdns: FQDNs of the SLIM link devices
+        :param link_fqdns: a list of SLIM Link FQDNs
         :param logger: a logger for this object to use
-        :param push_change_event_callback: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
-            component fault
+        :param push_change_event_callback: callback used when the base classes want to send an event
+        :param communication_status_changed_callback: callback used when the status of the communications channel between the component manager and its component changes
+        :param component_power_mode_changed_callback: callback used when the component power mode changes
+        :param component_fault_callback: callback used in event of component fault
         :param simulation_mode: simulation mode identifies if the real power switch
                 driver or the simulator should be used
         """
@@ -103,7 +96,7 @@ class SlimComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        self._logger.info(f"Link FQDNs: {self._link_fqdns}")  # todo: remove
+        self._logger.debug(f"Link FQDNs: {self._link_fqdns}")
 
         self._dp_links = []
         if len(self._dp_links) == 0 and self._link_fqdns is not None:
@@ -151,9 +144,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def off(self) -> Tuple[ResultCode, str]:
         """
-        Off command. Currently just returns OK. The device
-        does nothing until mesh configuration is provided via
-        the Configure command.
+        Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -168,9 +159,9 @@ class SlimComponentManager(CbfComponentManager):
 
     def configure(self, config_str) -> Tuple[ResultCode, str]:
         """
-        Configure command. Parses the mesh configuration
+        Configure command. Parses the mesh configuration.
 
-        :param config: a string in YAML format describing the links to be created
+        :param config_str: a string in YAML format describing the links to be created.
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -201,9 +192,21 @@ class SlimComponentManager(CbfComponentManager):
         return (rc, msg)
 
     def get_configuration_string(self) -> str:
+        """
+        Returns the configurations string used to configure the SLIM.
+
+        :return: the SLIM configuration string
+        :rtype: str
+        """
         return self._config_str
 
     def get_link_fqdns(self) -> List[str]:
+        """
+        Returns a list of SLIM Link FQDNs.
+
+        :return: the SLIM links assosiated with the mesh.
+        :rtype: List[str]
+        """
         fqdns = []
         for idx, txrx in enumerate(self._active_links):
             fqdn = self._link_fqdns[idx]
@@ -211,6 +214,12 @@ class SlimComponentManager(CbfComponentManager):
         return fqdns
 
     def get_link_names(self) -> List[str]:
+        """
+        Returns a list of SLIM Link names, formatted 'tx_device_name->rx_device_name'.
+
+        :return: the names of SLIM links assosiated with the mesh.
+        :rtype: List[str]
+        """
         names = []
         for idx, txrx in enumerate(self._active_links):
             name = self._dp_links[idx].linkName
@@ -218,6 +227,12 @@ class SlimComponentManager(CbfComponentManager):
         return names
 
     def get_health_summary(self) -> List[HealthState]:
+        """
+        Returns a list of HealthState enums describing the status of each link.
+
+        :return: the health state of each SLIM link in the mesh.
+        :rtype: List[HealthState]
+        """
         summary = []
         for idx, txrx in enumerate(self._active_links):
             link_health = self._dp_links[idx].healthState
@@ -225,18 +240,29 @@ class SlimComponentManager(CbfComponentManager):
         return summary
 
     def get_bit_error_rate(self) -> List[float]:
+        """
+        Returns a list containing the bit-error rates for each link.
+
+        :return: the bit-error rate (BER) of each SLIM link in the mesh.
+        :rtype: List[float]
+        """
         bers = []
         for idx, txrx in enumerate(self._active_links):
             ber = self._dp_links[idx].bitErrorRate
             bers.append(ber)
         return bers
 
-    def _parse_link(self, txt: str):
+    def _parse_link(self, link: str):
         """
         Each link is in the format of "tx_fqdn -> rx_fqdn". If the
         link is disabled, then the text ends with [x].
+
+        :param link: a string describing a singular SLIM link.
+
+        :return: the pair of HPS tx and rx device FQDNs that make up a link.
+        :rtype: List[str]
         """
-        tmp = re.sub(r"[\s\t]", "", txt)  # removes all whitespaces
+        tmp = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
 
         # ignore disabled links or lines without the expected format
         if tmp.endswith("[x]") or ("->" not in tmp):
@@ -248,8 +274,10 @@ class SlimComponentManager(CbfComponentManager):
 
     def _validate_mesh_config(self, links: list) -> None:
         """
-        checks if the requested SLIM configuration is valid.
-        Throws tango exception if it is not.
+        Checks if the requested SLIM configuration is valid.
+
+        :param links: a list of HPS tx and rx device pairs to be configured as SLIM links.
+        :raise Tango exception: if SLIM configuration is not valid.
         """
         tx_set = set([x[0] for x in links])
         rx_set = set([y[1] for y in links])
@@ -263,13 +291,14 @@ class SlimComponentManager(CbfComponentManager):
             )
         return
 
-    def _parse_links_yaml(self, yaml_str: str):
+    def _parse_links_yaml(self, yaml_str: str) -> list[list[str]]:
         """
-        parse a yaml string containing the mesh links.
+        Parse a yaml string containing the mesh links.
 
         :param yaml_str: the string defining the mesh links
-
-        :return: a list of [Tx FQDN, Rx FQDN]
+        :raise Tango exception: if the configuration is not valid yaml.
+        :return: a list of HPS tx and rx device pairs as [Tx FQDN, Rx FQDN]
+        :rtype: list[list[str]]
         """
         links = list()
         try:
@@ -292,6 +321,14 @@ class SlimComponentManager(CbfComponentManager):
         return links
 
     def _initialize_links(self) -> Tuple[ResultCode, str]:
+        """
+        Triggers the configured SLIM links to connect and starts polling each link's health state.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
         self._logger.info(
             f"Creating {len(self._active_links)} links: {self._active_links}"
         )
@@ -317,6 +354,14 @@ class SlimComponentManager(CbfComponentManager):
         return (ResultCode.OK, msg)
 
     def _disconnect_links(self) -> Tuple[ResultCode, str]:
+        """
+        Triggers the configured SLIM links to disconnect and cease polling health states.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
         self._logger.info(
             f"Disconnecting {len(self._active_links)} links: {self._active_links}"
         )

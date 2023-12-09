@@ -56,9 +56,9 @@ class Slim(SKABaseDevice):
     )
     def meshConfiguration(self: Slim) -> str:
         """
-        Returns the Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured
+        Returns the Mesh configuration in a YAML string. This is the string provided in Configure. Returns empty string if not already configured.
 
-        :return: the Mesh configuration in a YAML string
+        :return: the Mesh configuration in a YAML string.
         """
         res = self.component_manager.get_configuration_string()
         return res
@@ -71,9 +71,9 @@ class Slim(SKABaseDevice):
     )
     def linkFQDNs(self: Slim) -> List[str]:
         """
-        Returns the Tango device FQDN of the active links
+        Returns the Tango device FQDN of the active links.
 
-        :return: a list of FQDNs
+        :return: a list of FQDNs.
         """
         res = self.component_manager.get_link_fqdns()
         return res
@@ -88,7 +88,7 @@ class Slim(SKABaseDevice):
         """
         Returns the names of the active links.
 
-        :return: a list of link names
+        :return: a list of link names.
         """
         res = self.component_manager.get_link_names()
         return res
@@ -97,13 +97,13 @@ class Slim(SKABaseDevice):
         dtype=(HealthState,),
         max_dim_x=MAX_NUM_LINKS,
         label="Mesh health summary",
-        doc="Returns a list of health state of each link. True if OK. False if the link is in a bad state.",
+        doc="Returns a list with the health state of each link. True if OK. False if the link is in a bad state.",
     )
     def healthSummary(self: Slim) -> List[HealthState]:
         """
-        Returns a list of health state of each link.
+        Returns a list with the health state of each link.
 
-        :return: a list of health state
+        :return: a list of health states.
         """
         res = self.component_manager.get_health_summary()
         return res
@@ -112,13 +112,13 @@ class Slim(SKABaseDevice):
         dtype=(float,),
         max_dim_x=MAX_NUM_LINKS,
         label="Bit error rate",
-        doc="Returns the bit error rate of each link in a list",
+        doc="Returns the bit-error rate of each link in a list",
     )
     def bitErrorRate(self: Slim) -> List[float]:
         """
-        Returns the bit error rate of each link in a list
+        Returns the bit-error rate of each link in a list.
 
-        :return: the bit error rate as a list of float
+        :return: the bit-error rate as a list of floats.
         """
         res = self.component_manager.get_bit_error_rate()
         return res
@@ -147,7 +147,7 @@ class Slim(SKABaseDevice):
 
     def init_command_objects(self: Slim) -> None:
         """
-        Sets up the command objects
+        Sets up the command objects.
         """
         super().init_command_objects()
 
@@ -166,6 +166,7 @@ class Slim(SKABaseDevice):
         Create and return a component manager for this device.
 
         :return: a component manager for this device.
+        :rtype: SlimComponentManager
         """
 
         self.logger.debug("Entering create_component_manager()")
@@ -195,6 +196,7 @@ class Slim(SKABaseDevice):
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
 
@@ -215,6 +217,7 @@ class Slim(SKABaseDevice):
             :return: A Tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
             return component_manager.on()
@@ -231,6 +234,7 @@ class Slim(SKABaseDevice):
             :return: A Tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
             return component_manager.off()
@@ -246,7 +250,7 @@ class Slim(SKABaseDevice):
             """
             Configure command. Configures the SLIM as provided in the input string.
 
-            :param argin: mesh configuration as a string in YAML format
+            :param argin: mesh configuration as a string in YAML format.
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -334,6 +338,8 @@ class Slim(SKABaseDevice):
     def _component_fault(self: Slim, faulty: bool) -> None:
         """
         Handle component fault
+
+        :param faulty: True if component is faulty.
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")

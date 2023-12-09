@@ -24,9 +24,7 @@ import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
-from ska_mid_cbf_mcs.slim.slim_component_manager import (
-    SlimComponentManager,
-)
+from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
     MockChangeEventCallback,
@@ -180,7 +178,7 @@ def link_fqdns() -> unittest.mock.Mock:
         "mid_csp_cbf/fs_links/012",
         "mid_csp_cbf/fs_links/013",
         "mid_csp_cbf/fs_links/014",
-        "mid_csp_cbf/fs_links/015"
+        "mid_csp_cbf/fs_links/015",
     ]
 
 
@@ -191,7 +189,7 @@ def mesh_config() -> unittest.mock.Mock:
 
     :return: a mock slim configuration
     """
-    with open ("./mnt/slim/fs_slim_config.yaml", 'r') as mesh_config:
+    with open("./mnt/slim/fs_slim_config.yaml", "r") as mesh_config:
         return mesh_config.read()
 
 
@@ -204,9 +202,15 @@ def mock_link() -> unittest.mock.Mock:
     """
     builder = MockDeviceBuilder()
 
-    builder.add_command("ConnectTxRx", (ResultCode.OK, "Connected Tx Rx successfully"))
-    builder.add_command("VerifyConnection", (ResultCode.OK, "Link health check OK"))
-    builder.add_command("DisconnectTxRx", (ResultCode.OK, "Disconnected Tx Rx"))
+    builder.add_command(
+        "ConnectTxRx", (ResultCode.OK, "Connected Tx Rx successfully")
+    )
+    builder.add_command(
+        "VerifyConnection", (ResultCode.OK, "Link health check OK")
+    )
+    builder.add_command(
+        "DisconnectTxRx", (ResultCode.OK, "Disconnected Tx Rx")
+    )
     builder.add_command("ClearCounters", (ResultCode.OK, "Counters cleared!"))
     return builder()
 
@@ -223,20 +227,20 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/fs_links/000" : mock_link,
-        "mid_csp_cbf/fs_links/001" : mock_link,
-        "mid_csp_cbf/fs_links/002" : mock_link,
-        "mid_csp_cbf/fs_links/003" : mock_link,
-        "mid_csp_cbf/fs_links/004" : mock_link,
-        "mid_csp_cbf/fs_links/005" : mock_link,
-        "mid_csp_cbf/fs_links/006" : mock_link,
-        "mid_csp_cbf/fs_links/007" : mock_link,
-        "mid_csp_cbf/fs_links/008" : mock_link,
-        "mid_csp_cbf/fs_links/009" : mock_link,
-        "mid_csp_cbf/fs_links/010" : mock_link,
-        "mid_csp_cbf/fs_links/011" : mock_link,
-        "mid_csp_cbf/fs_links/012" : mock_link,
-        "mid_csp_cbf/fs_links/013" : mock_link,
-        "mid_csp_cbf/fs_links/014" : mock_link,
-        "mid_csp_cbf/fs_links/015" : mock_link
+        "mid_csp_cbf/fs_links/000": mock_link,
+        "mid_csp_cbf/fs_links/001": mock_link,
+        "mid_csp_cbf/fs_links/002": mock_link,
+        "mid_csp_cbf/fs_links/003": mock_link,
+        "mid_csp_cbf/fs_links/004": mock_link,
+        "mid_csp_cbf/fs_links/005": mock_link,
+        "mid_csp_cbf/fs_links/006": mock_link,
+        "mid_csp_cbf/fs_links/007": mock_link,
+        "mid_csp_cbf/fs_links/008": mock_link,
+        "mid_csp_cbf/fs_links/009": mock_link,
+        "mid_csp_cbf/fs_links/010": mock_link,
+        "mid_csp_cbf/fs_links/011": mock_link,
+        "mid_csp_cbf/fs_links/012": mock_link,
+        "mid_csp_cbf/fs_links/013": mock_link,
+        "mid_csp_cbf/fs_links/014": mock_link,
+        "mid_csp_cbf/fs_links/015": mock_link,
     }

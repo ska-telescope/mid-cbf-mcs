@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Optional, Tuple,  Type
+from typing import Optional, Tuple, Type
 
 import pytest
 import pytest_mock
@@ -105,7 +105,7 @@ def mock_component_manager(
             CommunicationStatus.ESTABLISHED
         )
         mock._component_power_mode_changed_callback(PowerMode.OFF)
-        
+
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         mock.message = "Slim On command completed OK"
         return (ResultCode.OK, mock.message)
@@ -113,8 +113,10 @@ def mock_component_manager(
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         mock.message = "Slim Off command completed OK"
         return (ResultCode.OK, mock.message)
-    
-    def _configure(mock: unittest.mock.Mock, argin: str) -> Tuple[ResultCode, str]:
+
+    def _configure(
+        mock: unittest.mock.Mock, argin: str
+    ) -> Tuple[ResultCode, str]:
         mock.message = "Slim Configure command completed OK"
         return (ResultCode.OK, mock.message)
 

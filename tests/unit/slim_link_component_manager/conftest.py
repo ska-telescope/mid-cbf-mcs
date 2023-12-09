@@ -21,7 +21,7 @@ import unittest
 from typing import Callable, Dict
 
 import pytest
-from ska_tango_base.control_model import HealthState, SimulationMode
+from ska_tango_base.control_model import SimulationMode
 
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,

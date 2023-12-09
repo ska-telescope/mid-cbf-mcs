@@ -36,7 +36,7 @@ __all__ = ["SlimLink", "main"]
 
 class SlimLink(SKABaseDevice):
     """
-    TANGO device class for slim link device
+    TANGO device class for SLIM link device.
     """
 
     # PROTECTED REGION ID(SlimLink.class_variable) ENABLED START #
@@ -129,6 +129,7 @@ class SlimLink(SKABaseDevice):
         Create and return a component manager for this device.
 
         :return: a component manager for this device
+        :rtype: SlimLinkComponentManager
         """
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
@@ -231,6 +232,8 @@ class SlimLink(SKABaseDevice):
     def _component_fault(self: SlimLink, faulty: bool) -> None:
         """
         Handle component fault
+
+        :param faulty: True if component is faulty.
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")
@@ -241,6 +244,8 @@ class SlimLink(SKABaseDevice):
     def _update_health_state(self: SlimLink, state: HealthState) -> None:
         """
         Update the device's health state
+
+        :param state: HealthState describing the link's status.
         """
         if self._health_state != state:
             self.logger.info(f"Updating health state to {state}")
@@ -256,7 +261,7 @@ class SlimLink(SKABaseDevice):
         """
         Read the txDeviceName attribute.
 
-        :return: the txDeviceName fqdn.
+        :return: the txDeviceName FQDN.
         :rtype: str
         """
         return self.component_manager.tx_device_name
@@ -267,7 +272,7 @@ class SlimLink(SKABaseDevice):
         """
         Write the txDeviceName attribute.
 
-        :param value: the txDeviceName fqdn.
+        :param value: the txDeviceName FQDN.
         """
         self.component_manager.tx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.txDeviceName_write
@@ -277,7 +282,7 @@ class SlimLink(SKABaseDevice):
         """
         Read the rxDeviceName attribute.
 
-        :return: the rxDeviceName fqdn.
+        :return: the rxDeviceName FQDN.
         :rtype: str
         """
         return self.component_manager.rx_device_name
@@ -288,7 +293,7 @@ class SlimLink(SKABaseDevice):
         """
         Write the rxDeviceName attribute.
 
-        :param value: the rxDeviceName fqdn.
+        :param value: the rxDeviceName FQDN.
         """
         self.component_manager.rx_device_name = value
         # PROTECTED REGION END #    //  SlimLink.rxDeviceName_write
@@ -307,9 +312,9 @@ class SlimLink(SKABaseDevice):
     def read_txIdleCtrlWord(self: SlimLink) -> int:
         # PROTECTED REGION ID(SlimLink.txIdleCtrlWord_read) ENABLED START #
         """
-        Read the TxIdleCtrlWord attribute.
+        Read the txIdleCtrlWord attribute.
 
-        :return: the tx device's idle ctrl word.
+        :return: the HPS tx device's idle ctrl word.
         :rtype: int
         """
         return self.component_manager.tx_idle_ctrl_word
@@ -320,7 +325,7 @@ class SlimLink(SKABaseDevice):
         """
         Read the rxIdleCtrlWord attribute.
 
-        :return: the rx device's idle ctrl word.
+        :return: the HPS rx device's idle ctrl word.
         :rtype: int
         """
         return self.component_manager.rx_idle_ctrl_word
@@ -337,12 +342,13 @@ class SlimLink(SKABaseDevice):
         return self.component_manager.bit_error_rate
         # PROTECTED REGION END #    //  SlimLink.bitErrorRate_read
 
-    def read_counters(self: SlimLink) -> list[tango.DevULong64]:
+    def read_counters(self: SlimLink) -> list[int]:
         # PROTECTED REGION ID(SlimLink.counters_read) ENABLED START #
         """
         Read the counters attribute.
 
         :return: the counters array.
+        :rtype: list[int]
         """
         return self.component_manager.read_counters()
         # PROTECTED REGION END #    //  SlimLink.counters_read
@@ -354,6 +360,7 @@ class SlimLink(SKABaseDevice):
         implementation.
 
         :return: Health State of the device.
+        :rtype: HealthState
         """
         return self._health_state
         # PROTECTED REGION END #    //  SlimLink.healthState_read
@@ -386,6 +393,7 @@ class SlimLink(SKABaseDevice):
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
 
@@ -410,6 +418,7 @@ class SlimLink(SKABaseDevice):
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
 
@@ -441,6 +450,7 @@ class SlimLink(SKABaseDevice):
             Implement VerifyConnection command functionality.
 
             :return: The HealthState enum describing the link's status.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
             return component_manager.verify_connection()
@@ -473,6 +483,7 @@ class SlimLink(SKABaseDevice):
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
 
@@ -504,6 +515,7 @@ class SlimLink(SKABaseDevice):
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
             component_manager = self.target
             return component_manager.clear_counters()
