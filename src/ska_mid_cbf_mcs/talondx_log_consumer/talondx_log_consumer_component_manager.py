@@ -31,7 +31,7 @@ class LogComponentManager(BaseComponentManager):
         :return: An instance of LogComponentManager
         :rtype: LogComponentManager
         """
-        # Setting logger.propagate to false fixes the duplicated logs issue, 
+        # Setting logger.propagate to false fixes the duplicated logs issue,
         # however logs executed prior to this line will still be duplicated
         logger.propagate = False
         super().__init__(logger, None, None)
