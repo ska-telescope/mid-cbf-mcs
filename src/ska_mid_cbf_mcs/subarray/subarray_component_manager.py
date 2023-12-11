@@ -1196,18 +1196,19 @@ class CbfSubarrayComponentManager(
                         return (False, msg)
 
                     # Validate fspChannelOffset
-                    try:
-                        if int(fsp["channel_offset"]) >= 0:
-                            pass
-                        # TODO has to be a multiple of 14880
-                        else:
-                            msg = "fspChannelOffset must be greater than or equal to zero"
+                    if "channel_offset" in fsp:
+                        try:
+                            if int(fsp["channel_offset"]) >= 0:
+                                pass
+                            # TODO has to be a multiple of 14880
+                            else:
+                                msg = "fspChannelOffset must be greater than or equal to zero"
+                                self._logger.error(msg)
+                                return (False, msg)
+                        except (TypeError, ValueError):
+                            msg = "fspChannelOffset must be an integer"
                             self._logger.error(msg)
                             return (False, msg)
-                    except (TypeError, ValueError):
-                        msg = "fspChannelOffset must be an integer"
-                        self._logger.error(msg)
-                        return (False, msg)
 
                     # validate outputlink
                     # check the format

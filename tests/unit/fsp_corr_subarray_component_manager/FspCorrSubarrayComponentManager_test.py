@@ -187,6 +187,36 @@ class TestFspCorrSubarrayComponentManager:
                 )
 
     @pytest.mark.parametrize(
+        "config_file_name",
+        [("/../../data/FspCorrSubarray_ConfigureScan_basic.json")],
+    )
+    def test_optional_config_input(
+        self: TestFspCorrSubarrayComponentManager,
+        fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the fsp corr subarray component manager's configure_scan command with optional config inputs.
+
+        :param fsp_corr_subarray_component_manager: the fsp corr subarray component
+            manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        configuration = json.loads(json_str)
+
+        # remove optional channel_offset before running ConfigureScan
+        _ = configuration.pop("channel_offset")
+
+        valid_config_string = json.dumps(configuration)
+        fsp_corr_subarray_component_manager.configure_scan(valid_config_string)
+        f.close()
+
+        assert fsp_corr_subarray_component_manager.fsp_channel_offset == 0
+
+    @pytest.mark.parametrize(
         "config_file_name, scan_id",
         [
             ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1),

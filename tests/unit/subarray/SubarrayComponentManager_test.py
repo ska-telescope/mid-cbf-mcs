@@ -257,6 +257,49 @@ class TestCbfSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "config_file_name, \
+        receptors",
+        [
+            (
+                "ConfigureScan_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+            )
+        ],
+    )
+    def test_optional_input(
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
+        config_file_name: str,
+        receptors: List[str],
+    ) -> None:
+        """
+        Test scan parameter validation and configuration.
+
+        :param subarray_component_manager: subarray component manager under test.
+        :param config_file_name: scan configuration file name.
+        :param receptors: receptor IDs to use in test.
+        """
+        subarray_component_manager.start_communicating()
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
+
+        f = open(data_file_path + config_file_name)
+        config_string = f.read().replace("\n", "")
+        f.close()
+        config_json = json.loads(config_string)
+
+        # remove optional channel_offset
+        _ = config_json["cbf"]["fsp"][0].pop("channel_offset")
+
+        subarray_component_manager.add_receptors(receptors)
+        valid_config_string = json.dumps(config_json)
+
+        result = subarray_component_manager.validate_input(valid_config_string)
+        assert result[0]
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
         scan_file_name, \
         receptors",
         [

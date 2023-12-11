@@ -568,7 +568,8 @@ class FspCorrSubarrayComponentManager(
 
         self._integration_factor = int(configuration["integration_factor"])
 
-        self._fsp_channel_offset = int(configuration["channel_offset"])
+        if "channel_offset" in configuration:
+            self._fsp_channel_offset = int(configuration["channel_offset"])
 
         if "output_host" in configuration:
             self._vis_destination_address["outputHost"] = configuration[
