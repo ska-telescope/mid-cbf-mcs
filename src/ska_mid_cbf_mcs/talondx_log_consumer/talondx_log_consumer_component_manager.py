@@ -31,6 +31,8 @@ class LogComponentManager(BaseComponentManager):
         :return: An instance of LogComponentManager
         :rtype: LogComponentManager
         """
+        # Setting logger.propagate to false fixes the duplicated logs issue, 
+        # however logs executed prior to this line will still be duplicated
         logger.propagate = False
         super().__init__(logger, None, None)
         self.logger = logger
@@ -58,8 +60,6 @@ class LogComponentManager(BaseComponentManager):
                 return True
 
         self.logger.addFilter(TangoDeviceTagsFilter())
-        message = f"Current Handlers (After INIT): {self.logger.handlers}"
-        self.log("1650964795495", "ERROR", "ska003/elt/master", message)
 
     def log(
         self,
