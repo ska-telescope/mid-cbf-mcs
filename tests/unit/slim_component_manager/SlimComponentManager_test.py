@@ -8,7 +8,7 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 
-"""Contain the tests for the SlimLink component manager."""
+"""Contain the tests for the SLIM component manager."""
 from __future__ import annotations
 
 import os
@@ -24,7 +24,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestSlimComponentManager:
-    """Tests of the fsp pst subarray component manager."""
+    """Tests of the SLIM component manager."""
 
     def test_communication(
         self: TestSlimComponentManager,
@@ -32,9 +32,9 @@ class TestSlimComponentManager:
         communication_status_changed_callback: MockCallable,
     ) -> None:
         """
-        Test the slim component manager's management of communication.
+        Test the SLIM component manager's management of communication.
 
-        :param slim_component_manager: the slim link component
+        :param slim_component_manager: the SLIM component
             manager under test.
         :param communication_status_changed_callback: callback to be
             called when the status of the communications channel between
@@ -76,11 +76,11 @@ class TestSlimComponentManager:
         mesh_config_filename: str,
     ) -> None:
         """
-        Test the slim component manager's connect_tx_rx command.
+        Test the SLIM component manager's connect_tx_rx command.
 
-        :param slim_component_manager: the slim link component
+        :param slim_component_manager: the SLIM component
             manager under test.
-        :param tx_name: fqdn of the slim-tx mock device
+        :param mesh_config_filename: name of SLIM configuration YAML file.
         """
         assert (
             slim_component_manager.communication_status

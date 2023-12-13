@@ -55,6 +55,7 @@ def slim_link_component_manager(
     :param logger: the logger fixture
 
     :return: a SlimLink component manager.
+    :rtype: SlimLinkComponentManager
     """
 
     return SlimLinkComponentManager(
@@ -161,9 +162,13 @@ def update_health_state(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
 ) -> unittest.mock.Mock:
     """
-    Return a mock HealthState
+    Return a mock callback for component manager fault.
 
-    :return: a mock HealthState
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the health state of the link is polled.
     """
     return mock_callback_factory()
 
@@ -171,9 +176,9 @@ def update_health_state(
 @pytest.fixture()
 def mock_tx() -> unittest.mock.Mock:
     """
-    Return a mock device proxy for slim tx
+    Return a mock SLIM-tx device proxy
 
-    :return: a mock slim-tx device
+    :return: a mock SLIM-tx device
     """
     builder = MockDeviceBuilder()
 
@@ -193,9 +198,9 @@ def mock_tx() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_rx() -> unittest.mock.Mock:
     """
-    Return a mock device proxy for slim rx
+    Return a mock SLIM-rx device proxy
 
-    :return: a mock slim-rx device
+    :return: a mock SLIM-rx device
     """
     builder = MockDeviceBuilder()
 
@@ -224,8 +229,8 @@ def initial_mocks(
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_tx: a mock slim-tx that is powered off.
-    :param mock_rx: a mock slim-rx that is powered off.
+    :param mock_tx: a mock SLIM-tx that is powered off.
+    :param mock_rx: a mock SLIM-rx that is powered off.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

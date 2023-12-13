@@ -51,9 +51,10 @@ def slim_component_manager(
     """
     Return a Slim component manager.
 
-    :param logger: the logger fixture
+    :param logger: the logger fixture.
 
     :return: a Slim component manager.
+    :rtype: SlimComponentManager
     """
 
     return SlimComponentManager(
@@ -158,9 +159,9 @@ def push_change_event_callback(
 @pytest.fixture()
 def link_fqdns() -> unittest.mock.Mock:
     """
-    Return a mock list of slim link fqdns
+    Returns a mock list of slim link FQDNs
 
-    :return: a mock list of slim link fqdns
+    :return: a mock list of slim link FQDNs
     """
     return [
         "mid_csp_cbf/fs_links/000",
@@ -185,7 +186,7 @@ def link_fqdns() -> unittest.mock.Mock:
 @pytest.fixture()
 def mesh_config() -> unittest.mock.Mock:
     """
-    Return a mock slim configuration string
+    Returns a mock slim configuration string
 
     :return: a mock slim configuration
     """
@@ -196,9 +197,9 @@ def mesh_config() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_link() -> unittest.mock.Mock:
     """
-    Return a mock device proxy for a slim link
+    Return a mock slim link device proxy
 
-    :return: a mock slim-rx device
+    :return: a mock slim link device
     """
     builder = MockDeviceBuilder()
 
@@ -222,7 +223,7 @@ def initial_mocks(
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_link: a mock SlimLink.
+    :param mock_link: a mock SlimLink device.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

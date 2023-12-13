@@ -10,7 +10,8 @@ Code
   CbfController<CbfController/index>
   CbfSubarray<CbfSubarray/index>
   Fsp<Fsp/index>
-  Vcc<Vcc/index>
   PowerSwitch<PowerSwitch/index>
-  TalonLRU<TalonLRU/index>
+  Slim<Slim/index>
   TalonDxLogConsumer<TalonDxLogConsumer/index>
+  TalonLRU<TalonLRU/index>
+  Vcc<Vcc/index>

@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the SlimLink."""
+"""Contain the tests for the Slim."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ CONST_WAIT_TIME = 1
 
 class TestSlim:
     """
-    Test class for Slim tests.
+    Test class for SLIM tests.
     """
 
     def test_State(self: TestSlim, device_under_test: CbfDeviceProxy) -> None:
@@ -73,6 +73,13 @@ class TestSlim:
         self: TestSlim,
         device_under_test: CbfDeviceProxy,
     ) -> None:
+        """
+        Test Admin Mode Online
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE

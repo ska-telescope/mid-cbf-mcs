@@ -1,0 +1,72 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title Visibility SLIM Configuration Sequence\n
+
+
+box "MCS"
+participant "Mid.CBF\nController" as controller
+participant "FS\nMesh" as mesh_fs
+participant "Vis\nMesh" as mesh_vis
+collections "FS\nLinks\n0-15" as links_fs
+collections "Vis\nLinks\n0-3" as links_vis
+end box
+
+box "VCC-FSP-1\n(Talon A)"
+collections "FS\nTx\n0-3"  as tx_fs_1
+collections "FS\nRx\n0-3"  as rx_fs_1
+participant "Vis\nTx\n"    as tx_vis_1
+collections "Vis\nRx\n0-3" as rx_vis_1
+end box
+
+box "VCC-FSP-2\n(Talon B)"
+collections "FS\nTx\n0-3"  as tx_fs_2
+collections "FS\nRx\n0-3"  as rx_fs_2
+participant "Vis\nTx\n"    as tx_vis_2
+end box
+
+box "VCC-FSP-3\n(Talon C)"
+collections "FS\nTx\n0-3"  as tx_fs_3
+collections "FS\nRx\n0-3"  as rx_fs_3
+participant "Vis\nTx\n"    as tx_vis_3
+end box
+
+box "VCC-FSP-4\n(Talon D)"
+collections "FS\nTx\n0-3"  as tx_fs_4
+collections "FS\nRx\n0-3"  as rx_fs_4
+participant "Vis\nTx\n"    as tx_vis_4
+end box
+
+controller -> mesh_vis  : Configure()
+mesh_vis   -> links_vis : Configure() x4
+
+links_vis   -> tx_vis_1  : Configure Vis-Link0-Tx
+links_vis   -> rx_vis_1  : Configure Vis-Link0-Rx
+links_vis   -> tx_vis_2  : Configure Vis-Link1-Tx
+links_vis   -> rx_vis_1  : Configure Vis-Link1-Rx
+links_vis   -> tx_vis_3  : Configure Vis-Link2-Tx
+links_vis   -> rx_vis_1  : Configure Vis-Link2-Rx
+links_vis   -> tx_vis_4  : Configure Vis-Link3-Tx
+links_vis   -> rx_vis_1  : Configure Vis-Link3-Rx 
+
+@enduml

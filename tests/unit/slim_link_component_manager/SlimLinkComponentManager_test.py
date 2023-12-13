@@ -26,7 +26,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestSlimLinkComponentManager:
-    """Tests of the fsp pst subarray component manager."""
+    """Tests of the SlimLink component manager."""
 
     def test_communication(
         self: TestSlimLinkComponentManager,
@@ -34,9 +34,9 @@ class TestSlimLinkComponentManager:
         communication_status_changed_callback: MockCallable,
     ) -> None:
         """
-        Test the slim link component manager's management of communication.
+        Test the SlimLink component manager's management of communication.
 
-        :param slim_link_component_manager: the slim link component
+        :param slim_link_component_manager: the SlimLink component
             manager under test.
         :param communication_status_changed_callback: callback to be
             called when the status of the communications channel between
@@ -80,12 +80,12 @@ class TestSlimLinkComponentManager:
         rx_name: str,
     ) -> None:
         """
-        Test the slim link component manager's connect_tx_rx command.
+        Test the SlimLink component manager's connect_tx_rx command.
 
-        :param slim_link_component_manager: the slim link component
+        :param slim_link_component_manager: the SlimLink component
             manager under test.
-        :param tx_name: fqdn of the slim-tx mock device
-        :param rx_name: fqdn of the slim-rx mock device
+        :param tx_name: FQDN of the SLIM-tx mock device
+        :param rx_name: FQDN of the SLIM-rx mock device
         """
         assert (
             slim_link_component_manager.communication_status
@@ -108,9 +108,9 @@ class TestSlimLinkComponentManager:
         slim_link_component_manager: SlimLinkComponentManager,
     ) -> None:
         """
-        Test the slim link component manager's verify_connection command.
+        Test the SlimLink component manager's verify_connection command.
 
-        :param slim_link_component_manager: the slim link component
+        :param slim_link_component_manager: the SlimLink component
             manager under test.
         """
         assert (
@@ -132,9 +132,9 @@ class TestSlimLinkComponentManager:
         slim_link_component_manager: SlimLinkComponentManager,
     ) -> None:
         """
-        Test the slim link component manager's disconnect_tx_rx command.
+        Test the SlimLink component manager's disconnect_tx_rx command.
 
-        :param slim_link_component_manager: the slim link component
+        :param slim_link_component_manager: the SlimLink component
             manager under test.
         """
         assert (
@@ -156,9 +156,9 @@ class TestSlimLinkComponentManager:
         slim_link_component_manager: SlimLinkComponentManager,
     ) -> None:
         """
-        Test the slim link component manager's clear_counters command.
+        Test the SlimLink component manager's clear_counters command.
 
-        :param slim_link_component_manager: the slim link component
+        :param slim_link_component_manager: the SlimLink component
             manager under test.
         """
         assert (

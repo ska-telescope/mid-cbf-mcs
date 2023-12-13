@@ -76,6 +76,13 @@ class TestSlimLink:
         self: TestSlimLink,
         device_under_test: CbfDeviceProxy,
     ) -> None:
+        """
+        Test Admin Mode Online
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
