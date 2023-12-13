@@ -10,16 +10,11 @@
 """Contain the tests for the Slim."""
 from __future__ import annotations
 
-import copy
-import json
 import os
-import time
 
 import pytest
-from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DeviceData, DevShort, DevState
-
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_tango_base.control_model import AdminMode, LoggingLevel
+from tango import DevState
 
 # Standard imports
 
@@ -37,9 +32,7 @@ class TestSlim:
     Test class for Slim device class integration testing.
     """
 
-    def test_Connect(
-        self: TestSlim, test_proxies: pytest.fixture
-    ) -> None:
+    def test_Connect(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
@@ -66,9 +59,7 @@ class TestSlim:
         )
         assert test_proxies.slim.State() == DevState.OFF
 
-    def test_On(
-        self: TestSlim, test_proxies: pytest.fixture
-    ) -> None:
+    def test_On(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "On" command
 
@@ -88,9 +79,7 @@ class TestSlim:
         )
         assert device_under_test.State() == DevState.ON
 
-    def test_Off(
-        self: TestSlim, test_proxies: pytest.fixture
-    ) -> None:
+    def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "Off" command
 
@@ -109,9 +98,7 @@ class TestSlim:
         )
         assert device_under_test.State() == DevState.OFF
 
-    def test_Disconnect(
-        self: TestSlim, test_proxies: pytest.fixture
-    ) -> None:
+    def test_Disconnect(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Verify the component manager can stop communicating
 

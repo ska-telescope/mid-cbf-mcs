@@ -480,7 +480,7 @@ def init_proxies_fixture():
                         logger=logging.getLogger(),
                     )
                 )
-                
+
             # Slim
             self.slim = CbfDeviceProxy(
                 fqdn="mid_csp_cbf/slim/slim-fs",
@@ -496,7 +496,7 @@ def init_proxies_fixture():
                         logger=logging.getLogger(),
                     )
                 )
-                
+
         def wait_timeout_dev(
             self: TestProxies,
             proxy_list: List[CbfDeviceProxy],
