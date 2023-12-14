@@ -13,7 +13,7 @@ Development
 0.12.9
 ******
 * CIP-1674 Logconsumer logs every message twice
-* CIP-1853 Enhance ysstem-tests to check ResultCode
+* CIP-1853 Enhance system-tests to check ResultCode
 * CIP-2012 MCS k8s test pipeline job output no longer includes code coverage table
 
 0.12.8
