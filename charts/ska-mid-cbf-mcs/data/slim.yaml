@@ -1,7 +1,7 @@
 name: slim
 function: slim
 domain: mid-csp-cbf
-command: "SlimMesh"
+command: "Slim"
 instances: ["mesh"]
 depends_on:
   - device: sys/database/2
@@ -18,11 +18,11 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "SlimMesh"
+  name: "Slim"
   instances:
   - name: "mesh"
     classes:
-    - name: "SlimMesh"
+    - name: "Slim"
       devices:
       - name: "mid_csp_cbf/slim/slim-fs"
         properties:
