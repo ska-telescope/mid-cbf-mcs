@@ -15,7 +15,6 @@ MID CBF MCS Documentation
 
    guide/interfaces/lmc_mcs_interface
    guide/interfaces/mcs_hps_interface
-   SLIM<guide/interfaces/slim_interface>
 
 .. DEVELOPER =============================================================
 .. toctree::
