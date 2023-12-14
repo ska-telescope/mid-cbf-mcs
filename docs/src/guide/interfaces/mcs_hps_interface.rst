@@ -148,15 +148,15 @@ AA0.5 quantities shown.
 
 .. uml:: /diagrams/slim-configuration-vis.puml
 
-SLIM FS Links Definition YAML File
-++++++++++++++++++++++++++++++++++
+SLIM FS Links Definition Example YAML File
++++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
 .. literalinclude:: fs_slim_config.yaml
 
-SLIM Visibility Links Definition YAML File
-++++++++++++++++++++++++++++++++++++++++++
+SLIM Visibility Links Definition Example YAML File
+++++++++++++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
