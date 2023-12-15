@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.10
+*******
+* CIP-2006 Renamed all SlimMesh refs to just Slim
+
 0.12.9
 ******
 * CIP-1674 Logconsumer logs every message twice
