@@ -77,13 +77,14 @@ deviceServers:
     enabled: true
     file: "data/slim.yaml"
 
+  slimlink:
+    enabled: true
+    file: "data/slimlink.yaml"
+
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
-  slimlink:
-    enabled: true
-    file: "data/slimlink.yaml"
 
 nodeSelector: {}
 
