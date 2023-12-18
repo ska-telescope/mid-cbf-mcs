@@ -1,0 +1,9 @@
+links_to_vis1:
+  - vis1-0 -> vis1-0 [x]
+  - vis2-0 -> vis1-1 [x]
+  - vis3-0 -> vis1-2 [x]
+  - vis4-0 -> vis1-3 [x]
+  - vis5-0 -> vis1-4 [x]
+  - vis6-0 -> vis1-5 [x]
+  - vis7-0 -> vis1-6 [x]
+  - vis8-0 -> vis1-7 [x]

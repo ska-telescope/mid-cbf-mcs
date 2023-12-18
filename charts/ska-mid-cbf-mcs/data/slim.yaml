@@ -1,0 +1,79 @@
+name: slim
+function: slim
+domain: mid-csp-cbf
+command: "Slim"
+instances: ["mesh"]
+depends_on:
+  - device: sys/database/2
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "Slim"
+  instances:
+  - name: "mesh"
+    classes:
+    - name: "Slim"
+      devices:
+      - name: "mid_csp_cbf/slim/slim-fs"
+        properties:
+          - name: "Links"
+            values:
+            - "mid_csp_cbf/fs_links/000"
+            - "mid_csp_cbf/fs_links/001"
+            - "mid_csp_cbf/fs_links/002"
+            - "mid_csp_cbf/fs_links/003"
+            - "mid_csp_cbf/fs_links/004"
+            - "mid_csp_cbf/fs_links/005"
+            - "mid_csp_cbf/fs_links/006"
+            - "mid_csp_cbf/fs_links/007"
+            - "mid_csp_cbf/fs_links/008"
+            - "mid_csp_cbf/fs_links/009"
+            - "mid_csp_cbf/fs_links/010"
+            - "mid_csp_cbf/fs_links/011"
+            - "mid_csp_cbf/fs_links/012"
+            - "mid_csp_cbf/fs_links/013"
+            - "mid_csp_cbf/fs_links/014"
+            - "mid_csp_cbf/fs_links/015"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+      - name: "mid_csp_cbf/slim/slim-vis"
+        properties:
+          - name: "Links"
+            values:
+            - "mid_csp_cbf/vis_links/000"
+            - "mid_csp_cbf/vis_links/001"
+            - "mid_csp_cbf/vis_links/002"
+            - "mid_csp_cbf/vis_links/003"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "simulationMode"
+            - "3000"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

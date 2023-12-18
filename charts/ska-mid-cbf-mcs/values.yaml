@@ -32,7 +32,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.12.7
+    tag: 0.12.10
     pullPolicy: IfNotPresent
 
 resources:
@@ -73,9 +73,18 @@ deviceServers:
     enabled: true
     file: "data/talonboard.yaml"
 
+  slim:
+    enabled: true
+    file: "data/slim.yaml"
+
+  slimlink:
+    enabled: true
+    file: "data/slimlink.yaml"
+
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
+
 
 nodeSelector: {}
 

@@ -94,6 +94,8 @@ def controller_component_manager(
     talon_lru = configuration["fqdn_talon_lru"]
     talon_board = configuration["fqdn_talon_board"]
     power_switch = configuration["fqdn_power_switch"]
+    fs_slim = configuration["fqdn_fs_slim"]
+    vis_slim = configuration["fqdn_vis_slim"]
 
     def mock_get_num_capabilities():
         num_capabilities = {
@@ -106,6 +108,8 @@ def controller_component_manager(
 
     talondx_config_path = "mnt/talondx-config/"
     hw_config_path = "mnt/hw_config/hw_config.yaml"
+    fs_slim_config_path = "mnt/slim/fs_slim_config.yaml"
+    vis_slim_config_path = "mnt/slim/vis_slim_config.yaml"
 
     component_manager = ControllerComponentManager(
         get_num_capabilities=mock_get_num_capabilities,
@@ -115,10 +119,14 @@ def controller_component_manager(
         talon_lru_fqdns_all=talon_lru,
         talon_board_fqdns_all=talon_board,
         power_switch_fqdns_all=power_switch,
+        fs_slim_fqdn=fs_slim,
+        vis_slim_fqdn=vis_slim,
         lru_timeout=20,
         talondx_component_manager=talondx_component_manager,
         talondx_config_path=talondx_config_path,
         hw_config_path=hw_config_path,
+        fs_slim_config_path=fs_slim_config_path,
+        vis_slim_config_path=vis_slim_config_path,
         logger=logger,
         push_change_event=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
@@ -306,6 +314,17 @@ def mock_power_switch() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_slim_mesh() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_result_command("On", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
     mock_vcc_group: unittest.mock.Mock,
@@ -316,6 +335,7 @@ def initial_mocks(
     mock_talon_board: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
     mock_power_switch: unittest.mock.Mock,
+    mock_slim_mesh: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -356,6 +376,8 @@ def initial_mocks(
         "mid_csp_cbf/talon_lru/004": mock_talon_lru,
         "mid_csp_cbf/power_switch/001": mock_power_switch,
         "mid_csp_cbf/power_switch/002": mock_power_switch,
+        "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
+        "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,

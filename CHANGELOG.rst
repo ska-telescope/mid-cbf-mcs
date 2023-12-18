@@ -10,6 +10,21 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.10
+*******
+* CIP-2006 Renamed all SlimMesh refs to just Slim
+
+0.12.9
+******
+* CIP-1674 Logconsumer logs every message twice
+* CIP-1853 Enhance system-tests to check ResultCode
+* CIP-2012 MCS k8s test pipeline job output no longer includes code coverage table
+
+0.12.8
+******
+* CIP-1769 Implement SLIM Tango device (mesh)
+* CIP-1768 Implement SLIM Link Tango device
+
 0.12.7
 ******
 * CIP-1967 revert fo_validity_interval to 0.001 while CIP-2001 is being addressed
@@ -37,7 +52,7 @@ Development
 
 0.12.1
 *****
-* Removed hardcoded input sample rate. 
+* Removed hardcoded input sample rate
 * Changed fs_sample_rate to integer and in Hz
 * Added check for missing Dish ID - VCC mapping during On command
 
@@ -51,7 +66,7 @@ Development
 
 0.11.7
 *****
-* Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame.
+* Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame
 
 0.11.6
 *****
