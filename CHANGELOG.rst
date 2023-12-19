@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.11
+*******
+* CIP-1883 bumped engineering console version to 0.9.7, signal verification to 0.2.7
+
 0.12.10
 *******
 * CIP-2006 Renamed all SlimMesh refs to just Slim
