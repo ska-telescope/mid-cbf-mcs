@@ -128,10 +128,10 @@ mode (this is the default), simulator classes are used in place of communication
 with the real Talon-DX Tango devices. This allows testing of the MCS without
 any connection to the hardware.
 
-.. figure:: ../../diagrams/vcc-device.png
+.. figure:: ../../diagrams/slimlink-device.png
    :align: center
    
-   MCS Slim and SlimLink Devices
+   MCS SlimLink Device
 
 
 Talon LRU
