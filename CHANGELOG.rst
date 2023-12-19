@@ -13,6 +13,7 @@ Development
 0.12.11
 *******
 * CIP-1883 bumped engineering console version to 0.9.7, signal verification to 0.2.7
+* CIP-2001 reverted fo_validity_interval internal parameter to 0.01
 
 0.12.10
 *******
