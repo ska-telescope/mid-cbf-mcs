@@ -135,10 +135,10 @@ Ref: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_
 SLIM Configuration
 ++++++++++++++++++
 
-.. figure:: /diagrams/VCC-SLIM-FSP.png
+.. figure:: /diagrams/4-receptor-correlator.png
     :align: center
 
-    VCC-SLIM-FSP Context
+    SLIM Interconnections for AA0.5 CBF
 
 SLIM Configuration Sequence
 +++++++++++++++++++++++++++

@@ -114,6 +114,11 @@ mode (this is the default), simulator classes are used in place of communication
 with the real Talon-DX Tango devices. This allows testing of the MCS without
 any connection to the hardware.
 
+.. figure:: ../../diagrams/slim-device.png
+   :align: center
+   
+   MCS Slim Device
+
 SlimLink
 --------
 The ``SlimLink`` Tango device configures a pair of proxies to ``slim-tx`` and ``slim-rx`` HPS devices 
