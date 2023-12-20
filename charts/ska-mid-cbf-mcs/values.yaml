@@ -10,8 +10,8 @@ enabled: true
 system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
-engineeringConsoleVersion: 0.9.2
-signalVerificationVersion: 0.2.5
+engineeringConsoleVersion: 0.9.8
+signalVerificationVersion: 0.2.7
 
 labels:
   app: ska-mid-cbf-mcs
@@ -32,7 +32,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.12.10
+    tag: 0.12.12
     pullPolicy: IfNotPresent
 
 resources:
