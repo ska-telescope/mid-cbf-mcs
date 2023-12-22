@@ -210,15 +210,31 @@ class TestVccComponentManager:
                 )
 
     @pytest.mark.parametrize(
-        "config_file_name, \
-        delay_model_file_name",
-        [("Vcc_ConfigureScan_basic.json", "delaymodel_unit_test.json")],
+        "config_file_name, delay_model_file_name , receptor_id",
+        [
+            (
+                "Vcc_ConfigureScan_basic.json",
+                "delaymodel_unit_test.json",
+                "SKA001",
+            ),
+            (
+                "Vcc_ConfigureScan_basic.json",
+                "delaymodel_unit_test.json",
+                "SKA100",
+            ),
+            (
+                "Vcc_ConfigureScan_basic.json",
+                "delaymodel_unit_test.json",
+                "SKA063",
+            ),
+        ],
     )
     def test_update_delay_model(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
         config_file_name: str,
         delay_model_file_name: str,
+        receptor_id: str,
     ) -> None:
         """
         Test Vcc's UpdateDelayModel Command.
@@ -226,6 +242,7 @@ class TestVccComponentManager:
         :param vcc_component_manager: vcc component manager under test.
         :param config_file_name: JSON file for the configuration
         :param delay_model_file_name: JSON file for the delay model
+        :param receptor_id: receptor in delaymodel_unit_test.json
         """
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
@@ -256,40 +273,29 @@ class TestVccComponentManager:
         f.close()
         input_delay_model_obj = json.loads(input_delay_model)
 
-        # update the delay model
-        # Set the receptor id arbitrarily to the first receptor
-        # in the delay model
-        input_delay_model_first_receptor = input_delay_model_obj[
-            "delay_details"
-        ][0]
-        vcc_component_manager.receptor_id = input_delay_model_first_receptor[
-            "receptor"
-        ][1]
-        assert (
-            vcc_component_manager.receptor_id
-            == input_delay_model_first_receptor["receptor"][1]
-        )
+        # set the receptor id and update the delay model
+        vcc_component_manager.receptor_id = receptor_id
         vcc_component_manager.update_delay_model(input_delay_model)
 
         # check that the delay model is no longer an empty string
         updated_delay_model_obj = json.loads(vcc_component_manager.delay_model)
         assert len(updated_delay_model_obj) != 0
 
-        # check that the coeff values were copied
-        for entry in input_delay_model_obj["delay_details"]:
-            if entry["receptor"][1] == vcc_component_manager.receptor_id:
-                input_delay_model_for_receptor = json.dumps(entry)
-                # the updated delay model for vcc is a single entry
-                # for the given receptor and should be the first (only)
-                # item in the list of entries allowed by the schema
-                updated_delay_model_for_vcc = json.dumps(
-                    updated_delay_model_obj["delay_details"][0]
-                )
-                # compare the delay models as strings
-                assert (
-                    input_delay_model_for_receptor
-                    == updated_delay_model_for_vcc
-                )
+        for model in input_delay_model_obj["models"]:
+            for entry in model["model"]["delay_details"]:
+                if entry["receptor"] == vcc_component_manager.receptor_id:
+                    input_delay_model_for_receptor = json.dumps(entry)
+                    # the updated delay model for vcc is a single entry
+                    # for the given receptor and should be the first (only)
+                    # item in the list of entries allowed by the schema
+                    updated_delay_model_for_vcc = json.dumps(
+                        updated_delay_model_obj["delay_details"][0]
+                    )
+                    # compare the delay models as strings
+                    assert (
+                        input_delay_model_for_receptor
+                        == updated_delay_model_for_vcc
+                    )
 
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]

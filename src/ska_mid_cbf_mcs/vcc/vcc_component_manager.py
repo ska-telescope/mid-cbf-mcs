@@ -917,17 +917,20 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # with a single entry so that the schema is followed
         # Set up the delay model to be a list
         list_of_entries = []
-        for entry in delay_model_obj["delay_details"]:
-            self._logger.debug(
-                f"Received delay model for receptor {entry['receptor'][0]}"
-            )
-            if entry["receptor"][1] == self._receptor_id:
-                self._logger.debug("Updating delay model for this VCC")
-                list_of_entries.append(copy.deepcopy(entry))
-                self._delay_model = json.dumps(
-                    {"delay_details": list_of_entries}
+        for model in delay_model_obj["models"]:
+            for entry in model["model"]["delay_details"]:
+                self._logger.debug(
+                    f"Received delay model for receptor {entry['receptor']}"
                 )
-                dm_found = True
+                if entry["receptor"] == self._receptor_id:
+                    self._logger.debug("Updating delay model for this VCC")
+                    list_of_entries.append(copy.deepcopy(entry))
+                    self._delay_model = json.dumps(
+                        {"delay_details": list_of_entries}
+                    )
+                    dm_found = True
+                    break
+            if dm_found:
                 break
         if not dm_found:
             log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
