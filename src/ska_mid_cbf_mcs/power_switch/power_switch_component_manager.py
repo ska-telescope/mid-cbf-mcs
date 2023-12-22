@@ -22,10 +22,8 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import (
-    ApcPduDriver,
-    ApcSnmpDriver,
-)
+from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
+from ska_mid_cbf_mcs.power_switch.apc_snmp_driver import ApcSnmpDriver
 from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
     DLIProSwitchDriver,
 )
