@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 
 import pytest
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, LoggingLevel
 from tango import DevState
 
@@ -108,18 +109,18 @@ class TestSlim:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        device_under_test = device_under_test = test_proxies.slim
+        device_under_test = test_proxies.slim
 
         device_under_test.Off()
 
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         device_under_test.adminMode = AdminMode.OFFLINE
 
-        # controller device should be in DISABLE state after stop_communicating
+        # controller device should be in OFF state after stop_communicating
         test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.DISABLE, wait_time_s, sleep_time_s
+            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
         )
-        assert device_under_test.State() == DevState.DISABLE
+        assert device_under_test.State() == DevState.OFF
 
         # Stop monitoring the TalonLRUs and power switch devices
         for proxy in test_proxies.power_switch:
@@ -128,3 +129,16 @@ class TestSlim:
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.OFFLINE
             proxy.set_timeout_millis(10000)
+
+    def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
+        """
+        Test the "Configure" command
+
+        :param test_proxies: the proxies test fixture
+        """
+
+        device_under_test = test_proxies.slim
+        with open(data_file_path + 'slim_test_config.yaml', 'r') as f:
+            rc, msg = device_under_test.Configure(f.read())
+
+        assert rc == ResultCode.OK

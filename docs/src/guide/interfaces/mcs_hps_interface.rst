@@ -135,7 +135,7 @@ Ref: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_
 The Serial Lightweight Interconnect Mesh (SLIM) provides a streaming packet link between two different FPGAs. At its lowest level, a TX and RX IP block are paired together to transfer packetized data across a high-speed serial link.
 The SLIM architecture consists of three parts: The HPS DsSlimTxRx device server, which provides an interface to the FPGA IP, the MCS SLIM Links, which establish links between Tx and Rx devices, and finally the top level MCS SLIM Mesh (simply called 'SLIM'), which bundles links into groups for better organization.
 
-The DsSLIMTX and DsSLIMRx are provided together as a multi-class device server to control and monitor the SLIM Links. Each TX device server has a corresponding RX device server which it must connect to to provide a link, depending on the SLIM configuration (see next section).
+The DsSLIMTX and DsSLIMRx are provided together as a multi-class HPS device server to control and monitor the SLIM Links. Each TX device server has a corresponding RX device server which it must connect to to provide a link, depending on the SLIM configuration (see next section).
 
 During a SLIM Link's initialization, the FQDNs of a Tx and Rx device pair are passed as arguments and device proxies are made to each device. Then the connection is monitored by periodically comparing the idle control words (a 55-bit hash of the Tx or Rx's FQDN) on either side of the link, checking that the bit-error rate remains below an acceptable threshold, and ensuring that clocks on each side of the link remain in sync. Each link uses an enumerated HealthState attribute to summarize these metrics.
 

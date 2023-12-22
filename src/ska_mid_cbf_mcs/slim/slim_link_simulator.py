@@ -161,10 +161,10 @@ class SlimLinkSimulator:
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        if self._link_enabled:
-            # FIXME: Add _update_health_state(HealthState.UNKNOWN)
+        if not self._link_enabled:
+            self._update_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "link is healthy"
-        # FIXME: Add _update_health_state(HealthState.OK)
+        self._update_health_state(HealthState.OK)
         return ResultCode.OK, "link is not active"
 
     def disconnect_slim_tx_rx(
