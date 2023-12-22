@@ -1926,8 +1926,6 @@ class TestCbfSubarray:
                     # Extract the delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    dm_found = False
-                    # for model in input_delay_model_obj["models"]:
                     for entry in input_delay_model["delay_details"]:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
@@ -1938,12 +1936,7 @@ class TestCbfSubarray:
                                     entry["receptor"]
                                 ],
                             ]
-                            dm_found = True
                             break
-                    if dm_found:
-                        break
-                    # if dm_found:
-                    #    break
 
                     print(f"vcc delay model {this_vcc}: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
