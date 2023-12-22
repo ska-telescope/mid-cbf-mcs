@@ -14,14 +14,21 @@ from __future__ import annotations
 import logging
 from typing import List
 
-import sys
+from pysnmp import error as snmp_error
 from pysnmp.entity.rfc3413.oneliner import cmdgen
-from pysnmp.hlapi import UsmUserData, usmHMACMD5AuthProtocol, \
-                         usmNoPrivProtocol
-from pysnmp.hlapi import SnmpEngine, UdpTransportTarget, ContextData, \
-                         ObjectType, ObjectIdentity, getCmd, setCmd
-
-
+from pysnmp.hlapi import (  # noqa: F401
+    ContextData,
+    ObjectIdentity,
+    ObjectType,
+    SnmpEngine,
+    UdpTransportTarget,
+    UsmUserData,
+    getCmd,
+    setCmd,
+    usmHMACMD5AuthProtocol,
+    usmNoPrivProtocol,
+)
+from pysnmp.proto import rfc1902
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
@@ -57,7 +64,7 @@ class ApcSnmpDriver:
         """
         self.logger = logger
 
-        # Initialize the various URLs for monitoring/controlling the power switch
+        # Initialize the IP for monitoring/controlling the power switch
         self.ip = ip
 
         # valid range 0 to 23
@@ -67,9 +74,9 @@ class ApcSnmpDriver:
         self.outlets: List(Outlet) = []
 
         # Snmp Auth
-        self.auth = UsmUserData (
-            userName = login,
-            authKey = password,
+        self.auth = UsmUserData(
+            userName=login,
+            authKey=password,
         )
 
         # Initialize outlet on and off states
@@ -117,14 +124,14 @@ class ApcSnmpDriver:
         try:
             cmdGen = cmdgen.CommandGenerator()
             errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
-                 auth,
-                    cmdgen.UdpTransportTarget((self.ip, 161)),
-                    cmdgen.MibVariable(sys_description_oid),
-                    lookupMib=False,
+                self.auth,
+                cmdgen.UdpTransportTarget((self.ip, 161)),
+                cmdgen.MibVariable(sys_description_oid),
+                lookupMib=False,
             )
             for oid, val in varBinds:
                 sys_description = val
-            
+
             if sys_description is None or sys_description == "":
                 return False
             else:
@@ -133,9 +140,7 @@ class ApcSnmpDriver:
             self.logger.error(f"Failed to connect to power switch: {e}")
             return False
 
-    def get_outlet_power_mode(
-        self: ApcSnmpDriver, outlet: str
-    ) -> PowerMode:
+    def get_outlet_power_mode(self: ApcSnmpDriver, outlet: str) -> PowerMode:
         """
         Get the power mode of a specific outlet.
 
@@ -157,10 +162,10 @@ class ApcSnmpDriver:
         try:
             cmdGen = cmdgen.CommandGenerator()
             errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
-                 auth,
-                    cmdgen.UdpTransportTarget((self.ip, 161)),
-                    cmdgen.MibVariable(outlet_status_oid),
-                    lookupMib=False,
+                self.auth,
+                cmdgen.UdpTransportTarget((self.ip, 161)),
+                cmdgen.MibVariable(outlet_status_oid),
+                lookupMib=False,
             )
             for oid, val in varBinds:
                 state = val
@@ -197,17 +202,15 @@ class ApcSnmpDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
-        outlet_idx = self.outlet_id_list.index(outlet)
-
         outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{outlet}"
 
         try:
             cmdGen = cmdgen.CommandGenerator()
             errorIndication, errorStatus, errorIndex, varBinds = cmdGen.setCmd(
-                auth,
+                self.auth,
                 cmdgen.UdpTransportTarget((self.ip, 161)),
-                (outlet_status_oid, rfc1902.Integer32(self.action_on))
-        )
+                (outlet_status_oid, rfc1902.Integer32(self.action_on)),
+            )
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
 
@@ -228,17 +231,15 @@ class ApcSnmpDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
-        outlet_idx = self.outlet_id_list.index(outlet)
-
         outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{outlet}"
 
         try:
             cmdGen = cmdgen.CommandGenerator()
 
             errorIndication, errorStatus, errorIndex, varBinds = cmdGen.setCmd(
-                auth,
+                self.auth,
                 cmdgen.UdpTransportTarget((self.ip, 161)),
-                (outlet_status_oid, rfc1902.Integer32(self.action_off))
+                (outlet_status_oid, rfc1902.Integer32(self.action_off)),
             )
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
@@ -252,14 +253,20 @@ class ApcSnmpDriver:
                  or an empty list if there was an error
         """
 
-        url = self.outlet_list_url
+        # Extract the outlet list
+        outlets: List(Outlet) = []
 
         for idx in range(self.outlet_id_list):
             outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{idx}"
             try:
                 cmdGen = cmdgen.CommandGenerator()
-                errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
-                    auth,
+                (
+                    errorIndication,
+                    errorStatus,
+                    errorIndex,
+                    varBinds,
+                ) = cmdGen.getCmd(
+                    self.auth,
                     cmdgen.UdpTransportTarget((self.ip, 161)),
                     cmdgen.MibVariable(outlet_status_oid),
                     lookupMib=False,

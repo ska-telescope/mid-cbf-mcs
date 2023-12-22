@@ -22,7 +22,10 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
+from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import (
+    ApcPduDriver,
+    ApcSnmpDriver,
+)
 from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
     DLIProSwitchDriver,
 )
@@ -31,9 +34,6 @@ from ska_mid_cbf_mcs.power_switch.power_switch_simulator import (
 )
 from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
     STSwitchedPRO2Driver,
-)
-from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import (
-    ApcSnmpDriver,
 )
 
 __all__ = ["PowerSwitchComponentManager"]
