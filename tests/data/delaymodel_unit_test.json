@@ -1,5 +1,5 @@
 {
-  "description": "Single Delay Model (per receptor) covering entire scan duration with zero-value coefficients.",
+  "description": "Single Delay Model (per receptor) covering entire scan duration.",
   "models": [
     {
       "delay_model_send_time_offset": 45.0,
