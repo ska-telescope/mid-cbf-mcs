@@ -127,7 +127,7 @@ Return calls are not shown.
 .. uml:: ../../diagrams/restart-command.puml
 
 
-Serial Lightweight Intercnnect Mesh (SLIM)
+Serial Lightweight Interconnect Mesh (SLIM)
 --------------------------------------------
 
 Ref: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_
@@ -139,7 +139,7 @@ The DsSLIMTX and DsSLIMRx are provided together as a multi-class HPS device serv
 
 During a SLIM Link's initialization, the FQDNs of a Tx and Rx device pair are passed as arguments and device proxies are made to each device. Then the connection is monitored by periodically comparing the idle control words (a 55-bit hash of the Tx or Rx's FQDN) on either side of the link, checking that the bit-error rate remains below an acceptable threshold, and ensuring that clocks on each side of the link remain in sync. Each link uses an enumerated HealthState attribute to summarize these metrics.
 
-At the top of the SLIM hierarchy, sits the SLIM device (sometimes referred to as the 'mesh'), which is essentially just a list of SLIM Links. The SLIM device parses the SLIM configuration file (discussed next), and is responsible for spawning the appropriate links. It also rolls up all of the links' HealthState attributes into a single master HealthState attribute to summarize the status of the entre mesh. If any of the links report a degraded HealthState, the mesh also becomes degraded.
+At the top of the SLIM hierarchy, sits the SLIM device (sometimes referred to as the 'mesh'), which is essentially just a list of SLIM Links. Currently there are two SLIM instances, one for the frequency slice (FS) mesh, and the other for the visibility (Vis) mesh. While each SLIM Link is identical to the rest, they are organized into different mesh instances to more easily differentiate between distinct stages in the signal processing chain. The SLIM device parses the SLIM configuration file (discussed next), and is responsible for spawning the appropriate links. It also rolls up all of the links' HealthState attributes into a single master HealthState attribute to summarize the status of the entire mesh. If any of the links report a degraded HealthState, the mesh also becomes degraded.
 
 SLIM Configuration
 ++++++++++++++++++
