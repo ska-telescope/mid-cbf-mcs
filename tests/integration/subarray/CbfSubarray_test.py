@@ -1853,7 +1853,7 @@ class TestCbfSubarray:
 
         # to simulate updating the delay model multiple times, we
         # have several delay models in the input data
-        dm_num_entries = len(delay_model_all_obj)
+        dm_num_entries = len(delay_model_all_obj["models"])
 
         try:
             wait_time_s = 1
@@ -1900,7 +1900,9 @@ class TestCbfSubarray:
             # update the TM with each of the input delay models
             for i_dm in range(dm_num_entries):
                 # Get one delay model Python object from the list
-                input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
+                input_delay_model_obj = delay_model_for_test_all_obj["models"][
+                    i_dm
+                ]
 
                 # Convert to a serialized JSON object
                 input_delay_model = json.dumps(input_delay_model_obj)
