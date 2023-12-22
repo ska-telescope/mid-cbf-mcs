@@ -670,7 +670,7 @@ def init_delay_model_test_fixture():
             delay_model_all_obj: dict,
             receptors_under_test: List(int),
         ) -> dict:
-            dm_num_entries = len(delay_model_all_obj)
+            dm_num_entries = len(delay_model_all_obj["models"])
             # TODO: receptor values are hardcoded
             receptors_to_remove = list(
                 set(["SKA001", "SKA100", "SKA036", "SKA063"])
@@ -683,12 +683,14 @@ def init_delay_model_test_fixture():
                     # among receptors_under_test:
                     for i_rec in receptors_to_remove:
                         for jj, entry in enumerate(
-                            delay_model_all_obj[i_dm]["delay_details"]
+                            delay_model_all_obj["models"][i_dm][
+                                "delay_details"
+                            ]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["delay_details"].pop(
-                                    jj
-                                )
+                                delay_model_all_obj["models"][i_dm][
+                                    "delay_details"
+                                ].pop(jj)
 
             return delay_model_all_obj
 

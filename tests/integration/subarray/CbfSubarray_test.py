@@ -1921,20 +1921,29 @@ class TestCbfSubarray:
                     )
                     vcc_dp = test_proxies.vcc[this_vcc]
 
-                    # Extract the  delay model corresponding to receptor i_rec:
+                    # Extract the delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_details"]:
-                        if entry["receptor"] == rec:
-                            this_input_delay_model_obj = copy.deepcopy(entry)
-                            # receptor as pair of str and int for comparison
-                            this_input_delay_model_obj["receptor"] = [
-                                entry["receptor"],
-                                test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                    entry["receptor"]
-                                ],
-                            ]
+                    dm_found = False
+                    for model in input_delay_model_obj["models"]:
+                        for entry in model["model"]["delay_details"]:
+                            if entry["receptor"] == rec:
+                                this_input_delay_model_obj = copy.deepcopy(
+                                    entry
+                                )
+                                # receptor as pair of str and int for comparison
+                                this_input_delay_model_obj["receptor"] = [
+                                    entry["receptor"],
+                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                        entry["receptor"]
+                                    ],
+                                ]
+                                dm_found = True
+                                break
+                        if dm_found:
                             break
+                    if dm_found:
+                        break
 
                     print(f"vcc delay model {this_vcc}: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
@@ -1981,14 +1990,15 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for FSP
                 # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_details"]:
-                    receptor_id = model["receptor"]
-                    model["receptor"] = [
-                        receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor_id
-                        ],
-                    ]
+                for entry in input_delay_model_obj["models"]:
+                    for model in entry["model"]["delay_details"]:
+                        receptor_id = model["receptor"]
+                        model["receptor"] = [
+                            receptor_id,
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                receptor_id
+                            ],
+                        ]
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
                     test_proxies.fsp[i]
