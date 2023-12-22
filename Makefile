@@ -91,7 +91,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 
 K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 						pytest \
-						$(PYTHON_VARS_AFTER_PYTEST) ./tests/integration/vcc \
+						$(PYTHON_VARS_AFTER_PYTEST) ./tests/integration \
 						| tee pytest.stdout
 
 #
