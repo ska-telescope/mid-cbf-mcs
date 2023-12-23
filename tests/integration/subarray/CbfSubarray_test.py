@@ -1926,7 +1926,9 @@ class TestCbfSubarray:
                     # Extract the delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_details"]:
+                    for entry in input_delay_model_obj["model"][
+                        "delay_details"
+                    ]:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             # receptor as pair of str and int for comparison
