@@ -1896,13 +1896,14 @@ class TestCbfSubarray:
             )
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
+            print(f"num_entries {dm_num_entries}")
 
             # update the TM with each of the input delay models
             for i_dm in range(dm_num_entries):
                 # Get one delay model Python object from the list
                 input_delay_model_obj = delay_model_for_test_all_obj["models"][
                     i_dm
-                ]
+                ]["model"]
 
                 # Convert to a serialized JSON object
                 input_delay_model = json.dumps(input_delay_model_obj)
