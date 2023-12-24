@@ -1888,6 +1888,7 @@ class CbfSubarrayComponentManager(
                     this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
+                    this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
 
                     self._logger.info(
