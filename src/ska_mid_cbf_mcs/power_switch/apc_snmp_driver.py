@@ -179,7 +179,7 @@ class ApcSnmpDriver:
             self.logger.info(f"Getting outlets {self.outlets}")
             self.logger.info(f"Getting outlet mode for {outlet_idx}")
 
-            if power_mode != self.outlets[outlet_idx-1].power_mode:
+            if power_mode != self.outlets[outlet_idx - 1].power_mode:
                 raise AssertionError(
                     f"Power mode of outlet ID {outlet} ({power_mode})"
                     f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
@@ -214,7 +214,7 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_on)),
             )
-            self.outlets[int(outlet)-1].power_mode = PowerMode.ON
+            self.outlets[int(outlet) - 1].power_mode = PowerMode.ON
             return ResultCode.OK, f"Outlet {outlet} power on"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
@@ -246,7 +246,7 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_off)),
             )
-            self.outlets[int(outlet)-1].power_mode = PowerMode.OFF
+            self.outlets[int(outlet) - 1].power_mode = PowerMode.OFF
             return ResultCode.OK, f"Outlet {outlet} power off"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
