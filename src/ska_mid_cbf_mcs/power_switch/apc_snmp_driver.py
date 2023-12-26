@@ -68,7 +68,7 @@ class ApcSnmpDriver:
         self.ip = ip
 
         # valid range 0 to 23
-        self.outlet_id_list: List(str) = [str(i) for i in range(0, 24)]
+        self.outlet_id_list: List(str) = [str(i) for i in range(1, 25)]
 
         # Initialize outlets
         self.outlets: List(Outlet) = []
@@ -80,8 +80,8 @@ class ApcSnmpDriver:
         )
 
         # Initialize outlet on and off states
-        self.state_on = "1"
-        self.state_off = "2"
+        self.state_on = 1
+        self.state_off = 2
 
         # Initialize the on/off inputs
         self.action_on = 1
@@ -176,7 +176,10 @@ class ApcSnmpDriver:
             else:
                 power_mode = PowerMode.UNKNOWN
 
-            if power_mode != self.outlets[outlet_idx].power_mode:
+            self.logger.info(f"Getting outlets {self.outlets}")
+            self.logger.info(f"Getting outlet mode for {outlet_idx}")
+
+            if power_mode != self.outlets[outlet_idx-1].power_mode:
                 raise AssertionError(
                     f"Power mode of outlet ID {outlet} ({power_mode})"
                     f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
@@ -211,6 +214,8 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_on)),
             )
+            self.outlets[int(outlet)-1].power_mode = PowerMode.ON
+            return ResultCode.OK, f"Outlet {outlet} power on"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
 
@@ -241,6 +246,8 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_off)),
             )
+            self.outlets[int(outlet)-1].power_mode = PowerMode.OFF
+            return ResultCode.OK, f"Outlet {outlet} power off"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
 
@@ -256,7 +263,7 @@ class ApcSnmpDriver:
         # Extract the outlet list
         outlets: List(Outlet) = []
 
-        for idx in range(self.outlet_id_list):
+        for idx in self.outlet_id_list:
             outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{idx}"
             try:
                 cmdGen = cmdgen.CommandGenerator()
