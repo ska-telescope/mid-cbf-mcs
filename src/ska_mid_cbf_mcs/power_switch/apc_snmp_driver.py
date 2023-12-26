@@ -155,8 +155,6 @@ class ApcSnmpDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
-        outlet_idx = self.outlet_id_list.index(outlet)
-
         outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{outlet}"
 
         try:
@@ -176,13 +174,10 @@ class ApcSnmpDriver:
             else:
                 power_mode = PowerMode.UNKNOWN
 
-            self.logger.info(f"Getting outlets {self.outlets}")
-            self.logger.info(f"Getting outlet mode for {outlet_idx}")
-
-            if power_mode != self.outlets[outlet_idx - 1].power_mode:
+            if power_mode != self.outlets[int(outlet) - 1].power_mode:
                 raise AssertionError(
                     f"Power mode of outlet ID {outlet} ({power_mode})"
-                    f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
+                    f" is different than the expected mode {self.outlets[int(outlet)].power_mode}"
                 )
             return power_mode
         except snmp_error.PySnmpError as e:
@@ -263,10 +258,12 @@ class ApcSnmpDriver:
         # Extract the outlet list
         outlets: List(Outlet) = []
 
+        # Create cmdgen for snmp requests
+        cmdGen = cmdgen.CommandGenerator()
+
         for idx in self.outlet_id_list:
             outlet_status_oid = f"1.3.6.1.4.1.318.1.1.4.4.2.1.3.{idx}"
             try:
-                cmdGen = cmdgen.CommandGenerator()
                 (
                     errorIndication,
                     errorStatus,
