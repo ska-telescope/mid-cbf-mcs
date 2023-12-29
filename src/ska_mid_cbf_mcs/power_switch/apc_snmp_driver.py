@@ -67,7 +67,7 @@ class ApcSnmpDriver:
         # Initialize the IP for monitoring/controlling the power switch
         self.ip = ip
 
-        # valid range 0 to 23
+        # valid range 1 to 24
         self.outlet_id_list: List(str) = [str(i) for i in range(1, 25)]
 
         # Initialize outlets
@@ -175,7 +175,7 @@ class ApcSnmpDriver:
                 power_mode = PowerMode.UNKNOWN
 
             if power_mode != self.outlets[int(outlet) - 1].power_mode:
-                raise AssertionError(
+                self.logger.warn(
                     f"Power mode of outlet ID {outlet} ({power_mode})"
                     f" is different than the expected mode {self.outlets[int(outlet)].power_mode}"
                 )
