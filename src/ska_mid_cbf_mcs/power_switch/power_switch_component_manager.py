@@ -23,6 +23,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
+from ska_mid_cbf_mcs.power_switch.apc_snmp_driver import ApcSnmpDriver
 from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
     DLIProSwitchDriver,
 )
@@ -253,8 +254,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return STSwitchedPRO2Driver(
                 ip=ip, login=login, password=password, logger=logger
             )
-        elif model == "APC AP8681":
+        elif model == "APC AP8681 SSH":
             return ApcPduDriver(
+                ip=ip, login=login, password=password, logger=logger
+            )
+        elif model == "APC AP8681 SNMP":
+            return ApcSnmpDriver(
                 ip=ip, login=login, password=password, logger=logger
             )
         else:
