@@ -123,7 +123,7 @@ class FspComponentManager(CbfComponentManager):
         :return: an array of affiliations of the FSP.
         :rtype: List[int]
         """
-        return sorted(self._subarray_membership)
+        return list(self._subarray_membership)
 
     @property
     def function_mode(self: FspComponentManager) -> tango.DevEnum:
