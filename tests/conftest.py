@@ -482,10 +482,12 @@ def init_proxies_fixture():
                 )
 
             # Slim
-            self.slim = CbfDeviceProxy(
-                fqdn="mid_csp_cbf/slim/slim-fs",
-                logger=logging.getLogger(),
-            )
+            self.slim = [
+                CbfDeviceProxy(
+                    fqdn="mid_csp_cbf/slim/slim-fs",
+                    logger=logging.getLogger(),
+                )
+            ]
 
             # SlimLink
             self.slim_link = []

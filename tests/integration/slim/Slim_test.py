@@ -14,7 +14,7 @@ import os
 
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, LoggingLevel
+from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
 from tango import DevState
 
 # Standard imports
@@ -51,14 +51,16 @@ class TestSlim:
             proxy.adminMode = AdminMode.ONLINE
             proxy.set_timeout_millis(10000)
 
-        # The Slim should be in the OFF state after being initialised
-        test_proxies.slim.loggingLevel = LoggingLevel.DEBUG
-        test_proxies.slim.adminMode = AdminMode.ONLINE
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            # The Slim should be in the OFF state after being initialised
+            mesh.loggingLevel = LoggingLevel.DEBUG
+            mesh.adminMode = AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.slim], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.slim.State() == DevState.OFF
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.OFF
 
     def test_On(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
@@ -69,16 +71,17 @@ class TestSlim:
         wait_time_s = 3
         sleep_time_s = 1
 
-        device_under_test = test_proxies.slim
-
         # Turn on the LRUs and then the Slim devices
         for proxy in test_proxies.talon_lru:
             proxy.On()
-        device_under_test.On()
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.ON
+
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            mesh.On()
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.ON, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.ON
 
     def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
@@ -91,13 +94,12 @@ class TestSlim:
         sleep_time_s = 0.1
 
         device_under_test = test_proxies.slim
-
-        device_under_test.Off()
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.OFF
+        for mesh in device_under_test:
+            mesh.Off()
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.OFF
 
     def test_Disconnect(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
@@ -110,17 +112,17 @@ class TestSlim:
         sleep_time_s = 0.1
 
         device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            mesh.Off()
 
-        device_under_test.Off()
+            # trigger stop_communicating by setting the AdminMode to OFFLINE
+            mesh.adminMode = AdminMode.OFFLINE
 
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        device_under_test.adminMode = AdminMode.OFFLINE
-
-        # controller device should be in OFF state after stop_communicating
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.OFF
+            # controller device should be in OFF state after stop_communicating
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.OFF
 
         # Stop monitoring the TalonLRUs and power switch devices
         for proxy in test_proxies.power_switch:
@@ -138,7 +140,10 @@ class TestSlim:
         """
 
         device_under_test = test_proxies.slim
-        with open(data_file_path + 'slim_test_config.yaml', 'r') as f:
-            rc, msg = device_under_test.Configure(f.read())
+        for mesh in device_under_test:
+            with open(data_file_path + "slim_test_config.yaml", "r") as f:
+                rc, msg = mesh.Configure(f.read())
 
-        assert rc == ResultCode.OK
+            assert rc == ResultCode.OK
+            for link in mesh.healthSummary:
+                assert link == HealthState.OK
