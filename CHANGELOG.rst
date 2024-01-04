@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.13
+*******
+* MAP-36 Add support for APC PDU Driver using SNMP Interface
+
 0.12.12
 *******
 * CIP-1830 add back strict validation against the delay model epoch
