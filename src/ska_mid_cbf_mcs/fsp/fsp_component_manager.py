@@ -98,9 +98,6 @@ class FspComponentManager(CbfComponentManager):
         self._group_fsp_pst_subarray = None
         self._proxy_hps_fsp_controller = None
         self._proxy_hps_fsp_corr_controller = None
-        self._proxy_fsp_corr_subarray = None
-        self._proxy_fsp_pss_subarray = None
-        self._proxy_fsp_pst_subarray = None
 
         self._subarray_membership = set()
         self._function_mode = FspModes.IDLE.value  # IDLE
@@ -198,7 +195,7 @@ class FspComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        self._get_group_proxies()
+        self._get_function_mode_group_proxies()
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
@@ -212,7 +209,7 @@ class FspComponentManager(CbfComponentManager):
 
         self._connected = False
 
-    def _get_device_proxy(
+    def _get_proxy(
         self: FspComponentManager, fqdn_or_name: str, is_group: bool
     ) -> CbfDeviceProxy | CbfGroupProxy | None:
         """
@@ -254,12 +251,12 @@ class FspComponentManager(CbfComponentManager):
         if not self._simulation_mode:
             self._logger.info("Trying to connected to REAL HPS devices")
             if self._proxy_hps_fsp_controller is None:
-                self._proxy_hps_fsp_controller = self._get_device_proxy(
+                self._proxy_hps_fsp_controller = self._get_proxy(
                     self._hps_fsp_controller_fqdn, is_group=False
                 )
 
             if self._proxy_hps_fsp_corr_controller is None:
-                self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
+                self._proxy_hps_fsp_corr_controller = self._get_proxy(
                     self._hps_fsp_corr_controller_fqdn, is_group=False
                 )
         else:
@@ -274,38 +271,20 @@ class FspComponentManager(CbfComponentManager):
                 self._proxy_hps_fsp_corr_controller,
             )
 
-        if self._proxy_fsp_corr_subarray is None:
-            self._proxy_fsp_corr_subarray = [
-                self._get_device_proxy(fqdn, is_group=False)
-                for fqdn in self._fsp_corr_subarray_fqdns_all
-            ]
-
-        if self._proxy_fsp_pss_subarray is None:
-            self._proxy_fsp_pss_subarray = [
-                self._get_device_proxy(fqdn, is_group=False)
-                for fqdn in self._fsp_pss_subarray_fqdns_all
-            ]
-
-        if self._proxy_fsp_pst_subarray is None:
-            self._proxy_fsp_pst_subarray = [
-                self._get_device_proxy(fqdn, is_group=False)
-                for fqdn in self._fsp_pst_subarray_fqdns_all
-            ]
-
-    def _get_group_proxies(
+    def _get_function_mode_group_proxies(
         self: FspComponentManager,
     ) -> None:
         """Establish connections with the group proxies"""
         if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = self._get_device_proxy(
+            self._group_fsp_corr_subarray = self._get_proxy(
                 "FSP Subarray Corr", is_group=True
             )
         if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = self._get_device_proxy(
+            self._group_fsp_pss_subarray = self._get_proxy(
                 "FSP Subarray Pss", is_group=True
             )
         if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = self._get_device_proxy(
+            self._group_fsp_pst_subarray = self._get_proxy(
                 "FSP Subarray Pst", is_group=True
             )
 
@@ -313,45 +292,69 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager, subarray_id: int
     ) -> None:
         """Remove FSP function mode subarray device from group proxy for specified subarray."""
-        if self._function_mode == FspModes.IDLE.value:
-            self._logger.error(
-                f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
-            )
-            pass
-        if self._function_mode == FspModes.CORR.value:
-            for fqdn in self._fsp_corr_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_corr_subarray.remove(fqdn)
-        if self._function_mode == FspModes.PSS_BF.value:
-            for fqdn in self._fsp_pss_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_pss_subarray.remove(fqdn)
-        if self._function_mode == FspModes.PST_BF.value:
-            for fqdn in self._fsp_pst_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_pst_subarray.remove(fqdn)
+        match self._function_mode:
+            case FspModes.IDLE.value:
+                self._logger.error(
+                    f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
+                )
+            case FspModes.CORR.value:
+                for fqdn in self._fsp_corr_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_corr_subarray.remove(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
+                        )
+            case FspModes.PSS_BF.value:
+                for fqdn in self._fsp_pss_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_pss_subarray.remove(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
+                        )
+            case FspModes.PST_BF.value:
+                for fqdn in self._fsp_pst_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_pst_subarray.remove(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
+                        )
 
     def _add_subarray_to_group_proxy(
         self: FspComponentManager, subarray_id: int
     ) -> None:
         """Add FSP function mode subarray device to group proxy for specified subarray."""
-        if self._function_mode == FspModes.IDLE.value:
-            self._logger.error(
-                f"FSP {self._fsp_id} function mode is IDLE; error adding subarray {subarray_id} function mode device to group proxy."
-            )
-            pass
-        if self._function_mode == FspModes.CORR.value:
-            for fqdn in self._fsp_corr_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_corr_subarray.add(fqdn)
-        if self._function_mode == FspModes.PSS_BF.value:
-            for fqdn in self._fsp_pss_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_pss_subarray.add(fqdn)
-        if self._function_mode == FspModes.PST_BF.value:
-            for fqdn in self._fsp_pst_subarray_fqdns_all:
-                if subarray_id == int(fqdn[-2:]):
-                    self._group_fsp_pst_subarray.add(fqdn)
+        match self._function_mode:
+            case FspModes.IDLE.value:
+                self._logger.error(
+                    f"FSP {self._fsp_id} function mode is IDLE; error adding subarray {subarray_id} function mode device to group proxy."
+                )
+            case FspModes.CORR.value:
+                for fqdn in self._fsp_corr_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_corr_subarray.add(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
+                        )
+            case FspModes.PSS_BF.value:
+                for fqdn in self._fsp_pss_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_pss_subarray.add(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
+                        )
+            case FspModes.PST_BF.value:
+                for fqdn in self._fsp_pst_subarray_fqdns_all:
+                    if subarray_id == int(fqdn[-2:]):
+                        self._group_fsp_pst_subarray.add(fqdn)
+                    else:
+                        self._logger.error(
+                            f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
+                        )
 
     @check_communicating
     def remove_subarray_membership(
@@ -379,12 +382,14 @@ class FspComponentManager(CbfComponentManager):
             # change function mode to IDLE if no subarrays are using it.
             if len(self._subarray_membership) == 0:
                 # TODO implement VLBI
-                if self._function_mode == FspModes.CORR.value:
-                    self._group_fsp_corr_subarray.command_inout("GoToIdle")
-                if self._function_mode == FspModes.PSS_BF.value:
-                    self._group_fsp_pss_subarray.command_inout("GoToIdle")
-                if self._function_mode == FspModes.PST_BF.value:
-                    self._group_fsp_pst_subarray.command_inout("GoToIdle")
+                match self._function_mode:
+                    case FspModes.CORR.value:
+                        self._group_fsp_corr_subarray.command_inout("GoToIdle")
+                    case FspModes.PSS_BF.value:
+                        self._group_fsp_pss_subarray.command_inout("GoToIdle")
+                    case FspModes.PST_BF.value:
+                        self._group_fsp_pst_subarray.command_inout("GoToIdle")
+
                 self._function_mode = FspModes.IDLE.value
                 self._push_change_event("functionMode", self._function_mode)
         else:
@@ -426,6 +431,30 @@ class FspComponentManager(CbfComponentManager):
 
         return (result_code, message)
 
+    def _issue_command_all_subarray_group_proxies(
+        self: FspComponentManager, command: str
+    ):
+        """Issue command to all function mode subarray devices, independent of subarray membership."""
+        group_fsp_corr_subarray = self._get_proxy(
+            "FSP Subarray Corr", is_group=True
+        )
+        for fqdn in self._fsp_corr_subarray_fqdns_all:
+            group_fsp_corr_subarray.add(fqdn)
+        group_fsp_pss_subarray = self._get_proxy(
+            "FSP Subarray Pss", is_group=True
+        )
+        for fqdn in self._fsp_pss_subarray_fqdns_all:
+            group_fsp_pss_subarray.add(fqdn)
+        group_fsp_pst_subarray = self._get_proxy(
+            "FSP Subarray Pst", is_group=True
+        )
+        for fqdn in self._fsp_pst_subarray_fqdns_all:
+            group_fsp_pst_subarray.add(fqdn)
+
+        group_fsp_corr_subarray.command_inout(command)
+        group_fsp_pss_subarray.command_inout(command)
+        group_fsp_pst_subarray.command_inout(command)
+
     @check_communicating
     def on(
         self: FspComponentManager,
@@ -446,10 +475,7 @@ class FspComponentManager(CbfComponentManager):
 
             # TODO: in the future, DsFspController to implement on(), off()
             # commands. Then invoke here the DsFspController on() command.
-
-            self._group_fsp_corr_subarray.command_inout("On")
-            self._group_fsp_pss_subarray.command_inout("On")
-            self._group_fsp_pst_subarray.command_inout("On")
+            self._issue_command_all_subarray_group_proxies("On")
 
             message = "Fsp On command completed OK"
             return (ResultCode.OK, message)
@@ -476,10 +502,7 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
             # TODO: in the future, DsFspController to implement on(), off()
             # commands. Then invoke here the DsFspController off() command.
-
-            self._group_fsp_corr_subarray.command_inout("Off")
-            self._group_fsp_pss_subarray.command_inout("Off")
-            self._group_fsp_pst_subarray.command_inout("Off")
+            self._issue_command_all_subarray_group_proxies("Off")
 
             for subarray_ID in self._subarray_membership:
                 self.remove_subarray_membership(subarray_ID)
@@ -511,12 +534,12 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def set_function_mode(
-        self: FspComponentManager, argin: str
+        self: FspComponentManager, function_mode: str
     ) -> Tuple[ResultCode, str]:
         """
         Put the fsp into low power standby mode
 
-        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -524,33 +547,35 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            function_mode = FspModes.IDLE.value
-            if argin == "IDLE":
-                # TODO: should this return an error message
-                pass
-            elif argin == "CORR":
-                function_mode = FspModes.CORR.value
-            elif argin == "PSS-BF":
-                function_mode = FspModes.PSS_BF.value
-            elif argin == "PST-BF":
-                function_mode = FspModes.PST_BF.value
-            elif argin == "VLBI":
-                function_mode = FspModes.VLBI.value
-            else:
-                # shouldn't happen
-                self._logger.warning("functionMode not valid. Ignoring.")
-                message = "Fsp SetFunctionMode command failed: \
-                    functionMode not valid"
-                return (ResultCode.FAILED, message)
+            match function_mode:
+                case "IDLE":
+                    self._function_mode = FspModes.IDLE.value
+                case "CORR":
+                    self._function_mode = FspModes.CORR.value
+                case "PSS-BF":
+                    self._function_mode = FspModes.PSS_BF.value
+                case "PST-BF":
+                    self._function_mode = FspModes.PST_BF.value
+                case "VLBI":
+                    self._function_mode = FspModes.VLBI.value
+                case _:
+                    # shouldn't happen
+                    self._logger.warning("functionMode not valid. Ignoring.")
+                    message = "Fsp SetFunctionMode command failed: \
+                        functionMode not valid"
+                    return (ResultCode.FAILED, message)
 
             try:
-                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
+                self._proxy_hps_fsp_controller.SetFunctionMode(
+                    self._function_mode
+                )
             except Exception as e:
                 self._logger.error(str(e))
 
-            self._function_mode = function_mode
             self._push_change_event("functionMode", self._function_mode)
-            self._logger.info(f"FSP set to function mode {argin}")
+            self._logger.info(
+                f"FSP set to function mode {self._function_mode}"
+            )
 
             message = "Fsp SetFunctionMode command completed OK"
             return (ResultCode.OK, message)

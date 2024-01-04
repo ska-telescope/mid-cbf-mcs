@@ -1806,89 +1806,89 @@ class CbfSubarrayComponentManager(
                 common_configuration["frequency_band"]
             )
 
-            if fsp["function_mode"] == "CORR":
-                # Receptors may not be specified in the
-                # configuration at all or the list
-                # of receptors may be empty
-                receptorsSpecified = False
-                if "receptors" in fsp:
-                    if fsp["receptors"] != []:
-                        receptorsSpecified = True
+            match fsp["function_mode"]:
+                case "CORR":
+                    # Receptors may not be specified in the
+                    # configuration at all or the list
+                    # of receptors may be empty
+                    receptorsSpecified = False
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
+                            receptorsSpecified = True
 
-                if not receptorsSpecified:
-                    # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptors"] = self._receptors.copy()
-
-                # receptor IDs to pair of str and int for FSP level
-                fsp["corr_receptor_ids"] = []
-                for i, receptor in enumerate(fsp["receptors"]):
-                    fsp["corr_receptor_ids"].append(
-                        [
-                            receptor,
-                            self._receptor_utils.receptor_id_to_vcc_id[
-                                receptor
-                            ],
-                        ]
-                    )
-
-                self._corr_config.append(fsp)
-                self._corr_fsp_list.append(fsp["fsp_id"])
-
-            # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
-            elif fsp["function_mode"] == "PSS-BF":
-                for searchBeam in fsp["search_beam"]:
-                    if "receptor_ids" not in searchBeam:
+                    if not receptorsSpecified:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        searchBeam["receptor_ids"] = [
+                        fsp["receptors"] = self._receptors.copy()
+
+                    # receptor IDs to pair of str and int for FSP level
+                    fsp["corr_receptor_ids"] = []
+                    for i, receptor in enumerate(fsp["receptors"]):
+                        fsp["corr_receptor_ids"].append(
                             [
                                 receptor,
                                 self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            searchBeam["receptor_ids"]
-                        ):
-                            searchBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
-                            ]
-                self._pss_config.append(fsp)
-                self._pss_fsp_list.append(fsp["fsp_id"])
+                        )
 
-            elif fsp["function_mode"] == "PST-BF":
-                for timingBeam in fsp["timing_beam"]:
-                    if "receptor_ids" not in timingBeam:
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        timingBeam["receptor_ids"] = [
-                            [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
+                    self._corr_config.append(fsp)
+                    self._corr_fsp_list.append(fsp["fsp_id"])
+
+                # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
+                case "PSS-BF":
+                    for searchBeam in fsp["search_beam"]:
+                        if "receptor_ids" not in searchBeam:
+                            # In this case by the ICD, all subarray allocated resources should be used.
+                            searchBeam["receptor_ids"] = [
+                                [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                                for receptor in self._receptors
                             ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            timingBeam["receptor_ids"]
-                        ):
-                            timingBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
+                        else:
+                            for i, receptor in enumerate(
+                                searchBeam["receptor_ids"]
+                            ):
+                                searchBeam["receptor_ids"][i] = [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                    self._pss_config.append(fsp)
+                    self._pss_fsp_list.append(fsp["fsp_id"])
+
+                case "PST-BF":
+                    for timingBeam in fsp["timing_beam"]:
+                        if "receptor_ids" not in timingBeam:
+                            # In this case by the ICD, all subarray allocated resources should be used.
+                            timingBeam["receptor_ids"] = [
+                                [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                                for receptor in self._receptors
                             ]
-                self._pst_config.append(fsp)
-                self._pst_fsp_list.append(fsp["fsp_id"])
+                        else:
+                            for i, receptor in enumerate(
+                                timingBeam["receptor_ids"]
+                            ):
+                                timingBeam["receptor_ids"][i] = [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                    self._pst_config.append(fsp)
+                    self._pst_fsp_list.append(fsp["fsp_id"])
 
         # Call ConfigureScan for all FSP Subarray devices (CORR/PSS/PST)
-
         # NOTE:_corr_config is a list of fsp config JSON objects, each
         #      augmented by a number of vcc-fsp common parameters
         if len(self._corr_config) != 0:
