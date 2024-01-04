@@ -1078,7 +1078,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test CbfSubarrays's ConfigureScan command
+        Test CbfSubarrays's GoToIdle command
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -2859,14 +2859,9 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
 
-            for fsp in configuration["cbf"]["fsp"]:
-                fsp_id = int(fsp["fsp_id"])
-                assert (
-                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-                        fsp_id
-                    ].obsState
-                    == ObsState.ABORTED
-                )
+            # At this point in the test, we only need to assert that the VCCs
+            # are aborted and not the FSPs, as the FSPs are not added to
+            # their respective group_proxy until ConfigureScan is executed.
             for r in vcc_receptors:
                 assert test_proxies.vcc[r].obsState == ObsState.ABORTED
 

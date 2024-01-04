@@ -665,6 +665,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 try:
                     pass
                     # TODO CIP-1850
+                    # self._vcc_controller_proxy.Unconfigure()
                     # self._band_proxies[idx].Abort()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
@@ -673,6 +674,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                         ResultCode.FAILED,
                         "Failed to connect to VCC band device",
                     )
+                # If the VCC has been aborted from READY, update accordingly.
+                if self._ready:
+                    self._ready = False
         else:
             # if no value for _freq_band_name, assume in IDLE state,
             # either from initialization or after deconfigure has been called

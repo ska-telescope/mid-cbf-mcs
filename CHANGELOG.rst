@@ -10,13 +10,62 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.13
+*******
+* MAP-36 Add support for APC PDU Driver using SNMP Interface
+
+0.12.12
+*******
+* CIP-1830 add back strict validation against the delay model epoch
+
+0.12.11
+*******
+* CIP-1883 bumped engineering console version to 0.9.7, signal verification to 0.2.7
+* CIP-2001 reverted fo_validity_interval internal parameter to 0.01
+
+0.12.10
+*******
+* CIP-2006 Renamed all SlimMesh refs to just Slim
+
+0.12.9
+******
+* CIP-1674 Logconsumer logs every message twice
+* CIP-1853 Enhance system-tests to check ResultCode
+* CIP-2012 MCS k8s test pipeline job output no longer includes code coverage table
+
+0.12.8
+******
+* CIP-1769 Implement SLIM Tango device (mesh)
+* CIP-1768 Implement SLIM Link Tango device
+
+0.12.7
+******
+* CIP-1967 revert fo_validity_interval to 0.001 while CIP-2001 is being addressed
+
+0.12.6
+******
+* CIP-1886 update vcc_component_manager._ready = False at the end of abort() 
+
+0.12.5
+******
+* CIP-1870 decreased timeout for talon_board_proxy and influxdb client
+* CIP-1967 Changed fo_validity_interval to 0.01 - it was incorrectly set to 0.001
+
+0.12.4
+******
+* CIP-1957 Removed problematic vcc gain file (mnt/vcc_param/internal_params_receptor1_band1_.json)
+
+0.12.3
+******
+* CIP-1933 Fixed the group_proxy implementation
+
 0.12.2
 ******
 * CIP-1764 Added telmodel schema validation against the InitSysParam command 
 
 0.12.1
 *****
-* Removed hardcoded input sample rate. 
+* Removed hardcoded input sample rate
 * Changed fs_sample_rate to integer and in Hz
 * Added check for missing Dish ID - VCC mapping during On command
 
@@ -30,7 +79,7 @@ Development
 
 0.11.7
 *****
-* Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame.
+* Removes Delta F and K from VCC and replaces them with dish_sample_rate and num_samples_per_frame
 
 0.11.6
 *****

@@ -20,6 +20,8 @@ depends_on:
   - device: mid_csp_cbf/talon_lru/002
   - device: mid_csp_cbf/talon_lru/003
   - device: mid_csp_cbf/talon_lru/004
+  - device: mid_csp_cbf/slim/slim-fs
+  - device: mid_csp_cbf/slim/slim-vis
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -87,6 +89,12 @@ server:
             values:
             - "mid_csp_cbf/power_switch/001"
             - "mid_csp_cbf/power_switch/002"
+          - name: "FsSLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-fs"
+          - name: "VisSLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-vis"
           - name: "LruTimeout"
             values:
             - "30"
@@ -96,6 +104,12 @@ server:
           - name: "HWConfigPath"
             values:
             - "mnt/hw_config/hw_config.yaml"
+          - name: "FsSLIMConfigPath"
+            values:
+            - "mnt/slim/fs_slim_config.yaml"
+          - name: "VisSLIMConfigPath"
+            values:
+            - "mnt/slim/vis_slim_config.yaml"
           - name: "polled_attr"
             values:
             - "commandprogress"

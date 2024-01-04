@@ -43,7 +43,9 @@ class PowerSwitchSimulator:
             self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
         elif model == "Server Technology Switched PRO2":
             self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
-        elif model == "APC AP8681":
+        elif model == "APC AP8681 SSH":
+            self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
+        elif model == "APC AP8681 SNMP":
             self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
         else:
             raise AssertionError(f"Invalid PDU model: {model}")
