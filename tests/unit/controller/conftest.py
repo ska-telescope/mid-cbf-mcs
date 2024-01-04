@@ -122,11 +122,15 @@ def mock_component_manager(
     def _init_sys_param(mock: unittest.mock.Mock) -> None:
         mock.message = "CbfController InitSysParam command completed OK"
         return (ResultCode.OK, mock.message)
+    
+    def _retrieve_sys_param_file(mock: unittest.mock.Mock) -> None:
+        return (ResultCode.OK, mock.message)
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
     mock.standby.side_effect = lambda: _standby(mock)
     mock.init_sys_param.side_effect = lambda argin: _init_sys_param(mock)
+    mock._retrieve_sys_param_file.side_effect = lambda argin: _retrieve_sys_param_file(mock)
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
@@ -228,6 +232,9 @@ def mock_subarray() -> unittest.mock.Mock:
     with open(json_file_path + "sys_param_4_boards.json") as f:
         sp = f.read()
     builder.add_attribute("sysParam", sp)
+    with open(json_file_path + "source_init_sys_param.json") as f:
+        sp = f.read()
+    builder.add_attribute("sourceSysParam", sp)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()

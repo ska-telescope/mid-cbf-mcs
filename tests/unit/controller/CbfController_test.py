@@ -101,3 +101,23 @@ class TestCbfController:
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
+
+    def test_source_init_sys_param(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        assert device_under_test.State() == DevState.OFF
+        expected_state = device_under_test.State()  # no change expected
+        with open(json_file_path + "source_init_sys_param.json") as f:
+            sp = f.read()
+        
+        result = device_under_test.InitSysParam(sp)
+
+        time.sleep(CONST_WAIT_TIME)
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state

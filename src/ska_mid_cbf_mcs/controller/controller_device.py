@@ -99,6 +99,13 @@ class CbfController(SKAController):
         doc="Maps Dish ID to VCC and frequency offset k. The string is in JSON format.",
     )
 
+    sourceSysParam = attribute(
+        dtype="str",
+        access=AttrWriteType.READ,
+        label="The json file that was provided as input",
+        doc="The location of the json file, to be retrieved from the telescope model",
+    )
+
     simulationMode = attribute(
         dtype=SimulationMode,
         access=AttrWriteType.READ_WRITE,
@@ -300,8 +307,15 @@ class CbfController(SKAController):
     def read_sysParam(self: CbfController) -> str:
         # PROTECTED REGION ID(CbfController.read_sysParam) ENABLED START #
         """Return the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format."""
-        return self.component_manager._sys_param
+        return self.component_manager._init_sys_param
         # PROTECTED REGION END #    //  CbfController.sysParam_read
+
+    def read_sourceSysParam(self: CbfController) -> str:
+        # PROTECTED REGION ID(CbfController.read_sourceSysParam) ENABLED START #
+        """Return the location of the json file that contains the mapping from 
+        Dish ID to VCC and frequency offset k, to be retrieved using the Telescope Model."""
+        return self.component_manager._source_init_sys_param
+        # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
 
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #

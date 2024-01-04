@@ -27,6 +27,7 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from ska_telmodel.schema import validate as telmodel_validate
+from ska_telmodel.data import TMData
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -132,6 +133,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._get_max_capabilities = get_num_capabilities
 
         self._init_sys_param = ""
+        self._source_init_sys_param = ""
         self._receptor_utils = None
 
         # TODO: component manager should not be passed into component manager ?
@@ -648,7 +650,17 @@ class ControllerComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 msg,
             )
-
+        if "tm_data_filepath" in init_sys_param_json:
+            try:
+                init_sys_param_json = self._retrieve_sys_param_file(params)
+            except (ValueError, KeyError) as e:
+                return ( ResultCode.FAILED, e )
+            passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            if not passed:
+                return (
+                    ResultCode.FAILED,
+                    msg,
+                )
         # store the attribute
         self._receptor_utils = ReceptorUtils(init_sys_param_json)
         self._init_sys_param = params
@@ -670,6 +682,26 @@ class ControllerComponentManager(CbfComponentManager):
             "CbfController InitSysParam command completed OK",
         )
 
+    def _retrieve_sys_param_file(self, params) -> dict:
+        # The uri was provided in the input string, therefore the mapping from Dish ID to 
+        # VCC and frequency offset k needs to be retrieved using the Telescope Model
+        tm_data_sources = params["tm_data_sources"]
+        tm_data_filepath = params["tm_data_filepath"]
+        try:
+            mid_cbf_param_dict = TMData([tm_data_sources])[tm_data_filepath].get_dict()
+        except ValueError as e:
+            msg = f"Retrieving the init_sys_param file failed because {tm_data_sources} is an invalid source"
+            self._logger.error(msg, e)
+            raise ValueError(msg)
+        except KeyError as e:
+            msg = f"Retrieving the init_sys_param file failed because {tm_data_filepath} is an invalid file path"
+            self._logger.error(msg, e)
+            raise KeyError(msg)
+
+        self._source_init_sys_param = params
+        self._logger.info(f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}")
+        return mid_cbf_param_dict
+    
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,
