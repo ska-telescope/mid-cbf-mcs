@@ -1,4 +1,5 @@
 {
     "interface": "https://schema.skao.int/ska-mid-cbf-initial-parameters/2.2",
-    "invalid_key": "valid_source"
+    "invalid_key": "file://",
+    "tm_data_filepath": "tests/data/sys_param_4_boards.json"
 }
