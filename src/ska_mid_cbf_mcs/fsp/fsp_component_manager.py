@@ -86,9 +86,9 @@ class FspComponentManager(CbfComponentManager):
 
         self._fsp_id = fsp_id
 
-        self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
-        self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
-        self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
+        self._fsp_corr_subarray_fqdns_all = list(fsp_corr_subarray_fqdns_all)
+        self._fsp_pss_subarray_fqdns_all = list(fsp_pss_subarray_fqdns_all)
+        self._fsp_pst_subarray_fqdns_all = list(fsp_pst_subarray_fqdns_all)
 
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
@@ -102,7 +102,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_fsp_pss_subarray = None
         self._proxy_fsp_pst_subarray = None
 
-        self._subarray_membership = []
+        self._subarray_membership = set()
         self._function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = ""
         self._delay_model = ""
@@ -126,7 +126,7 @@ class FspComponentManager(CbfComponentManager):
         :return: an array of affiliations of the FSP.
         :rtype: List[int]
         """
-        return self._subarray_membership
+        return sorted(self._subarray_membership)
 
     @property
     def function_mode(self: FspComponentManager) -> tango.DevEnum:
@@ -300,31 +300,69 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_corr_subarray = self._get_device_proxy(
                 "FSP Subarray Corr", is_group=True
             )
-            for fqdn in list(self._fsp_corr_subarray_fqdns_all):
-                self._group_fsp_corr_subarray.add(fqdn)
         if self._group_fsp_pss_subarray is None:
             self._group_fsp_pss_subarray = self._get_device_proxy(
                 "FSP Subarray Pss", is_group=True
             )
-            for fqdn in list(self._fsp_pss_subarray_fqdns_all):
-                self._group_fsp_pss_subarray.add(fqdn)
         if self._group_fsp_pst_subarray is None:
             self._group_fsp_pst_subarray = self._get_device_proxy(
                 "FSP Subarray Pst", is_group=True
             )
-            for fqdn in list(self._fsp_pst_subarray_fqdns_all):
-                self._group_fsp_pst_subarray.add(fqdn)
+
+    def _remove_subarray_from_group_proxy(
+        self: FspComponentManager, subarray_id: int
+    ) -> None:
+        """Remove FSP function mode subarray device from group proxy for specified subarray."""
+        if self._function_mode == FspModes.IDLE.value:
+            self._logger.error(
+                f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
+            )
+            pass
+        if self._function_mode == FspModes.CORR.value:
+            for fqdn in self._fsp_corr_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_corr_subarray.remove(fqdn)
+        if self._function_mode == FspModes.PSS_BF.value:
+            for fqdn in self._fsp_pss_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_pss_subarray.remove(fqdn)
+        if self._function_mode == FspModes.PST_BF.value:
+            for fqdn in self._fsp_pst_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_pst_subarray.remove(fqdn)
+
+    def _add_subarray_to_group_proxy(
+        self: FspComponentManager, subarray_id: int
+    ) -> None:
+        """Add FSP function mode subarray device to group proxy for specified subarray."""
+        if self._function_mode == FspModes.IDLE.value:
+            self._logger.error(
+                f"FSP {self._fsp_id} function mode is IDLE; error adding subarray {subarray_id} function mode device to group proxy."
+            )
+            pass
+        if self._function_mode == FspModes.CORR.value:
+            for fqdn in self._fsp_corr_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_corr_subarray.add(fqdn)
+        if self._function_mode == FspModes.PSS_BF.value:
+            for fqdn in self._fsp_pss_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_pss_subarray.add(fqdn)
+        if self._function_mode == FspModes.PST_BF.value:
+            for fqdn in self._fsp_pst_subarray_fqdns_all:
+                if subarray_id == int(fqdn[-2:]):
+                    self._group_fsp_pst_subarray.add(fqdn)
 
     @check_communicating
     def remove_subarray_membership(
-        self: FspComponentManager, argin: int
+        self: FspComponentManager, subarray_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Remove subarray from the subarrayMembership list.
         If subarrayMembership is empty after removing
         (no subarray is using this FSP), set function mode to empty.
 
-        :param argin: an integer representing the subarray affiliation
+        :param subarray_id: an integer representing the subarray affiliation
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -332,8 +370,9 @@ class FspComponentManager(CbfComponentManager):
         """
         result_code = ResultCode.OK
         message = "Fsp RemoveSubarrayMembership command completed OK"
-        if argin in self._subarray_membership:
-            self._subarray_membership.remove(argin)
+        if subarray_id in self._subarray_membership:
+            self._remove_subarray_from_group_proxy(subarray_id)
+            self._subarray_membership.remove(subarray_id)
             self._push_change_event(
                 "subarrayMembership", self._subarray_membership
             )
@@ -350,18 +389,18 @@ class FspComponentManager(CbfComponentManager):
                 self._push_change_event("functionMode", self._function_mode)
         else:
             result_code = ResultCode.FAILED
-            message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {argin}."
+            message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {subarray_id}."
 
         return (result_code, message)
 
     @check_communicating
     def add_subarray_membership(
-        self: FspComponentManager, argin: int
+        self: FspComponentManager, subarray_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Add a subarray to the subarrayMembership list.
 
-        :param argin: an integer representing the subarray affiliation
+        :param subarray_id: an integer representing the subarray affiliation
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -375,14 +414,15 @@ class FspComponentManager(CbfComponentManager):
                 f"({const.MAX_SUBARRAY})"
             )
             result_code = ResultCode.FAILED
-        elif argin not in self._subarray_membership:
-            self._subarray_membership.append(argin)
+        elif subarray_id not in self._subarray_membership:
+            self._add_subarray_to_group_proxy(subarray_id)
+            self._subarray_membership.add(subarray_id)
             self._push_change_event(
                 "subarrayMembership", self._subarray_membership
             )
         else:
             result_code = ResultCode.FAILED
-            message = f"Fsp AddSubarrayMembership command failed; FSP already belongs to subarray {argin}."
+            message = f"Fsp AddSubarrayMembership command failed; FSP already belongs to subarray {subarray_id}."
 
         return (result_code, message)
 
@@ -441,7 +481,7 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_pss_subarray.command_inout("Off")
             self._group_fsp_pst_subarray.command_inout("Off")
 
-            for subarray_ID in self._subarray_membership[:]:
+            for subarray_ID in self._subarray_membership:
                 self.remove_subarray_membership(subarray_ID)
 
             message = "Fsp Off command completed OK"
@@ -486,6 +526,7 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
             function_mode = FspModes.IDLE.value
             if argin == "IDLE":
+                # TODO: should this return an error message
                 pass
             elif argin == "CORR":
                 function_mode = FspModes.CORR.value

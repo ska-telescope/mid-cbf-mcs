@@ -1167,6 +1167,7 @@ class TestCbfSubarray:
                 assert test_proxies.vcc[r].obsState == ObsState.IDLE
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
+                assert test_proxies.fsp[fsp_id].subarrayMembership == []
                 if fsp["function_mode"] == "CORR":
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][

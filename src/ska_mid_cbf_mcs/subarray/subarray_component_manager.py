@@ -780,6 +780,15 @@ class CbfSubarrayComponentManager(
                         msg = str(df.args[0].desc)
                         self._logger.error(f"Error in GoToIdle; {msg}")
                         self._component_obs_fault_callback(True)
+
+            if self._group_fsp.get_size() > 0:
+                # change FSP subarray membership
+                data = tango.DeviceData()
+                data.insert(tango.DevUShort, self._subarray_id)
+                self._logger.debug(data)
+                # TODO could potentially be sending FSP subarrays to IDLE twice
+                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._group_fsp.remove_all()
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -2288,14 +2297,6 @@ class CbfSubarrayComponentManager(
                     group.command_inout("ObsReset")
                     group.remove_all()
 
-            if self._group_fsp.get_size() > 0:
-                # change FSP subarray membership
-                data = tango.DeviceData()
-                data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
-                # TODO could potentially be sending FSP subarrays to IDLE twice
-                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
 
@@ -2330,14 +2331,6 @@ class CbfSubarrayComponentManager(
                     group.command_inout("ObsReset")
                     group.remove_all()
 
-            if self._group_fsp.get_size() > 0:
-                # change FSP subarray membership
-                data = tango.DeviceData()
-                data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
-                # TODO could potentially be sending FSP subarrays to IDLE twice
-                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
 
