@@ -137,7 +137,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         return self._link_name
 
     @property
-    def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
+    def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> tango.DevULong64:
         """
         The idle control word value tx generates by hashing the tx's fqdn.
 
@@ -155,7 +155,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         return self._tx_device_proxy.idle_ctrl_word
 
     @property
-    def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
+    def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> tango.DevULong64:
         """
         The last idle control word read by rx from the datastream.
 
@@ -313,6 +313,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
+            self._logger.info(
+                f"{self._link_name} idle ctrl word = {idle_ctrl_word}"
+            )
             self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
