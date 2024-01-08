@@ -62,7 +62,8 @@ class TestCbfController:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize(
-        "command", ["On", "Off", "Standby", "InitSysParam", "InitSysParam-Retrieve"]
+        "command",
+        ["On", "Off", "Standby", "InitSysParam", "InitSysParam-Retrieve"],
     )
     def test_Commands(
         self: TestCbfController,
@@ -102,7 +103,7 @@ class TestCbfController:
             with open(json_file_path + "source_init_sys_param.json") as f:
                 sp = f.read()
             result = device_under_test.InitSysParam(sp)
-        
+
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state

@@ -147,7 +147,7 @@ class TestCbfController:
             assert result[0] == ResultCode.OK
             assert test_proxies.controller.read_sysParam == sp
             assert test_proxies.controller.read_sourceSysParam == ""
-    
+
     def test_SourceInitSysParam(self, test_proxies):
         """
         Test that InitSysParam can only be used when
