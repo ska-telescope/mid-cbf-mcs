@@ -14,6 +14,7 @@ from __future__ import annotations
 # Path
 import json
 import os
+import pytest
 
 from ska_tango_base.commands import ResultCode
 
@@ -179,7 +180,7 @@ class TestControllerComponentManager:
         (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED
 
-    def test_sys_param_usable_source(
+    def test_sys_param_valid_source_and_filepath(
         self: TestControllerComponentManager,
         controller_component_manager: ControllerComponentManager,
     ) -> None:
@@ -194,133 +195,127 @@ class TestControllerComponentManager:
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "source_init_sys_param.json") as f:
+            sys_param = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        assert result_code == ResultCode.OK
+        assert controller_component_manager._source_init_sys_param == sys_param
+        assert controller_component_manager._init_sys_param == sys_param
+    
+    def test_sys_param_valid_source_and_filepath_then_file_only(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid source and filepath in sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        with open(json_file_path + "source_init_sys_param.json") as f:
+            sys_param = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        assert result_code == ResultCode.OK
+        assert controller_component_manager._source_init_sys_param == sys_param
+        assert controller_component_manager._init_sys_param == sys_param
+
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sys_param_no_retrieve = f.read()
+        
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param_no_retrieve)
+        assert result_code == ResultCode.OK
+        assert controller_component_manager._source_init_sys_param == ""
+        assert controller_component_manager._init_sys_param == sys_param_no_retrieve
+
+    def test_sys_param_invalid_source(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid source and filepath in sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        with open(json_file_path + "source_init_sys_param_invalid_source.json") as f:
+            sys_param_invalid_source = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param_invalid_source)
+        assert result_code == ResultCode.FAILED
+        assert controller_component_manager._source_init_sys_param == ""
+        assert controller_component_manager._init_sys_param == ""
+
+    def test_sys_param_valid_source_and_filepath_then_invalid_source(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid source and filepath in sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        with open(json_file_path + "source_init_sys_param.json") as f:
+            sys_param = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        assert result_code == ResultCode.OK
+        assert controller_component_manager._source_init_sys_param == sys_param
+        assert controller_component_manager._init_sys_param == sys_param
+
+        with open(json_file_path + "source_init_sys_param_invalid_source.json") as f:
+            sys_param_unusable_source = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param_unusable_source)
+        assert result_code == ResultCode.FAILED
+        assert controller_component_manager._source_init_sys_param == sys_param
+        assert controller_component_manager._init_sys_param == sys_param
+
+    def test_sys_param_invalid_filepath(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid source and filepath in sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+
+        with open(json_file_path + "source_init_sys_param_invalid_file.json") as f:
+            sys_param_invalid_file = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sys_param_invalid_file)
+        assert result_code == ResultCode.FAILED
+        assert controller_component_manager._source_init_sys_param == ""
+        assert controller_component_manager._init_sys_param == ""
+  
+    def test_sys_param_send_invalid_schema(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+    ) -> None:
+        """
+        Test if component manager handles invalid source and filepath in sys param
+        """
+        controller_component_manager.start_communicating()
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
+        assert controller_component_manager._connected is True
+        with open(json_file_path + "source_init_sys_param_invalid_schema.json") as f:
             sp = f.read()
         (result_code, _) = controller_component_manager.init_sys_param(sp)
-        assert result_code == ResultCode.OK
-        assert controller_component_manager._source_init_sys_param == json.loads(sp)
-
-    # def test_sys_param_usable_source_and_filepath_then_file_only(
-    #     self: TestControllerComponentManager,
-    #     controller_component_manager: ControllerComponentManager,
-    # ) -> None:
-    #     """
-    #     Test if component manager handles invalid source and filepath in sys param
-    #     """
-    #     controller_component_manager.start_communicating()
-    #     assert (
-    #         controller_component_manager.communication_status
-    #         == CommunicationStatus.ESTABLISHED
-    #     )
-    #     assert controller_component_manager._connected is True
-
-    #     with open(json_file_path + "source_init_sys_param.json") as f:
-    #         sp = f.read()
-    #     (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.OK
-    #     assert controller_component_manager._source_init_sys_param == json.loads(sp)
-
-    #     # Send file only - meaning the json file we're supposed to be retrieving?
-    #     # So is this just to test that when they send in the request with the json
-    #     # included, instead of having to retrieve it, that the _source_init_sys_param
-    #     # attribute gets set back to empty string?  Otherwise, it would always appear as though
-    #     with open(json_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-        
-    #     (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.OK
-    #     assert "dish_parameters" in json.loads(sp) # Is this what was meant by read parameters being used - should be new file?
-    #     assert controller_component_manager._source_init_sys_param == "" # double check if I have to actually set this again or not
-    #     assert controller_component_manager._init_sys_param == json.loads(sp)
-
-    # def test_sys_param_unusable_source(
-    #     self: TestControllerComponentManager,
-    #     controller_component_manager: ControllerComponentManager,
-    # ) -> None:
-    #     """
-    #     Test if component manager handles invalid source and filepath in sys param
-    #     """
-    #     controller_component_manager.start_communicating()
-    #     assert (
-    #         controller_component_manager.communication_status
-    #         == CommunicationStatus.ESTABLISHED
-    #     )
-    #     assert controller_component_manager._connected is True
-
-    #     with open(json_file_path + "source_init_sys_param_invalid_file.json") as f:
-    #         sp = f.read()
-    #     with self.assertRaises(KeyError):
-    #         (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.FAILED
-    #     assert controller_component_manager._source_init_sys_param == ""
-    #     assert controller_component_manager._init_sys_param == ""
-
-    # def test_sys_param_usable_source_and_filepath_then_unusuable_source(
-    #     self: TestControllerComponentManager,
-    #     controller_component_manager: ControllerComponentManager,
-    # ) -> None:
-    #     """
-    #     Test if component manager handles invalid source and filepath in sys param
-    #     """
-    #     controller_component_manager.start_communicating()
-    #     assert (
-    #         controller_component_manager.communication_status
-    #         == CommunicationStatus.ESTABLISHED
-    #     )
-    #     assert controller_component_manager._connected is True
-
-    #     with open(json_file_path + "source_init_sys_param.json") as f:
-    #         sp = f.read()
-    #     (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.OK
-    #     sp_json = json.loads(sp)
-    #     assert controller_component_manager._source_init_sys_param == sp_json
-    #     assert controller_component_manager._init_sys_param == sp_json
-
-    #     with open(json_file_path + "source_init_sys_param_unusable_source.json") as f:
-    #         sp = f.read()
-    #     with self.assertRaises(ValueError):
-    #         (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.FAILED
-    #     assert controller_component_manager._source_init_sys_param == sp_json
-    #     assert controller_component_manager._init_sys_param == sp_json
-
-    # def test_sys_param_filepath_does_not_exist(
-    #     self: TestControllerComponentManager,
-    #     controller_component_manager: ControllerComponentManager,
-    # ) -> None:
-    #     """
-    #     Test if component manager handles invalid source and filepath in sys param
-    #     """
-    #     controller_component_manager.start_communicating()
-    #     assert (
-    #         controller_component_manager.communication_status
-    #         == CommunicationStatus.ESTABLISHED
-    #     )
-    #     assert controller_component_manager._connected is True
-
-    #     with open(json_file_path + "source_init_sys_param_invalid_file.json") as f:
-    #         sp = f.read()
-    #     with self.assertRaises(KeyError):
-    #         (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.FAILED
-    #     assert controller_component_manager._source_init_sys_param == ""
-  
-    # def test_sys_param_send_invalid_schema(
-    #     self: TestControllerComponentManager,
-    #     controller_component_manager: ControllerComponentManager,
-    # ) -> None:
-    #     """
-    #     Test if component manager handles invalid source and filepath in sys param
-    #     """
-    #     controller_component_manager.start_communicating()
-    #     assert (
-    #         controller_component_manager.communication_status
-    #         == CommunicationStatus.ESTABLISHED
-    #     )
-    #     assert controller_component_manager._connected is True
-    #     with open(json_file_path + "source_init_sys_param_invalid_schema.json") as f:
-    #         sp = f.read()
-    #     (result_code, _) = controller_component_manager.init_sys_param(sp)
-    #     assert result_code == ResultCode.FAILED
-    #     assert controller_component_manager._source_init_sys_param == ""
-    #     assert controller_component_manager._init_sys_param == ""
+        assert result_code == ResultCode.FAILED
+        assert controller_component_manager._source_init_sys_param == ""
+        assert controller_component_manager._init_sys_param == ""

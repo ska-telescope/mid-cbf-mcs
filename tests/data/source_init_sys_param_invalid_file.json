@@ -1,5 +1,5 @@
 {
-    "interface": "https://schema.skao.int/ska-mid-cbf-initial-parameters/2.2",
+    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/1.0",
     "tm_data_sources": "file://",
     "tm_data_filepath": "tests/data/invalid-path.json"
 }
