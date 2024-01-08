@@ -99,7 +99,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_hps_fsp_controller = None
         self._proxy_hps_fsp_corr_controller = None
 
-        self._subarray_membership = set()
+        self._subarray_membership = []
         self._function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = ""
         self._delay_model = ""
@@ -123,7 +123,7 @@ class FspComponentManager(CbfComponentManager):
         :return: an array of affiliations of the FSP.
         :rtype: List[int]
         """
-        return list(self._subarray_membership)
+        return self._subarray_membership
 
     @property
     def function_mode(self: FspComponentManager) -> tango.DevEnum:
@@ -421,7 +421,7 @@ class FspComponentManager(CbfComponentManager):
             result_code = ResultCode.FAILED
         elif subarray_id not in self._subarray_membership:
             self._add_subarray_to_group_proxy(subarray_id)
-            self._subarray_membership.add(subarray_id)
+            self._subarray_membership.append(subarray_id)
             self._push_change_event(
                 "subarrayMembership", self._subarray_membership
             )
