@@ -312,8 +312,9 @@ class CbfController(SKAController):
 
     def read_sourceSysParam(self: CbfController) -> str:
         # PROTECTED REGION ID(CbfController.read_sourceSysParam) ENABLED START #
-        """Return the location of the json file that contains the mapping from 
-        Dish ID to VCC and frequency offset k, to be retrieved using the Telescope Model."""
+        """Return the location of the json file that contains the mapping from
+        Dish ID to VCC and frequency offset k, to be retrieved using the Telescope Model.
+        """
         return self.component_manager._source_init_sys_param
         # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
 

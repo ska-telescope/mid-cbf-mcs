@@ -650,11 +650,13 @@ class ControllerComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 msg,
             )
-        # If tm_data_filepath is provided, then we need to retrieve the 
+        # If tm_data_filepath is provided, then we need to retrieve the
         # init sys param file from CAR via the telescope model
         if "tm_data_filepath" in init_sys_param_json:
             try:
-                init_sys_param_json = self._retrieve_sys_param_file(init_sys_param_json)
+                init_sys_param_json = self._retrieve_sys_param_file(
+                    init_sys_param_json
+                )
             except (ValueError, KeyError) as e:
                 return (ResultCode.FAILED, e)
             self._source_init_sys_param = params
@@ -666,7 +668,7 @@ class ControllerComponentManager(CbfComponentManager):
                 )
         else:
             self._source_init_sys_param = ""
-        
+
         # store the attribute
         self._receptor_utils = ReceptorUtils(init_sys_param_json)
         self._init_sys_param = params
@@ -689,12 +691,14 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
     def _retrieve_sys_param_file(self, init_sys_param_json) -> dict:
-        # The uri was provided in the input string, therefore the mapping from Dish ID to 
+        # The uri was provided in the input string, therefore the mapping from Dish ID to
         # VCC and frequency offset k needs to be retrieved using the Telescope Model
         tm_data_sources = init_sys_param_json["tm_data_sources"][0]
         tm_data_filepath = init_sys_param_json["tm_data_filepath"]
         try:
-            mid_cbf_param_dict = TMData([tm_data_sources])[tm_data_filepath].get_dict()
+            mid_cbf_param_dict = TMData([tm_data_sources])[
+                tm_data_filepath
+            ].get_dict()
         except ValueError:
             msg = f"Retrieving the init_sys_param file failed because {tm_data_sources} is an invalid source"
             self._logger.error(msg)
@@ -704,9 +708,11 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(msg, e)
             raise KeyError(msg)
 
-        self._logger.info(f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}")
+        self._logger.info(
+            f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+        )
         return mid_cbf_param_dict
-    
+
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,

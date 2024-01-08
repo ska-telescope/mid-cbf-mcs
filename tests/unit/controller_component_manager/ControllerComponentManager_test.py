@@ -195,11 +195,13 @@ class TestControllerComponentManager:
 
         with open(json_file_path + "source_init_sys_param.json") as f:
             sys_param = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param
+        )
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == sys_param
         assert controller_component_manager._init_sys_param == sys_param
-    
+
     def test_sys_param_valid_source_and_filepath_then_file_only(
         self: TestControllerComponentManager,
         controller_component_manager: ControllerComponentManager,
@@ -216,18 +218,25 @@ class TestControllerComponentManager:
 
         with open(json_file_path + "source_init_sys_param.json") as f:
             sys_param = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param
+        )
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == sys_param
         assert controller_component_manager._init_sys_param == sys_param
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sys_param_no_retrieve = f.read()
-        
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param_no_retrieve)
+
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param_no_retrieve
+        )
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == ""
-        assert controller_component_manager._init_sys_param == sys_param_no_retrieve
+        assert (
+            controller_component_manager._init_sys_param
+            == sys_param_no_retrieve
+        )
 
     def test_sys_param_invalid_source(
         self: TestControllerComponentManager,
@@ -243,9 +252,13 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
-        with open(json_file_path + "source_init_sys_param_invalid_source.json") as f:
+        with open(
+            json_file_path + "source_init_sys_param_invalid_source.json"
+        ) as f:
             sys_param_invalid_source = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param_invalid_source)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param_invalid_source
+        )
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == ""
         assert controller_component_manager._init_sys_param == ""
@@ -266,14 +279,20 @@ class TestControllerComponentManager:
 
         with open(json_file_path + "source_init_sys_param.json") as f:
             sys_param = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param
+        )
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == sys_param
         assert controller_component_manager._init_sys_param == sys_param
 
-        with open(json_file_path + "source_init_sys_param_invalid_source.json") as f:
+        with open(
+            json_file_path + "source_init_sys_param_invalid_source.json"
+        ) as f:
             sys_param_unusable_source = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param_unusable_source)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param_unusable_source
+        )
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == sys_param
         assert controller_component_manager._init_sys_param == sys_param
@@ -292,13 +311,17 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
-        with open(json_file_path + "source_init_sys_param_invalid_file.json") as f:
+        with open(
+            json_file_path + "source_init_sys_param_invalid_file.json"
+        ) as f:
             sys_param_invalid_file = f.read()
-        (result_code, _) = controller_component_manager.init_sys_param(sys_param_invalid_file)
+        (result_code, _) = controller_component_manager.init_sys_param(
+            sys_param_invalid_file
+        )
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == ""
         assert controller_component_manager._init_sys_param == ""
-  
+
     def test_sys_param_send_invalid_schema(
         self: TestControllerComponentManager,
         controller_component_manager: ControllerComponentManager,
@@ -312,7 +335,9 @@ class TestControllerComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert controller_component_manager._connected is True
-        with open(json_file_path + "source_init_sys_param_invalid_schema.json") as f:
+        with open(
+            json_file_path + "source_init_sys_param_invalid_schema.json"
+        ) as f:
             sp = f.read()
         (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED

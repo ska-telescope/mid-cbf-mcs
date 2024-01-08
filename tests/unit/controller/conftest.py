@@ -122,7 +122,7 @@ def mock_component_manager(
     def _init_sys_param(mock: unittest.mock.Mock) -> None:
         mock.message = "CbfController InitSysParam command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _retrieve_sys_param_file(mock: unittest.mock.Mock) -> None:
         return (ResultCode.OK, mock.message)
 
@@ -130,7 +130,9 @@ def mock_component_manager(
     mock.off.side_effect = lambda: _off(mock)
     mock.standby.side_effect = lambda: _standby(mock)
     mock.init_sys_param.side_effect = lambda argin: _init_sys_param(mock)
-    mock._retrieve_sys_param_file.side_effect = lambda argin: _retrieve_sys_param_file(mock)
+    mock._retrieve_sys_param_file.side_effect = (
+        lambda argin: _retrieve_sys_param_file(mock)
+    )
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
