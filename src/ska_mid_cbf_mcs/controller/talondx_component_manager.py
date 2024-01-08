@@ -478,6 +478,21 @@ class TalonDxComponentManager:
         # Wait for HPS Master
         ping_ok = False
         for i in range(6):
+            self.logger.info(f"Trying ping #{i}...")
+            try:
+                hps_master.ping()
+                ping_ok = True
+                break
+            except tango.DevFailed:  # TODO handle unstarted HPS master
+                time.sleep(5)
+
+        if not ping_ok:
+            self.logger.error(
+                f"Timeout trying to ping, trying again {hps_master_fqdn}."
+            )
+
+        for i in range(6):
+            self.logger.info(f"Trying ping #{i}...")
             try:
                 hps_master.ping()
                 ping_ok = True
@@ -487,7 +502,32 @@ class TalonDxComponentManager:
 
         if not ping_ok:
             self.logger.error(f"Timeout trying to ping {hps_master_fqdn}.")
-            return ResultCode.FAILED
+
+            # Retry
+            if self._start_hps_master(talon_cfg) == ResultCode.FAILED:
+                return (ResultCode.FAILED, "_start_hps_master FAILED")
+
+            if (
+                self._create_hps_master_device_proxies(talon_cfg)
+                == ResultCode.FAILED
+            ):
+                return (
+                    ResultCode.FAILED,
+                    "_create_hps_master_device_proxies FAILED",
+                )
+
+            for i in range(6):
+                self.logger.info(f"Trying ping #{i}...")
+                try:
+                    hps_master.ping()
+                    ping_ok = True
+                    break
+                except tango.DevFailed:  # TODO handle unstarted HPS master
+                    time.sleep(5)
+            ###
+
+            if not ping_ok:
+                return ResultCode.FAILED
 
         self.logger.info(f"Sending configure command to {hps_master_fqdn}")
         try:
