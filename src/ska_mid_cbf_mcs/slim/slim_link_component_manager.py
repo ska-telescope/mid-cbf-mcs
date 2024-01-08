@@ -198,7 +198,6 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         return self._rx_device_proxy.bit_error_rate
 
-    # FIXME: Do I need this? It's not in SLIM.. does it need to be added to SLIM?
     @property
     def simulation_mode(self):
         """

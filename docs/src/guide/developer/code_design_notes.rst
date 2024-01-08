@@ -109,10 +109,11 @@ and monitoring important device attributes, such as each link's HealthState. The
 device’s ConfigureCommand triggers a call to ``SlimComponentManager.configure``, which 
 initializes ``SlimLink`` devices as described in a YAML configuration file.
 
-The ``Slim`` device can operated in either simulation mode or not. When in simulation
-mode (this is the default), simulator classes are used in place of communication
-with the real Talon-DX Tango devices. This allows testing of the MCS without
-any connection to the hardware.
+Since the ``SlimLink`` component that the ``Slim`` device controls is software within MCS, it does not 
+require a simulator. Whether being tested or not, the ``Slim`` device always controls the ``SlimLink`` 
+MCS devices. It should be noted, however, that the ``Slim`` device still implements a simulation mode,
+and it's sole purpose is to set the child ``SlimLink`` device's simulation mode. Therefore, simulation mode 
+is set globally within a mesh and cannot be toggled per link.
 
 .. figure:: ../../diagrams/slim-device.png
    :align: center
@@ -128,7 +129,7 @@ ConnectTxRxCommand triggers a call to ``SlimLinkComponentManager.connect_slim_tx
 initializes the target HPS ``ds-slim-tx-rx`` devices by taking them out of serial loopback 
 mode, syncing idle control words, etc.
 
-The ``SlimLink`` device can operated in either simulation mode or not. When in simulation
+The ``SlimLink`` device can operate in either simulation mode or not. When in simulation
 mode (this is the default), simulator classes are used in place of communication
 with the real Talon-DX Tango devices. This allows testing of the MCS without
 any connection to the hardware.
