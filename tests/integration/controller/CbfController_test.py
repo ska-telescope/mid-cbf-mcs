@@ -145,6 +145,30 @@ class TestCbfController:
             assert result[0] == ResultCode.FAILED
         else:
             assert result[0] == ResultCode.OK
+            assert test_proxies.controller.read_sysParam == sp
+            assert test_proxies.controller.read_sourceSysParam == ""
+    
+    def test_SourceInitSysParam(self, test_proxies):
+        """
+        Test that InitSysParam can only be used when
+        the controller op state is OFF
+        """
+        state = test_proxies.controller.State()
+        with open(data_file_path + "source_init_sys_param.json") as f:
+            sp = f.read()
+        result = test_proxies.controller.InitSysParam(sp)
+        state_after = test_proxies.controller.State()
+
+        # InitSysParam should not change state
+        assert state == state_after
+
+        # InitSysParam can only be called when controller is in OFF state
+        if state != DevState.OFF:
+            assert result[0] == ResultCode.FAILED
+        else:
+            assert result[0] == ResultCode.OK
+            assert test_proxies.controller.read_sysParam == sp
+            assert test_proxies.controller.read_sourceSysParam == sp
 
     def test_Off(self, test_proxies):
         """
