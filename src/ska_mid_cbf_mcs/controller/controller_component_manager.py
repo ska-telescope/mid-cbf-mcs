@@ -26,8 +26,8 @@ from ska_tango_base.control_model import (
     PowerMode,
     SimulationMode,
 )
-from ska_telmodel.schema import validate as telmodel_validate
 from ska_telmodel.data import TMData
+from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils

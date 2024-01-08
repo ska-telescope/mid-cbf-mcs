@@ -14,7 +14,6 @@ from __future__ import annotations
 # Path
 import json
 import os
-import pytest
 
 from ska_tango_base.commands import ResultCode
 
