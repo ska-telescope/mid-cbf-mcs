@@ -148,13 +148,16 @@ class TestCbfController:
             assert test_proxies.controller.read_sysParam == sp
             assert test_proxies.controller.read_sourceSysParam == ""
 
-    def test_SourceInitSysParam(self, test_proxies):
+    @pytest.mark.parametrize(
+            "config_file_name", ["source_init_sys_param.json", "source_init_sys_param_retrieve_from_car.json"]
+    )
+    def test_SourceInitSysParam(self, test_proxies, config_file_name: str):
         """
         Test that InitSysParam can only be used when
         the controller op state is OFF
         """
         state = test_proxies.controller.State()
-        with open(data_file_path + "source_init_sys_param.json") as f:
+        with open(data_file_path + config_file_name) as f:
             sp = f.read()
         result = test_proxies.controller.InitSysParam(sp)
         state_after = test_proxies.controller.State()
