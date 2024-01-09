@@ -513,6 +513,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream1 = 0
         self._stream_tuning = (0, 0)
         self._frequency_band = 0
+        self._push_change_event("frequencyBand", self._frequency_band)
         self._freq_band_name = ""
         self._config_id = ""
         self._scan_id = 0
