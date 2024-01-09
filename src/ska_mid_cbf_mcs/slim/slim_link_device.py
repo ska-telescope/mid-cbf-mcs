@@ -133,6 +133,7 @@ class SlimLink(SKABaseDevice):
         """
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
+        self._health_state = HealthState.UNKNOWN
 
         return SlimLinkComponentManager(
             update_health_state=self._update_health_state,

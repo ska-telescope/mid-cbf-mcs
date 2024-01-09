@@ -51,8 +51,7 @@ class TestSlim:
             proxy.adminMode = AdminMode.ONLINE
             proxy.set_timeout_millis(10000)
 
-        device_under_test = test_proxies.slim
-        for mesh in device_under_test:
+        for mesh in test_proxies.slim:
             # The Slim should be in the OFF state after being initialised
             mesh.loggingLevel = LoggingLevel.DEBUG
             mesh.adminMode = AdminMode.ONLINE

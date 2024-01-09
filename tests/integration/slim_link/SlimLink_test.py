@@ -105,7 +105,6 @@ class TestSlimLink:
         :param test_proxies: the proxies test fixture
         """
 
-        wait_time_s = 3
         sleep_time_s = 0.1
 
         device_under_test = test_proxies.slim_link
@@ -115,7 +114,5 @@ class TestSlimLink:
             link.rxDeviceName = "talondx/slim-tx-rx/rx-sim" + str(idx)
             link.ConnectTxRx()
             sleep(sleep_time_s)
-            assert link._link_enabled == True
-            sleep(wait_time_s)
-            linkHealth = link.VerifyConnection()
-            assert linkHealth == HealthState.OK
+            link.VerifyConnection()
+            assert link.healthState == HealthState.OK

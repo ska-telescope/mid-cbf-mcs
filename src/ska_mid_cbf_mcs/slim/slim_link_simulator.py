@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState
@@ -28,7 +29,7 @@ class SlimLinkSimulator:
     A simulator for the SLIM Link.
     """
 
-    def __init__(self: SlimLinkSimulator, logger: logging.Logger) -> None:
+    def __init__(self: SlimLinkSimulator, logger: logging.Logger, update_health_state: Callable[[HealthState], None]) -> None:
         """
         Initialize a new instance.
         """
@@ -43,6 +44,7 @@ class SlimLinkSimulator:
         self._link_enabled = False
         self._read_counters = [0] * 9
         self._block_lost_cdr_lost_count = [0] * 2
+        self._update_health_state = update_health_state
         self._update_health_state(HealthState.UNKNOWN)
 
     @property
@@ -152,7 +154,7 @@ class SlimLinkSimulator:
 
     def verify_connection(
         self: SlimLinkSimulator,
-    ) -> HealthState:
+    ) -> tuple[ResultCode, str]:
         """
         Performs a health check on the SLIM link. No check is done if the link
         is not active; instead, the health state is set to UNKNOWN.
