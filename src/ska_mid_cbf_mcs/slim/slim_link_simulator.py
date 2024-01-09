@@ -36,6 +36,8 @@ class SlimLinkSimulator:
     ) -> None:
         """
         Initialize a new instance.
+        :param logger: a logger for this object to use
+        :param update_health_state: method to call when link health state changes
         """
         self._logger = logger
 
