@@ -146,3 +146,7 @@ class TestSlim:
             assert rc == ResultCode.OK
             for link in mesh.healthSummary:
                 assert link == HealthState.OK
+
+        # Turn off the LRUs and then the Slim devices
+        for proxy in test_proxies.talon_lru:
+            proxy.Off()

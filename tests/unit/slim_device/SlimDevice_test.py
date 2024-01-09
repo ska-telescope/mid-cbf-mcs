@@ -85,37 +85,6 @@ class TestSlim:
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
 
-    # @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
-    # def test_Power_Commands(
-    #     self: TestSlim,
-    #     device_under_test: CbfDeviceProxy,
-    #     command: str,
-    # ) -> None:
-    #     """
-    #     Test Power commands.
-
-    #     :param device_under_test: fixture that provides a
-    #         :py:class:`CbfDeviceProxy` to the device under test, in a
-    #         :py:class:`tango.test_context.DeviceTestContext`.
-    #     :param command: the name of the Power command to be tested
-    #     """
-
-    #     self.test_adminModeOnline()
-
-    #     if command == "On":
-    #         expected_state = DevState.ON
-    #         result = device_under_test.On()
-    #     elif command == "Off":
-    #         expected_state = DevState.OFF
-    #         result = device_under_test.Off()
-    #     elif command == "Standby":
-    #         expected_state = DevState.STANDBY
-    #         result = device_under_test.Standby()
-
-    #     time.sleep(CONST_WAIT_TIME)
-    #     assert result[0][0] == ResultCode.OK
-    #     assert device_under_test.State() == expected_state
-
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./mnt/slim/fs_slim_config.yaml")],

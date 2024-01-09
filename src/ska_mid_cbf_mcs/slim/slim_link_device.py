@@ -20,7 +20,12 @@ from ska_tango_base.commands import ResponseCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    PowerMode,
+    SimulationMode,
+)
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, run
 
@@ -421,9 +426,14 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            component_manager = self.target
-
-            return component_manager.connect_slim_tx_rx()
+            if self.adminMode == AdminMode.ONLINE:
+                component_manager = self.target
+                return component_manager.connect_slim_tx_rx()
+            else:
+                return (
+                    ResultCode.FAILED,
+                    "Device is offline. Failed to issue ConnectTxRx command.",
+                )
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -453,8 +463,14 @@ class SlimLink(SKABaseDevice):
             :return: The HealthState enum describing the link's status.
             :rtype: (ResultCode, str)
             """
-            component_manager = self.target
-            return component_manager.verify_connection()
+            if self.adminMode == AdminMode.ONLINE:
+                component_manager = self.target
+                return component_manager.verify_connection()
+            else:
+                return (
+                    ResultCode.FAILED,
+                    "Device is offline. Failed to issue VerifyConnection command.",
+                )
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -486,9 +502,14 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            component_manager = self.target
-
-            return component_manager.disconnect_slim_tx_rx()
+            if self.adminMode == AdminMode.ONLINE:
+                component_manager = self.target
+                return component_manager.disconnect_slim_tx_rx()
+            else:
+                return (
+                    ResultCode.FAILED,
+                    "Device is offline. Failed to issue DisconnectTxRx command.",
+                )
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -518,8 +539,14 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            component_manager = self.target
-            return component_manager.clear_counters()
+            if self.adminMode == AdminMode.ONLINE:
+                component_manager = self.target
+                return component_manager.clear_counters()
+            else:
+                return (
+                    ResultCode.FAILED,
+                    "Device is offline. Failed to issue ClearCounters command.",
+                )
 
     @command(
         dtype_out="DevVarLongStringArray",
