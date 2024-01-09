@@ -149,7 +149,11 @@ class TestCbfController:
             assert test_proxies.controller.read_sourceSysParam == ""
 
     @pytest.mark.parametrize(
-            "config_file_name", ["source_init_sys_param.json", "source_init_sys_param_retrieve_from_car.json"]
+        "config_file_name",
+        [
+            "source_init_sys_param.json",
+            "source_init_sys_param_retrieve_from_car.json",
+        ],
     )
     def test_SourceInitSysParam(self, test_proxies, config_file_name: str):
         """
