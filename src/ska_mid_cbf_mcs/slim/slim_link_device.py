@@ -155,7 +155,7 @@ class SlimLink(SKABaseDevice):
         """
         super().init_command_objects()
 
-        device_args = (self.component_manager, self.logger)
+        device_args = (self, self.logger)
         self.register_command_object(
             "ConnectTxRx", self.ConnectTxRxCommand(*device_args)
         )
@@ -426,8 +426,8 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.adminMode == AdminMode.ONLINE:
-                component_manager = self.target
+            if self.target.adminMode == AdminMode.ONLINE:
+                component_manager = self.target.component_manager
                 return component_manager.connect_slim_tx_rx()
             else:
                 return (
@@ -463,8 +463,8 @@ class SlimLink(SKABaseDevice):
             :return: The HealthState enum describing the link's status.
             :rtype: (ResultCode, str)
             """
-            if self.adminMode == AdminMode.ONLINE:
-                component_manager = self.target
+            if self.target.adminMode == AdminMode.ONLINE:
+                component_manager = self.target.component_manager
                 return component_manager.verify_connection()
             else:
                 return (
@@ -502,8 +502,8 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.adminMode == AdminMode.ONLINE:
-                component_manager = self.target
+            if self.target.adminMode == AdminMode.ONLINE:
+                component_manager = self.target.component_manager
                 return component_manager.disconnect_slim_tx_rx()
             else:
                 return (
@@ -539,8 +539,8 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.adminMode == AdminMode.ONLINE:
-                component_manager = self.target
+            if self.target.adminMode == AdminMode.ONLINE:
+                component_manager = self.target.component_manager
                 return component_manager.clear_counters()
             else:
                 return (
