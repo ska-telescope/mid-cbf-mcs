@@ -29,7 +29,11 @@ class SlimLinkSimulator:
     A simulator for the SLIM Link.
     """
 
-    def __init__(self: SlimLinkSimulator, logger: logging.Logger, update_health_state: Callable[[HealthState], None]) -> None:
+    def __init__(
+        self: SlimLinkSimulator,
+        logger: logging.Logger,
+        update_health_state: Callable[[HealthState], None],
+    ) -> None:
         """
         Initialize a new instance.
         """

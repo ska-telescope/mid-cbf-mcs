@@ -11,11 +11,11 @@
 from __future__ import annotations
 
 import os
+from time import sleep
 
 import pytest
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
 from tango import DevState
-from time import sleep
 
 # Standard imports
 
@@ -95,7 +95,6 @@ class TestSlimLink:
             proxy.adminMode = AdminMode.OFFLINE
             proxy.set_timeout_millis(10000)
 
-
     def test_VerifyConnection(
         self: TestSlimLink, test_proxies: pytest.fixture
     ) -> None:
@@ -108,7 +107,7 @@ class TestSlimLink:
         sleep_time_s = 0.1
 
         device_under_test = test_proxies.slim_link
-        
+
         for idx, link in enumerate(device_under_test):
             link.txDeviceName = "talondx/slim-tx-rx/tx-sim" + str(idx)
             link.rxDeviceName = "talondx/slim-tx-rx/rx-sim" + str(idx)

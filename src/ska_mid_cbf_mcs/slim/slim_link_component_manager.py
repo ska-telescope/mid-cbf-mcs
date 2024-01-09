@@ -69,7 +69,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         self._link_enabled = False  # True when tx rx are connected
 
-        self.slim_link_simulator = SlimLinkSimulator(logger=logger, update_health_state=update_health_state)
+        self.slim_link_simulator = SlimLinkSimulator(
+            logger=logger, update_health_state=update_health_state
+        )
 
         self._update_health_state = update_health_state
 
