@@ -703,9 +703,9 @@ class ControllerComponentManager(CbfComponentManager):
             msg = f"Retrieving the init_sys_param file failed because {tm_data_sources} is an invalid source"
             self._logger.error(msg)
             raise ValueError(msg)
-        except KeyError as e:
+        except KeyError:
             msg = f"Retrieving the init_sys_param file failed because {tm_data_filepath} is an invalid file path"
-            self._logger.error(msg, e)
+            self._logger.error(msg)
             raise KeyError(msg)
 
         self._logger.info(
