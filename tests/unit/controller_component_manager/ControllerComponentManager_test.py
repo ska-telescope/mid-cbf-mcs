@@ -183,7 +183,7 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles a valid source and filepath in sys param
+        Test if the component manager handles retrieving the sys param file with a valid source and filepath
         """
         controller_component_manager.start_communicating()
         assert (
@@ -206,7 +206,9 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles invalid source and filepath in sys param
+        Test if the component manager properly handles the scenario where it initially 
+        retrieves the sys param file with a valid source and filepath, 
+        followed by sending the sys param file directly
         """
         controller_component_manager.start_communicating()
         assert (
@@ -242,7 +244,7 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles invalid source and filepath in sys param
+        Test if the component manager handles retrieving the sys param file with an invalid source
         """
         controller_component_manager.start_communicating()
         assert (
@@ -267,7 +269,9 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles invalid source and filepath in sys param
+        Test if the component manager properly handles the scenario where it initially 
+        retrieves the sys param file with a valid source and filepath, 
+        followed by sending another command with an invalid source
         """
         controller_component_manager.start_communicating()
         assert (
@@ -301,7 +305,7 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles invalid source and filepath in sys param
+        Test if the component manager handles retrieving the sys param file with an invalid filepath
         """
         controller_component_manager.start_communicating()
         assert (
@@ -326,7 +330,7 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if component manager handles invalid source and filepath in sys param
+        Test if the component manager handles the scenario where it has a schema error
         """
         controller_component_manager.start_communicating()
         assert (
