@@ -82,6 +82,26 @@ class TestSlim:
             )
             assert mesh.State() == DevState.ON
 
+    def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
+        """
+        Test the "Configure" command
+
+        :param test_proxies: the proxies test fixture
+        """
+
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            with open(data_file_path + "slim_test_config.yaml", "r") as f:
+                rc, msg = mesh.Configure(f.read())
+
+            assert rc == ResultCode.OK
+            for link in mesh.healthSummary:
+                assert link == HealthState.OK
+
+        # Turn off the LRUs and then the Slim devices
+        for proxy in test_proxies.talon_lru:
+            proxy.Off()
+
     def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "Off" command
@@ -130,23 +150,3 @@ class TestSlim:
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.OFFLINE
             proxy.set_timeout_millis(10000)
-
-    def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
-        """
-        Test the "Configure" command
-
-        :param test_proxies: the proxies test fixture
-        """
-
-        device_under_test = test_proxies.slim
-        for mesh in device_under_test:
-            with open(data_file_path + "slim_test_config.yaml", "r") as f:
-                rc, msg = mesh.Configure(f.read())
-
-            assert rc == ResultCode.OK
-            for link in mesh.healthSummary:
-                assert link == HealthState.OK
-
-        # Turn off the LRUs and then the Slim devices
-        for proxy in test_proxies.talon_lru:
-            proxy.Off()
