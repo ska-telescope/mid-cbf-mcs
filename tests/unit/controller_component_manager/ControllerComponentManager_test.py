@@ -206,8 +206,8 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if the component manager properly handles the scenario where it initially 
-        retrieves the sys param file with a valid source and filepath, 
+        Test if the component manager properly handles the scenario where it initially
+        retrieves the sys param file with a valid source and filepath,
         followed by sending the sys param file directly
         """
         controller_component_manager.start_communicating()
@@ -269,8 +269,8 @@ class TestControllerComponentManager:
         controller_component_manager: ControllerComponentManager,
     ) -> None:
         """
-        Test if the component manager properly handles the scenario where it initially 
-        retrieves the sys param file with a valid source and filepath, 
+        Test if the component manager properly handles the scenario where it initially
+        retrieves the sys param file with a valid source and filepath,
         followed by sending another command with an invalid source
         """
         controller_component_manager.start_communicating()
