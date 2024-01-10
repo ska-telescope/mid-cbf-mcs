@@ -86,9 +86,9 @@ class FspComponentManager(CbfComponentManager):
 
         self._fsp_id = fsp_id
 
-        self._fsp_corr_subarray_fqdns_all = list(fsp_corr_subarray_fqdns_all)
-        self._fsp_pss_subarray_fqdns_all = list(fsp_pss_subarray_fqdns_all)
-        self._fsp_pst_subarray_fqdns_all = list(fsp_pst_subarray_fqdns_all)
+        self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
+        self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
+        self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
 
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
@@ -299,6 +299,7 @@ class FspComponentManager(CbfComponentManager):
                 )
             case FspModes.CORR.value:
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
+                    # remove CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_corr_subarray.remove(fqdn)
                     else:
@@ -307,6 +308,7 @@ class FspComponentManager(CbfComponentManager):
                         )
             case FspModes.PSS_BF.value:
                 for fqdn in self._fsp_pss_subarray_fqdns_all:
+                    # remove PSS subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pss_subarray.remove(fqdn)
                     else:
@@ -315,6 +317,7 @@ class FspComponentManager(CbfComponentManager):
                         )
             case FspModes.PST_BF.value:
                 for fqdn in self._fsp_pst_subarray_fqdns_all:
+                    # remove PST subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pst_subarray.remove(fqdn)
                     else:
@@ -333,6 +336,7 @@ class FspComponentManager(CbfComponentManager):
                 )
             case FspModes.CORR.value:
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
+                    # add CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_corr_subarray.add(fqdn)
                     else:
@@ -341,6 +345,7 @@ class FspComponentManager(CbfComponentManager):
                         )
             case FspModes.PSS_BF.value:
                 for fqdn in self._fsp_pss_subarray_fqdns_all:
+                    # add PSS subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pss_subarray.add(fqdn)
                     else:
@@ -349,6 +354,7 @@ class FspComponentManager(CbfComponentManager):
                         )
             case FspModes.PST_BF.value:
                 for fqdn in self._fsp_pst_subarray_fqdns_all:
+                    # add PST subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pst_subarray.add(fqdn)
                     else:
@@ -390,8 +396,7 @@ class FspComponentManager(CbfComponentManager):
                     case FspModes.PST_BF.value:
                         self._group_fsp_pst_subarray.command_inout("GoToIdle")
 
-                self._function_mode = FspModes.IDLE.value
-                self._push_change_event("functionMode", self._function_mode)
+                self.set_function_mode("IDLE")
         else:
             result_code = ResultCode.FAILED
             message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {subarray_id}."
@@ -547,6 +552,16 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            if len(self._subarray_membership) != 0:
+                self._logger.error(
+                    f"FSP {self._fsp_id} currently belongs to \
+                                   subarray(s) {self._subarray_membership}, \
+                                   cannot change function mode at this time."
+                )
+                return (
+                    ResultCode.FAILED,
+                    f"Fsp SetFunctionMode command FAILED",
+                )
             match function_mode:
                 case "IDLE":
                     self._function_mode = FspModes.IDLE.value
@@ -577,8 +592,7 @@ class FspComponentManager(CbfComponentManager):
                 f"FSP set to function mode {self._function_mode}"
             )
 
-            message = "Fsp SetFunctionMode command completed OK"
-            return (ResultCode.OK, message)
+            return (ResultCode.OK, "Fsp SetFunctionMode command completed OK")
 
         else:
             log_msg = "Fsp SetFunctionMode command failed: \

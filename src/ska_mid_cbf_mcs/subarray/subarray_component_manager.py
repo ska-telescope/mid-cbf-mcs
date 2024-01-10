@@ -782,7 +782,6 @@ class CbfSubarrayComponentManager(
                 data = tango.DeviceData()
                 data.insert(tango.DevUShort, self._subarray_id)
                 self._logger.debug(data)
-                # TODO could potentially be sending FSP subarrays to IDLE twice
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
                 self._group_fsp.remove_all()
         try:
@@ -1493,10 +1492,6 @@ class CbfSubarrayComponentManager(
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
-        # reset any previously configured VCCs
-        if self._ready:
-            self._group_vcc.command_inout("GoToIdle")
-
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
         self._logger.debug(f"config_id: {self._config_id}")
@@ -1707,15 +1702,6 @@ class CbfSubarrayComponentManager(
                     "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
                 )
                 group.remove_all()
-
-        if self._group_fsp.get_size() > 0:
-            # change FSP subarray membership
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, self._subarray_id)
-            self._logger.debug(data)
-            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-            self._logger.debug("removing all fqdns from group_fsp:")
-            self._group_fsp.remove_all()
 
         for fsp in configuration["fsp"]:
             # Configure fspID.
