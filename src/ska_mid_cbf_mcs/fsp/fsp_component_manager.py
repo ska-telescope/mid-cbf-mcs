@@ -560,7 +560,7 @@ class FspComponentManager(CbfComponentManager):
                 )
                 return (
                     ResultCode.FAILED,
-                    f"Fsp SetFunctionMode command FAILED",
+                    "Fsp SetFunctionMode command FAILED",
                 )
             match function_mode:
                 case "IDLE":
