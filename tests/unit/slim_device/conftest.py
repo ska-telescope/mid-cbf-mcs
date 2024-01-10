@@ -107,10 +107,12 @@ def mock_component_manager(
         mock._component_power_mode_changed_callback(PowerMode.OFF)
 
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         mock.message = "Slim On command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
         mock.message = "Slim Off command completed OK"
         return (ResultCode.OK, mock.message)
 

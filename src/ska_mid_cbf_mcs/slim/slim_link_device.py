@@ -426,7 +426,7 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.target.adminMode == AdminMode.ONLINE:
+            if self.target.read_adminMode() == AdminMode.ONLINE:
                 component_manager = self.target.component_manager
                 return component_manager.connect_slim_tx_rx()
             else:
@@ -463,7 +463,7 @@ class SlimLink(SKABaseDevice):
             :return: The HealthState enum describing the link's status.
             :rtype: (ResultCode, str)
             """
-            if self.target.adminMode == AdminMode.ONLINE:
+            if self.target.read_adminMode() == AdminMode.ONLINE:
                 component_manager = self.target.component_manager
                 return component_manager.verify_connection()
             else:
@@ -502,7 +502,7 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.target.adminMode == AdminMode.ONLINE:
+            if self.target.read_adminMode() == AdminMode.ONLINE:
                 component_manager = self.target.component_manager
                 return component_manager.disconnect_slim_tx_rx()
             else:
@@ -539,7 +539,7 @@ class SlimLink(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.target.adminMode == AdminMode.ONLINE:
+            if self.target.read_adminMode() == AdminMode.ONLINE:
                 component_manager = self.target.component_manager
                 return component_manager.clear_counters()
             else:

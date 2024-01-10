@@ -102,6 +102,8 @@ class TestSlim:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         self.test_adminModeOnline(device_under_test)
+        device_under_test.On()
+        time.sleep(CONST_WAIT_TIME)
         with open(mesh_config_filename, "r") as mesh_config:
             result = device_under_test.Configure(mesh_config.read())
-            assert result[0] == ResultCode.OK
+            assert result[0][0] == ResultCode.OK
