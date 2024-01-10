@@ -22,13 +22,12 @@ An example of this Tango device and component manager interaction is shown in th
 Cbf Controller
 ======================================================
 
-The ``CbfController`` Tango device controls its subordinate Tango devices: ``Fsp``, ``Vcc``, 
-``CbfSubarray`` and ``TalonLRU``. It is responsible for turning these subordinate devices on 
-and off, and putting the ``Fsp``,``Vcc`` and CbfSubarray devices in STANDBY mode. The 
-CbfController also initiates the configuration of the Talon-DX boards. The ``CbfController`` 
-device’s OnCommand triggers ``TalonDxComponentManager.configure_talons`` to be called which copies 
+The ``CbfController`` Tango device controls its subordinate Tango devices: ``Fsp``, ``Vcc``, ``Slim``, 
+``CbfSubarray``, and ``TalonLRU``. It is responsible for turning these subordinate devices on 
+and off. The ``CbfController`` also initiates the configuration of the Talon-DX boards. The ``CbfController`` 
+device’s OnCommand triggers a call to ``TalonDxComponentManager.configure_talons``, which copies 
 the device server binaries and FPGA bitstream to the Talon-DX boards, starts the HPS master 
-device server and sends the configure command to each DsHpsMaster device.
+device server, and sends the configure command to each DsHpsMaster device.
 
 Cbf Subarray 
 ======================================================
@@ -98,6 +97,49 @@ any connection to the hardware.
    
    MCS Vcc Device
 
+
+Serial Lightweight Interconnect Mesh (SLIM)
+=================================================
+
+Slim
+----
+The ``Slim`` Tango device provides macro control to aggregated subordinate ``SlimLink`` Tango devices.
+It is responsible for turning the subordinate devices on and off, as well as rolling up 
+and monitoring important device attributes, such as each link's HealthState. The ``Slim``
+device’s ConfigureCommand triggers a call to ``SlimComponentManager.configure``, which 
+initializes ``SlimLink`` devices as described in a YAML configuration file.
+
+Since the ``SlimLink`` component that the ``Slim`` device controls is software within MCS, it does not 
+require a simulator. Whether being tested or not, the ``Slim`` device always controls the ``SlimLink`` 
+MCS devices. It should be noted, however, that the ``Slim`` device still implements a simulation mode,
+and it's sole purpose is to set the child ``SlimLink`` device's simulation mode. Therefore, simulation mode 
+is set globally within a mesh and cannot be toggled per link.
+
+.. figure:: ../../diagrams/slim-device.png
+   :align: center
+   
+   MCS Slim Device
+
+SlimLink
+--------
+The ``SlimLink`` Tango device configures a pair of proxies to ``slim-tx`` and ``slim-rx`` HPS devices 
+within the ``ds-slim-tx-rx`` device server. It also monitors several of the HPS device's attributes
+that are used to update the ``SlimLink`` device's HealthState attribute. The ``SlimLink`` device’s 
+ConnectTxRxCommand triggers a call to ``SlimLinkComponentManager.connect_slim_tx_rx``, which 
+initializes the target HPS ``ds-slim-tx-rx`` devices by taking them out of serial loopback 
+mode, syncing idle control words, etc.
+
+The ``SlimLink`` device can operate in either simulation mode or not. When in simulation
+mode (this is the default), simulator classes are used in place of communication
+with the real Talon-DX Tango devices. This allows testing of the MCS without
+any connection to the hardware.
+
+.. figure:: ../../diagrams/slimlink-device.png
+   :align: center
+   
+   MCS SlimLink Device
+
+
 Talon LRU
 ======================================================
 
@@ -126,7 +168,7 @@ The ``PowerSwitch`` Tango device is used to control and monitor the web power sw
 that provides power to the Talon LRUs. The current power switch in use is the DLI LPC9 (`User Guide
 <http://www.digital-loggers.com/downloads/Product%20Manuals/Power%20Control/pro%20manual.pdf>`_). 
 The power switch has 8 programmable outlets, meaning that it can power up to 4 Talon 
-LRUs (each LRU needs two power supply lines).
+LRUs (each LRU has redundant power supplies).
 
 The ``PowerSwitch`` device can be operated in either simulation mode or not. When in simulation
 mode (this is the default), the ``PowerSwitchSimulator`` is used in place of communication with
@@ -164,7 +206,7 @@ The Talon DX Log Consumer is a Tango device intended to run on the host machine 
 to the Talon-DX boards. This Tango device is set up as a default logging target for all the
 Tango device servers running on the HPS of each Talon-DX board. When the HPS device servers
 output logs via the Tango Logging Service, the logs get transmitted to this log consumer device
-where they get converted to the SKA logging format and outputted once again via the
+where they get converted to the SKA logging format and output once again via the
 SKA logging framework. In this way logs from the Talon-DX boards can be aggregated in once
 place and eventually shipped to the Elastic framework in the same way as logs from the Mid CBF
 Monitor and Control Software (MCS).
@@ -185,13 +227,13 @@ endpoint when starting up the log consumer that is visible to the HPS devices.
 
 The following ORB arguments are used (see the make target ``talondx-log-consumer``):
 
-* ``-ORBendPointPublish giop:tcp:169.254.100.88:60721``: Exposes this IP address and port to all clients of this Tango device. When the HPS device servers contact the database to get the network information of the log consumer, this is the IP address and port that is returned. The IP addresses matches that of the Ethernet connection to the development server, allowing the HPS device servers to direct their messages across that interface.
+* ``-ORBendPointPublish giop:tcp:169.254.100.88:60721``: Exposes this IP address and port to all clients of this Tango device. When the HPS device servers contact the database to get the network information of the log consumer, this is the IP address and port that is returned. The IP address matches that of the Ethernet connection to the development server, allowing the HPS device servers to direct their messages across that interface.
 * ``-ORBendPoint giop:tcp:142.73.34.173:60721``: Assigns the IP address and port that the log consumer device is actually running on. This needs to be manually assigned since an iptables mapping rule was created on the development server to route any TCP traffic coming in on ``169.254.100.88:60721`` to ``142.73.34.173:60721``.
 
 Some important notes:
 
 * Due to the end point publishing, no Tango devices running on the development server will be able to connect to the log consumer (including being able to configure the device from Jive). This is because the published IP address is not accessible on the development server. There may be a way to publish multiple endpoints, but this needs further investigation.
-* If the log consumer device cannot be started due to an OmniORB exception saying that the end point cannot be created, it is possible that the ``142.73.34.173`` needs to change to something else. It is not yet clear why this can happen. To change it do the following:
+* If the log consumer device cannot be started due to an OmniORB exception saying that the end point cannot be created, it is possible that the ``142.73.34.173`` needs to change to something else. It is not yet clear why this can happen. To change it, do the following:
 
   * Remove the ORB arguments from the ``talondx-log-consumer`` make target, and then start the log consumer.
   * Open up Jive and look at what IP address is automatically assigned to the log consumer device. This is the IP address that we now need to use for the endpoint.

@@ -47,16 +47,14 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         Initialize a new instance.
 
-        :param logger: a logger for this object to use
         :param update_health_state: method to call when link health state changes
-        :param push_change_event_callback: method to call when the base classes
+        :param logger: a logger for this object to use
+        :param push_change_event_callback: callback used when the base classes
             want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
+        :param communication_status_changed_callback: callback used when the status of the communications channel between
             the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
+        :param component_power_mode_changed_callback: callback used when the component power mode changes
+        :param component_fault_callback: callback used in event of
             component fault
         """
         self.connected = False
@@ -71,7 +69,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         self._link_enabled = False  # True when tx rx are connected
 
-        self.slim_link_simulator = SlimLinkSimulator(logger=logger)
+        self.slim_link_simulator = SlimLinkSimulator(
+            logger=logger, update_health_state=update_health_state
+        )
 
         self._update_health_state = update_health_state
 
@@ -86,9 +86,10 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def tx_device_name(self: SlimLinkComponentManager) -> str:
         """
-        The name of the tx device the link is associated with.
+        The name of the HPS tx device that the link is associated with.
 
         :return: the tx device name.
+        :rtype: str
         """
         return self._tx_device_name
 
@@ -97,7 +98,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager, tx_device_name: str
     ) -> None:
         """
-        Set the tx device name value.
+        Sets the tx device name value.
 
         :param tx_device_name: The tx device name.
         """
@@ -108,9 +109,10 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def rx_device_name(self: SlimLinkComponentManager) -> str:
         """
-        The name of the rx device the link is associated with.
+        The name of the HPS rx device that the link is associated with.
 
         :return: the rx device name.
+        :rtype: str
         """
         return self._rx_device_name
 
@@ -119,7 +121,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager, rx_device_name: str
     ) -> None:
         """
-        Set the rx device name value.
+        Sets the rx device name value.
 
         :param rx_device_name: The rx device name.
         """
@@ -130,18 +132,21 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def link_name(self: SlimLinkComponentManager) -> str:
         """
-        The name of the link
+        The name of the SLIM link.
 
-        :return: the link name
+        :return: the link name.
+        :rtype: str
         """
         return self._link_name
 
     @property
     def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The idle control word value tx generates by hashing the tx's fqdn.
+        The idle control word generated in the HPS by hashing the tx device's FQDN.
 
         :return: the tx idle control word.
+        :raise Tango exception: if the tx device is not set.
+        :rtype: int
         """
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.tx_idle_ctrl_word
@@ -157,9 +162,11 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The last idle control word read by rx from the datastream.
+        The last idle control word received in the datastream by the HPS rx device.
 
         :return: the rx idle control word.
+        :raise Tango exception: if the rx device is not set.
+        :rtype: int
         """
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.rx_idle_ctrl_word
@@ -175,9 +182,11 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def bit_error_rate(self: SlimLinkComponentManager) -> float:
         """
-        The bit error rate in 66b-word-errors per second.
+        The bit-error rate in 66b-word-errors per second.
 
         :return: The bit error rate.
+        :raise Tango exception: if the rx device is not set.
+        :rtype: float
         """
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.bit_error_rate
@@ -194,7 +203,7 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def simulation_mode(self):
         """
-        Get the simulation mode
+        Get the simulation mode.
         """
         return self._simulation_mode
 
@@ -209,9 +218,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def read_counters(
         self: SlimLinkComponentManager,
-    ) -> list[tango.DevULong64]:
+    ) -> list[int]:
         """
-        An array holding the counter values from the tx and rx devices in the order:
+        An array holding the counter values from the HPS tx and rx devices in the order:
         [0] rx_word_count
         [1] rx_packet_count
         [2] rx_idle_word_count
@@ -223,6 +232,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         [8] tx_idle_word_count
 
         :return: The read_counters array.
+        :raise Tango exception: if link is not enabled.
+        :rtype: list[int]
         """
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.read_counters()
@@ -283,8 +294,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> tuple[ResultCode, str]:
         """
-        Link the Tx and Rx by setting them to use the same idle control word,
-        and disable serial loopback. Begin monitoring the Tx and Rx.
+        Link the HPS tx and rx devices by synchronizing their idle control words
+        and disabling serial loopback. Begin monitoring the Tx and Rx.
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -293,12 +304,15 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         self._logger.debug(
             "Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  "
-            + self._link_name
+            + self._tx_device_name
+            + "->"
+            + self._rx_device_name
         )
 
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.connect_slim_tx_rx()
 
+        # Tx and Rx device names must be set to create proxies.
         if self._rx_device_name == "" or self._tx_device_name == "":
             msg = "Tx or Rx device FQDN have not been set."
             return (ResultCode.FAILED, msg)
@@ -335,10 +349,12 @@ class SlimLinkComponentManager(CbfComponentManager):
     ) -> tuple[ResultCode, str]:
         """
         Performs a health check on the SLIM link. No check is done if the link
-        is not active, and the health state UNKNOWN will be returned.
+        is not active; instead, the health state is set to UNKNOWN.
 
-        :return: the link HealthState. UNKNOWN if link is inactive. OK if link
-                 is healthy. FAILED if problem has been detected.
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
         """
         self._logger.debug(
             "Entering SlimLinkComponentManager.verify_connection()  -  "
@@ -394,8 +410,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> tuple[ResultCode, str]:
         """
-        Stops controlling and monitoring the Tx and Rx devices. The link
-        becomes inactive.
+        Stops controlling and monitoring the HPS tx and rx devices. The link
+        becomes inactive. Serial loopback is re-established.
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -431,7 +447,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> tuple[ResultCode, str]:
         """
-        Clears the Tx and Rx counters.
+        Clears the HPS tx and rx device's read counters.
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for

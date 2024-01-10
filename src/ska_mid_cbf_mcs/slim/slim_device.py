@@ -151,7 +151,7 @@ class Slim(SKABaseDevice):
         """
         super().init_command_objects()
 
-        device_args = (self.component_manager, self.logger)
+        device_args = (self, self.logger)
 
         self.register_command_object(
             "Configure", self.ConfigureCommand(*device_args)
@@ -244,6 +244,18 @@ class Slim(SKABaseDevice):
         The command class for the Configure command.
         """
 
+        def is_allowed(self: Slim.ConfigureCommand) -> bool:
+            """
+            Determine if Configure is allowed
+            (allowed when Devstate is ON).
+
+            :return: if Configure is allowed
+            :rtype: bool
+            """
+            if self.target.get_state() == tango.DevState.ON:
+                return True
+            return False
+
         def do(
             self: Slim.ConfigureCommand, argin: str
         ) -> Tuple[ResultCode, str]:
@@ -256,14 +268,19 @@ class Slim(SKABaseDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            component_manager = self.target
-            (result_code, message) = component_manager.configure(argin)
-            if result_code == ResultCode.OK:
-                self.logger.info("Mesh Configure completed successfully")
-            elif result_code == ResultCode.FAILED:
-                self.logger.error(message)
-
-            return (result_code, message)
+            if self.is_allowed():
+                component_manager = self.target.component_manager
+                (result_code, message) = component_manager.configure(argin)
+                if result_code == ResultCode.OK:
+                    self.logger.info("Mesh Configure completed successfully")
+                elif result_code == ResultCode.FAILED:
+                    self.logger.error(message)
+                return (result_code, message)
+            else:
+                return (
+                    ResultCode.FAILED,
+                    "Device is off. Failed to issue Configure command.",
+                )
 
     @command(
         dtype_in="DevString",

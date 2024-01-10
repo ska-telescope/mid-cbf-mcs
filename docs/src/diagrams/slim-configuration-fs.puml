@@ -1,0 +1,107 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title FS SLIM Configuration Sequence\n
+
+
+box "MCS"
+participant "Mid.CBF\nController" as controller
+participant "FS\nMesh" as mesh_fs
+participant "Vis\nMesh" as mesh_vis
+collections "FS\nLinks\n0-15" as links_fs
+collections "Vis\nLinks\n0-3" as links_vis
+end box
+
+box "VCC-FSP-1\n(Talon A)"
+collections "FS\nTx\n0-3"  as tx_fs_1
+collections "FS\nRx\n0-3"  as rx_fs_1
+participant "Vis\nTx\n"    as tx_vis_1
+collections "Vis\nRx\n0-3" as rx_vis_1
+end box
+
+box "VCC-FSP-2\n(Talon B)"
+collections "FS\nTx\n0-3"  as tx_fs_2
+collections "FS\nRx\n0-3"  as rx_fs_2
+participant "Vis\nTx\n"    as tx_vis_2
+end box
+
+box "VCC-FSP-3\n(Talon C)"
+collections "FS\nTx\n0-3"  as tx_fs_3
+collections "FS\nRx\n0-3"  as rx_fs_3
+participant "Vis\nTx\n"    as tx_vis_3
+end box
+
+box "VCC-FSP-4\n(Talon D)"
+collections "FS\nTx\n0-3"  as tx_fs_4
+collections "FS\nRx\n0-3"  as rx_fs_4
+participant "Vis\nTx\n"    as tx_vis_4
+end box
+
+controller -> mesh_fs   : Configure()
+mesh_fs    -> links_fs  : Configure() x16
+
+group#Red SLIM Links to FSP 1
+links_fs   -> tx_fs_1   : Configure FS-Link0-Tx
+links_fs   -> rx_fs_1   : Configure FS-Link0-Rx
+links_fs   -> tx_fs_2   : Configure FS-Link1-Tx
+links_fs   -> rx_fs_1   : Configure FS-Link1-Rx
+links_fs   -> tx_fs_3   : Configure FS-Link2-Tx
+links_fs   -> rx_fs_1   : Configure FS-Link2-Rx
+links_fs   -> tx_fs_4   : Configure FS-Link3-Tx
+links_fs   -> rx_fs_1   : Configure FS-Link3-Rx
+end group 
+
+group#LightGreen SLIM Links to FSP 2
+links_fs   -> tx_fs_1   : Configure FS-Link4-Tx
+links_fs   -> rx_fs_2   : Configure FS-Link4-Rx
+links_fs   -> tx_fs_2   : Configure FS-Link5-Tx
+links_fs   -> rx_fs_2   : Configure FS-Link5-Rx
+links_fs   -> tx_fs_3   : Configure FS-Link6-Tx
+links_fs   -> rx_fs_2   : Configure FS-Link6-Rx
+links_fs   -> tx_fs_4   : Configure FS-Link7-Tx
+links_fs   -> rx_fs_2   : Configure FS-Link7-Rx
+end group 
+
+group#DodgerBlue SLIM Links to FSP 3
+links_fs   -> tx_fs_1   : Configure FS-Link8-Tx
+links_fs   -> rx_fs_3   : Configure FS-Link8-Rx
+links_fs   -> tx_fs_2   : Configure FS-Link9-Tx
+links_fs   -> rx_fs_3   : Configure FS-Link9-Rx
+links_fs   -> tx_fs_3   : Configure FS-Link10-Tx
+links_fs   -> rx_fs_3   : Configure FS-Link10-Rx
+links_fs   -> tx_fs_4   : Configure FS-Link11-Tx
+links_fs   -> rx_fs_3   : Configure FS-Link11-Rx
+end group 
+
+group#GoldenRod SLIM Links to FSP 4
+links_fs   -> tx_fs_1   : Configure FS-Link12-Tx
+links_fs   -> rx_fs_4   : Configure FS-Link12-Rx
+links_fs   -> tx_fs_2   : Configure FS-Link13-Tx
+links_fs   -> rx_fs_4   : Configure FS-Link13-Rx
+links_fs   -> tx_fs_3   : Configure FS-Link14-Tx
+links_fs   -> rx_fs_4   : Configure FS-Link14-Rx
+links_fs   -> tx_fs_4   : Configure FS-Link15-Tx
+links_fs   -> rx_fs_4   : Configure FS-Link15-Rx
+end group 
+
+@enduml

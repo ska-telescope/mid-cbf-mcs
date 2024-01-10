@@ -62,6 +62,8 @@ class TestCbfController:
             assert test_proxies.vcc[i].State() == DevState.DISABLE
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.DISABLE
+        for mesh in test_proxies.slim:
+            assert mesh.State() == DevState.DISABLE
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
@@ -109,6 +111,8 @@ class TestCbfController:
             assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
+        for mesh in test_proxies.slim:
+            assert mesh.adminMode == AdminMode.ONLINE
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
@@ -183,6 +187,12 @@ class TestCbfController:
             )
             assert test_proxies.fsp[i].State() == DevState.OFF
 
+        for mesh in test_proxies.slim:
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.OFF
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
@@ -256,6 +266,8 @@ class TestCbfController:
             assert test_proxies.vcc[i].obsState == ObsState.IDLE
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+        for mesh in test_proxies.slim:
+            assert mesh.State() == DevState.OFF
         for func in ["CORR", "PSS-BF", "PST-BF"]:
             for sub in range(1, test_proxies.num_sub + 1):
                 for fsp in range(1, test_proxies.num_fsp + 1):
@@ -306,6 +318,8 @@ class TestCbfController:
             assert test_proxies.vcc[i].obsState == ObsState.IDLE
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+        for mesh in test_proxies.slim:
+            assert mesh.State() == DevState.OFF
         for func in ["CORR", "PSS-BF", "PST-BF"]:
             for sub in range(1, test_proxies.num_sub + 1):
                 for fsp in range(1, test_proxies.num_fsp + 1):
@@ -402,6 +416,8 @@ class TestCbfController:
             assert test_proxies.vcc[i].obsState == ObsState.IDLE
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+        for mesh in test_proxies.slim:
+            assert mesh.State() == DevState.OFF
         for func in ["CORR", "PSS-BF", "PST-BF"]:
             for sub in range(1, test_proxies.num_sub + 1):
                 for fsp in range(1, test_proxies.num_fsp + 1):
@@ -493,6 +509,11 @@ class TestCbfController:
                 sleep_time_s,
             )
             assert test_proxies.fsp[i].State() == DevState.DISABLE
+        for mesh in test_proxies.slim:
+            test_proxies.wait_timeout_dev(
+                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert mesh.State() == DevState.OFF
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
