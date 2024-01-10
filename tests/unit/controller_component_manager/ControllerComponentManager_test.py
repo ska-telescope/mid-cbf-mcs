@@ -11,9 +11,10 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
+import json
+
 # Path
 import os
-import json
 
 from ska_tango_base.commands import ResultCode
 
@@ -187,7 +188,10 @@ class TestControllerComponentManager:
         Test if the component manager handles retrieving the sys param file with a valid source and filepath
         """
         controller_component_manager.start_communicating()
-        assert controller_component_manager.communication_status == CommunicationStatus.ESTABLISHED
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "source_init_sys_param.json") as f:
@@ -196,7 +200,9 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(controller_component_manager, sys_param)
+        self.assert_attributes_match_expected_outcome(
+            controller_component_manager, sys_param
+        )
 
     def test_sys_param_valid_source_and_filepath_then_file_only(
         self: TestControllerComponentManager,
@@ -208,7 +214,10 @@ class TestControllerComponentManager:
         followed by sending the sys param file directly
         """
         controller_component_manager.start_communicating()
-        assert controller_component_manager.communication_status == CommunicationStatus.ESTABLISHED
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
         assert controller_component_manager._connected is True
 
         with open(json_file_path + "source_init_sys_param.json") as f:
@@ -217,7 +226,9 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(controller_component_manager, sys_param)
+        self.assert_attributes_match_expected_outcome(
+            controller_component_manager, sys_param
+        )
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sys_param_no_retrieve = f.read()
@@ -227,7 +238,10 @@ class TestControllerComponentManager:
         )
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == ""
-        assert controller_component_manager._init_sys_param == sys_param_no_retrieve
+        assert (
+            controller_component_manager._init_sys_param
+            == sys_param_no_retrieve
+        )
 
     def test_sys_param_invalid_source(
         self: TestControllerComponentManager,
@@ -237,7 +251,10 @@ class TestControllerComponentManager:
         Test if the component manager handles retrieving the sys param file with an invalid source
         """
         controller_component_manager.start_communicating()
-        assert controller_component_manager.communication_status == CommunicationStatus.ESTABLISHED
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
         assert controller_component_manager._connected is True
 
         with open(
@@ -273,7 +290,9 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(controller_component_manager, sys_param)
+        self.assert_attributes_match_expected_outcome(
+            controller_component_manager, sys_param
+        )
 
         with open(
             json_file_path + "source_init_sys_param_invalid_source.json"
@@ -283,7 +302,9 @@ class TestControllerComponentManager:
             sys_param_unusable_source
         )
         assert result_code == ResultCode.FAILED
-        self.assert_attributes_match_expected_outcome(controller_component_manager, sys_param)
+        self.assert_attributes_match_expected_outcome(
+            controller_component_manager, sys_param
+        )
 
     def test_sys_param_invalid_filepath(
         self: TestControllerComponentManager,
@@ -293,7 +314,10 @@ class TestControllerComponentManager:
         Test if the component manager handles retrieving the sys param file with an invalid filepath
         """
         controller_component_manager.start_communicating()
-        assert controller_component_manager.communication_status == CommunicationStatus.ESTABLISHED
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
         assert controller_component_manager._connected is True
 
         with open(
@@ -315,7 +339,10 @@ class TestControllerComponentManager:
         Test if the component manager handles the scenario where it has a schema error
         """
         controller_component_manager.start_communicating()
-        assert controller_component_manager.communication_status == CommunicationStatus.ESTABLISHED
+        assert (
+            controller_component_manager.communication_status
+            == CommunicationStatus.ESTABLISHED
+        )
         assert controller_component_manager._connected is True
         with open(
             json_file_path + "source_init_sys_param_invalid_schema.json"
@@ -326,8 +353,17 @@ class TestControllerComponentManager:
         assert controller_component_manager._source_init_sys_param == ""
         assert controller_component_manager._init_sys_param == ""
 
-    def assert_attributes_match_expected_outcome(self: TestControllerComponentManager, controller_component_manager: ControllerComponentManager, source_init_sys_param: str):
-        assert controller_component_manager._source_init_sys_param == source_init_sys_param
+    def assert_attributes_match_expected_outcome(
+        self: TestControllerComponentManager,
+        controller_component_manager: ControllerComponentManager,
+        source_init_sys_param: str,
+    ):
+        assert (
+            controller_component_manager._source_init_sys_param
+            == source_init_sys_param
+        )
         with open(json_file_path + "sys_param_4_boards.json") as f:
-            retrieved_sys_param_file_contents = f.read().replace("\n", "")    
-        assert controller_component_manager._init_sys_param.replace(" ", "") == retrieved_sys_param_file_contents.replace(" ", "")
+            retrieved_sys_param_file_contents = f.read().replace("\n", "")
+        assert controller_component_manager._init_sys_param.replace(
+            " ", ""
+        ) == retrieved_sys_param_file_contents.replace(" ", "")
