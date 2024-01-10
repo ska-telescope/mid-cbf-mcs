@@ -137,11 +137,11 @@ class TestSlim:
             # trigger stop_communicating by setting the AdminMode to OFFLINE
             mesh.adminMode = AdminMode.OFFLINE
 
-            # controller device should be in OFF state after stop_communicating
+            # controller device should be in disable state after stop_communicating
             test_proxies.wait_timeout_dev(
-                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+                [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
             )
-            assert mesh.State() == DevState.OFF
+            assert mesh.State() == DevState.DISABLE
 
         # Stop monitoring the TalonLRUs and power switch devices
         for proxy in test_proxies.power_switch:
