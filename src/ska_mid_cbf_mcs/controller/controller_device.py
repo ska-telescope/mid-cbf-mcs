@@ -102,8 +102,8 @@ class CbfController(SKAController):
     sourceSysParam = attribute(
         dtype="str",
         access=AttrWriteType.READ,
-        label="The json file that was provided as input",
-        doc="The location of the json file, to be retrieved from the telescope model",
+        label="The location of the file containing Dish ID to VCC and frequency offset k mapping.",
+        doc="Source and file path to the file to be retrieved through the Telescope Model. The string is in JSON format.",
     )
 
     simulationMode = attribute(

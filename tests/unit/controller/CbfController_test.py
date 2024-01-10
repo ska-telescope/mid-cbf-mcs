@@ -63,7 +63,7 @@ class TestCbfController:
 
     @pytest.mark.parametrize(
         "command",
-        ["On", "Off", "Standby", "InitSysParam", "InitSysParam-Retrieve"],
+        ["On", "Off", "Standby", "InitSysParam", "SourceInitSysParam"],
     )
     def test_Commands(
         self: TestCbfController,
@@ -98,7 +98,7 @@ class TestCbfController:
             with open(json_file_path + "sys_param_4_boards.json") as f:
                 sp = f.read()
             result = device_under_test.InitSysParam(sp)
-        elif command == "InitSysParam-Retrieve":
+        elif command == "SourceInitSysParam":
             expected_state = device_under_test.State()  # no change expected
             with open(json_file_path + "source_init_sys_param.json") as f:
                 sp = f.read()
