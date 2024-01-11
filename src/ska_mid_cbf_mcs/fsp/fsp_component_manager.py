@@ -302,28 +302,31 @@ class FspComponentManager(CbfComponentManager):
                     # remove CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_corr_subarray.remove(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
+                    )
             case FspModes.PSS_BF.value:
                 for fqdn in self._fsp_pss_subarray_fqdns_all:
                     # remove PSS subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pss_subarray.remove(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
+                    )
             case FspModes.PST_BF.value:
                 for fqdn in self._fsp_pst_subarray_fqdns_all:
                     # remove PST subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pst_subarray.remove(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
+                    )
 
     def _add_subarray_to_group_proxy(
         self: FspComponentManager, subarray_id: int
@@ -339,28 +342,31 @@ class FspComponentManager(CbfComponentManager):
                     # add CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_corr_subarray.add(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
+                    )
             case FspModes.PSS_BF.value:
                 for fqdn in self._fsp_pss_subarray_fqdns_all:
                     # add PSS subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pss_subarray.add(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
+                    )
             case FspModes.PST_BF.value:
                 for fqdn in self._fsp_pst_subarray_fqdns_all:
                     # add PST subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
                         self._group_fsp_pst_subarray.add(fqdn)
-                    else:
-                        self._logger.error(
-                            f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
-                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
+                    )
 
     @check_communicating
     def remove_subarray_membership(
@@ -552,10 +558,10 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            if len(self._subarray_membership) != 0:
+            if len(self._subarray_membership) > 1:
                 self._logger.error(
                     f"FSP {self._fsp_id} currently belongs to \
-                                   subarray(s) {self._subarray_membership}, \
+                                   subarrays {self._subarray_membership}, \
                                    cannot change function mode at this time."
                 )
                 return (
@@ -589,7 +595,7 @@ class FspComponentManager(CbfComponentManager):
 
             self._push_change_event("functionMode", self._function_mode)
             self._logger.info(
-                f"FSP set to function mode {self._function_mode}"
+                f"FSP set to function mode {FspModes(self._function_mode).name}"
             )
 
             return (ResultCode.OK, "Fsp SetFunctionMode command completed OK")

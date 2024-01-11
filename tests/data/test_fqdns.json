@@ -26,23 +26,20 @@
     "fqdn_fsp_corr_subarray_device":
     [
         "mid_csp_cbf/fspCorrSubarray/01_01",
-        "mid_csp_cbf/fspCorrSubarray/02_01",
-        "mid_csp_cbf/fspCorrSubarray/03_01",
-        "mid_csp_cbf/fspCorrSubarray/04_01"
+        "mid_csp_cbf/fspCorrSubarray/01_02",
+        "mid_csp_cbf/fspCorrSubarray/01_03"
     ],
     "fqdn_fsp_pss_subarray_device":
     [
         "mid_csp_cbf/fspPssSubarray/01_01",
-        "mid_csp_cbf/fspPssSubarray/02_01",
-        "mid_csp_cbf/fspPssSubarray/03_01",
-        "mid_csp_cbf/fspPssSubarray/04_01"
+        "mid_csp_cbf/fspPssSubarray/01_02",
+        "mid_csp_cbf/fspPssSubarray/01_03"
     ],
     "fqdn_fsp_pst_subarray_device":
     [
         "mid_csp_cbf/fspPstSubarray/01_01",
-        "mid_csp_cbf/fspPstSubarray/02_01",
-        "mid_csp_cbf/fspPstSubarray/03_01",
-        "mid_csp_cbf/fspPstSubarray/04_01"
+        "mid_csp_cbf/fspPstSubarray/01_02",
+        "mid_csp_cbf/fspPstSubarray/01_03"
     ],
     "fqdn_vlbi":
     [
