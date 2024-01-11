@@ -951,11 +951,22 @@ class CbfSubarrayComponentManager(
                     return (False, msg)
 
                 # Validate functionMode.
-                valid_function_modes = ["IDLE", "CORR", "PSS-BF", "PST-BF", "VLBI"]
+                valid_function_modes = [
+                    "IDLE",
+                    "CORR",
+                    "PSS-BF",
+                    "PST-BF",
+                    "VLBI",
+                ]
                 try:
-                    function_mode_value = valid_function_modes.index(fsp["function_mode"])
+                    function_mode_value = valid_function_modes.index(
+                        fsp["function_mode"]
+                    )
                 except ValueError:
-                    return (False, f"{fsp['function_mode']} is not a valid FSP function mode.")
+                    return (
+                        False,
+                        f"{fsp['function_mode']} is not a valid FSP function mode.",
+                    )
                 fsp_function_mode = fsp_proxy.functionMode
                 if fsp_function_mode not in [
                     FspModes.IDLE.value,
