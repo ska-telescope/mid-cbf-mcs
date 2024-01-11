@@ -548,7 +548,8 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager, function_mode: str
     ) -> Tuple[ResultCode, str]:
         """
-        Put the fsp into low power standby mode
+        Switch the function mode of the FSP; can only be done if currently
+        unassigned from any subarray membership.
 
         :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         :return: A tuple containing a return code and a string
@@ -558,10 +559,10 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            if len(self._subarray_membership) > 1:
+            if len(self._subarray_membership) > 0:
                 self._logger.error(
                     f"FSP {self._fsp_id} currently belongs to \
-                                   subarrays {self._subarray_membership}, \
+                                   subarray(s) {self._subarray_membership}, \
                                    cannot change function mode at this time."
                 )
                 return (

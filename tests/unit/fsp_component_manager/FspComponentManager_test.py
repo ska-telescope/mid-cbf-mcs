@@ -310,7 +310,9 @@ class TestFspComponentManager:
 
         valid_function_modes = ["PSS-BF", "PST-BF", "VLBI"]
         for mode in valid_function_modes:
+            fsp_component_manager.remove_subarray_membership(sub_id)
             fsp_component_manager.set_function_mode(mode)
+            fsp_component_manager.add_subarray_membership(sub_id)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode
@@ -407,7 +409,9 @@ class TestFspComponentManager:
 
         valid_function_modes = ["PSS-BF", "PST-BF", "CORR"]
         for mode in valid_function_modes:
+            fsp_component_manager.remove_subarray_membership(sub_id)
             fsp_component_manager.set_function_mode(mode)
+            fsp_component_manager.add_subarray_membership(sub_id)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode

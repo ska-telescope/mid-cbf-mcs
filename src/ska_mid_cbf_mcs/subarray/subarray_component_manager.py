@@ -39,6 +39,7 @@ from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
+    FspModes,
     const,
     freq_band_dict,
     mhz_to_hz,
@@ -938,54 +939,27 @@ class CbfSubarrayComponentManager(
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
-                # Validate fspID.
+                # Validate fsp_id.
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
-                    fspID = int(fsp["fsp_id"])
-                    proxy_fsp = self._proxies_fsp[fspID - 1]
+                    fsp_id = int(fsp["fsp_id"])
+                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
                 else:
                     msg = (
-                        f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
+                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
                         " Aborting configuration."
                     )
                     return (False, msg)
 
                 # Validate functionMode.
-                function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                if (
-                    function_modes.index(fsp["function_mode"]) + 1
-                    == proxy_fsp.functionMode
-                    or proxy_fsp.functionMode == 0
-                ):
-                    pass
-                else:
-                    # TODO need to add this check for VLBI once implemented
-                    for (
-                        fsp_corr_subarray_proxy
-                    ) in self._proxies_fsp_corr_subarray_device:
-                        if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
-                    for (
-                        fsp_pss_subarray_proxy
-                    ) in self._proxies_fsp_pss_subarray_device:
-                        if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
-                    for (
-                        fsp_pst_subarray_proxy
-                    ) in self._proxies_fsp_pst_subarray_device:
-                        if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
+                fsp_function_mode = fsp_proxy.functionMode
+                if fsp_function_mode not in [
+                    FspModes.IDLE.value,
+                    FspModes(fsp["function_mode"]).value,
+                ]:
+                    msg = f"FSP {fsp_id} currently set to function mode {FspModes(fsp_function_mode).name}, \
+                            cannot be used for {FspModes(fsp['function_mode']).name} \
+                            until it is returned to IDLE."
+                    return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
@@ -1704,62 +1678,45 @@ class CbfSubarrayComponentManager(
                 group.remove_all()
 
         for fsp in configuration["fsp"]:
-            # Configure fspID.
-            fspID = int(fsp["fsp_id"])
-            proxy_fsp = self._proxies_fsp[fspID - 1]
+            # Configure fsp_id.
+            fsp_id = int(fsp["fsp_id"])
+            fsp_proxy = self._proxies_fsp[fsp_id - 1]
+            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
+            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fsp_id - 1]
+            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fsp_id - 1]
 
-            self._group_fsp.add(self._fqdn_fsp[fspID - 1])
+            self._group_fsp.add(self._fqdn_fsp[fsp_id - 1])
             self._group_fsp_corr_subarray.add(
-                self._fqdn_fsp_corr_subarray_device[fspID - 1]
+                self._fqdn_fsp_corr_subarray_device[fsp_id - 1]
             )
             self._group_fsp_pss_subarray.add(
-                self._fqdn_fsp_pss_subarray_device[fspID - 1]
+                self._fqdn_fsp_pss_subarray_device[fsp_id - 1]
             )
             self._group_fsp_pst_subarray.add(
-                self._fqdn_fsp_pst_subarray_device[fspID - 1]
-            )
-
-            self._logger.info("Connecting to FSP devices from subarray")
-            self._logger.info(
-                f"Setting Simulation Mode of FSP proxies to: {self._simulation_mode}"
+                self._fqdn_fsp_pst_subarray_device[fsp_id - 1]
             )
 
             # Set simulation mode of FSPs to subarray sim mode
-            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
-            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fspID - 1]
-            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fspID - 1]
-
-            proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
-            proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
-            proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
-            proxy_fsp.command_inout("On")
-
-            fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_corr_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
+            self._logger.info(
+                f"Setting Simulation Mode of FSP {fsp_id} proxies to: {self._simulation_mode} and turning them on."
             )
-            fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_corr_proxy.command_inout("On")
+            for proxy in [
+                fsp_proxy,
+                fsp_corr_proxy,
+                fsp_pss_proxy,
+                fsp_pst_proxy,
+            ]:
+                proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+                proxy.write_attribute("simulationMode", self._simulation_mode)
+                proxy.write_attribute("adminMode", AdminMode.ONLINE)
+                proxy.command_inout("On")
 
-            fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pss_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
-            )
-            fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_pss_proxy.command_inout("On")
-
-            fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pst_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
-            )
-            fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_pst_proxy.command_inout("On")
+            # Configure functionMode if IDLE
+            if fsp_proxy.functionMode == FspModes.IDLE.value:
+                fsp_proxy.SetFunctionMode(fsp["function_mode"])
 
             # change FSP subarray membership
-            proxy_fsp.AddSubarrayMembership(self._subarray_id)
-
-            # Configure functionMode.
-            proxy_fsp.SetFunctionMode(fsp["function_mode"])
+            fsp_proxy.AddSubarrayMembership(self._subarray_id)
 
             # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
