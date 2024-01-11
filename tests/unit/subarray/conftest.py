@@ -352,6 +352,7 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("functionMode", 0)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
