@@ -132,22 +132,12 @@ class TestCbfController:
         Test that InitSysParam can only be used when
         the controller op state is OFF
         """
-        state = test_proxies.controller.State()
+        if(test_proxies.controller.State() == DevState.OFF):
+            test_proxies.controller.On()
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         result = test_proxies.controller.InitSysParam(sp)
-        state_after = test_proxies.controller.State()
-
-        # InitSysParam should not change state
-        assert state == state_after
-
-        # InitSysParam can only be called when controller is in OFF state
-        if state != DevState.OFF:
-            assert result[0] == ResultCode.FAILED
-        else:
-            assert result[0] == ResultCode.OK
-            assert test_proxies.controller.read_sysParam == sp
-            assert test_proxies.controller.read_sourceSysParam == ""
+        assert result[0] == ResultCode.FAILED
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -158,33 +148,26 @@ class TestCbfController:
     )
     def test_SourceInitSysParam(self, test_proxies, config_file_name: str):
         """
-        Test that InitSysParam can only be used when
-        the controller op state is OFF
+        Test that InitSysParam file can be retrieved from CAR
         """
-        state = test_proxies.controller.State()
+        if(test_proxies.controller.State() == DevState.ON):
+            test_proxies.controller.Off()
         with open(data_file_path + config_file_name) as f:
             sp = f.read()
         result = test_proxies.controller.InitSysParam(sp)
-        state_after = test_proxies.controller.State()
 
-        # InitSysParam should not change state
-        assert state == state_after
-
-        # InitSysParam can only be called when controller is in OFF state
-        if state != DevState.OFF:
-            assert result[0] == ResultCode.FAILED
-        else:
-            assert result[0] == ResultCode.OK
-            assert test_proxies.controller.read_sourceSysParam == sp
-            sp_json = json.loads(sp)
-            tm_data_sources = sp_json["tm_data_sources"][0]
-            tm_data_filepath = sp_json["tm_data_filepath"]
-            retrieved_init_sys_param_file = TMData([tm_data_sources])[
-                tm_data_filepath
-            ].get_dict()
-            assert test_proxies.controller.read_sysParam == json.dumps(
-                retrieved_init_sys_param_file
-            )
+        assert test_proxies.controller.State() == DevState.OFF
+        assert result[0] == ResultCode.OK
+        assert test_proxies.controller.sourceSysParam == sp
+        sp_json = json.loads(sp)
+        tm_data_sources = sp_json["tm_data_sources"][0]
+        tm_data_filepath = sp_json["tm_data_filepath"]
+        retrieved_init_sys_param_file = TMData([tm_data_sources])[
+            tm_data_filepath
+        ].get_dict()
+        assert test_proxies.controller.sysParam == json.dumps(
+            retrieved_init_sys_param_file
+        )
 
     def test_Off(self, test_proxies):
         """
