@@ -180,9 +180,11 @@ class TestCbfController:
             tm_data_sources = sp_json["tm_data_sources"][0]
             tm_data_filepath = sp_json["tm_data_filepath"]
             retrieved_init_sys_param_file = TMData([tm_data_sources])[
-                    tm_data_filepath
-                ].get_dict()
-            assert test_proxies.controller.read_sysParam == json.dumps(retrieved_init_sys_param_file)
+                tm_data_filepath
+            ].get_dict()
+            assert test_proxies.controller.read_sysParam == json.dumps(
+                retrieved_init_sys_param_file
+            )
 
     def test_Off(self, test_proxies):
         """
@@ -544,15 +546,3 @@ class TestCbfController:
                         test_proxies.fspSubarray[i][j][k].State()
                         == DevState.DISABLE
                     )
-
-    def retrieve_init_sys_param_file_from_car(self, init_sys_param_json: str) -> dict:
-        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
-        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
-        try:
-            mid_cbf_param_dict = TMData([tm_data_sources])[
-                    tm_data_filepath
-                ].get_dict()
-        except (ValueError, KeyError) as e:
-            self._logger.error(f"Retrieving the init_sys_param file failed with exception: \n {str(e)}")
-            return None
-        return mid_cbf_param_dict
