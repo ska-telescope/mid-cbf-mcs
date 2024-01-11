@@ -132,7 +132,7 @@ class TestCbfController:
         Test that InitSysParam can only be used when
         the controller op state is OFF
         """
-        if(test_proxies.controller.State() == DevState.OFF):
+        if test_proxies.controller.State() == DevState.OFF:
             test_proxies.controller.On()
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
@@ -150,7 +150,7 @@ class TestCbfController:
         """
         Test that InitSysParam file can be retrieved from CAR
         """
-        if(test_proxies.controller.State() == DevState.ON):
+        if test_proxies.controller.State() == DevState.ON:
             test_proxies.controller.Off()
         with open(data_file_path + config_file_name) as f:
             sp = f.read()
