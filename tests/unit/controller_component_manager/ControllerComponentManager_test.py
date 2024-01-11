@@ -11,8 +11,6 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
-import json
-
 # Path
 import os
 
