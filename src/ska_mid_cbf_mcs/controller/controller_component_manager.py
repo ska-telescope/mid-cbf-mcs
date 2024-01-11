@@ -675,7 +675,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # send init_sys_param to the subarrays
         try:
-            self._update_init_sys_param(params)
+            self._update_init_sys_param(self._init_sys_param)
         except tango.DevFailed as e:
             self._logger.error(e)
             return (
