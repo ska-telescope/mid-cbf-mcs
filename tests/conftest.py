@@ -339,6 +339,8 @@ def init_proxies_fixture():
             - 1 CbfSubarray
             - 4 Fsp
             - 8 Vcc
+            - 1 Slim
+            - 4 SlimLink
             """
             # NOTE: set debug_device_is_on to True in order
             #       to allow device debugging under VScode
@@ -475,6 +477,24 @@ def init_proxies_fixture():
                 self.power_switch.append(
                     CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/power_switch/{i:03}",
+                        logger=logging.getLogger(),
+                    )
+                )
+
+            # Slim
+            self.slim = [
+                CbfDeviceProxy(
+                    fqdn="mid_csp_cbf/slim/slim-fs",
+                    logger=logging.getLogger(),
+                )
+            ]
+
+            # SlimLink
+            self.slim_link = []
+            for i in range(0, 3):  # 4 SlimLinks
+                self.slim_link.append(
+                    CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/fs_links/{i:03}",
                         logger=logging.getLogger(),
                     )
                 )

@@ -125,3 +125,62 @@ to return to EMPTY via the Restart command for a correlation scan.
 Return calls are not shown.
 
 .. uml:: ../../diagrams/restart-command.puml
+
+
+Serial Lightweight Interconnect Mesh (SLIM)
+--------------------------------------------
+
+Ref: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_
+
+The Serial Lightweight Interconnect Mesh (SLIM) provides a streaming packet link between two different FPGAs. At its lowest level, a TX and RX IP block are paired together to transfer packetized data across a high-speed serial link.
+The SLIM architecture consists of three parts: The HPS DsSlimTxRx device server, which provides an interface to the FPGA IP, the MCS SLIM Links, which establish links between Tx and Rx devices, and finally the top level MCS SLIM Mesh (simply called 'SLIM'), which bundles links into groups for better organization.
+
+The DsSLIMTX and DsSLIMRx are provided together as a multi-class HPS device server to control and monitor the SLIM Links. To provide a link, each TX device server must connect to a corresponding RX device server, based on the SLIM configuration (see next section).
+
+During a SLIM Link's initialization, the FQDNs of a Tx and Rx device pair are passed as arguments and device proxies are made to each device. Then the connection is monitored by periodically comparing the idle control words (a 55-bit hash of the Tx or Rx's FQDN) on either side of the link, checking that the bit-error rate remains below an acceptable threshold, and ensuring that clocks on each side of the link remain in sync. Each link uses an enumerated HealthState attribute to summarize these metrics.
+
+At the top of the SLIM hierarchy, sits the SLIM device (sometimes referred to as the 'mesh'), which is essentially just a list of SLIM Links. Currently there are two SLIM instances, one for the frequency slice (FS) mesh, and the other for the visibility (Vis) mesh. While each SLIM Link is identical to the rest, they are organized into different mesh instances to differentiate between distinct stages in the signal processing chain. The SLIM device parses the SLIM configuration file (discussed next), and is responsible for spawning the appropriate links. It also rolls up all of the links' HealthState attributes into a single master HealthState attribute to summarize the status of the entire mesh. If any of the links report a degraded HealthState, the mesh also becomes degraded.
+
+SLIM Configuration
+++++++++++++++++++
+
+.. figure:: /diagrams/4-receptor-correlator.png
+    :align: center
+
+    SLIM Interconnections for AA0.5 CBF
+
+SLIM Configuration Sequence
++++++++++++++++++++++++++++
+AA0.5 quantities shown.
+
+.. uml:: /diagrams/slim-configuration-fs.puml
+
+.. uml:: /diagrams/slim-configuration-vis.puml
+
+SLIM FS Links Definition Example YAML File
++++++++++++++++++++++++++++++++++++++++++++
+`[x]` indicates inactive link.
+Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
+
+.. literalinclude:: fs_slim_config.yaml
+
+SLIM Visibility Links Definition Example YAML File
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+`[x]` indicates inactive link.
+Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
+
+.. literalinclude:: vis_slim_config.yaml
+
+SLIM Tx / Rx Device Servers (HPS)
+++++++++++++++++++++++++++++++++++++++++++
+
+Note: See `SLIM Tx/Rx Documentation <https://gitlab.drao.nrc.ca/digital-systems/software/applications/ds-slim-tx-rx/-/blob/main/doc>`_ for more details.
+
+**SLIM Tx**
+
+Ref: `tx_slim.tango.json <https://gitlab.drao.nrc.ca/digital-systems/software/applications/ds-slim-tx-rx/-/blob/main/reg/tx/definition/tx_slim.tango.json>`_
+
+
+**SLIM Rx**
+Ref: `rx_slim.tango.json <https://gitlab.drao.nrc.ca/digital-systems/software/applications/ds-slim-tx-rx/-/blob/main/reg/rx/definition/rx_slim.tango.json>`_
+
