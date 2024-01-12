@@ -198,7 +198,7 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(
+        self.assert_sysparam_attributes_match_expected_outcome(
             controller_component_manager, sys_param
         )
 
@@ -224,7 +224,7 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(
+        self.assert_sysparam_attributes_match_expected_outcome(
             controller_component_manager, sys_param
         )
 
@@ -288,7 +288,7 @@ class TestControllerComponentManager:
             sys_param
         )
         assert result_code == ResultCode.OK
-        self.assert_attributes_match_expected_outcome(
+        self.assert_sysparam_attributes_match_expected_outcome(
             controller_component_manager, sys_param
         )
 
@@ -300,7 +300,7 @@ class TestControllerComponentManager:
             sys_param_unusable_source
         )
         assert result_code == ResultCode.FAILED
-        self.assert_attributes_match_expected_outcome(
+        self.assert_sysparam_attributes_match_expected_outcome(
             controller_component_manager, sys_param
         )
 
