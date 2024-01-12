@@ -386,7 +386,6 @@ class FspComponentManager(CbfComponentManager):
         result_code = ResultCode.OK
         message = "Fsp RemoveSubarrayMembership command completed OK"
         if subarray_id in self._subarray_membership:
-            self._remove_subarray_from_group_proxy(subarray_id)
             self._subarray_membership.remove(subarray_id)
             self._push_change_event(
                 "subarrayMembership", self._subarray_membership
@@ -403,6 +402,8 @@ class FspComponentManager(CbfComponentManager):
                         self._group_fsp_pst_subarray.command_inout("GoToIdle")
 
                 self.set_function_mode("IDLE")
+
+            self._remove_subarray_from_group_proxy(subarray_id)
         else:
             result_code = ResultCode.FAILED
             message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {subarray_id}."
