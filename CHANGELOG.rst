@@ -10,6 +10,11 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.14
+*******
+* CIP-1987 Updated default SlimLink config with new DsSlimTxRx FQDNs.
+* CIP-2006 Updated Slim and SlimLink tests and documentation.
+
 0.12.13
 *******
 * MAP-36 Add support for APC PDU Driver using SNMP Interface
