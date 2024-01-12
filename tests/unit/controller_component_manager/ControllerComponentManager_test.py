@@ -351,7 +351,7 @@ class TestControllerComponentManager:
         assert controller_component_manager._source_init_sys_param == ""
         assert controller_component_manager._init_sys_param == ""
 
-    def assert_attributes_match_expected_outcome(
+    def assert_sysparam_attributes_match_expected_outcome(
         self: TestControllerComponentManager,
         controller_component_manager: ControllerComponentManager,
         source_init_sys_param: str,
