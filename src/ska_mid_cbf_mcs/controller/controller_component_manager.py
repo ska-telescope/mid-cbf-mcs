@@ -26,6 +26,7 @@ from ska_tango_base.control_model import (
     PowerMode,
     SimulationMode,
 )
+from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -132,6 +133,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._get_max_capabilities = get_num_capabilities
 
         self._init_sys_param = ""
+        self._source_init_sys_param = ""
         self._receptor_utils = None
 
         # TODO: component manager should not be passed into component manager ?
@@ -648,14 +650,32 @@ class ControllerComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 msg,
             )
+        # If tm_data_filepath is provided, then we need to retrieve the
+        # init sys param file from CAR via the telescope model
+        if "tm_data_filepath" in init_sys_param_json:
+            passed, msg, init_sys_param_json = self._retrieve_sys_param_file(
+                init_sys_param_json
+            )
+            if not passed:
+                return (ResultCode.FAILED, msg)
+            passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            if not passed:
+                return (
+                    ResultCode.FAILED,
+                    msg,
+                )
+            self._source_init_sys_param = params
+            self._init_sys_param = json.dumps(init_sys_param_json)
+        else:
+            self._source_init_sys_param = ""
+            self._init_sys_param = params
 
         # store the attribute
         self._receptor_utils = ReceptorUtils(init_sys_param_json)
-        self._init_sys_param = params
 
         # send init_sys_param to the subarrays
         try:
-            self._update_init_sys_param(params)
+            self._update_init_sys_param(self._init_sys_param)
         except tango.DevFailed as e:
             self._logger.error(e)
             return (
@@ -669,6 +689,23 @@ class ControllerComponentManager(CbfComponentManager):
             ResultCode.OK,
             "CbfController InitSysParam command completed OK",
         )
+
+    def _retrieve_sys_param_file(self, init_sys_param_json) -> Tuple:
+        # The uri was provided in the input string, therefore the mapping from Dish ID to
+        # VCC and frequency offset k needs to be retrieved using the Telescope Model
+        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
+        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
+        try:
+            mid_cbf_param_dict = TMData([tm_data_sources])[
+                tm_data_filepath
+            ].get_dict()
+            msg = f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+            self._logger.info(msg)
+        except (ValueError, KeyError) as e:
+            msg = f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
+            self._logger.error(msg)
+            return (False, msg, None)
+        return (True, msg, mid_cbf_param_dict)
 
     def _validate_init_sys_param(
         self: ControllerComponentManager,
