@@ -454,6 +454,7 @@ class CbfSubarrayComponentManager(
                 return
             try:
                 self._logger.info("Received delay model update.")
+                self._logger.info(value)
 
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
