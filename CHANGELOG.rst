@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.16
+*******
+* CIP-1898 Fix FSP subarrayMembership resetting after subarray GoToIdle
+
 0.12.15
 *******
 * CIP-1915 Retrieve initial system parameters file from CAR through Telescope Model
