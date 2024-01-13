@@ -72,6 +72,14 @@ class HpsFspCorrControllerSimulator:
         """
         pass
 
+    def set_timeout_millis(self: HpsFspCorrControllerSimulator, timeout: int):
+        """
+        Stub to allow setting of device proxy timeout.
+
+        :param timeout: timeout in milliseconds
+        """
+        pass
+
     def ConfigureScan(
         self: HpsFspCorrControllerSimulator, json_str: str
     ) -> None:

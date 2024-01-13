@@ -644,6 +644,7 @@ class FspCorrSubarrayComponentManager(
             self._logger.info(
                 f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}"
             )
+            self._proxy_hps_fsp_corr_controller.set_timeout_millis(12000)
             self._proxy_hps_fsp_corr_controller.ConfigureScan(
                 json.dumps(hps_fsp_configuration)
             )

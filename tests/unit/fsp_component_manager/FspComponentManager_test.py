@@ -196,10 +196,11 @@ class TestFspComponentManager:
         :param mode: the function mode
         """
         fsp_component_manager.start_communicating()
+        fsp_component_manager.on()
         (rcode, _) = fsp_component_manager.set_function_mode(mode)
         assert rcode == ResultCode.OK
 
-    @pytest.mark.parametrize("sub_ids", [([3, 4, 15]), ([1])])
+    @pytest.mark.parametrize("sub_ids", [([1, 2, 3]), ([1])])
     def test_AddRemoveSubarrayMembership(
         self: TestFspComponentManager,
         fsp_component_manager: FspComponentManager,
@@ -221,6 +222,9 @@ class TestFspComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert fsp_component_manager._connected is True
+
+        fsp_component_manager.on()
+        fsp_component_manager.set_function_mode("CORR")
 
         # subarray membership should be empty
         assert fsp_component_manager.subarray_membership == []
@@ -291,6 +295,8 @@ class TestFspComponentManager:
             "Fsp On command completed OK",
         )
 
+        fsp_component_manager.set_function_mode("PSS-BF")
+
         fsp_component_manager.add_subarray_membership(sub_id)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
@@ -304,7 +310,9 @@ class TestFspComponentManager:
 
         valid_function_modes = ["PSS-BF", "PST-BF", "VLBI"]
         for mode in valid_function_modes:
+            fsp_component_manager.remove_subarray_membership(sub_id)
             fsp_component_manager.set_function_mode(mode)
+            fsp_component_manager.add_subarray_membership(sub_id)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode
@@ -345,7 +353,9 @@ class TestFspComponentManager:
         assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
-        fsp_component_manager.set_function_mode(FspModes.CORR)
+        fsp_component_manager.on()
+        fsp_component_manager.set_function_mode("CORR")
+        fsp_component_manager.add_subarray_membership(1)
         (rcode, _) = fsp_component_manager.update_jones_matrix("some-input")
         assert rcode == ResultCode.FAILED
 
@@ -384,6 +394,8 @@ class TestFspComponentManager:
             "Fsp On command completed OK",
         )
 
+        fsp_component_manager.set_function_mode("CORR")
+
         fsp_component_manager.add_subarray_membership(sub_id)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
@@ -397,7 +409,9 @@ class TestFspComponentManager:
 
         valid_function_modes = ["PSS-BF", "PST-BF", "CORR"]
         for mode in valid_function_modes:
+            fsp_component_manager.remove_subarray_membership(sub_id)
             fsp_component_manager.set_function_mode(mode)
+            fsp_component_manager.add_subarray_membership(sub_id)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode
@@ -436,7 +450,9 @@ class TestFspComponentManager:
         assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
-        fsp_component_manager.set_function_mode(FspModes.VLBI)
+        fsp_component_manager.on()
+        fsp_component_manager.set_function_mode("VLBI")
+        fsp_component_manager.add_subarray_membership(1)
         (rcode, _) = fsp_component_manager.update_delay_model("input")
         assert rcode == ResultCode.FAILED
 
@@ -474,6 +490,8 @@ class TestFspComponentManager:
             ResultCode.OK,
             "Fsp On command completed OK",
         )
+
+        fsp_component_manager.set_function_mode("PST-BF")
 
         fsp_component_manager.add_subarray_membership(sub_id)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
@@ -517,7 +535,9 @@ class TestFspComponentManager:
         assert rcode == ResultCode.FAILED
 
         fsp_component_manager.start_communicating()
-        fsp_component_manager.set_function_mode(FspModes.CORR)
+        fsp_component_manager.on()
+        fsp_component_manager.set_function_mode("CORR")
+        fsp_component_manager.add_subarray_membership(1)
         (rcode, _) = fsp_component_manager.update_timing_beam_weights("input")
         assert rcode == ResultCode.FAILED
 

@@ -39,6 +39,7 @@ from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
+    FspModes,
     const,
     freq_band_dict,
     mhz_to_hz,
@@ -776,6 +777,14 @@ class CbfSubarrayComponentManager(
                     self._logger.info("Results from GoToIdle:")
                     for res in results:
                         self._logger.info(res.get_data())
+
+            if self._group_fsp.get_size() > 0:
+                # change FSP subarray membership
+                data = tango.DeviceData()
+                data.insert(tango.DevUShort, self._subarray_id)
+                self._logger.debug(data)
+                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._group_fsp.remove_all()
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -930,54 +939,43 @@ class CbfSubarrayComponentManager(
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
-                # Validate fspID.
+                # Validate fsp_id.
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
-                    fspID = int(fsp["fsp_id"])
-                    proxy_fsp = self._proxies_fsp[fspID - 1]
+                    fsp_id = int(fsp["fsp_id"])
+                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
                 else:
                     msg = (
-                        f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
+                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
                         " Aborting configuration."
                     )
                     return (False, msg)
 
                 # Validate functionMode.
-                function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                if (
-                    function_modes.index(fsp["function_mode"]) + 1
-                    == proxy_fsp.functionMode
-                    or proxy_fsp.functionMode == 0
-                ):
-                    pass
-                else:
-                    # TODO need to add this check for VLBI once implemented
-                    for (
-                        fsp_corr_subarray_proxy
-                    ) in self._proxies_fsp_corr_subarray_device:
-                        if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
-                    for (
-                        fsp_pss_subarray_proxy
-                    ) in self._proxies_fsp_pss_subarray_device:
-                        if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
-                    for (
-                        fsp_pst_subarray_proxy
-                    ) in self._proxies_fsp_pst_subarray_device:
-                        if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
-                            msg = (
-                                f"A different subarray is using FSP {fsp['fsp_id']} "
-                                "for a different function mode. Aborting configuration."
-                            )
-                            return (False, msg)
+                valid_function_modes = [
+                    "IDLE",
+                    "CORR",
+                    "PSS-BF",
+                    "PST-BF",
+                    "VLBI",
+                ]
+                try:
+                    function_mode_value = valid_function_modes.index(
+                        fsp["function_mode"]
+                    )
+                except ValueError:
+                    return (
+                        False,
+                        f"{fsp['function_mode']} is not a valid FSP function mode.",
+                    )
+                fsp_function_mode = fsp_proxy.functionMode
+                if fsp_function_mode not in [
+                    FspModes.IDLE.value,
+                    function_mode_value,
+                ]:
+                    msg = f"FSP {fsp_id} currently set to function mode {valid_function_modes.index(fsp_function_mode)}, \
+                            cannot be used for {fsp['function_mode']} \
+                            until it is returned to IDLE."
+                    return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
@@ -1484,10 +1482,6 @@ class CbfSubarrayComponentManager(
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
-        # reset any previously configured VCCs
-        if self._ready:
-            self._group_vcc.command_inout("GoToIdle")
-
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
         self._logger.debug(f"config_id: {self._config_id}")
@@ -1699,72 +1693,46 @@ class CbfSubarrayComponentManager(
                 )
                 group.remove_all()
 
-        if self._group_fsp.get_size() > 0:
-            # change FSP subarray membership
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, self._subarray_id)
-            self._logger.debug(data)
-            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-            self._logger.debug("removing all fqdns from group_fsp:")
-            self._group_fsp.remove_all()
-
         for fsp in configuration["fsp"]:
-            # Configure fspID.
-            fspID = int(fsp["fsp_id"])
-            proxy_fsp = self._proxies_fsp[fspID - 1]
+            # Configure fsp_id.
+            fsp_id = int(fsp["fsp_id"])
+            fsp_proxy = self._proxies_fsp[fsp_id - 1]
+            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
+            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fsp_id - 1]
+            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fsp_id - 1]
 
-            self._group_fsp.add(self._fqdn_fsp[fspID - 1])
+            self._group_fsp.add(self._fqdn_fsp[fsp_id - 1])
             self._group_fsp_corr_subarray.add(
-                self._fqdn_fsp_corr_subarray_device[fspID - 1]
+                self._fqdn_fsp_corr_subarray_device[fsp_id - 1]
             )
             self._group_fsp_pss_subarray.add(
-                self._fqdn_fsp_pss_subarray_device[fspID - 1]
+                self._fqdn_fsp_pss_subarray_device[fsp_id - 1]
             )
             self._group_fsp_pst_subarray.add(
-                self._fqdn_fsp_pst_subarray_device[fspID - 1]
-            )
-
-            self._logger.info("Connecting to FSP devices from subarray")
-            self._logger.info(
-                f"Setting Simulation Mode of FSP proxies to: {self._simulation_mode}"
+                self._fqdn_fsp_pst_subarray_device[fsp_id - 1]
             )
 
             # Set simulation mode of FSPs to subarray sim mode
-            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
-            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fspID - 1]
-            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fspID - 1]
-
-            proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
-            proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
-            proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
-            proxy_fsp.command_inout("On")
-
-            fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_corr_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
+            self._logger.info(
+                f"Setting Simulation Mode of FSP {fsp_id} proxies to: {self._simulation_mode} and turning them on."
             )
-            fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_corr_proxy.command_inout("On")
+            for proxy in [
+                fsp_proxy,
+                fsp_corr_proxy,
+                fsp_pss_proxy,
+                fsp_pst_proxy,
+            ]:
+                proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+                proxy.write_attribute("simulationMode", self._simulation_mode)
+                proxy.write_attribute("adminMode", AdminMode.ONLINE)
+                proxy.command_inout("On")
 
-            fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pss_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
-            )
-            fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_pss_proxy.command_inout("On")
-
-            fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pst_proxy.write_attribute(
-                "simulationMode", self._simulation_mode
-            )
-            fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            fsp_pst_proxy.command_inout("On")
+            # Configure functionMode if IDLE
+            if fsp_proxy.functionMode == FspModes.IDLE.value:
+                fsp_proxy.SetFunctionMode(fsp["function_mode"])
 
             # change FSP subarray membership
-            proxy_fsp.AddSubarrayMembership(self._subarray_id)
-
-            # Configure functionMode.
-            proxy_fsp.SetFunctionMode(fsp["function_mode"])
+            fsp_proxy.AddSubarrayMembership(self._subarray_id)
 
             # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
@@ -1797,89 +1765,89 @@ class CbfSubarrayComponentManager(
                 common_configuration["frequency_band"]
             )
 
-            if fsp["function_mode"] == "CORR":
-                # Receptors may not be specified in the
-                # configuration at all or the list
-                # of receptors may be empty
-                receptorsSpecified = False
-                if "receptors" in fsp:
-                    if fsp["receptors"] != []:
-                        receptorsSpecified = True
+            match fsp["function_mode"]:
+                case "CORR":
+                    # Receptors may not be specified in the
+                    # configuration at all or the list
+                    # of receptors may be empty
+                    receptorsSpecified = False
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
+                            receptorsSpecified = True
 
-                if not receptorsSpecified:
-                    # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptors"] = self._receptors.copy()
-
-                # receptor IDs to pair of str and int for FSP level
-                fsp["corr_receptor_ids"] = []
-                for i, receptor in enumerate(fsp["receptors"]):
-                    fsp["corr_receptor_ids"].append(
-                        [
-                            receptor,
-                            self._receptor_utils.receptor_id_to_vcc_id[
-                                receptor
-                            ],
-                        ]
-                    )
-
-                self._corr_config.append(fsp)
-                self._corr_fsp_list.append(fsp["fsp_id"])
-
-            # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
-            elif fsp["function_mode"] == "PSS-BF":
-                for searchBeam in fsp["search_beam"]:
-                    if "receptor_ids" not in searchBeam:
+                    if not receptorsSpecified:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        searchBeam["receptor_ids"] = [
+                        fsp["receptors"] = self._receptors.copy()
+
+                    # receptor IDs to pair of str and int for FSP level
+                    fsp["corr_receptor_ids"] = []
+                    for i, receptor in enumerate(fsp["receptors"]):
+                        fsp["corr_receptor_ids"].append(
                             [
                                 receptor,
                                 self._receptor_utils.receptor_id_to_vcc_id[
                                     receptor
                                 ],
                             ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            searchBeam["receptor_ids"]
-                        ):
-                            searchBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
-                            ]
-                self._pss_config.append(fsp)
-                self._pss_fsp_list.append(fsp["fsp_id"])
+                        )
 
-            elif fsp["function_mode"] == "PST-BF":
-                for timingBeam in fsp["timing_beam"]:
-                    if "receptor_ids" not in timingBeam:
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        timingBeam["receptor_ids"] = [
-                            [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
+                    self._corr_config.append(fsp)
+                    self._corr_fsp_list.append(fsp["fsp_id"])
+
+                # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
+                case "PSS-BF":
+                    for searchBeam in fsp["search_beam"]:
+                        if "receptor_ids" not in searchBeam:
+                            # In this case by the ICD, all subarray allocated resources should be used.
+                            searchBeam["receptor_ids"] = [
+                                [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                                for receptor in self._receptors
                             ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            timingBeam["receptor_ids"]
-                        ):
-                            timingBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptor_id_to_vcc_id[
-                                    receptor
-                                ],
+                        else:
+                            for i, receptor in enumerate(
+                                searchBeam["receptor_ids"]
+                            ):
+                                searchBeam["receptor_ids"][i] = [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                    self._pss_config.append(fsp)
+                    self._pss_fsp_list.append(fsp["fsp_id"])
+
+                case "PST-BF":
+                    for timingBeam in fsp["timing_beam"]:
+                        if "receptor_ids" not in timingBeam:
+                            # In this case by the ICD, all subarray allocated resources should be used.
+                            timingBeam["receptor_ids"] = [
+                                [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                                for receptor in self._receptors
                             ]
-                self._pst_config.append(fsp)
-                self._pst_fsp_list.append(fsp["fsp_id"])
+                        else:
+                            for i, receptor in enumerate(
+                                timingBeam["receptor_ids"]
+                            ):
+                                timingBeam["receptor_ids"][i] = [
+                                    receptor,
+                                    self._receptor_utils.receptor_id_to_vcc_id[
+                                        receptor
+                                    ],
+                                ]
+                    self._pst_config.append(fsp)
+                    self._pst_fsp_list.append(fsp["fsp_id"])
 
         # Call ConfigureScan for all FSP Subarray devices (CORR/PSS/PST)
-
         # NOTE:_corr_config is a list of fsp config JSON objects, each
         #      augmented by a number of vcc-fsp common parameters
         if len(self._corr_config) != 0:
@@ -1888,6 +1856,7 @@ class CbfSubarrayComponentManager(
                     this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
+                    this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
 
                     self._logger.info(
@@ -1908,6 +1877,7 @@ class CbfSubarrayComponentManager(
                     this_proxy = self._proxies_fsp_pss_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
+                    this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
                 except tango.DevFailed:
                     msg = (
@@ -1923,6 +1893,7 @@ class CbfSubarrayComponentManager(
                     this_proxy = self._proxies_fsp_pst_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
+                    this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
                 except tango.DevFailed:
                     msg = (
@@ -2288,15 +2259,6 @@ class CbfSubarrayComponentManager(
                     )
                     group.remove_all()
 
-            if self._group_fsp.get_size() > 0:
-                # change FSP subarray membership
-                data = tango.DeviceData()
-                data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
-                # TODO could potentially be sending FSP subarrays to IDLE twice
-                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._logger.debug("removing all fqdns from group_fsp:")
-                self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
 
@@ -2337,15 +2299,6 @@ class CbfSubarrayComponentManager(
                     )
                     group.remove_all()
 
-            if self._group_fsp.get_size() > 0:
-                # change FSP subarray membership
-                data = tango.DeviceData()
-                data.insert(tango.DevUShort, self._subarray_id)
-                self._logger.debug(data)
-                # TODO could potentially be sending FSP subarrays to IDLE twice
-                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._logger.debug("removing all fqdns from group_fsp:")
-                self._group_fsp.remove_all()
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
 
