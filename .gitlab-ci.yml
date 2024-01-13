@@ -57,6 +57,14 @@ include:
     file: 'gitlab-ci/includes/deploy.gitlab-ci.yml'
 
 
+k8s-test:
+  variables:
+    KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+
+stop-k8s-test:
+  variables:
+    KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+
 helm-chart-lint:
   allow_failure: true
 
