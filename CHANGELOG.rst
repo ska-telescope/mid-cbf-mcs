@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.15
+*******
+* CIP-1915 Retrieve initial system parameters file from CAR through Telescope Model
+
 0.12.14
 *******
 * CIP-1987 Updated default SlimLink config with new DsSlimTxRx FQDNs.
