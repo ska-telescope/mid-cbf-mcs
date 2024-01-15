@@ -327,6 +327,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
+            self._logger.info(f"idle_ctrl_word: {idle_ctrl_word} type: {type(idle_ctrl_word)}")
             self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
