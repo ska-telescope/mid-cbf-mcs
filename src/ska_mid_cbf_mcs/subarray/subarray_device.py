@@ -444,6 +444,8 @@ class CbfSubarray(CspSubElementSubarray):
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
         """
         Set the sys param string in json format
+        Should not be used by components external to Mid.CBF.
+        Refer to the CbfController api docs: https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/api/CbfController/index.html and the telescope model readthedocs: https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf-initsysparam.html
 
         :param value: the sys param string in json format
         """
