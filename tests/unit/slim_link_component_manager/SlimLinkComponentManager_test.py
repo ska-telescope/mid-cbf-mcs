@@ -71,7 +71,7 @@ class TestSlimLinkComponentManager:
     @pytest.mark.parametrize(
         "tx_name, \
         rx_name",
-        [("mid_csp_cbf/slim-tx-rx/tx-test", "mid_csp_cbf/slim-tx-rx/rx-test")],
+        [("mid_csp_cbf/slim-tx-rx/fs-txtest", "mid_csp_cbf/slim-tx-rx/fs-rxtest")],
     )
     def test_connect_tx_rx(
         self: TestSlimLinkComponentManager,
@@ -120,8 +120,8 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
-            "mid_csp_cbf/slim-tx-rx/tx-test",
-            "mid_csp_cbf/slim-tx-rx/rx-test",
+            "mid_csp_cbf/slim-tx-rx/fs-txtest",
+            "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
 
         result = slim_link_component_manager.verify_connection()
@@ -144,8 +144,8 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
-            "mid_csp_cbf/slim-tx-rx/tx-test",
-            "mid_csp_cbf/slim-tx-rx/rx-test",
+            "mid_csp_cbf/slim-tx-rx/fs-txtest",
+            "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
 
         result = slim_link_component_manager.disconnect_slim_tx_rx()
@@ -168,8 +168,8 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
-            "mid_csp_cbf/slim-tx-rx/tx-test",
-            "mid_csp_cbf/slim-tx-rx/rx-test",
+            "mid_csp_cbf/slim-tx-rx/fs-txtest",
+            "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
 
         result = slim_link_component_manager.clear_counters()

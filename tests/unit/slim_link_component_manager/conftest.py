@@ -235,6 +235,6 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/slim-tx-rx/tx-test": mock_tx,
-        "mid_csp_cbf/slim-tx-rx/rx-test": mock_rx,
+        "mid_csp_cbf/slim-tx-rx/fs-txtest": mock_tx,
+        "mid_csp_cbf/slim-tx-rx/fs-rxtest": mock_rx,
     }

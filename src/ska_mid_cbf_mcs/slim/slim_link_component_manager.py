@@ -428,12 +428,13 @@ class SlimLinkComponentManager(CbfComponentManager):
         try:
             if self._rx_device_proxy is not None:
                 # Put SLIM Rx back in serial loopback
-                self._logger.info(f"rx device: {self._rx_device_name}")
-                temp = self._rx_device_name
-                temp[-2] = "t"
-                self._tx_device_name = temp
-                self._logger.info(f"tx device now: {self._tx_device_name}")
-
+                rx = self._rx_device_name
+                index = rx.split("/")[2].split("-")[1][2:]
+                mesh = rx.split("/")[2].split("-")[0]
+                rx_arr = rx.split("/")
+                tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
+                self._tx_device_name = tx
+                
                 self._tx_device_proxy = CbfDeviceProxy(
                     fqdn=self._tx_device_name, logger=self._logger
                 )
