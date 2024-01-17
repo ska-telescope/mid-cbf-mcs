@@ -428,6 +428,20 @@ class SlimLinkComponentManager(CbfComponentManager):
         try:
             if self._rx_device_proxy is not None:
                 # Put SLIM Rx back in serial loopback
+                self._logger.info(f"rx device: {self._rx_device_name}")
+                temp = self._rx_device_name
+                temp[-2] = 't'
+                self._tx_device_name = temp
+                self._logger.info(f"tx device now: {self._tx_device_name}")
+                
+                self._tx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._tx_device_name, logger=self._logger
+                )
+
+                # Sync the idle ctrl word between Tx and Rx
+                idle_ctrl_word = self.tx_idle_ctrl_word
+                self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
+                
                 self._rx_device_proxy.initialize_connection(True)
         except tango.DevFailed:
             result_msg = (
