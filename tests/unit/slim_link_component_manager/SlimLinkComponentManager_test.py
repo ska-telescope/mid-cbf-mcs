@@ -71,7 +71,12 @@ class TestSlimLinkComponentManager:
     @pytest.mark.parametrize(
         "tx_name, \
         rx_name",
-        [("mid_csp_cbf/slim-tx-rx/fs-txtest", "mid_csp_cbf/slim-tx-rx/fs-rxtest")],
+        [
+            (
+                "mid_csp_cbf/slim-tx-rx/fs-txtest",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            )
+        ],
     )
     def test_connect_tx_rx(
         self: TestSlimLinkComponentManager,
