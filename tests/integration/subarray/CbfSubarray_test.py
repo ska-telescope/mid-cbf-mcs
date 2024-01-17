@@ -22,8 +22,8 @@ import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -83,7 +83,7 @@ class TestCbfSubarray:
         device_under_test.sysParam = sp
 
         sys_param = json.loads(sp)
-        test_proxies.receptor_utils = ReceptorUtils(sys_param)
+        test_proxies.receptor_utils = DISHUtils(sys_param)
 
         device_under_test.On()
 

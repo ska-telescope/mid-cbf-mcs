@@ -83,22 +83,22 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._scan_id = scan_id
 
     @property
-    def receptor_id(self: VccComponentManager) -> int:
+    def dish_id(self: VccComponentManager) -> str:
         """
-        Receptor ID
+        DISH ID
 
-        :return: the receptor ID
+        :return: the DISH ID
         """
-        return self._receptor_id
+        return self._dish_id
 
-    @receptor_id.setter
-    def receptor_id(self: VccComponentManager, receptor_id: int) -> None:
+    @dish_id.setter
+    def dish_id(self: VccComponentManager, dish_id: str) -> None:
         """
-        Set the receptor ID.
+        Set the DISH ID.
 
-        :param receptor_id: Receptor ID
+        :param dish_id: DISH ID
         """
-        self._receptor_id = receptor_id
+        self._dish_id = dish_id
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
@@ -222,7 +222,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._ready = False
 
         # Initialize attribute values
-        self._receptor_id = 0
+        self._dish_id = ""
 
         self._scan_id = 0
         self._config_id = ""
@@ -451,7 +451,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
+            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._dish_id}_band{freq_band_name}.json"
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
@@ -460,7 +460,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     json_string = f.read()
             except FileNotFoundError:
                 self._logger.info(
-                    f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
+                    f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
                 )
                 with open(
                     f"{VCC_PARAM_PATH}internal_params_default.json", "r"
@@ -863,7 +863,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 if argin["tdc_enable"]:
                     for tdc_dest in argin["tdc_destination_address"]:
                         # "receptor" value is a pair of str and int
-                        if tdc_dest["receptor_id"][1] == self._receptor_id:
+                        if tdc_dest["receptor_id"][0] == self._dish_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = tdc_dest[
                                 "tdc_destination_address"
@@ -891,7 +891,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         for dopplerDetails in argin:
             # "receptor" value is a pair of str and int
-            if dopplerDetails["receptor"][1] == self._receptor_id:
+            if dopplerDetails["receptor"][0] == self._dish_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
                     self._doppler_phase_correction = coeff.copy()
@@ -922,7 +922,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.debug(
                 f"Received delay model for receptor {entry['receptor'][0]}"
             )
-            if entry["receptor"][1] == self._receptor_id:
+            if entry["receptor"][0] == self._dish_id:
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._delay_model = json.dumps(
@@ -931,7 +931,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 dm_found = True
                 break
         if not dm_found:
-            log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
+            log_msg = (
+                f"Delay Model for VCC (receptor: {self._dish_id}) not found"
+            )
             self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
@@ -957,7 +959,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.debug(
                 f"Received Jones matrix for receptor {entry['receptor'][0]}"
             )
-            if entry["receptor"][1] == self._receptor_id:
+            if entry["receptor"][0] == self._dish_id:
                 self._logger.debug("Updating Jones Matrix for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._jones_matrix = json.dumps(
@@ -967,5 +969,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 break
 
         if not jm_found:
-            log_msg = f"Jones matrix for VCC (receptor: {self._receptor_id}) not found"
+            log_msg = (
+                f"Jones matrix for VCC (receptor: {self._dish_id}) not found"
+            )
             self._logger.error(log_msg)

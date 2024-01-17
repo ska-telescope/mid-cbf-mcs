@@ -28,8 +28,8 @@ from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -94,7 +94,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: number of resources assigned
         :rtype: int
         """
-        return len(self.component_manager.receptors)
+        return len(self.component_manager.vcc_dish_ids)
 
     # -----------------
     # Device Properties
@@ -142,8 +142,8 @@ class CbfSubarray(CspSubElementSubarray):
         dtype=("str",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
-        label="receptor_ids",
-        doc="List of receptors assigned to subarray",
+        label="receptors",
+        doc="List of DISH/receptor IDs assigned to subarray",
     )
 
     frequencyOffsetK = attribute(
@@ -402,7 +402,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of receptors
         :rtype: List[str]
         """
-        return self.component_manager.receptors
+        return self.component_manager.vcc_dish_ids
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self: CbfSubarray, value: List[str]) -> None:
@@ -430,7 +430,7 @@ class CbfSubarray(CspSubElementSubarray):
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_sysParam(self: CbfSubarray) -> str:
-        # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarray.sysParam_read) ENABLED START #
         """
         Return the sys param string in json format
 
@@ -438,23 +438,23 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: str
         """
         return self.component_manager._sys_param_str
-        # PROTECTED REGION END #    //  CbfSubarray.receptors_read
+        # PROTECTED REGION END #    //  CbfSubarray.sysParam_read
 
     def write_sysParam(self: CbfSubarray, value: str) -> None:
-        # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarray.sysParam_write) ENABLED START #
         """
         Set the sys param string in json format
 
         :param value: the sys param string in json format
         """
         self.component_manager.update_sys_param(value)
-        # PROTECTED REGION END #    //  CbfSubarray.receptors_write
+        # PROTECTED REGION END #    //  CbfSubarray.sysParam_write
 
     # --------
     # Commands
     # --------
 
-    #  Receptors Related Commands  #
+    #  Receptor Related Commands  #
 
     class RemoveReceptorsCommand(
         CspSubElementSubarray.ReleaseResourcesCommand
@@ -483,20 +483,20 @@ class CbfSubarray(CspSubElementSubarray):
             self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
         ) -> Tuple[bool, str]:
             """
-            Validate receptor ids.
+            Validate DISH/receptor IDs.
 
-            :param argin: The list of receptor IDs to remove.
+            :param argin: The list of DISH/receptor IDs to remove.
 
             :return: A tuple containing a boolean indicating if the configuration
                 is valid and a string message. The message is for information
                 purpose only.
             :rtype: (bool, str)
             """
-            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+            return DISHUtils.are_Valid_DISH_Ids(argin)
 
     @command(
         dtype_in=("str",),
-        doc_in="List of receptor IDs",
+        doc_in="List of DISH/receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
@@ -504,10 +504,10 @@ class CbfSubarray(CspSubElementSubarray):
         self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
-        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
-        Uses RemoveReceptorsCommand class.
+        Remove input from list of assigned receptors.
+        Set subarray to ObsState.EMPTY if no receptors assigned.
 
-        :param argin: list of receptor IDs to remove
+        :param argin: list of DISH/receptor IDs to remove
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -558,7 +558,8 @@ class CbfSubarray(CspSubElementSubarray):
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
-        Remove all receptors. Turn Subarray OFF if no receptors assigned
+        Remove all assigned receptors.
+        Set subarray to ObsState.EMPTY if no receptors assigned.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -595,20 +596,20 @@ class CbfSubarray(CspSubElementSubarray):
             self: CbfSubarray.AddReceptorsCommand, argin: List[str]
         ) -> Tuple[bool, str]:
             """
-            Validate receptor ids.
+            Validate DISH/receptor ID.
 
-            :param argin: The list of receptor IDs to add.
+            :param argin: The list of DISH/receptor IDs to add.
 
             :return: A tuple containing a boolean indicating if the configuration
                 is valid and a string message. The message is for information
                 purpose only.
             :rtype: (bool, str)
             """
-            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+            return DISHUtils.are_Valid_DISH_Ids(argin)
 
     @command(
         dtype_in=("str",),
-        doc_in="List of receptor IDs",
+        doc_in="List of DISH/receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
@@ -617,10 +618,10 @@ class CbfSubarray(CspSubElementSubarray):
         self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
-        Assign Receptors to this subarray.
-        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+        Assign input receptors to this subarray.
+        Set subarray to ObsState.IDLE if no receptors were previously assigned.
 
-        :param argin: list of receptors to add
+        :param argin: list of DISH/receptors to add
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.

@@ -318,30 +318,30 @@ class CbfController(SKAController):
         return self.component_manager._source_init_sys_param
         # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
 
-    def read_receptorToVcc(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
-        """Return 'receptorID:vccID'"""
-        if self.component_manager._receptor_utils is None:
+    def read_dishToVcc(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.dishToVcc_read) ENABLED START #
+        """Return 'dishID:vccID'"""
+        if self.component_manager.dish_utils is None:
             return []
         out_str = [
             f"{r}:{v}"
-            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
         ]
 
         return out_str
-        # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
+        # PROTECTED REGION END #    //  CbfController.dishToVcc_read
 
-    def read_vccToReceptor(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
-        """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        if self.component_manager._receptor_utils is None:
+    def read_vccToDish(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.vccToDish_read) ENABLED START #
+        """Return dishToVcc attribute: 'vccID:dishID'"""
+        if self.component_manager.dish_utils is None:
             return []
         out_str = [
             f"{v}:{r}"
-            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
         ]
         return out_str
-        # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
+        # PROTECTED REGION END #    //  CbfController.vccToDish_read
 
     def write_simulationMode(
         self: CbfController, value: SimulationMode

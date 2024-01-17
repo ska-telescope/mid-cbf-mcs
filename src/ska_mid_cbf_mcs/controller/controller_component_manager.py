@@ -29,8 +29,8 @@ from ska_tango_base.control_model import (
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -134,7 +134,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._init_sys_param = ""
         self._source_init_sys_param = ""
-        self._receptor_utils = None
+        self.dish_utils = None
 
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
@@ -385,7 +385,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger.info("Trying to execute ON Command")
 
-        if self._receptor_utils is None:
+        if self.dish_utils is None:
             log_msg = "Dish-VCC mapping has not been provided."
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
@@ -671,7 +671,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._init_sys_param = params
 
         # store the attribute
-        self._receptor_utils = ReceptorUtils(init_sys_param_json)
+        self.dish_utils = DISHUtils(init_sys_param_json)
 
         # send init_sys_param to the subarrays
         try:
@@ -737,12 +737,11 @@ class ControllerComponentManager(CbfComponentManager):
             proxy = self._proxies[fqdn]
             try:
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                rec_id = self._receptor_utils.vcc_id_to_receptor_id[vcc_id]
-                rec_id_int = self._receptor_utils.receptor_id_to_vcc_id[rec_id]
+                dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                 self._logger.info(
-                    f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
+                    f"Assigning DISH ID {dish_id} to VCC {vcc_id}"
                 )
-                proxy.receptorID = rec_id_int
+                proxy.dishID = dish_id
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
