@@ -455,10 +455,10 @@ class SlimLinkComponentManager(CbfComponentManager):
                 idle_ctrl_word = self.tx_idle_ctrl_word
                 self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
-                self._logger.info(
+                self._logger.error(
                     f"CIP-2052 Tx: {self._tx_device_name} ICW: {self.tx_idle_ctrl_word}"
                 )
-                self._logger.info(
+                self._logger.error(
                     f"CIP-2052 Rx: {self._rx_device_name} ICW: {self.rx_idle_ctrl_word}"
                 )
 
