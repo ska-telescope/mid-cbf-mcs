@@ -423,7 +423,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.info(
+        self._logger.debug(
             "Entering SlimLinkComponentManager.disconnect_slim_tx_rx()  -  "
             + self._link_name
         )
@@ -431,11 +431,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             return (self.slim_link_simulator.disconnect_slim_tx_rx(),)
 
         try:
-            self._logger.info("CIP-2052 Before IF")
             if self._rx_device_proxy is not None:
-                self._logger.info(
-                    f"CIP-2052 Old Tx Name is {self._tx_device_name}"
-                )
                 # Put SLIM Rx back in serial loopback
                 rx = self._rx_device_name
                 index = rx.split("/")[2].split("-")[1][2:]
@@ -443,10 +439,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 rx_arr = rx.split("/")
                 tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
                 self._tx_device_name = tx
-                self._logger.info(
-                    f"CIP-2052 New Tx Name is {self._tx_device_name}"
-                )
-
+                
                 self._tx_device_proxy = CbfDeviceProxy(
                     fqdn=self._tx_device_name, logger=self._logger
                 )
@@ -454,13 +447,6 @@ class SlimLinkComponentManager(CbfComponentManager):
                 # Sync the idle ctrl word between Tx and Rx
                 idle_ctrl_word = self.tx_idle_ctrl_word
                 self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
-
-                self._logger.error(
-                    f"CIP-2052 Tx: {self._tx_device_name} ICW: {self.tx_idle_ctrl_word}"
-                )
-                self._logger.error(
-                    f"CIP-2052 Rx: {self._rx_device_name} ICW: {self.rx_idle_ctrl_word}"
-                )
 
                 self._rx_device_proxy.initialize_connection(True)
         except tango.DevFailed:
@@ -475,7 +461,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         return (
             ResultCode.OK,
-            f"Disconnected {self._tx_device_name}->{self._rx_device_name}",
+            f"Disconnected Tx Rx. {self._rx_device_name} now in serial loopback.",
         )
 
     def clear_counters(
