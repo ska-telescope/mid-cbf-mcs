@@ -292,7 +292,9 @@ def mock_subarray_group() -> unittest.mock.Mock:
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_property("TalonDxBoardAddress", {"TalonDxBoardAddress": ["192.168.6.2"]})
+    builder.add_property(
+        "TalonDxBoardAddress", {"TalonDxBoardAddress": ["192.168.6.2"]}
+    )
     return builder()
 
 
