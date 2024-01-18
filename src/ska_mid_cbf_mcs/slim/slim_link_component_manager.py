@@ -342,7 +342,10 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        return ResultCode.OK, f"Connected Tx Rx successfully: {self._link_name}"
+        return (
+            ResultCode.OK,
+            f"Connected Tx Rx successfully: {self._link_name}",
+        )
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -400,7 +403,9 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._update_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
-            self._logger.warn(f"Link failed health check for {self._link_name}: {error_msg}")
+            self._logger.warn(
+                f"Link failed health check for {self._link_name}: {error_msg}"
+            )
             self._update_health_state(HealthState.FAILED)
             return ResultCode.OK, error_msg
         self._update_health_state(HealthState.OK)
@@ -426,9 +431,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             return (self.slim_link_simulator.disconnect_slim_tx_rx(),)
 
         try:
-            self._logger.info(
-                f"CIP-2052 Before IF"
-            )
+            self._logger.info(f"CIP-2052 Before IF")
             if self._rx_device_proxy is not None:
                 self._logger.info(
                     f"CIP-2052 Old Tx Name is {self._tx_device_name}"
@@ -472,7 +475,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._link_name = ""
             self._link_enabled = False
 
-        return ResultCode.OK, f"Disconnected {self._tx_device_name}->{self._rx_device_name}"
+        return (
+            ResultCode.OK,
+            f"Disconnected {self._tx_device_name}->{self._rx_device_name}",
+        )
 
     def clear_counters(
         self: SlimLinkComponentManager,
