@@ -327,7 +327,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
-            self.rx_idle_ctrl_word = idle_ctrl_word
+            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
             self._rx_device_proxy.initialize_connection(False)
@@ -441,7 +441,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
                 # Sync the idle ctrl word between Tx and Rx
                 idle_ctrl_word = self.tx_idle_ctrl_word
-                self.rx_idle_ctrl_word = idle_ctrl_word
+                self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
                 self._logger.info(
                     f"CIP-2052 Tx: {self._tx_device_name} ICW: {self.tx_idle_ctrl_word}\n         Rx: {self._rx_device_name} ICW: {self.rx_idle_ctrl_word}"
