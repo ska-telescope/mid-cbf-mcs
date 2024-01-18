@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.17
+*******
+* CIP-2052 Fixed SlimLink disconnect_slim_tx_rx() by re-syncing idle_ctrl_words before initializing in loopback mode.
+
 0.12.16
 *******
 * CIP-1898 Fix FSP subarrayMembership resetting after subarray GoToIdle
