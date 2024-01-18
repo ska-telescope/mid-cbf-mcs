@@ -749,6 +749,34 @@ class ControllerComponentManager(CbfComponentManager):
                     self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
 
+        # update talon boards. The VCC ID to IP address mapping comes
+        # from hw_config. Then map VCC ID to receptor ID.
+        for vcc_id_str, ip in self._hw_config["talon_board"].items():
+            for fqdn in self._fqdn_talon_board:
+                try:
+                    proxy = self._proxies[fqdn]
+                    board_ip = proxy.get_property("TalonDxBoardAddress")[
+                        "TalonDxBoardAddress"
+                    ][0]
+                    if board_ip == ip:
+                        vcc_id = int(vcc_id_str)
+                        proxy.write_attribute("vccID", str(vcc_id))
+                        if (
+                            vcc_id
+                            in self._receptor_utils.vcc_id_to_receptor_id
+                        ):
+                            receptor_id = (
+                                self._receptor_utils.vcc_id_to_receptor_id[
+                                    vcc_id
+                                ]
+                            )
+                            proxy.write_attribute("receptorID", receptor_id)
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = f"Failed to update {fqdn} with VCC ID and receptor ID; {item.reason}"
+                        self._logger.error(log_msg)
+                        return (ResultCode.FAILED, log_msg)
+
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")

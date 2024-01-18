@@ -96,6 +96,7 @@ class CbfSubarrayComponentManager(
         fsp_corr_sub: List[str],
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
+        talon_board: List[str],
         logger: logging.Logger,
         simulation_mode: SimulationMode,
         push_change_event_callback: Optional[Callable],
@@ -119,6 +120,7 @@ class CbfSubarrayComponentManager(
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
         :param fsp_pss_sub: FQDNs of subordinate FSP PSS-BF subarray devices
         :param fsp_pst_sub: FQDNs of subordinate FSP PST-BF devices
+        :param talon_board: FQDNs of talon board devices
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -157,6 +159,7 @@ class CbfSubarrayComponentManager(
         self._fqdn_fsp_corr_subarray_device = fsp_corr_sub
         self._fqdn_fsp_pss_subarray_device = fsp_pss_sub
         self._fqdn_fsp_pst_subarray_device = fsp_pst_sub
+        self._fqdn_talon_board_device = talon_board
 
         # set to determine if resources are assigned
         self._resourced = False
@@ -219,6 +222,8 @@ class CbfSubarrayComponentManager(
         self._proxies_fsp_corr_subarray_device = []
         self._proxies_fsp_pss_subarray_device = []
         self._proxies_fsp_pst_subarray_device = []
+        self._proxies_talon_board_device = []
+
         # group proxies to subordinate devices
         # Note: VCC connected both individual and in group
         self._group_vcc = None
@@ -304,6 +309,11 @@ class CbfSubarrayComponentManager(
                 for fqdn in self._fqdn_fsp_pst_subarray_device:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     self._proxies_fsp_pst_subarray_device.append(proxy)
+
+            if len(self._proxies_talon_board_device) == 0:
+                for fqdn in self._fqdn_talon_board_device:
+                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    self._proxies_talon_board_device.append(proxy)
 
             if self._group_vcc is None:
                 self._group_vcc = CbfGroupProxy(
@@ -1957,6 +1967,12 @@ class CbfSubarrayComponentManager(
                     self._component_obs_fault_callback(True)
                     return (ResultCode.FAILED, msg)
 
+                # clear the subarray ID off the talon board with the matching
+                # receptor ID
+                self._assign_talon_board_subarray_id(
+                    receptor_id=receptor_id, assign=False
+                )
+
             else:
                 msg = f"Receptor {receptor_id} not found. Skipping."
                 self._logger.warning(msg)
@@ -2019,6 +2035,12 @@ class CbfSubarrayComponentManager(
                     msg = str(df.args[0].desc)
                     self._component_obs_fault_callback(True)
                     return (ResultCode.FAILED, msg)
+
+                # clear the subarray ID off the talon board with the matching
+                # receptor ID
+                self._assign_talon_board_subarray_id(
+                    receptor_id=receptor_id, assign=False
+                )
 
             self._logger.debug("No receptors remaining.")
             self.update_component_resources(False)
@@ -2125,6 +2147,12 @@ class CbfSubarrayComponentManager(
                         + "subarray. Skipping."
                     )
                     self._logger.warning(msg)
+
+            # assign the subarray ID to the talon board with the matching
+            # receptor ID
+            self._assign_talon_board_subarray_id(
+                receptor_id=receptor_id, assign=True
+            )
 
         self._logger.debug(f"receptors after adding: {*self._receptors,}")
 
@@ -2395,3 +2423,22 @@ class CbfSubarrayComponentManager(
         return (base_dish_sample_rate_MH * mhz_to_hz) + (
             sample_rate_const * freq_offset_k * const.DELTA_F
         )
+
+    def _assign_talon_board_subarray_id(
+        self: CbfSubarrayComponentManager, receptor_id: str, assign: bool
+    ) -> None:
+        """
+        Assign subarray ID to the talon board with the receptor_id
+
+        :param receptor_id: the receptor ID
+        :param assign: true to assign the subarray id, false to remove
+        """
+        for proxy in self._proxies_talon_board_device:
+            board_receptor_id = proxy.read_attribute("receptorID")
+            if board_receptor_id == receptor_id:
+                if assign:
+                    proxy.write_attribute("subarrayID", str(self._subarray_id))
+                else:
+                    proxy.write_attribute("subarrayID", "")
+                return
+        return

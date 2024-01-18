@@ -19,6 +19,7 @@ from typing import Optional, Tuple
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
+from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -42,6 +43,13 @@ class TalonBoard(SKABaseDevice):
     """
 
     # PROTECTED REGION ID(TalonBoard.class_variable) ENABLED START #
+
+    # Some of these IDs are typically integers. But it is easier to use
+    # empty string to show the board is not assigned.
+    subarrayID_ = ""
+    receptorID_ = ""
+    vccID_ = ""
+
     # PROTECTED REGION END #    //  TalonBoard.class_variable
 
     # -----------------
@@ -71,6 +79,28 @@ class TalonBoard(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
+
+    subarrayID = attribute(
+        dtype="DevString",
+        access=AttrWriteType.READ_WRITE,
+        label="Subarray ID",
+        doc="The Subarray ID assigned to the board. This attribute is only used for labelling.",
+    )
+
+    receptorID = attribute(
+        dtype="DevString",
+        access=AttrWriteType.READ_WRITE,
+        label="Receptor ID",
+        doc="The Receptor ID assigned to the board. This attribute is only used for labelling.",
+    )
+
+    vccID = attribute(
+        dtype="DevString",
+        access=AttrWriteType.READ_WRITE,
+        label="VCC ID",
+        doc="The VCC ID assigned to the board. This attribute is only used for labelling.",
+    )
+
     @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
     )
@@ -414,6 +444,73 @@ class TalonBoard(SKABaseDevice):
         :return: true if fan fault register is set
         """
         return self.component_manager.fans_fault()
+
+    # -----------------
+    # Attribute Methods
+    # -----------------
+
+    def read_subarrayID(self: TalonBoard) -> str:
+        # PROTECTED REGION ID(TalonBoard.read_subarrayID) ENABLED START #
+        """
+        Read the subarrayID attribute.
+
+        :return: the vcc ID
+        :rtype: str
+        """
+        return self.subarrayID_
+        # PROTECTED REGION END #    //  TalonBoard.subarrayID_read
+
+    def write_subarrayID(self: TalonBoard, value: str) -> None:
+        # PROTECTED REGION ID(TalonBoard.subarrayID_write) ENABLED START #
+        """
+        Write the receptorID attribute.
+
+        :param value: the vcc ID
+        """
+        self.subarrayID_ = value
+        # PROTECTED REGION END #    //  TalonBoard.subarrayID_write
+
+    def read_receptorID(self: TalonBoard) -> str:
+        # PROTECTED REGION ID(TalonBoard.read_receptorID) ENABLED START #
+        """
+        Read the receptorID attribute.
+
+        :return: the receptor ID
+        :rtype: str
+        """
+        return self.receptorID_
+        # PROTECTED REGION END #    //  TalonBoard.receptorID_read
+
+    def write_receptorID(self: TalonBoard, value: str) -> None:
+        # PROTECTED REGION ID(TalonBoard.receptorID_write) ENABLED START #
+        """
+        Write the receptorID attribute.
+
+        :param value: the receptor ID
+        """
+        self.receptorID_ = value
+        # PROTECTED REGION END #    //  TalonBoard.receptorID_write
+
+    def read_vccID(self: TalonBoard) -> str:
+        # PROTECTED REGION ID(TalonBoard.read_vccID) ENABLED START #
+        """
+        Read the vccID attribute.
+
+        :return: the vcc ID
+        :rtype: str
+        """
+        return self.vccID_
+        # PROTECTED REGION END #    //  TalonBoard.vccID_read
+
+    def write_vccID(self: TalonBoard, value: str) -> None:
+        # PROTECTED REGION ID(TalonBoard.vccID_write) ENABLED START #
+        """
+        Write the receptorID attribute.
+
+        :param value: the vcc ID
+        """
+        self.vccID_ = value
+        # PROTECTED REGION END #    //  TalonBoard.vccID_write
 
     # ---------------
     # General methods

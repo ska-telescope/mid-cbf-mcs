@@ -126,6 +126,8 @@ class CbfSubarray(CspSubElementSubarray):
 
     FspPstSubarray = device_property(dtype=("str",))
 
+    TalonBoard = device_property(dtype=("str",))
+
     # ----------
     # Attributes
     # ----------
@@ -222,6 +224,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_corr_sub=self.FspCorrSubarray,
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
+            talon_board=self.TalonBoard,
             logger=self.logger,
             simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,
