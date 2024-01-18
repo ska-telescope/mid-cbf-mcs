@@ -423,7 +423,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(
+        self._logger.info(
             "Entering SlimLinkComponentManager.disconnect_slim_tx_rx()  -  "
             + self._link_name
         )
@@ -464,9 +464,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
                 self._rx_device_proxy.initialize_connection(True)
         except tango.DevFailed:
-            result_msg = (
-                f"Failed to enable Rx loopback: {self._rx_device_name}"
-            )
+            result_msg = f"Failed to enable Rx loopback: {self._tx_device_name}->{self._rx_device_name}"
             self._logger.warn(result_msg)
             return ResultCode.FAILED, result_msg
         finally:
