@@ -431,7 +431,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             return (self.slim_link_simulator.disconnect_slim_tx_rx(),)
 
         try:
-            self._logger.info(f"CIP-2052 Before IF")
+            self._logger.info("CIP-2052 Before IF")
             if self._rx_device_proxy is not None:
                 self._logger.info(
                     f"CIP-2052 Old Tx Name is {self._tx_device_name}"
