@@ -1533,6 +1533,10 @@ class CbfSubarrayComponentManager(
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(args))
                 vccProxy.command_inout("ConfigureBand", data)
+
+                self._assign_talon_board_subarray_id(
+                    receptor_id=receptor_id, assign=True
+                )
             else:
                 return (
                     ResultCode.FAILED,
@@ -2434,7 +2438,7 @@ class CbfSubarrayComponentManager(
         :param assign: true to assign the subarray id, false to remove
         """
         for proxy in self._proxies_talon_board_device:
-            board_receptor_id = proxy.read_attribute("receptorID")
+            board_receptor_id = proxy.read_attribute("receptorID").value
             if board_receptor_id == receptor_id:
                 if assign:
                     proxy.write_attribute("subarrayID", str(self._subarray_id))
