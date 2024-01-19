@@ -127,10 +127,10 @@ Return calls are not shown.
 .. uml:: ../../diagrams/restart-command.puml
 
 
-Serial Lightweight Interconnect Mesh (SLIM)
---------------------------------------------
+Serial Lightweight Interconnect Mesh (SLIM) Interface
+------------------------------------------------------
 
-Refs: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_, `Code Design Notes <https://developer.skatelescope.org/projects/ska-mid-cbf-engineering-console/en/latest/system.html#on-command-sequencehttps://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/developer/code_design_notes.html#serial-lightweight-interconnect-mesh-slim>`_
+Refs: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_, :ref:`Serial Lightweight Interconnect Mesh (SLIM) Design`
 
 The Serial Lightweight Interconnect Mesh (SLIM) provides a streaming packet link between two different FPGAs. At its lowest level, a TX and RX IP block are paired together to transfer packetized data across a high-speed serial link.
 The SLIM architecture consists of three parts: The HPS DsSlimTxRx device server, which provides an interface to the FPGA IP, the MCS SLIM Links, which establish links between Tx and Rx devices, and finally the top level MCS SLIM Mesh (simply called 'SLIM'), which bundles links into groups for better organization.

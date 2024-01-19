@@ -98,10 +98,10 @@ any connection to the hardware.
    MCS Vcc Device
 
 
-Serial Lightweight Interconnect Mesh (SLIM)
-=================================================
+Serial Lightweight Interconnect Mesh (SLIM) Design
+==================================================
 
-Ref: `MCS to HPS Interface <https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/mcs_hps_interface.html#serial-lightweight-interconnect-mesh-slim>`_
+Ref: :ref:`Serial Lightweight Interconnect Mesh (SLIM) Interface`
 
 Slim
 ----
