@@ -324,6 +324,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 result1 = self._proxy_power_switch1.TurnOnOutlet(
                     self._pdu_outlets[0]
                 )[0][0]
+                self._logger.info(f"Result Code from TurnOnOutlet for outlet {self._pdu_outlets[0]} : {result1}")
                 if result1 == ResultCode.OK:
                     self.pdu1_power_mode = PowerMode.ON
                     self._logger.info("PDU 1 successfully turned on.")
@@ -345,6 +346,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     result2 = self._proxy_power_switch2.TurnOnOutlet(
                         self._pdu_outlets[1]
                     )[0][0]
+                    self._logger.info(f"Result Code from TurnOnOutlet for outlet {self._pdu_outlets[1]} : {result2}")
                     if result2 == ResultCode.OK:
                         self.pdu2_power_mode = PowerMode.ON
                         self._logger.info("PDU 2 successfully turned on.")

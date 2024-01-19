@@ -257,6 +257,7 @@ class PowerSwitchDriver:
         url = self.outlet_control_url.replace("{outlet}", outlet)
         data = self.turn_on_action
         outlet_idx = self.outlet_id_list.index(outlet)
+        self.logger.info(f"URL for turning on outlet in power_switch_driver: {url}")
 
         try:
             response = requests.patch(
@@ -267,6 +268,8 @@ class PowerSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
+
+            self.logger.info(f"response status_code: {response.status_code}, reason: {response.reason}")
 
             if response.status_code in [
                 requests.codes.ok,
@@ -306,6 +309,7 @@ class PowerSwitchDriver:
         url = self.outlet_control_url.replace("{outlet}", outlet)
         data = self.turn_off_action
         outlet_idx = self.outlet_id_list.index(outlet)
+        self.logger.info(f"URL for turning on outlet in power_switch_driver: {url}")
 
         try:
             response = requests.patch(
@@ -317,6 +321,8 @@ class PowerSwitchDriver:
                 timeout=self.query_timeout_s,
             )
 
+            self.logger.info(f"response status_code: {response.status_code}, reason: {response.reason}")
+            
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,

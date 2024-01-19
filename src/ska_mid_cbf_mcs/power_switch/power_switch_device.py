@@ -285,11 +285,13 @@ class PowerSwitch(SKABaseDevice):
 
             try:
                 result, msg = component_manager.turn_on_outlet(argin)
+                self.logger.info(f"Result from component_manager.turn_on_outlet: {result}, message: {msg}")
                 if result != ResultCode.OK:
                     return (result, msg)
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.ON:
+                    self.logger.info(f"Power on failed, outlet is in power mode {power_mode}")
                     return (
                         ResultCode.FAILED,
                         f"Power on failed, outlet is in power mode {power_mode}",
@@ -300,7 +302,7 @@ class PowerSwitch(SKABaseDevice):
                     ResultCode.FAILED,
                     "Unable to read outlet state after power on",
                 )
-
+            self.logger.info(f"TurnOnOutletCommand was successful.  Result: {result}, message: {msg}")
             return (result, msg)
 
     @command(
@@ -342,11 +344,13 @@ class PowerSwitch(SKABaseDevice):
 
             try:
                 result, msg = component_manager.turn_off_outlet(argin)
+                self.logger.info(f"Result from component_manager.turn_off_outlet: {result}, message: {msg}")
                 if result != ResultCode.OK:
                     return (result, msg)
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.OFF:
+                    self.logger.info(f"Power on failed, outlet is in power mode {power_mode}")
                     return (
                         ResultCode.FAILED,
                         f"Power off failed, outlet is in power mode {power_mode}",
@@ -357,7 +361,7 @@ class PowerSwitch(SKABaseDevice):
                     ResultCode.FAILED,
                     "Unable to read outlet state after power off",
                 )
-
+            self.logger.info(f"TurnOffOutletCommand was successful.  Result: {result}, message: {msg}")
             return (result, msg)
 
     @command(
