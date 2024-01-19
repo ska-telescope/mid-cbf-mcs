@@ -101,6 +101,8 @@ any connection to the hardware.
 Serial Lightweight Interconnect Mesh (SLIM)
 =================================================
 
+Ref: `MCS to HPS Interface <https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/mcs_hps_interface.html#serial-lightweight-interconnect-mesh-slim>`_
+
 Slim
 ----
 The ``Slim`` Tango device provides macro control to aggregated subordinate ``SlimLink`` Tango devices.
