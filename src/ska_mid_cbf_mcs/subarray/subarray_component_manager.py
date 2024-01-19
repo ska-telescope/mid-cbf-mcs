@@ -1533,10 +1533,6 @@ class CbfSubarrayComponentManager(
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(args))
                 vccProxy.command_inout("ConfigureBand", data)
-
-                self._assign_talon_board_subarray_id(
-                    receptor_id=receptor_id, assign=True
-                )
             else:
                 return (
                     ResultCode.FAILED,

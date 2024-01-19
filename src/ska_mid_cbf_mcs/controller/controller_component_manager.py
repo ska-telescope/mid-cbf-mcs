@@ -771,6 +771,10 @@ class ControllerComponentManager(CbfComponentManager):
                                 ]
                             )
                             proxy.write_attribute("receptorID", receptor_id)
+                        else:
+                            self._logger.warn(
+                                "Unable to match VCC ID in the HW config with the receptor-VCC mapping."
+                            )
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = f"Failed to update {fqdn} with VCC ID and receptor ID; {item.reason}"
