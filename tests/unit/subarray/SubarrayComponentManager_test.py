@@ -122,11 +122,9 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.vcc_dish_ids == []
 
-        vcc_id = (
-            subarray_component_manager._dish_utils.dish_id_to_vcc_id[
-                receptors[-1]
-            ]
-        )
+        vcc_id = subarray_component_manager._dish_utils.dish_id_to_vcc_id[
+            receptors[-1]
+        ]
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 

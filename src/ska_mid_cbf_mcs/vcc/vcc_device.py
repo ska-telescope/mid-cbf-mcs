@@ -244,7 +244,7 @@ class Vcc(CspSubElementObsDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return VccComponentManager(
-            vcc_id= self.VccID,
+            vcc_id=self.VccID,
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
