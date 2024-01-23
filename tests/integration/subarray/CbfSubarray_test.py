@@ -83,7 +83,7 @@ class TestCbfSubarray:
         device_under_test.sysParam = sp
 
         sys_param = json.loads(sp)
-        test_proxies.receptor_utils = DISHUtils(sys_param)
+        test_proxies.dish_utils = DISHUtils(sys_param)
 
         device_under_test.On()
 
@@ -169,7 +169,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
                     for r in receptors[:-1]
@@ -187,7 +187,7 @@ class TestCbfSubarray:
             ] == receptors
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    test_proxies.dish_utils.dish_id_to_vcc_id[
                         receptors[-1]
                     ]
                 ].subarrayMembership
@@ -204,7 +204,7 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                        test_proxies.dish_utils.dish_id_to_vcc_id[
                             receptor
                         ]
                     ].subarrayMembership
@@ -213,7 +213,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
                     for r in receptors_to_remove
@@ -234,7 +234,7 @@ class TestCbfSubarray:
             for receptor in receptors_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                        test_proxies.dish_utils.dish_id_to_vcc_id[
                             receptor
                         ]
                     ].subarrayMembership
@@ -312,7 +312,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -338,7 +338,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -418,7 +418,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -522,7 +522,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
                     for r in receptors
@@ -542,7 +542,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
                     for r in receptors
@@ -747,7 +747,7 @@ class TestCbfSubarray:
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                    test_proxies.dish_utils.dish_id_to_vcc_id[
                                         t["receptor_id"]
                                     ]
                                     == r
@@ -797,7 +797,7 @@ class TestCbfSubarray:
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            test_proxies.dish_utils.dish_id_to_vcc_id[
                                 r
                             ]
                             for r in config_fsp_receptors_sorted
@@ -813,7 +813,7 @@ class TestCbfSubarray:
                         receptors_sorted = receptors
                         receptors_sorted.sort()
                         fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            test_proxies.dish_utils.dish_id_to_vcc_id[
                                 r
                             ]
                             for r in receptors_sorted
@@ -960,7 +960,7 @@ class TestCbfSubarray:
                         # TODO currently only one receptor supported
                         assert (
                             searchBeam["receptor_ids"][0][1]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
                         )
@@ -998,7 +998,7 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["PST-BF"][sub_id][
                                 fsp_id
                             ].receptors[0]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 beam["receptor_ids"][0]
                             ]
                         )
@@ -1422,7 +1422,7 @@ class TestCbfSubarray:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                        test_proxies.dish_utils.dish_id_to_vcc_id[
                             receptor_id
                         ],
                     ]
@@ -1468,7 +1468,7 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights:
                 for receptor in weights["timing_beam_weights"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    rec_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
@@ -1571,7 +1571,7 @@ class TestCbfSubarray:
             for receptor_id, ii in zip(receptors, range(num_receptors)):
                 vcc_ids[
                     ii
-                ] = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                ] = test_proxies.dish_utils.dish_id_to_vcc_id[
                     receptor_id
                 ]
 
@@ -1918,7 +1918,7 @@ class TestCbfSubarray:
                 for jj, rec in enumerate(vcc_receptors):
                     # get the vcc device proxy (dp) corresponding to i_rec
                     this_vcc = (
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[rec]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[rec]
                     )
                     vcc_dp = test_proxies.vcc[this_vcc]
 
@@ -1931,7 +1931,7 @@ class TestCbfSubarray:
                             # receptor as pair of str and int for comparison
                             this_input_delay_model_obj["receptor"] = [
                                 entry["receptor"],
-                                test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                test_proxies.dish_utils.dish_id_to_vcc_id[
                                     entry["receptor"]
                                 ],
                             ]
@@ -1986,7 +1986,7 @@ class TestCbfSubarray:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                        test_proxies.dish_utils.dish_id_to_vcc_id[
                             receptor_id
                         ],
                     ]
@@ -2160,14 +2160,14 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["jones_matrix"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    rec_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     for frequency_slice in receptor["jones_matrix_details"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
-                            vcc_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            vcc_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                                 receptor["receptor"]
                             ]
                             fs_id = frequency_slice["fsid"]

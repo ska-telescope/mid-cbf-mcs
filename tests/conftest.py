@@ -353,7 +353,7 @@ def init_proxies_fixture():
 
             # Load in system params
             sys_param = load_data("sys_param_4_boards")
-            self.receptor_utils = DISHUtils(sys_param)
+            self.dish_utils = DISHUtils(sys_param)
 
             # TmCspSubarrayLeafNodeTest
             self.tm = CbfDeviceProxy(
