@@ -1,7 +1,7 @@
 {
     "jones_matrix": [
         {
-            "receptor": ["SKA001", 1],
+            "receptor": 1,
             "jones_matrix_details": [
                 {
                     "fsid": 1,
@@ -27,7 +27,7 @@
             ]
         },
         {
-            "receptor": ["SKA036", 36],
+            "receptor": 2,
             "jones_matrix_details": [
                 {
                     "fsid": 1,
@@ -53,7 +53,7 @@
             ]
         },
         {
-            "receptor": ["SKA100", 100],
+            "receptor": 4,
             "jones_matrix_details": [
                 {
                     "fsid": 1,

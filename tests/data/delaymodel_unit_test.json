@@ -4,7 +4,7 @@
   "validity_period": 400.0,
   "delay_details": [
     {
-      "receptor": ["SKA001", 1],
+      "receptor": 1,
       "poly_info": [
         {
           "polarization": "X",
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "receptor": ["SKA100", 100],
+      "receptor": 4,
       "poly_info": [
         {
           "polarization": "X",
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "receptor": ["SKA036", 36],
+      "receptor": 2,
       "poly_info": [
         {
           "polarization": "X",
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "receptor": ["SKA063", 63],
+      "receptor": 3,
       "poly_info": [
         {
           "polarization": "X",

@@ -176,6 +176,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
+        vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: List[str],
@@ -192,6 +193,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         Initialize a new instance.
 
+        :param vcc_id: integer ID of this VCC
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
@@ -213,6 +215,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self._simulation_mode = simulation_mode
 
+        self._vcc_id = vcc_id
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -862,8 +865,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
                     for tdc_dest in argin["tdc_destination_address"]:
-                        # "receptor" value is a pair of str and int
-                        if tdc_dest["receptor_id"][0] == self._dish_id:
+                        if tdc_dest["receptor_id"] == self._vcc_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = tdc_dest[
                                 "tdc_destination_address"
@@ -890,8 +892,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for dopplerDetails in argin:
-            # "receptor" value is a pair of str and int
-            if dopplerDetails["receptor"][0] == self._dish_id:
+            if dopplerDetails["receptor"] == self._vcc_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
                     self._doppler_phase_correction = coeff.copy()
@@ -920,9 +921,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         list_of_entries = []
         for entry in delay_model_obj["delay_details"]:
             self._logger.debug(
-                f"Received delay model for receptor {entry['receptor'][0]}"
+                f"Received delay model for VCC {entry['receptor']}"
             )
-            if entry["receptor"][0] == self._dish_id:
+            if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._delay_model = json.dumps(
@@ -957,9 +958,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         list_of_entries = []
         for entry in matrix["jones_matrix"]:
             self._logger.debug(
-                f"Received Jones matrix for receptor {entry['receptor'][0]}"
+                f"Received Jones matrix for VCC {entry['receptor']}"
             )
-            if entry["receptor"][0] == self._dish_id:
+            if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating Jones Matrix for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._jones_matrix = json.dumps(
