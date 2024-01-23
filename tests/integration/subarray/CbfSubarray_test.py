@@ -187,9 +187,7 @@ class TestCbfSubarray:
             ] == receptors
             assert (
                 test_proxies.vcc[
-                    test_proxies.dish_utils.dish_id_to_vcc_id[
-                        receptors[-1]
-                    ]
+                    test_proxies.dish_utils.dish_id_to_vcc_id[receptors[-1]]
                 ].subarrayMembership
                 == sub_id
             )
@@ -204,9 +202,7 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.dish_utils.dish_id_to_vcc_id[
-                            receptor
-                        ]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor]
                     ].subarrayMembership
                     == sub_id
                 )
@@ -234,9 +230,7 @@ class TestCbfSubarray:
             for receptor in receptors_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.dish_utils.dish_id_to_vcc_id[
-                            receptor
-                        ]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor]
                     ].subarrayMembership
                     == 0
                 )
@@ -797,9 +791,7 @@ class TestCbfSubarray:
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
-                            test_proxies.dish_utils.dish_id_to_vcc_id[
-                                r
-                            ]
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
                             for r in config_fsp_receptors_sorted
                         ]
                         assert all(
@@ -813,9 +805,7 @@ class TestCbfSubarray:
                         receptors_sorted = receptors
                         receptors_sorted.sort()
                         fsp_receptors_num = [
-                            test_proxies.dish_utils.dish_id_to_vcc_id[
-                                r
-                            ]
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
                             for r in receptors_sorted
                         ]
                         assert all(
@@ -1422,9 +1412,7 @@ class TestCbfSubarray:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        test_proxies.dish_utils.dish_id_to_vcc_id[
-                            receptor_id
-                        ],
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id],
                     ]
                 input_delay_model = json.dumps(input_delay_model_obj)
 
@@ -1569,9 +1557,7 @@ class TestCbfSubarray:
 
             vcc_ids = [None for _ in range(num_receptors)]
             for receptor_id, ii in zip(receptors, range(num_receptors)):
-                vcc_ids[
-                    ii
-                ] = test_proxies.dish_utils.dish_id_to_vcc_id[
+                vcc_ids[ii] = test_proxies.dish_utils.dish_id_to_vcc_id[
                     receptor_id
                 ]
 
@@ -1917,9 +1903,7 @@ class TestCbfSubarray:
                 # check the delay model was correctly updated for vcc
                 for jj, rec in enumerate(vcc_receptors):
                     # get the vcc device proxy (dp) corresponding to i_rec
-                    this_vcc = (
-                        test_proxies.dish_utils.dish_id_to_vcc_id[rec]
-                    )
+                    this_vcc = test_proxies.dish_utils.dish_id_to_vcc_id[rec]
                     vcc_dp = test_proxies.vcc[this_vcc]
 
                     # Extract the  delay model corresponding to receptor i_rec:
@@ -1986,9 +1970,7 @@ class TestCbfSubarray:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
-                        test_proxies.dish_utils.dish_id_to_vcc_id[
-                            receptor_id
-                        ],
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id],
                     ]
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [

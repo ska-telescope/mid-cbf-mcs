@@ -2246,7 +2246,6 @@ class CbfSubarrayComponentManager(
         # convert the DISH ID to a VCC ID integer using DISHUtils
 
         # CIP-1724 Using receptors dictionary to access receptor int instead
-        # vcc_id = self._dish_utils.dish_id_str_to_int(receptor)
         vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
 
         # find the k value for this receptor
