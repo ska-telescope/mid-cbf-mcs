@@ -619,6 +619,23 @@ class FspPssSubarray(CspSubElementObsDevice):
                 device._component_configured(False)
 
             return (result_code, message)
+        
+    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+        """ A class for FSPPssSubarray's ObsReset() command. """
+        def do(self):
+            """
+            Stateless hook for the ObsReset() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            component_manager = self.target
+            (result_code, message) = component_manager.obs_reset()
+
+            return (result_code, message)
+        
 
     class AbortCommand(CspSubElementObsDevice.AbortCommand):
         """A class for FspPssSubarray's Abort() command."""
