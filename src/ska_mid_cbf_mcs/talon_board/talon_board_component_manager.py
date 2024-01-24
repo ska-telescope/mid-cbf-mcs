@@ -789,6 +789,204 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(-1)
         return res
 
+    def ltm_input_voltage(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-input"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_input_voltage()",
+                )
+        return res
+
+    def ltm_output_voltage_1(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-output-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_voltage_1()",
+                )
+        return res
+
+    def ltm_output_voltage_2(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-output-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_voltage_2()",
+                )
+        return res
+
+    def ltm_input_current(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-input"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_input_current()",
+                )
+        return res
+
+    def ltm_output_current_1(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-output-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_current_1()",
+                )
+        return res
+
+    def ltm_output_current_2(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-output-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_current_2()",
+                )
+        return res
+
+    def ltm_temperature_1(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_temperature-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_temperature_1()",
+                )
+        return res
+
+    def ltm_temperature_2(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_temperature-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_temperature_2()",
+                )
+        return res
+
+    def ltm_voltage_warning(self) -> list[bool]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_voltage-output-max-alarm-1",
+                f"LTMs_{i}_LTM_voltage-output-max-alarm-2",
+                f"LTMs_{i}_LTM_voltage-input-crit-alarm",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
+    def ltm_current_warning(self) -> list[bool]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_current-output-max-alarm-1",
+                f"LTMs_{i}_LTM_current-output-max-alarm-2",
+                f"LTMs_{i}_LTM_current-input-max-alarm",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
+    def ltm_temperature_warning(self) -> list[bool]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_temperature-max-alarm-1",
+                f"LTMs_{i}_LTM_temperature-max-alarm-1",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
     def _query_if_needed(self):
         td = datetime.now() - self._last_check
         if td.total_seconds() > 10:
