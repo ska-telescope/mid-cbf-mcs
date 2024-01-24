@@ -936,12 +936,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 device._component_configured(False)
 
             return (result_code, message)
-        
+
     class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
         """
         A class for the FspCorrSubarray's ObsReset() command.
         """
-        
+
         def do(self):
             """
             Stateless hook for the ObsReset() command functionality.
@@ -955,7 +955,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
             (result_code, message) = component_manager.obs_reset()
 
             return (result_code, message)
-
 
     class AbortCommand(CspSubElementObsDevice.AbortCommand):
         """A class for FspCorrSubarray's Abort() command."""

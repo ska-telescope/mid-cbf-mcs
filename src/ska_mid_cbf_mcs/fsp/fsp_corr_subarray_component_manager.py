@@ -756,21 +756,17 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        
+
         self._deconfigure()
 
         self._remove_all_receptors()
-        
+
         # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
         # self._proxy_hps_fsp_corr_controller.ObsReset()
-        
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
-        
 
     def abort(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
         # TODO: Abort command not implemented for the HPS FSP application
         return (ResultCode.OK, "Abort command not implemented")
-
-        

@@ -333,7 +333,7 @@ class FspPssSubarrayComponentManager(
         self._remove_all_receptors()
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
-    
+
     def obs_reset(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -345,13 +345,13 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        
+
         self._deconfigure()
 
         self._remove_all_receptors()
-        
+
         # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-        
+
         return (ResultCode.OK, "FspPssSubarray ObsReset command completed OK")
 
     def abort(

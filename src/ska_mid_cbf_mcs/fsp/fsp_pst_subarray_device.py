@@ -581,7 +581,7 @@ class FspPstSubarray(CspSubElementObsDevice):
                 device._component_configured(False)
 
             return (result_code, message)
-        
+
     class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
         """A class for FspPstSubarray's ObsReset() command."""
 
