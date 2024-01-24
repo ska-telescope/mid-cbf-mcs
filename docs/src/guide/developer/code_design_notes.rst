@@ -98,8 +98,10 @@ any connection to the hardware.
    MCS Vcc Device
 
 
-Serial Lightweight Interconnect Mesh (SLIM)
-=================================================
+Serial Lightweight Interconnect Mesh (SLIM) Design
+==================================================
+
+Ref: :ref:`Serial Lightweight Interconnect Mesh (SLIM) Interface`
 
 Slim
 ----

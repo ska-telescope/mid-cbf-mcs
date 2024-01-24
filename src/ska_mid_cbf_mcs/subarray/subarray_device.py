@@ -126,6 +126,8 @@ class CbfSubarray(CspSubElementSubarray):
 
     FspPstSubarray = device_property(dtype=("str",))
 
+    TalonBoard = device_property(dtype=("str",))
+
     # ----------
     # Attributes
     # ----------
@@ -222,6 +224,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_corr_sub=self.FspCorrSubarray,
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
+            talon_board=self.TalonBoard,
             logger=self.logger,
             simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,
@@ -444,6 +447,8 @@ class CbfSubarray(CspSubElementSubarray):
         # PROTECTED REGION ID(CbfSubarray.sysParam_write) ENABLED START #
         """
         Set the sys param string in json format
+        Should not be used by components external to Mid.CBF.
+        To set the system parameters, refer to the CbfController Tango Commands at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/lmc_mcs_interface.html#cbfcontroller-tango-commands or the CbfController api docs at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/api/CbfController/index.html
 
         :param value: the sys param string in json format
         """
