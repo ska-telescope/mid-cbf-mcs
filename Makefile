@@ -1,5 +1,7 @@
 #
 # Project makefile for ska-mid-cbf-mcs project. 
+include ska-mid-cbf-mcs/.make/base.mk
+
 PROJECT = ska-mid-cbf-mcs
 
 KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
