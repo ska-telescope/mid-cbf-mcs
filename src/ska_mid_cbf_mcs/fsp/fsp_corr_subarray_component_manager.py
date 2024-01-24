@@ -761,7 +761,8 @@ class FspCorrSubarrayComponentManager(
 
         self._remove_all_receptors()
         
-        self._proxy_hps_fsp_corr_controller.ObsReset()
+        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+        # self._proxy_hps_fsp_corr_controller.ObsReset()
         
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
         
