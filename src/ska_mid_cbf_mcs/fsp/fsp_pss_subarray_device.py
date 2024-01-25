@@ -633,7 +633,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
             component_manager = self.target
-            (result_code, message) = component_manager.obs_reset()
+            (result_code, message) = component_manager.obsreset()
 
             return (result_code, message)
 

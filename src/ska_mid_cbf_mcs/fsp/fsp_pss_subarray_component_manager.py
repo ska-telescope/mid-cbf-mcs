@@ -334,7 +334,7 @@ class FspPssSubarrayComponentManager(
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
 
-    def obs_reset(
+    def obsreset(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
