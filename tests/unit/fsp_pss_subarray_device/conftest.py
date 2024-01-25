@@ -127,7 +127,7 @@ def mock_component_manager(
     def _go_to_idle(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPssSubarray GoToIdle command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _obsreset(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPssSubarray ObsReset command completed OK"
         return (ResultCode.OK, mock.message)

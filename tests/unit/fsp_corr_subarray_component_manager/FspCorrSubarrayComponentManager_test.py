@@ -16,6 +16,7 @@ import logging
 import os
 
 import pytest
+from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -222,3 +223,19 @@ class TestFspCorrSubarrayComponentManager:
 
         fsp_corr_subarray_component_manager.scan(scan_id)
         assert fsp_corr_subarray_component_manager.scan_id == scan_id
+
+    def test_abort_obs_reset(
+        self: TestFspCorrSubarrayComponentManager,
+        fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+    ) -> None:
+        """
+        Test the fsp corr subarray component manager's Abort and ObsReset command.
+
+        :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
+        """
+
+        (result_code, _) = fsp_corr_subarray_component_manager.abort()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
+        assert result_code == ResultCode.OK

@@ -131,7 +131,7 @@ def mock_component_manager(
     def _abort(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPstSubarray Abort command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _obsreset(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPstSubarray ObsReset command completed OK"
         return (ResultCode.OK, mock.message)

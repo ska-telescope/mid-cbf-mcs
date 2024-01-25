@@ -15,6 +15,7 @@ import json
 import os
 
 import pytest
+from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
@@ -143,3 +144,20 @@ class TestFspPssSubarrayComponentManager:
 
         fsp_pss_subarray_component_manager.scan(scan_id)
         assert fsp_pss_subarray_component_manager.scan_id == scan_id
+
+    def test_abort_obs_reset(
+        self: TestFspPssSubarrayComponentManager,
+        fsp_pss_subarray_component_manager: FspPssSubarrayComponentManager,
+    ) -> None:
+        """
+        Test the fsp pss subarray component manager's Abort and Reset commands.
+
+        :param fsp_pss_subarray_component_manager: the fsp pss subarray component
+            manager under test.
+        """
+
+        (result_code, _) = fsp_pss_subarray_component_manager.abort()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = fsp_pss_subarray_component_manager.obsreset()
+        assert result_code == ResultCode.OK
