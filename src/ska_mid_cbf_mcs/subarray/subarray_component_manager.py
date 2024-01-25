@@ -660,7 +660,7 @@ class CbfSubarrayComponentManager(
                     t = Thread(
                         target=self._update_timing_beam_weights,
                         args=(
-                            int(timing_beam_weights["epoch"]),
+                            float(timing_beam_weights["epoch"]),
                             json.dumps(
                                 timing_beam_weights[
                                     "timing_beam_weights_details"
