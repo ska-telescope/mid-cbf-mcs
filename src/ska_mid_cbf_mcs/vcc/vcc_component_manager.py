@@ -475,7 +475,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 {"samples_per_frame": band_config["samples_per_frame"]}
             )
             json_string = json.dumps(args)
-            
+
             self._logger.info(f"To SetInternalParameters: [{json_string}]")
 
             idx = self._freq_band_index[self._freq_band_name]

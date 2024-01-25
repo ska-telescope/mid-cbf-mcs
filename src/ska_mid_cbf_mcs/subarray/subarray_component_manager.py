@@ -2391,10 +2391,12 @@ class CbfSubarrayComponentManager(
     ):
         base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
         sample_rate_const = freq_band_info["sample_rate_const"]
-        
+
         sample_rate = (base_dish_sample_rate_MH * mhz_to_hz) + (
             sample_rate_const * freq_offset_k * const.DELTA_F
         )
-        self._logger.info(f"DISH Sample Rate: {sample_rate} =  ( {base_dish_sample_rate_MH} * {mhz_to_hz} ) + ( {sample_rate_const} * {freq_offset_k} * {const.DELTA_F} )")
+        self._logger.info(
+            f"DISH Sample Rate: {sample_rate} =  ( {base_dish_sample_rate_MH} * {mhz_to_hz} ) + ( {sample_rate_const} * {freq_offset_k} * {const.DELTA_F} )"
+        )
 
         return sample_rate
