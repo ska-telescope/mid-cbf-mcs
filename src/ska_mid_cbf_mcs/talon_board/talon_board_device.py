@@ -101,6 +101,17 @@ class TalonBoard(SKABaseDevice):
         doc="The VCC ID assigned to the board. This attribute is only used for labelling.",
     )
 
+    @attribute(dtype=str, label="IP", doc="IP Address")
+    def IpAddr(self: TalonBoard) -> str:
+        """
+        The IP Address assigned to this talon board. This is a device
+        property. This attribute is a workaround to expose it
+        to Taranta.
+
+        :return: the IP address
+        """
+        return self.TalonDxBoardAddress
+
     @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
     )
@@ -444,6 +455,160 @@ class TalonBoard(SKABaseDevice):
         :return: true if fan fault register is set
         """
         return self.component_manager.fans_fault()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Input Voltage",
+        doc="LTM Input Voltage. One entry per LTM.",
+    )
+    def LtmInputVoltage(self: TalonBoard):
+        """
+        Read the input voltage to LTMs
+
+        :return: the input voltage to LTMs
+        """
+        return self.component_manager.ltm_input_voltage()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Output Voltage 1",
+        doc="LTM Output Voltage 1. One entry per LTM",
+    )
+    def LtmOutputVoltage1(self: TalonBoard):
+        """
+        Read the output voltage 1 to LTMs
+
+        :return: the output voltage 1 to LTMs
+        """
+        return self.component_manager.ltm_output_voltage_1()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Output Voltage 2",
+        doc="LTM Output Voltage 2. One entry per LTM",
+    )
+    def LtmOutputVoltage2(self: TalonBoard):
+        """
+        Read the output voltage 2 to LTMs
+
+        :return: the output voltage 2 to LTMs
+        """
+        return self.component_manager.ltm_output_voltage_2()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Input Current",
+        doc="LTM Input Current. One entry per LTM.",
+    )
+    def LtmInputCurrent(self: TalonBoard):
+        """
+        Read the input current to LTMs
+
+        :return: the input current to LTMs
+        """
+        return self.component_manager.ltm_input_current()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Output Current 1",
+        doc="LTM Output Current 1. One entry per LTM",
+    )
+    def LtmOutputCurrent1(self: TalonBoard):
+        """
+        Read the output current 1 to LTMs
+
+        :return: the output current 1 to LTMs
+        """
+        return self.component_manager.ltm_output_current_1()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Output Current 2",
+        doc="LTM Output Current 2. One entry per LTM",
+    )
+    def LtmOutputCurrent2(self: TalonBoard):
+        """
+        Read the output current 2 to LTMs
+
+        :return: the output current 2 to LTMs
+        """
+        return self.component_manager.ltm_output_current_2()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Temperature 1",
+        doc="LTM Temperature 1. One entry per LTM",
+    )
+    def LtmTemperature1(self: TalonBoard):
+        """
+        Read the temperature 1 of LTMs
+
+        :return: the temperature 1 of LTMs
+        """
+        return self.component_manager.ltm_temperature_1()
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="LTM Temperature 2",
+        doc="LTM Temperature 2. One entry per LTM",
+    )
+    def LtmTemperature2(self: TalonBoard):
+        """
+        Read the temperature 2 of LTMs
+
+        :return: the temperature 2 of LTMs
+        """
+        return self.component_manager.ltm_temperature_2()
+
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=4,
+        label="LTM Voltage Warning",
+        doc="True if any input or output voltage warnings is set. One entry per LTM",
+    )
+    def LtmVoltageWarning(self: TalonBoard):
+        """
+        Returns True if any input or output voltage warning is set. One entry per LTM
+
+        :return: True if any input or output voltage warning is set
+        """
+        return self.component_manager.ltm_voltage_warning()
+
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=4,
+        label="LTM Current Warning",
+        doc="True if any input or output current warnings is set. One entry per LTM",
+    )
+    def LtmCurrentWarning(self: TalonBoard):
+        """
+        Returns True if any input or output current warning is set. One entry per LTM
+
+        :return: True if any input or output current warning is set
+        """
+        return self.component_manager.ltm_current_warning()
+
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=4,
+        label="LTM Temperature Warning",
+        doc="True if any temperature warnings is set. One entry per LTM",
+    )
+    def LtmTemperatureWarning(self: TalonBoard):
+        """
+        Returns True if any temperature warning is set. One entry per LTM
+
+        :return: True if any temperature warning is set
+        """
+        return self.component_manager.ltm_temperature_warning()
 
     # -----------------
     # Attribute Methods
