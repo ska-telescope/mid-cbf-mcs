@@ -186,7 +186,9 @@ class TestFspPssSubarrayComponentManager:
         :param config_file_name: the name of the configuration file
         """
 
-        self.test_configure_scan(fsp_pss_subarray_component_manager, config_file_name)
+        self.test_configure_scan(
+            fsp_pss_subarray_component_manager, config_file_name
+        )
         self.test_abort_obs_reset(fsp_pss_subarray_component_manager)
 
     @pytest.mark.parametrize(
@@ -207,8 +209,3 @@ class TestFspPssSubarrayComponentManager:
 
         self.test_scan(fsp_pss_subarray_component_manager, config_file_name)
         self.test_abort_obs_reset(fsp_pss_subarray_component_manager)
-
-
-
-
-        

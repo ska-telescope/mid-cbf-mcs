@@ -224,7 +224,6 @@ class TestFspCorrSubarrayComponentManager:
         fsp_corr_subarray_component_manager.scan(scan_id)
         assert fsp_corr_subarray_component_manager.scan_id == scan_id
 
-
     def test_abort_and_obs_reset(
         self: TestFspCorrSubarrayComponentManager,
         fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
@@ -243,19 +242,40 @@ class TestFspCorrSubarrayComponentManager:
         assert fsp_corr_subarray_component_manager._freq_band_name == ""
         assert fsp_corr_subarray_component_manager._frequency_band == 0
         assert fsp_corr_subarray_component_manager._stream_tuning == (0, 0)
-        assert fsp_corr_subarray_component_manager._frequency_band_offset_stream1 == 0
-        assert fsp_corr_subarray_component_manager._frequency_band_offset_stream2 == 0
+        assert (
+            fsp_corr_subarray_component_manager._frequency_band_offset_stream1
+            == 0
+        )
+        assert (
+            fsp_corr_subarray_component_manager._frequency_band_offset_stream2
+            == 0
+        )
         assert fsp_corr_subarray_component_manager._frequency_slice_id == 0
         assert fsp_corr_subarray_component_manager._bandwidth == 0
-        assert fsp_corr_subarray_component_manager._bandwidth_actual == const.FREQUENCY_SLICE_BW
+        assert (
+            fsp_corr_subarray_component_manager._bandwidth_actual
+            == const.FREQUENCY_SLICE_BW
+        )
         assert fsp_corr_subarray_component_manager._zoom_window_tuning == 0
         assert fsp_corr_subarray_component_manager._integration_factor == 0
         assert fsp_corr_subarray_component_manager._scan_id == 0
         assert fsp_corr_subarray_component_manager._config_id == ""
-        assert fsp_corr_subarray_component_manager._channel_averaging_map == [[int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1, 0] for i in range(const.NUM_CHANNEL_GROUPS)]
-        assert fsp_corr_subarray_component_manager._vis_destination_address == {"outputHost": [], "outputPort": []}
+        assert fsp_corr_subarray_component_manager._channel_averaging_map == [
+            [
+                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
+                + 1,
+                0,
+            ]
+            for i in range(const.NUM_CHANNEL_GROUPS)
+        ]
+        assert (
+            fsp_corr_subarray_component_manager._vis_destination_address
+            == {"outputHost": [], "outputPort": []}
+        )
         assert fsp_corr_subarray_component_manager._fsp_channel_offset == 0
-        assert fsp_corr_subarray_component_manager._output_link_map == [[0, 0] for i in range(40)]
+        assert fsp_corr_subarray_component_manager._output_link_map == [
+            [0, 0] for i in range(40)
+        ]
         assert fsp_corr_subarray_component_manager._channel_info == []
 
     @pytest.mark.parametrize(
@@ -274,7 +294,9 @@ class TestFspCorrSubarrayComponentManager:
         :param config_file_name: the name of the configuration file
         """
 
-        self.test_configure_scan(fsp_corr_subarray_component_manager, config_file_name)
+        self.test_configure_scan(
+            fsp_corr_subarray_component_manager, config_file_name
+        )
         self.test_abort_and_obs_reset(fsp_corr_subarray_component_manager)
 
     @pytest.mark.parametrize(
@@ -292,6 +314,7 @@ class TestFspCorrSubarrayComponentManager:
         :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
         :param config_file_name: the name of the configuration file
         """
-        self.test_scan(fsp_corr_subarray_component_manager, config_file_name, 1)
+        self.test_scan(
+            fsp_corr_subarray_component_manager, config_file_name, 1
+        )
         self.test_abort_and_obs_reset(fsp_corr_subarray_component_manager)
-

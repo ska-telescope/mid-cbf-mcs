@@ -179,10 +179,11 @@ class TestFspPstSubarrayComponentManager:
         :param fsp_pst_subarray_component_manager: the fsp pst subarray component manager under test.
         :param config_file_name: the name of the configuration file
         """
-        self.test_configure_scan(fsp_pst_subarray_component_manager, config_file_name)
+        self.test_configure_scan(
+            fsp_pst_subarray_component_manager, config_file_name
+        )
         self.test_abort_obs_reset(fsp_pst_subarray_component_manager)
 
-    
     @pytest.mark.parametrize("scan_id", [1, 2])
     def test_abort_from_scanning_obs_reset(
         self: TestFspPstSubarrayComponentManager,
@@ -197,4 +198,3 @@ class TestFspPstSubarrayComponentManager:
         """
         self.test_scan(fsp_pst_subarray_component_manager, scan_id)
         self.test_abort_obs_reset(fsp_pst_subarray_component_manager)
-
