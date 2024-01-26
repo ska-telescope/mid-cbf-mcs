@@ -230,7 +230,7 @@ class TestFspCorrSubarrayComponentManager:
         fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
     ) -> None:
         """
-        Test the fsp corr subarray component manager's Abort and ObsReset command. If ran individually, tests from idle state.
+        Test the fsp corr subarray component manager's Abort and ObsReset command. If ran in isolation, tests from idle state.
 
         :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
         """
@@ -275,12 +275,6 @@ class TestFspCorrSubarrayComponentManager:
         """
 
         self.test_configure_scan(fsp_corr_subarray_component_manager, config_file_name)
-
-        (result_code, _) = fsp_corr_subarray_component_manager.abort()
-        assert result_code == ResultCode.OK
-
-        (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
-        assert result_code == ResultCode.OK
         self.test_abort_and_obs_reset(fsp_corr_subarray_component_manager)
 
     @pytest.mark.parametrize(
@@ -299,11 +293,5 @@ class TestFspCorrSubarrayComponentManager:
         :param config_file_name: the name of the configuration file
         """
         self.test_scan(fsp_corr_subarray_component_manager, config_file_name, 1)
-
-        (result_code, _) = fsp_corr_subarray_component_manager.abort()
-        assert result_code == ResultCode.OK
-
-        (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
-        assert result_code == ResultCode.OK
         self.test_abort_and_obs_reset(fsp_corr_subarray_component_manager)
 
