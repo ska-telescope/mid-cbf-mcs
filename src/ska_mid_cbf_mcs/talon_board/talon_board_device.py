@@ -101,6 +101,17 @@ class TalonBoard(SKABaseDevice):
         doc="The VCC ID assigned to the board. This attribute is only used for labelling.",
     )
 
+    @attribute(dtype=str, label="IP", doc="IP Address")
+    def IpAddr(self: TalonBoard) -> str:
+        """
+        The IP Address assigned to this talon board. This is a device
+        property. This attribute is a workaround to expose it
+        to Taranta.
+
+        :return: the IP address
+        """
+        return self.TalonDxBoardAddress
+
     @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
     )
