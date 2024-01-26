@@ -224,18 +224,100 @@ class TestFspCorrSubarrayComponentManager:
         fsp_corr_subarray_component_manager.scan(scan_id)
         assert fsp_corr_subarray_component_manager.scan_id == scan_id
 
-    def test_abort_obs_reset(
+
+    def test_abort_from_idle_obs_reset(
         self: TestFspCorrSubarrayComponentManager,
         fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
     ) -> None:
         """
-        Test the fsp corr subarray component manager's Abort and ObsReset command.
+        Test the fsp corr subarray component manager's Abort and ObsReset command from idle state.
 
         :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
         """
+        (result_code, _) = fsp_corr_subarray_component_manager.abort()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
+        assert result_code == ResultCode.OK
+        self.validate_obs_reset(fsp_corr_subarray_component_manager)
+
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [("/../../data/FspCorrSubarray_ConfigureScan_basic.json")],
+    )
+    def test_abort_from_ready_obs_reset(
+        self: TestFspCorrSubarrayComponentManager,
+        fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the fsp corr subarray component manager's Abort and ObsReset command from ready state.
+
+        :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+
+        self.test_configure_scan(fsp_corr_subarray_component_manager, config_file_name)
 
         (result_code, _) = fsp_corr_subarray_component_manager.abort()
         assert result_code == ResultCode.OK
 
         (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
         assert result_code == ResultCode.OK
+        self.validate_obs_reset(fsp_corr_subarray_component_manager)
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [("/../../data/FspCorrSubarray_ConfigureScan_basic.json")],
+    )
+    def test_abort_from_scanning_obs_reset(
+        self: TestFspCorrSubarrayComponentManager,
+        fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the fsp corr subarray component manager's Abort and ObsReset command from ready state.
+
+        :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+        self.test_scan(fsp_corr_subarray_component_manager, config_file_name, 1)
+
+        (result_code, _) = fsp_corr_subarray_component_manager.abort()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = fsp_corr_subarray_component_manager.obsreset()
+        assert result_code == ResultCode.OK
+        self.validate_obs_reset(fsp_corr_subarray_component_manager)
+
+
+    def validate_obs_reset(
+        self: TestFspCorrSubarrayComponentManager,
+        fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+    ) -> None:
+        """
+        Helper to validate the fsp corr subarray component manager's ObsReset command.
+
+        :param fsp_corr_subarray_component_manager: the fsp corr subarray component manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+        assert fsp_corr_subarray_component_manager._freq_band_name == ""
+        assert fsp_corr_subarray_component_manager._frequency_band == 0
+        assert fsp_corr_subarray_component_manager._stream_tuning == (0, 0)
+        assert fsp_corr_subarray_component_manager._frequency_band_offset_stream1 == 0
+        assert fsp_corr_subarray_component_manager._frequency_band_offset_stream2 == 0
+        assert fsp_corr_subarray_component_manager._frequency_slice_id == 0
+        assert fsp_corr_subarray_component_manager._bandwidth == 0
+        assert fsp_corr_subarray_component_manager._bandwidth_actual == const.FREQUENCY_SLICE_BW
+        assert fsp_corr_subarray_component_manager._zoom_window_tuning == 0
+        assert fsp_corr_subarray_component_manager._integration_factor == 0
+        assert fsp_corr_subarray_component_manager._scan_id == 0
+        assert fsp_corr_subarray_component_manager._config_id == ""
+        assert fsp_corr_subarray_component_manager._channel_averaging_map == [[int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1, 0] for i in range(const.NUM_CHANNEL_GROUPS)]
+        assert fsp_corr_subarray_component_manager._vis_destination_address == {"outputHost": [], "outputPort": []}
+        assert fsp_corr_subarray_component_manager._fsp_channel_offset == 0
+        assert fsp_corr_subarray_component_manager._output_link_map == [[0, 0] for i in range(40)]
+        assert fsp_corr_subarray_component_manager._channel_info == []
+
+        
