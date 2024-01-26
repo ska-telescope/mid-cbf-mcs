@@ -15,6 +15,7 @@ import json
 import os
 
 import pytest
+from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
@@ -141,3 +142,59 @@ class TestFspPstSubarrayComponentManager:
 
         fsp_pst_subarray_component_manager.scan(scan_id)
         assert fsp_pst_subarray_component_manager.scan_id == scan_id
+
+    def test_abort_obs_reset(
+        self: TestFspPstSubarrayComponentManager,
+        fsp_pst_subarray_component_manager: FspPstSubarrayComponentManager,
+    ) -> None:
+        """
+        Test the fsp pst subarray component manager's Abort and ObsReset command. If ran in isolation, tests from idle state.
+
+        :param fsp_pst_subarray_component_manager: the fsp pst subarray component manager under test.
+        """
+
+        (result_code, _) = fsp_pst_subarray_component_manager.abort()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = fsp_pst_subarray_component_manager.obsreset()
+        assert result_code == ResultCode.OK
+
+        assert fsp_pst_subarray_component_manager.timing_beam_id == []
+        assert fsp_pst_subarray_component_manager.timing_beams == []
+        assert fsp_pst_subarray_component_manager._output_enable == 0
+        assert fsp_pst_subarray_component_manager.receptors == []
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [("/../../data/FspPstSubarray_ConfigureScan_basic.json")],
+    )
+    def test_abort_from_ready_obs_reset(
+        self: TestFspPstSubarrayComponentManager,
+        fsp_pst_subarray_component_manager: FspPstSubarrayComponentManager,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the fsp pst subarray component manager's Abort and ObsReset command from the ready state.
+
+        :param fsp_pst_subarray_component_manager: the fsp pst subarray component manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+        self.test_configure_scan(
+            fsp_pst_subarray_component_manager, config_file_name
+        )
+        self.test_abort_obs_reset(fsp_pst_subarray_component_manager)
+
+    @pytest.mark.parametrize("scan_id", [1, 2])
+    def test_abort_from_scanning_obs_reset(
+        self: TestFspPstSubarrayComponentManager,
+        fsp_pst_subarray_component_manager: FspPstSubarrayComponentManager,
+        scan_id: int,
+    ) -> None:
+        """
+        Test the fsp pst subarray component manager's Abort and ObsReset command from the ready state.
+
+        :param fsp_pst_subarray_component_manager: the fsp pst subarray component manager under test.
+        :param config_file_name: the name of the configuration file
+        """
+        self.test_scan(fsp_pst_subarray_component_manager, scan_id)
+        self.test_abort_obs_reset(fsp_pst_subarray_component_manager)
