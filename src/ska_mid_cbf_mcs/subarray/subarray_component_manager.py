@@ -1734,17 +1734,17 @@ class CbfSubarrayComponentManager(
             ] = self._frequency_band_offset_stream2
 
             # Add all receptor ids for subarray and for correlation to fsp
-            # Parameter named "subarray_dish_ids" used by HPS contains all the
-            # receptors for the subarray
-            # Parameter named "corr_dish_ids" used by HPS contains the
-            # subset of the subarray receptors for which the correlation results
+            # Parameter named "subarray_vcc_ids" used by HPS contains all the
+            # VCCs assigned to the subarray
+            # Parameter named "corr_vcc_ids" used by HPS contains the
+            # subset of the subarray VCCs for which the correlation results
             # are requested to be used in Mid.CBF output products (visibilities)
 
-            fsp["subarray_dish_ids"] = self._vcc_dish_ids.copy()
-            for i, dish in enumerate(fsp["subarray_dish_ids"]):
-                fsp["subarray_dish_ids"][
-                    i
-                ] = self._dish_utils.dish_id_to_vcc_id[dish]
+            fsp["subarray_vcc_ids"] = []
+            for i, dish in enumerate(self._vcc_dish_ids):
+                fsp["subarray_vcc_ids"].append(
+                    self._dish_utils.dish_id_to_vcc_id[dish]
+                )
 
             # Add the fs_sample_rate for all receptors
             fsp["fs_sample_rates"] = self._calculate_fs_sample_rates(
@@ -1756,16 +1756,15 @@ class CbfSubarrayComponentManager(
                     # Receptors may not be specified in the
                     # configuration at all or the list
                     # of receptors may be empty
+                    fsp["corr_vcc_ids"] = []
                     if "receptors" not in fsp or len(fsp["receptors"]) == 0:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptors"] = self._vcc_dish_ids.copy()
-
-                    # DISH ID to VCC ID integer for FSP level
-                    fsp["corr_dish_ids"] = []
-                    for i, dish in enumerate(fsp["receptors"]):
-                        fsp["corr_dish_ids"].append(
-                            self._dish_utils.dish_id_to_vcc_id[dish]
-                        )
+                        fsp["corr_vcc_ids"] = fsp["subarray_vcc_ids"].copy()
+                    else:
+                        for i, dish in enumerate(fsp["receptors"]):
+                            fsp["corr_vcc_ids"].append(
+                                self._dish_utils.dish_id_to_vcc_id[dish]
+                            )
 
                     self._corr_config.append(fsp)
                     self._corr_fsp_list.append(fsp["fsp_id"])
