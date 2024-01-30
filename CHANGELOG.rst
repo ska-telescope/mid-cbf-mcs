@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.18
+*******
+* CIP-2048 Added SlimLink logging to help debug blank link names
+
 0.12.17
 *******
 * CIP-2052 Fixed SlimLink disconnect_slim_tx_rx() by re-syncing idle_ctrl_words before initializing in loopback mode.
