@@ -12,7 +12,7 @@ Development
 
 0.12.18
 *******
-* CIP-2048 Added SlimLink logging to help debug blank link names
+* CIP-2067 Change epoch from int to float
 
 0.12.17
 *******
