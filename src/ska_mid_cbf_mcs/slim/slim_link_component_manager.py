@@ -341,14 +341,17 @@ class SlimLinkComponentManager(CbfComponentManager):
             self.clear_counters()
 
         except tango.DevFailed as df:
-            msg = f"Failed to connect Tx Rx: {df.args[0].desc}"
+            msg = f"Failed to connect Tx Rx for {self._link_name}: {df.args[0].desc}"
             self._logger.error(msg)
             self.update_component_fault(True)
             return (ResultCode.FAILED, msg)
 
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        return ResultCode.OK, "Connected Tx Rx successfully"
+        return (
+            ResultCode.OK,
+            f"Connected Tx Rx successfully: {self._link_name}",
+        )
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -401,16 +404,18 @@ class SlimLinkComponentManager(CbfComponentManager):
                     f"bit-error-rate higher than {BER_PASS_THRESHOLD}. "
                 )
         except tango.DevFailed as df:
-            error_msg = f"verify_connection() failed: {df.args[0].desc}"
+            error_msg = f"verify_connection() failed for {self._link_name}: {df.args[0].desc}"
             self._logger.error(error_msg)
             self._update_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
-            self._logger.warn(f"Link failed health check: {error_msg}")
+            self._logger.warn(
+                f"Link failed health check for {self._link_name}: {error_msg}"
+            )
             self._update_health_state(HealthState.FAILED)
             return ResultCode.OK, error_msg
         self._update_health_state(HealthState.OK)
-        return ResultCode.OK, "Link health check OK"
+        return ResultCode.OK, f"Link health check OK: {self._link_name}"
 
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -434,11 +439,24 @@ class SlimLinkComponentManager(CbfComponentManager):
         try:
             if self._rx_device_proxy is not None:
                 # Put SLIM Rx back in serial loopback
+                rx = self._rx_device_name
+                index = rx.split("/")[2].split("-")[1][2:]
+                mesh = rx.split("/")[2].split("-")[0]
+                rx_arr = rx.split("/")
+                tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
+                self._tx_device_name = tx
+
+                self._tx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._tx_device_name, logger=self._logger
+                )
+
+                # Sync the idle ctrl word between Tx and Rx
+                idle_ctrl_word = self.tx_idle_ctrl_word
+                self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
+
                 self._rx_device_proxy.initialize_connection(True)
         except tango.DevFailed:
-            result_msg = (
-                f"Failed to enable Rx loopback: {self._rx_device_name}"
-            )
+            result_msg = f"Failed to enable Rx loopback: {self._tx_device_name}->{self._rx_device_name}"
             self._logger.warn(result_msg)
             return ResultCode.FAILED, result_msg
         finally:
@@ -447,7 +465,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._link_name = ""
             self._link_enabled = False
 
-        return ResultCode.OK, "Disconnected Tx Rx"
+        return (
+            ResultCode.OK,
+            f"Disconnected Tx Rx. {self._rx_device_name} now in serial loopback.",
+        )
 
     def clear_counters(
         self: SlimLinkComponentManager,
@@ -479,8 +500,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._tx_device_proxy.clear_read_counters()
             self._rx_device_proxy.clear_read_counters()
         except tango.DevFailed:
-            result_msg = "Clearing counters failed: " + self._link_name
+            result_msg = f"Clearing counters failed: {self._link_name}"
             self._logger.error(result_msg)
             return ResultCode.FAILED, result_msg
 
-        return ResultCode.OK, "Counters cleared!"
+        return ResultCode.OK, f"Counters cleared: {self._link_name}"

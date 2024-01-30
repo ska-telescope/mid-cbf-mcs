@@ -334,6 +334,26 @@ class FspPssSubarrayComponentManager(
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
 
+    def obsreset(
+        self: FspPssSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the ObsReset() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._deconfigure()
+
+        self._remove_all_receptors()
+
+        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+
+        return (ResultCode.OK, "FspPssSubarray ObsReset command completed OK")
+
     def abort(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:

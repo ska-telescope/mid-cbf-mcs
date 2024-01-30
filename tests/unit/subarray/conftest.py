@@ -406,6 +406,18 @@ def mock_fsp_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_talon_board() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("subarrayID", "")
+    builder.add_attribute("receptorID", "")
+    builder.add_attribute("vccID", "")
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_doppler: unittest.mock.Mock,
     mock_delay: unittest.mock.Mock,
@@ -418,6 +430,7 @@ def initial_mocks(
     mock_fsp_group: unittest.mock.Mock,
     mock_fsp_subarray: unittest.mock.Mock,
     mock_fsp_subarray_group: unittest.mock.Mock,
+    mock_talon_board: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
@@ -433,6 +446,7 @@ def initial_mocks(
     :param mock_fsp_group: a mock Fsp tango.Group.
     :param mock_fsp_subarray: a mock Fsp function mode subarray that is powered on.
     :param mock_fsp_subarray_group: a mock Fsp function mode subarray tango.Group.
+    :param mock_talon_board: a mock talon board device
 
     :return: a dictionary of proxy mocks to pre-register.
     """
@@ -471,6 +485,14 @@ def initial_mocks(
         "FSP Subarray Corr": mock_fsp_subarray_group,
         "FSP Subarray Pss": mock_fsp_subarray_group,
         "FSP Subarray Pst": mock_fsp_subarray_group,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
+        "mid_csp_cbf/talon_board/003": mock_talon_board,
+        "mid_csp_cbf/talon_board/004": mock_talon_board,
+        "mid_csp_cbf/talon_board/005": mock_talon_board,
+        "mid_csp_cbf/talon_board/006": mock_talon_board,
+        "mid_csp_cbf/talon_board/007": mock_talon_board,
+        "mid_csp_cbf/talon_board/008": mock_talon_board,
     }
 
 
@@ -518,6 +540,16 @@ def subarray_component_manager(
             "mid_csp_cbf/fspPstSubarray/02_01",
             "mid_csp_cbf/fspPstSubarray/03_01",
             "mid_csp_cbf/fspPstSubarray/04_01",
+        ],
+        talon_board=[
+            "mid_csp_cbf/talon_board/001",
+            "mid_csp_cbf/talon_board/002",
+            "mid_csp_cbf/talon_board/003",
+            "mid_csp_cbf/talon_board/004",
+            "mid_csp_cbf/talon_board/005",
+            "mid_csp_cbf/talon_board/006",
+            "mid_csp_cbf/talon_board/007",
+            "mid_csp_cbf/talon_board/008",
         ],
         logger=logger,
         simulation_mode=SimulationMode.TRUE,
