@@ -1,6 +1,6 @@
 {
   "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
-  "epoch": 11000000,
+  "epoch": 11000000.0,
   "validity_period": 400.0,
   "delay_details": [
     {
