@@ -181,8 +181,9 @@ class ApcSnmpDriver:
 
             if power_mode != self.outlets[int(outlet) - 1].power_mode:
                 self.logger.warn(
-                    f"Power mode of outlet ID {outlet} ({power_mode})"
-                    f" is different than the expected mode {self.outlets[int(outlet) - 1].power_mode}"
+                    f"Power mode of outlet ID {outlet} is {power_mode} ({PowerMode(power_mode).name}), "
+                    f"which is different than the expected mode {self.outlets[int(outlet) - 1].power_mode} "
+                    f"({PowerMode(self.outlets[int(outlet) - 1].power_mode).name})"
                 )
             return power_mode
         except snmp_error.PySnmpError as e:
