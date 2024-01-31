@@ -41,7 +41,7 @@ class ApcSnmpDriver:
     """
     A driver for the APC power switch.
     The PDU provides an interface through SNMP.
-    Valid outlet IDs are 0 to 23.
+    Valid outlet IDs are 1 to 24.
 
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
@@ -165,6 +165,11 @@ class ApcSnmpDriver:
                 cmdgen.MibVariable(outlet_status_oid),
                 lookupMib=False,
             )
+            if errorIndication:
+                self.logger.info(
+                    f"Outlet {outlet} getting power mode error: {errorIndication}"
+                )
+
             for oid, val in varBinds:
                 state = val
             if state == self.state_on:
@@ -177,7 +182,7 @@ class ApcSnmpDriver:
             if power_mode != self.outlets[int(outlet) - 1].power_mode:
                 self.logger.warn(
                     f"Power mode of outlet ID {outlet} ({power_mode})"
-                    f" is different than the expected mode {self.outlets[int(outlet)].power_mode}"
+                    f" is different than the expected mode {self.outlets[int(outlet) - 1].power_mode}"
                 )
             return power_mode
         except snmp_error.PySnmpError as e:
@@ -209,6 +214,10 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_on)),
             )
+            if errorIndication:
+                self.logger.info(
+                    f"Outlet {outlet} powering on error: {errorIndication}"
+                )
             self.outlets[int(outlet) - 1].power_mode = PowerMode.ON
             return ResultCode.OK, f"Outlet {outlet} power on"
         except snmp_error.PySnmpError as e:
@@ -241,6 +250,10 @@ class ApcSnmpDriver:
                 cmdgen.UdpTransportTarget((self.ip, 161)),
                 (outlet_status_oid, rfc1902.Integer32(self.action_off)),
             )
+            if errorIndication:
+                self.logger.info(
+                    f"Outlet {outlet} powering off error: {errorIndication}"
+                )
             self.outlets[int(outlet) - 1].power_mode = PowerMode.OFF
             return ResultCode.OK, f"Outlet {outlet} power off"
         except snmp_error.PySnmpError as e:
