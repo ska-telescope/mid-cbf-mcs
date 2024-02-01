@@ -166,7 +166,7 @@ class ApcSnmpDriver:
                 lookupMib=False,
             )
             if errorIndication:
-                self.logger.info(
+                self.logger.error(
                     f"Outlet {outlet} get power mode error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
 
@@ -216,7 +216,7 @@ class ApcSnmpDriver:
                 (outlet_status_oid, rfc1902.Integer32(self.action_on)),
             )
             if errorIndication:
-                self.logger.info(
+                self.logger.error(
                     f"Outlet {outlet} powering on error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
             self.outlets[int(outlet) - 1].power_mode = PowerMode.ON
@@ -252,7 +252,7 @@ class ApcSnmpDriver:
                 (outlet_status_oid, rfc1902.Integer32(self.action_off)),
             )
             if errorIndication:
-                self.logger.info(
+                self.logger.error(
                     f"Outlet {outlet} powering off error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
             self.outlets[int(outlet) - 1].power_mode = PowerMode.OFF
