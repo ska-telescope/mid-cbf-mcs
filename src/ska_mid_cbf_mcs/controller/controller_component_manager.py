@@ -760,23 +760,16 @@ class ControllerComponentManager(CbfComponentManager):
                     if board_ip == ip:
                         vcc_id = int(vcc_id_str)
                         proxy.write_attribute("vccID", str(vcc_id))
-                        if (
-                            vcc_id
-                            in self._receptor_utils.vcc_id_to_receptor_id
-                        ):
-                            receptor_id = (
-                                self._receptor_utils.vcc_id_to_receptor_id[
-                                    vcc_id
-                                ]
-                            )
-                            proxy.write_attribute("receptorID", receptor_id)
+                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                            proxy.write_attribute("dishID", dish_id)
                         else:
                             self._logger.warn(
-                                "Unable to match VCC ID in the HW config with the receptor-VCC mapping."
+                                "Unable to match VCC ID in the HW config with the DISH-VCC mapping."
                             )
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = f"Failed to update {fqdn} with VCC ID and receptor ID; {item.reason}"
+                        log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
