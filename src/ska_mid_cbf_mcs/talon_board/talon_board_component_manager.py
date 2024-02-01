@@ -361,7 +361,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
             }
             self._talon_status_events.append(e)
-        # TODO: Add attributes as needed
+        return
 
     def off(self) -> Tuple[ResultCode, str]:
         """
@@ -385,6 +385,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                     f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
                 )
                 self._proxies[self._talon_status_fqdn].remove_event(name, id)
+
+        self._talon_sysid_attrs = {}
+        self._talon_status_attrs = {}
 
         self.update_component_power_mode(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
@@ -431,7 +434,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "System ID Device is not available",
-                "talon_sysid_version()",
+                "talon_sysid_bitstream()",
             )
         attr_name = "bitstream"
         if attr_name not in self._talon_sysid_attrs:
@@ -447,7 +450,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_iopll_locked_fault()",
             )
         attr_name = "iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
@@ -463,7 +466,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_fs_iopll_locked_fault()",
             )
         attr_name = "fs_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
@@ -479,7 +482,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_comms_iopll_locked_fault()",
             )
         attr_name = "comms_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
@@ -495,7 +498,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_system_clk_fault()",
             )
         attr_name = "system_clk_fault"
         if attr_name not in self._talon_status_attrs:
@@ -511,7 +514,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_emif_bl_fault()",
             )
         attr_name = "emif_bl_fault"
         if attr_name not in self._talon_status_attrs:
@@ -527,7 +530,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_emif_br_fault()",
             )
         attr_name = "emif_br_fault"
         if attr_name not in self._talon_status_attrs:
@@ -543,7 +546,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_emif_tr_fault()",
             )
         attr_name = "emif_tr_fault"
         if attr_name not in self._talon_status_attrs:
@@ -559,7 +562,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_e100g_0_pll_fault()",
             )
         attr_name = "e100g_0_pll_fault"
         if attr_name not in self._talon_status_attrs:
@@ -575,7 +578,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_e100g_1_pll_fault()",
             )
         attr_name = "e100g_1_pll_fault"
         if attr_name not in self._talon_status_attrs:
@@ -591,7 +594,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
                 "Talon Status Device is not available",
-                "talon_sysid_version()",
+                "talon_status_slim_pll_fault()",
             )
         attr_name = "slim_pll_fault"
         if attr_name not in self._talon_status_attrs:
@@ -605,6 +608,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     # Talon board telemetry and status from Influxdb
     def fpga_die_temperature(self) -> float:
+        self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
         t, val = self._telemetry[field]
@@ -612,6 +616,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def humidity_sensor_temperature(self) -> float:
+        self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_humidity-temp"
         t, val = self._telemetry[field]
@@ -619,6 +624,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def dimm_temperatures(self) -> list[float]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -633,6 +639,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_temperatures(self) -> list[float]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -647,6 +654,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_vcc_voltages(self) -> list[float]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -661,6 +669,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_fault_status(self):
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -675,6 +684,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_lol_status(self):
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -689,6 +699,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_los_status(self):
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -703,6 +714,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_vcc_voltages(self) -> list[float]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -717,6 +729,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_lol_status(self):
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -731,6 +744,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_los_status(self):
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -745,6 +759,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_pwm(self) -> list[int]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -760,6 +775,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_pwm_enable(self) -> list[int]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -775,6 +791,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_fault(self) -> list[bool]:
+        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -788,6 +805,224 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self._logger.error(msg)
                 res.append(-1)
         return res
+
+    def ltm_input_voltage(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-input"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_input_voltage()",
+                )
+        return res
+
+    def ltm_output_voltage_1(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-output-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_voltage_1()",
+                )
+        return res
+
+    def ltm_output_voltage_2(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_voltage-output-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_voltage_2()",
+                )
+        return res
+
+    def ltm_input_current(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-input"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_input_current()",
+                )
+        return res
+
+    def ltm_output_current_1(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-output-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_current_1()",
+                )
+        return res
+
+    def ltm_output_current_2(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_current-output-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_output_current_2()",
+                )
+        return res
+
+    def ltm_temperature_1(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_temperature-1"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_temperature_1()",
+                )
+        return res
+
+    def ltm_temperature_2(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"LTMs_{i}_LTM_temperature-2"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                tango.Except.throw_exception(
+                    "Cannot_read_LTM_telemetry",
+                    "LTM telemetries not available. This can happen if the bitstream is not programmed.",
+                    "ltm_temperature_2()",
+                )
+        return res
+
+    def ltm_voltage_warning(self) -> list[bool]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_voltage-output-max-alarm-1",
+                f"LTMs_{i}_LTM_voltage-output-max-alarm-2",
+                f"LTMs_{i}_LTM_voltage-input-crit-alarm",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
+    def ltm_current_warning(self) -> list[bool]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_current-output-max-alarm-1",
+                f"LTMs_{i}_LTM_current-output-max-alarm-2",
+                f"LTMs_{i}_LTM_current-input-max-alarm",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
+    def ltm_temperature_warning(self) -> list[bool]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            flag = False
+            # Set to true for the LTM if any of the voltage alarm fields is set to 1
+            fields = [
+                f"LTMs_{i}_LTM_temperature-max-alarm-1",
+                f"LTMs_{i}_LTM_temperature-max-alarm-1",
+            ]
+            for field in fields:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    self._validate_time(field, t)
+                    flag = bool(val)
+                    if flag:
+                        break
+            res.append(flag)
+        return res
+
+    def _throw_if_device_off(self):
+        if self.power_mode != PowerMode.ON:
+            tango.Except.throw_exception(
+                "Talon_Board_Off",
+                "Talon Board is OFF",
+                "throw_if_device_off()",
+            )
+        return
 
     def _query_if_needed(self):
         td = datetime.now() - self._last_check
