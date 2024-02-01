@@ -93,7 +93,7 @@ class TestFspCorrSubarrayComponentManager:
 
         fsp_corr_subarray_component_manager.start_communicating()
 
-        assert fsp_corr_subarray_component_manager.receptors == []
+        assert fsp_corr_subarray_component_manager.vcc_ids == []
         assert fsp_corr_subarray_component_manager.frequency_band == 0
         assert [
             fsp_corr_subarray_component_manager.stream_tuning[0],
@@ -144,10 +144,10 @@ class TestFspCorrSubarrayComponentManager:
         f.close()
 
         # verify correct attribute values are received
-        for idx, receptorID in enumerate(
-            fsp_corr_subarray_component_manager.receptors
-        ):
-            assert receptorID == configuration["corr_receptor_ids"][idx][1]
+        assert (
+            fsp_corr_subarray_component_manager.vcc_ids
+            == configuration["corr_vcc_ids"]
+        )
         assert (
             fsp_corr_subarray_component_manager.frequency_band
             == freq_band_dict()[configuration["frequency_band"]]["band_index"]

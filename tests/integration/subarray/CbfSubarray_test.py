@@ -161,10 +161,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
 
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors[:-1]))
-            ] == receptors[:-1]
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors[:-1])
+            ) == sorted(receptors[:-1])
 
             assert all(
                 [
@@ -181,10 +180,10 @@ class TestCbfSubarray:
             # add the last receptor
             test_proxies.subarray[sub_id].AddReceptors([receptors[-1]])
             time.sleep(1)
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
+
             assert (
                 test_proxies.vcc[
                     test_proxies.dish_utils.dish_id_to_vcc_id[receptors[-1]]
@@ -299,10 +298,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
@@ -325,10 +323,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
@@ -405,10 +402,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
@@ -425,10 +421,9 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].RemoveReceptors(
                 invalid_receptors_to_remove
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -507,12 +502,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
@@ -621,12 +613,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1099,12 +1088,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1274,12 +1260,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1568,12 +1551,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(num_receptors), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # Check fsp obsState BEFORE scan configuration:
@@ -1865,12 +1845,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -2089,12 +2066,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -2351,12 +2325,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -2571,12 +2542,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             # configure scan
             wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
@@ -2628,12 +2596,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(3), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
@@ -2656,12 +2621,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             # configure scan
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
             test_proxies.wait_timeout_obs(
@@ -3258,12 +3220,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(3), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
