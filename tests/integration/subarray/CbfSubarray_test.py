@@ -162,7 +162,7 @@ class TestCbfSubarray:
             )
 
             assert sorted(
-                list(test_proxies.subarray[sub_id].receptors[:-1])
+                list(test_proxies.subarray[sub_id].receptors)
             ) == sorted(receptors[:-1])
 
             assert all(
