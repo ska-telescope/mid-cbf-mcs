@@ -167,7 +167,7 @@ class ApcSnmpDriver:
             )
             if errorIndication:
                 self.logger.info(
-                    f"Outlet {outlet} powering off error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
+                    f"Outlet {outlet} get power mode error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
 
             for oid, val in varBinds:
@@ -217,7 +217,7 @@ class ApcSnmpDriver:
             )
             if errorIndication:
                 self.logger.info(
-                    f"Outlet {outlet} powering off error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
+                    f"Outlet {outlet} powering on error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
             self.outlets[int(outlet) - 1].power_mode = PowerMode.ON
             return ResultCode.OK, f"Outlet {outlet} power on"
