@@ -87,6 +87,9 @@ class InfluxdbQueryClient:
                 self._query_mbo_voltages(client),
                 self._query_fans_pwm(client),
                 self._query_fans_fault(client),
+                self._query_ltm_voltages(client),
+                self._query_ltm_currents(client),
+                self._query_ltm_temperatures(client),
             )
         return res
 
@@ -144,5 +147,29 @@ class InfluxdbQueryClient:
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
         |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-5]/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_ltm_voltages(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_voltage.*?/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_ltm_currents(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_current.*?/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_ltm_temperatures(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_temperature.*?/)\
         |>last()'
         return await self._query_common(client, query)

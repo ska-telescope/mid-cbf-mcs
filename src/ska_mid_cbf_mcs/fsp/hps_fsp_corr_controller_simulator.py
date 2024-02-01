@@ -111,6 +111,10 @@ class HpsFspCorrControllerSimulator:
         """Set the device state to IDLE"""
         pass
 
+    def ObsReset(self: HpsFspCorrControllerSimulator) -> None:
+        """Set the device state to IDLE from ABORTED"""
+        pass
+
     def UpdateDelayModels(
         self: HpsFspCorrControllerSimulator, delay_model: str
     ) -> None:
