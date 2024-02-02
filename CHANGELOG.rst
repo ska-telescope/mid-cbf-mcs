@@ -10,6 +10,10 @@ Development
 * Added Abort and ObsReset command implementation for Vcc and 
   FspCorr/Pss/PstSubarray devices
 
+0.12.20
+*******
+* CIP-2050 Added additional logging for apsc_smnp_driver
+
 0.12.19
 *******
 * CIP-2048 Added logging for idle_ctrl_word for visibility on intermittent type mismatch error
