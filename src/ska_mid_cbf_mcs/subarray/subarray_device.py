@@ -142,10 +142,18 @@ class CbfSubarray(CspSubElementSubarray):
 
     receptors = attribute(
         dtype=("str",),
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         max_dim_x=197,
         label="receptors",
-        doc="List of DISH/receptor IDs assigned to subarray",
+        doc="List of DISH/receptor string IDs assigned to subarray",
+    )
+
+    assignedVCCs = attribute(
+        dtype=("int",),
+        access=AttrWriteType.READ,
+        max_dim_x=197,
+        label="VCCs",
+        doc="List of VCC integer IDs assigned to subarray",
     )
 
     frequencyOffsetK = attribute(
@@ -402,23 +410,22 @@ class CbfSubarray(CspSubElementSubarray):
         """
         Return list of receptors assigned to subarray
 
-        :return: the list of receptors
+        :return: the list of receptor IDs
         :rtype: List[str]
         """
-        return self.component_manager.vcc_dish_ids
+        return self.component_manager.dish_ids
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
-    def write_receptors(self: CbfSubarray, value: List[str]) -> None:
-        # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+    def read_assignedVCCs(self: CbfSubarray) -> List[int]:
+        # PROTECTED REGION ID(CbfSubarray.assignedVCCs_read) ENABLED START #
         """
-        Set receptors of this array to the input value.
-        Input should be an array of int
+        Return list of VCCs assigned to subarray
 
-        :param value: the list of receptors
+        :return: the list of VCC IDs
+        :rtype: List[int]
         """
-        self.RemoveAllReceptors()
-        self.AddReceptors(value)
-        # PROTECTED REGION END #    //  CbfSubarray.receptors_write
+        return self.component_manager.vcc_ids
+        # PROTECTED REGION END #    //  CbfSubarray.assignedVCCs_read
 
     def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #

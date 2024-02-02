@@ -83,9 +83,14 @@ class CbfSubarrayComponentManager(
         return self._frequency_band
 
     @property
-    def vcc_dish_ids(self: CbfSubarrayComponentManager) -> List[str]:
+    def dish_ids(self: CbfSubarrayComponentManager) -> List[str]:
         """Return the DISH/receptor ID list."""
-        return self._vcc_dish_ids
+        return self._dish_ids
+
+    @property
+    def vcc_ids(self: CbfSubarrayComponentManager) -> List[int]:
+        """Return the VCC ID list."""
+        return self._vcc_ids
 
     def __init__(
         self: CbfSubarrayComponentManager,
@@ -173,7 +178,8 @@ class CbfSubarrayComponentManager(
 
         # initialize attribute values
         self._sys_param_str = ""
-        self._vcc_dish_ids = []
+        self._dish_ids = []
+        self._vcc_ids = []
         self._frequency_band = 0
         self._config_id = ""
         self._scan_id = 0
@@ -928,7 +934,7 @@ class CbfSubarrayComponentManager(
                 if sw["tdc_enable"]:
                     for receptor in sw["tdc_destination_address"]:
                         dish_id = receptor["receptor_id"]
-                        if dish_id not in self._vcc_dish_ids:
+                        if dish_id not in self._dish_ids:
                             msg = (
                                 f"'searchWindow' receptor ID {dish_id} "
                                 + "not assigned to subarray. Aborting configuration."
@@ -1001,9 +1007,9 @@ class CbfSubarrayComponentManager(
                     if "receptors" in fsp and len(fsp["receptors"]) > 0:
                         for dish in fsp["receptors"]:
                             self._logger.info(
-                                f"List of receptors: {self._vcc_dish_ids}"
+                                f"List of receptors: {self._dish_ids}"
                             )
-                            if dish not in self._vcc_dish_ids:
+                            if dish not in self._dish_ids:
                                 msg = (
                                     f"Receptor {dish} does not belong to "
                                     f"subarray {self._subarray_id}."
@@ -1327,12 +1333,12 @@ class CbfSubarrayComponentManager(
                                 searchBeam[
                                     "receptor_ids"
                                 ] = self._dish_utils.dish_id_to_vcc_id[
-                                    self._vcc_dish_ids[0]
+                                    self._dish_ids[0]
                                 ]
 
                             # Sanity check:
                             for receptor in searchBeam["receptor_ids"]:
-                                if receptor not in self._vcc_dish_ids:
+                                if receptor not in self._dish_ids:
                                     msg = (
                                         f"Receptor {receptor} does not belong to "
                                         f"subarray {self._subarray_id}."
@@ -1414,7 +1420,7 @@ class CbfSubarrayComponentManager(
                             # This is always given, due to implementation details.
                             if "receptor_ids" in timingBeam:
                                 for receptor in timingBeam["receptor_ids"]:
-                                    if receptor not in self._vcc_dish_ids:
+                                    if receptor not in self._dish_ids:
                                         msg = (
                                             f"Receptor {receptor} does not belong to "
                                             f"subarray {self._subarray_id}."
@@ -1424,7 +1430,7 @@ class CbfSubarrayComponentManager(
                             else:
                                 timingBeam["receptor_ids"] = [
                                     self._dish_utils.dish_id_to_vcc_id[dish]
-                                    for dish in self._vcc_dish_ids
+                                    for dish in self._dish_ids
                                 ]
 
                             if (
@@ -1487,7 +1493,7 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
         # Prepare args for ConfigureBand
-        for dish_id in self._vcc_dish_ids:
+        for dish_id in self._dish_ids:
             if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
                 # Fetch K-value based on dish_id
                 vccID = self._dish_utils.dish_id_to_vcc_id[dish_id]
@@ -1741,7 +1747,7 @@ class CbfSubarrayComponentManager(
             # are requested to be used in Mid.CBF output products (visibilities)
 
             fsp["subarray_vcc_ids"] = []
-            for i, dish in enumerate(self._vcc_dish_ids):
+            for i, dish in enumerate(self._dish_ids):
                 fsp["subarray_vcc_ids"].append(
                     self._dish_utils.dish_id_to_vcc_id[dish]
                 )
@@ -1776,7 +1782,7 @@ class CbfSubarrayComponentManager(
                             # In this case by the ICD, all subarray allocated resources should be used.
                             searchBeam["receptor_ids"] = [
                                 self._dish_utils.dish_id_to_vcc_id[dish]
-                                for dish in self._vcc_dish_ids
+                                for dish in self._dish_ids
                             ]
                         else:
                             for i, dish in enumerate(
@@ -1794,7 +1800,7 @@ class CbfSubarrayComponentManager(
                             # In this case by the ICD, all subarray allocated resources should be used.
                             timingBeam["receptor_ids"] = [
                                 self._dish_utils.dish_id_to_vcc_id[dish]
-                                for dish in self._vcc_dish_ids
+                                for dish in self._dish_ids
                             ]
                         else:
                             for i, dish in enumerate(
@@ -1881,10 +1887,10 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._vcc_dish_ids,}")
+        self._logger.debug(f"current receptors: {*self._dish_ids,}")
         for dish_id in argin:
             self._logger.debug(f"Attempting to remove {dish_id}")
-            if dish_id in self._vcc_dish_ids:
+            if dish_id in self._dish_ids:
                 if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
                     vccID = self._dish_utils.dish_id_to_vcc_id[dish_id]
                 else:
@@ -1895,7 +1901,8 @@ class CbfSubarrayComponentManager(
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
-                self._vcc_dish_ids.remove(dish_id)
+                self._dish_ids.remove(dish_id)
+                self._vcc_ids.remove(vccID)
                 self._group_vcc.remove(vccFQDN)
                 del self._proxies_assigned_vcc[dish_id]
 
@@ -1921,11 +1928,11 @@ class CbfSubarrayComponentManager(
                 msg = f"Receptor {dish_id} not found. Skipping."
                 self._logger.warning(msg)
 
-        if len(self._vcc_dish_ids) == 0:
+        if len(self._dish_ids) == 0:
             self.update_component_resources(False)
             self._logger.debug("No receptors remaining.")
         else:
-            self._logger.debug(f"receptors remaining: {*self._vcc_dish_ids,}")
+            self._logger.debug(f"receptors remaining: {*self._dish_ids,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -1942,8 +1949,8 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        if len(self._vcc_dish_ids) > 0:
-            (rc, msg) = self.remove_receptors(self._vcc_dish_ids.copy())
+        if len(self._dish_ids) > 0:
+            (rc, msg) = self.remove_receptors(self._dish_ids.copy())
             return (rc, msg.replace("RemoveReceptors", "RemoveAllReceptors"))
         return (
             ResultCode.FAILED,
@@ -1963,7 +1970,7 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._vcc_dish_ids,}")
+        self._logger.debug(f"current receptors: {*self._dish_ids,}")
         for dish_id in argin:
             self._logger.debug(f"Attempting to add receptor {dish_id}")
 
@@ -2003,7 +2010,7 @@ class CbfSubarrayComponentManager(
                     + f"subarray {vccSubarrayID}. Skipping."
                 )
                 self._logger.warning(msg)
-            elif dish_id not in self._vcc_dish_ids:
+            elif dish_id not in self._dish_ids:
                 try:
                     # Setting simulation mode of VCC proxies based on simulation mode of subarray
                     self._logger.info(
@@ -2017,10 +2024,11 @@ class CbfSubarrayComponentManager(
                     vccProxy.command_inout("On")
 
                     # update resourced state once first receptor is added
-                    if len(self._vcc_dish_ids) == 0:
+                    if len(self._dish_ids) == 0:
                         self.update_component_resources(True)
 
-                    self._vcc_dish_ids.append(dish_id)
+                    self._dish_ids.append(dish_id)
+                    self._vcc_ids.append(vccID)
                     self._group_vcc.add(self._fqdn_vcc[vccID - 1])
                     self._proxies_assigned_vcc[dish_id] = vccProxy
 
@@ -2044,7 +2052,7 @@ class CbfSubarrayComponentManager(
                 msg = f"{dish_id} already assigned to " + "subarray. Skipping."
                 self._logger.warning(msg)
 
-        self._logger.debug(f"receptors after adding: {*self._vcc_dish_ids,}")
+        self._logger.debug(f"receptors after adding: {*self._dish_ids,}")
 
         return (ResultCode.OK, "AddReceptors completed OK")
 
@@ -2298,7 +2306,7 @@ class CbfSubarrayComponentManager(
         self: CbfSubarrayComponentManager, freq_band: str
     ) -> List[Dict]:
         output_sample_rates = []
-        for dish in self._vcc_dish_ids:
+        for dish in self._dish_ids:
             output_sample_rates.append(
                 self._calculate_fs_sample_rate(freq_band, dish)
             )
