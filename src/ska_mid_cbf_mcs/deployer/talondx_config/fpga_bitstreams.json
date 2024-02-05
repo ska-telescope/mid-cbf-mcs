@@ -1,0 +1,16 @@
+{
+      "fpga_bitstreams": [
+            {
+                  "source": "raw",
+                  "version": "0.2.4",
+                  "raw": {
+                        "base_filename": "ska-mid-cbf-talondx"
+                  },
+                  "git": {
+                        "git_project_id": 450,
+                        "git_branch": "master",
+                        "git_pipeline_job": "talon_dx-quartus-stratix10"
+                  }
+            }
+      ]
+}

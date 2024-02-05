@@ -1,0 +1,94 @@
+{
+	"DsBandProcessor123":{
+		"alias": "bandproc123",
+		"num": 2,
+		"inst": [{
+				"id": 0,
+				"devprop": {
+				}
+			},
+			{
+				"id": 1,
+				"devprop": {
+				}
+			}
+		]
+	},
+	"DsDataReceiver123":{
+		"alias": "datarx123",
+		"num": 2,
+		"inst": [{
+				"id": 0,
+				"devprop": {
+				}
+			},
+			{
+				"id": 1,
+				"devprop": {
+				}
+			}
+		]
+	},
+	"DsCapture":{
+		"alias": "pktcap",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+	},
+	"DsPacketizer":{
+		"alias": "packetizer",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+	},
+	"DsDataStreamSwitch":{
+		"alias": "switch",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+
+	},
+	"DsNoiseDiodeController":{
+		"alias": "noisediode",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+	},
+	"DsTlkInterface123":{
+		"alias": "tlk",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+	},
+	"DsTalonDx100GigEth":{
+		"alias": "e100s10",
+		"num": 1,
+		"inst": [{
+			"id": 0,
+			"devprop": {
+
+			}
+		}]
+	}
+
+}

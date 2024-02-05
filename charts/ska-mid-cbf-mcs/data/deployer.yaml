@@ -1,0 +1,40 @@
+name: deployer
+function: deployer
+domain: mid-csp-cbf
+command: "ECDeployer"
+instances: ["deployer"]
+depends_on:
+  - device: sys/database/2
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "ECDeployer"
+  instances:
+  - name: "deployer"
+    classes:
+    - name: "ECDeployer"
+      devices:
+      - name: "mid_csp_cbf/engineering_console_deployer/deployer"
+environment_variables:
+- name: RAW_USER_ACCOUNT
+  value:
+- name: RAW_USER_PASS
+  value:
+- name: TANGO_HOST
+  value: "{{ .Values.global.tango_host }}"
+
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

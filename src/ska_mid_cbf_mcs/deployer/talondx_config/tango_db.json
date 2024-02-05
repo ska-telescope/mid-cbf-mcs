@@ -1,0 +1,928 @@
+{
+      "tango_db": {
+            "db_servers": [
+                  {
+                        "server": "dshpsmaster",
+                        "instance": "talon1_test",
+                        "name": "hpsmaster",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsHpsMaster",
+                                    "alias": "hps",
+                                    "num": 1,
+                                    "id": "1",
+                                    "devprop": {
+                                          "LoggingLevelDefault": 5,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "TalonStatusFQDN": "talondx-001/ska-talondx-status/status"
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-talondx-sysid-ds",
+                        "instance": "talon1_test",
+                        "name": "ska-talondx-sysid-ds",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "SkaTalondxSysidDs",
+                                    "alias": "sysid",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_SYS_ID\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-mid-cbf-vcc-app",
+                        "instance": "talon1_test",
+                        "name": "vcc-app",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsVccController",
+                                    "alias": "vcc-controller",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "Band1And2FQDN": "talondx-001/vcc-app/vcc-band-1-and-2"
+                                    }
+                              },
+                              {
+                                    "class": "DsVccBand1And2",
+                                    "alias": "vcc-band-1-and-2",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "VccFQDN": "talondx-001/vcc/vcc",
+                                          "CircuitSwitchFQDN": "talondx-001/circuitswitch/circuit_switch",
+                                          "WidebandInputBufferFQDN": "talondx-001/wideband-input-buffer/wideband-input-buffer",
+                                          "MaximumFSPs": 4
+                                    }
+                              },
+                              {
+                                    "class": "DsVccBand3",
+                                    "alias": "vcc-band-3",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "VccFQDN": "talondx-001/vcc/vcc",
+                                          "CircuitSwitchFQDN": "talondx-001/circuitswitch/circuit_switch",
+                                          "WidebandInputBufferFQDN": "talondx-001/wideband-input-buffer/wideband-input-buffer"
+                                    }
+                              },
+                              {
+                                    "class": "DsVccBand4",
+                                    "alias": "vcc-band-4",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "VccFQDN": "talondx-001/vcc/vcc",
+                                          "CircuitSwitchFQDN": "talondx-001/circuitswitch/circuit_switch",
+                                          "WidebandInputBufferFQDN": "talondx-001/wideband-input-buffer/wideband-input-buffer"
+                                    }
+                              },
+                              {
+                                    "class": "DsVccBand5",
+                                    "alias": "vcc-band-5",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "VccFQDN": "talondx-001/vcc/vcc",
+                                          "CircuitSwitchFQDN": "talondx-001/circuitswitch/circuit_switch",
+                                          "WidebandInputBufferFQDN": "talondx-001/wideband-input-buffer/wideband-input-buffer"
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dscorrelator",
+                        "instance": "talon1_test",
+                        "name": "correlator",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsCorrelator",
+                                    "alias": "correlator",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_CORRELATOR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-talondx-100-gigabit-ethernet-ds",
+                        "instance": "talon1_test",
+                        "name": "ska-talondx-100-gigabit-ethernet",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "SkaTalonDx100GigabitEthernetDs",
+                                    "alias": "100g_eth",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "100g_eth_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|G_100GBE\\[(?P<src>\\w+)\\]\\|E_100GBE\\|B_REGISTERS\\|.*"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "100g_eth_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|G_100GBE\\[(?P<src>\\w+)\\]\\|E_100GBE\\|G_QSFP_CTRL\\|E_QSFP"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dscircuitswitch",
+                        "instance": "talon1_test",
+                        "name": "circuitswitch",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsCircuitSwitch",
+                                    "alias": "circuit_switch",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FS_TRANSPORT\\|E_CIRCUIT_SWITCH\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsdct",
+                        "instance": "talon1_test",
+                        "name": "dct",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsDCT",
+                                    "alias": "dct",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_CORNER_TURNER_0\\|E_CT\\|E_CT\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsfinechannelizer",
+                        "instance": "talon1_test",
+                        "name": "finechannelizer",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsFineChannelizer",
+                                    "alias": "ch_16k",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "ch_16k_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_16K_CHAN\\|E_AVMM_BRIDGE"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsgaussiannoisegen",
+                        "instance": "talon1_test",
+                        "name": "gaussiannoisegen",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsGaussianNoiseGen",
+                                    "alias": "gn_gen",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "gn_gen_rcv_pol{pol}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_RECEIVER_NOISE_GEN_(?P<pol>\\w+)\\|E_GAUSSIAN_NOISE\\|E_CSR"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "gn_gen_src_pol{pol}_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_SOURCE_NOISE_GEN_(?P<pol>\\w+)\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dshostlutstage1",
+                        "instance": "talon1_test",
+                        "name": "dshostlutstage1",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsHostLUTStage1",
+                                    "alias": "host_lut_s1",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "host_lut_stage_2_device_name": "talondx-001/dshostlutstage2/host_lut_s2",
+                                          "stage_1_host_lookup_channel_id_offset": 0
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_VIS_PKTS\\|E_HOST_LOOKUP\\|E_PROG_REG"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dshostlutstage2",
+                        "instance": "talon1_test",
+                        "name": "dshostlutstage2",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsHostLUTStage2",
+                                    "alias": "host_lut_s2",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "host_lut_s1_chan_offsets": 0
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "host_lut_s2",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VIS_TO_ETHERNET\\|B_REGISTER\\|E_CSR"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "host_lut_s2",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VIS_TO_ETHERNET\\|E_MAC_IP_UDP_LOOKUP\\|E_PROG_REG"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dslstvbandpassfilter",
+                        "instance": "talon1_test",
+                        "name": "lstvbandpassfilter",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsLstvBandpassFilter",
+                                    "alias": "fir_filt",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "fir_filt_rcv_pol{pol}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_RECEIVER_NOISE_GEN_(?P<pol>\\w+)\\|E_FIR\\|E_AVMM_BRIDGE"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "fir_filt_src_pol{pol}_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_SOURCE_NOISE_GEN_(?P<pol>\\w+)\\|E_NOISE_SHAPING_FIR\\|E_FIR_COEFFS_FIFO"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dslstvgen",
+                        "instance": "talon1_test",
+                        "name": "lstvgen",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsLstvGen",
+                                    "alias": "lstv_gen",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dslstvplayback",
+                        "instance": "talon1_test",
+                        "name": "lstvplayback",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsLstvPlayback",
+                                    "alias": "lstv_pbk",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_REPLAY\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dslstvtonegenerator",
+                        "instance": "talon1_test",
+                        "name": "lstvtonegenerator",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsLstvToneGenerator",
+                                    "alias": "tone_gen_pol",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "tone_gen_pol{pol}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_TONE_(?P<pol>\\w+)\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dspolarizationcoupler",
+                        "instance": "talon1_test",
+                        "name": "polarizationcoupler",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsPolarizationCoupler",
+                                    "alias": "pol_coupler",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "pol_coupler_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_POLARIZATION_COUPLER\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ds-resampler-delay-tracker",
+                        "instance": "talon1_test",
+                        "name": "resamplerdelaytracker",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsResamplerDelayTracker",
+                                    "alias": "resampler",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "resampler_fsp_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_RDT\\|E_CSR"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "resampler_fsp_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_RDT\\|G_POL\\[(?P<pol>\\w+)\\]"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "resampler_bite_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|B_RESAMPLER_DELAY_TRACKER\\|E_CSR"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "resampler_bite_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|B_RESAMPLER_DELAY_TRACKER\\|E_RDT_POL_(?P<pol>\\w+)\\|E_CONTROL\\|E_DELAY_MODEL_RAM_BRIDGE"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsspeaddescriptor",
+                        "instance": "talon1_test",
+                        "name": "dsspeaddescriptor",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsSpeadDescriptor",
+                                    "alias": "spead",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_VIS_PKTS\\|E_SPEAD_VISIBILITY_PACKETISER\\|E_ITEM_PKT\\|E_SUBARRAY_SPEAD_PROG"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dstalondxrdma",
+                        "instance": "talon1_test",
+                        "name": "talondxrdma",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsTalonDxRDMA",
+                                    "alias": "chan",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "chan{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_RDMA\\|E_RDMA_CAPTURE\\|G_CHAN\\[(?P<chan>\\w+)\\]\\|E_RDMA\\|B_REG\\|E_SOURCE_HOST_CONFIG"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "chan{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_RDMA\\|E_RDMA_CAPTURE\\|G_CHAN\\[(?P<chan>\\w+)\\]\\|E_RDMA\\|B_QP_LUT\\|E_QUEUE_PAIR_PROG"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsvcc",
+                        "instance": "talon1_test",
+                        "name": "vcc",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsVcc",
+                                    "alias": "vcc",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_VCC_CH20\\|E_AVMM_BRIDGE"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dswbstatecount",
+                        "instance": "talon1_test",
+                        "name": "wbstatecount",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsWBStateCount",
+                                    "alias": "state_count",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_PKT_CAP\\|E_CSR"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-mid-spfrx-packetizer-ds",
+                        "instance": "talon1_test",
+                        "name": "ska-mid-spfrx-packetizer",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "SkaMidSpfrxPacketizerDs",
+                                    "alias": "spfrx_pkt",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_SPFRX_PACKETIZER\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-talondx-status-ds",
+                        "instance": "talon1_test",
+                        "name": "ska-talondx-status",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "SkaTalondxStatusDs",
+                                    "alias": "status",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_TALON_ST\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ska-mid-cbf-fsp-app",
+                        "instance": "talon1_test",
+                        "name": "fsp-app",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsFspController",
+                                    "alias": "fsp-controller",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "FspID": 0,
+                                          "FspCorrControllerFQDN": "talondx-001/fsp-app/fsp-corr-controller"
+                                    }
+                              },
+                              {
+                                    "class": "DsFspCorrController",
+                                    "alias": "fsp-corr-controller",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "FspID": 0,
+                                          "FspUnitID": 1,
+                                          "NumReceptorLanes": 4,
+                                          "PacketStreamRepair1FQDN": "talondx-001/packetstreamrepair/packet_stream_repair_0",
+                                          "PacketStreamRepair2FQDN": "talondx-001/packetstreamrepair/packet_stream_repair_1",
+                                          "PacketStreamRepair3FQDN": "talondx-001/packetstreamrepair/packet_stream_repair_2",
+                                          "PacketStreamRepair4FQDN": "talondx-001/packetstreamrepair/packet_stream_repair_3",
+                                          "Resampler1FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_0",
+                                          "Resampler2FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_1",
+                                          "Resampler3FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_2",
+                                          "Resampler4FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_3",
+                                          "Resampler5FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_4",
+                                          "Resampler6FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_5",
+                                          "Resampler7FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_6",
+                                          "Resampler8FQDN": "talondx-001/resamplerdelaytracker/resampler_fsp_7",
+                                          "FineChannelizer1FQDN": "talondx-001/finechannelizer/ch_16k_0",
+                                          "FineChannelizer2FQDN": "talondx-001/finechannelizer/ch_16k_1",
+                                          "FineChannelizer3FQDN": "talondx-001/finechannelizer/ch_16k_2",
+                                          "FineChannelizer4FQDN": "talondx-001/finechannelizer/ch_16k_3",
+                                          "FineChannelizer5FQDN": "talondx-001/finechannelizer/ch_16k_4",
+                                          "FineChannelizer6FQDN": "talondx-001/finechannelizer/ch_16k_5",
+                                          "FineChannelizer7FQDN": "talondx-001/finechannelizer/ch_16k_6",
+                                          "FineChannelizer8FQDN": "talondx-001/finechannelizer/ch_16k_7",
+                                          "CornerTurn1FQDN": "talondx-001/dct/dct",
+                                          "CornerTurn2FQDN": "talondx-001/dct/dct2",
+                                          "CorrelatorFQDN": "talondx-001/correlator/correlator",
+                                          "SPEADFQDN": "talondx-001/dsspeaddescriptor/spead",
+                                          "HostLUTStage1FQDN": "talondx-001/dshostlutstage1/host_lut_s1",
+                                          "HostLUTStage2FQDN": "talondx-001/dshostlutstage2/host_lut_s2"
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dsslimtxrx",
+                        "instance": "talon1_test",
+                        "name": "slim-tx-rx",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsSLIMTx",
+                                    "alias": "slim-tx",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "vis-tx{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_1\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_TX\\|E_REGISTERS"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "fs-tx{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_2\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_TX\\|E_REGISTERS"
+                                                }
+                                          ]
+                                    }
+                              },
+                              {
+                                    "class": "DsSLIMRx",
+                                    "alias": "slim-rx",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "vis-rx{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_1\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_RX\\|E_REGISTERS"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "fs-rx{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_2\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_RX\\|E_REGISTERS"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dswbinputbuffer",
+                        "instance": "talon1_test",
+                        "name": "wideband-input-buffer",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsWBInputBuffer",
+                                    "alias": "wideband-input-buffer",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ],
+                                          "ExpectedDishID": "SKA123"
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_WIB\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "dspacketstreamrepair",
+                        "instance": "talon1_test",
+                        "name": "packetstreamrepair",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsPacketStreamRepair",
+                                    "alias": "packet_stream_repair",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "packet_stream_repair_{chan}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FS_TRANSPORT\\|G_RX\\[(?P<chan>\\w+)\\]\\|E_STREAM_REPAIR\\|E_REG_BANK"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  },
+                  {
+                        "server": "ds-histogram",
+                        "instance": "talon1_test",
+                        "name": "histogram",
+                        "device": "talondx-001",
+                        "deviceList": [
+                              {
+                                    "class": "DsHistogram",
+                                    "alias": "histogram",
+                                    "num": 1,
+                                    "devprop": {
+                                          "LoggingLevelDefault": 4,
+                                          "LoggingTargetsDefault": [
+                                                "console::cout",
+                                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                                          ]
+                                    },
+                                    "registerMetadata": {
+                                          "templateDefinitions": [
+                                                {
+                                                      "aliasPerMatch": "E_PRE_VCC",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_PRE_VCC_HISTOGRAM\\|.*"
+                                                },
+                                                {
+                                                      "aliasPerMatch": "{type}_{src}",
+                                                      "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|(?P<type>\\w+)_HISTOGRAM\\|.*"
+                                                }
+                                          ]
+                                    }
+                              }
+                        ]
+                  }
+            ]
+      }
+}

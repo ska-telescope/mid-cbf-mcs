@@ -84,7 +84,10 @@ deviceServers:
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
-
+  
+  deployer:
+    enabled: true
+    file: "data/deployer.yaml"
 
 nodeSelector: {}
 

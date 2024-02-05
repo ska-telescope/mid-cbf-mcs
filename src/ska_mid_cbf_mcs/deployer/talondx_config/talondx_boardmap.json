@@ -1,0 +1,1706 @@
+{
+    "ds_binaries" : [
+        {
+            "name": "ds-hps-master",
+            "source": "conan",
+            "conan": {
+                "package_name": "dshpsmaster",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.0.6",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 688,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ska-talondx-sysid-ds",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-talondx-sysid-ds",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 807,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ska-mid-cbf-vcc-app",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-mid-cbf-vcc-app",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.1",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 782,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ska-mid-spfrx-packetizer-ds",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-mid-spfrx-packetizer-ds",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 645,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ska-talondx-100-gigabit-ethernet-ds",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-talondx-100-gigabit-ethernet-ds",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 484,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-gaussian-noise-gen",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsgaussiannoisegen",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "2.0.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 657,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-lstv-bandpass-filter",
+            "source": "conan",
+            "conan": {
+                "package_name": "dslstvbandpassfilter",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 668,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-lstv-gen",
+            "source": "conan",
+            "conan": {
+                "package_name": "dslstvgen",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 669,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-lstv-playback", 
+            "source": "conan",
+            "conan": {
+                "package_name": "dslstvplayback",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 663,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-lstv-tone-generator",
+            "source": "conan",
+            "conan": {
+                "package_name": "dslstvtonegenerator",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 667,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-polarization-coupler",
+            "source": "conan",
+            "conan": {
+                "package_name": "dspolarizationcoupler",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 664,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-circuit-switch",
+            "source": "conan",
+            "conan": {
+                "package_name": "dscircuitswitch",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "2.1.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 653,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-vcc",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsvcc",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 652,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-fine-channelizer",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsfinechannelizer",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.3.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 675,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-dct",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsdct",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.3.0",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 671,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ska-talondx-status-ds",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-talondx-status-ds",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.1",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 837,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-wb-state-count",
+            "source": "conan",
+            "conan": {
+                "package_name": "dswbstatecount",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.3.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 673,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-wb-input-buffer",
+            "source": "conan",
+            "conan": {
+                "package_name": "dswbinputbuffer",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "0.2.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 885,
+                "git_branch": "master",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-resampler-delay-tracker",
+            "source": "conan",
+            "conan": {
+                "package_name": "ds-resampler-delay-tracker",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.5.2", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 721,
+                "git_branch": "develop",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-correlator",
+            "source": "conan",
+            "conan": {
+                "package_name": "dscorrelator",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "2.1.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 735,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        }, 
+        {
+            "name": "ds-spead-descriptor",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsspeaddescriptor",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.5.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 753,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        }, 
+        {
+            "name": "ds-host-lut-stage-1",
+            "source": "conan",
+            "conan": {
+                "package_name": "dshostlutstage1",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.4.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 755,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-host-lut-stage-2",
+            "source": "conan",
+            "conan": {
+                "package_name": "dshostlutstage2",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.7.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 756,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        }, 
+        {
+            "name": "ska-mid-cbf-fsp-app",
+            "source": "conan",
+            "conan": {
+                "package_name": "ska-mid-cbf-fsp-app",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "0.4.4", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 863,
+                "git_branch": "master",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-slim-tx-rx",
+            "source": "conan",
+            "conan": {
+                "package_name": "dsslimtxrx",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "2.1.2",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 702,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-packet-stream-repair",
+            "source": "conan",
+            "conan": {
+                "package_name": "dspacketstreamrepair",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.3.0", 
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 910,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        },
+        {
+            "name": "ds-histogram",
+            "source": "conan",
+            "conan": {
+                "package_name": "ds-histogram",
+                "user": "nrc",
+                "channel": "stable",
+                "version": "1.2.1",
+                "profile": "conan_aarch64_profile.txt"
+            },
+            "git": {
+                "git_project_id": 926,
+                "git_branch": "main",
+                "git_pipeline_job": "export"
+            }
+        }
+    ],
+    "fpga_bitstreams": [
+        {
+            "source": "raw",
+            "version": "0.2.4",
+            "raw": {
+                "base_filename": "ska-mid-cbf-talondx"
+            },
+            "git": {
+                "git_project_id": 450,
+                "git_branch": "master",
+                "git_pipeline_job": "talon_dx-quartus-stratix10"
+            }
+        }
+    ],
+    "config_commands": {
+        "1" : 
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "001",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon1_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "2" : 
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "002",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-002/hpsmaster/hps-2",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon2_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "3" : 
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "003",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-003/hpsmaster/hps-3",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon3_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "4" : 
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "004",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-004/hpsmaster/hps-4",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon4_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "5" :
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "005",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-005/hpsmaster/hps-5",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon5_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "6" :
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "006",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-006/hpsmaster/hps-6",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon6_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "7" :
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "007",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-007/hpsmaster/hps-7",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon7_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            },
+        "8" :
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "008",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-008/hpsmaster/hps-8",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon8_test",
+                "devices": [
+                    "ska-talondx-sysid-ds",
+                    "ska-mid-cbf-vcc-app",
+                    "dsvcc",
+                    "dscircuitswitch",
+                    "dsdct",
+                    "dsfinechannelizer",
+                    "dsgaussiannoisegen",
+                    "ska-mid-spfrx-packetizer-ds",
+                    "dslstvbandpassfilter",
+                    "dslstvgen",
+                    "dslstvplayback",
+                    "dslstvtonegenerator",
+                    "dspolarizationcoupler",
+                    "ska-talondx-100-gigabit-ethernet-ds",
+                    "ska-talondx-status-ds",
+                    "dswbstatecount",
+                    "dswbinputbuffer",
+                    "ds-resampler-delay-tracker",
+                    "dscorrelator",
+                    "dsspeaddescriptor",
+                    "dshostlutstage1",
+                    "dshostlutstage2",
+                    "ska-mid-cbf-fsp-app",
+                    "dsslimtxrx",
+                    "dspacketstreamrepair",
+                    "ds-histogram"
+                ]
+            }
+        },
+    "tango_db": {
+        "db_servers": [
+            {
+                "server": "dshpsmaster",
+                "instance": "<server_instance>",
+                "name": "hpsmaster",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsHpsMaster",
+                        "alias": "hps",
+                        "num": 1,
+                        "id": "<board_number>",
+                        "devprop": {
+                            "LoggingLevelDefault": 5,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "TalonStatusFQDN": "<device>/ska-talondx-status/status"
+                        }                            
+                    }
+                ]
+            },
+            {
+                "server": "ska-talondx-sysid-ds",
+                "instance": "<server_instance>",
+                "name": "ska-talondx-sysid-ds",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "SkaTalondxSysidDs",
+                        "alias": "sysid",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_SYS_ID\\|E_CSR"
+                                }
+                            ]
+                        }                         
+                    }
+                ]
+            },
+            {
+                "server": "ska-mid-cbf-vcc-app",
+                "instance": "<server_instance>",
+                "name": "vcc-app",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsVccController",
+                        "alias": "vcc-controller",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "Band1And2FQDN": "<device>/vcc-app/vcc-band-1-and-2"
+                        }
+                    },
+                    {
+                        "class": "DsVccBand1And2",
+                        "alias": "vcc-band-1-and-2",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "VccFQDN": "<device>/vcc/vcc",
+                            "CircuitSwitchFQDN": "<device>/circuitswitch/circuit_switch",
+                            "WidebandInputBufferFQDN": "<device>/wideband-input-buffer/wideband-input-buffer",
+                            "MaximumFSPs" : 4
+                        }
+                    },
+                    {
+                        "class": "DsVccBand3",
+                        "alias": "vcc-band-3",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "VccFQDN": "<device>/vcc/vcc",
+                            "CircuitSwitchFQDN": "<device>/circuitswitch/circuit_switch",
+                            "WidebandInputBufferFQDN": "<device>/wideband-input-buffer/wideband-input-buffer"
+                        }
+                    },
+                    {
+                        "class": "DsVccBand4",
+                        "alias": "vcc-band-4",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "VccFQDN": "<device>/vcc/vcc",
+                            "CircuitSwitchFQDN": "<device>/circuitswitch/circuit_switch",
+                            "WidebandInputBufferFQDN": "<device>/wideband-input-buffer/wideband-input-buffer"
+                        }
+                    },
+                    {
+                        "class": "DsVccBand5",
+                        "alias": "vcc-band-5",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "VccFQDN": "<device>/vcc/vcc",
+                            "CircuitSwitchFQDN": "<device>/circuitswitch/circuit_switch",
+                            "WidebandInputBufferFQDN": "<device>/wideband-input-buffer/wideband-input-buffer"
+                        }
+                    }
+                ]
+            },
+	        {
+                "server": "dscorrelator",
+                "instance": "<server_instance>",
+                "name": "correlator",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsCorrelator",
+                        "alias": "correlator",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+				"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_CORRELATOR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "ska-talondx-100-gigabit-ethernet-ds",
+                "instance": "<server_instance>",
+                "name": "ska-talondx-100-gigabit-ethernet",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "SkaTalonDx100GigabitEthernetDs",
+                        "alias": "100g_eth",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "100g_eth_{src}",
+                                    "regex": "TOP\\|E_BASE\\|G_100GBE\\[(?P<src>\\w+)\\]\\|E_100GBE\\|B_REGISTERS\\|.*"
+                                },
+                                {
+                                    "aliasPerMatch" : "100g_eth_{src}",
+                                    "regex": "TOP\\|E_BASE\\|G_100GBE\\[(?P<src>\\w+)\\]\\|E_100GBE\\|G_QSFP_CTRL\\|E_QSFP"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dscircuitswitch",
+                "instance": "<server_instance>",
+                "name": "circuitswitch",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsCircuitSwitch",
+                        "alias": "circuit_switch",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FS_TRANSPORT\\|E_CIRCUIT_SWITCH\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsdct",
+                "instance": "<server_instance>",
+                "name": "dct",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsDCT",
+                        "alias": "dct",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_CORNER_TURNER_0\\|E_CT\\|E_CT\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsfinechannelizer",
+                "instance": "<server_instance>",
+                "name": "finechannelizer",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsFineChannelizer",
+                        "alias": "ch_16k",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "ch_16k_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_16K_CHAN\\|E_AVMM_BRIDGE"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsgaussiannoisegen",
+                "instance": "<server_instance>",
+                "name": "gaussiannoisegen",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsGaussianNoiseGen",
+                        "alias": "gn_gen",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "gn_gen_rcv_pol{pol}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_RECEIVER_NOISE_GEN_(?P<pol>\\w+)\\|E_GAUSSIAN_NOISE\\|E_CSR"
+                                },
+                                {
+                                    "aliasPerMatch" : "gn_gen_src_pol{pol}_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_SOURCE_NOISE_GEN_(?P<pol>\\w+)\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dshostlutstage1",
+                "instance": "<server_instance>",
+                "name": "dshostlutstage1",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsHostLUTStage1",
+                        "alias": "host_lut_s1",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "host_lut_stage_2_device_name": "<device>/dshostlutstage2/host_lut_s2",
+                            "stage_1_host_lookup_channel_id_offset": 0
+                        },
+                        "registerMetadata":{							
+				"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_VIS_PKTS\\|E_HOST_LOOKUP\\|E_PROG_REG"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dshostlutstage2",
+                "instance": "<server_instance>",
+                "name": "dshostlutstage2",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsHostLUTStage2",
+                        "alias": "host_lut_s2",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "host_lut_s1_chan_offsets": 0
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "host_lut_s2",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VIS_TO_ETHERNET\\|B_REGISTER\\|E_CSR"
+                                },
+                                {
+                                    "aliasPerMatch" : "host_lut_s2",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VIS_TO_ETHERNET\\|E_MAC_IP_UDP_LOOKUP\\|E_PROG_REG"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dslstvbandpassfilter",
+                "instance": "<server_instance>",
+                "name": "lstvbandpassfilter",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsLstvBandpassFilter",
+                        "alias": "fir_filt",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "fir_filt_rcv_pol{pol}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_RECEIVER_NOISE_GEN_(?P<pol>\\w+)\\|E_FIR\\|E_AVMM_BRIDGE"
+                                },
+                                {
+                                    "aliasPerMatch" : "fir_filt_src_pol{pol}_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_SOURCE_NOISE_GEN_(?P<pol>\\w+)\\|E_NOISE_SHAPING_FIR\\|E_FIR_COEFFS_FIFO"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dslstvgen",
+                "instance": "<server_instance>",
+                "name": "lstvgen",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsLstvGen",
+                        "alias": "lstv_gen",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{							
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dslstvplayback",
+                "instance": "<server_instance>",
+                "name": "lstvplayback",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsLstvPlayback",
+                        "alias": "lstv_pbk",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_REPLAY\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dslstvtonegenerator",
+                "instance": "<server_instance>",
+                "name": "lstvtonegenerator",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsLstvToneGenerator",
+                        "alias": "tone_gen_pol",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "tone_gen_pol{pol}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|E_TONE_(?P<pol>\\w+)\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dspolarizationcoupler",
+                "instance": "<server_instance>",
+                "name": "polarizationcoupler",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsPolarizationCoupler",
+                        "alias": "pol_coupler",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "pol_coupler_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|E_POLARIZATION_COUPLER\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "ds-resampler-delay-tracker",
+                "instance": "<server_instance>",
+                "name": "resamplerdelaytracker",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsResamplerDelayTracker",
+                        "alias": "resampler",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+				            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "resampler_fsp_{src}",
+                                    "regex" : "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_RDT\\|E_CSR"
+                                },
+                                {
+                                    "aliasPerMatch" : "resampler_fsp_{src}",
+                                    "regex" : "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|E_RDT\\|G_POL\\[(?P<pol>\\w+)\\]"
+                                },
+                                {
+                                    "aliasPerMatch" : "resampler_bite_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|B_RESAMPLER_DELAY_TRACKER\\|E_CSR"
+                                },
+                                {
+                                    "aliasPerMatch" : "resampler_bite_{src}",
+                                    "regex" : "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_LSTV\\|GEN_SOURCE\\[(?P<src>\\w+)\\]\\|B_RESAMPLER_DELAY_TRACKER\\|E_RDT_POL_(?P<pol>\\w+)\\|E_CONTROL\\|E_DELAY_MODEL_RAM_BRIDGE"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsspeaddescriptor",
+                "instance": "<server_instance>",
+                "name": "dsspeaddescriptor",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsSpeadDescriptor",
+                        "alias": "spead",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|E_VIS_PKTS\\|E_SPEAD_VISIBILITY_PACKETISER\\|E_ITEM_PKT\\|E_SUBARRAY_SPEAD_PROG"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dstalondxrdma",
+                "instance": "<server_instance>",
+                "name": "talondxrdma",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsTalonDxRDMA",
+                        "alias": "chan",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "chan{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_RDMA\\|E_RDMA_CAPTURE\\|G_CHAN\\[(?P<chan>\\w+)\\]\\|E_RDMA\\|B_REG\\|E_SOURCE_HOST_CONFIG"
+                                },
+                                {
+                                    "aliasPerMatch" : "chan{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_RDMA\\|E_RDMA_CAPTURE\\|G_CHAN\\[(?P<chan>\\w+)\\]\\|E_RDMA\\|B_QP_LUT\\|E_QUEUE_PAIR_PROG"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsvcc",
+                "instance": "<server_instance>",
+                "name": "vcc",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsVcc",
+                        "alias": "vcc",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_VCC_CH20\\|E_AVMM_BRIDGE"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dswbstatecount",
+                "instance": "<server_instance>",
+                "name": "wbstatecount",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsWBStateCount",
+                        "alias": "state_count",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+			                "templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_PKT_CAP\\|E_CSR"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "ska-mid-spfrx-packetizer-ds",
+                "instance": "<server_instance>",
+                "name": "ska-mid-spfrx-packetizer",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "SkaMidSpfrxPacketizerDs",
+                        "alias": "spfrx_pkt",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+							"templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|G_BITE\\|E_BITE\\|E_SPFRX_PACKETIZER\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+	        {
+                "server": "ska-talondx-status-ds",
+                "instance": "<server_instance>",
+                "name": "ska-talondx-status",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "SkaTalondxStatusDs",
+                        "alias": "status",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_TALON_ST\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "ska-mid-cbf-fsp-app",
+                "instance": "<server_instance>",
+                "name": "fsp-app",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsFspController",
+                        "alias": "fsp-controller",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "FspID": 0,
+                            "FspCorrControllerFQDN": "<device>/fsp-app/fsp-corr-controller"
+                        }
+                    },
+                    {
+                        "class": "DsFspCorrController",
+                        "alias": "fsp-corr-controller",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "FspID": 0,
+                            "FspUnitID": 1,
+                            "NumReceptorLanes": 4,
+                            "PacketStreamRepair1FQDN": "<device>/packetstreamrepair/packet_stream_repair_0",
+                            "PacketStreamRepair2FQDN": "<device>/packetstreamrepair/packet_stream_repair_1",
+                            "PacketStreamRepair3FQDN": "<device>/packetstreamrepair/packet_stream_repair_2",
+                            "PacketStreamRepair4FQDN": "<device>/packetstreamrepair/packet_stream_repair_3",
+                            "Resampler1FQDN": "<device>/resamplerdelaytracker/resampler_fsp_0",
+                            "Resampler2FQDN": "<device>/resamplerdelaytracker/resampler_fsp_1",
+                            "Resampler3FQDN": "<device>/resamplerdelaytracker/resampler_fsp_2",
+                            "Resampler4FQDN": "<device>/resamplerdelaytracker/resampler_fsp_3",
+                            "Resampler5FQDN": "<device>/resamplerdelaytracker/resampler_fsp_4",
+                            "Resampler6FQDN": "<device>/resamplerdelaytracker/resampler_fsp_5",
+                            "Resampler7FQDN": "<device>/resamplerdelaytracker/resampler_fsp_6",
+                            "Resampler8FQDN": "<device>/resamplerdelaytracker/resampler_fsp_7",
+                            "FineChannelizer1FQDN": "<device>/finechannelizer/ch_16k_0",
+                            "FineChannelizer2FQDN": "<device>/finechannelizer/ch_16k_1",
+                            "FineChannelizer3FQDN": "<device>/finechannelizer/ch_16k_2",
+                            "FineChannelizer4FQDN": "<device>/finechannelizer/ch_16k_3",
+                            "FineChannelizer5FQDN": "<device>/finechannelizer/ch_16k_4",
+                            "FineChannelizer6FQDN": "<device>/finechannelizer/ch_16k_5",
+                            "FineChannelizer7FQDN": "<device>/finechannelizer/ch_16k_6",
+                            "FineChannelizer8FQDN": "<device>/finechannelizer/ch_16k_7",
+                            "CornerTurn1FQDN": "<device>/dct/dct",
+                            "CornerTurn2FQDN": "<device>/dct/dct2",
+                            "CorrelatorFQDN": "<device>/correlator/correlator",
+                            "SPEADFQDN": "<device>/dsspeaddescriptor/spead",
+                            "HostLUTStage1FQDN": "<device>/dshostlutstage1/host_lut_s1",
+                            "HostLUTStage2FQDN": "<device>/dshostlutstage2/host_lut_s2"
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dsslimtxrx",
+                "instance": "<server_instance>",
+                "name": "slim-tx-rx",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsSLIMTx",
+                        "alias": "slim-tx",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "vis-tx{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_1\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_TX\\|E_REGISTERS"                                    
+                                },
+                                {
+                                    "aliasPerMatch" : "fs-tx{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_2\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_TX\\|E_REGISTERS"                                    
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "class": "DsSLIMRx",
+                        "alias": "slim-rx",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "vis-rx{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_1\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_RX\\|E_REGISTERS"                                    
+                                },
+                                {
+                                    "aliasPerMatch" : "fs-rx{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_SLIM_MBO\\|E_MBO_2\\|G_CHANNEL\\[(?P<chan>\\w+)\\]\\|G_ENABLED\\|E_SLIM_RX\\|E_REGISTERS"                                    
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dswbinputbuffer",
+                "instance": "<server_instance>",
+                "name": "wideband-input-buffer",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsWBInputBuffer",
+                        "alias": "wideband-input-buffer",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ],
+                            "ExpectedDishID": "SKA123"
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_WIB\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "dspacketstreamrepair",
+                "instance": "<server_instance>",
+                "name": "packetstreamrepair",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsPacketStreamRepair",
+                        "alias": "packet_stream_repair",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "packet_stream_repair_{chan}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FS_TRANSPORT\\|G_RX\\[(?P<chan>\\w+)\\]\\|E_STREAM_REPAIR\\|E_REG_BANK"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "server": "ds-histogram",
+                "instance": "<server_instance>",
+                "name": "histogram",
+                "device": "<device>",
+                "deviceList": [
+                    {
+                        "class": "DsHistogram",
+                        "alias": "histogram",
+                        "num": 1,
+                        "devprop": {
+                            "LoggingLevelDefault": 4,
+                            "LoggingTargetsDefault": [
+                                "console::cout",
+                                "device::mid_csp_cbf/talondx_log_consumer/001"
+                            ]
+                        },
+                        "registerMetadata":{
+                            "templateDefinitions":[
+                                {
+                                    "aliasPerMatch" : "E_PRE_VCC",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_VCC\\|E_PRE_VCC_HISTOGRAM\\|.*"
+                                },
+                                {
+                                    "aliasPerMatch" : "{type}_{src}",
+                                    "regex": "TOP\\|E_BASE\\|E_PERSONA\\|E_FSP\\|G_ANTENNA_PROCESSING\\[(?P<src>\\w+)\\]\\|(?P<type>\\w+)_HISTOGRAM\\|.*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

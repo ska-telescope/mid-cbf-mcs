@@ -1,0 +1,133 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "definitions" : 
+    {
+
+        "tangoDeviceProperty" : 
+        {
+            "title" : "TANGO Device Property",
+            "description" : "A JSON element defining a TANGO device property for an instance of a TANGO Device Server. This is implemented as a dict of key-value pairs, having type string or integer.",
+            "type" : "object"
+        },
+
+        "tangoDeviceInstance" :
+        {
+            "title" : "TANGO Device Class instance",
+            "description" : "A JSON element defining a TANGO Device Server class instance.",
+            "type" : "object",
+            "required":
+            [
+            ],
+            "properties" : 
+            {
+                "id" : 
+                {
+                    "title" : "Instance ID",
+                    "description" : "An enumerated instance ID value",
+                    "type" : ["integer","string"]
+                },
+                "devprop" : 
+                {
+                    "$ref" : "#/definitions/tangoDeviceProperty"
+                }
+            }
+        },
+
+        "tangoDeviceClass" : 
+        {
+            "title" : "TANGO Device Server Class name",
+            "description" : "A JSON element defining instances of a TANGO Device Server class associated with the projoect.",
+            "type" : "object",
+            "required" : 
+            [
+                "class",
+                "alias",
+                "num",
+                "inst"
+            ],
+            "properties" : 
+            {
+                "class" :
+                {
+                    "title" : "Device class name",
+                    "description" : "The name of the TANGO Device Server class",
+                    "type" : "string"
+                },
+                "alias" : 
+                {
+                    "title" : "Device instance alias",
+                    "description" : "The instance ID is appended to the alias in forming the family part of the device/name/family TANGO unique identifier string.",
+                    "type" : "string"
+                },
+                "num" : 
+                {
+                    "title" : "Number of instances",
+                    "description" : "The number of instances to create in the TANGO DB for this device server class",
+                    "type" : "integer"
+                },
+                "inst" : 
+                {
+                    "title" : "TANGO Device instances",
+                    "description" : "An array of instances to be created in the TANGO DB for this device class.",
+                    "type" : "array",
+                    "minItems" : 1,
+                    "items" : 
+                    {
+                        "$ref" : "#/definitions/tangoDeviceInstance"
+                    }
+                }
+            }
+        }
+
+    },
+
+    "title" : "TANGO DB Population Schema",
+    "type" : "object",
+    "required" : 
+    [
+        "server",
+        "instance",
+        "device",
+        "name",
+        "deviceList"
+    ],
+    "properties" : 
+    {
+        "server" : {
+            "title" : "TANGO Device Server",
+            "description" : "A string representing the executable name of the TANGO Device Server.",
+            "type" : "string"
+        },
+
+        "instance" : {
+            "title" : "TANGO Device Server Instance",
+            "description" : "The instance string used when starting the device server.",
+            "type" : "string"
+        },
+
+        "device" : {
+            "title" : "TANGO Device",
+            "description" : "The string to be used for the device part of the device/name/family TANGO unique identifier",
+            "type" : "string"
+        },
+
+        "name" : {
+            "title" : "TANGO Device Name",
+            "description" : "The string to be use for the name part of the device/name/family TANGO unique identifier.",
+            "type" : "string"
+        },
+
+        "deviceList" : {
+            "title" : "The Device Class list",
+            "description" : "A list of TANGO Device Classes to be instantiated in the DB",
+            "type" : "array",
+            "minItems" : 1,
+            "items" : 
+            {
+                "$ref" : "#/definitions/tangoDeviceClass"
+            } 
+
+        }
+    }
+}

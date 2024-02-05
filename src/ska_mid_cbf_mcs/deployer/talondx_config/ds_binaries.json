@@ -1,0 +1,436 @@
+{
+      "ds_binaries": [
+            {
+                  "name": "ds-hps-master",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dshpsmaster",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.0.6",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 688,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-talondx-sysid-ds",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-talondx-sysid-ds",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 807,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-mid-cbf-vcc-app",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-mid-cbf-vcc-app",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.1",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 782,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-mid-spfrx-packetizer-ds",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-mid-spfrx-packetizer-ds",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 645,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-talondx-100-gigabit-ethernet-ds",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-talondx-100-gigabit-ethernet-ds",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 484,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-gaussian-noise-gen",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsgaussiannoisegen",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "2.0.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 657,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-lstv-bandpass-filter",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dslstvbandpassfilter",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 668,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-lstv-gen",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dslstvgen",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 669,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-lstv-playback",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dslstvplayback",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 663,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-lstv-tone-generator",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dslstvtonegenerator",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 667,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-polarization-coupler",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dspolarizationcoupler",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 664,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-circuit-switch",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dscircuitswitch",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "2.1.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 653,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-vcc",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsvcc",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 652,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-fine-channelizer",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsfinechannelizer",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.3.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 675,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-dct",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsdct",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.3.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 671,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-talondx-status-ds",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-talondx-status-ds",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.1",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 837,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-wb-state-count",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dswbstatecount",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.3.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 673,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-wb-input-buffer",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dswbinputbuffer",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "0.2.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 885,
+                        "git_branch": "master",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-resampler-delay-tracker",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ds-resampler-delay-tracker",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.5.2",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 721,
+                        "git_branch": "develop",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-correlator",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dscorrelator",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "2.1.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 735,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-spead-descriptor",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsspeaddescriptor",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.5.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 753,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-host-lut-stage-1",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dshostlutstage1",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.4.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 755,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-host-lut-stage-2",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dshostlutstage2",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.7.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 756,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ska-mid-cbf-fsp-app",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ska-mid-cbf-fsp-app",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "0.4.4",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 863,
+                        "git_branch": "master",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-slim-tx-rx",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dsslimtxrx",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "2.1.2",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 702,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-packet-stream-repair",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "dspacketstreamrepair",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.3.0",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 910,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            },
+            {
+                  "name": "ds-histogram",
+                  "source": "conan",
+                  "conan": {
+                        "package_name": "ds-histogram",
+                        "user": "nrc",
+                        "channel": "stable",
+                        "version": "1.2.1",
+                        "profile": "conan_aarch64_profile.txt"
+                  },
+                  "git": {
+                        "git_project_id": 926,
+                        "git_branch": "main",
+                        "git_pipeline_job": "export"
+                  }
+            }
+      ]
+}

@@ -1,0 +1,136 @@
+{
+    "type": "object",
+    "properties": {
+        "ds_binaries": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "source": {"type": "string", "enum": ["conan", "git"]},
+                    "conan": {"$ref": "#/$defs/conan"},
+                    "git": {"$ref": "#/$defs/git"}
+                },
+                "required": [
+                    "name",
+                    "source"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "fpga_bitstreams": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "source": {"type": "string", "enum": ["raw", "git"]},
+                    "version": {"type": "string"},
+                    "raw": {"$ref": "#/$defs/raw"},
+                    "git": {"$ref": "#/$defs/git"}
+                },
+                "required": [
+                    "source",
+                    "version"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "config_commands": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "description": {"type": "string"},
+                    "target": {"type": "string"},
+                    "talon_first_connect_timeout": {"type": "integer"},
+                    "ds_hps_master_fqdn": {"type": "string"},
+                    "fpga_path": {"type": "string"},
+                    "fpga_dtb_name": {"type": "string"},
+                    "fpga_rbf_name": {"type": "string"},
+                    "fpga_label": {"type": "string"},
+                    "ds_path": {"type": "string"},
+                    "server_instance": {"type": "string"},
+                    "devices": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+                },
+                "required": [
+                    "description",
+                    "target",
+                    "ds_hps_master_fqdn",
+                    "fpga_path",
+                    "fpga_dtb_name",
+                    "fpga_rbf_name",
+                    "fpga_label",
+                    "ds_path",
+                    "server_instance",
+                    "devices"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "tango_db": {
+            "type": "object",
+            "properties": {
+                "db_servers": {
+                    "type": "array"
+                }
+            }
+        }
+    },
+    "required": [
+        "ds_binaries", 
+        "fpga_bitstreams", 
+        "config_commands", 
+        "tango_db"
+    ],
+    "$defs": {
+        "conan": {
+            "type": "object",
+            "properties": {
+                "package_name": {"type": "string"},
+                "user": {"type": "string"},
+                "channel": {"type": "string"},
+                "version": {"type": "string"},
+                "profile": {
+                    "type": "string", 
+                    "enum": ["conan_aarch64_profile.txt", "conan_x86_profile.txt"]
+                }
+            },
+            "required": [
+                "package_name",
+                "user",
+                "channel",
+                "version",
+                "profile"
+            ],
+            "additionalProperties": false
+        },
+        "raw": {
+            "type": "object",
+            "properties": {
+                "group": {"type": "string"},
+                "base_filename": {"type": "string"}
+            },
+            "required": [
+                "base_filename"
+            ],
+            "additionalProperties": false
+        },
+        "git": {
+            "type": "object",
+            "properties": {
+                "git_project_id": {"type": "integer"},
+                "git_branch": {"type": "string"},
+                "git_pipeline_job": {"type": "string"}
+            },
+            "required": [
+                "git_project_id",
+                "git_branch",
+                "git_pipeline_job"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+      "config_commands": [
+            {
+                  "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                  "target": "001",
+                  "talon_first_connect_timeout": 90,
+                  "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
+                  "fpga_path": "/lib/firmware",
+                  "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                  "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                  "fpga_label": "base",
+                  "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                  "server_instance": "talon1_test",
+                  "devices": [
+                        "ska-talondx-sysid-ds",
+                        "ska-mid-cbf-vcc-app",
+                        "dsvcc",
+                        "dscircuitswitch",
+                        "dsdct",
+                        "dsfinechannelizer",
+                        "dsgaussiannoisegen",
+                        "ska-mid-spfrx-packetizer-ds",
+                        "dslstvbandpassfilter",
+                        "dslstvgen",
+                        "dslstvplayback",
+                        "dslstvtonegenerator",
+                        "dspolarizationcoupler",
+                        "ska-talondx-100-gigabit-ethernet-ds",
+                        "ska-talondx-status-ds",
+                        "dswbstatecount",
+                        "dswbinputbuffer",
+                        "ds-resampler-delay-tracker",
+                        "dscorrelator",
+                        "dsspeaddescriptor",
+                        "dshostlutstage1",
+                        "dshostlutstage2",
+                        "ska-mid-cbf-fsp-app",
+                        "dsslimtxrx",
+                        "dspacketstreamrepair",
+                        "ds-histogram"
+                  ]
+            }
+      ]
+}
