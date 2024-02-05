@@ -2240,7 +2240,7 @@ class CbfSubarrayComponentManager(
         """
         for group in [
             self._group_vcc,
-            self._group_fsp_corr_subarray, # TODO CIP-1850 Abort/ObsReset per FSP subarray
+            self._group_fsp_corr_subarray,  # TODO CIP-1850 Abort/ObsReset per FSP subarray
             self._group_fsp_pss_subarray,
             self._group_fsp_pst_subarray,
         ]:
