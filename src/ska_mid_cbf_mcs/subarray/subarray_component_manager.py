@@ -2333,10 +2333,10 @@ class CbfSubarrayComponentManager(
         # configured == True and self._ready == True -> INVALID: cannot issue component_configured from READY
         if configured and not self._ready:
             self._component_configured_callback(True)
+            self._ready = True
         elif not configured and self._ready:
             self._component_configured_callback(False)
-
-        self._ready = configured
+            self._ready = False
 
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, receptor: str
