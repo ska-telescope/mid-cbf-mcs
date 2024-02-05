@@ -823,7 +823,7 @@ class CbfSubarrayComponentManager(
         self._deconfigure()
 
         # issue GoToIdle to assigned VCCs
-        if self._group_vcc.get_size > 0:
+        if self._group_vcc.get_size() > 0:
             results = self._group_vcc.command_inout("GoToIdle")
             self._logger.info("Results from VCC GoToIdle:")
             for res in results:
