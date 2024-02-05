@@ -2238,6 +2238,9 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
+        # reset ready flag
+        self._ready = False
+
         for group in [
             self._group_vcc,
             self._group_fsp_corr_subarray,  # TODO CIP-1850 Abort/ObsReset per FSP subarray
@@ -2324,7 +2327,9 @@ class CbfSubarrayComponentManager(
 
         :param configured: whether the component is configured.
         """
-        self._logger.debug(f"update_component_configuration({configured})")
+        self._logger.debug(
+            f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
+        )
         # perform component_configured/unconfigured callback if in a VALID case
         # Cases:
         # configured == False and self._ready == False -> INVALID: cannot issue component_unconfigured from IDLE
