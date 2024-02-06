@@ -2531,7 +2531,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_Basic.json",
+                "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
