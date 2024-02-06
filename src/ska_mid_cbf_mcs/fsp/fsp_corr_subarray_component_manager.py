@@ -412,12 +412,14 @@ class FspCorrSubarrayComponentManager(
                 self._logger.info(f"VCC {vccID} released.")
                 self._vcc_ids.remove(vccID)
             else:
-                log_msg = "VCC {vccID} not assigned to FSP subarray. Skipping."
+                log_msg = (
+                    "VCC {vccID} not assigned to FSP CORR subarray. Skipping."
+                )
                 self._logger.warning(log_msg)
 
     def _release_all_vcc(self: FspCorrSubarrayComponentManager) -> None:
         """Release all assigned VCCs from the FSP CORR subarray"""
-        self._release_vcc(self._vcc_ids[:])
+        self._release_vcc(self._vcc_ids.copy())
 
     def configure_scan(
         self: FspCorrSubarrayComponentManager, configuration: str

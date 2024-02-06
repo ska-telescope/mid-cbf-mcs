@@ -756,6 +756,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             )
 
             if result_code == ResultCode.OK:
+                device._last_scan_configuration = argin
                 device._component_configured(True)
 
             return (result_code, message)

@@ -69,7 +69,7 @@ class FspPssSubarrayComponentManager(
         self._fsp_id = fsp_id
         self._output_enable = 0
         self._search_beams = []
-        self._receptors = []
+        self._vcc_ids = []
         self._search_beam_id = []
 
         super().__init__(
@@ -152,14 +152,14 @@ class FspPssSubarrayComponentManager(
         return self._output_enable
 
     @property
-    def receptors(self: FspPssSubarrayComponentManager) -> List[int]:
+    def vcc_ids(self: FspPssSubarrayComponentManager) -> List[int]:
         """
-        Receptors
+        Assigned VCC IDs
 
-        :return: list of receptor ids
+        :return: list of VCC IDs
         :rtype: List[int]
         """
-        return self._receptors
+        return self._vcc_ids
 
     def start_communicating(
         self: FspPssSubarrayComponentManager,
@@ -185,54 +185,56 @@ class FspPssSubarrayComponentManager(
 
         self._connected = False
 
-    def _add_receptors(
+    def _assign_vcc(
         self: FspPssSubarrayComponentManager, argin: List[int]
     ) -> None:
         """
-        Add specified receptors to the subarray.
+        Assign specified VCCs to the FSP PSS subarray.
 
-        :param argin: ids of receptors to add.
+        :param argin: IDs of VCCs to add.
         """
         errs = []  # list of error messages
 
-        for receptorID in argin:
+        for vccID in argin:
             try:
-                if receptorID not in self._receptors:
-                    self._logger.info(f"Receptor {receptorID} added.")
-                    self._receptors.append(receptorID)
+                if vccID not in self._vcc_ids:
+                    self._logger.info(f"VCC {vccID} added.")
+                    self._vcc_ids.append(vccID)
                 else:
-                    # TODO: this is not true if more receptors can be
+                    # TODO: this is not true if more VCCs can be
                     #       specified for the same search beam
-                    log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
+                    log_msg = f"VCC {vccID} already assigned to current FSP PSS subarray."
                     self._logger.warning(log_msg)
 
-            except KeyError:  # invalid receptor ID
-                errs.append(f"Invalid receptor ID: {receptorID}")
+            except KeyError:  # invalid VCC ID
+                errs.append(f"Invalid VCC ID: {vccID}")
 
         if errs:
             msg = "\n".join(errs)
             self._logger.error(msg)
 
-    def _remove_receptors(
+    def _release_vcc(
         self: FspPssSubarrayComponentManager, argin: List[int]
     ) -> None:
         """
-        Remove specified receptors from the subarray.
+        Release assigned VCC from the FSP PSS subarray.
 
-        :param argin: ids of receptors to remove.
+        :param argin: IDs of VCCs to remove.
         """
 
-        for receptorID in argin:
-            if receptorID in self._receptors:
-                self._logger.info(f"Receptor {receptorID} removed.")
-                self._receptors.remove(receptorID)
+        for vccID in argin:
+            if vccID in self._vcc_ids:
+                self._logger.info(f"VCC {vccID} removed.")
+                self._vcc_ids.remove(vccID)
             else:
-                log_msg = f"Receptor {receptorID} not assigned to FSP subarray. Skipping."
+                log_msg = (
+                    f"VCC {vccID} not assigned to FSP PSS subarray. Skipping."
+                )
                 self._logger.warning(log_msg)
 
-    def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
-        """Remove all receptors from the subarray."""
-        self._remove_receptors(self._receptors[:])
+    def _release_all_vcc(self: FspPssSubarrayComponentManager) -> None:
+        """Release all assigned VCCs from the FSP PSS subarray"""
+        self._release_vcc(self._vcc_ids.copy())
 
     def configure_scan(
         self: FspPssSubarrayComponentManager, configuration: str
@@ -246,12 +248,14 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._deconfigure()
 
         configuration = json.loads(configuration)
 
         self._search_window_id = int(configuration["search_window_id"])
 
-        self._remove_all_receptors()
+        # release previously assigned VCCs and assign newly specified VCCs
+        self._release_all_vcc()
 
         for searchBeam in configuration["search_beam"]:
             if len(searchBeam["receptor_ids"]) != 1:
@@ -260,11 +264,7 @@ class FspPssSubarrayComponentManager(
                 self._logger.error(msg)
                 return (ResultCode.FAILED, msg)
 
-            # "receptor_ids" values are pairs of str and int
-            receptors_to_add = [
-                receptor[1] for receptor in searchBeam["receptor_ids"]
-            ]
-            self._add_receptors(receptors_to_add)
+            self._assign_vcc(searchBeam["receptor_ids"])
             self._search_beams.append(json.dumps(searchBeam))
             self._search_beam_id.append(int(searchBeam["search_beam_id"]))
 
@@ -314,8 +314,6 @@ class FspPssSubarrayComponentManager(
         self._scan_id = 0
         self._config_id = ""
 
-        self._remove_all_receptors()
-
     def go_to_idle(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -330,7 +328,7 @@ class FspPssSubarrayComponentManager(
 
         self._deconfigure()
 
-        self._remove_all_receptors()
+        self._release_all_vcc()
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
 
@@ -348,7 +346,7 @@ class FspPssSubarrayComponentManager(
 
         self._deconfigure()
 
-        self._remove_all_receptors()
+        self._release_all_vcc()
 
         # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
 
