@@ -85,6 +85,9 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
+  ec-bite:
+    enabled: true
+    file: "data/ec-bite.yaml"
 
 nodeSelector: {}
 

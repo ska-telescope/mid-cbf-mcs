@@ -1,0 +1,16 @@
+{   
+    "device_servers" : [
+        "dsgaussiannoisegen",
+        "dslstvbandpassfilter",
+        "dslstvgen",
+        "dslstvplayback",
+        "ska-mid-spfrx-packetizer-ds",
+        "dslstvtonegenerator",
+        "dspolarizationcoupler",
+        "dsvcc",
+        "dscircuitswitch",
+        "ska-talondx-100-gigabit-ethernet-ds",
+        "ska-talondx-status-ds",
+        "dswbstatecount"
+    ]
+}

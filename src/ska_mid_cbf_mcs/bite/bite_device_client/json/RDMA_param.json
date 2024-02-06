@@ -1,0 +1,8 @@
+{
+    "rdmaRxNetworkDeviceName": "mlx5_1",
+    "rdmaDataCaptureFileName": "/app/images/ska-mid-cbf-engineering-console-rdma/dsrdmarx/rdma-rx-data.dat",
+    "rdmaGidIndex": 3,
+    "hostMacIPAttributes": [546, 860116327, 171048970],
+    "queuePairAttributes": [47167, 3525580729, 171049218, 65535, 0],
+    "rdmaTransferParams": [1048576, 4, 4]
+}

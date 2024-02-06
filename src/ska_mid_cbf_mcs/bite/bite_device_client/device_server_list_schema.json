@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "properties": {
+        "device_servers": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "required": ["device_servers"]
+}

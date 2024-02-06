@@ -1,0 +1,62 @@
+{
+    "tests": {
+        "Test_1": {
+            "description": "Single talon basic correlation sequence. 1 receptor, band 1, 1 FSP, no options.",
+            "cbf_input_data": "talon3 basic gaussian noise"
+        }
+    },
+    "cbf_input_data": {
+        "talon3 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA063",
+                    "bite_config_id": "basic gaussian noise",
+                    "talon": "3",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        }
+    },
+    "bite_configs": {
+        "basic gaussian noise": {
+            "description": "4 seconds of basic gaussian noise, with no filtering.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass"
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4
+        }
+    },
+    "filters": {
+        "filter_all_pass": {
+            "description": "All pass filter ^^^^^^^^^^",
+            "band_edges": [
+                0.0,
+                1.0
+            ],
+            "band_gains": [
+                1.0,
+                1.0
+            ],
+            "window": {
+                "kaiser": {
+                    "beta": 14
+                }
+            }
+        }
+    }
+}

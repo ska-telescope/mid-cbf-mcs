@@ -1,0 +1,35 @@
+name: ecbite
+function: ECBite
+domain: engineering-console
+command: "ECBite"
+instances: ["ecbite"]
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "ECBite"
+  instances:
+  - name: "ecbite"
+    classes:
+    - name: "ECBite"
+      devices:
+      - name: "mid_csp_cbf/ec/bite"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+environment_variables:
+- name: BITE_DATA_SRC
+  value: "lstv"
+- name: TANGO_HOST
+  value: "{{ .Values.hostInfo.hostIP }}"
