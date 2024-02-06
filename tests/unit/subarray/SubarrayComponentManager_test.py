@@ -79,13 +79,13 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.add_receptors(receptors)
 
         assert [
-            subarray_component_manager.vcc_dish_ids[i]
+            subarray_component_manager.dish_ids[i]
             for i in range(len(receptors))
         ] == receptors
 
         subarray_component_manager.remove_receptors(receptors)
 
-        assert subarray_component_manager.vcc_dish_ids == []
+        assert subarray_component_manager.dish_ids == []
 
     @pytest.mark.parametrize(
         "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
@@ -120,7 +120,7 @@ class TestCbfSubarrayComponentManager:
 
         subarray_component_manager.add_receptors(receptors[:-1])
 
-        assert subarray_component_manager.vcc_dish_ids == []
+        assert subarray_component_manager.dish_ids == []
 
         vcc_id = subarray_component_manager._dish_utils.dish_id_to_vcc_id[
             receptors[-1]
@@ -131,7 +131,7 @@ class TestCbfSubarrayComponentManager:
         # try adding same receptor twice
         subarray_component_manager.add_receptors([receptors[-1]])
         subarray_component_manager.add_receptors([receptors[-1]])
-        assert subarray_component_manager.vcc_dish_ids == [receptors[-1]]
+        assert subarray_component_manager.dish_ids == [receptors[-1]]
 
     @pytest.mark.parametrize(
         "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
@@ -155,14 +155,14 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.update_sys_param(sp)
 
         # try removing receptors before assignment
-        assert subarray_component_manager.vcc_dish_ids == []
+        assert subarray_component_manager.dish_ids == []
         subarray_component_manager.remove_receptors(receptors)
-        assert subarray_component_manager.vcc_dish_ids == []
+        assert subarray_component_manager.dish_ids == []
 
         # try removing unassigned receptor
         subarray_component_manager.add_receptors(receptors[:-1])
         subarray_component_manager.remove_receptors([receptors[-1]])
-        assert subarray_component_manager.vcc_dish_ids == receptors[:-1]
+        assert subarray_component_manager.dish_ids == receptors[:-1]
 
     @pytest.mark.parametrize(
         "receptors",
@@ -198,7 +198,7 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.add_receptors(receptors)
         result = subarray_component_manager.remove_all_receptors()
         assert result[0] == ResultCode.OK
-        assert subarray_component_manager.vcc_dish_ids == []
+        assert subarray_component_manager.dish_ids == []
 
     @pytest.mark.parametrize(
         "config_file_name, \

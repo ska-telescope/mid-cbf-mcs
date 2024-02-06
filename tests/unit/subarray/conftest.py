@@ -81,7 +81,7 @@ def mock_component_manager(
     mock = mocker.Mock()
     mock.is_communicating = False
     mock.connected = False
-    mock.vcc_dish_ids = []
+    mock.dish_ids = []
     mock._ready = False
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
@@ -118,9 +118,9 @@ def mock_component_manager(
     def _remove_receptor(
         mock: unittest.mock.Mock, dish_id: str
     ) -> Tuple[ResultCode, str]:
-        if dish_id in mock.vcc_dish_ids:
-            mock.vcc_dish_ids.remove(dish_id)
-            if len(mock.vcc_dish_ids) == 0:
+        if dish_id in mock.dish_ids:
+            mock.dish_ids.remove(dish_id)
+            if len(mock.dish_ids) == 0:
                 mock._component_resourced_callback(False)
             return (ResultCode.OK, "RemoveReceptors completed OK")
         else:
@@ -132,17 +132,17 @@ def mock_component_manager(
     def _remove_all_receptors(
         mock: unittest.mock.Mock,
     ) -> Tuple[ResultCode, str]:
-        if mock.vcc_dish_ids == []:
+        if mock.dish_ids == []:
             return (ResultCode.FAILED, "RemoveAllReceptors failed")
-        mock.vcc_dish_ids = []
+        mock.dish_ids = []
         mock._component_resourced_callback(False)
         return (ResultCode.OK, "RemoveAllReceptors completed OK")
 
     def _add_receptor(
         mock: unittest.mock.Mock, dish_id: str
     ) -> Tuple[ResultCode, str]:
-        if dish_id not in mock.vcc_dish_ids:
-            if len(mock.vcc_dish_ids) == 0:
+        if dish_id not in mock.dish_ids:
+            if len(mock.dish_ids) == 0:
                 mock._component_resourced_callback(True)
             mock.receptors.append(dish_id)
             return (ResultCode.OK, "AddReceptors completed OK")

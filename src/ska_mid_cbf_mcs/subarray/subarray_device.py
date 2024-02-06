@@ -94,7 +94,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: number of resources assigned
         :rtype: int
         """
-        return len(self.component_manager.vcc_dish_ids)
+        return len(self.component_manager.dish_ids)
 
     # -----------------
     # Device Properties
