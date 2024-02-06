@@ -66,9 +66,10 @@ CbfSubarray Tango Commands
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | ObsReset             | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
 |                      |               |                    | | Keep assigned receptors                       |
-|                      |               |                    | | Change observing state to IDLE                |
-|                      |               |                    | | Send ObsReset to VCC                          |
-|                      |               |                    | | Send ObsReset to FSP <function mode> Subarrays|
+|                      |               |                    | | Reset observing state to IDLE                 |
+|                      |               |                    | | If in FAULT, send Abort/ObsReset to VCC       |
+|                      |               |                    | | If in FAULT, send Abort/ObsReset to           |
+|                      |               |                    | | FSP <function mode> subarrays                 |
 |                      |               |                    | | No action on hardware                         |
 |                      |               |                    | | See also :ref:`ObsReset Sequence`             |
 +----------------------+---------------+--------------------+-------------------------------------------------+
@@ -89,11 +90,12 @@ CbfSubarray Tango Commands
 |                      |               |                    | | Change observing state to EMPTY if no         |
 |                      |               |                    | | receptors assigned                            |
 +----------------------+---------------+--------------------+-------------------------------------------------+
-| Restart              | None          | (ResultCode, str)  | | Reset subarray scan configuration and         |
-|                      |               |                    | | remove assigned receptors                     |
-|                      |               |                    | | Change observing state to EMPTY               |
-|                      |               |                    | | Send ObsReset to VCC                          |
-|                      |               |                    | | Send ObsReset to FSP <function mode> Subarrays|
+| Restart              | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
+|                      |               |                    | | Remove assigned receptors                     |
+|                      |               |                    | | Restart observing state model to EMPTY        |
+|                      |               |                    | | If in FAULT, send Abort/ObsReset to VCC       |
+|                      |               |                    | | If in FAULT, send Abort/ObsReset to           |
+|                      |               |                    | | FSP <function mode> subarrays                 |
 |                      |               |                    | | No action on hardware                         |
 |                      |               |                    | | See also :ref:`Restart Sequence`              |
 +----------------------+---------------+--------------------+-------------------------------------------------+

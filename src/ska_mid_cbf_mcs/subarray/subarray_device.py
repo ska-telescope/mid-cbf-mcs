@@ -918,7 +918,9 @@ class CbfSubarray(CspSubElementSubarray):
             code and a string message indicating status. The message is
             for information purpose only.
         """
-        # NOTE: overriding base class erasure of self._last_scan_configuration
+        # NOTE: ska-tango-base class also deletes self._last_scan_configuration
+        # here, but we are choosing to preserve it even in IDLE state should there 
+        # be a need to check it
 
         command = self.get_command_object("GoToIdle")
         (return_code, message) = command()
