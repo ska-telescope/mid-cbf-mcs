@@ -19,7 +19,7 @@ import os
 from typing import List
 
 # Python Imports
-from midcbf_deployer import (
+from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
     TalonDxConfig,
     configure_tango_db,
     download_ds_binaries,
@@ -41,10 +41,11 @@ __all__ = ["ECDeployer", "main"]
 
 
 # Skabasedevice
+# SKABASEDEVICE TEST
 class ECDeployer(SKABaseDevice):
-    def __init__(self: ECDeployer, logger: logging.Logger) -> None:
+    def init_device(self):
         self.logger_ = logging.getLogger("ec_deployer.py")
-        super().__init__(logger=logger)
+        # super().__init__(logger=logger)
 
     # This is how many boards we can create configurations for currently.
     # Can be increased as needed.

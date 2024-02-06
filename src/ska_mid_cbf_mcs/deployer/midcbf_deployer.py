@@ -13,10 +13,10 @@ from collections import OrderedDict
 
 import requests
 import tango
-from conan_local.conan_wrapper import ConanWrapper
-from nrcdbpopulate.dbPopulate import DbPopulate
-from slim.slim_mesh_test import SlimMeshTest
-from talondx_config.talondx_config import TalonDxConfig
+from ska_mid_cbf_mcs.deployer.conan_local.conan_wrapper import ConanWrapper
+from ska_mid_cbf_mcs.deployer.nrcdbpopulate.dbPopulate import DbPopulate
+# from ska_mid_cbf_mcs.deployer.slim.slim_mesh_test import SlimMeshTest
+from ska_mid_cbf_mcs.deployer.talondx_config.talondx_config import TalonDxConfig
 
 LOG_FORMAT = "[talondx.py: line %(lineno)s]%(levelname)s: %(message)s"
 
@@ -493,11 +493,11 @@ def db_device_check():
     logger_.removeHandler(handler)
 
 
-def slim_mesh_test(mesh_config: str, loopback: bool):
-    logger_.info(f"Mesh test with config file: {mesh_config}")
-    SlimMeshTest().run_mesh_test(
-        mesh_config_filename=mesh_config, serial_loopback=loopback
-    )
+# def slim_mesh_test(mesh_config: str, loopback: bool):
+#     logger_.info(f"Mesh test with config file: {mesh_config}")
+#     SlimMeshTest().run_mesh_test(
+#         mesh_config_filename=mesh_config, serial_loopback=loopback
+#     )
 
 
 if __name__ == "__main__":
