@@ -211,7 +211,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         return self.component_manager.output_enable
         # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
 
-    def read_vccIDs(self: FspPssSubarray) -> List[int]:
+    def read_vccIDs(self: FspPstSubarray) -> List[int]:
         # PROTECTED REGION ID(FspCorrSubarray.vccIDs_read) ENABLED START #
         """
         Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
