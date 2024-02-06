@@ -24,7 +24,7 @@ server:
     classes:
     - name: "ECDeployer"
       devices:
-      - name: "mid_csp_cbf/engineering_console_deployer/deployer"
+      - name: "mid_csp_cbf/ec/deployer"
 environment_variables:
 - name: RAW_USER_ACCOUNT
   value:

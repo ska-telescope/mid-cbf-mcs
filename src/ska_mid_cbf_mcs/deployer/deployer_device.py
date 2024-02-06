@@ -31,6 +31,7 @@ TALONDX_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "talondx-config.json")
 
 __all__ = ["ECDeployer", "main"]
 
+#Skabasedevice
 class ECDeployer(Device):
     def __init__(self: ECDeployer, logger: logging.Logger) -> None:
         self.logger_ = logging.getLogger("ec_deployer.py")
