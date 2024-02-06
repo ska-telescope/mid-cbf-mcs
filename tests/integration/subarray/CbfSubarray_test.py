@@ -2764,7 +2764,6 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
-
             # configure second scan
             test_proxies.subarray[sub_id].ConfigureScan(json_2_string)
             test_proxies.wait_timeout_obs(
