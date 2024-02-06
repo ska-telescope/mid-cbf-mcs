@@ -273,19 +273,19 @@ class DbPopulate:
                     elif className == "DsHistogram":
                         regdef_properties = {}
                         if "E_CSR" in template:
-                            regdef_properties[f"{mnemonic}_filename"] = (
-                                "/dev/mem"
-                            )
-                            regdef_properties[f"{mnemonic}_bridge_offset"] = (
-                                self.templates[template]["bridge_address"]
-                            )
+                            regdef_properties[
+                                f"{mnemonic}_filename"
+                            ] = "/dev/mem"
+                            regdef_properties[
+                                f"{mnemonic}_bridge_offset"
+                            ] = self.templates[template]["bridge_address"]
                             regdef_properties[
                                 f"{mnemonic}_firmware_offset"
                             ] = self.templates[template]["firmware_offset"]
                         elif "E_HIST_POLX" in template:
-                            regdef_properties[f"{mnemonic}_polX_filename"] = (
-                                "/dev/mem"
-                            )
+                            regdef_properties[
+                                f"{mnemonic}_polX_filename"
+                            ] = "/dev/mem"
                             regdef_properties[
                                 f"{mnemonic}_polX_bridge_offset"
                             ] = self.templates[template]["bridge_address"]
@@ -293,9 +293,9 @@ class DbPopulate:
                                 f"{mnemonic}_polX_firmware_offset"
                             ] = self.templates[template]["firmware_offset"]
                         elif "E_HIST_POLY" in template:
-                            regdef_properties[f"{mnemonic}_polY_filename"] = (
-                                "/dev/mem"
-                            )
+                            regdef_properties[
+                                f"{mnemonic}_polY_filename"
+                            ] = "/dev/mem"
                             regdef_properties[
                                 f"{mnemonic}_polY_bridge_offset"
                             ] = self.templates[template]["bridge_address"]
