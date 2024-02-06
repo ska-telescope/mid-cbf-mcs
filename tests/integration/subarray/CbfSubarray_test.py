@@ -2665,7 +2665,7 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, \
+        "configs_file_name, \
         scan_file_name, \
         receptors",
         [
