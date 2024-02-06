@@ -919,7 +919,7 @@ class CbfSubarray(CspSubElementSubarray):
             for information purpose only.
         """
         # NOTE: ska-tango-base class also deletes self._last_scan_configuration
-        # here, but we are choosing to preserve it even in IDLE state should there 
+        # here, but we are choosing to preserve it even in IDLE state should there
         # be a need to check it
 
         command = self.get_command_object("GoToIdle")
