@@ -20,6 +20,7 @@ from talondx_config.talondx_config import TalonDxConfig
 
 LOG_FORMAT = "[talondx.py: line %(lineno)s]%(levelname)s: %(message)s"
 
+
 class bcolors:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
@@ -76,11 +77,12 @@ NEXUS_API_URL = "https://artefact.skatelescope.org/service/rest/v1/"
 RAW_REPO_USER = os.environ.get("RAW_USER_ACCOUNT")
 RAW_REPO_PASS = os.environ.get("RAW_USER_PASS")
 
-#Split into 4:
-#fpga_bitstreams.json
-#ds_binaries.json
-#config_commands.json
-#tango_db.json
+
+# Split into 4:
+# fpga_bitstreams.json
+# ds_binaries.json
+# config_commands.json
+# tango_db.json
 def generate_talondx_config(boards_list):
     """
     Reads and displays the state and status of each HPS Tango device running on the
@@ -96,11 +98,13 @@ def generate_talondx_config(boards_list):
         "r",
     ) as config_map:
         config_map_json = json.load(config_map)
-        fpga_bitstreams = {"fpga_bitstreams": config_map_json["fpga_bitstreams"]}
+        fpga_bitstreams = {
+            "fpga_bitstreams": config_map_json["fpga_bitstreams"]
+        }
         ds_binaries = {"ds_binaries": config_map_json["ds_binaries"]}
         config_commands = {}
         tango_db = {}
-        
+
         talondx_config_commands = []
         for board in boards_list:
             talondx_config_commands.append(
@@ -135,11 +139,15 @@ def generate_talondx_config(boards_list):
                             if "FQDN" in devprop:
                                 device["devprop"][devprop] = device["devprop"][
                                     devprop
-                                ].replace("<device>", "talondx-00" + str(board))
+                                ].replace(
+                                    "<device>", "talondx-00" + str(board)
+                                )
                             if "host_lut_stage_2_device_name" in devprop:
                                 device["devprop"][devprop] = device["devprop"][
                                     devprop
-                                ].replace("<device>", "talondx-00" + str(board))
+                                ].replace(
+                                    "<device>", "talondx-00" + str(board)
+                                )
                 if db_server["server"] == "dsrdmarx":
                     db_server_tmp["deviceList"][0]["devprop"][
                         "rdmaTxTangoDeviceName"
@@ -160,16 +168,20 @@ def generate_talondx_config(boards_list):
                 db_server_tmp = copy.deepcopy(db_server)
                 db_servers_list.append(db_server_tmp)
         tango_db["tango_db"] = {"db_servers": db_servers_list}
-        
-        fpga_bitstreams_file = open("./talondx_config/fpga_bitstreams.json", "w")
+
+        fpga_bitstreams_file = open(
+            "./talondx_config/fpga_bitstreams.json", "w"
+        )
         ds_binaries_file = open("./talondx_config/ds_binaries.json", "w")
-        talondx_config_commands_file = open("./talondx_config/config_commands.json", "w")
+        talondx_config_commands_file = open(
+            "./talondx_config/config_commands.json", "w"
+        )
         tango_db_file = open("./talondx_config/tango_db.json", "w")
-        
+
         json.dump(fpga_bitstreams, fpga_bitstreams_file, indent=6)
         json.dump(ds_binaries, ds_binaries_file, indent=6)
         json.dump(config_commands, talondx_config_commands_file, indent=6)
-        json.dump(tango_db, tango_db_file, indent=6)        
+        json.dump(tango_db, tango_db_file, indent=6)
 
         fpga_bitstreams_file.close()
         ds_binaries_file.close()
@@ -229,6 +241,7 @@ def configure_tango_db(inputjson: dict, logger_):
         with open("artifacts/device_list.json", "w") as f:
             data = {"devices": device_list}
             json.dump(data, f)
+
 
 def download_git_artifacts(git_api_url, name):
     response = requests.head(url=git_api_url, headers=GITLAB_API_HEADER)
@@ -330,7 +343,7 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
     :param ds_binaries: JSON string specifying which DS binaries to download.
     :param clear_conan_cache: if true, Conan packages are fetched from remote; default true.
     """
-    
+
     conan = ConanWrapper(ARTIFACTS_DIR)
     logger_.info(f"Conan version: {conan.version()}")
     if clear_conan_cache:
