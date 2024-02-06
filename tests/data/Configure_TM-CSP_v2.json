@@ -1,58 +1,259 @@
 {
-    "interface": "https://schema.skao.int/ska-csp-configure/2.4",
-    "subarray": {
-      "subarray_name": "science period 23"
-    },
-    "common": {
-      "config_id": "sbi-mvp01-20200325-00001-science_A",
-      "frequency_band": "1",
-      "subarray_id": 1
-    },
-    "cbf": {
-      "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
-      "fsp": [
-          {
-            "fsp_id": 1,
-            "function_mode": "CORR",
-            "frequency_slice_id": 1,
-            "integration_factor": 1,
-            "zoom_factor": 0,
-            "channel_averaging_map": [
-              [0, 2],
-              [744, 0]
-            ],
-            "channel_offset": 0,
-            "output_link_map": [
-              [0, 0],
-              [200, 1]
-            ]
+  "configure_scan": {
+      "Basic Scan Config (FSP1)": {
+          "interface": "https://schema.skao.int/ska-csp-configure/2.4",
+          "subarray": {
+              "subarray_name": "Single receptor"
           },
-          {
-            "fsp_id": 2,
-            "function_mode": "CORR",
-            "frequency_slice_id": 2,
-            "integration_factor": 1,
-            "zoom_factor": 1,
-            "zoom_window_tuning": 650000,
-            "channel_averaging_map": [
-              [0, 2],
-              [744, 0]
-            ],
-            "channel_offset": 744,
-            "output_link_map": [
-              [0, 4],
-              [200, 5]
-            ],
-            "output_host": [
-              [0, "192.168.1.1"]
-            ],
-            "output_port": [
-              [0, 9744, 1]
-            ]
+          "common": {
+              "config_id": "1 receptor, band 1, 1 FSP, no options",
+              "frequency_band": "1",
+              "subarray_id": 1
+          },
+          "cbf": {
+              "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+              "rfi_flagging_mask": {},
+              "fsp": [
+                  {
+                      "fsp_id": 1,
+                      "function_mode": "CORR",
+                      "receptors": ["SKA001"],
+                      "frequency_slice_id": 1,
+                      "zoom_factor": 1,
+                      "zoom_window_tuning": 450000,
+                      "integration_factor": 10,
+                      "channel_offset": 14880,
+                      "output_link_map": [ 
+                          [0, 4],
+                          [744, 8],
+                          [1488, 12],
+                          [2232, 16],
+                          [2976, 20],
+                          [3720, 24],
+                          [4464, 28],
+                          [5206, 32],
+                          [5952, 36],
+                          [6696, 40],
+                          [7440, 44],
+                          [8184, 48],
+                          [8928, 52],
+                          [9672, 56],
+                          [10416, 60],
+                          [11160, 64],
+                          [11904, 68],
+                          [12648, 72],
+                          [13392, 76],
+                          [14136, 80]
+                      ],
+                      "output_host": [[0, "0.0.0.0"]],
+                      "output_port": [[0, 14000, 1]]
+                  }
+              ]
           }
-        ],
-        "vlbi": {
-   
-        }
-    }
+      },
+      "Basic Scan Config (FSP2)": {
+          "interface": "https://schema.skao.int/ska-csp-configure/2.4",
+          "subarray": {
+              "subarray_name": "Single receptor"
+          },
+          "common": {
+              "config_id": "1 receptor, band 1, 1 FSP, no options",
+              "frequency_band": "1",
+              "subarray_id": 1
+          },
+          "cbf": {
+              "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+              "rfi_flagging_mask": {},
+              "fsp": [
+                  {
+                      "fsp_id": 2,
+                      "function_mode": "CORR",
+                      "receptors": ["SKA036"],
+                      "frequency_slice_id": 1,
+                      "zoom_factor": 1,
+                      "zoom_window_tuning": 450000,
+                      "integration_factor": 10,
+                      "channel_offset": 14880,
+                      "output_link_map": [ 
+                          [0, 4],
+                          [744, 8],
+                          [1488, 12],
+                          [2232, 16],
+                          [2976, 20],
+                          [3720, 24],
+                          [4464, 28],
+                          [5206, 32],
+                          [5952, 36],
+                          [6696, 40],
+                          [7440, 44],
+                          [8184, 48],
+                          [8928, 52],
+                          [9672, 56],
+                          [10416, 60],
+                          [11160, 64],
+                          [11904, 68],
+                          [12648, 72],
+                          [13392, 76],
+                          [14136, 80]
+                      ],
+                      "output_host": [[0, "0.0.0.0"]],
+                      "output_port": [[0, 14000, 1]]
+                  }
+              ]
+          }
+      },
+      "Basic Scan Config (FSP3)": {
+          "interface": "https://schema.skao.int/ska-csp-configure/2.4",
+          "subarray": {
+              "subarray_name": "Single receptor"
+          },
+          "common": {
+              "config_id": "1 receptor, band 1, 1 FSP, no options",
+              "frequency_band": "1",
+              "subarray_id": 1
+          },
+          "cbf": {
+              "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+              "rfi_flagging_mask": {},
+              "fsp": [
+                  {
+                      "fsp_id": 3,
+                      "function_mode": "CORR",
+                      "receptors": ["SKA063"],
+                      "frequency_slice_id": 1,
+                      "zoom_factor": 1,
+                      "zoom_window_tuning": 450000,
+                      "integration_factor": 10,
+                      "channel_offset": 14880,
+                      "output_link_map": [ 
+                          [0, 4],
+                          [744, 8],
+                          [1488, 12],
+                          [2232, 16],
+                          [2976, 20],
+                          [3720, 24],
+                          [4464, 28],
+                          [5206, 32],
+                          [5952, 36],
+                          [6696, 40],
+                          [7440, 44],
+                          [8184, 48],
+                          [8928, 52],
+                          [9672, 56],
+                          [10416, 60],
+                          [11160, 64],
+                          [11904, 68],
+                          [12648, 72],
+                          [13392, 76],
+                          [14136, 80]
+                      ],
+                      "output_host": [[0, "0.0.0.0"]],
+                      "output_port": [[0, 14000, 1]]
+                  }
+              ]
+          }
+      },
+      "Basic Scan Config (FSP4)": {
+          "interface": "https://schema.skao.int/ska-csp-configure/2.4",
+          "subarray": {
+              "subarray_name": "Single receptor"
+          },
+          "common": {
+              "config_id": "1 receptor, band 1, 1 FSP, no options",
+              "frequency_band": "1",
+              "subarray_id": 1
+          },
+          "cbf": {
+              "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+              "rfi_flagging_mask": {},
+              "fsp": [
+                  {
+                      "fsp_id": 4,
+                      "function_mode": "CORR",
+                      "receptors": ["SKA100"],
+                      "frequency_slice_id": 1,
+                      "zoom_factor": 1,
+                      "zoom_window_tuning": 450000,
+                      "integration_factor": 10,
+                      "channel_offset": 14880,
+                      "output_link_map": [ 
+                          [0, 4],
+                          [744, 8],
+                          [1488, 12],
+                          [2232, 16],
+                          [2976, 20],
+                          [3720, 24],
+                          [4464, 28],
+                          [5206, 32],
+                          [5952, 36],
+                          [6696, 40],
+                          [7440, 44],
+                          [8184, 48],
+                          [8928, 52],
+                          [9672, 56],
+                          [10416, 60],
+                          [11160, 64],
+                          [11904, 68],
+                          [12648, 72],
+                          [13392, 76],
+                          [14136, 80]
+                      ],
+                      "output_host": [[0, "0.0.0.0"]],
+                      "output_port": [[0, 14000, 1]]
+                  }
+              ]
+          }
+      },
+      "Single FSP, vanilla settings": {
+          "interface": "https://schema.skao.int/ska-csp-configure/2.4",
+          "subarray": {
+              "subarray_name": "4 receptors"
+          },
+          "common": {
+              "config_id": "4 receptor, band 1, 1 FSP, no options",
+              "frequency_band": "1",
+              "subarray_id": 1
+          },
+          "cbf": {
+              "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+              "rfi_flagging_mask": {},
+              "fsp": [
+                  {
+                      "fsp_id": 1,
+                      "function_mode": "CORR",
+                      "receptors": ["SKA001","SKA036","SKA063","SKA100"],
+                      "frequency_slice_id": 1,
+                      "zoom_factor": 1,
+                      "zoom_window_tuning": 450000,
+                      "integration_factor": 10,
+                      "channel_offset": 14880,
+                      "output_link_map": [ 
+                          [0, 4],
+                          [744, 8],
+                          [1488, 12],
+                          [2232, 16],
+                          [2976, 20],
+                          [3720, 24],
+                          [4464, 28],
+                          [5206, 32],
+                          [5952, 36],
+                          [6696, 40],
+                          [7440, 44],
+                          [8184, 48],
+                          [8928, 52],
+                          [9672, 56],
+                          [10416, 60],
+                          [11160, 64],
+                          [11904, 68],
+                          [12648, 72],
+                          [13392, 76],
+                          [14136, 80]
+                      ],
+                      "output_host": [[0, "0.0.0.0"]],
+                      "output_port": [[0, 14000, 1]]
+                  }
+              ]
+          }
+      }
   }
+}
