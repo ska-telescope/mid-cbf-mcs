@@ -11,19 +11,26 @@
 TANGO device class for deployment of the Engineering Console
 """
 
-#Tango Imports
-from ska_tango_base import SKABaseDevice
-from tango import AttrWriteType, ApiUtil
-from tango.server import attribute, command, run
+import json
 
 #Additional Imports
 import logging
 import os
-import json
 from typing import List
 
 #Python Imports
-from midcbf_deployer import generate_talondx_config, configure_tango_db, download_ds_binaries, download_fpga_bitstreams, TalonDxConfig
+from midcbf_deployer import (
+    TalonDxConfig,
+    configure_tango_db,
+    download_ds_binaries,
+    download_fpga_bitstreams,
+    generate_talondx_config,
+)
+
+#Tango Imports
+from ska_tango_base import SKABaseDevice
+from tango import ApiUtil, AttrWriteType
+from tango.server import attribute, command, run
 
 PROJECTS_DIR = os.path.dirname(os.path.abspath(__file__))
 ARTIFACTS_DIR = os.path.join(PROJECTS_DIR, "artifacts")
