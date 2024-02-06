@@ -2774,18 +2774,457 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
+            # check configured attributes of CBF subarray
+            assert sub_id == int(configuration_2["common"]["subarray_id"])
+            assert (
+                test_proxies.subarray[sub_id].configurationID
+                == configuration_2["common"]["config_id"]
+            )
+            band_index = freq_band_dict()[
+                configuration_2["common"]["frequency_band"]
+            ]["band_index"]
+            assert band_index == test_proxies.subarray[sub_id].frequencyBand
+            assert test_proxies.subarray[sub_id].obsState == ObsState.READY
+
+            test_proxies.wait_timeout_obs(
+                [
+                    test_proxies.vcc[i]
+                    for i in range(1, test_proxies.num_vcc + 1)
+                ],
+                ObsState.READY,
+                wait_time_s,
+                sleep_time_s,
+            )
+
+            # check the rest of the configured attributes of VCCs
+            for r in vcc_receptors:
+                assert test_proxies.vcc[r].frequencyBand == band_index
+                assert test_proxies.vcc[r].subarrayMembership == sub_id
+                assert (
+                    test_proxies.vcc[r].configID
+                    == configuration_2["common"]["config_id"]
+                )
+                if "band_5_tuning" in configuration_2["common"]:
+                    for idx, band in enumerate(
+                        configuration_2["common"]["band_5_tuning"]
+                    ):
+                        assert test_proxies.vcc[r].band5Tuning[idx] == band
+                if "frequency_band_offset_stream1" in configuration_2["cbf"]:
+                    assert (
+                        test_proxies.vcc[r].frequencyBandOffsetStream1
+                        == configuration_2["cbf"][
+                            "frequency_band_offset_stream1"
+                        ]
+                    )
+                if "frequency_band_offset_stream2" in configuration_2["cbf"]:
+                    assert (
+                        test_proxies.vcc[r].frequencyBandOffsetStream2
+                        == configuration_2["cbf"][
+                            "frequency_band_offset_stream2"
+                        ]
+                    )
+                if "rfi_flagging_mask" in configuration_2["cbf"]:
+                    assert test_proxies.vcc[r].rfiFlaggingMask == str(
+                        configuration_2["cbf"]["rfi_flagging_mask"]
+                    )
+
+            time.sleep(1)
+            # check configured attributes of VCC search windows
+            if "search_window" in configuration_2["cbf"]:
+                for idx, search_window in enumerate(
+                    configuration_2["cbf"]["search_window"]
+                ):
+                    for r in vcc_receptors:
+                        assert (
+                            test_proxies.vccSw[r][idx + 1].tdcEnable
+                            == search_window["tdc_enable"]
+                        )
+                        # TODO implement VCC SW functionality and
+                        # correct power states
+                        if search_window["tdc_enable"]:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        else:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        assert (
+                            test_proxies.vccSw[r][idx + 1].searchWindowTuning
+                            == search_window["search_window_tuning"]
+                        )
+                        if "tdc_num_bits" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].tdcNumBits
+                                == search_window["tdc_num_bits"]
+                            )
+                        if "tdc_period_before_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodBeforeEpoch
+                                == search_window["tdc_period_before_epoch"]
+                            )
+                        if "tdc_period_after_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodAfterEpoch
+                                == search_window["tdc_period_after_epoch"]
+                            )
+                        if "tdc_destination_address" in search_window:
+                            for t in search_window["tdc_destination_address"]:
+                                if (
+                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                        t["receptor_id"]
+                                    ]
+                                    == r
+                                ):
+                                    tdcDestAddr = t["tdc_destination_address"]
+                                    assert (
+                                        list(
+                                            test_proxies.vccSw[r][
+                                                idx + 1
+                                            ].tdcDestinationAddress
+                                        )
+                                        == tdcDestAddr
+                                    )
+
+            # check configured attributes of FSPs, including states of function mode capabilities
+            for fsp in configuration_2["cbf"]["fsp"]:
+                fsp_id = fsp["fsp_id"]
+                logging.info("Check for fsp id = {}".format(fsp_id))
+
+                if fsp["function_mode"] == "CORR":
+                    function_mode = FspModes.CORR.value
+                    assert (
+                        test_proxies.fsp[fsp_id].functionMode == function_mode
+                    )
+                    assert (
+                        sub_id in test_proxies.fsp[fsp_id].subarrayMembership
+                    )
+                    # check configured attributes of FSP subarray
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.READY
+                    )
+
+                    # If receptors are not specified, then
+                    # all the subarray receptors are used
+                    receptorsSpecified = False
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
+                            receptorsSpecified = True
+
+                    fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
+                        sub_id
+                    ][fsp_id].receptors
+
+                    if receptorsSpecified:
+                        config_fsp_receptors_sorted = fsp["receptors"]
+                        fsp_receptors_num = [
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
+                            for r in config_fsp_receptors_sorted
+                        ]
+                        assert all(
+                            [
+                                fsp_corr_receptors[i] == fsp_receptors_num[i]
+                                for i in range(len(fsp_corr_receptors))
+                            ]
+                        )
+
+                    else:
+                        receptors_sorted = receptors
+                        receptors_sorted.sort()
+                        fsp_receptors_num = [
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
+                            for r in receptors_sorted
+                        ]
+                        assert all(
+                            [
+                                fsp_corr_receptors[i] == fsp_receptors_num[i]
+                                for i in range(len(fsp_corr_receptors))
+                            ]
+                        )
+
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].frequencyBand
+                        == band_index
+                    )
+                    if "band_5_tuning" in configuration_2["common"]:
+                        for idx, band in enumerate(
+                            configuration_2["common"]["band_5_tuning"]
+                        ):
+                            assert (
+                                test_proxies.fspSubarray["CORR"][sub_id][
+                                    fsp_id
+                                ].band5Tuning[idx]
+                                == band
+                            )
+                    if (
+                        "frequency_band_offset_stream1"
+                        in configuration_2["cbf"]
+                    ):
+                        assert (
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].frequencyBandOffsetStream1
+                            == configuration_2["cbf"][
+                                "frequency_band_offset_stream1"
+                            ]
+                        )
+                    if (
+                        "frequency_band_offset_stream2"
+                        in configuration_2["cbf"]
+                    ):
+                        assert (
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].frequencyBandOffsetStream2
+                            == configuration_2["cbf"][
+                                "frequency_band_offset_stream2"
+                            ]
+                        )
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].frequencySliceID
+                        == fsp["frequency_slice_id"]
+                    )
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].integrationFactor
+                        == fsp["integration_factor"]
+                    )
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].corrBandwidth
+                        == fsp["zoom_factor"]
+                    )
+                    if fsp["zoom_factor"] > 0:
+                        assert (
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].zoomWindowTuning
+                            == fsp["zoom_window_tuning"]
+                        )
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].fspChannelOffset
+                        == fsp["channel_offset"]
+                    )
+
+                    for i in range(len(fsp["channel_averaging_map"])):
+                        for j in range(len(fsp["channel_averaging_map"][i])):
+                            assert (
+                                test_proxies.fspSubarray["CORR"][sub_id][
+                                    fsp_id
+                                ].channelAveragingMap[i][j]
+                                == fsp["channel_averaging_map"][i][j]
+                            )
+
+                    for i in range(len(fsp["output_link_map"])):
+                        for j in range(len(fsp["output_link_map"][i])):
+                            assert (
+                                test_proxies.fspSubarray["CORR"][sub_id][
+                                    fsp_id
+                                ].outputLinkMap[i][j]
+                                == fsp["output_link_map"][i][j]
+                            )
+
+                    if "output_host" and "output_port" in fsp:
+                        assert str(
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].visDestinationAddress
+                        ).replace('"', "'") == str(
+                            {
+                                "outputHost": [
+                                    fsp["output_host"][0],
+                                    fsp["output_host"][1],
+                                ],
+                                "outputPort": [
+                                    fsp["output_port"][0],
+                                    fsp["output_port"][1],
+                                ],
+                            }
+                        ).replace(
+                            '"', "'"
+                        )
+
+                elif fsp["function_mode"] == "PSS-BF":
+                    function_mode = FspModes.PSS_BF.value
+                    assert (
+                        test_proxies.fsp[fsp_id].functionMode == function_mode
+                    )
+                    assert (
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].searchWindowID
+                        == fsp["search_window_id"]
+                    )
+
+                    # TODO: currently searchBeams is stored by the device
+                    #       as a json string ( via attribute 'searchBeams');
+                    #       this has to be updated in FspPssSubarray
+                    #       to read/write individual members
+                    for idx, sBeam in enumerate(
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].searchBeams
+                    ):
+                        # TODO: bug in FSP seems that searchBeams not cleared
+                        #  from previous scan configs even after deconfigure
+                        searchBeam = json.loads(sBeam)
+                        assert (
+                            searchBeam["search_beam_id"]
+                            == fsp["search_beam"][idx]["search_beam_id"]
+                        )
+                        # TODO currently only one receptor supported
+                        assert (
+                            searchBeam["receptor_ids"][0][1]
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                fsp["search_beam"][idx]["receptor_ids"][0]
+                            ]
+                        )
+                        assert (
+                            searchBeam["enable_output"]
+                            == fsp["search_beam"][idx]["enable_output"]
+                        )
+                        assert (
+                            searchBeam["averaging_interval"]
+                            == fsp["search_beam"][idx]["averaging_interval"]
+                        )
+                        # TODO - this does not pass - to debug & fix
+                        # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
+
+                elif fsp["function_mode"] == "PST-BF":
+                    function_mode = FspModes.PST_BF.value
+                    assert (
+                        test_proxies.fsp[fsp_id].functionMode == function_mode
+                    )
+
+                    assert test_proxies.fsp[fsp_id].State() == DevState.ON
+                    assert (
+                        sub_id in test_proxies.fsp[fsp_id].subarrayMembership
+                    )
+
+                    assert (
+                        test_proxies.fspSubarray["PST-BF"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.READY
+                    )
+                    for beam in fsp["timing_beam"]:
+                        # TODO currently only one receptor supported
+                        assert (
+                            test_proxies.fspSubarray["PST-BF"][sub_id][
+                                fsp_id
+                            ].receptors[0]
+                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                beam["receptor_ids"][0]
+                            ]
+                        )
+
+                        assert all(
+                            [
+                                test_proxies.fspSubarray["PST-BF"][sub_id][
+                                    fsp_id
+                                ].timingBeamID[i]
+                                == j
+                                for i, j in zip(
+                                    range(1), [beam["timing_beam_id"]]
+                                )
+                            ]
+                        )
+
+                elif fsp["function_mode"] == "VLBI":
+                    function_mode = FspModes.VLBI.value
+                    assert (
+                        test_proxies.fsp[fsp_id].functionMode == function_mode
+                    )
+                    # TODO: This mode is not tested yet
+
             # send second Scan command
             f2 = open(data_file_path + scan_file_name)
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
+            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
                 wait_time_s,
                 sleep_time_s,
             )
+
+            scan_id = scan_configuration["scan_id"]
+
+            # check scanID on VCC and FSP
+            for fsp in configuration_2["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][fsp_id].scanID
+                        == scan_id
+                    )
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert (
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].scanID
+                        == scan_id
+                    )
+                elif fsp["function_mode"] == "PST-BF":
+                    assert (
+                        test_proxies.fspSubarray["PST-BF"][sub_id][
+                            fsp_id
+                        ].scanID
+                        == scan_id
+                    )
+            for r in vcc_receptors:
+                assert test_proxies.vcc[r].scanID == scan_id
+
+            # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
+            for r in vcc_receptors:
+                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
+            for fsp in configuration_2["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert (
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
+                elif fsp["function_mode"] == "PST-BF":
+                    assert (
+                        test_proxies.fspSubarray["PST-BF"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
 
             # clean up
             wait_time_s = 3
