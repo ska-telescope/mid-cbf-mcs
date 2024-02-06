@@ -2528,14 +2528,12 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptors, \
-        vcc_receptors",
+        receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_Basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
             )
         ],
     )
@@ -2545,7 +2543,6 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on the same scan configuration.
@@ -2554,7 +2551,6 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2657,6 +2653,171 @@ class TestCbfSubarray:
             )
             test_proxies.off()
 
+        except AssertionError as ae:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise ae
+        except Exception as e:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise e
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors",
+        [
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+            )
+        ],
+    )
+    def test_Scan_Twice_Different_Configs(
+        self: TestCbfSubarray,
+        test_proxies: pytest.fixture,
+        configs_file_name: str,
+        scan_file_name: str,
+        receptors: List[str],
+    ) -> None:
+        """
+        Test CbfSubarrays's Scan command running twice on different scan configurations.
+
+        :param proxies: proxies pytest fixture
+        :param config_file_name: JSON file for the configuration
+        :param scan_file_name: JSON file for the scan configuration
+        :param receptors: list of receptor ids
+        """
+        # TODO: implement this test
+        try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
+            f = open(data_file_path + configs_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configurations = json.loads(json_string)
+            configuration_1 = configurations["Basic Scan Config (FSP1)"]
+            configuration_2 = configurations["Basic Scan Config (FSP2)"]
+
+            sub_id = int(configuration_1["common"]["subarray_id"])
+            test_proxies.on()
+            time.sleep(sleep_time_s)
+            assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            # add receptors
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+
+            # configure first scan
+            wait_time_configure = 5
+            test_proxies.subarray[sub_id].ConfigureScan(configuration_1)
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.READY,
+                wait_time_configure,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.READY
+
+            # send the first Scan command
+            f2 = open(data_file_path + scan_file_name)
+            json_string_scan = f2.read().replace("\n", "")
+            test_proxies.subarray[sub_id].Scan(json_string_scan)
+            f2.close()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.SCANNING,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
+
+            # send the EndScan command
+            test_proxies.subarray[sub_id].EndScan()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.READY,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.READY
+
+            # configure second scan
+            test_proxies.subarray[sub_id].ConfigureScan(configuration_2)
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.READY,
+                wait_time_configure,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.READY
+
+            # send second Scan command
+            f2 = open(data_file_path + scan_file_name)
+            json_string_scan = f2.read().replace("\n", "")
+            test_proxies.subarray[sub_id].Scan(json_string_scan)
+            f2.close()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.SCANNING,
+                wait_time_s,
+                sleep_time_s,
+            )
+
+            # send the second Scan command
+            f2 = open(data_file_path + scan_file_name)
+            json_string_scan = f2.read().replace("\n", "")
+            test_proxies.subarray[sub_id].Scan(json_string_scan)
+            f2.close()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.SCANNING,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
+
+            # TODO: validate values
+
+            # Clean up
+            wait_time_s = 3
+            test_proxies.subarray[sub_id].EndScan()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.READY,
+                wait_time_s,
+                sleep_time_s,
+            )
+            test_proxies.subarray[sub_id].End()
+            test_proxies.wait_timeout_obs(
+                [
+                    test_proxies.vcc[i]
+                    for i in range(1, test_proxies.num_vcc + 1)
+                ],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+            test_proxies.subarray[sub_id].RemoveAllReceptors()
+            test_proxies.wait_timeout_obs(
+                [
+                    test_proxies.vcc[i]
+                    for i in range(1, test_proxies.num_vcc + 1)
+                ],
+                ObsState.EMPTY,
+                wait_time_s,
+                sleep_time_s,
+            )
+            test_proxies.off()
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
