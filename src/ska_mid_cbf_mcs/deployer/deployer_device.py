@@ -12,8 +12,9 @@ TANGO device class for deployment of the Engineering Console
 """
 
 #Tango Imports
+from ska_tango_base import SKABaseDevice
 from tango import AttrWriteType, ApiUtil
-from tango.server import Device, attribute, command, run
+from tango.server import attribute, command, run
 
 #Additional Imports
 import logging
@@ -32,7 +33,7 @@ TALONDX_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "talondx-config.json")
 __all__ = ["ECDeployer", "main"]
 
 #Skabasedevice
-class ECDeployer(Device):
+class ECDeployer(SKABaseDevice):
     def __init__(self: ECDeployer, logger: logging.Logger) -> None:
         self.logger_ = logging.getLogger("ec_deployer.py")
         super().__init__(logger=logger)
