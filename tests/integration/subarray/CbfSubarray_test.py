@@ -2625,7 +2625,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            
+
             # Clean up
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
@@ -2667,7 +2667,6 @@ class TestCbfSubarray:
             test_proxies.clean_test_proxies()
             time.sleep(2)
             raise e
-
 
     @pytest.mark.parametrize(
         "config_file_name, \
