@@ -103,7 +103,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         try:
             # Create proxy to VCC band
             vcc_band_proxy = CbfDeviceProxy(
-                fqdn=self._vcc_band_fqdn, logger=self._logger
+                fqdn=self._vcc_band_fqdn[0], logger=self._logger
             )
             # Create proxy to this VCC band's WIB
             wib_fqdn = vcc_band_proxy.get_property("WidebandInputBufferFQDN")[
