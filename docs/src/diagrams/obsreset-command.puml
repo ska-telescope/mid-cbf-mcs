@@ -41,12 +41,20 @@ end box
 
 lmc         ->  subarray      : Obsreset
 
-subarray    ->  subarray      : deconfigure
+group if subarray in ObsState.FAULT
+subarray    ->  vcc           : Abort
+subarray    ->  fspsubarray   : Abort
+end group
+
 subarray    ->  vcc           : ObsReset
 vcc         ->  hpsvccband    : ObsReset
+
 note over vcc                 : VCC\nObsState IDLE
 subarray    ->  fspsubarray   : ObsReset
+
 note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
+
+subarray    ->  subarray      : deconfigure
 subarray    ->  fsp           : RemoveSubarrayMembership
 
 group no other subarray membership
