@@ -13,13 +13,15 @@ from collections import OrderedDict
 
 import requests
 import tango
+
 from ska_mid_cbf_mcs.deployer.conan_local.conan_wrapper import ConanWrapper
 from ska_mid_cbf_mcs.deployer.nrcdbpopulate.dbPopulate import DbPopulate
-# from ska_mid_cbf_mcs.deployer.slim.slim_mesh_test import SlimMeshTest
-from ska_mid_cbf_mcs.deployer.talondx_config.talondx_config import TalonDxConfig
+from ska_mid_cbf_mcs.deployer.talondx_config.talondx_config import (
+    TalonDxConfig,
+)
 
 LOG_FORMAT = "[talondx.py: line %(lineno)s]%(levelname)s: %(message)s"
-
+WORKING_DIR = "/app/src/ska_mid_cbf_mcs/deployer"
 
 class bcolors:
     HEADER = "\033[95m"
@@ -92,11 +94,7 @@ def generate_talondx_config(boards_list):
     :param boards: List of boards to deploy
     :type boards: int
     """
-
-    with open(
-        "./talondx_config/talondx_boardmap.json",
-        "r",
-    ) as config_map:
+    with open(WORKING_DIR + "/talondx_config/talondx_boardmap.json", "r") as config_map:
         config_map_json = json.load(config_map)
         fpga_bitstreams = {
             "fpga_bitstreams": config_map_json["fpga_bitstreams"]
@@ -169,14 +167,10 @@ def generate_talondx_config(boards_list):
                 db_servers_list.append(db_server_tmp)
         tango_db["tango_db"] = {"db_servers": db_servers_list}
 
-        fpga_bitstreams_file = open(
-            "./talondx_config/fpga_bitstreams.json", "w"
-        )
-        ds_binaries_file = open("./talondx_config/ds_binaries.json", "w")
-        talondx_config_commands_file = open(
-            "./talondx_config/config_commands.json", "w"
-        )
-        tango_db_file = open("./talondx_config/tango_db.json", "w")
+        fpga_bitstreams_file = open(WORKING_DIR + "/talondx_config/fpga_bitstreams.json", "w")
+        ds_binaries_file = open(WORKING_DIR + "/talondx_config/ds_binaries.json", "w")
+        talondx_config_commands_file = open(WORKING_DIR + "/talondx_config/config_commands.json", "w")
+        tango_db_file = open(WORKING_DIR + "/talondx_config/tango_db.json", "w")
 
         json.dump(fpga_bitstreams, fpga_bitstreams_file, indent=6)
         json.dump(ds_binaries, ds_binaries_file, indent=6)
@@ -364,7 +358,6 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
                 pkg_name=conan_info["package_name"],
                 version=conan_info["version"],
                 user=conan_info["user"],
-                # password=os.environ["RAW_USER_PASS"],
                 channel=conan_info["channel"],
                 profile=os.path.join(
                     conan.profiles_dir, conan_info["profile"]

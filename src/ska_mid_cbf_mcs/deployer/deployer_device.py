@@ -18,6 +18,11 @@ import logging
 import os
 from typing import List
 
+# Tango Imports
+from ska_tango_base import SKABaseDevice
+from tango import ApiUtil, AttrWriteType
+from tango.server import attribute, command, run
+
 # Python Imports
 from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
     TalonDxConfig,
@@ -26,11 +31,6 @@ from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
     download_fpga_bitstreams,
     generate_talondx_config,
 )
-
-# Tango Imports
-from ska_tango_base import SKABaseDevice
-from tango import ApiUtil, AttrWriteType
-from tango.server import attribute, command, run
 
 PROJECTS_DIR = os.path.dirname(os.path.abspath(__file__))
 ARTIFACTS_DIR = os.path.join(PROJECTS_DIR, "artifacts")
@@ -149,25 +149,26 @@ class ECDeployer(SKABaseDevice):
     JSON file for the target boards"
     > What is this? 1/board we're generating for? Isn't this already in config_commands.json?
     """
-
+    '''THIS ONE WORKS'''
     @command
     # 4 scripts from boardmap
     def generate_config_jsons(self) -> None:
         self.logger_.info("Generate talondx-config.json file")
+        working_dir = "/app/src/ska_mid_cbf_mcs/deployer"
         generate_talondx_config(self.read_targetTalons())
-        with open("./talondx_config/ds_binaries.json") as file:
+        with open(working_dir + "/talondx_config/ds_binaries.json") as file:
             ds_binaries = json.load(file)
             self._ds_binaries = json.dumps(ds_binaries)
 
-        with open("./talondx_config/fpga_bitstreams.json") as file:
+        with open(working_dir + "/talondx_config/fpga_bitstreams.json") as file:
             fpga_bitstreams = json.load(file)
             self._fpga_bitstreams = json.dumps(fpga_bitstreams)
 
-        with open("./talondx_config/config_commands.json") as file:
+        with open(working_dir + "/talondx_config/config_commands.json") as file:
             config_commands = json.load(file)
             self._config_commands = json.dumps(config_commands)
 
-        with open("./talondx_config/tango_db.json") as file:
+        with open(working_dir + "/talondx_config/tango_db.json") as file:
             tango_db = json.load(file)
             self._tango_db = json.dumps(tango_db)
 
