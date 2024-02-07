@@ -162,7 +162,7 @@ class TestFspPstSubarrayComponentManager:
         assert fsp_pst_subarray_component_manager.timing_beam_id == []
         assert fsp_pst_subarray_component_manager.timing_beams == []
         assert fsp_pst_subarray_component_manager._output_enable == 0
-        assert fsp_pst_subarray_component_manager.receptors == []
+        assert fsp_pst_subarray_component_manager.vcc_ids == []
 
     @pytest.mark.parametrize(
         "config_file_name",
