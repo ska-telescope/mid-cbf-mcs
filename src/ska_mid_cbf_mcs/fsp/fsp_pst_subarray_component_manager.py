@@ -235,7 +235,7 @@ class FspPstSubarrayComponentManager(
         self._release_all_vcc()
 
         for timingBeam in configuration["timing_beam"]:
-            self._add_receptors(timingBeam["receptor_ids"])
+            self._assign_vcc(timingBeam["receptor_ids"])
             self._timing_beams.append(json.dumps(timingBeam))
             self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
 
