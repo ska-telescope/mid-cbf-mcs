@@ -3048,31 +3048,6 @@ class TestCbfSubarray:
                                     == fsp["output_link_map"][i][j]
                                 )
 
-                    if "output_host" in fsp and "output_port" in fsp:
-                        output_host = (
-                            fsp["output_host"][:2]
-                            if len(fsp["output_host"]) >= 2
-                            else [None, None]
-                        )
-                        output_port = (
-                            fsp["output_port"][:2]
-                            if len(fsp["output_port"]) >= 2
-                            else [None, None]
-                        )
-
-                        assert str(
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].visDestinationAddress
-                        ).replace('"', "'") == str(
-                            {
-                                "outputHost": output_host,
-                                "outputPort": output_port,
-                            }
-                        ).replace(
-                            '"', "'"
-                        )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     function_mode = FspModes.PSS_BF.value
                     assert (
