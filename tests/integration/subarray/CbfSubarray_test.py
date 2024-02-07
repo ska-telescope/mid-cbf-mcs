@@ -3028,7 +3028,9 @@ class TestCbfSubarray:
 
                     if "channel_averaging_map" in fsp:
                         for i in range(len(fsp["channel_averaging_map"])):
-                            for j in range(len(fsp["channel_averaging_map"][i])):
+                            for j in range(
+                                len(fsp["channel_averaging_map"][i])
+                            ):
                                 assert (
                                     test_proxies.fspSubarray["CORR"][sub_id][
                                         fsp_id
