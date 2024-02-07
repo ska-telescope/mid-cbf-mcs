@@ -107,9 +107,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     fqdn=self._vcc_band_fqdn[0], logger=self._logger
                 )
                 # Create proxy to this VCC band's WIB
-                wib_fqdn = vcc_band_proxy.get_property("WidebandInputBufferFQDN")[
+                wib_fqdn = vcc_band_proxy.get_property(
                     "WidebandInputBufferFQDN"
-                ][0]
+                )["WidebandInputBufferFQDN"][0]
                 self._logger.debug(f"Updating ExpectedDishID in {wib_fqdn}")
                 wib_proxy = CbfDeviceProxy(fqdn=wib_fqdn, logger=self._logger)
                 # Update WIBs ExpectedDishID property
