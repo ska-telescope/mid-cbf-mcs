@@ -3026,23 +3026,25 @@ class TestCbfSubarray:
                         == fsp["channel_offset"]
                     )
 
-                    for i in range(len(fsp["channel_averaging_map"])):
-                        for j in range(len(fsp["channel_averaging_map"][i])):
-                            assert (
-                                test_proxies.fspSubarray["CORR"][sub_id][
-                                    fsp_id
-                                ].channelAveragingMap[i][j]
-                                == fsp["channel_averaging_map"][i][j]
-                            )
+                    if "channel_averaging_map" in fsp:
+                        for i in range(len(fsp["channel_averaging_map"])):
+                            for j in range(len(fsp["channel_averaging_map"][i])):
+                                assert (
+                                    test_proxies.fspSubarray["CORR"][sub_id][
+                                        fsp_id
+                                    ].channelAveragingMap[i][j]
+                                    == fsp["channel_averaging_map"][i][j]
+                                )
 
-                    for i in range(len(fsp["output_link_map"])):
-                        for j in range(len(fsp["output_link_map"][i])):
-                            assert (
-                                test_proxies.fspSubarray["CORR"][sub_id][
-                                    fsp_id
-                                ].outputLinkMap[i][j]
-                                == fsp["output_link_map"][i][j]
-                            )
+                    if "output_link_map" in fsp:
+                        for i in range(len(fsp["output_link_map"])):
+                            for j in range(len(fsp["output_link_map"][i])):
+                                assert (
+                                    test_proxies.fspSubarray["CORR"][sub_id][
+                                        fsp_id
+                                    ].outputLinkMap[i][j]
+                                    == fsp["output_link_map"][i][j]
+                                )
 
                     if "output_host" and "output_port" in fsp:
                         assert str(
