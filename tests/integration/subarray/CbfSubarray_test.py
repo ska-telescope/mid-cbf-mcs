@@ -2714,7 +2714,7 @@ class TestCbfSubarray:
             f = open(data_file_path + config_2_file_name)
             json_2_string = f.read().replace("\n", "")
             f.close()
-            configuration_2 = json.loads(json_1_string)
+            configuration_2 = json.loads(json_2_string)
             assert sub_id == int(configuration_2["common"]["subarray_id"])
 
             test_proxies.on()
@@ -2775,7 +2775,6 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
             # check configured attributes of CBF subarray
-            assert sub_id == int(configuration_2["common"]["subarray_id"])
             assert (
                 test_proxies.subarray[sub_id].configurationID
                 == configuration_2["common"]["config_id"]
