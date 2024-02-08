@@ -115,7 +115,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 )["WidebandInputBufferFQDN"][0]
                 self._logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
                 wib_proxy = CbfDeviceProxy(fqdn=wib_fqdn, logger=self._logger)
-                self._logger.info("Created WIB proxy before updating ExpectedDishID.")
+                self._logger.info(
+                    "Created WIB proxy before updating ExpectedDishID."
+                )
                 old_expDishID = wib_proxy.get_property("ExpectedDishID")[
                     "ExpectedDishID"
                 ][0]
@@ -124,7 +126,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 dish_id_prop = tango.utils.obj_2_property(
                     {"ExpectedDishID": self._receptor_id}
                 )
-                self._logger.info(f"Setting ExpectedDishID to {self._receptor_id}")
+                self._logger.info(
+                    f"Setting ExpectedDishID to {self._receptor_id}"
+                )
                 wib_proxy.put_property(dish_id_prop)
                 wib_proxy.Init()
 
