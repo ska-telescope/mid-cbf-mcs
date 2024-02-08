@@ -122,7 +122,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 dish_id_prop = tango.utils.obj_2_property(
                     {"ExpectedDishID": self._receptor_id}
                 )
-                ### TODO: Add print of get_prop after updating.
+                # TODO: Add print of get_prop after updating.
                 wib_proxy.put_property(dish_id_prop)
                 wib_proxy.Init()
 
