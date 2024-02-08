@@ -256,6 +256,10 @@ def mock_vcc_band() -> unittest.mock.Mock:
 def mock_wib() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_attribute("DishID", "SKA001")
+    builder.add_property(
+        "ExpectedDishID",
+        {"ExpectedDishID": ["SKA123"]},
+    )
     return builder()
 
 
