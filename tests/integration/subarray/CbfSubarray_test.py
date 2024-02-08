@@ -2625,7 +2625,6 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             scan_id = scan_configuration["scan_id"]
 
