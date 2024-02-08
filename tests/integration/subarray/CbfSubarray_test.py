@@ -2528,12 +2528,14 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptors",
+        receptors, \
+        vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
             )
         ],
     )
@@ -2543,6 +2545,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
+        vcc_receptors: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on the same scan configuration.
@@ -2551,6 +2554,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
+        :param vcc_receptors: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2614,6 +2618,7 @@ class TestCbfSubarray:
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
+            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
@@ -2621,6 +2626,61 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
+
+            scan_id = scan_configuration["scan_id"]
+
+            # check scanID on VCC and FSP
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][fsp_id].scanID
+                        == scan_id
+                    )
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert (
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].scanID
+                        == scan_id
+                    )
+                elif fsp["function_mode"] == "PST-BF":
+                    assert (
+                        test_proxies.fspSubarray["PST-BF"][sub_id][
+                            fsp_id
+                        ].scanID
+                        == scan_id
+                    )
+            for r in vcc_receptors:
+                assert test_proxies.vcc[r].scanID == scan_id
+
+            # check states
+            assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
+            for r in vcc_receptors:
+                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    assert (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert (
+                        test_proxies.fspSubarray["PSS-BF"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
+                elif fsp["function_mode"] == "PST-BF":
+                    assert (
+                        test_proxies.fspSubarray["PST-BF"][sub_id][
+                            fsp_id
+                        ].obsState
+                        == ObsState.SCANNING
+                    )
 
             # clean up
             wait_time_s = 3
