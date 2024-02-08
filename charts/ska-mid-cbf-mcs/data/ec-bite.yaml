@@ -32,4 +32,4 @@ environment_variables:
 - name: BITE_DATA_SRC
   value: "lstv"
 - name: TANGO_HOST
-  value: "{{ .Values.hostInfo.hostIP }}"
+  value: "{{ .Values.global.tango_host }}"

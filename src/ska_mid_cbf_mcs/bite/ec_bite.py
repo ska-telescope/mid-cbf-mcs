@@ -47,7 +47,8 @@ class ECBite(SKABaseDevice):
     Currently does not allow for writing of test data manually on call.
     """
 
-    def __init__(self):
+    """
+    def init_device(self):
         self._test_id = "Test_1"
         self._boards = [3]
         self._bite_json = "cbf_input_data"
@@ -64,6 +65,8 @@ class ECBite(SKABaseDevice):
 
         self.dish_id_lut = {}
         self.k_lut = {}
+    """
+    
 
 
     # -- TANGO DEVICE ATTRIBUTES--
@@ -424,9 +427,9 @@ class ECBite(SKABaseDevice):
         return "Placeholder for command to stop lstv replay on target Talons"
 
 
-def main():
+def main(args=None, **kwargs):
     # PROTECTED REGION ID(ECBite.main) ENABLED START #
-    return run((ECBite,))
+    return run((ECBite,), args=args, **kwargs)
     # PROTECTED REGION END # // ECBite.main
 
 if __name__ == "__main__":

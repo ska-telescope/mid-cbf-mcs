@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 import scipy.stats
 import tango
-import tango_db_ops
+import ska_mid_cbf_mcs.bite.tango_db_ops
 import tqdm
 from jsonschema import validate
 from tango import DeviceProxy
