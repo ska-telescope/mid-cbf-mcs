@@ -32,11 +32,6 @@ from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
     generate_talondx_config,
 )
 
-PROJECTS_DIR = os.path.dirname(os.path.abspath(__file__))
-ARTIFACTS_DIR = os.path.join(PROJECTS_DIR, "artifacts")
-TALONDX_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "talondx-config.json")
-
-
 __all__ = ["ECDeployer", "main"]
 
 

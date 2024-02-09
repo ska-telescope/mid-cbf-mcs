@@ -61,8 +61,8 @@ class Version:
 POWER_SWITCH_USER = os.environ.get("POWER_SWITCH_USER")
 POWER_SWITCH_PASS = os.environ.get("POWER_SWITCH_PASS")
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-ARTIFACTS_DIR = os.path.join(PROJECT_DIR, "artifacts")
+# PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+ARTIFACTS_DIR = "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
 TALONDX_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "talondx-config.json")
 DOWNLOAD_CHUNK_BYTES = 1024
 
@@ -246,7 +246,6 @@ def download_git_artifacts(git_api_url, name):
         response = requests.get(
             git_api_url, headers=GITLAB_API_HEADER, stream=True
         )
-
         ds_artifacts_dir = os.path.join(ARTIFACTS_DIR, name)
         filename = os.path.join(ds_artifacts_dir, "artifacts.zip")
         bytes_downloaded = 0
@@ -260,8 +259,9 @@ def download_git_artifacts(git_api_url, name):
                     bytes_downloaded + DOWNLOAD_CHUNK_BYTES, total_bytes
                 )
                 per_cent = round(bytes_downloaded / total_bytes * 100.0)
+                test_path = "/app/src/ska_mid_cbf_mcs/deployer/"
                 logger_.debug(
-                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)} "
+                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)} "
                     f"[{bcolors.OK}{per_cent:>3} %{bcolors.ENDC}]",
                     end="\r",
                 )
@@ -287,14 +287,14 @@ def download_raw_artifacts(api_url, name, filename):
         response = requests.get(
             api_url, auth=(RAW_REPO_USER, RAW_REPO_PASS), stream=True
         )
-
         artifacts_dir = os.path.join(ARTIFACTS_DIR, name)
         filename = os.path.join(artifacts_dir, filename)
         bytes_downloaded = 0
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "wb") as fd:
+            test_path = "/app/src/ska_mid_cbf_mcs/deployer/"
             logger_.debug(
-                f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)}"
+                f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)}"
             )
             for chunk in response.iter_content(
                 chunk_size=DOWNLOAD_CHUNK_BYTES
@@ -305,7 +305,7 @@ def download_raw_artifacts(api_url, name, filename):
                 )
                 per_cent = round(bytes_downloaded / total_bytes * 100.0)
                 print(
-                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)} "
+                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)} "
                     f"[{bcolors.OK}{per_cent:>3} %{bcolors.ENDC}]",
                     end="\r",
                 )
@@ -337,8 +337,7 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
     :param ds_binaries: JSON string specifying which DS binaries to download.
     :param clear_conan_cache: if true, Conan packages are fetched from remote; default true.
     """
-
-    conan = ConanWrapper(ARTIFACTS_DIR)
+    conan = ConanWrapper("/app/src/ska_mid_cbf_mcs/deployer/")
     logger_.info(f"Conan version: {conan.version()}")
     if clear_conan_cache:
         logger_.info(f"Conan local cache: {conan.search_local_cache()}")
@@ -376,7 +375,7 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
             exit(-1)
 
     # Modify the permissions of Artifacts dir so they can be modified/deleted later
-    chmod_r_cmd = "chmod -R o=rwx " + ARTIFACTS_DIR
+    chmod_r_cmd = "chmod -R o=rwx " + "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
     os.system(chmod_r_cmd)
 
 
@@ -546,10 +545,12 @@ if __name__ == "__main__":
         configure_tango_db(config.tango_db())
     elif args.download_artifacts:
         logger_.info("Download Artifacts")
-        config = TalonDxConfig(config_file=TALONDX_CONFIG_FILE)
-        config.export_config(ARTIFACTS_DIR)
-        download_ds_binaries(config.ds_binaries())
-        download_fpga_bitstreams(config.fpga_bitstreams())
+        ds = TalonDxConfig(config_file="/app/src/ska_mid_cbf_mcs/deployer/talondx_config/ds_binaries.json")
+        ds.export_config(ARTIFACTS_DIR)
+        download_ds_binaries(ds.ds_binaries())
+        fpga = TalonDxConfig(config_file="/app/src/ska_mid_cbf_mcs/deployer/talondx_config/fpga_bitstreams.json")
+        fpga.export_config(ARTIFACTS_DIR)
+        download_fpga_bitstreams(fpga.fpga_bitstreams())
     elif args.generate_talondx_config and args.boards is not None:
         logger_.info("Generate talondx-config.json file")
         generate_talondx_config(args.boards)

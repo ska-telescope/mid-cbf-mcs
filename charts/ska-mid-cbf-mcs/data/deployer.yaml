@@ -25,14 +25,6 @@ server:
     - name: "ECDeployer"
       devices:
       - name: "mid_csp_cbf/ec/deployer"
-          # spec:
-          #   volumes:
-          #     - name: artifacts-pv-storage
-          #       persistentVolumeClaim:
-          #         claimName: artifacts-pvc-{{ .Release.Name }}
-          #   volumeMounts:
-          #     - mountPath: "/app/images/ska-mid-cbf-engineering-console-deployer/artifacts"
-          #       name: artifacts-pv-storage
 environment_variables:
 - name: RAW_USER_ACCOUNT
   value:
@@ -42,7 +34,7 @@ environment_variables:
   value: "{{ .Values.global.tango_host }}"
 volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
-  mountPath: "/app/images/ska-mid-cbf-engineering-console-deployer/artifacts"
+  mountPath: "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
   readOnly: false
 image:
   registry: "{{.Values.midcbf.image.registry}}"

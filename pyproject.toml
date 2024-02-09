@@ -51,6 +51,7 @@ pylint-junit = "^0.3.2"
 polling2 = "^0.5.0"
 pysnmp = "4.4.12"
 pyasn1 = "0.4.8"
+conan = "^1.54.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"
@@ -65,6 +66,7 @@ pytest-xdist = "^3.3.1"
 pytest-repeat = "^0.9.1"
 pytest-pylint = "^0.19.0"
 pylint = "2.15.5"
+
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^6"
