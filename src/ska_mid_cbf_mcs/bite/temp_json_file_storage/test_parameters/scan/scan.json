@@ -1,0 +1,11 @@
+{
+  "scan": {
+      "Scan 1": {
+          "subarray_id": 1,
+          "command": {
+            "interface": "https://schema.skao.int/ska-csp-scan/2.2",
+            "scan_id": 1
+          }
+      }
+  }
+}

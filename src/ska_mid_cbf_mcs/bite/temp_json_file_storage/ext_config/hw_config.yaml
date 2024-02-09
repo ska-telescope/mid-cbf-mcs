@@ -1,0 +1,59 @@
+talon_board:
+    "001": 192.168.8.1
+    "002": 192.168.8.2
+    "003": 192.168.8.3
+    "004": 192.168.8.4
+    "005": 192.168.8.5
+    "006": 192.168.8.6
+    "007": 192.168.8.7
+    "008": 192.168.8.8
+talon_lru:
+    "001":
+        PDU1: "004"
+        PDU1PowerOutlet: "1"
+        PDU2: "004"
+        PDU2PowerOutlet: "1"
+        TalonDxBoard1: "001"
+        TalonDxBoard2: "002"
+    "002":
+        PDU1: "004"
+        PDU1PowerOutlet: "2"
+        PDU2: "004"
+        PDU2PowerOutlet: "2"
+        TalonDxBoard1: "003"
+        TalonDxBoard2: "004"
+    "003":
+        PDU1: "001"
+        PDU1PowerOutlet: "2"
+        PDU2: "001"
+        PDU2PowerOutlet: "2"
+        TalonDxBoard1: "005"
+        TalonDxBoard2: "006"
+    "004":
+        PDU1: "001"
+        PDU1PowerOutlet: "3"
+        PDU2: "001"
+        PDU2PowerOutlet: "3"
+        TalonDxBoard1: "007"
+        TalonDxBoard2: "008"
+power_switch:
+    "001":
+        PowerSwitchModel: "DLI LPC9"
+        PowerSwitchIp: "192.168.0.100"
+        PowerSwitchLogin: "admin"
+        PowerSwitchPassword: "1234"
+    "002":
+        PowerSwitchModel: "Server Technology Switched PRO2"
+        PowerSwitchIp: "192.168.1.254"
+        PowerSwitchLogin: "admn"
+        PowerSwitchPassword: "admn-1-Psi"
+    "003":
+        PowerSwitchModel: "APC AP8681 SSH"
+        PowerSwitchIp: "192.168.1.253"
+        PowerSwitchLogin: "apc"
+        PowerSwitchPassword: "apc"
+    "004":
+        PowerSwitchModel: "APC AP8681 SNMP"
+        PowerSwitchIp: "192.168.1.253"
+        PowerSwitchLogin: "apcsnmp"
+        PowerSwitchPassword: "testingapcsnmp"

@@ -1,0 +1,19 @@
+talon_board:
+    "001": 10.165.3.29
+    "002": 10.165.3.30
+talon_lru:
+    "001":
+        PDU1: "001"
+        PDU1PowerOutlet: "12"
+        PDU2: "001"
+        PDU2PowerOutlet: "13"
+        TalonDxBoard1: "001"
+        TalonDxBoard2: "002"
+power_switch:
+    "001":
+        PowerSwitchModel: "APC AP8681 SNMP"
+        PowerSwitchIp: "10.20.2.14"
+        PowerSwitchLogin: "apcsnmp"
+        PowerSwitchPassword: "itfapcsnmp"
+
+

@@ -1,0 +1,14 @@
+{
+    "release_resources": {
+        "Subarray 1 (all)": {
+            "interface": "https://schema.skao.int/ska-csp-releaseresources/2.2",
+            "subarray_id": 1,
+            "release_all": true
+        },
+        "Partial Release A": {
+            "interface": "https://schema.skao.int/ska-csp-releaseresources/2.2",
+            "subarray_id": 2,
+            "receptor_ids": ["SKA001", "SKA036"]
+        }
+    }
+}

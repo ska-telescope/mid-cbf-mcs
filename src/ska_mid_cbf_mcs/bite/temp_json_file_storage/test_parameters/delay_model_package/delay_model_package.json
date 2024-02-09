@@ -1,0 +1,188 @@
+{
+    "delay_model_package": {
+        "Single zero-value model (SKA001)": {
+            "description": "Single Delay Model covering entire scan duration with zero-value coefficients.",
+            "models": [
+                {
+                    "delay_model_send_time_offset": 45.0,
+                    "epoch_time_offset": 50.0,
+                    "model": {
+                        "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+                        "epoch": -1.0,
+                        "validity_period": 400.0,
+                        "delay_details": [
+                            {
+                                "receptor": "SKA001",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "Single zero-value model (SKA036)": {
+            "description": "Single Delay Model covering entire scan duration with zero-value coefficients.",
+            "models": [
+                {
+                    "delay_model_send_time_offset": 45.0,
+                    "epoch_time_offset": 50.0,
+                    "model": {
+                        "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+                        "epoch": -1.0,
+                        "validity_period": 400.0,
+                        "delay_details": [
+                            {
+                                "receptor": "SKA036",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "Single zero-value model (SKA063)": {
+            "description": "Single Delay Model covering entire scan duration with zero-value coefficients.",
+            "models": [
+                {
+                    "delay_model_send_time_offset": 45.0,
+                    "epoch_time_offset": 50.0,
+                    "model": {
+                        "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+                        "epoch": -1.0,
+                        "validity_period": 400.0,
+                        "delay_details": [
+                            {
+                                "receptor": "SKA063",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "Single zero-value model (SKA100)": {
+            "description": "Single Delay Model covering entire scan duration with zero-value coefficients.",
+            "models": [
+                {
+                    "delay_model_send_time_offset": 45.0,
+                    "epoch_time_offset": 50.0,
+                    "model": {
+                        "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+                        "epoch": -1.0,
+                        "validity_period": 400.0,
+                        "delay_details": [
+                            {
+                                "receptor": "SKA100",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "4 receptor zero-value models": {
+            "description": "Single Delay Model (per receptor) covering entire scan duration with zero-value coefficients.",
+            "models": [
+                {
+                    "delay_model_send_time_offset": 45.0,
+                    "epoch_time_offset": 50.0,
+                    "model": {
+                        "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+                        "epoch": -1.0,
+                        "validity_period": 600.0,
+                        "delay_details": [
+                            {
+                                "receptor": "SKA001",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            },
+                            {
+                                "receptor": "SKA036",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            },
+                            {
+                                "receptor": "SKA063",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            },
+                            {
+                                "receptor": "SKA100",
+                                "poly_info": [
+                                    {
+                                        "polarization": "X",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    },
+                                    {
+                                        "polarization": "Y",
+                                        "coeffs": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -19,17 +19,25 @@ logger_ = logging.getLogger("midcbf_bite.py")
 
 # Currently assumes this will be run in where the test_parameters repo will be available
 # TODO: Find where this file will be run to ensure proper file opens
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+"""
 TEST_PARAMS_DIR = os.path.join(
     os.getcwd(), "ska-mid-cbf-system-tests/test_parameters"
 )
 CBF_INPUT_DATA_DIR = os.path.join(TEST_PARAMS_DIR, "cbf_input_data")
 BITE_CONFIGS_DIR = os.path.join(CBF_INPUT_DATA_DIR, "bite_config_parameters")
-JSON_DIR = os.path.join(PROJECT_DIR, "bite_device_client/json")
 EXTERNAL_CONFIG_DIR = os.path.join(
     os.getcwd(), "ska-mid-cbf-engineering-console/ext_config"
 )
+"""
 
+## TEMP FILE DIRS to hold JSON data while running in MCS
+TEMP_LOC = os.path.dirname(__file__)
+TEST_PARAMS_DIR = os.path.join(TEMP_LOC,"temp_json_file_storage/test_parameters")
+CBF_INPUT_DATA_DIR = os.path.join(TEST_PARAMS_DIR, "cbf_input_data")
+BITE_CONFIGS_DIR = os.path.join(CBF_INPUT_DATA_DIR, "bite_config_parameters")
+EXTERNAL_CONFIG_DIR = os.path.join(
+    TEMP_LOC, "temp_json_file_storage/ext_config"
+)
 
 # Point to the JSON config files the system will be using
 cbf_input_data_path = os.path.join(CBF_INPUT_DATA_DIR, "cbf_input_data.json")

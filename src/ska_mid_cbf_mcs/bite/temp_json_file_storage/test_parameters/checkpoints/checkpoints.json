@@ -1,0 +1,328 @@
+{
+    "checkpoints": {
+        "talon1: all checkpoints and visibilities": {
+            "talon_status": {
+                "talons": [1],
+                "memory_blocks": [
+                    "Bottom Left",
+                    "Bottom Right",
+                    "Top Right"
+                ],
+                "criteria": {
+                    "base_clock_frequency": "[124991250,125008750]",
+                    "memory_block": {
+                        "emif_clock_frequency": "[333310000,333356666]",
+                        "emif_pll_locked": true,
+                        "emif_local_reset_done": true,
+                        "emif_local_calibration_success": true,
+                        "emif_local_calibration_fail": false
+                    }
+                }
+            },
+            "wideband_state_count": {
+                "talons": [1],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            },
+            "histograms": [
+                {
+                    "talon": 1,
+                    "inspection_points": [
+                        "E_PRE_VCC",
+                        "E_POST_VCC_0",
+                        "E_POST_RDT_0",
+                        "E_POST_CH16K_0"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                }
+            ],
+            "packet_stream_repair": [
+                {
+                    "talon": 1,
+                    "device": "packet_stream_repair_0",
+                    "criteria": {}
+                }
+            ],
+            "visibilities": {
+                "criteria": {
+                    "zip_file_exists": true,
+                    "fraction_of_data": true
+                }
+            }
+        },
+        "talon2: all checkpoints and visibilities": {
+            "talon_status": {
+                "talons": [2],
+                "memory_blocks": [
+                    "Bottom Left",
+                    "Bottom Right",
+                    "Top Right"
+                ],
+                "criteria": {
+                    "base_clock_frequency": "[124991250,125008750]",
+                    "memory_block": {
+                        "emif_clock_frequency": "[333310000,333356666]",
+                        "emif_pll_locked": true,
+                        "emif_local_reset_done": true,
+                        "emif_local_calibration_success": true,
+                        "emif_local_calibration_fail": false
+                    }
+                }
+            },
+            "wideband_state_count": {
+                "talons": [2],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            },
+            "histograms": [
+                {
+                    "talon": 2,
+                    "inspection_points": [
+                        "E_PRE_VCC",
+                        "E_POST_VCC_1",
+                        "E_POST_RDT_1",
+                        "E_POST_CH16K_1"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                }
+            ],
+            "packet_stream_repair": [
+                {
+                    "talon": 2,
+                    "device": "packet_stream_repair_0",
+                    "criteria": {}
+                }
+            ],
+            "visibilities": {
+                "criteria": {
+                    "zip_file_exists": true,
+                    "fraction_of_data": true
+                }
+            }
+        },
+        "talon3: all checkpoints and visibilities": {
+            "talon_status": {
+                "talons": [3],
+                "memory_blocks": [
+                    "Bottom Left",
+                    "Bottom Right",
+                    "Top Right"
+                ],
+                "criteria": {
+                    "base_clock_frequency": "[124991250,125008750]",
+                    "memory_block": {
+                        "emif_clock_frequency": "[333310000,333356666]",
+                        "emif_pll_locked": true,
+                        "emif_local_reset_done": true,
+                        "emif_local_calibration_success": true,
+                        "emif_local_calibration_fail": false
+                    }
+                }
+            },
+            "wideband_state_count": {
+                "talons": [3],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            },
+            "histograms": [
+                {
+                    "talon": 3,
+                    "inspection_points": [
+                        "E_PRE_VCC",
+                        "E_POST_VCC_2",
+                        "E_POST_RDT_2",
+                        "E_POST_CH16K_2"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                }
+            ],
+            "packet_stream_repair": [
+                {
+                    "talon": 3,
+                    "device": "packet_stream_repair_0",
+                    "criteria": {}
+                }
+            ],
+            "visibilities": {
+                "criteria": {
+                    "zip_file_exists": true,
+                    "fraction_of_data": true
+                }
+            }
+        },
+        "talon4: all checkpoints and visibilities": {
+            "talon_status": {
+                "talons": [4],
+                "memory_blocks": [
+                    "Bottom Left",
+                    "Bottom Right",
+                    "Top Right"
+                ],
+                "criteria": {
+                    "base_clock_frequency": "[124991250,125008750]",
+                    "memory_block": {
+                        "emif_clock_frequency": "[333310000,333356666]",
+                        "emif_pll_locked": true,
+                        "emif_local_reset_done": true,
+                        "emif_local_calibration_success": true,
+                        "emif_local_calibration_fail": false
+                    }
+                }
+            },
+            "wideband_state_count": {
+                "talons": [4],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            },
+            "histograms": [
+                {
+                    "talon": 4,
+                    "inspection_points": [
+                        "E_PRE_VCC",
+                        "E_POST_VCC_3",
+                        "E_POST_RDT_3",
+                        "E_POST_CH16K_3"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                }
+            ],
+            "packet_stream_repair": [
+                {
+                    "talon": 4,
+                    "device": "packet_stream_repair_0",
+                    "criteria": {}
+                }
+            ],
+            "visibilities": {
+                "criteria": {
+                    "zip_file_exists": true,
+                    "fraction_of_data": true
+                }
+            }
+        },
+        "4 VCCs, 1 FSP, all checkpoints": {
+            "talon_status": {
+                "talons": [1,2,3,4],
+                "memory_blocks": [
+                    "Bottom Left",
+                    "Bottom Right",
+                    "Top Right"
+                ],
+                "criteria": {
+                    "base_clock_frequency": "[124991250,125008750]",
+                    "memory_block": {
+                        "emif_clock_frequency": "[333310000,333356666]",
+                        "emif_pll_locked": true,
+                        "emif_local_reset_done": true,
+                        "emif_local_calibration_success": true,
+                        "emif_local_calibration_fail": false
+                    }
+                }
+            },
+            "wideband_state_count": {
+                "talons": [1,2,3,4],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            },
+            "slim_links": {
+                "criteria": {
+                    "fs_mesh_health_status_ok": true,
+                    "vis_mesh_health_status_ok": true
+                }
+            },
+            "histograms": [
+                {
+                    "talon": 1,
+                    "inspection_points": [
+                        "E_PRE_VCC",
+                        "E_POST_VCC_0",
+                        "E_POST_RDT_0",
+                        "E_POST_CH16K_0",
+                        "E_POST_VCC_1",
+                        "E_POST_RDT_1",
+                        "E_POST_CH16K_1",
+                        "E_POST_VCC_2",
+                        "E_POST_RDT_2",
+                        "E_POST_CH16K_2",
+                        "E_POST_VCC_3",
+                        "E_POST_RDT_3",
+                        "E_POST_CH16K_3"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                },{
+                    "talon": 2,
+                    "inspection_points": [
+                        "E_PRE_VCC"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                },{
+                    "talon": 3,
+                    "inspection_points": [
+                        "E_PRE_VCC"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                },{
+                    "talon": 4,
+                    "inspection_points": [
+                        "E_PRE_VCC"
+                    ],
+                    "criteria": {
+                        "capture_status": true
+                    }
+                }
+            ],
+            "packet_stream_repair": [
+                {
+                    "talon": 1,
+                    "device": "packet_stream_repair_0",
+                    "criteria": {}
+                },{
+                    "talon": 2,
+                    "device": "packet_stream_repair_1",
+                    "criteria": {}
+                },{
+                    "talon": 3,
+                    "device": "packet_stream_repair_2",
+                    "criteria": {}
+                },{
+                    "talon": 4,
+                    "device": "packet_stream_repair_3",
+                    "criteria": {}
+                }
+            ],
+            "visibilities": {
+                "criteria": {
+                    "zip_file_exists": true,
+                    "fraction_of_data": true
+                }
+            }
+        },
+        "4 VCCs, only wideband_state_count": {
+            "wideband_state_count": {
+                "talons": [1,2,3,4],
+                "criteria": {
+                    "samples_accumulated": "(100000,infinity)"
+                }
+            }
+        }
+    }
+}

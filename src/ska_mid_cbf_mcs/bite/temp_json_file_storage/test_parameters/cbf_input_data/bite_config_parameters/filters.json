@@ -1,0 +1,122 @@
+{
+    "num_coeffs": 1024,
+    "fxp_frac_bits": 16,
+    "filters": {
+        "filter_all_pass": {
+            "description": "All pass filter ^^^^^^^^^^",
+            "band_edges": [
+                0.0,
+                1.0
+            ],
+            "band_gains": [
+                1.0,
+                1.0
+            ],
+            "window": {
+                "kaiser": {
+                    "beta": 14
+                }
+            }
+        },
+        "filter_zero_pass": {
+            "description": "Zero pass filter ___________",
+            "band_edges": [
+                0.0,
+                1.0
+            ],
+            "band_gains": [
+                0.0,
+                0.0
+            ],
+            "window": "hann"
+        },
+        "filter_ramp_up" : {
+            "description": "Ascending ramp shaping filter",
+            "band_edges": [
+                0.0,
+                1.0
+            ],
+            "band_gains": [
+                0.0001,
+                1.0
+            ],
+            "window": "hamming"
+        },
+        "filter_ramp_down": {
+            "description": "Descending ramp shaping filter",
+            "band_edges": [
+                0.0,
+                1.0
+            ],
+            "band_gains": [
+                1.0,
+                0.0001
+            ],
+            "window": "hamming"
+        },
+        "filter_band_pass": {
+            "description": "band pass filter _______/^^^^^^^^\\________",
+            "band_edges": [
+                0.0,
+                0.15,
+                0.15,
+                0.18,
+                0.18,
+                1.0
+            ],
+            "band_gains": [
+                0.0,
+                0.0,
+                1.0,
+                1.0,
+                0.0,
+                0.0
+            ],
+            "window": {
+                "kaiser": {
+                    "beta": 14
+                }
+            }
+        },
+        "filter_low_pass": {
+            "description": "low pass filter 1.0 ^^^^^^^^^\\________ 0.2",
+            "band_edges": [
+                0.0,
+                0.5,
+                0.5,
+                1.0
+            ],
+            "band_gains": [
+                1.0,
+                1.0,
+                0.2,
+                0.2
+            ],
+            "window": {
+                "kaiser": {
+                    "beta": 14
+                }
+            }
+        },
+        "filter_high_pass": {
+            "description": "high pass filter 0.2 _________/^^^^^^^^^ 1.0",
+            "band_edges": [
+                0.0,
+                0.5,
+                0.5,
+                1.0
+            ],
+            "band_gains": [
+                0.2,
+                0.2,
+                1.0,
+                1.0
+            ],
+            "window": {
+                "kaiser": {
+                    "beta": 14
+                }
+            }
+        }
+    }
+}

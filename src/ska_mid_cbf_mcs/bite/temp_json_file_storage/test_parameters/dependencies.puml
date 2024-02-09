@@ -1,0 +1,11 @@
+
+@startmindmap
+-[#DeepSkyBlue] tests.json
+--[#DeepSkyBlue] cbf_input_data.json
+---[#DeepSkyBlue] bite_configs.json
+----[#DeepSkyBlue] filter_definitions.json
+--[#DeepSkyBlue] delay_models.json
+--[#DeepSkyBlue] subarrays.json
+--[#DeepSkyBlue] configure_scan.json
+--[#DeepSkyBlue] checkpoints.json
+@endmindmap

@@ -1,0 +1,355 @@
+{
+    "bite_configs": {
+        "basic gaussian noise 1": {
+            "description": "4 seconds of basic gaussian noise with no filtering, using the default mean (0) and standard deviation (0.5).",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass"
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 100
+        },
+        "basic gaussian noise 2": {
+            "description": "4 seconds of basic gaussian noise with no filtering, using the default mean (0) and standard deviation (0.5).",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass"
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 618
+        },
+        "basic gaussian noise 3": {
+            "description": "4 seconds of basic gaussian noise with no filtering, using the default mean (0) and standard deviation (0.5).",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass"
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1220
+        },
+        "basic gaussian noise 4": {
+            "description": "4 seconds of basic gaussian noise with no filtering, using the default mean (0) and standard deviation (0.5).",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass"
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1815
+        },
+        "gaussian noise 1": {
+            "description": "4 seconds of gaussian noise with no filtering, exercising non-default mean and standard deviation on both polarizations.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols; unique mean and standard deviation for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass",
+                            "noise_mean": -0.15,
+                            "noise_std": 0.35
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0.15,
+                            "noise_std": 0.65
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 100
+        },
+        "gaussian noise 2": {
+            "description": "4 seconds of gaussian noise with no filtering, exercising non-default mean and standard deviation on both polarizations.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols; unique mean and standard deviation for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass",
+                            "noise_mean": -0.20,
+                            "noise_std": 0.25
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0.30,
+                            "noise_std": 0.75
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 618
+        },
+        "gaussian noise 3": {
+            "description": "4 seconds of gaussian noise with no filtering, exercising non-default mean and standard deviation on both polarizations.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols; unique mean and standard deviation for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0,
+                            "noise_std": 0.80
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0,
+                            "noise_std": 0.20
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1220
+        },
+        "gaussian noise 4": {
+            "description": "4 seconds of gaussian noise with no filtering, exercising non-default mean and standard deviation on both polarizations.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols; unique mean and standard deviation for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 1234,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0.15,
+                            "noise_std": 0.65
+                        },
+                        "pol_y": {
+                            "seed": 9876,
+                            "filter": "filter_all_pass",
+                            "noise_mean": 0.65,
+                            "noise_std": 0.15
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1815
+        },
+        "band-pass filtered gaussian noise": {
+            "description": "4 seconds of gaussian noise with band-pass filtering.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 2345,
+                            "filter": "filter_band_pass"
+                        },
+                        "pol_y": {
+                            "seed": 8765,
+                            "filter": "filter_band_pass"
+                        }
+                    },
+                    "pol_coupling_rho": -1.0,
+                    "pol_Y_1_sample_delay": true
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 100
+        },
+        "band-pass, all-pass filtered gaussian noise": {
+            "description": "4 seconds of basic gaussian noise, band-pass filtered on pol X and all-pass filtered on pol Y, with 100% polarization coupling.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 3456,
+                            "filter": "filter_band_pass"
+                        },
+                        "pol_y": {
+                            "seed": 7654,
+                            "filter": "filter_all_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 1.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [],
+            "lstv_seconds": 4,
+            "sample_rate_k": 100
+        },
+        "ramp filtered gaussian noise and tone": {
+            "description": "4 seconds of gaussian noise, filtered by ramp up and ramp down filters, with a basic 100MHz tone.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 6543,
+                            "filter": "filter_ramp_up"
+                        },
+                        "pol_y": {
+                            "seed": 1234,
+                            "filter": "filter_ramp_down"
+                        }
+                    },
+                    "pol_coupling_rho": 0.5,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [
+                {
+                    "description": "100 MHz tone (# 0.005 is full scale out of 16k channeliser with gain of 1.0.)",
+                    "pol_x": {
+                        "frequency": 100e6,
+                        "scale": 0.0025
+                    },
+                    "pol_y": {
+                        "frequency": 333.3333333e6,
+                        "scale": 0.0025
+                    }
+                }
+            ],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1220
+        },
+        "high pass, low pass filtered gaussian noise and tone": {
+            "description": "4 seconds of gaussian noise, filtered by ramp up and ramp down filters, with a basic 100MHz tone.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 3456,
+                            "filter": "filter_high_pass"
+                        },
+                        "pol_y": {
+                            "seed": 7654,
+                            "filter": "filter_low_pass"
+                        }
+                    },
+                    "pol_coupling_rho": -0.5,
+                    "pol_Y_1_sample_delay": true
+                }
+            ],
+            "tone_gens": [
+                {
+                    "description": "100 MHz tone on pol X and 333.333 MHz tone on pol Y, both with amplitude 0.0025 (0.005 is full scale out of 16k channeliser with gain of 1.0.)",
+                    "pol_x": {
+                        "frequency": 100e6,
+                        "scale": 0.0025
+                    },
+                    "pol_y": {
+                        "frequency": 333.3333333e6,
+                        "scale": 0.0025
+                    }
+                }
+            ],
+            "lstv_seconds": 4,
+            "sample_rate_k": 1815
+        },
+        "basic tone": {
+            "description": "4 seconds of basic 100MHz tone on pol X and 333.333 MHz tone on pol Y, both with amplitude 0.0025. No noise.",
+            "sources": [
+                {
+                    "description": "Noise input, independent between X and Y pols; zero-pass filter to filter out all noise",
+                    "gaussian": {
+                        "pol_x": {
+                            "seed": 9876,
+                            "filter": "filter_zero_pass"
+                        },
+                        "pol_y": {
+                            "seed": 1234,
+                            "filter": "filter_zero_pass"
+                        }
+                    },
+                    "pol_coupling_rho": 0.0,
+                    "pol_Y_1_sample_delay": false
+                }
+            ],
+            "tone_gens": [
+                {
+                    "description": "100 MHz tone on pol X and 333.333 MHz tone on pol Y, both with amplitude 0.0025 (0.005 is full scale out of 16k channeliser with gain of 1.0.)",
+                    "pol_x": {
+                        "frequency": 100e6,
+                        "scale": 0.0025
+                    },
+                    "pol_y": {
+                        "frequency": 333.3333333e6,
+                        "scale": 0.0025
+                    }
+                }
+            ],
+            "lstv_seconds": 4,
+            "sample_rate_k": 618
+        }
+    }
+}

@@ -1,0 +1,74 @@
+{
+    "tests": {
+        "Test_1": {
+            "description": "Single talon basic correlation sequence (talon1). 1 receptor, band 1, 1 FSP, no options.",
+            "cbf_input_data": "talon1 basic gaussian noise",
+            "delay_model_package": "Single zero-value model (SKA001)",
+            "assign_resources": "Single receptor (SKA001)",
+            "configure_scan": "Basic Scan Config (FSP1)",
+            "scan": "Scan 1",
+            "checkpoints": "talon1: all checkpoints and visibilities",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_2": {
+            "description": "Single talon basic correlation sequence (talon2). 1 receptor, band 1, 1 FSP, no options.",
+            "cbf_input_data": "talon2 basic gaussian noise",
+            "delay_model_package": "Single zero-value model (SKA036)",
+            "assign_resources": "Single receptor (SKA036)",
+            "configure_scan": "Basic Scan Config (FSP2)",
+            "scan": "Scan 1",
+            "checkpoints": "talon2: all checkpoints and visibilities",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_3": {
+            "description": "Single talon basic correlation sequence (talon3). 1 receptor, band 1, 1 FSP, no options.",
+            "cbf_input_data": "talon3 basic gaussian noise",
+            "delay_model_package": "Single zero-value model (SKA063)",
+            "assign_resources": "Single receptor (SKA063)",
+            "configure_scan": "Basic Scan Config (FSP3)",
+            "scan": "Scan 1",
+            "checkpoints": "talon3: all checkpoints and visibilities",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_4": {
+            "description": "Single talon basic correlation sequence (talon4). 1 receptor, band 1, 1 FSP, no options.",
+            "cbf_input_data": "talon4 basic gaussian noise",
+            "delay_model_package": "Single zero-value model (SKA100)",
+            "assign_resources": "Single receptor (SKA100)",
+            "configure_scan": "Basic Scan Config (FSP4)",
+            "scan": "Scan 1",
+            "checkpoints": "talon4: all checkpoints and visibilities",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_5": {
+            "description": "BITE four Talon test. Four receptors, Gaussian Noise, 4 different power levels on each talon board, mix of filters. Same tone on each board.",
+            "cbf_input_data": "talons 1-4 all different configurations",
+            "delay_model_package": "4 receptor zero-value models",
+            "assign_resources": "subarray 1, 4 receptors",
+            "configure_scan": "Basic Scan Config (FSP3)",
+            "scan": "Scan 1",
+            "checkpoints": "4 VCCs, only wideband_state_count",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_6": {
+            "description": "band 1, 4 VCCs, 1 FSP, no options.",
+            "cbf_input_data": "talons 1-4 basic gaussian noise",
+            "delay_model_package": "4 receptor zero-value models",
+            "assign_resources": "subarray 1, 4 receptors",
+            "configure_scan": "Single FSP, vanilla settings",
+            "scan": "Scan 1",
+            "checkpoints": "4 VCCs, 1 FSP, all checkpoints",
+            "release_resources": "Subarray 1 (all)"
+        },
+        "Test_7": {
+            "description": "Test 4 variants of BITE gaussian noise generation with non-default mean and standard deviation. Plot/test wideband state counts.",
+            "cbf_input_data": "talons 1-4 gaussian noise",
+            "delay_model_package": "4 receptor zero-value models",
+            "assign_resources": "subarray 1, 4 receptors",
+            "configure_scan": "Basic Scan Config (FSP1)",
+            "scan": "Scan 1",
+            "checkpoints": "4 VCCs, only wideband_state_count",
+            "release_resources": "Subarray 1 (all)"
+        }
+    }
+}

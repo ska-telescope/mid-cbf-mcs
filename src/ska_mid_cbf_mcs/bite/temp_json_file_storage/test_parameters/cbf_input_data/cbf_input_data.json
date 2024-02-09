@@ -1,0 +1,128 @@
+{
+    "cbf_input_data": {
+        "talon1 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA001",
+                    "bite_config_id": "basic gaussian noise 1",
+                    "talon": "1",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talon2 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA036",
+                    "bite_config_id": "basic gaussian noise 2",
+                    "talon": "2",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talon3 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA063",
+                    "bite_config_id": "basic gaussian noise 3",
+                    "talon": "3",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talon4 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA100",
+                    "bite_config_id": "basic gaussian noise 4",
+                    "talon": "4",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talons 1-4 basic gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA001",
+                    "bite_config_id": "basic gaussian noise 1",
+                    "talon": "1",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA036",
+                    "bite_config_id": "basic gaussian noise 2",
+                    "talon": "2",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA063",
+                    "bite_config_id": "basic gaussian noise 3",
+                    "talon": "3",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA100",
+                    "bite_config_id": "basic gaussian noise 4",
+                    "talon": "4",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talons 1-4 gaussian noise": {
+            "receptors": [
+                {
+                    "dish_id": "SKA001",
+                    "bite_config_id": "gaussian noise 1",
+                    "talon": "1",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA036",
+                    "bite_config_id": "gaussian noise 2",
+                    "talon": "2",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA063",
+                    "bite_config_id": "gaussian noise 3",
+                    "talon": "3",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA100",
+                    "bite_config_id": "gaussian noise 4",
+                    "talon": "4",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        },
+        "talons 1-4 all different configurations": {
+            "receptors": [
+                {
+                    "dish_id": "SKA001",
+                    "bite_config_id": "band-pass, all-pass filtered gaussian noise",
+                    "talon": "1",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA036",
+                    "bite_config_id": "basic tone",
+                    "talon": "2",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA063",
+                    "bite_config_id": "ramp filtered gaussian noise and tone",
+                    "talon": "3",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "dish_id": "SKA100",
+                    "bite_config_id": "high pass, low pass filtered gaussian noise and tone",
+                    "talon": "4",
+                    "bite_initial_timestamp_time_offset": 60.0
+                }
+            ]
+        }
+    }
+}

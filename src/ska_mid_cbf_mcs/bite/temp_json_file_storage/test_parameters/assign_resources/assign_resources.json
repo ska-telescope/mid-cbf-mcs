@@ -1,0 +1,39 @@
+{
+    "assign_resources": {
+        "Single receptor (SKA001)": {
+            "interface": "https://schema.skao.int/ska-csp-assignresources/2.2",
+            "subarray_id": 1,
+            "dish": {
+                "receptor_ids": ["SKA001"]
+            }
+        },
+        "Single receptor (SKA036)": {
+            "interface": "https://schema.skao.int/ska-csp-assignresources/2.2",
+            "subarray_id": 1,
+            "dish": {
+                "receptor_ids": ["SKA036"]
+            }
+        },
+        "Single receptor (SKA063)": {
+            "interface": "https://schema.skao.int/ska-csp-assignresources/2.2",
+            "subarray_id": 1,
+            "dish": {
+                "receptor_ids": ["SKA063"]
+            }
+        },
+        "Single receptor (SKA100)": {
+            "interface": "https://schema.skao.int/ska-csp-assignresources/2.2",
+            "subarray_id": 1,
+            "dish": {
+                "receptor_ids": ["SKA100"]
+            }
+        },
+        "subarray 1, 4 receptors": {
+            "interface": "https://schema.skao.int/ska-csp-assignresources/2.2",
+            "subarray_id": 1,
+            "dish": {
+                "receptor_ids": ["SKA001","SKA036","SKA063","SKA100"]
+            }
+        }
+    }
+}
