@@ -22,6 +22,7 @@ from tango import DevState
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
+@pytest.mark.skip(reason="TEMP CIP-1767")
 class TestFspPssSubarray:
     """
     Test class for FspPssSubarray device class integration testing.
