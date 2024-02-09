@@ -2487,7 +2487,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on the same scan configuration.
@@ -2496,7 +2496,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2592,12 +2592,12 @@ class TestCbfSubarray:
                         ].scanID
                         == scan_id
                     )
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].obsState == ObsState.SCANNING
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -2670,7 +2670,7 @@ class TestCbfSubarray:
         config_2_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
                 "Configure_TM-CSP_v2.json",
@@ -2688,7 +2688,7 @@ class TestCbfSubarray:
         config_2_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on different scan configurations.
@@ -2698,7 +2698,7 @@ class TestCbfSubarray:
         :param config_2_file_name: JSON file for the second configuration
         :param scan_file_name: JSON file for both scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2797,7 +2797,7 @@ class TestCbfSubarray:
             )
 
             # check the rest of the configured attributes of VCCs
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].frequencyBand == band_index
                 assert test_proxies.vcc[r].subarrayMembership == sub_id
                 assert (
@@ -2834,7 +2834,7 @@ class TestCbfSubarray:
                 for idx, search_window in enumerate(
                     configuration_2["cbf"]["search_window"]
                 ):
-                    for r in vcc_receptors:
+                    for r in vcc_ids:
                         assert (
                             test_proxies.vccSw[r][idx + 1].tdcEnable
                             == search_window["tdc_enable"]
@@ -3163,12 +3163,12 @@ class TestCbfSubarray:
                         ].scanID
                         == scan_id
                     )
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].obsState == ObsState.SCANNING
             for fsp in configuration_2["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -3239,7 +3239,7 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
                 "Configure_TM-CSP_v2.json",
