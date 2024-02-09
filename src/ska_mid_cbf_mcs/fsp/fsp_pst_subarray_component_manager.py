@@ -192,7 +192,7 @@ class FspPstSubarrayComponentManager(
         self: FspPstSubarrayComponentManager, argin: List[int]
     ) -> None:
         """
-        Release assigned VCC from the FSP CORR subarray.
+        Release assigned VCC from the FSP PST subarray.
 
         :param argin: IDs of VCCs to remove.
         """
@@ -225,14 +225,10 @@ class FspPstSubarrayComponentManager(
         """
         self._deconfigure()
 
-        configuration = json.loads(configuration)
-
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._vcc_ids = []
-
         # release previously assigned VCCs and assign newly specified VCCs
         self._release_all_vcc()
+
+        configuration = json.loads(configuration)
 
         for timingBeam in configuration["timing_beam"]:
             self._assign_vcc(timingBeam["receptor_ids"])

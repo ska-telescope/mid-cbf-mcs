@@ -250,12 +250,12 @@ class FspPssSubarrayComponentManager(
         """
         self._deconfigure()
 
+        # release previously assigned VCCs and assign newly specified VCCs
+        self._release_all_vcc()
+
         configuration = json.loads(configuration)
 
         self._search_window_id = int(configuration["search_window_id"])
-
-        # release previously assigned VCCs and assign newly specified VCCs
-        self._release_all_vcc()
 
         for searchBeam in configuration["search_beam"]:
             if len(searchBeam["receptor_ids"]) != 1:

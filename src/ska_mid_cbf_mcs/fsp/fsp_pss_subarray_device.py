@@ -80,7 +80,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         max_dim_x=197,
         label="VCC IDs",
-        doc="List of VCCs used for correlation",
+        doc="List of VCCs used for PSS beamforming",
     )
 
     searchBeams = attribute(
@@ -220,7 +220,7 @@ class FspPssSubarray(CspSubElementObsDevice):
     # ------------------
 
     def read_vccIDs(self: FspPssSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspCorrSubarray.vccIDs_read) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.vccIDs_read) ENABLED START #
         """
         Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
 
@@ -228,7 +228,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         :rtype: List[int]
         """
         return self.component_manager.vcc_ids
-        # PROTECTED REGION END #    //  FspCorrSubarray.vccIDs_read
+        # PROTECTED REGION END #    //  FspPssSubarray.vccIDs_read
 
     def read_searchBeams(self: FspPssSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #

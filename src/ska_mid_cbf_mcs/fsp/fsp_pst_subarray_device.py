@@ -79,7 +79,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         max_dim_x=197,
         label="VCC IDs",
-        doc="List of VCCs used for correlation",
+        doc="List of VCCs used for PST beamforming",
     )
 
     timingBeams = attribute(
@@ -212,7 +212,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
 
     def read_vccIDs(self: FspPstSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspCorrSubarray.vccIDs_read) ENABLED START #
+        # PROTECTED REGION ID(FspPstSubarray.vccIDs_read) ENABLED START #
         """
         Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
 
@@ -220,7 +220,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         :rtype: List[int]
         """
         return self.component_manager.vcc_ids
-        # PROTECTED REGION END #    //  FspCorrSubarray.vccIDs_read
+        # PROTECTED REGION END #    //  FspPstSubarray.vccIDs_read
 
     # TODO: do we need write_receptors? All receptor adding is handled by component
     # manager. Other Fsp subarray devices do not have this
