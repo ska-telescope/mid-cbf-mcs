@@ -676,9 +676,6 @@ class CbfSubarray(CspSubElementSubarray):
             """
             component_manager = self.target
 
-            # Call this just to release all FSPs and unsubscribe to events.
-            component_manager.deconfigure()
-
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
@@ -871,6 +868,71 @@ class CbfSubarray(CspSubElementSubarray):
 
         self.logger.debug(f"obsState == {self.obsState}")
         return [[result_code], [message]]
+
+    class GoToIdleCommand(CspSubElementSubarray.GoToIdleCommand):
+        """A class for the CbfSubarray's GoToIdle command."""
+
+        def __init__(
+            self, target, op_state_model, obs_state_model, logger=None
+        ):
+            """
+            Initialise a new GoToIdleCommand instance.
+
+            :param target: the object that this base command acts upon. For
+                example, the device's component manager.
+            :type target: object
+            :param op_state_model: the op state model that this command
+                uses to check that it is allowed to run
+            :type op_state_model: :py:class:`OpStateModel`
+            :param obs_state_model: the observation state model that
+                 this command uses to check that it is allowed to run,
+                 and that it drives with actions.
+            :type obs_state_model: :py:class:`SubarrayObsStateModel`
+            :param logger: the logger to be used by this Command. If not
+                provided, then a default module logger will be used.
+            :type logger: a logger that implements the standard library
+                logger interface
+            """
+            super().__init__(
+                target=target,
+                op_state_model=op_state_model,
+                obs_state_model=obs_state_model,
+                logger=logger,
+            )
+
+        def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :return: A tuple containing a return code and a string
+                  message indicating status. The message is for
+                  information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            component_manager = self.target
+            return component_manager.go_to_idle()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string  message indicating status."
+        "The message is for information purpose only.",
+    )
+    def GoToIdle(self):
+        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+        """
+        Transit the subarray from READY to IDLE obsState.
+
+        :return: 'DevVarLongStringArray' A tuple containing a return
+            code and a string message indicating status. The message is
+            for information purpose only.
+        """
+        # NOTE: ska-tango-base class also deletes self._last_scan_configuration
+        # here, but we are choosing to preserve it even in IDLE state should there
+        # be a need to check it
+
+        command = self.get_command_object("GoToIdle")
+        (return_code, message) = command()
+        return [[return_code], [message]]
 
     class ScanCommand(CspSubElementSubarray.ScanCommand):
         """
