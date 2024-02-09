@@ -101,39 +101,39 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._receptor_id = receptor_id
         # Update HPS WIB ExpectedDishID property
         self._logger.info(f"Simulation Mode = {str(self._simulation_mode)}")
-        if not self._simulation_mode:
-            try:
-                self._logger.info(
-                    "Attempting to update WIB ExpectedDishID property..."
+        # if not self._simulation_mode:
+        try:
+            self._logger.info(
+                "Attempting to update WIB ExpectedDishID property..."
+            )
+            # Create proxy to VCC band
+            vcc_band_proxy = CbfDeviceProxy(
+                fqdn=self._vcc_band_fqdn[0], logger=self._logger
+            )
+            # Create proxy to this VCC band's WIB
+            wib_fqdn = vcc_band_proxy.get_property(
+                "WidebandInputBufferFQDN"
+            )["WidebandInputBufferFQDN"][0]
+            self._logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
+            wib_proxy = CbfDeviceProxy(fqdn=wib_fqdn, logger=self._logger)
+            self._logger.info(
+                "Created WIB proxy before updating ExpectedDishID."
+            )
+            # Update WIBs ExpectedDishID property
+            dish_id_prop = tango.utils.obj_2_property(
+                {"ExpectedDishID": self._receptor_id}
+            )
+            self._logger.info(
+                f"Setting ExpectedDishID to {self._receptor_id}"
+            )
+            wib_proxy.put_property(dish_id_prop)
+            wib_proxy.Init()
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = (
+                    f"Failure while updating ExpectedDishID; {item.reason}"
                 )
-                # Create proxy to VCC band
-                vcc_band_proxy = CbfDeviceProxy(
-                    fqdn=self._vcc_band_fqdn[0], logger=self._logger
-                )
-                # Create proxy to this VCC band's WIB
-                wib_fqdn = vcc_band_proxy.get_property(
-                    "WidebandInputBufferFQDN"
-                )["WidebandInputBufferFQDN"][0]
-                self._logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                wib_proxy = CbfDeviceProxy(fqdn=wib_fqdn, logger=self._logger)
-                self._logger.info(
-                    "Created WIB proxy before updating ExpectedDishID."
-                )
-                # Update WIBs ExpectedDishID property
-                dish_id_prop = tango.utils.obj_2_property(
-                    {"ExpectedDishID": self._receptor_id}
-                )
-                self._logger.info(
-                    f"Setting ExpectedDishID to {self._receptor_id}"
-                )
-                wib_proxy.put_property(dish_id_prop)
-                wib_proxy.Init()
-            except tango.DevFailed as df:
-                for item in df.args:
-                    log_msg = (
-                        f"Failure while updating ExpectedDishID; {item.reason}"
-                    )
-                    self._logger.error(log_msg)
+                self._logger.error(log_msg)
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
