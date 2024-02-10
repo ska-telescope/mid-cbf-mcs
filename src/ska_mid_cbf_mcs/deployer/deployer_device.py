@@ -34,11 +34,9 @@ from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
 
 __all__ = ["ECDeployer", "main"]
 
-
-# Skabasedevice
-# SKABASEDEVICE TEST
 class ECDeployer(SKABaseDevice):
     def init_device(self):
+        #TODO: Check logging instantiation
         self.logger_ = logging.getLogger("ec_deployer.py")
         # super().__init__(logger=logger)
 
@@ -59,9 +57,6 @@ class ECDeployer(SKABaseDevice):
         doc="Target Talons: Setting Talon Board Indices",
     )
 
-    # Divide the talondx_boardmap.json file into 3 smaller input jsons, store these as attributes:
-    # ds_binaries and fpga_bitstreams: for downloading artifacts
-    # PULL as a string into each attr at runtime, the commands will parse at runtime
     dsBinaries = attribute(
         dtype="DevString",
         access=AttrWriteType.READ_WRITE,
@@ -129,22 +124,6 @@ class ECDeployer(SKABaseDevice):
     # Commands
     # --------
 
-    # - generate the config jsons, where the flow will be:
-    #   - write the target talon board indices to the device's targets attribute
-    #   this will be done by the device_proxy using the attribute r/w
-    #   - write the json strings to the boardmap attributes
-    # THIS MEANS TAKING THE OUTPUTTED JSON AND STORING IT IN THE DEVICE ATTRIBUTE, WOULD THIS BE A NEW ATTRIBUTE?
-    #   - use the config_commands map and target talon boards to generate the config_commands json file for the target boards
-
-    """
-    4. CONAN Networking issue? 
-    5. Artifacts??
-    6. What the talondxconfig class do
-    "Use the config_commands map and target talon boards to generate the config_commands
-    JSON file for the target boards"
-    > What is this? 1/board we're generating for? Isn't this already in config_commands.json?
-    """
-    '''THIS ONE WORKS'''
     @command
     # 4 scripts from boardmap
     def generate_config_jsons(self) -> None:
@@ -167,23 +146,20 @@ class ECDeployer(SKABaseDevice):
             tango_db = json.load(file)
             self._tango_db = json.dumps(tango_db)
 
-    # # #- aim is for it to be a smart downloader that can understand which binaries have already been downloaded and doesn't redownload if not needed
-    """
-    WHAT IS /ARTIFACTS/ ???
-    RAW_USER_ACCOUNT + RAW_USER_PASS
-    """
-
+    #- aim is for it to be a smart downloader that can understand which binaries have already been downloaded and doesn't redownload if not needed
     @command
     def download_artifacts(self) -> None:
         self.logger_.info("Download Artifacts")
+        #TODO: Unhard code this
+        os.system("conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/ False")
+        os.system("conan remote list")
+
         download_ds_binaries(json.loads(self._ds_binaries), self.logger_)
         download_fpga_bitstreams(
             json.loads(self._fpga_bitstreams), self.logger_
         )
 
-    # # # #- configure the tango DB
-    # # # #- sends the config_commands json to the CbfController
-    # # # #- uses the tango_db json to populate the database
+    #- configure the tango DB
     @command
     def configure_db(self) -> None:
         self.logger_.info(

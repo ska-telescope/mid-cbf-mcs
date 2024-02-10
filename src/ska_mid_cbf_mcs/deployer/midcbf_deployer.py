@@ -191,7 +191,7 @@ def configure_tango_db(inputjson: dict, logger_):
     inputjson = inputjson.get("db_servers", "")
     # Open bitstream file and load dictionary
     bitstream_f = open(
-        "/app/images/ska-mid-cbf-engineering-console-deployer/artifacts/fpga-talon/bin/talon_dx-tdc_base-tdc_vcc_processing.json",
+        "/app/src/ska_mid_cbf_mcs/deployer/artifacts/fpga-talon/bin/talon_dx-tdc_base-tdc_vcc_processing.json",
         "r",
     )
     bitstream_json = json.load(bitstream_f)
@@ -292,7 +292,7 @@ def download_raw_artifacts(api_url, name, filename):
         bytes_downloaded = 0
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "wb") as fd:
-            test_path = "/app/src/ska_mid_cbf_mcs/deployer/"
+            test_path = "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
             logger_.debug(
                 f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)}"
             )
@@ -337,7 +337,7 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
     :param ds_binaries: JSON string specifying which DS binaries to download.
     :param clear_conan_cache: if true, Conan packages are fetched from remote; default true.
     """
-    conan = ConanWrapper("/app/src/ska_mid_cbf_mcs/deployer/")
+    conan = ConanWrapper("/app/src/ska_mid_cbf_mcs/deployer/artifacts")
     logger_.info(f"Conan version: {conan.version()}")
     if clear_conan_cache:
         logger_.info(f"Conan local cache: {conan.search_local_cache()}")
