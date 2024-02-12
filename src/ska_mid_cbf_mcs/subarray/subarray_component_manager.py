@@ -761,33 +761,15 @@ class CbfSubarrayComponentManager(
         )
 
     @check_communicating
-    def deconfigure(
+    def _deconfigure(
         self: CbfSubarrayComponentManager,
     ) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
-        # TODO: component_manager.deconfigure is invoked by the base class v0.11.3
-        # GoToIdleCommand, while it is also being used by ConfigureScan, ObsReset
-        # and Restart here (in the CbfSubarray); this should get simplified to be
-        # more useful for general deconfiguration, with command/state-specific logic
-        # handled elsewhere, during the ska-tango-base upgrade, where GoToIdle
-        # will be replaced by the End command
+        # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
+        # ObsReset and Restart here in the CbfSubarray
 
-        # if deconfiguring from READY, which can occur if ConfigureScan is called
-        # from READY or if GoToIdle was called, issue GoToIdle to VCCs/FSP subarrays
         if self._ready:
-            for group in [
-                self._group_vcc,
-                self._group_fsp_corr_subarray,
-                self._group_fsp_pss_subarray,
-                self._group_fsp_pst_subarray,
-            ]:
-                if group.get_size() > 0:
-                    results = group.command_inout("GoToIdle")
-                    self._logger.info("Results from GoToIdle:")
-                    for res in results:
-                        self._logger.info(res.get_data())
-
             if self._group_fsp.get_size() > 0:
                 # change FSP subarray membership
                 data = tango.DeviceData()
@@ -795,6 +777,15 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(data)
                 self._group_fsp.command_inout("RemoveSubarrayMembership", data)
                 self._group_fsp.remove_all()
+
+            for group in [
+                self._group_fsp_corr_subarray,
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray,
+            ]:
+                if group.get_size() > 0:
+                    group.remove_all()
+
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -818,7 +809,29 @@ class CbfSubarrayComponentManager(
         self._last_received_jones_matrix = "{}"
         self._last_received_timing_beam_weights = "{}"
 
+    def go_to_idle(
+        self: CbfSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Send subarray from READY to IDLE.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self._deconfigure()
+
+        # issue GoToIdle to assigned VCCs
+        if self._group_vcc.get_size() > 0:
+            results = self._group_vcc.command_inout("GoToIdle")
+            self._logger.info("Results from VCC GoToIdle:")
+            for res in results:
+                self._logger.info(res.get_data())
+
         self.update_component_configuration(False)
+
+        return (ResultCode.OK, "GoToIdle command completed OK")
 
     @check_communicating
     def validate_input(
@@ -1488,6 +1501,9 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        # deconfigure to reset assigned FSPs and unsubscribe to events.
+        self._deconfigure()
+
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
@@ -1691,18 +1707,6 @@ class CbfSubarrayComponentManager(
         # Configure FSP.
         # TODO add VLBI once implemented
 
-        # remove any previously assigned FSPs
-        for group in [
-            self._group_fsp_corr_subarray,
-            self._group_fsp_pss_subarray,
-            self._group_fsp_pst_subarray,
-        ]:
-            if group.get_size() > 0:
-                self._logger.debug(
-                    "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
-                )
-                group.remove_all()
-
         for fsp in configuration["fsp"]:
             # Configure fsp_id.
             fsp_id = int(fsp["fsp_id"])
@@ -1712,15 +1716,6 @@ class CbfSubarrayComponentManager(
             fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fsp_id - 1]
 
             self._group_fsp.add(self._fqdn_fsp[fsp_id - 1])
-            self._group_fsp_corr_subarray.add(
-                self._fqdn_fsp_corr_subarray_device[fsp_id - 1]
-            )
-            self._group_fsp_pss_subarray.add(
-                self._fqdn_fsp_pss_subarray_device[fsp_id - 1]
-            )
-            self._group_fsp_pst_subarray.add(
-                self._fqdn_fsp_pst_subarray_device[fsp_id - 1]
-            )
 
             # Set simulation mode of FSPs to subarray sim mode
             self._logger.info(
@@ -1803,6 +1798,9 @@ class CbfSubarrayComponentManager(
 
                     self._corr_config.append(fsp)
                     self._corr_fsp_list.append(fsp["fsp_id"])
+                    self._group_fsp_corr_subarray.add(
+                        self._fqdn_fsp_corr_subarray_device[fsp_id - 1]
+                    )
 
                 # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
                 case "PSS-BF":
@@ -1830,6 +1828,9 @@ class CbfSubarrayComponentManager(
                                 ]
                     self._pss_config.append(fsp)
                     self._pss_fsp_list.append(fsp["fsp_id"])
+                    self._group_fsp_pss_subarray.add(
+                        self._fqdn_fsp_pss_subarray_device[fsp_id - 1]
+                    )
 
                 case "PST-BF":
                     for timingBeam in fsp["timing_beam"]:
@@ -1856,6 +1857,9 @@ class CbfSubarrayComponentManager(
                                 ]
                     self._pst_config.append(fsp)
                     self._pst_fsp_list.append(fsp["fsp_id"])
+                    self._group_fsp_pst_subarray.add(
+                        self._fqdn_fsp_pst_subarray_device[fsp_id - 1]
+                    )
 
         # Call ConfigureScan for all FSP Subarray devices (CORR/PSS/PST)
         # NOTE:_corr_config is a list of fsp config JSON objects, each
@@ -2234,9 +2238,12 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
+        # reset ready flag
+        self._ready = False
+
         for group in [
             self._group_vcc,
-            self._group_fsp_corr_subarray,
+            self._group_fsp_corr_subarray,  # TODO CIP-1850 Abort/ObsReset per FSP subarray
             self._group_fsp_pss_subarray,
             self._group_fsp_pst_subarray,
         ]:
@@ -2245,50 +2252,6 @@ class CbfSubarrayComponentManager(
                 self._logger.info("Results from Abort:")
                 for res in results:
                     self._logger.info(res.get_data())
-
-    @check_communicating
-    def restart(self: CbfSubarrayComponentManager) -> None:
-        """
-        Restart to EMPTY from abort/fault.
-        """
-        # if subarray is in FAULT, we must first abort VCC and FSP operation
-        # this will allow us to call ObsReset on them even if they are not in FAULT
-        if self.obs_faulty:
-            self.abort()
-            # use callback to reset FAULT state
-            self._component_obs_fault_callback(False)
-
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-        self.deconfigure()
-
-        # send Vcc devices to IDLE, remove all assigned VCCs
-        if self._group_vcc.get_size() > 0:
-            self._group_vcc.command_inout("ObsReset")
-
-        # remove all assigned VCCs to return to EMPTY
-        self.remove_all_receptors()
-
-        try:
-            # remove any previously assigned FSPs
-            # TODO VLBI
-            for group in [
-                self._group_fsp_corr_subarray,
-                self._group_fsp_pss_subarray,
-                self._group_fsp_pst_subarray,
-            ]:
-                if group.get_size() > 0:
-                    results = group.command_inout("ObsReset")
-                    self._logger.info("Results from ObsReset:")
-                    for res in results:
-                        self._logger.info(res.get_data())
-                    self._logger.debug(
-                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
-                    )
-                    group.remove_all()
-
-        except tango.DevFailed:
-            self._component_obs_fault_callback(True)
 
     @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
@@ -2302,33 +2265,41 @@ class CbfSubarrayComponentManager(
             # use callback to reset FAULT state
             self._component_obs_fault_callback(False)
 
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-        self.deconfigure()
-
         try:
+            # send Vcc devices to IDLE
             if self._group_vcc.get_size() > 0:
                 self._group_vcc.command_inout("ObsReset")
 
-            # remove any previously assigned FSPs
-            # TODO VLBI
+            # send any previously assigned FSPs to IDLE
             for group in [
                 self._group_fsp_corr_subarray,
                 self._group_fsp_pss_subarray,
                 self._group_fsp_pst_subarray,
             ]:
+                # TODO CIP-1850 Abort/ObsReset per FSP subarray
                 if group.get_size() > 0:
                     results = group.command_inout("ObsReset")
                     self._logger.info("Results from ObsReset:")
                     for res in results:
                         self._logger.info(res.get_data())
-                    self._logger.debug(
-                        "removing all fqdns from group_fsp_corr/pss/pst_subarray:"
-                    )
-                    group.remove_all()
 
         except tango.DevFailed:
             self._component_obs_fault_callback(True)
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self._deconfigure()
+
+    @check_communicating
+    def restart(self: CbfSubarrayComponentManager) -> None:
+        """
+        Restart to EMPTY from abort/fault.
+        """
+        # leverage obsreset to send assigned resources to IDLE and deconfigure
+        self.obsreset()
+
+        # remove all assigned VCCs to return to EMPTY
+        self.remove_all_receptors()
 
     def update_component_resources(
         self: CbfSubarrayComponentManager, resourced: bool
@@ -2356,15 +2327,21 @@ class CbfSubarrayComponentManager(
 
         :param configured: whether the component is configured.
         """
-        self._logger.debug(f"update_component_configuration({configured})")
-        if configured:
-            # perform "component_configured" if not previously configured
-            if not self._ready:
-                self._component_configured_callback(True)
-        elif self._ready:
+        self._logger.debug(
+            f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
+        )
+        # perform component_configured/unconfigured callback if in a VALID case
+        # Cases:
+        # configured == False and self._ready == False -> INVALID: cannot issue component_unconfigured from IDLE
+        # configured == True and self._ready == False -> VALID: can issue component_configured from IDLE
+        # configured == False and self._ready == True -> VALID: can issue component_unconfigured from READY
+        # configured == True and self._ready == True -> INVALID: cannot issue component_configured from READY
+        if configured and not self._ready:
+            self._component_configured_callback(True)
+            self._ready = True
+        elif not configured and self._ready:
             self._component_configured_callback(False)
-
-        self._ready = configured
+            self._ready = False
 
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, receptor: str
