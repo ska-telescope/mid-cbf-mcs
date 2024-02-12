@@ -241,25 +241,6 @@ def mock_vcc_band() -> unittest.mock.Mock:
     builder.add_command("EndScan", None)
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
-    builder.add_property(
-        "WidebandInputBufferFQDN",
-        {
-            "WidebandInputBufferFQDN": [
-                "talondx-001/wideband-input-buffer/wideband-input-buffer"
-            ]
-        },
-    )
-    return builder()
-
-
-@pytest.fixture()
-def mock_wib() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_attribute("DishID", "SKA001")
-    builder.add_property(
-        "ExpectedDishID",
-        {"ExpectedDishID": ["SKA123"]},
-    )
     return builder()
 
 
@@ -283,7 +264,6 @@ def initial_mocks(
     mock_talon_lru: unittest.mock.Mock,
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
-    mock_wib: unittest.mock.Mock,
     mock_sw: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
@@ -301,7 +281,6 @@ def initial_mocks(
         "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
-        "talondx-001/wideband-input-buffer/wideband-input-buffer": mock_wib,
         "mid_csp_cbf/vcc_sw1/001": mock_sw,
         "mid_csp_cbf/vcc_sw2/001": mock_sw,
     }

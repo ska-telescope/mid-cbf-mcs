@@ -1916,13 +1916,13 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for vcc
                 for jj, rec in enumerate(vcc_receptors):
-                    # get the vcc device proxy (dp) corresponding to rec
+                    # get the vcc device proxy (dp) corresponding to i_rec
                     this_vcc = (
                         test_proxies.receptor_utils.receptor_id_to_vcc_id[rec]
                     )
                     vcc_dp = test_proxies.vcc[this_vcc]
 
-                    # Extract the delay model corresponding to receptor rec:
+                    # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
                     for entry in input_delay_model_obj["delay_details"]:
