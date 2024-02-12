@@ -14,8 +14,8 @@ TANGO device class for controlling and monitoring the web power switch that dist
 """
 
 from __future__ import annotations
-import time
 
+import time
 from typing import Optional, Tuple
 
 # tango imports
