@@ -14,6 +14,7 @@ TANGO device class for controlling and monitoring the web power switch that dist
 """
 
 from __future__ import annotations
+import time
 
 from typing import Optional, Tuple
 
@@ -290,10 +291,13 @@ class PowerSwitch(SKABaseDevice):
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.ON:
-                    return (
-                        ResultCode.FAILED,
-                        f"Power on failed, outlet is in power mode {power_mode}",
-                    )
+                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+                    time.sleep(5)
+                    if power_mode != PowerMode.ON:
+                        return (
+                            ResultCode.FAILED,
+                            f"Power on failed, outlet is in power mode {power_mode}",
+                        )
             except AssertionError as e:
                 self.logger.error(e)
                 return (
@@ -347,10 +351,14 @@ class PowerSwitch(SKABaseDevice):
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.OFF:
-                    return (
-                        ResultCode.FAILED,
-                        f"Power off failed, outlet is in power mode {power_mode}",
-                    )
+                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+                    time.sleep(5)
+                    power_mode = component_manager.get_outlet_power_mode(argin)
+                    if power_mode != PowerMode.OFF:
+                        return (
+                            ResultCode.FAILED,
+                            f"Power off failed, outlet is in power mode {power_mode}",
+                        )
             except AssertionError as e:
                 self.logger.error(e)
                 return (
