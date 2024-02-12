@@ -91,7 +91,7 @@ to configure a correlation scan. Return calls are not shown.
 .. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
 
 The sequence diagram below shows additional detail for configuration of 
-the VCC for a correlation scan.
+the VCC for a correlation scan, following the ConfigureScan call from LMC.
 
 .. uml:: ../../diagrams/configure-scan-vcc.puml
 
