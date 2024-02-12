@@ -13,6 +13,8 @@ BoxBackgroundColor #F0FFFF
 
 title MCS Correlation Configure Scan Band 1 - VCC Detail\n
 
+participant "CSP_Mid\n.LMC" as lmc
+
 box "MCS"
 participant "Mid.CBF\nSubarray" as subarray
 participant "VCC\n" as vcc
@@ -27,19 +29,28 @@ participant "VCC\n" as vccdevice
 participant "Wide Band\nInput Buffer" as wb
 end box
 
-
-subarray    -> vcc          : GoToIdle
-vcc         -> hpsvcc       : Unconfigure
-hpsvcc      -> vccband1     : Unconfigure
-hpsvcc      -> vccband1     : Disable
-subarray    -> vcc          : ConfigureBand(int)
-vcc         -> hpsvcc       : ConfigureBand(json_str)
+lmc         -> subarray     : ConfigureScan(json_str)
+subarray    -> fsp          : Deconfigure
+subarray    -> subarray     : Calc dish_sample_rate
+note right                  : dish_sample_rate (Band 1/2) = 3960 MHz + (1 * K * <U+0394>F)
+subarray    -> vcc          : ConfigureBand(json_str)
+vcc         -> hpsvcc       : ConfigureBand(int)
+hpsvcc      -> vccband1     : On
 vcc         -> vccband1     : SetInternalParameters(json_str)
+vccband1    -> vccdevice    : write_attribute(gain)
 subarray    -> vcc          : ConfigureScan(json_str)
 vcc         -> vccband1     : ConfigureScan(json_str)
+vccband1    -> vccband1     : State Transition: CONFIGURE_INVOKED
 vccband1    -> cs           : write_attribute(input_select)
+note right                  : stream_rate = dish_sample_rate / 18
 vccband1    -> vccdevice    : write_attribute(frame_count)
+note right                  : frame_count = stream_rate
 vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
+vccband1    -> vccband1     : Sleep(2s)
+vccband1    -> vccband1     : Verify configuration (Compare dish IDs, sample rates)
+vccband1    -> vccband1     : State Transition: CONFIGURE_COMPLETED
+vcc         -> vcc          : Ready
+subarray    -> subarray     : Ready
 
 
 @enduml
