@@ -293,6 +293,7 @@ class PowerSwitch(SKABaseDevice):
                 if power_mode != PowerMode.ON:
                     # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
                     time.sleep(5)
+                    power_mode = component_manager.get_outlet_power_mode(argin)
                     if power_mode != PowerMode.ON:
                         return (
                             ResultCode.FAILED,
