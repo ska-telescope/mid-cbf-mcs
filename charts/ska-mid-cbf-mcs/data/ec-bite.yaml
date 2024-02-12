@@ -1,8 +1,10 @@
 name: ecbite
 function: ECBite
-domain: engineering-console
+domain: mid-csp-cbf
 command: "ECBite"
 instances: ["ecbite"]
+depends_on:
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -23,13 +25,13 @@ server:
     - name: "ECBite"
       devices:
       - name: "mid_csp_cbf/ec/bite"
-image:
-  registry: "{{.Values.midcbf.image.registry}}"
-  image: "{{.Values.midcbf.image.image}}"
-  tag: "{{.Values.midcbf.image.tag}}"
-  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
 environment_variables:
 - name: BITE_DATA_SRC
   value: "lstv"
 - name: TANGO_HOST
   value: "{{ .Values.global.tango_host }}"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

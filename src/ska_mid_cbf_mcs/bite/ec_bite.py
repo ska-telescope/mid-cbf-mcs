@@ -9,7 +9,7 @@ import os
 
 from ska_mid_cbf_mcs.bite.bite_device_client.bite_client import BiteClient
 from ska_tango_base import SKABaseDevice
-from tango import AttrWriteType
+from tango import AttrWriteType,DevState
 from tango.server import attribute, command, run
 
 # Set up the logger to print neatly to terminal
@@ -172,7 +172,8 @@ class ECBite(SKABaseDevice):
 
     def init_device(self):
         SKABaseDevice.init_device(self)
-        # Set defualt values
+        self.set_state(DevState.INIT)
+        # Set default values
         self._test_id = "Test_1"
         self._boards = [3]
         self._bite_json = "cbf_input_data"
@@ -211,6 +212,8 @@ class ECBite(SKABaseDevice):
             self.k_lut[str(v["vcc"])] = v["k"]
 
         logger_.info("Config JSON files read successfully")
+        logger_.info("Device setup has finished")
+
 
     # --GETTERS AND SETTERS FOR TANGO DEVICE ATTRIBUTES--
     def set_test_id(self, test_id):
