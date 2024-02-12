@@ -292,6 +292,7 @@ class PowerSwitch(SKABaseDevice):
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.ON:
                     # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+                    self.logger.info("The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode...")
                     time.sleep(5)
                     power_mode = component_manager.get_outlet_power_mode(argin)
                     if power_mode != PowerMode.ON:
@@ -353,6 +354,7 @@ class PowerSwitch(SKABaseDevice):
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.OFF:
                     # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+                    self.logger.info("The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode...")
                     time.sleep(5)
                     power_mode = component_manager.get_outlet_power_mode(argin)
                     if power_mode != PowerMode.OFF:
