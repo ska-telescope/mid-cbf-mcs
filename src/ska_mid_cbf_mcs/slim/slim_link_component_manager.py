@@ -331,11 +331,11 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Contingency incase IdleCtrlWord was corrupted
             if idle_ctrl_word is None:
-                self._logger.error(
+                self._logger.warning(
                     "SlimTx IdleCtrlWord could not be read. Using random number instead."
                 )
                 random.seed()
-                idle_ctrl_word = random.randint(0, 2e32)
+                idle_ctrl_word = random.randint(0, 2e64)
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             self._logger.info(
