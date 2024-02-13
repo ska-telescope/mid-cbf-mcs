@@ -8,7 +8,6 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 0.12.22
 *******
 * CIP-2050 Added temporary timeout in power_switch_device on/off to possible fix async issue
-* CIP-1940 Updated configure_scan sequence diagram in ReadTheDocs
 
 0.12.21
 *******
