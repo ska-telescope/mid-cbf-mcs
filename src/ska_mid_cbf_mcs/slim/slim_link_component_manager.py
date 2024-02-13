@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from typing import Callable, Optional
-from uuid import UUID
 
 import tango
 from ska_tango_base.commands import ResultCode
@@ -333,7 +332,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             # If Tx's IdleCtrlWord reads as None, regenerate.
             if idle_ctrl_word is None:
                 idle_ctrl_word = (
-                    UUID(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                    hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
                 )
                 self._logger.warning(
                     f"SlimTx IdleCtrlWord could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
