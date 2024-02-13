@@ -38,8 +38,9 @@ vcc         -> vccband1     : ConfigureScan(json_str)
 vccband1    -> cs           : write_attribute(input_select)
 vccband1    -> vccdevice    : write_attribute(frame_count)
 vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
-vccband1    -> vccband1     : verify_configuration()
 vccband1    -> wb           : read_attributes(meta_transport_sample_rate, rx_sample_rate, dish_id)
+vccband1    -> vccband1     : verify_configuration()
+
 
 
 @enduml
