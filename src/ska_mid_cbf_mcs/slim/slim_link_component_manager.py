@@ -327,15 +327,16 @@ class SlimLinkComponentManager(CbfComponentManager):
             )
 
             # Sync the idle ctrl word between Tx and Rx
-            idle_ctrl_word = self.tx_idle_ctrl_word
+            # idle_ctrl_word = self.tx_idle_ctrl_word
+            idle_ctrl_word = None
 
             # If Tx's IdleCtrlWord reads as None, regenerate.
             if idle_ctrl_word is None:
-                self._logger.warning(
-                    "SlimTx IdleCtrlWord could not be read. Using random number instead."
-                )
                 idle_ctrl_word = (
                     UUID(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                )
+                self._logger.warning(
+                    f"SlimTx IdleCtrlWord could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
                 )
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
