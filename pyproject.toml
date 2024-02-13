@@ -53,6 +53,7 @@ pysnmp = "4.4.12"
 pyasn1 = "0.4.8"
 scipy = "^1.12.0"
 tqdm = "^4.66.1"
+jsonref = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"
