@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import logging
-import random
+from uuid import UUID
 from typing import Callable, Optional
 
 import tango
@@ -329,13 +329,12 @@ class SlimLinkComponentManager(CbfComponentManager):
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
 
-            # Contingency incase IdleCtrlWord was corrupted
+            # If Tx's IdleCtrlWord reads as None, regenerate.
             if idle_ctrl_word is None:
                 self._logger.warning(
                     "SlimTx IdleCtrlWord could not be read. Using random number instead."
                 )
-                random.seed()
-                idle_ctrl_word = random.randint(0, 2e64)
+                idle_ctrl_word = UUID(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             self._logger.info(
