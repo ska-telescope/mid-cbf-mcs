@@ -7,10 +7,11 @@ import json
 import logging
 import os
 
-from ska_mid_cbf_mcs.bite.bite_device_client.bite_client import BiteClient
 from ska_tango_base import SKABaseDevice
-from tango import AttrWriteType,DevState
+from tango import AttrWriteType, DevState
 from tango.server import attribute, command, run
+
+from ska_mid_cbf_mcs.bite.bite_device_client.bite_client import BiteClient
 
 # Set up the logger to print neatly to terminal
 LOG_FORMAT = "[THREAD: %(threadName)s]->[ec_bite.py: line %(lineno)s]%(levelname)s: %(message)s"
@@ -30,9 +31,11 @@ EXTERNAL_CONFIG_DIR = os.path.join(
 )
 """
 
-## TEMP FILE DIRS to hold JSON data while running in MCS
+# TEMP FILE DIRS to hold JSON data while running in MCS
 TEMP_LOC = os.path.dirname(__file__)
-TEST_PARAMS_DIR = os.path.join(TEMP_LOC,"temp_json_file_storage/test_parameters")
+TEST_PARAMS_DIR = os.path.join(
+    TEMP_LOC, "temp_json_file_storage/test_parameters"
+)
 CBF_INPUT_DATA_DIR = os.path.join(TEST_PARAMS_DIR, "cbf_input_data")
 BITE_CONFIGS_DIR = os.path.join(CBF_INPUT_DATA_DIR, "bite_config_parameters")
 EXTERNAL_CONFIG_DIR = os.path.join(
@@ -47,9 +50,9 @@ filters_path = os.path.join(BITE_CONFIGS_DIR, "filters.json")
 
 
 class ECBite(SKABaseDevice):
-    """ 
+    """
     TANGO device for handling the configuration and management of BITE tests.
-    Allows for users to configure board setup via TANGO attributes, 
+    Allows for users to configure board setup via TANGO attributes,
     then use JSON files or default test setup to run test data through the boards.
     Can use Test # or string of data config name to pull from JSON files to run specified tests.
     Currently does not allow for writing of test data manually on call.
@@ -74,8 +77,6 @@ class ECBite(SKABaseDevice):
         self.dish_id_lut = {}
         self.k_lut = {}
     """
-    
-
 
     # -- TANGO DEVICE ATTRIBUTES--
     test_id = attribute(
@@ -203,7 +204,8 @@ class ECBite(SKABaseDevice):
 
         # Read in configuartion of dish parameters
         with open(
-            os.path.join(EXTERNAL_CONFIG_DIR, "initial_system_param.json"), encoding="utf-8"
+            os.path.join(EXTERNAL_CONFIG_DIR, "initial_system_param.json"),
+            encoding="utf-8",
         ) as file:
             self.sys_param = json.loads(file.read())
         for r, v in self.sys_param["dish_parameters"].items():
@@ -212,7 +214,6 @@ class ECBite(SKABaseDevice):
 
         logger_.info("Config JSON files read successfully")
         logger_.info("Device setup has finished")
-
 
     # --GETTERS AND SETTERS FOR TANGO DEVICE ATTRIBUTES--
     def set_test_id(self, test_id):
@@ -241,7 +242,7 @@ class ECBite(SKABaseDevice):
 
     def set_bite_config(self, bite_config):
         """TANGO function that sets the test type to be used for testing,
-          when using the bit config method"""
+        when using the bit config method"""
         self._bite_config = bite_config
 
     def get_bite_inital_timestamp_time_offset(self):
@@ -262,7 +263,7 @@ class ECBite(SKABaseDevice):
 
     def get_input_data(self):
         """TANGO function that returns the input data to be used
-          if using the input data config mode"""
+        if using the input data config mode"""
         return self._input_data
 
     def set_input_data(self, input_data):
@@ -271,12 +272,12 @@ class ECBite(SKABaseDevice):
 
     def get_config_method(self):
         """TANGO function that gets the config method string,
-          used to choose how to program boards"""
+        used to choose how to program boards"""
         return self._config_method
 
     def set_config_method(self, config_method):
         """TANGO function that sets the config method string,
-          used to choose how to program boards"""
+        used to choose how to program boards"""
         self._config_method = config_method
 
     def get_talon_instance(self):
@@ -301,7 +302,7 @@ class ECBite(SKABaseDevice):
         dtype_out=str, doc_out="A list of the currently configured boards"
     )
     def generate_bite_data(self):
-        """ 
+        """
         Using the data set in the BITE TANGO device, generates tests to be run on the boards.
         Uses threading to be able to work on multiple boards at once.
         The Config Method set in the BITE device will determine how this data is read in:
@@ -417,7 +418,7 @@ class ECBite(SKABaseDevice):
     # Stops LSTV replay using a configured bite client
     @command(dtype_out=str)
     def stop_lstv_replay(self):
-        """ Stops LSTV replay for configured boards"""
+        """Stops LSTV replay for configured boards"""
         logger_.info("Stopping LSTV replay...")
         for b, receptor in enumerate(self._bite_receptors):
             # initialize a BITE server using formating for server instance, no UML logging
@@ -441,6 +442,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(ECBite.main) ENABLED START #
     return run((ECBite,), args=args, **kwargs)
     # PROTECTED REGION END # // ECBite.main
+
 
 if __name__ == "__main__":
     main()

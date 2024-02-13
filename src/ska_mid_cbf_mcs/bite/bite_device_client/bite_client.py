@@ -12,17 +12,18 @@ from typing import Any
 import numpy as np
 import scipy.stats
 import tango
-import ska_mid_cbf_mcs.bite.tango_db_ops as tango_db_ops
 import tqdm
 from jsonschema import validate
 from tango import DeviceProxy
+
+import ska_mid_cbf_mcs.bite.tango_db_ops as tango_db_ops
 
 TEST_PARAMS_DIR = os.path.join(
     os.getcwd(), "ska-mid-cbf-engineering-tests/test_parameters"
 )
 TEST_DATA_DIR = os.path.join(TEST_PARAMS_DIR, "cbf_input_data")
 BITE_CONFIGS_DIR = os.path.join(TEST_DATA_DIR, "bite_config_parameters")
-#TODO: Temp alterations to allow mcs to find these files
+# TODO: Temp alterations to allow mcs to find these files
 """
 DEVICE_SERVER_LIST_DIR = os.path.join(
     os.getcwd(),
