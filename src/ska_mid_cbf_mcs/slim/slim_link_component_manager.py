@@ -10,8 +10,8 @@
 from __future__ import annotations
 
 import logging
-from uuid import UUID
 from typing import Callable, Optional
+from uuid import UUID
 
 import tango
 from ska_tango_base.commands import ResultCode
@@ -334,7 +334,9 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._logger.warning(
                     "SlimTx IdleCtrlWord could not be read. Using random number instead."
                 )
-                idle_ctrl_word = UUID(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                idle_ctrl_word = (
+                    UUID(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                )
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             self._logger.info(
