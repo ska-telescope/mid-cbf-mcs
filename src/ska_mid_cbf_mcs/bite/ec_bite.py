@@ -82,7 +82,6 @@ class ECBite(SKABaseDevice):
         label="Test ID to run",
         dtype=str,
         access=AttrWriteType.READ_WRITE,
-        min_value=0,
         fget="get_test_id",
         fset="set_test_id",
     )
