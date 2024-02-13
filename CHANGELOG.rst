@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.22
+*******
+* CIP-2050 Added temporary timeout in power_switch_device on/off to possible fix async issue
+
 0.12.21
 *******
 * CIP-1356 Fixed CbfSubarray configure from READY failure
