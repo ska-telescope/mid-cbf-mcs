@@ -331,7 +331,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             
             # Contingency incase IdleCtrlWord was corrupted
             if idle_ctrl_word is None:
-                self._logger.debug("Tx IdleCtrlWord could not be read. Using random number instead.")
+                self._logger.error("SlimTx IdleCtrlWord could not be read. Using random number instead.")
                 random.seed()
                 idle_ctrl_word = random.randint(0, 2e32)
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
