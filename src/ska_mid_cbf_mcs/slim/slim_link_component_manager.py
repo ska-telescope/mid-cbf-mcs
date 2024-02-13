@@ -10,9 +10,9 @@
 from __future__ import annotations
 
 import logging
+import random
 from typing import Callable, Optional
 
-import random
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
@@ -328,14 +328,16 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
-            
+
             # Contingency incase IdleCtrlWord was corrupted
             if idle_ctrl_word is None:
-                self._logger.error("SlimTx IdleCtrlWord could not be read. Using random number instead.")
+                self._logger.error(
+                    "SlimTx IdleCtrlWord could not be read. Using random number instead."
+                )
                 random.seed()
                 idle_ctrl_word = random.randint(0, 2e32)
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
-                
+
             self._logger.info(
                 f"Tx idle_ctrl_word: {idle_ctrl_word} type: {type(idle_ctrl_word)}"
             )
