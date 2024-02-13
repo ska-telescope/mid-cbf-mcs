@@ -96,11 +96,13 @@ the VCC for a correlation scan, following the ConfigureScan call from LMC.
 .. uml:: ../../diagrams/configure-scan-vcc.puml
 
 When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
+
 - "frequency_band"
 - "dish_sample_rate"
 - "samples_per_frame"
 
 When the Subarray calls **ConfigureScan**, the jsonstr argument contains:
+
 - "config_id"
 - "frequency_band"
 - "band_5_tuning"
