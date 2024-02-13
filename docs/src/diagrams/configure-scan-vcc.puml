@@ -20,7 +20,7 @@ end box
 
 box "HPS"
 participant "HPS VCC\nController" as hpsvcc
-participant "HPC VCC\nBand1&2" as vccband1
+participant "HPS VCC\nBand1&2" as vccband1
 participant "Circuit\nSwitch" as cs
 participant "VCC\n" as vccdevice
 participant "Wide Band\nInput Buffer" as wb
