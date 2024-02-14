@@ -80,7 +80,7 @@ class TestSlimLinkComponentManager:
             ),
             (
                 "pass",
-                "mid_csp_cbf/slim-tx-rx/fs-txtest-alt",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest_icw_none",
                 "mid_csp_cbf/slim-tx-rx/fs-rxtest",
             ),
             (
@@ -117,6 +117,7 @@ class TestSlimLinkComponentManager:
 
         match test_type:
             case "fail":
+                # Expect failure from tx_device_name being empty.
                 slim_link_component_manager.rx_device_name = rx_name
             case _:
                 slim_link_component_manager.tx_device_name = tx_name
@@ -141,8 +142,8 @@ class TestSlimLinkComponentManager:
             ),
             (
                 "fail_1",
-                "mid_csp_cbf/slim-tx-rx/fs-txtest-alt",
-                "mid_csp_cbf/slim-tx-rx/fs-rxtest-alt",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest_bad_connection",
             ),
             (
                 "fail_2",
@@ -178,10 +179,12 @@ class TestSlimLinkComponentManager:
 
         match test_type:
             case "fail_1":
+                # Expect complaint about ICW mismatch.
                 slim_link_component_manager._rx_device_proxy.idle_ctrl_word = (
                     123
                 )
             case "fail_2":
+                # Expect complaint about devices not being connected.
                 slim_link_component_manager._tx_device_proxy = None
 
         result = slim_link_component_manager.verify_connection()

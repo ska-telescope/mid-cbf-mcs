@@ -223,7 +223,7 @@ def mock_rx() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_tx_alt() -> unittest.mock.Mock:
+def mock_tx_icw_none() -> unittest.mock.Mock:
     """
     Return an alternate mock SLIM-tx device proxy for failing tests
 
@@ -245,7 +245,7 @@ def mock_tx_alt() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_rx_alt() -> unittest.mock.Mock:
+def mock_rx_bad_connection() -> unittest.mock.Mock:
     """
     Return an alternate mock SLIM-rx device proxy for failing tests
 
@@ -275,8 +275,8 @@ def mock_rx_alt() -> unittest.mock.Mock:
 def initial_mocks(
     mock_tx: unittest.mock.Mock,
     mock_rx: unittest.mock.Mock,
-    mock_tx_alt: unittest.mock.Mock,
-    mock_rx_alt: unittest.mock.Mock,
+    mock_tx_icw_none: unittest.mock.Mock,
+    mock_rx_bad_connection: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -289,6 +289,6 @@ def initial_mocks(
     return {
         "mid_csp_cbf/slim-tx-rx/fs-txtest": mock_tx,
         "mid_csp_cbf/slim-tx-rx/fs-rxtest": mock_rx,
-        "mid_csp_cbf/slim-tx-rx/fs-txtest-alt": mock_tx_alt,
-        "mid_csp_cbf/slim-tx-rx/fs-rxtest-alt": mock_rx_alt,
+        "mid_csp_cbf/slim-tx-rx/fs-txtest_icw_none": mock_tx_icw_none,
+        "mid_csp_cbf/slim-tx-rx/fs-rxtest_bad_connection": mock_rx_bad_connection,
     }
