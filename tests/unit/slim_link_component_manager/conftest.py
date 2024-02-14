@@ -223,8 +223,60 @@ def mock_rx() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_tx_alt() -> unittest.mock.Mock:
+    """
+    Return an alternate mock SLIM-tx device proxy for failing tests
+
+    :return: a mock SLIM-tx device
+    """
+    builder = MockDeviceBuilder()
+
+    builder.add_attribute("idle_ctrl_word", None)
+    builder.add_attribute(
+        "read_counters",
+        [
+            100000,
+            200000,
+            300000,
+        ],
+    )
+    builder.add_command("clear_read_counters", None)
+    return builder()
+
+
+@pytest.fixture()
+def mock_rx_alt() -> unittest.mock.Mock:
+    """
+    Return an alternate mock SLIM-rx device proxy for failing tests
+
+    :return: a mock SLIM-rx device
+    """
+    builder = MockDeviceBuilder()
+
+    builder.add_attribute("idle_ctrl_word", 0)
+    builder.add_attribute("bit_error_rate", 3e-5)
+    builder.add_attribute(
+        "read_counters",
+        [
+            100000,
+            200000,
+            300000,
+            0,
+            1,
+            2,
+        ],
+    )
+    builder.add_command("initialize_connection", None)
+    builder.add_command("clear_read_counters", None)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
-    mock_tx: unittest.mock.Mock, mock_rx: unittest.mock.Mock
+    mock_tx: unittest.mock.Mock,
+    mock_rx: unittest.mock.Mock,
+    mock_tx_alt: unittest.mock.Mock,
+    mock_rx_alt: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -237,4 +289,6 @@ def initial_mocks(
     return {
         "mid_csp_cbf/slim-tx-rx/fs-txtest": mock_tx,
         "mid_csp_cbf/slim-tx-rx/fs-rxtest": mock_rx,
+        "mid_csp_cbf/slim-tx-rx/fs-txtest-alt": mock_tx_alt,
+        "mid_csp_cbf/slim-tx-rx/fs-rxtest-alt": mock_rx_alt,
     }

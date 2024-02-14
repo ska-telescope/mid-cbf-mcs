@@ -69,18 +69,31 @@ class TestSlimLinkComponentManager:
         )
 
     @pytest.mark.parametrize(
-        "tx_name, \
+        "test_type, \
+        tx_name, \
         rx_name",
         [
             (
+                "pass",
                 "mid_csp_cbf/slim-tx-rx/fs-txtest",
                 "mid_csp_cbf/slim-tx-rx/fs-rxtest",
-            )
+            ),
+            (
+                "pass",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest-alt",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            ),
+            (
+                "fail",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            ),
         ],
     )
     def test_connect_tx_rx(
         self: TestSlimLinkComponentManager,
         slim_link_component_manager: SlimLinkComponentManager,
+        test_type: str,
         tx_name: str,
         rx_name: str,
     ) -> None:
@@ -102,15 +115,48 @@ class TestSlimLinkComponentManager:
         assert slim_link_component_manager.tx_device_name == ""
         assert slim_link_component_manager.tx_device_name == ""
 
-        slim_link_component_manager.tx_device_name = tx_name
-        slim_link_component_manager.rx_device_name = rx_name
+        match test_type:
+            case "fail":
+                slim_link_component_manager.rx_device_name = rx_name
+            case _:
+                slim_link_component_manager.tx_device_name = tx_name
+                slim_link_component_manager.rx_device_name = rx_name
 
         result = slim_link_component_manager.connect_slim_tx_rx()
-        assert result[0] == ResultCode.OK
+        match test_type:
+            case "pass":
+                assert result[0] == ResultCode.OK
+            case "fail":
+                assert result[0] == ResultCode.FAILED
 
+    @pytest.mark.parametrize(
+        "test_type, \
+        tx_name, \
+        rx_name",
+        [
+            (
+                "pass",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            ),
+            (
+                "fail_1",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest-alt",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest-alt",
+            ),
+            (
+                "fail_2",
+                "mid_csp_cbf/slim-tx-rx/fs-txtest",
+                "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            ),
+        ],
+    )
     def test_verify_connection(
         self: TestSlimLinkComponentManager,
         slim_link_component_manager: SlimLinkComponentManager,
+        test_type: str,
+        tx_name: str,
+        rx_name: str,
     ) -> None:
         """
         Test the SlimLink component manager's verify_connection command.
@@ -125,11 +171,35 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
-            "mid_csp_cbf/slim-tx-rx/fs-txtest",
-            "mid_csp_cbf/slim-tx-rx/fs-rxtest",
+            "pass",
+            tx_name,
+            rx_name,
         )
 
+        match test_type:
+            case "fail_1":
+                slim_link_component_manager._rx_device_proxy.idle_ctrl_word = (
+                    123
+                )
+            case "fail_2":
+                slim_link_component_manager._tx_device_proxy = None
+
         result = slim_link_component_manager.verify_connection()
+        match test_type:
+            case "pass":
+                assert (
+                    result[1]
+                    == f"Link health check OK: {slim_link_component_manager._link_name}"
+                )
+            case "fail_1":
+                assert (
+                    result[1]
+                    == "Expected and received idle control word do not match. block_lost_count not zero. cdr_lost_count not zero. bit-error-rate higher than 8e-11. "
+                )
+            case "fail_2":
+                assert (
+                    result[1] == "Tx and Rx devices have not been connected."
+                )
         assert result[0] == ResultCode.OK
 
     def test_disconnect_tx_rx(
@@ -149,6 +219,7 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
+            "pass",
             "mid_csp_cbf/slim-tx-rx/fs-txtest",
             "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
@@ -156,9 +227,21 @@ class TestSlimLinkComponentManager:
         result = slim_link_component_manager.disconnect_slim_tx_rx()
         assert result[0] == ResultCode.OK
 
+    @pytest.mark.parametrize(
+        "test_type",
+        [
+            (
+                "pass",
+            ),
+            (
+                "fail",
+            )
+        ],
+    )
     def test_clear_counters(
         self: TestSlimLinkComponentManager,
         slim_link_component_manager: SlimLinkComponentManager,
+        test_type: str,
     ) -> None:
         """
         Test the SlimLink component manager's clear_counters command.
@@ -173,9 +256,18 @@ class TestSlimLinkComponentManager:
 
         self.test_connect_tx_rx(
             slim_link_component_manager,
+            "pass",
             "mid_csp_cbf/slim-tx-rx/fs-txtest",
             "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
+        
+        match test_type:
+            case "fail":
+                slim_link_component_manager._rx_device_proxy = None
 
         result = slim_link_component_manager.clear_counters()
-        assert result[0] == ResultCode.OK
+        match test_type:
+            case "pass":
+                assert result[0] == ResultCode.OK
+            case "fail":
+                assert result[0] == ResultCode.FAILED

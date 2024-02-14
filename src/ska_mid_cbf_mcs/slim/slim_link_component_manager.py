@@ -142,7 +142,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The idle control word generated in the HPS by hashing the tx device's FQDN.
+        The idle control word set in the tx device. Initially generated
+        in the HPS by hashing the tx device's FQDN.
 
         :return: the tx idle control word.
         :raise Tango exception: if the tx device is not set.
@@ -326,8 +327,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             )
 
             # Sync the idle ctrl word between Tx and Rx
-            # idle_ctrl_word = self.tx_idle_ctrl_word
-            idle_ctrl_word = None
+            idle_ctrl_word = self.tx_idle_ctrl_word
 
             # If Tx's IdleCtrlWord reads as None, regenerate.
             if idle_ctrl_word is None:
