@@ -64,6 +64,9 @@ class FspPssSubarrayComponentManager(
         """
         self._logger = logger
 
+        self._component_op_fault_callback = component_fault_callback
+        self._component_obs_fault_callback = component_obs_fault_callback
+
         self._connected = False
 
         self._scan_id = 0

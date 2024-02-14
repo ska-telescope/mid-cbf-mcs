@@ -188,6 +188,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             self._communication_status_changed,
             self._component_power_mode_changed,
             self._component_fault,
+            self._component_obsfault,
         )
 
     def delete_device(self: FspPstSubarray) -> None:

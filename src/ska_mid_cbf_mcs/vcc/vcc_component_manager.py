@@ -223,6 +223,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self.connected = False
         self._ready = False
+        
+        self._component_op_fault_callback = component_fault_callback
+        self._component_obs_fault_callback = component_obs_fault_callback
 
         # Initialize attribute values
         self._receptor_id = 0
