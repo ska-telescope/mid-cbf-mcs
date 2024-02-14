@@ -187,6 +187,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable,
+        component_obs_fault_callback: Callable,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
@@ -205,7 +206,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param component_power_mode_changed_callback: callback to be called when
             the component power mode changes
         :param component_fault_callback: callback to be called in event of
-            component fault
+            component fault (for op state model)
+        :param component_obs_fault_callback: callback to be called in event of
+            component fault (for obs state model)
         :param simulation_mode: simulation mode identifies if the real VCC HPS
             applications or the simulator should be connected
         """
@@ -270,6 +273,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
             component_fault_callback=component_fault_callback,
+            component_obs_fault_callback=component_obs_fault_callback,
             obs_state_model=None,
         )
 
