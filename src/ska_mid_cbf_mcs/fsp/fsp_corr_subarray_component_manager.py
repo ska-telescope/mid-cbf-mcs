@@ -74,7 +74,6 @@ class FspCorrSubarrayComponentManager(
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
         self._proxy_hps_fsp_corr_controller = None
 
-        self._component_op_fault_callback = component_fault_callback
         self._component_obs_fault_callback = component_obs_fault_callback
 
         self._connected = False
@@ -116,7 +115,6 @@ class FspCorrSubarrayComponentManager(
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
             component_fault_callback=component_fault_callback,
-            component_obs_fault_callback=component_obs_fault_callback,
             obs_state_model=None,
         )
 
@@ -656,6 +654,7 @@ class FspCorrSubarrayComponentManager(
                 json.dumps(hps_fsp_configuration)
             )
         except Exception as e:
+            self._component_obs_fault_callback(True)
             self._logger.error(str(e))
 
         return (
