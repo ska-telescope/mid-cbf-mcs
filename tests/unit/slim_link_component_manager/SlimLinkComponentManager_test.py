@@ -157,7 +157,6 @@ class TestSlimLinkComponentManager:
         result = slim_link_component_manager.connect_slim_tx_rx()
         assert result[0] == ResultCode.FAILED
 
-
     def test_verify_connection(
         self: TestSlimLinkComponentManager,
         slim_link_component_manager: SlimLinkComponentManager,
@@ -185,7 +184,6 @@ class TestSlimLinkComponentManager:
             == f"Link health check OK: {slim_link_component_manager._link_name}"
         )
         assert result[0] == ResultCode.OK
-        
 
     def test_verify_connection_fail_health_check(
         self: TestSlimLinkComponentManager,
@@ -211,13 +209,14 @@ class TestSlimLinkComponentManager:
         )
 
         # Expect complaint about ICW mismatch.
-        slim_link_component_manager._rx_device_proxy.idle_ctrl_word = (
-            123
-        )
+        slim_link_component_manager._rx_device_proxy.idle_ctrl_word = 123
 
         result = slim_link_component_manager.verify_connection()
         assert result[0] == ResultCode.OK
-        
+        assert (
+            result[1]
+            == "Expected and received idle control word do not match. block_lost_count not zero. cdr_lost_count not zero. bit-error-rate higher than 8e-11. "
+        )
 
     def test_verify_connection_fail_no_connection(
         self: TestSlimLinkComponentManager,
@@ -247,6 +246,7 @@ class TestSlimLinkComponentManager:
 
         result = slim_link_component_manager.verify_connection()
         assert result[0] == ResultCode.OK
+        assert result[1] == "Tx and Rx devices have not been connected."
 
     def test_disconnect_tx_rx(
         self: TestSlimLinkComponentManager,
@@ -295,7 +295,7 @@ class TestSlimLinkComponentManager:
 
         result = slim_link_component_manager.clear_counters()
         assert result[0] == ResultCode.OK
-                
+
     def test_clear_counters_fail(
         self: TestSlimLinkComponentManager,
         slim_link_component_manager: SlimLinkComponentManager,
