@@ -229,14 +229,7 @@ class TestSlimLinkComponentManager:
 
     @pytest.mark.parametrize(
         "test_type",
-        [
-            (
-                "pass",
-            ),
-            (
-                "fail",
-            )
-        ],
+        [("pass",), ("fail",)],
     )
     def test_clear_counters(
         self: TestSlimLinkComponentManager,
@@ -260,7 +253,7 @@ class TestSlimLinkComponentManager:
             "mid_csp_cbf/slim-tx-rx/fs-txtest",
             "mid_csp_cbf/slim-tx-rx/fs-rxtest",
         )
-        
+
         match test_type:
             case "fail":
                 slim_link_component_manager._rx_device_proxy = None
