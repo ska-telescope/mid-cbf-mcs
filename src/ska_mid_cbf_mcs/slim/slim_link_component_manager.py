@@ -335,21 +335,20 @@ class SlimLinkComponentManager(CbfComponentManager):
                     hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
                 )
                 self._logger.warning(
-                    f"SlimTx IdleCtrlWord could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
+                    f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
                 )
                 self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
+            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             self._logger.info(
-                f"Tx idle_ctrl_word: {idle_ctrl_word} type: {type(idle_ctrl_word)}"
+                f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}"
             )
             self._logger.info(
                 f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
             )
-            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
             self._rx_device_proxy.initialize_connection(False)
-
             self.clear_counters()
 
         except tango.DevFailed as df:
