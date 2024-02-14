@@ -179,11 +179,11 @@ class TestSlimLinkComponentManager:
         )
 
         result = slim_link_component_manager.verify_connection()
+        assert result[0] == ResultCode.OK
         assert (
             result[1]
             == f"Link health check OK: {slim_link_component_manager._link_name}"
         )
-        assert result[0] == ResultCode.OK
 
     def test_verify_connection_fail_health_check(
         self: TestSlimLinkComponentManager,
