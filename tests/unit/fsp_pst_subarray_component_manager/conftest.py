@@ -46,6 +46,7 @@ def fsp_pst_subarray_component_manager(
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
     component_fault_callback: MockCallable,
+    component_obs_fault_callback: MockCallable,
 ) -> FspPstSubarrayComponentManager:
     """
     Return a FspPstSubarray component manager.
@@ -64,6 +65,7 @@ def fsp_pst_subarray_component_manager(
         communication_status_changed_callback,
         component_power_mode_changed_callback,
         component_fault_callback,
+        component_obs_fault_callback,
     )
 
 
