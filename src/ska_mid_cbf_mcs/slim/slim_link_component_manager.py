@@ -343,11 +343,13 @@ class SlimLinkComponentManager(CbfComponentManager):
                 """
                 self._tx_device_proxy.ping()
                 self._rx_device_proxy.ping()
-                ping_count +=1
+                ping_count += 1
 
             ping_count = 0
             ping_slim_tx_rx()
-            self._logger.info(f"Successfully pinged DsSlimTx and DsSlimRx devices after {ping_count} tries")
+            self._logger.info(
+                f"Successfully pinged DsSlimTx and DsSlimRx devices after {ping_count} tries"
+            )
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
 
