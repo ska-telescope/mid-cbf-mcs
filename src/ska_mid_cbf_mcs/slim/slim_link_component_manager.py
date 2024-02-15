@@ -142,7 +142,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The idle control word generated in the HPS by hashing the tx device's FQDN.
+        The idle control word set in the tx device. Initially generated
+        in the HPS by hashing the tx device's FQDN.
 
         :return: the tx idle control word.
         :raise Tango exception: if the tx device is not set.
@@ -327,17 +328,27 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
+
+            # If Tx's IdleCtrlWord reads as None, regenerate.
+            if idle_ctrl_word is None:
+                idle_ctrl_word = (
+                    hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                )
+                self._logger.warning(
+                    f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
+                )
+                self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
+            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
+
             self._logger.info(
-                f"Tx idle_ctrl_word: {idle_ctrl_word} type: {type(idle_ctrl_word)}"
+                f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}"
             )
             self._logger.info(
                 f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
             )
-            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
             self._rx_device_proxy.initialize_connection(False)
-
             self.clear_counters()
 
         except tango.DevFailed as df:
