@@ -333,7 +333,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 max_tries=10,
                 max_time=1,
             )
-            def ping_slim_tx_rx(ping_count: int) -> None:
+            def ping_slim_tx_rx() -> None:
                 """
                 Attempts to connect to the Talon board for the first time
                 after power-on.
@@ -341,14 +341,14 @@ class SlimLinkComponentManager(CbfComponentManager):
                 :param ip: IP address of the board
                 :param ssh_client: SSH client to use for connection
                 """
-                ping_count += 1
+                self._ping_count += 1
                 self._tx_device_proxy.ping()
                 self._rx_device_proxy.ping()
 
-            ping_count = 0
-            ping_slim_tx_rx(ping_count)
+            self._ping_count = 0
+            ping_slim_tx_rx()
             self._logger.info(
-                f"Successfully pinged DsSlimTx and DsSlimRx devices after {ping_count} tries"
+                f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
             )
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
