@@ -9,10 +9,10 @@
 
 from __future__ import annotations
 
-import backoff
 import logging
 from typing import Callable, Optional
 
+import backoff
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
@@ -326,7 +326,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._rx_device_proxy = CbfDeviceProxy(
                 fqdn=self._rx_device_name, logger=self._logger
             )
-            
+
             @backoff.on_exception(
                 backoff.expo,
                 (Exception, tango.DevFailed),
