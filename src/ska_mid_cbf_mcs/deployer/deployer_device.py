@@ -153,6 +153,7 @@ class ECDeployer(SKABaseDevice):
         #TODO: Unhard code this
         os.system("conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/ False")
         os.system("conan remote list")
+        os.system("conan --version")
 
         download_ds_binaries(json.loads(self._ds_binaries), self.logger_)
         download_fpga_bitstreams(
