@@ -328,10 +328,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             )
 
             @backoff.on_exception(
-                backoff.expo,
+                backoff.constant,
                 (Exception, tango.DevFailed),
                 max_tries=10,
-                max_time=1,
+                interval=1,
             )
             def ping_slim_tx_rx() -> None:
                 """
