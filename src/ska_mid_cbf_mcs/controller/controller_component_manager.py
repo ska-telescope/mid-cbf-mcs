@@ -120,6 +120,12 @@ class ControllerComponentManager(CbfComponentManager):
             self._fqdn_power_switch,
         ) = ([] for i in range(6))
 
+        # init sub-element count to default
+        self._count_vcc = const.DEFAULT_COUNT_VCC
+        self._count_fsp = const.DEFAULT_COUNT_FSP
+        self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
+
+        # init sub-element FQDNs to all
         self._subarray_fqdns_all = subarray_fqdns_all
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
@@ -174,29 +180,38 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 self._count_vcc = self._max_capabilities["VCC"]
             except KeyError:  # not found in DB
-                self._count_vcc = const.DEFAULT_COUNT_VCC
+                self._logger.warning(
+                    f"MaxCapabilities VCC count KeyError - \
+                    using default value of {const.DEFAULT_COUNT_VCC}"
+                )
 
             try:
                 self._count_fsp = self._max_capabilities["FSP"]
             except KeyError:  # not found in DB
-                self._count_fsp = const.DEFAULT_COUNT_FSP
+                self._logger.warning(
+                    f"MaxCapabilities FSP count KeyError - \
+                    using default value of {const.DEFAULT_COUNT_FSP}"
+                )
 
             try:
                 self._count_subarray = self._max_capabilities["Subarray"]
             except KeyError:  # not found in DB
-                self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
+                self._logger.warning(
+                    f"MaxCapabilities subarray count KeyError - \
+                    using default value of {const.DEFAULT_COUNT_SUBARRAY}"
+                )
         else:
             self._logger.warning(
                 "MaxCapabilities device property not defined - \
-                using default value"
+                using default values"
             )
 
+        # limit list of sub-element FQDNs to max capabilities count
         self._fqdn_vcc = list(self._vcc_fqdns_all)[: self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[: self._count_fsp]
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-
         self._fqdn_talon_lru = [
             fqdn
             for fqdn in self._talon_lru_fqdns_all
@@ -266,6 +281,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._logger.debug(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
 
+                    # write hardware configuration properties to Talon LRU devices
                     if fqdn in self._fqdn_talon_lru:
                         self._logger.debug(
                             f"Writing hardware configuration properties to {fqdn}"
@@ -278,6 +294,7 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.Init()
                         proxy.set_timeout_millis(self._lru_timeout * 1000)
 
+                    # write hardware configuration properties to Talon board devices
                     elif fqdn in self._fqdn_talon_board:
                         self._logger.debug(
                             f"Writing hardware configuration properties to {fqdn}"
@@ -293,6 +310,7 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.put_property(board_config)
                         proxy.Init()
 
+                    # write hardware configuration properties to PDU devices
                     elif fqdn in self._fqdn_power_switch:
                         self._logger.debug(
                             f"Writing hardware configuration properties to {fqdn}"
@@ -308,16 +326,16 @@ class ControllerComponentManager(CbfComponentManager):
                 except tango.DevFailed as df:
                     self._connected = False
                     for item in df.args:
-                        log_msg = (
-                            f"Failure in connection to {fqdn}; {item.reason}"
+                        self._logger.error(
+                            f"Failure in connection to {fqdn}: {item.reason}"
                         )
-                        self._logger.error(log_msg)
                     return
 
             # establish proxy connection to component
+            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
-        for idx, fqdn in enumerate(self._fqdn_vcc):
+        for fqdn in self._fqdn_vcc:
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn} device"
@@ -326,15 +344,12 @@ class ControllerComponentManager(CbfComponentManager):
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = (
-                            "Failure in connection to "
-                            + fqdn
-                            + " device: "
-                            + str(item.reason)
+                        self._logger.error(
+                            f"Failure in connection to {fqdn}: {item.reason}"
                         )
-                        self._logger.error(log_msg)
 
             # establish proxy connection to component
+            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
         # Establish connection to SLIM devices
@@ -347,13 +362,12 @@ class ControllerComponentManager(CbfComponentManager):
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = (
-                            "Failure in connection to "
-                            + fqdn
-                            + " device: "
-                            + str(item.reason)
+                        self._logger.error(
+                            f"Failure in connection to {fqdn}: {item.reason}"
                         )
-                        self._logger.error(log_msg)
+
+            # establish proxy connection to component
+            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
         self._connected = True
