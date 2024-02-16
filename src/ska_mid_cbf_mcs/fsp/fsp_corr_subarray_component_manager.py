@@ -680,6 +680,7 @@ class FspCorrSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
+
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
     def end_scan(
@@ -698,6 +699,7 @@ class FspCorrSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
+            
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
     def _deconfigure(
@@ -752,6 +754,7 @@ class FspCorrSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
+
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
     def obsreset(
@@ -773,10 +776,25 @@ class FspCorrSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
+
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def abort(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-        # TODO: Abort command not implemented for the HPS FSP application
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        try:
+            # TODO: Abort command not implemented for the HPS FSP application
+            pass
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
+
         return (ResultCode.OK, "Abort command not implemented")
