@@ -674,11 +674,12 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._scan_id = scan_id
-
-        self._proxy_hps_fsp_corr_controller.Scan(scan_id)
-
+        try:
+            self._scan_id = scan_id
+            self._proxy_hps_fsp_corr_controller.Scan(scan_id)
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
     def end_scan(
@@ -692,9 +693,11 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._proxy_hps_fsp_corr_controller.EndScan()
-
+        try:
+            self._proxy_hps_fsp_corr_controller.EndScan()
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
     def _deconfigure(
@@ -742,13 +745,13 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._deconfigure()
-
-        self._remove_all_receptors()
-
-        self._proxy_hps_fsp_corr_controller.GoToIdle()
-
+        try: 
+            self._deconfigure()
+            self._remove_all_receptors()
+            self._proxy_hps_fsp_corr_controller.GoToIdle()
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
     def obsreset(
@@ -762,13 +765,14 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._deconfigure()
-
-        self._remove_all_receptors()
-
-        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-        # self._proxy_hps_fsp_corr_controller.ObsReset()
+        try:
+            self._deconfigure()
+            self._remove_all_receptors()
+            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+            # self._proxy_hps_fsp_corr_controller.ObsReset()
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def abort(
