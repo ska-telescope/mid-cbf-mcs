@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Callable, Optional
 
+import backoff
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
@@ -326,6 +327,29 @@ class SlimLinkComponentManager(CbfComponentManager):
                 fqdn=self._rx_device_name, logger=self._logger
             )
 
+            @backoff.on_exception(
+                backoff.constant,
+                (Exception, tango.DevFailed),
+                max_tries=10,
+                interval=1,
+            )
+            def ping_slim_tx_rx() -> None:
+                """
+                Attempts to connect to the Talon board for the first time
+                after power-on.
+
+                :param ip: IP address of the board
+                :param ssh_client: SSH client to use for connection
+                """
+                self._ping_count += 1
+                self._tx_device_proxy.ping()
+                self._rx_device_proxy.ping()
+
+            self._ping_count = 0
+            ping_slim_tx_rx()
+            self._logger.info(
+                f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
+            )
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
 
