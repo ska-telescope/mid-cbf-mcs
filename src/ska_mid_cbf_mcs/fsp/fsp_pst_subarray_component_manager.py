@@ -261,8 +261,11 @@ class FspPstSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._scan_id = scan_id
+        try:
+            self._scan_id = scan_id
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
 
         return (ResultCode.OK, "FspPstSubarray Scan command completed OK")
 
@@ -277,6 +280,11 @@ class FspPstSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        try:
+            pass
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
 
         return (ResultCode.OK, "FspPstSubarray EndScan command completed OK")
 
@@ -299,10 +307,13 @@ class FspPstSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        try:
+            self._deconfigure()
+            self._remove_all_receptors()
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
 
-        self._deconfigure()
-
-        self._remove_all_receptors()
 
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
 
@@ -317,17 +328,33 @@ class FspPstSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        try:
+            self._deconfigure()
+            self._remove_all_receptors()
+            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
 
-        self._deconfigure()
-
-        self._remove_all_receptors()
-
-        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
 
         return (ResultCode.OK, "FspPstSubarray ObsReset command completed OK")
 
     def abort(
         self: FspPstSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-        # TODO: Abort command not implemented for the HPS FSP application
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        try:
+            # TODO: Abort command not implemented for the HPS FSP application
+            pass
+        except Exception as e:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(e))
+
         return (ResultCode.OK, "Abort command not implemented")
