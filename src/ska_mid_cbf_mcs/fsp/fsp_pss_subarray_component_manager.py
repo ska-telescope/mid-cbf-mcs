@@ -295,7 +295,7 @@ class FspPssSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
-        
+
         return (ResultCode.OK, "FspPssSubarray Scan command completed OK")
 
     def end_scan(

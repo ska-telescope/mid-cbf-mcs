@@ -314,7 +314,6 @@ class FspPstSubarrayComponentManager(
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
 
-
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
 
     def obsreset(
@@ -335,7 +334,6 @@ class FspPstSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
-
 
         return (ResultCode.OK, "FspPstSubarray ObsReset command completed OK")
 

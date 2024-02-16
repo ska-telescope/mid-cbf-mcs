@@ -699,7 +699,7 @@ class FspCorrSubarrayComponentManager(
         except Exception as e:
             self._component_obs_fault_callback(True)
             self._logger.error(str(e))
-            
+
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
     def _deconfigure(
