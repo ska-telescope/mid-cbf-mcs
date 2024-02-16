@@ -745,7 +745,7 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        try: 
+        try:
             self._deconfigure()
             self._remove_all_receptors()
             self._proxy_hps_fsp_corr_controller.GoToIdle()
