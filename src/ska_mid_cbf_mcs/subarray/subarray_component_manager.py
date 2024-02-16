@@ -1227,6 +1227,11 @@ class CbfSubarrayComponentManager(
                         msg = "fspChannelOffset must be an integer"
                         self._logger.error(msg)
                         return (False, msg)
+                    except KeyError:
+                        fsp["channel_offset"] = 1
+                        self._logger.warning(
+                            "no fspChannelOffset value found in configuration. Will be set to default of 1."
+                        )
 
                     # validate outputlink
                     # check the format
