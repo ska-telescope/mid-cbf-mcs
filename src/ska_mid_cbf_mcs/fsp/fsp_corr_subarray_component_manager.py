@@ -571,7 +571,9 @@ class FspCorrSubarrayComponentManager(
         try:
             self._fsp_channel_offset = int(configuration["channel_offset"])
         except KeyError:
-            self._logger.warning("No channel_offset defined in configuration. Using default value of 1.")
+            self._logger.warning(
+                "No channel_offset defined in configuration. Using default value of 1."
+            )
             self._fsp_channel_offset = 1
 
         if "output_host" in configuration:
