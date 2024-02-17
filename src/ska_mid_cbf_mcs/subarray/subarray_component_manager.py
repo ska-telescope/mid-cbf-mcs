@@ -1228,7 +1228,6 @@ class CbfSubarrayComponentManager(
                         self._logger.error(msg)
                         return (False, msg)
                     except KeyError:
-                        fsp["channel_offset"] = 1
                         self._logger.warning(
                             "no fspChannelOffset value found in configuration. Will be set to default of 1."
                         )
