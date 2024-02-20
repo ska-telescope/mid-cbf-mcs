@@ -655,9 +655,13 @@ class FspCorrSubarrayComponentManager(
             self._proxy_hps_fsp_corr_controller.ConfigureScan(
                 json.dumps(hps_fsp_configuration)
             )
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "Failed to ConfigureScan the FspCorrSubarray component.",
+            )
 
         return (
             ResultCode.OK,
@@ -676,12 +680,13 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._scan_id = scan_id
         try:
-            self._scan_id = scan_id
             self._proxy_hps_fsp_corr_controller.Scan(scan_id)
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (ResultCode.FAILED, "Failed to Scan the FspCorrSubarray component.")
 
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
@@ -698,9 +703,13 @@ class FspCorrSubarrayComponentManager(
         """
         try:
             self._proxy_hps_fsp_corr_controller.EndScan()
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "Failed to EndScan the FspCorrSubarray component.",
+            )
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
@@ -753,9 +762,10 @@ class FspCorrSubarrayComponentManager(
             self._deconfigure()
             self._remove_all_receptors()
             self._proxy_hps_fsp_corr_controller.GoToIdle()
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (ResultCode.FAILED, "Failed to GoToIdle the FspCorrSubarray component.")
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
@@ -775,9 +785,13 @@ class FspCorrSubarrayComponentManager(
             self._remove_all_receptors()
             # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
             # self._proxy_hps_fsp_corr_controller.ObsReset()
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (
+                    ResultCode.FAILED,
+                    "Failed to obsreset the FspCorrSubarray component.",
+            )
 
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
@@ -795,8 +809,12 @@ class FspCorrSubarrayComponentManager(
         try:
             # TODO: Abort command not implemented for the HPS FSP application
             pass
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "Failed to abort the FspCorrSubarray component.",
+            )
 
         return (ResultCode.OK, "Abort command not implemented")
