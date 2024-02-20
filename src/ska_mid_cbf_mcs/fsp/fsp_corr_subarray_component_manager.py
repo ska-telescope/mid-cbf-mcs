@@ -765,7 +765,10 @@ class FspCorrSubarrayComponentManager(
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "FspCorrSubarray GoToIdle command failed")
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray GoToIdle command failed",
+            )
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
@@ -789,8 +792,8 @@ class FspCorrSubarrayComponentManager(
             self._component_obs_fault_callback(True)
             self._logger.error(str(df.args[0].desc))
             return (
-                    ResultCode.FAILED,
-                    "FspCorrSubarray ObsReset command failed",
+                ResultCode.FAILED,
+                "FspCorrSubarray ObsReset command failed",
             )
 
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")

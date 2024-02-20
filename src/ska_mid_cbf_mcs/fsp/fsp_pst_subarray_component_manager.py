@@ -14,6 +14,7 @@ import json
 import logging
 from typing import Callable, List, Optional, Tuple
 
+import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
@@ -22,7 +23,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-import tango
 
 
 class FspPstSubarrayComponentManager(
@@ -322,7 +322,10 @@ class FspPstSubarrayComponentManager(
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df))
-            return (ResultCode.FAILED, "FspPstSubarray GoToIdle command failed")
+            return (
+                ResultCode.FAILED,
+                "FspPstSubarray GoToIdle command failed",
+            )
 
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
 
@@ -344,7 +347,10 @@ class FspPstSubarrayComponentManager(
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df))
-            return (ResultCode.FAILED, "FspPstSubarray ObsReset command failed")
+            return (
+                ResultCode.FAILED,
+                "FspPstSubarray ObsReset command failed",
+            )
 
         return (ResultCode.OK, "FspPstSubarray ObsReset command completed OK")
 
@@ -366,5 +372,5 @@ class FspPstSubarrayComponentManager(
             self._component_obs_fault_callback(True)
             self._logger.error(str(df))
             return (ResultCode.FAILED, "FspPstSubarray Abort command failed")
-        
+
         return (ResultCode.OK, "Abort command not implemented")
