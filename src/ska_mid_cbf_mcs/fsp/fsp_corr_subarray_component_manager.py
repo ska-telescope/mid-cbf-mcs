@@ -660,7 +660,7 @@ class FspCorrSubarrayComponentManager(
             self._logger.error(str(df.args[0].desc))
             return (
                 ResultCode.FAILED,
-                "Failed to ConfigureScan the FspCorrSubarray component.",
+                "FspCorrSubarray ConfigureScan command failed",
             )
 
         return (
@@ -686,7 +686,7 @@ class FspCorrSubarrayComponentManager(
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "Failed to Scan the FspCorrSubarray component.")
+            return (ResultCode.FAILED, "FspCorrSubarray Scan command failed")
 
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
@@ -708,7 +708,7 @@ class FspCorrSubarrayComponentManager(
             self._logger.error(str(df.args[0].desc))
             return (
                 ResultCode.FAILED,
-                "Failed to EndScan the FspCorrSubarray component.",
+                "FspCorrSubarray EndScan command failed",
             )
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
@@ -765,7 +765,7 @@ class FspCorrSubarrayComponentManager(
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "Failed to GoToIdle the FspCorrSubarray component.")
+            return (ResultCode.FAILED, "FspCorrSubarray GoToIdle command failed")
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
@@ -790,7 +790,7 @@ class FspCorrSubarrayComponentManager(
             self._logger.error(str(df.args[0].desc))
             return (
                     ResultCode.FAILED,
-                    "Failed to obsreset the FspCorrSubarray component.",
+                    "FspCorrSubarray ObsReset command failed",
             )
 
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
@@ -814,7 +814,7 @@ class FspCorrSubarrayComponentManager(
             self._logger.error(str(df.args[0].desc))
             return (
                 ResultCode.FAILED,
-                "Failed to abort the FspCorrSubarray component.",
+                "FspCorrSubarray Abort command failed",
             )
 
         return (ResultCode.OK, "Abort command not implemented")
