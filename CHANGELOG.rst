@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.24
+*******
+* CIP-1940: Implemented obsfault for Vcc and Fsp<func> Subarray
+
 0.12.23
 *******
 * CIP-1940: Updated ConfigureScan sequence diagram
