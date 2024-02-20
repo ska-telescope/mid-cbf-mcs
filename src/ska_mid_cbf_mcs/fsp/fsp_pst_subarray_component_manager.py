@@ -22,6 +22,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+import tango
 
 
 class FspPstSubarrayComponentManager(
@@ -263,11 +264,14 @@ class FspPstSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._scan_id = scan_id
         try:
-            self._scan_id = scan_id
-        except Exception as e:
+            # TODO: Scan command not implemented for the PST application
+            pass
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPstSubarray Scan command failed")
 
         return (ResultCode.OK, "FspPstSubarray Scan command completed OK")
 
@@ -283,10 +287,12 @@ class FspPstSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
         try:
+            # TODO: EndScan command not implemented for the PST application
             pass
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPstSubarray EndScan command failed")
 
         return (ResultCode.OK, "FspPstSubarray EndScan command completed OK")
 
@@ -312,9 +318,11 @@ class FspPstSubarrayComponentManager(
         try:
             self._deconfigure()
             self._remove_all_receptors()
-        except Exception as e:
+            # TODO: GoToIdle command not implemented for the PST application
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPstSubarray GoToIdle command failed")
 
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
 
@@ -333,9 +341,10 @@ class FspPstSubarrayComponentManager(
             self._deconfigure()
             self._remove_all_receptors()
             # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPstSubarray ObsReset command failed")
 
         return (ResultCode.OK, "FspPstSubarray ObsReset command completed OK")
 
@@ -353,8 +362,9 @@ class FspPstSubarrayComponentManager(
         try:
             # TODO: Abort command not implemented for the HPS FSP application
             pass
-        except Exception as e:
+        except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
-            self._logger.error(str(e))
-
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPstSubarray Abort command failed")
+        
         return (ResultCode.OK, "Abort command not implemented")

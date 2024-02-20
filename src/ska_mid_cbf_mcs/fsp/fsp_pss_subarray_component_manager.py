@@ -295,7 +295,7 @@ class FspPssSubarrayComponentManager(
         """
         self._scan_id = scan_id
         try:
-            # TODO: PSS is not implemented yet
+            # TODO: Scan command not implemented for the PSS application
             pass
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
@@ -316,6 +316,7 @@ class FspPssSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
         try:
+            # TODO: EndScan command not implemented for the PSS application
             pass
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
@@ -350,6 +351,7 @@ class FspPssSubarrayComponentManager(
         try:
             self._deconfigure()
             self._remove_all_receptors()
+            # TODO: GoToIdle command not implemented for the PSS application
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
             self._logger.error(str(df))
