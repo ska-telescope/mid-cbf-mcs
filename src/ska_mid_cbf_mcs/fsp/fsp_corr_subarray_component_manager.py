@@ -78,6 +78,8 @@ class FspCorrSubarrayComponentManager(
 
         self._connected = False
 
+        self.obs_faulty = False
+
         self._receptors = []
         self._freq_band_name = ""
         self._frequency_band = 0

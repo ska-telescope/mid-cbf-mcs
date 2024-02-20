@@ -68,6 +68,8 @@ class FspPstSubarrayComponentManager(
 
         self._connected = False
 
+        self.obs_faulty = False
+
         self._fsp_id = fsp_id
         self._receptors = []
         self._timing_beams = []

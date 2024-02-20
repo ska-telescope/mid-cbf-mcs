@@ -68,6 +68,8 @@ class FspPssSubarrayComponentManager(
 
         self._connected = False
 
+        self.obs_faulty = False
+
         self._scan_id = 0
         self._search_window_id = 0
         self._config_id = ""
