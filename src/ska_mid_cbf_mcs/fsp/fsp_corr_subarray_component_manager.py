@@ -568,9 +568,9 @@ class FspCorrSubarrayComponentManager(
 
         self._integration_factor = int(configuration["integration_factor"])
 
-        try:
+        if "channel_offset" in configuration:
             self._fsp_channel_offset = int(configuration["channel_offset"])
-        except KeyError:
+        else:
             self._logger.warning(
                 "No channel_offset defined in configuration. Using default value of 1."
             )
