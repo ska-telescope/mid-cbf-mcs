@@ -567,14 +567,8 @@ class FspCorrSubarrayComponentManager(
                     self._logger.warning(log_msg)
 
         self._integration_factor = int(configuration["integration_factor"])
-
-        if "channel_offset" in configuration:
-            self._fsp_channel_offset = int(configuration["channel_offset"])
-        else:
-            self._logger.warning(
-                "channel_offset not defined in configuration. Using default value of 1."
-            )
-            self._fsp_channel_offset = 1
+        
+        self._fsp_channel_offset = int(configuration["channel_offset"])
 
         if "output_host" in configuration:
             self._vis_destination_address["outputHost"] = configuration[

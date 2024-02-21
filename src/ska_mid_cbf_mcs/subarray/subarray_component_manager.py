@@ -1216,21 +1216,18 @@ class CbfSubarrayComponentManager(
 
                     # Validate fspChannelOffset
                     try:
-                        if int(fsp["channel_offset"]) >= 0:
-                            pass
-                        # TODO has to be a multiple of 14880
-                        else:
-                            msg = "fspChannelOffset must be greater than or equal to zero"
-                            self._logger.error(msg)
-                            return (False, msg)
+                        if "channel_offset" in fsp:
+                            if int(fsp["channel_offset"]) >= 0:
+                                pass
+                            # TODO has to be a multiple of 14880
+                            else:
+                                msg = "fspChannelOffset must be greater than or equal to zero"
+                                self._logger.error(msg)
+                                return (False, msg)
                     except (TypeError, ValueError):
                         msg = "fspChannelOffset must be an integer"
                         self._logger.error(msg)
                         return (False, msg)
-                    except KeyError:
-                        self._logger.warning(
-                            "fspChannelOffset not defined in configuration. Using default of 1."
-                        )
 
                     # validate outputlink
                     # check the format
@@ -1754,6 +1751,13 @@ class CbfSubarrayComponentManager(
             fsp[
                 "frequency_band_offset_stream2"
             ] = self._frequency_band_offset_stream2
+            
+            # Add channel_offset if it was omitted from the configuration (it is optional).
+            if "channel_offset" not in fsp: 
+                self._logger.warning(
+                    "channel_offset not defined in configuration. Assigning default of 1."
+                )
+                fsp["channel_offset"] = 1
 
             # Add all receptor ids for subarray and for correlation to fsp
             # Parameter named "subarray_receptor_ids" used by HPS contains all the
