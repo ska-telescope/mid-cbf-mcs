@@ -499,7 +499,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
-                            f"Failed to configure SLIM links; {item.reason}"
+                            f"Failed to configure SLIM (mesh): {item.reason}"
                         )
                         self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)

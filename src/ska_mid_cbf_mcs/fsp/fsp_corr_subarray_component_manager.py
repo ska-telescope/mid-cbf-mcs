@@ -200,9 +200,10 @@ class FspCorrSubarrayComponentManager(
     @property
     def fsp_channel_offset(self: FspCorrSubarrayComponentManager) -> int:
         """
-        FSP Channel Offset
+        ID of the first (lowest bandwidth) channel generated on this FSP.
+        See channel_offset in telescope model for more details.
 
-        :return: the FSP channel offset
+        :return: the starting channel ID assigned to this FSP
         :rtype: int
         """
         return self._fsp_channel_offset
