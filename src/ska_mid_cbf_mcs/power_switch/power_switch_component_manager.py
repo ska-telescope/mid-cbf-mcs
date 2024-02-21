@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 from typing import Callable, Optional, Tuple
 
-import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
@@ -42,14 +41,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
     A component manager for the power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
     mode.
-
-    :param simulation_mode: simulation mode identifies if the real power switch
-                          driver or the simulator should be used
-    :param protocol: Connection protocol (HTTP or HTTPS) for the power switch
-    :param ip: IP address of the power switch
-    :param login: Login username of the power switch
-    :param password: Login password for the power switch
-    :param logger: a logger for this object to use
     """
 
     def __init__(
@@ -88,17 +79,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 driver or the simulator should be used
 
         """
-        self.connected = False
-
+        self._model = model
+        self._ip = ip
+        self._login = login
+        self._password = password
+        self._power_switch_driver = None
+        self._power_switch_simulator = None
         self._simulation_mode = simulation_mode
-
-        self.power_switch_driver = self.get_power_switch_driver(
-            model=model, ip=ip, login=login, password=password, logger=logger
-        )
-
-        self.power_switch_simulator = PowerSwitchSimulator(
-            model=model, logger=logger
-        )
 
         super().__init__(
             logger=logger,
@@ -115,10 +102,18 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :return: number of outlets
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.num_outlets
+        # If we haven't started communicating yet, don't check number of power
+        # switch outlets
+        if self._communication_status != CommunicationStatus.ESTABLISHED:
+            self._logger.warning(
+                "Power switch driver not yet configured, unable to determine number of outlets."
+            )
+            return 0
+
+        if self._simulation_mode:
+            return self._power_switch_simulator.num_outlets
         else:
-            return self.power_switch_driver.num_outlets
+            return self._power_switch_driver.num_outlets
 
     @property
     def is_communicating(self: PowerSwitchComponentManager) -> bool:
@@ -129,15 +124,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         # If we haven't started communicating yet, don't check power switch
         # communication status
-        if self.connected is False:
+        if self._communication_status != CommunicationStatus.ESTABLISHED:
             return False
 
         # If we have started communicating, check the actual communication
         # status of the power switch
-        if self.simulation_mode:
-            return self.power_switch_simulator.is_communicating
+        if self._simulation_mode:
+            return self._power_switch_simulator.is_communicating
         else:
-            return self.power_switch_driver.is_communicating
+            return self._power_switch_driver.is_communicating
 
     @property
     def simulation_mode(self: PowerSwitchComponentManager) -> SimulationMode:
@@ -159,31 +154,86 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         self._simulation_mode = value
 
+    def _get_power_switch_driver(self: PowerSwitchComponentManager):
+        self._logger.info(
+            f"Configuring driver for {self._model} power switch."
+        )
+        driver = None
+
+        # The text must match the hw_config.yaml
+        match self._model:
+            case "DLI LPC9":
+                driver = DLIProSwitchDriver(
+                    ip=self._ip,
+                    login=self._login,
+                    password=self._password,
+                    logger=self._logger,
+                )
+            case "Server Technology Switched PRO2":
+                driver = STSwitchedPRO2Driver(
+                    ip=self._ip,
+                    login=self._login,
+                    password=self._password,
+                    logger=self._logger,
+                )
+            case "APC AP8681 SSH":
+                driver = ApcPduDriver(
+                    ip=self._ip,
+                    login=self._login,
+                    password=self._password,
+                    logger=self._logger,
+                )
+            case "APC AP8681 SNMP":
+                driver = ApcSnmpDriver(
+                    ip=self._ip,
+                    login=self._login,
+                    password=self._password,
+                    logger=self._logger,
+                )
+            case _:
+                self._logger.error(
+                    f"Model name {self._model} is not supported."
+                )
+                self.update_communication_status(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                return None
+
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        return driver
+
     def start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
-        if self.connected:
-            self._logger.info("Already communicating.")
+        if self.communication_status == CommunicationStatus.ESTABLISHED:
+            self._logger.info(
+                "start_communicating returning, already connected to component."
+            )
             return
 
-        super().start_communicating()
-
-        if not self._simulation_mode:
-            self.power_switch_driver.initialize()
-
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.ON)
-        self.connected = True
+        if self._simulation_mode:
+            self.update_communication_status(CommunicationStatus.ESTABLISHED)
+            self._power_switch_simulator = PowerSwitchSimulator(
+                model=self._model, logger=self._logger
+            )
+        else:
+            self._power_switch_driver = self._get_power_switch_driver()
+            if self._power_switch_driver is not None:
+                self._power_switch_driver.initialize()
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
-        super().stop_communicating()
-        self.update_component_power_mode(PowerMode.UNKNOWN)
-        self.connected = False
+        if self.communication_status == CommunicationStatus.DISABLED:
+            self._logger.info(
+                "stop_communicating returning, not connected to component."
+            )
+            return
 
-        if not self._simulation_mode:
-            self.power_switch_driver.stop()
+        if not self._simulation_mode and self._power_switch_driver is not None:
+            self._power_switch_driver.stop()
+
+        self.update_communication_status(CommunicationStatus.DISABLED)
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str
@@ -196,10 +246,11 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.get_outlet_power_mode(outlet)
+        self._logger.info(f"get_outlet_power_mode for outlet {outlet}")
+        if self._simulation_mode:
+            return self._power_switch_simulator.get_outlet_power_mode(outlet)
         else:
-            return self.power_switch_driver.get_outlet_power_mode(outlet)
+            return self._power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
         self: PowerSwitchComponentManager, outlet: str
@@ -213,11 +264,11 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
-        if self.simulation_mode:
-            return self.power_switch_simulator.turn_on_outlet(outlet)
+        self._logger.info(f"Turning on outlet {outlet}")
+        if self._simulation_mode:
+            return self._power_switch_simulator.turn_on_outlet(outlet)
         else:
-            return self.power_switch_driver.turn_on_outlet(outlet)
+            return self._power_switch_driver.turn_on_outlet(outlet)
 
     def turn_off_outlet(
         self: PowerSwitchComponentManager, outlet: str
@@ -231,42 +282,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
-        if self.simulation_mode:
-            return self.power_switch_simulator.turn_off_outlet(outlet)
+        self._logger.info(f"Turning off outlet {outlet}")
+        if self._simulation_mode:
+            return self._power_switch_simulator.turn_off_outlet(outlet)
         else:
-            return self.power_switch_driver.turn_off_outlet(outlet)
-
-    def get_power_switch_driver(
-        self: PowerSwitchComponentManager,
-        model: str,
-        ip: str,
-        login: str,
-        password: str,
-        logger: logging.Logger,
-    ):
-        # The text must match the powerswitch.yaml
-        if model == "DLI LPC9":
-            return DLIProSwitchDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "Server Technology Switched PRO2":
-            return STSwitchedPRO2Driver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "APC AP8681 SSH":
-            return ApcPduDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "APC AP8681 SNMP":
-            return ApcSnmpDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        else:
-            err = f"Model name {model} is not supported."
-            logger.error(err)
-            tango.Except.throw_exception(
-                "PowerSwitch_CreateDriverFailed",
-                err,
-                "get_power_switch_driver()",
-            )
+            return self._power_switch_driver.turn_off_outlet(outlet)

@@ -25,9 +25,9 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
-    device_under_test.adminMode = AdminMode.ONLINE
     # Put the device in simulation mode
     device_under_test.simulationMode = SimulationMode.TRUE
+    device_under_test.adminMode = AdminMode.ONLINE
 
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
@@ -65,9 +65,9 @@ def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     Tests that the device can respond to requests even when the power
     switch is not communicating.
     """
-    device_under_test.adminMode = AdminMode.ONLINE
     # Take device out of simulation mode
     device_under_test.simulationMode = SimulationMode.FALSE
+    device_under_test.adminMode = AdminMode.ONLINE
 
     # Check that the device is not communicating
     assert device_under_test.isCommunicating is False
