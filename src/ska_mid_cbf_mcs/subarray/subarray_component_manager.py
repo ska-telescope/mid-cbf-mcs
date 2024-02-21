@@ -1751,9 +1751,9 @@ class CbfSubarrayComponentManager(
             fsp[
                 "frequency_band_offset_stream2"
             ] = self._frequency_band_offset_stream2
-            
+
             # Add channel_offset if it was omitted from the configuration (it is optional).
-            if "channel_offset" not in fsp: 
+            if "channel_offset" not in fsp:
                 self._logger.warning(
                     "channel_offset not defined in configuration. Assigning default of 1."
                 )

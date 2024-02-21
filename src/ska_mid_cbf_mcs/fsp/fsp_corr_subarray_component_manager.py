@@ -567,7 +567,7 @@ class FspCorrSubarrayComponentManager(
                     self._logger.warning(log_msg)
 
         self._integration_factor = int(configuration["integration_factor"])
-        
+
         self._fsp_channel_offset = int(configuration["channel_offset"])
 
         if "output_host" in configuration:
