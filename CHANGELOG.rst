@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.25
+*******
+* CIP-1979: Updated SubarrayComponentManager to assign channel_offset=1 in FSP configuration when LMC does not define one.
+
 0.12.24
 *******
 * CIP-1849: Implemented obsfault for Vcc and Fsp<func> Subarray
