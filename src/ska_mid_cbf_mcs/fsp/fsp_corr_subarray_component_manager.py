@@ -572,7 +572,7 @@ class FspCorrSubarrayComponentManager(
             self._fsp_channel_offset = int(configuration["channel_offset"])
         else:
             self._logger.warning(
-                "No channel_offset defined in configuration. Using default value of 1."
+                "channel_offset not defined in configuration. Using default value of 1."
             )
             self._fsp_channel_offset = 1
 
