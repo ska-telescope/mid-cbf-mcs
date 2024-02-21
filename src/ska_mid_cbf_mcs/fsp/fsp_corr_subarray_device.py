@@ -168,7 +168,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         dtype="DevLong",
         access=AttrWriteType.READ_WRITE,
         label="fspChannelOffset",
-        doc="fsp Channel offset, integer, multiple of 14480",
+        doc="ID of the first (lowest bandwidth) channel generated on this FSP. See channel_offset in telescope model for more details.",
     )
 
     outputLinkMap = attribute(
