@@ -352,14 +352,6 @@ class TestVcc:
         )
         assert device_under_test.State() == DevState.OFF
 
-        # Stop monitoring the TalonLRUs and power switch devices
-        for proxy in test_proxies.power_switch:
-            proxy.adminMode = AdminMode.OFFLINE
-
-        for proxy in test_proxies.talon_lru:
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.set_timeout_millis(10000)
-
     @pytest.mark.parametrize(
         "config_file_name, \
         vcc_id, \
