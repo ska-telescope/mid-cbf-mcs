@@ -316,7 +316,7 @@ class TestVcc:
             [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
         )
         assert device_under_test.obsState == ObsState.IDLE
-    
+
     @pytest.mark.parametrize(
         "config_file_name, \
         vcc_id",
@@ -339,11 +339,11 @@ class TestVcc:
         wait_time_s = 1
         sleep_time_s = 1
 
-        device_under_test.State(DevState.FAULT)
-        
+        device_under_test.SetFault()
+
         # do stuff..
         assert device_under_test.State() == DevState.FAULT
-        
+
         device_under_test.Off()
 
         # controller device should be in DISABLE state after stop_communicating

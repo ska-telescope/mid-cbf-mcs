@@ -93,3 +93,6 @@ class VccControllerSimulator:
         self._frequency_band = 0
         for band_device in self._band_devices:
             band_device.Unconfigure()
+
+    def SetFault(self: VccControllerSimulator) -> None:
+        self._state = tango.DevState.FAULT
