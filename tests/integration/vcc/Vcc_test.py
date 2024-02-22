@@ -339,10 +339,10 @@ class TestVcc:
         wait_time_s = 1
         sleep_time_s = 1
 
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        # abort from READY
-        self.test_ConfigureScan(test_proxies, config_file_name, vcc_id)
+        device_under_test.set_state(DevState.FAULT)
+        
+        # do stuff..
+        assert device_under_test.State() == DevState.FAULT
         
         device_under_test.Off()
 
