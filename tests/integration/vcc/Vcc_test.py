@@ -339,7 +339,7 @@ class TestVcc:
         wait_time_s = 1
         sleep_time_s = 1
 
-        device_under_test.set_state(DevState.FAULT)
+        device_under_test.State(DevState.FAULT)
         
         # do stuff..
         assert device_under_test.State() == DevState.FAULT
