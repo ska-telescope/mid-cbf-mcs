@@ -4091,6 +4091,22 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors, \
+        receptors_to_remove, \
+        vcc_receptors",
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            )
+        ],
+    )
     def test_remove_receptors_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4101,7 +4117,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test removing receptors in the middle of a scan to confirm graceful failure 
+        Test removing receptors in the middle of a scan to confirm graceful failure
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -4185,7 +4201,6 @@ class TestCbfSubarray:
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
-            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
@@ -4246,19 +4261,16 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        receptors_to_remove, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             )
         ],
     )
-
     def test_add_receptors_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4268,7 +4280,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test adding receptors in the middle of a scan to confirm graceful failure 
+        Test adding receptors in the middle of a scan to confirm graceful failure
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -4351,7 +4363,6 @@ class TestCbfSubarray:
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
-            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
@@ -4422,8 +4433,6 @@ class TestCbfSubarray:
             )
         ],
     )
-
-
     def call_off_cmd_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4433,7 +4442,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test calling off command in the middle of a scan to confirm graceful failure 
+        Test calling off command in the middle of a scan to confirm graceful failure
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -4516,7 +4525,6 @@ class TestCbfSubarray:
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
-            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
@@ -4587,7 +4595,6 @@ class TestCbfSubarray:
             )
         ],
     )
-
     def configure_scan_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4597,7 +4604,7 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test configuring the scan in the middle of a scan to confirm graceful failure 
+        Test configuring the scan in the middle of a scan to confirm graceful failure
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
@@ -4618,7 +4625,6 @@ class TestCbfSubarray:
 
             test_proxies.on()
             time.sleep(sleep_time_s)
-            device_under_test = test_proxies.subarray[sub_id]
 
             assert test_proxies.subarray[sub_id].State() == DevState.ON
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -4681,7 +4687,6 @@ class TestCbfSubarray:
             json_string_scan = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
-            scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.SCANNING,
@@ -4737,18 +4742,3 @@ class TestCbfSubarray:
             test_proxies.clean_test_proxies()
             time.sleep(2)
             raise e
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_file_name, \
-        receptors, \
-        vcc_receptors",
-        [
-            (
-                "ConfigureScan_basic.json",
-                "Scan1_basic.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
-            )
-        ],
-    )
