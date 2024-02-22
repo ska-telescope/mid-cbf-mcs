@@ -316,6 +316,49 @@ class TestVcc:
             [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
         )
         assert device_under_test.obsState == ObsState.IDLE
+    
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        vcc_id",
+        [("Vcc_ConfigureScan_basic.json", 1)],
+    )
+    def test_OffFromFault(
+        self: TestVcc,
+        test_proxies: pytest.fixture,
+        config_file_name: str,
+        vcc_id: int,
+    ) -> None:
+        """
+        Verify the component manager can execute Off after the device has been put into fault state.
+
+        :param vcc_id: the fsp id
+
+        """
+
+        device_under_test = test_proxies.vcc[vcc_id]
+        wait_time_s = 1
+        sleep_time_s = 1
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        # abort from READY
+        self.test_ConfigureScan(test_proxies, config_file_name, vcc_id)
+        
+        device_under_test.Off()
+
+        # controller device should be in DISABLE state after stop_communicating
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.State() == DevState.OFF
+
+        # Stop monitoring the TalonLRUs and power switch devices
+        for proxy in test_proxies.power_switch:
+            proxy.adminMode = AdminMode.OFFLINE
+
+        for proxy in test_proxies.talon_lru:
+            proxy.adminMode = AdminMode.OFFLINE
+            proxy.set_timeout_millis(10000)
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -392,7 +435,7 @@ class TestVcc:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        device_under_test = device_under_test = test_proxies.vcc[vcc_id]
+        device_under_test = test_proxies.vcc[vcc_id]
 
         device_under_test.Off()
 
