@@ -4212,7 +4212,12 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attemp to remove receptors
-            test_proxies.subarray[sub_id].RemoveReceptors(receptors_to_remove)
+            result = test_proxies.subarray[sub_id].RemoveReceptors(
+                receptors_to_remove
+            )
+            msg = result[1][0]
+            command_not_permitted = "Command not permitted by state model"
+            assert msg.find(command_not_permitted) != -1
 
             # Clean up
             wait_time_s = 3
