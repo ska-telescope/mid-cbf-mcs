@@ -4212,7 +4212,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attempt to remove receptors
-            with pytest.raises(DevFailed, match="Command not permitted by state model."):
+            with pytest.raises(DevError, match="Command not permitted by state model."):
                 test_proxies.subarray[sub_id].RemoveReceptors(
                     receptors_to_remove
                 )
