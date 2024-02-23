@@ -459,7 +459,7 @@ class CbfSubarrayComponentManager(
 
         if value is not None:
             if not self._ready:
-                log_msg = "Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
+                log_msg = f"Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
                 self._logger.warning(log_msg)
                 return
             try:
