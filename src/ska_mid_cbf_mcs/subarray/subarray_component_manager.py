@@ -459,9 +459,8 @@ class CbfSubarrayComponentManager(
 
         if value is not None:
             if not self._ready:
-                log_msg = "Ignoring delay model (obsState not correct)."
+                log_msg = "Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
                 self._logger.warning(log_msg)
-                self._logger.info(f"Delay model being passed in is: {value}")
                 return
             try:
                 self._logger.info("Received delay model update.")
@@ -1635,6 +1634,7 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["delay_model_subscription_point"],
                 logger=self._logger,
             )
+            self._logger.info("Subscribing to delay model event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._delay_model_event_callback
             )
