@@ -376,6 +376,12 @@ class CbfController(SKAController):
             """
 
             self.logger.info("Trying ON Command")
+            if not self.target.op_state_model.is_action_allowed(
+                "component_on"
+            ):
+                msg = f"On command is not allowed when op state is {self.target.op_state_model.op_state}"
+                self.logger.error(msg)
+                return (ResultCode.FAILED, msg)
 
             (result_code, message) = self.target.component_manager.on()
 
@@ -404,6 +410,13 @@ class CbfController(SKAController):
             :rtype: (ResultCode, str)
             """
 
+            if not self.target.op_state_model.is_action_allowed(
+                "component_off"
+            ):
+                msg = f"Off command is not allowed when op state is {self.target.op_state_model.op_state}"
+                self.logger.error(msg)
+                return (ResultCode.FAILED, msg)
+
             (result_code, message) = self.target.component_manager.off()
 
             if result_code == ResultCode.OK:
@@ -431,6 +444,13 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            if not self.target.op_state_model.is_action_allowed(
+                "component_standby"
+            ):
+                msg = f"Standby command is not allowed when op state is {self.target.op_state_model.op_state}"
+                self.logger.error(msg)
+                return (ResultCode.FAILED, msg)
 
             (result_code, message) = self.target.component_manager.standby()
 
