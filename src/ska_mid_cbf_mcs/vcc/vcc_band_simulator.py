@@ -99,6 +99,10 @@ class VccBandSimulator:
     def State(self: VccBandSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state
+    
+    def SetFault(self: VccBandSimulator) -> None:
+        """Get the current state of the device"""
+        self._state = tango.DevState.FAULT
 
     def SetInternalParameters(self: VccBandSimulator, json_str: str) -> None:
         """
