@@ -23,18 +23,10 @@ TEST_PARAMS_DIR = os.path.join(
 )
 TEST_DATA_DIR = os.path.join(TEST_PARAMS_DIR, "cbf_input_data")
 BITE_CONFIGS_DIR = os.path.join(TEST_DATA_DIR, "bite_config_parameters")
-# TODO: Temp alterations to allow mcs to find these files
-"""
-DEVICE_SERVER_LIST_DIR = os.path.join(
-    os.getcwd(),
-    "ska-mid-cbf-engineering-console/images/ska-mid-cbf-engineering-console-bite/bite_device_client/json",
-)
-
-"""
 
 DEVICE_SERVER_LIST_DIR = os.path.join(
     os.getcwd(),
-    "src/ska_mid_cbf_mcs/bite/bite_device_client/json",
+    "src/ska_mid_cbf_engineering_console/bite/bite_device_client/json",
 )
 
 SCHEMAS_DIR = os.path.join(os.getcwd(), "schemas")
@@ -42,16 +34,10 @@ TEST_DATA_SCHEMA_DIR = os.path.join(SCHEMAS_DIR, "cbf_input_data")
 BITE_CONFIGS_SCHEMA_DIR = os.path.join(
     TEST_DATA_SCHEMA_DIR, "bite_config_parameters"
 )
-"""
-DEVICE_SERVER_LIST_SCHEMA_DIR = os.path.join(
-    os.getcwd(),
-    "ska-mid-cbf-engineering-console/images/ska-mid-cbf-engineering-console-bite/bite_device_client/",
-)
-"""
 
 DEVICE_SERVER_LIST_SCHEMA_DIR = os.path.join(
     os.getcwd(),
-    "src/ska_mid_cbf_mcs/bite/bite_device_client/",
+    "src/ska_mid_cbf_engineering_console/bite/bite_device_client/",
 )
 
 LOG_FORMAT = (
@@ -111,7 +97,6 @@ class BiteClient:
         """
         Initialize the device servers from the device servers parameter file, and the parameters from the system-tests parameter files.
         """
-
         with open(
             os.path.join(DEVICE_SERVER_LIST_DIR, "device_server_list.json")
         ) as f:

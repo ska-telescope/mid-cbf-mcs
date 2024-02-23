@@ -20,7 +20,7 @@ SlimLink='ska_mid_cbf_mcs.slim.slim_link_device:main'
 Slim='ska_mid_cbf_mcs.slim.slim_device:main'
 TalonDxLogConsumer='ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_device:main'
 TmCspSubarrayLeafNodeTest='ska_mid_cbf_mcs.tm_leaf_node:main'
-ECBite='ska_mid_cbf_mcs.bite.ec_bite:main'
+ECBite='ska_mid_cbf_mcs.bite.bite:main'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
