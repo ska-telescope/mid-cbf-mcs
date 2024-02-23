@@ -36,9 +36,8 @@ __all__ = ["ECDeployer", "main"]
 
 class ECDeployer(SKABaseDevice):
     def init_device(self):
-        #TODO: Check logging instantiation
-        self.logger_ = logging.getLogger("ec_deployer.py")
-        # super().__init__(logger=logger)
+        super().init_device()
+        self._logger = logging.getLogger(__name__)
 
     # This is how many boards we can create configurations for currently.
     # Can be increased as needed.
@@ -127,7 +126,7 @@ class ECDeployer(SKABaseDevice):
     @command
     # 4 scripts from boardmap
     def generate_config_jsons(self) -> None:
-        self.logger_.info("Generate talondx-config.json file")
+        self._logger.info("Generate talondx-config.json file")
         working_dir = "/app/src/ska_mid_cbf_mcs/deployer"
         generate_talondx_config(self.read_targetTalons())
         with open(working_dir + "/talondx_config/ds_binaries.json") as file:
@@ -149,24 +148,26 @@ class ECDeployer(SKABaseDevice):
     #- aim is for it to be a smart downloader that can understand which binaries have already been downloaded and doesn't redownload if not needed
     @command
     def download_artifacts(self) -> None:
-        self.logger_.info("Download Artifacts")
+        self._logger.info("Download Artifacts")
         #TODO: Unhard code this
-        os.system("conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/ False")
+        os.system("conan remote remove conancenter")
+        os.system("conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/")
+        os.system("conan remote add conan.io https://center.conan.io")
         os.system("conan remote list")
         os.system("conan --version")
 
-        download_ds_binaries(json.loads(self._ds_binaries), self.logger_)
+        download_ds_binaries(json.loads(self._ds_binaries), self._logger)
         download_fpga_bitstreams(
-            json.loads(self._fpga_bitstreams), self.logger_
+            json.loads(self._fpga_bitstreams), self._logger
         )
 
     #- configure the tango DB
     @command
     def configure_db(self) -> None:
-        self.logger_.info(
+        self._logger.info(
             f'Configure DB - TANGO_HOST = {ApiUtil.get_env_var("TANGO_HOST")}'
         )
-        configure_tango_db(json.loads(self._tango_db), self.logger_)
+        configure_tango_db(json.loads(self._tango_db), self._logger)
 
 
 def main(args=None, **kwargs):

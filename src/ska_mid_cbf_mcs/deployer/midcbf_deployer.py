@@ -61,7 +61,7 @@ class Version:
 POWER_SWITCH_USER = os.environ.get("POWER_SWITCH_USER")
 POWER_SWITCH_PASS = os.environ.get("POWER_SWITCH_PASS")
 
-# PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = "/app/src/ska_mid_cbf_mcs/deployer/"
 ARTIFACTS_DIR = "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
 TALONDX_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "talondx-config.json")
 DOWNLOAD_CHUNK_BYTES = 1024
@@ -259,14 +259,12 @@ def download_git_artifacts(git_api_url, name):
                     bytes_downloaded + DOWNLOAD_CHUNK_BYTES, total_bytes
                 )
                 per_cent = round(bytes_downloaded / total_bytes * 100.0)
-                test_path = "/app/src/ska_mid_cbf_mcs/deployer/"
-                logger_.debug(
-                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)} "
+                logger_.info(
+                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)} "
                     f"[{bcolors.OK}{per_cent:>3} %{bcolors.ENDC}]",
                     end="\r",
                 )
             logger_.info("")
-
         logger_.info("Extracting files... ", end="")
         with zipfile.ZipFile(filename, "r") as zip_ref:
             zip_ref.extractall(ds_artifacts_dir)
@@ -277,24 +275,21 @@ def download_git_artifacts(git_api_url, name):
         )
 
 
-def download_raw_artifacts(api_url, name, filename):
+def download_raw_artifacts(api_url, name, filename, logger_):
     # TODO: factorize common code with download_git_artifacts
-    response = requests.head(url=api_url, auth=(RAW_REPO_USER, RAW_REPO_PASS))
-
+    response = requests.head(url=api_url, auth=("", ""))
     if response.status_code == requests.codes.ok:  # pylint: disable=no-member
         total_bytes = int(response.headers["Content-Length"])
-
         response = requests.get(
-            api_url, auth=(RAW_REPO_USER, RAW_REPO_PASS), stream=True
+            api_url, auth=("", ""), stream=True
         )
         artifacts_dir = os.path.join(ARTIFACTS_DIR, name)
         filename = os.path.join(artifacts_dir, filename)
         bytes_downloaded = 0
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "wb") as fd:
-            test_path = "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
-            logger_.debug(
-                f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)}"
+            logger_.info(
+                f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)}"
             )
             for chunk in response.iter_content(
                 chunk_size=DOWNLOAD_CHUNK_BYTES
@@ -303,14 +298,14 @@ def download_raw_artifacts(api_url, name, filename):
                 bytes_downloaded = min(
                     bytes_downloaded + DOWNLOAD_CHUNK_BYTES, total_bytes
                 )
-                per_cent = round(bytes_downloaded / total_bytes * 100.0)
-                print(
-                    f"Downloading {total_bytes} bytes to {os.path.relpath(filename, test_path)} "
-                    f"[{bcolors.OK}{per_cent:>3} %{bcolors.ENDC}]",
-                    end="\r",
-                )
-            print("\n")
-
+                #TODO: Investigate why this makes the code hang
+                # per_cent = round(bytes_downloaded / total_bytes * 100.0)
+                # logger_.info(
+                #     # f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)} "
+                #     f"Downloading {total_bytes} bytes "
+                #     f"[{bcolors.OK}{per_cent:>3} %{bcolors.ENDC}]",
+                #     end="\r",
+                # )
         logger_.info("Extracting files... ")
         if tarfile.is_tarfile(filename):
             tar = tarfile.open(filename, "r")
@@ -320,7 +315,6 @@ def download_raw_artifacts(api_url, name, filename):
             with zipfile.ZipFile(filename, "r") as zip_ref:
                 zip_ref.extractall(artifacts_dir)
         logger_.info(f"{bcolors.OK}Done extracting files{bcolors.ENDC}")
-
         # TODO: workaround; request permissions change from systems team
         os.chmod(os.path.join(artifacts_dir, "MANIFEST.skao.int"), 0o644)
     else:
@@ -398,20 +392,20 @@ def download_fpga_bitstreams(fpga_bitstreams: dict, logger_):
             # TODO: update to filter directly on "base_filename"
             url = f"{NEXUS_API_URL}search?repository=raw-internal&group=/"
             response = requests.get(
-                url=url, auth=(RAW_REPO_USER, RAW_REPO_PASS)
+                url=url, auth=("", "")
             )
             download_urls = []
+            logger_.info("Response Code: " + str(response.status_code))
             if (
                 response.status_code
                 == requests.codes.ok  # pylint: disable=no-member
             ):
                 for item in response.json().get("items", []):
-                    # logger_.info(f'\nRaw search response item: {item}')
+                    logger_.info(f'\nRaw search response item: {item}')
                     for asset in item.get("assets"):
                         download_urls.append(asset.get("downloadUrl"))
             else:
                 logger_.info(response)
-
             for file_url in download_urls:
                 logger_.info(f"file_url = {file_url}")
                 filename_pattern = (
@@ -429,7 +423,9 @@ def download_fpga_bitstreams(fpga_bitstreams: dict, logger_):
                             api_url=file_url,
                             name="fpga-talon",
                             filename=filenames[0],
+                            logger_=logger_,
                         )
+                        logger_.info("Finished downloading")
         else:
             # Download the artifacts from the latest successful Git pipeline
             git_info = fpga["git"]
@@ -484,7 +480,7 @@ def db_device_check():
     # Destroy log handler so logs don't print twice.
     logger_.removeHandler(handler)
 
-
+#TODO: UNCOMMENT THIS AGAIN
 # def slim_mesh_test(mesh_config: str, loopback: bool):
 #     logger_.info(f"Mesh test with config file: {mesh_config}")
 #     SlimMeshTest().run_mesh_test(
@@ -557,12 +553,12 @@ if __name__ == "__main__":
     elif args.device_check:
         logger_.info("Check device status:")
         db_device_check()
-    elif args.mesh_test:
-        if args.loopback == 1:
-            logger_.info("Initiating SLIM Mesh Test in serial loopback mode")
-            slim_mesh_test(args.mesh_config, True)
-        else:
-            logger_.info("Initiating SLIM Mesh Test")
-            slim_mesh_test(args.mesh_config, False)
+    # elif args.mesh_test:
+    #     if args.loopback == 1:
+    #         logger_.info("Initiating SLIM Mesh Test in serial loopback mode")
+    #         slim_mesh_test(args.mesh_config, True)
+    #     else:
+    #         logger_.info("Initiating SLIM Mesh Test")
+    #         slim_mesh_test(args.mesh_config, False)
     else:
         logger_.info("Hello from Mid CBF Engineering Console!")
