@@ -19,7 +19,6 @@ import copy
 import json
 import logging
 import sys
-import time
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -462,16 +461,7 @@ class CbfSubarrayComponentManager(
             if not self._ready:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self._logger.warning(log_msg)
-
-                # TODO: Temporary logging, remove after debugging !!!
-                self._logger.info(
-                    "Sleeping for 3 seconds and rechecking for ready state."
-                )
-                time.sleep(3)
-                self._logger.info(
-                    f"Current value of self._ready is: {self._ready}"
-                )
-
+                self._logger.info(f"Delay model being passed in is: {value}")
                 return
             try:
                 self._logger.info("Received delay model update.")
@@ -2346,8 +2336,7 @@ class CbfSubarrayComponentManager(
 
         :param configured: whether the component is configured.
         """
-        # TODO: Swap back to debug when done testing !!!
-        self._logger.info(
+        self._logger.debug(
             f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
         )
         # perform component_configured/unconfigured callback if in a VALID case
