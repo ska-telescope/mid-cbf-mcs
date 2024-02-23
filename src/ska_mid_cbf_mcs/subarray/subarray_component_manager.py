@@ -463,7 +463,7 @@ class CbfSubarrayComponentManager(
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self._logger.warning(log_msg)
 
-                # TODO: Temporary logging, remove after debugging
+                # TODO: Temporary logging, remove after debugging !!!
                 self._logger.info(
                     "Sleeping for 3 seconds and rechecking for ready state."
                 )
@@ -2346,7 +2346,8 @@ class CbfSubarrayComponentManager(
 
         :param configured: whether the component is configured.
         """
-        self._logger.debug(
+        # TODO: Swap back to debug when done testing !!!
+        self._logger.info(
             f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
         )
         # perform component_configured/unconfigured callback if in a VALID case
