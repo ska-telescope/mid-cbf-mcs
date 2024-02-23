@@ -71,6 +71,7 @@ pylint = "2.15.5"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^6"
+sphinx_rtd_theme ="^1.2.2"
 ska-ser-sphinx-theme = "^0.1.1"
 myst-parser = "^2.0.0"
 sphinxcontrib-mermaid = "^0.9.2"
