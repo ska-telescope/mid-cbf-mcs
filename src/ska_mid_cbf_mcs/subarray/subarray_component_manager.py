@@ -1622,6 +1622,7 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["doppler_phase_corr_subscription_point"],
                 logger=self._logger,
             )
+            self._logger.info("Subscribing to doppler phase correction event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._doppler_phase_correction_event_callback
             )
@@ -1647,6 +1648,7 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["jones_matrix_subscription_point"],
                 logger=self._logger,
             )
+            self._logger.info("Subscribing to jones matrix event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._jones_matrix_event_callback
             )
@@ -1659,6 +1661,7 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["timing_beam_weights_subscription_point"],
                 logger=self._logger,
             )
+            self._logger.info("Subscribing to timing beam weights event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._timing_beam_weights_event_callback
             )
