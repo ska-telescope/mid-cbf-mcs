@@ -340,6 +340,9 @@ class TestVcc:
         sleep_time_s = 1
 
         device_under_test.SetFault()
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.FAULT, wait_time_s, sleep_time_s
+        )
 
         # do stuff..
         assert device_under_test.State() == DevState.FAULT
