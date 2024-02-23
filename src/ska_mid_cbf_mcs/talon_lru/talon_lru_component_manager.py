@@ -155,11 +155,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._check_power_mode_callback,
                 stateless=True,
             )
-            self.pdu1_power_mode = (
-                self._proxy_power_switch1.GetOutletPowerMode(
-                    self._pdu_outlets[0]
-                )
-            )
             if self._proxy_power_switch1.numOutlets == 0:
                 self.pdu1_power_mode = PowerMode.UNKNOWN
 
@@ -176,11 +171,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                     "simulationMode",
                     self._check_power_mode_callback,
                     stateless=True,
-                )
-                self.pdu2_power_mode = (
-                    self._proxy_power_switch2.GetOutletPowerMode(
-                        self._pdu_outlets[1]
-                    )
                 )
                 if self._proxy_power_switch2.numOutlets == 0:
                     self.pdu2_power_mode = PowerMode.UNKNOWN
