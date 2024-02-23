@@ -25,7 +25,6 @@ from tango.server import attribute, command, run
 
 # Python Imports
 from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
-    TalonDxConfig,
     configure_tango_db,
     download_ds_binaries,
     download_fpga_bitstreams,
@@ -33,6 +32,7 @@ from ska_mid_cbf_mcs.deployer.midcbf_deployer import (
 )
 
 __all__ = ["ECDeployer", "main"]
+
 
 class ECDeployer(SKABaseDevice):
     def init_device(self):
@@ -133,11 +133,15 @@ class ECDeployer(SKABaseDevice):
             ds_binaries = json.load(file)
             self._ds_binaries = json.dumps(ds_binaries)
 
-        with open(working_dir + "/talondx_config/fpga_bitstreams.json") as file:
+        with open(
+            working_dir + "/talondx_config/fpga_bitstreams.json"
+        ) as file:
             fpga_bitstreams = json.load(file)
             self._fpga_bitstreams = json.dumps(fpga_bitstreams)
 
-        with open(working_dir + "/talondx_config/config_commands.json") as file:
+        with open(
+            working_dir + "/talondx_config/config_commands.json"
+        ) as file:
             config_commands = json.load(file)
             self._config_commands = json.dumps(config_commands)
 
@@ -145,13 +149,16 @@ class ECDeployer(SKABaseDevice):
             tango_db = json.load(file)
             self._tango_db = json.dumps(tango_db)
 
-    #- aim is for it to be a smart downloader that can understand which binaries have already been downloaded and doesn't redownload if not needed
+    # - aim is for it to be a smart downloader that can understand
+    # which binaries have already been downloaded and doesn't redownload if not needed
     @command
     def download_artifacts(self) -> None:
         self._logger.info("Download Artifacts")
-        #TODO: Unhard code this
+        # TODO: Unhard code this
         os.system("conan remote remove conancenter")
-        os.system("conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/")
+        os.system(
+            "conan remote add ska https://artefact.skatelescope.org/repository/conan-internal/"
+        )
         os.system("conan remote add conan.io https://center.conan.io")
         os.system("conan remote list")
         os.system("conan --version")
@@ -161,7 +168,7 @@ class ECDeployer(SKABaseDevice):
             json.loads(self._fpga_bitstreams), self._logger
         )
 
-    #- configure the tango DB
+    # - configure the tango DB
     @command
     def configure_db(self) -> None:
         self._logger.info(

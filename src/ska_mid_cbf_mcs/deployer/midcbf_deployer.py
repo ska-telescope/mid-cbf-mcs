@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import argparse
 import copy
 import getpass
 import json
@@ -16,12 +15,11 @@ import tango
 
 from ska_mid_cbf_mcs.deployer.conan_local.conan_wrapper import ConanWrapper
 from ska_mid_cbf_mcs.deployer.nrcdbpopulate.dbPopulate import DbPopulate
-from ska_mid_cbf_mcs.deployer.talondx_config.talondx_config import (
-    TalonDxConfig,
-)
+from ska_mid_cbf_mcs.deployer.slim.slim_mesh_test import SlimMeshTest
 
 LOG_FORMAT = "[talondx.py: line %(lineno)s]%(levelname)s: %(message)s"
 WORKING_DIR = "/app/src/ska_mid_cbf_mcs/deployer"
+
 
 class bcolors:
     HEADER = "\033[95m"
@@ -94,7 +92,9 @@ def generate_talondx_config(boards_list):
     :param boards: List of boards to deploy
     :type boards: int
     """
-    with open(WORKING_DIR + "/talondx_config/talondx_boardmap.json", "r") as config_map:
+    with open(
+        WORKING_DIR + "/talondx_config/talondx_boardmap.json", "r"
+    ) as config_map:
         config_map_json = json.load(config_map)
         fpga_bitstreams = {
             "fpga_bitstreams": config_map_json["fpga_bitstreams"]
@@ -167,10 +167,18 @@ def generate_talondx_config(boards_list):
                 db_servers_list.append(db_server_tmp)
         tango_db["tango_db"] = {"db_servers": db_servers_list}
 
-        fpga_bitstreams_file = open(WORKING_DIR + "/talondx_config/fpga_bitstreams.json", "w")
-        ds_binaries_file = open(WORKING_DIR + "/talondx_config/ds_binaries.json", "w")
-        talondx_config_commands_file = open(WORKING_DIR + "/talondx_config/config_commands.json", "w")
-        tango_db_file = open(WORKING_DIR + "/talondx_config/tango_db.json", "w")
+        fpga_bitstreams_file = open(
+            WORKING_DIR + "/talondx_config/fpga_bitstreams.json", "w"
+        )
+        ds_binaries_file = open(
+            WORKING_DIR + "/talondx_config/ds_binaries.json", "w"
+        )
+        talondx_config_commands_file = open(
+            WORKING_DIR + "/talondx_config/config_commands.json", "w"
+        )
+        tango_db_file = open(
+            WORKING_DIR + "/talondx_config/tango_db.json", "w"
+        )
 
         json.dump(fpga_bitstreams, fpga_bitstreams_file, indent=6)
         json.dump(ds_binaries, ds_binaries_file, indent=6)
@@ -280,9 +288,7 @@ def download_raw_artifacts(api_url, name, filename, logger_):
     response = requests.head(url=api_url, auth=("", ""))
     if response.status_code == requests.codes.ok:  # pylint: disable=no-member
         total_bytes = int(response.headers["Content-Length"])
-        response = requests.get(
-            api_url, auth=("", ""), stream=True
-        )
+        response = requests.get(api_url, auth=("", ""), stream=True)
         artifacts_dir = os.path.join(ARTIFACTS_DIR, name)
         filename = os.path.join(artifacts_dir, filename)
         bytes_downloaded = 0
@@ -298,7 +304,7 @@ def download_raw_artifacts(api_url, name, filename, logger_):
                 bytes_downloaded = min(
                     bytes_downloaded + DOWNLOAD_CHUNK_BYTES, total_bytes
                 )
-                #TODO: Investigate why this makes the code hang
+                # TODO: Investigate why this makes the code hang
                 # per_cent = round(bytes_downloaded / total_bytes * 100.0)
                 # logger_.info(
                 #     # f"Downloading {total_bytes} bytes to {os.path.relpath(filename, PROJECT_DIR)} "
@@ -369,7 +375,9 @@ def download_ds_binaries(ds_binaries: dict, logger_, clear_conan_cache=True):
             exit(-1)
 
     # Modify the permissions of Artifacts dir so they can be modified/deleted later
-    chmod_r_cmd = "chmod -R o=rwx " + "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
+    chmod_r_cmd = (
+        "chmod -R o=rwx " + "/app/src/ska_mid_cbf_mcs/deployer/artifacts/"
+    )
     os.system(chmod_r_cmd)
 
 
@@ -391,9 +399,7 @@ def download_fpga_bitstreams(fpga_bitstreams: dict, logger_):
             # url = f"{NEXUS_API_URL}search?repository=raw-internal&group=/{raw_info['group']}/*"
             # TODO: update to filter directly on "base_filename"
             url = f"{NEXUS_API_URL}search?repository=raw-internal&group=/"
-            response = requests.get(
-                url=url, auth=("", "")
-            )
+            response = requests.get(url=url, auth=("", ""))
             download_urls = []
             logger_.info("Response Code: " + str(response.status_code))
             if (
@@ -401,7 +407,7 @@ def download_fpga_bitstreams(fpga_bitstreams: dict, logger_):
                 == requests.codes.ok  # pylint: disable=no-member
             ):
                 for item in response.json().get("items", []):
-                    logger_.info(f'\nRaw search response item: {item}')
+                    logger_.info(f"\nRaw search response item: {item}")
                     for asset in item.get("assets"):
                         download_urls.append(asset.get("downloadUrl"))
             else:
@@ -480,85 +486,16 @@ def db_device_check():
     # Destroy log handler so logs don't print twice.
     logger_.removeHandler(handler)
 
-#TODO: UNCOMMENT THIS AGAIN
-# def slim_mesh_test(mesh_config: str, loopback: bool):
-#     logger_.info(f"Mesh test with config file: {mesh_config}")
-#     SlimMeshTest().run_mesh_test(
-#         mesh_config_filename=mesh_config, serial_loopback=loopback
-#     )
+
+# TODO: UNCOMMENT THIS AGAIN
+def slim_mesh_test(mesh_config: str, loopback: bool):
+    logger_.info(f"Mesh test with config file: {mesh_config}")
+    SlimMeshTest().run_mesh_test(
+        mesh_config_filename=mesh_config, serial_loopback=loopback
+    )
 
 
 if __name__ == "__main__":
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
     logger_ = logging.getLogger("midcbf_deployer.py")
     logger_.info(f"User: {getpass.getuser()}")
-    parser = argparse.ArgumentParser(description="MID CBF Deployer Utility")
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        help="increase output verbosity",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--config-db",
-        help="configure the Tango database with devices specified in talondx-config.json file",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--download-artifacts",
-        help="download the FPGA bitstreams and Tango DS binaries from the Common Artefact Repository (CAR)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--generate-talondx-config",
-        help="Generate talondx config file",
-        action="store_true",
-    )
-    parser.add_argument("--boards", type=str)
-    parser.add_argument(
-        "--device-check",
-        help="checks that the devices added from dbPopulate have been exported",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--mesh-test",
-        help="creates a mesh of links between SLIM Tx Rx devices and tests links",
-        action="store_true",
-    )
-    parser.add_argument("--mesh-config", type=str)
-    parser.add_argument(
-        "--loopback",
-        help="configures SLIM Links in serial loopback mode",
-        type=int,
-    )
-    args = parser.parse_args()
-
-    if args.config_db:
-        logger_.info(
-            f'Configure DB - TANGO_HOST = {tango.ApiUtil.get_env_var("TANGO_HOST")}'
-        )
-        config = TalonDxConfig(config_file=TALONDX_CONFIG_FILE)
-        configure_tango_db(config.tango_db())
-    elif args.download_artifacts:
-        logger_.info("Download Artifacts")
-        ds = TalonDxConfig(config_file="/app/src/ska_mid_cbf_mcs/deployer/talondx_config/ds_binaries.json")
-        ds.export_config(ARTIFACTS_DIR)
-        download_ds_binaries(ds.ds_binaries())
-        fpga = TalonDxConfig(config_file="/app/src/ska_mid_cbf_mcs/deployer/talondx_config/fpga_bitstreams.json")
-        fpga.export_config(ARTIFACTS_DIR)
-        download_fpga_bitstreams(fpga.fpga_bitstreams())
-    elif args.generate_talondx_config and args.boards is not None:
-        logger_.info("Generate talondx-config.json file")
-        generate_talondx_config(args.boards)
-    elif args.device_check:
-        logger_.info("Check device status:")
-        db_device_check()
-    # elif args.mesh_test:
-    #     if args.loopback == 1:
-    #         logger_.info("Initiating SLIM Mesh Test in serial loopback mode")
-    #         slim_mesh_test(args.mesh_config, True)
-    #     else:
-    #         logger_.info("Initiating SLIM Mesh Test")
-    #         slim_mesh_test(args.mesh_config, False)
-    else:
-        logger_.info("Hello from Mid CBF Engineering Console!")

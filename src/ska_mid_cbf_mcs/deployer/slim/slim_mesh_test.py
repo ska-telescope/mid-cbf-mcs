@@ -1,5 +1,6 @@
-import slim.SLIM_Transceiver
 import yaml
+
+from ska_mid_cbf_mcs.deployer.slim import SLIM_Transceiver
 
 
 class SlimMeshTest:
@@ -25,7 +26,7 @@ class SlimMeshTest:
                 mesh_dict[j] = [tx.strip(), rx.strip()]
                 j = j + 1
 
-        return slim.SLIM_Transceiver.create_mesh(mesh_dict, serial_loopback)
+        return SLIM_Transceiver.create_mesh(mesh_dict, serial_loopback)
 
     def run_mesh_test(self, mesh_config_filename: str, serial_loopback: bool):
         BER_PASS_TH = 8.000e-11
@@ -38,7 +39,7 @@ class SlimMeshTest:
         test_length = t_sec
         ber_pass = BER_PASS_TH
         print("H/W Verification: Slim Mesh Links Check")
-        slim.SLIM_Transceiver.slim_mesh_links_ber_check(
+        SLIM_Transceiver.slim_mesh_links_ber_check(
             mesh, test_length, ber_pass, stop=False
         )
         print("Test finished.")
