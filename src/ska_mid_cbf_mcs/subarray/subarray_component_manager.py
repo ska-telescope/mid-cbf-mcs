@@ -1638,7 +1638,7 @@ class CbfSubarrayComponentManager(
             event_id = attribute_proxy.add_change_event_callback(
                 self._delay_model_event_callback
             )
-            self._logger.info("Subscribing to delay model event of id: {event_id}")
+            self._logger.info(f"Subscribing to delay model event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure jonesMatrixSubscriptionPoint
@@ -1651,7 +1651,7 @@ class CbfSubarrayComponentManager(
             event_id = attribute_proxy.add_change_event_callback(
                 self._jones_matrix_event_callback
             )
-            self._logger.info("Subscribing to jones matrix event of id: {event_id}")
+            self._logger.info(f"Subscribing to jones matrix event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure beamWeightsSubscriptionPoint
@@ -1664,7 +1664,7 @@ class CbfSubarrayComponentManager(
             event_id = attribute_proxy.add_change_event_callback(
                 self._timing_beam_weights_event_callback
             )
-            self._logger.info("Subscribing to timing beam weights event of id: {event_id}")
+            self._logger.info(f"Subscribing to timing beam weights event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure searchWindow.
