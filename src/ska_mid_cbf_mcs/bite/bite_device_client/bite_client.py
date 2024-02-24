@@ -26,7 +26,7 @@ BITE_CONFIGS_DIR = os.path.join(TEST_DATA_DIR, "bite_config_parameters")
 
 DEVICE_SERVER_LIST_DIR = os.path.join(
     os.getcwd(),
-    "src/ska_mid_cbf_engineering_console/bite/bite_device_client/json",
+    "src/ska_mid_cbf_mcs/bite/bite_device_client/json",
 )
 
 SCHEMAS_DIR = os.path.join(os.getcwd(), "schemas")
@@ -37,7 +37,7 @@ BITE_CONFIGS_SCHEMA_DIR = os.path.join(
 
 DEVICE_SERVER_LIST_SCHEMA_DIR = os.path.join(
     os.getcwd(),
-    "src/ska_mid_cbf_engineering_console/bite/bite_device_client/",
+    "src/ska_mid_cbf_mcs/bite/bite_device_client/",
 )
 
 LOG_FORMAT = (

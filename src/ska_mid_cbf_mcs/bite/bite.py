@@ -148,7 +148,7 @@ class ECBite(SKABaseDevice):
         )
         BASIC_TEST_PARAMETERS = os.path.join(
             os.getcwd(),
-            "src/ska_mid_cbf_engineering_console/bite/bite_device_client/json/basic_test_parameters.json",
+            "src/ska_mid_cbf_mcs/bite/bite_device_client/json/basic_test_parameters.json",
         )
 
         # Point to the JSON config files the system will be using
