@@ -1622,10 +1622,10 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["doppler_phase_corr_subscription_point"],
                 logger=self._logger,
             )
-            self._logger.info("Subscribing to doppler phase correction event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._doppler_phase_correction_event_callback
             )
+            self._logger.info(f"Subscribing to doppler phase correction event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure delayModelSubscriptionPoint.
@@ -1635,10 +1635,10 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["delay_model_subscription_point"],
                 logger=self._logger,
             )
-            self._logger.info("Subscribing to delay model event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._delay_model_event_callback
             )
+            self._logger.info("Subscribing to delay model event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure jonesMatrixSubscriptionPoint
@@ -1648,10 +1648,10 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["jones_matrix_subscription_point"],
                 logger=self._logger,
             )
-            self._logger.info("Subscribing to jones matrix event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._jones_matrix_event_callback
             )
+            self._logger.info("Subscribing to jones matrix event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure beamWeightsSubscriptionPoint
@@ -1661,10 +1661,10 @@ class CbfSubarrayComponentManager(
                 fqdn=configuration["timing_beam_weights_subscription_point"],
                 logger=self._logger,
             )
-            self._logger.info("Subscribing to timing beam weights event")
             event_id = attribute_proxy.add_change_event_callback(
                 self._timing_beam_weights_event_callback
             )
+            self._logger.info("Subscribing to timing beam weights event of id: {event_id}")
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure searchWindow.
