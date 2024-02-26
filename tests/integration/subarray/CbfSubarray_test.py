@@ -4379,7 +4379,10 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attemp to add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptors)
+            with pytest.raises(
+                DevFailed, match="Command not permitted by state model."
+            ):
+                test_proxies.subarray[sub_id].AddReceptors(receptors)
 
             # Clean up
             wait_time_s = 3
@@ -4541,7 +4544,10 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attemp to call off command
-            test_proxies.subarray[sub_id].Off()
+            with pytest.raises(
+                DevFailed, match="Command not permitted by state model."
+            ):
+                test_proxies.subarray[sub_id].Off()
 
             # Clean up
             wait_time_s = 3
@@ -4703,7 +4709,11 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attemp to configure scan
-            test_proxies.subarray[sub_id].ConfigureScan(json_string)
+
+            with pytest.raises(
+                DevFailed, match="Command not permitted by state model."
+            ):
+                test_proxies.subarray[sub_id].ConfigureScan(json_string)
 
             # Clean up
             wait_time_s = 3
