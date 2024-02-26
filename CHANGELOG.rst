@@ -5,6 +5,19 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.25
+*******
+* CIP-1979: Updated SubarrayComponentManager to assign channel_offset=1 in FSP configuration when LMC does not define one.
+
+0.12.24
+*******
+* CIP-1849: Implemented obsfault for Vcc and Fsp<func> Subarray
+
+0.12.23
+*******
+* CIP-1940: Updated ConfigureScan sequence diagram
+* CIP-2048: Added ping check and ICW regeneration condition to SlimLink
+
 0.12.22
 *******
 * CIP-2050 Added temporary timeout in power_switch_device on/off to possible fix async issue

@@ -187,6 +187,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable,
+        component_obs_fault_callback: Callable,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
@@ -205,7 +206,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param component_power_mode_changed_callback: callback to be called when
             the component power mode changes
         :param component_fault_callback: callback to be called in event of
-            component fault
+            component fault (for op state model)
+        :param component_obs_fault_callback: callback to be called in event of
+            component fault (for obs state model)
         :param simulation_mode: simulation mode identifies if the real VCC HPS
             applications or the simulator should be connected
         """
@@ -220,6 +223,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self.connected = False
         self._ready = False
+
+        self.obs_faulty = False
+
+        self._component_obs_fault_callback = component_obs_fault_callback
 
         # Initialize attribute values
         self._receptor_id = 0
@@ -487,7 +494,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
-            self.update_component_fault(True)
+            self._component_obs_fault_callback(True)
             (result_code, msg) = (
                 ResultCode.FAILED,
                 "Failed to connect to HPS VCC devices.",
@@ -528,7 +535,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     # self._vcc_controller_proxy.Unconfigure()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
-                    self.update_component_fault(True)
+                    self._component_obs_fault_callback(True)
             self._ready = False
 
     def configure_scan(
@@ -586,7 +593,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
+                self._component_obs_fault_callback(True)
                 return (
                     ResultCode.FAILED,
                     "Failed to connect to VCC band device",
@@ -620,7 +627,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].Scan(scan_id)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
+                self._component_obs_fault_callback(True)
                 return (
                     ResultCode.FAILED,
                     "Failed to connect to VCC band device",
@@ -648,7 +655,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].EndScan()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
+                self._component_obs_fault_callback(True)
                 return (
                     ResultCode.FAILED,
                     "Failed to connect to VCC band device",
@@ -670,7 +677,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     # self._band_proxies[idx].Abort()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
-                    self.update_component_fault(True)
+                    self._component_obs_fault_callback(True)
                     return (
                         ResultCode.FAILED,
                         "Failed to connect to VCC band device",
@@ -700,7 +707,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     # self._band_proxies[idx].ObsReset()
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
-                    self.update_component_fault(True)
+                    self._component_obs_fault_callback(True)
                     return (
                         ResultCode.FAILED,
                         "Failed to connect to VCC band device",
@@ -872,6 +879,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
+            self._component_obs_fault_callback(True)
             (result_code, msg) = (
                 ResultCode.FAILED,
                 "Error configuring search window.",

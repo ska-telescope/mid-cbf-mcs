@@ -168,7 +168,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         dtype="DevLong",
         access=AttrWriteType.READ_WRITE,
         label="fspChannelOffset",
-        doc="fsp Channel offset, integer, multiple of 14480",
+        doc="ID of the first (lowest bandwidth) channel generated on this FSP. See channel_offset in telescope model for more details.",
     )
 
     outputLinkMap = attribute(
@@ -293,6 +293,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self._communication_status_changed,
             self._component_power_mode_changed,
             self._component_fault,
+            self._component_obsfault,
         )
 
     def delete_device(self: FspCorrSubarray) -> None:
@@ -1089,13 +1090,16 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_fault")
             self.set_status("The device is in FAULT state")
 
-    def _component_obsfault(self: FspCorrSubarray) -> None:
+    def _component_obsfault(self: FspCorrSubarray, faulty: bool) -> None:
         """
         Handle notification that the component has obsfaulted.
 
         This is a callback hook.
         """
-        self.obs_state_model.perform_action("component_obsfault")
+        self.component_manager.obs_faulty = faulty
+        if faulty:
+            self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
 
     def _communication_status_changed(
         self: FspCorrSubarray, communication_status: CommunicationStatus

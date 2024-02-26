@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Callable, Optional
 
+import backoff
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
@@ -142,7 +143,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def tx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The idle control word generated in the HPS by hashing the tx device's FQDN.
+        The idle control word set in the tx device. Initially generated
+        in the HPS by hashing the tx device's FQDN.
 
         :return: the tx idle control word.
         :raise Tango exception: if the tx device is not set.
@@ -325,19 +327,53 @@ class SlimLinkComponentManager(CbfComponentManager):
                 fqdn=self._rx_device_name, logger=self._logger
             )
 
+            @backoff.on_exception(
+                backoff.constant,
+                (Exception, tango.DevFailed),
+                max_tries=6,
+                interval=1.5,
+                jitter=None,
+            )
+            def ping_slim_tx_rx() -> None:
+                """
+                Attempts to connect to the Talon board for the first time
+                after power-on.
+
+                :param ip: IP address of the board
+                :param ssh_client: SSH client to use for connection
+                """
+                self._ping_count += 1
+                self._tx_device_proxy.ping()
+                self._rx_device_proxy.ping()
+
+            self._ping_count = 0
+            ping_slim_tx_rx()
+            self._logger.info(
+                f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
+            )
             # Sync the idle ctrl word between Tx and Rx
             idle_ctrl_word = self.tx_idle_ctrl_word
+
+            # If Tx's IdleCtrlWord reads as None, regenerate.
+            if idle_ctrl_word is None:
+                idle_ctrl_word = (
+                    hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                )
+                self._logger.warning(
+                    f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
+                )
+                self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
+            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
+
             self._logger.info(
-                f"Tx idle_ctrl_word: {idle_ctrl_word} type: {type(idle_ctrl_word)}"
+                f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}"
             )
             self._logger.info(
                 f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
             )
-            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
             # Take SLIM Rx out of serial loopback
             self._rx_device_proxy.initialize_connection(False)
-
             self.clear_counters()
 
         except tango.DevFailed as df:

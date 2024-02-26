@@ -91,9 +91,25 @@ to configure a correlation scan. Return calls are not shown.
 .. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
 
 The sequence diagram below shows additional detail for configuration of 
-the VCC for a correlation scan.
+the VCC for a correlation scan, following the ConfigureScan call from LMC.
 
 .. uml:: ../../diagrams/configure-scan-vcc.puml
+
+When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
+
+- "frequency_band"
+- "dish_sample_rate"
+- "samples_per_frame"
+
+When the Subarray calls **ConfigureScan**, the jsonstr argument contains:
+
+- "config_id"
+- "frequency_band"
+- "band_5_tuning"
+- "frequency_band_offset_stream1"
+- "frequency_band_offset_stream2"
+- "rfi_flagging_mask"
+- "fsp"
 
 The sequence diagram below shows details of calls to configure a FSP for a 
 correlation scan.
