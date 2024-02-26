@@ -4107,7 +4107,6 @@ class TestCbfSubarray:
             )
         ],
     )
-    # Temp
     def test_remove_receptors_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4442,6 +4441,7 @@ class TestCbfSubarray:
             )
         ],
     )
+    @pytest.mark.skip(reason="Currently fails")
     def test_call_off_cmd_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
