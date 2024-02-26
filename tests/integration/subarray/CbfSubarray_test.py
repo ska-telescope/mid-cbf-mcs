@@ -4441,7 +4441,7 @@ class TestCbfSubarray:
             )
         ],
     )
-    def call_off_cmd_in_the_middle_of_scan(
+    def test_call_off_cmd_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
@@ -4606,7 +4606,7 @@ class TestCbfSubarray:
             )
         ],
     )
-    def configure_scan_in_the_middle_of_scanning(
+    def test_configure_scan_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
