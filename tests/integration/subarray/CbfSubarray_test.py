@@ -20,7 +20,7 @@ from typing import List
 
 import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
@@ -4212,7 +4212,9 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             # attempt to remove receptors
-            with pytest.raises(DevError, match="Command not permitted by state model."):
+            with pytest.raises(
+                DevFailed, match="Command not permitted by state model."
+            ):
                 test_proxies.subarray[sub_id].RemoveReceptors(
                     receptors_to_remove
                 )
