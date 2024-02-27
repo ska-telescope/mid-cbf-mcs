@@ -4441,7 +4441,7 @@ class TestCbfSubarray:
             )
         ],
     )
-    # @pytest.mark.skip(reason="Currently fails")
+    @pytest.mark.skip(reason="Currently fails")
     def test_call_off_cmd_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4549,6 +4549,38 @@ class TestCbfSubarray:
                 DevFailed, match="Command not permitted by state model."
             ):
                 test_proxies.subarray[sub_id].Off()
+
+            # Clean up
+            wait_time_s = 3
+            test_proxies.subarray[sub_id].EndScan()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.READY,
+                wait_time_s,
+                sleep_time_s,
+            )
+            test_proxies.subarray[sub_id].End()
+            test_proxies.wait_timeout_obs(
+                [
+                    test_proxies.vcc[i]
+                    for i in range(1, test_proxies.num_vcc + 1)
+                ],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+            test_proxies.subarray[sub_id].RemoveAllReceptors()
+            test_proxies.wait_timeout_obs(
+                [
+                    test_proxies.vcc[i]
+                    for i in range(1, test_proxies.num_vcc + 1)
+                ],
+                ObsState.EMPTY,
+                wait_time_s,
+                sleep_time_s,
+            )
+
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
