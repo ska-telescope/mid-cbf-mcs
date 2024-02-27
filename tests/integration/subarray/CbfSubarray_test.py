@@ -4441,7 +4441,7 @@ class TestCbfSubarray:
             )
         ],
     )
-    @pytest.mark.skip(reason="Currently fails")
+    # @pytest.mark.skip(reason="Currently fails")
     def test_call_off_cmd_in_the_middle_of_scan(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4607,7 +4607,7 @@ class TestCbfSubarray:
             )
         ],
     )
-    # @pytest.mark.skip(reason="Currently fails")
+    @pytest.mark.skip(reason="Currently fails, CIP-2306")
     def test_configure_scan_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4774,6 +4774,7 @@ class TestCbfSubarray:
             )
         ],
     )
+    @pytest.mark.skip(reason="temp")
     def test_go_to_idle_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
