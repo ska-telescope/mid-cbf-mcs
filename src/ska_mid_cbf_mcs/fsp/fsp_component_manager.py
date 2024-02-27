@@ -390,7 +390,6 @@ class FspComponentManager(CbfComponentManager):
             self._push_change_event(
                 "subarrayMembership", self._subarray_membership
             )
-            self._remove_subarray_from_group_proxy(subarray_id)
             # change function mode to IDLE if no subarrays are using it.
             if len(self._subarray_membership) == 0:
                 # TODO implement VLBI
@@ -401,7 +400,7 @@ class FspComponentManager(CbfComponentManager):
                         self._group_fsp_pss_subarray.command_inout("GoToIdle")
                     case FspModes.PST_BF.value:
                         self._group_fsp_pst_subarray.command_inout("GoToIdle")
-
+                self._remove_subarray_from_group_proxy(subarray_id)
                 self.set_function_mode("IDLE")
         else:
             result_code = ResultCode.FAILED
