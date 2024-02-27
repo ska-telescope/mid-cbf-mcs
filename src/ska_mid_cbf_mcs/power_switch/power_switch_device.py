@@ -159,19 +159,19 @@ class PowerSwitch(SKABaseDevice):
         :param communication_status: the status of communications
             between the component manager and its component.
         """
-        # Note: PowerSwitch only using operating states DISABLED, FAULT and ON,
+        # Note: PowerSwitch only using operating states OFF, FAULT and ON,
         # set by this communication status change callback; PowerSwitch device
         # operating state thus indicates the status of the component manager's
         # communication with its specified PDU driver
         #
-        # DISABLED: component manager power switch driver uninstantiated
+        # OFF: component manager power switch driver uninstantiated
         # FAULT: component manager failed to instantiate power switch driver
         # ON: component manager successfully instantiated power switch driver
 
         self._communication_status = communication_status
 
         if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
+            self.op_state_model.perform_action("component_off")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_fault")
         elif communication_status == CommunicationStatus.ESTABLISHED:

@@ -268,17 +268,23 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return
 
+        # NOTE: order matters here
+        # TODO: evaluate ordering and add further comments
+        # must set PDU online before LRU to establish outlet power states
+        # must set VCC online after LRU to establish LRU power state
         for fqdn in (
-            self._fqdn_fsp
+            self._fqdn_power_switch
             + self._fqdn_talon_lru
             + self._fqdn_talon_board
-            + self._fqdn_power_switch
             + self._fqdn_subarray
+            + self._fqdn_fsp
+            + self._fqdn_vcc
+            + self._fs_slim_fqdn
+            + self._vis_slim_fqdn
         ):
             if fqdn not in self._proxies:
                 try:
-                    log_msg = f"Trying connection to {fqdn}"
-                    self._logger.debug(log_msg)
+                    self._logger.debug(f"Trying connection to {fqdn}")
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
 
                     # write hardware configuration properties to Talon LRU devices
@@ -322,7 +328,13 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.put_property(switch_config)
                         proxy.Init()
 
+                    # add proxy to proxies list
                     self._proxies[fqdn] = proxy
+
+                    # establish proxy connection to component
+                    self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+                    self._proxies[fqdn].adminMode = AdminMode.ONLINE
+
                 except tango.DevFailed as df:
                     self._connected = False
                     for item in df.args:
@@ -330,45 +342,6 @@ class ControllerComponentManager(CbfComponentManager):
                             f"Failure in connection to {fqdn}: {item.reason}"
                         )
                     return
-
-            # establish proxy connection to component
-            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-            self._proxies[fqdn].adminMode = AdminMode.ONLINE
-
-        for fqdn in self._fqdn_vcc:
-            if fqdn not in self._proxies:
-                try:
-                    log_msg = f"Trying connection to {fqdn} device"
-                    self._logger.debug(log_msg)
-                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    self._proxies[fqdn] = proxy
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        self._logger.error(
-                            f"Failure in connection to {fqdn}: {item.reason}"
-                        )
-
-            # establish proxy connection to component
-            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-            self._proxies[fqdn].adminMode = AdminMode.ONLINE
-
-        # Establish connection to SLIM devices
-        for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-            if fqdn not in self._proxies:
-                try:
-                    log_msg = f"Trying connection to {fqdn} device"
-                    self._logger.debug(log_msg)
-                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    self._proxies[fqdn] = proxy
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        self._logger.error(
-                            f"Failure in connection to {fqdn}: {item.reason}"
-                        )
-
-            # establish proxy connection to component
-            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-            self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
