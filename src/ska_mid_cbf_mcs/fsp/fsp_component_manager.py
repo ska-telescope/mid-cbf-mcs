@@ -400,10 +400,8 @@ class FspComponentManager(CbfComponentManager):
                         self._group_fsp_pss_subarray.command_inout("GoToIdle")
                     case FspModes.PST_BF.value:
                         self._group_fsp_pst_subarray.command_inout("GoToIdle")
-
+                self._remove_subarray_from_group_proxy(subarray_id)
                 self.set_function_mode("IDLE")
-
-            self._remove_subarray_from_group_proxy(subarray_id)
         else:
             result_code = ResultCode.FAILED
             message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {subarray_id}."
