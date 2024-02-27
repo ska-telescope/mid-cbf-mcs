@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.26
+*******
+* CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.
+
 0.12.25
 *******
 * CIP-1979: Updated SubarrayComponentManager to assign channel_offset=1 in FSP configuration when LMC does not define one.
