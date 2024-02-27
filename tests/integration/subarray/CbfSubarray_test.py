@@ -4774,7 +4774,6 @@ class TestCbfSubarray:
             )
         ],
     )
-    @pytest.mark.skip(reason="temp")
     def test_go_to_idle_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
