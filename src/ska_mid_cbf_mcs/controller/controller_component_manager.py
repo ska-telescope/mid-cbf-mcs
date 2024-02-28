@@ -281,66 +281,66 @@ class ControllerComponentManager(CbfComponentManager):
             + self._fqdn_vcc
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
-            if fqdn not in self._proxies:
-                try:
+            try:
+                if fqdn not in self._proxies:
                     self._logger.debug(f"Trying connection to {fqdn}")
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-
-                    # write hardware configuration properties to Talon LRU devices
-                    if fqdn in self._fqdn_talon_lru:
-                        self._logger.debug(
-                            f"Writing hardware configuration properties to {fqdn}"
-                        )
-                        lru_id = fqdn.split("/")[-1]
-                        lru_config = tango.utils.obj_2_property(
-                            self._hw_config["talon_lru"][lru_id]
-                        )
-                        proxy.put_property(lru_config)
-                        proxy.Init()
-                        proxy.set_timeout_millis(self._lru_timeout * 1000)
-
-                    # write hardware configuration properties to Talon board devices
-                    elif fqdn in self._fqdn_talon_board:
-                        self._logger.debug(
-                            f"Writing hardware configuration properties to {fqdn}"
-                        )
-                        board_id = fqdn.split("/")[-1]
-                        board_config = tango.utils.obj_2_property(
-                            {
-                                "TalonDxBoardAddress": self._hw_config[
-                                    "talon_board"
-                                ][board_id]
-                            }
-                        )
-                        proxy.put_property(board_config)
-                        proxy.Init()
-
-                    # write hardware configuration properties to PDU devices
-                    elif fqdn in self._fqdn_power_switch:
-                        self._logger.debug(
-                            f"Writing hardware configuration properties to {fqdn}"
-                        )
-                        switch_id = fqdn.split("/")[-1]
-                        switch_config = tango.utils.obj_2_property(
-                            self._hw_config["power_switch"][switch_id]
-                        )
-                        proxy.put_property(switch_config)
-                        proxy.Init()
 
                     # add proxy to proxies list
                     self._proxies[fqdn] = proxy
 
-                    # establish proxy connection to component
-                    self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-                    self._proxies[fqdn].adminMode = AdminMode.ONLINE
+                # write hardware configuration properties to Talon LRU devices
+                if fqdn in self._fqdn_talon_lru:
+                    self._logger.debug(
+                        f"Writing hardware configuration properties to {fqdn}"
+                    )
+                    lru_id = fqdn.split("/")[-1]
+                    lru_config = tango.utils.obj_2_property(
+                        self._hw_config["talon_lru"][lru_id]
+                    )
+                    proxy.put_property(lru_config)
+                    proxy.Init()
+                    proxy.set_timeout_millis(self._lru_timeout * 1000)
 
-                except tango.DevFailed as df:
-                    self._connected = False
-                    for item in df.args:
-                        self._logger.error(
-                            f"Failure in connection to {fqdn}: {item.reason}"
-                        )
-                    return
+                # write hardware configuration properties to Talon board devices
+                elif fqdn in self._fqdn_talon_board:
+                    self._logger.debug(
+                        f"Writing hardware configuration properties to {fqdn}"
+                    )
+                    board_id = fqdn.split("/")[-1]
+                    board_config = tango.utils.obj_2_property(
+                        {
+                            "TalonDxBoardAddress": self._hw_config[
+                                "talon_board"
+                            ][board_id]
+                        }
+                    )
+                    proxy.put_property(board_config)
+                    proxy.Init()
+
+                # write hardware configuration properties to PDU devices
+                elif fqdn in self._fqdn_power_switch:
+                    self._logger.debug(
+                        f"Writing hardware configuration properties to {fqdn}"
+                    )
+                    switch_id = fqdn.split("/")[-1]
+                    switch_config = tango.utils.obj_2_property(
+                        self._hw_config["power_switch"][switch_id]
+                    )
+                    proxy.put_property(switch_config)
+                    proxy.Init()
+
+                # establish proxy connection to component
+                self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+                self._proxies[fqdn].adminMode = AdminMode.ONLINE
+
+            except tango.DevFailed as df:
+                self._connected = False
+                for item in df.args:
+                    self._logger.error(
+                        f"Failure in connection to {fqdn}: {item.reason}"
+                    )
+                return
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
