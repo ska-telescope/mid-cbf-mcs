@@ -88,7 +88,7 @@ class TestCbfController:
             expected_state = DevState.ON
             result = device_under_test.On()
         elif command == "Off":
-            # Off cannot be called from OFF state so first, On must be called.
+            # Off cannot be called from OFF state so On must be called first.
             device_under_test.On()
             time.sleep(CONST_WAIT_TIME)
             assert device_under_test.State() == DevState.ON
@@ -136,7 +136,7 @@ class TestCbfController:
         assert device_under_test.State() == DevState.OFF
 
         if command == "On":
-            # On is not allowed when controller is already on, so it must be caleld twice for this test.
+            # On is not allowed when controller is already on, so it must be called twice for this test.
             device_under_test.On()
             assert device_under_test.State() == DevState.ON
             expected_state = DevState.ON
