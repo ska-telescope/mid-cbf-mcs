@@ -71,7 +71,7 @@ class TestCbfController:
         command: str,
     ) -> None:
         """
-        Test On command.
+        Test each of CbfController's commands.
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
@@ -88,6 +88,10 @@ class TestCbfController:
             expected_state = DevState.ON
             result = device_under_test.On()
         elif command == "Off":
+            # Off cannot be called from OFF state so first, On must be called.
+            device_under_test.On()
+            time.sleep(CONST_WAIT_TIME)
+            assert device_under_test.State() == DevState.ON
             expected_state = DevState.OFF
             result = device_under_test.Off()
         elif command == "Standby":
@@ -106,4 +110,41 @@ class TestCbfController:
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state
+
+    @pytest.mark.parametrize(
+        "command",
+        ["On", "Off"],
+    )
+    def test_CommandsFail(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy,
+        command: str,
+    ) -> None:
+        """
+        Test On/Off commands from dissallowed states.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        assert device_under_test.State() == DevState.OFF
+
+        if command == "On":
+            # On is not allowed when controller is already on, so it must be caleld twice for this test.
+            device_under_test.On()
+            assert device_under_test.State() == DevState.ON
+            expected_state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
+
+        time.sleep(CONST_WAIT_TIME)
+        assert result[0][0] == ResultCode.FAILED
         assert device_under_test.State() == expected_state

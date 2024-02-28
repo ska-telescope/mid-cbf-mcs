@@ -109,8 +109,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._connected = False  # to device proxies
 
-        self._on = False  # CBF controller itself
-
         (
             self._fqdn_vcc,
             self._fqdn_fsp,
@@ -392,131 +390,113 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
-            # Check if CBF Controller is already on
-            if not self._on:
-                # Power on all the Talon boards if not in SimulationMode
-                # TODO: There are two VCCs per LRU. Need to check the number of
-                #       VCCs turned on against the number of LRUs powered on
-                if (
-                    self._talondx_component_manager.simulation_mode
-                    == SimulationMode.FALSE
-                ):
-                    # read in list of LRUs from configuration JSON
-                    with open(
-                        os.path.join(
-                            os.getcwd(),
-                            self._talondx_config_path,
-                            "talondx-config.json",
-                        )
-                    ) as f:
-                        talondx_config_json = json.load(f)
+            # Power on all the Talon boards if not in SimulationMode
+            # TODO: There are two VCCs per LRU. Need to check the number of
+            #       VCCs turned on against the number of LRUs powered on
+            if (
+                self._talondx_component_manager.simulation_mode
+                == SimulationMode.FALSE
+            ):
+                # read in list of LRUs from configuration JSON
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
 
-                    self._fqdn_talon_lru = []
-                    for config_command in talondx_config_json[
-                        "config_commands"
-                    ]:
-                        target = config_command["target"]
-                        for lru_id, lru_config in self._hw_config[
-                            "talon_lru"
-                        ].items():
-                            lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
-                            talon1 = lru_config["TalonDxBoard1"]
-                            talon2 = lru_config["TalonDxBoard2"]
-                            if (
-                                target in [talon1, talon2]
-                                and lru_fqdn not in self._fqdn_talon_lru
-                            ):
-                                self._fqdn_talon_lru.append(lru_fqdn)
+                self._fqdn_talon_lru = []
+                for config_command in talondx_config_json["config_commands"]:
+                    target = config_command["target"]
+                    for lru_id, lru_config in self._hw_config[
+                        "talon_lru"
+                    ].items():
+                        lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
+                        talon1 = lru_config["TalonDxBoard1"]
+                        talon2 = lru_config["TalonDxBoard2"]
+                        if (
+                            target in [talon1, talon2]
+                            and lru_fqdn not in self._fqdn_talon_lru
+                        ):
+                            self._fqdn_talon_lru.append(lru_fqdn)
 
-                    # TODO: handle subscribed events for missing LRUs
-                else:
-                    # use a hard-coded example fqdn talon lru for simulation mode
-                    self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+                # TODO: handle subscribed events for missing LRUs
+            else:
+                # use a hard-coded example fqdn talon lru for simulation mode
+                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-                # Turn on all the LRUs with the boards we need
-                lru_on_status, log_msg = self._turn_on_lrus()
-                if not lru_on_status:
-                    return (ResultCode.FAILED, log_msg)
+            # Turn on all the LRUs with the boards we need
+            lru_on_status, log_msg = self._turn_on_lrus()
+            if not lru_on_status:
+                return (ResultCode.FAILED, log_msg)
 
-                # Configure all the Talon boards
-                if (
-                    self._talondx_component_manager.configure_talons()
-                    == ResultCode.FAILED
-                ):
-                    log_msg = "Failed to configure Talon boards"
+            # Configure all the Talon boards
+            if (
+                self._talondx_component_manager.configure_talons()
+                == ResultCode.FAILED
+            ):
+                log_msg = "Failed to configure Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            try:
+                # Set the Simulation mode of the Subarray to the simulation mode of the controller
+                self._group_subarray.write_attribute(
+                    "simulationMode",
+                    self._talondx_component_manager.simulation_mode,
+                )
+                self._group_subarray.command_inout("On")
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failed to turn on group proxies; {item.reason}"
                     self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-                try:
-                    # Set the Simulation mode of the Subarray to the simulation mode of the controller
-                    self._group_subarray.write_attribute(
+            # Configure SLIM Mesh devices
+            try:
+                self._logger.info(
+                    f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
+                )
+                for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
+                    self._proxies[fqdn].write_attribute(
                         "simulationMode",
                         self._talondx_component_manager.simulation_mode,
                     )
-                    self._group_subarray.command_inout("On")
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = (
-                            f"Failed to turn on group proxies; {item.reason}"
-                        )
-                        self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+                    self._proxies[fqdn].command_inout("On")
 
-                # Configure SLIM Mesh devices
-                try:
-                    self._logger.info(
-                        f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
-                    )
-                    for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-                        self._proxies[fqdn].write_attribute(
-                            "simulationMode",
-                            self._talondx_component_manager.simulation_mode,
-                        )
-                        self._proxies[fqdn].command_inout("On")
+                # longer timeout may be needed because the links need to wait
+                # for Tx/Rx to be ready. From experience this can be as late
+                # as around 5s after HPS master completes configure.
+                with open(self._fs_slim_config_path) as f:
+                    fs_slim_config = f.read()
+                self._proxies[self._fs_slim_fqdn].set_timeout_millis(10000)
+                self._proxies[self._fs_slim_fqdn].command_inout(
+                    "Configure", fs_slim_config
+                )
 
-                    # longer timeout may be needed because the links need to wait
-                    # for Tx/Rx to be ready. From experience this can be as late
-                    # as around 5s after HPS master completes configure.
-                    with open(self._fs_slim_config_path) as f:
-                        fs_slim_config = f.read()
-                    self._proxies[self._fs_slim_fqdn].set_timeout_millis(10000)
-                    self._proxies[self._fs_slim_fqdn].command_inout(
-                        "Configure", fs_slim_config
-                    )
+                with open(self._vis_slim_config_path) as f:
+                    vis_slim_config = f.read()
+                self._proxies[self._vis_slim_fqdn].set_timeout_millis(10000)
+                self._proxies[self._vis_slim_fqdn].command_inout(
+                    "Configure", vis_slim_config
+                )
 
-                    with open(self._vis_slim_config_path) as f:
-                        vis_slim_config = f.read()
-                    self._proxies[self._vis_slim_fqdn].set_timeout_millis(
-                        10000
-                    )
-                    self._proxies[self._vis_slim_fqdn].command_inout(
-                        "Configure", vis_slim_config
-                    )
+                # restore default timeout
+                self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
+                self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failed to configure SLIM (mesh): {item.reason}"
+                    self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+            except OSError as e:
+                log_msg = f"Failed to read SLIM configuration file: {e}"
+                return (ResultCode.FAILED, log_msg)
 
-                    # restore default timeout
-                    self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
-                    self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = (
-                            f"Failed to configure SLIM (mesh): {item.reason}"
-                        )
-                        self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
-                except OSError as e:
-                    log_msg = f"Failed to read SLIM configuration file: {e}"
-                    return (ResultCode.FAILED, log_msg)
-
-                self._on = True
-                message = "CbfController On command completed OK"
-                return (ResultCode.OK, message)
-
-            # TODO: CIP-1814
-            else:
-                log_msg = "CbfController is already ON. Disregarding redundant command."
-                self._logger.warning(log_msg)
-                return (ResultCode.OK, log_msg)
-
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
@@ -536,74 +516,64 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
-            # Check if CBF Controller is on
-            if self._on:
-                (result_code, message) = (ResultCode.OK, [])
+            (result_code, message) = (ResultCode.OK, [])
 
-                # reset subarray observing state to EMPTY
-                for subarray in [
-                    self._proxies[fqdn] for fqdn in self._fqdn_subarray
-                ]:
-                    (subarray_empty, log_msg) = self._subarray_to_empty(
-                        subarray
-                    )
-                    if not subarray_empty:
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
-                        result_code = ResultCode.FAILED
-
-                # turn off subelements
-                (subelement_off, log_msg) = self._turn_off_subelements()
-                message.extend(log_msg)
-                if not subelement_off:
-                    result_code = ResultCode.FAILED
-
-                # HPS master shutdown
-                result = self._talondx_component_manager.shutdown()
-                if result == ResultCode.FAILED:
-                    # if HPS master shutdown failed, continue with attempting to
-                    # shut off power outlets via LRU device
-                    log_msg = "HPS Master shutdown failed."
-                    self._logger.warning(log_msg)
-                    message.append(log_msg)
-
-                # Turn off all the LRUs currently in use
-                (lru_off, log_msg) = self._turn_off_lrus()
-                if not lru_off:
+            # reset subarray observing state to EMPTY
+            for subarray in [
+                self._proxies[fqdn] for fqdn in self._fqdn_subarray
+            ]:
+                (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
+                if not subarray_empty:
+                    self._logger.error(log_msg)
                     message.append(log_msg)
                     result_code = ResultCode.FAILED
 
-                # check final device states
-                (
-                    op_state_error_list,
-                    obs_state_error_list,
-                ) = self._check_subelements_off()
+            # turn off subelements
+            (subelement_off, log_msg) = self._turn_off_subelements()
+            message.extend(log_msg)
+            if not subelement_off:
+                result_code = ResultCode.FAILED
 
-                if len(op_state_error_list) > 0:
-                    for fqdn, state in op_state_error_list:
-                        log_msg = f"{fqdn} failed to turn OFF, current state: {state}"
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
-                    result_code = ResultCode.FAILED
-
-                if len(obs_state_error_list) > 0:
-                    for fqdn, obs_state in obs_state_error_list:
-                        log_msg = f"{fqdn} failed to restart, current obsState: {obs_state}"
-                        self._logger.error(log_msg)
-                        message.append(log_msg)
-                    result_code = ResultCode.FAILED
-
-                self._on = False
-                if result_code == ResultCode.OK:
-                    message.append("CbfController Off command completed OK")
-                return (result_code, "; ".join(message))
-
-            # TODO: CIP-1814
-            else:
-                log_msg = "CbfController is already OFF. Disregarding redundant command."
+            # HPS master shutdown
+            result = self._talondx_component_manager.shutdown()
+            if result == ResultCode.FAILED:
+                # if HPS master shutdown failed, continue with attempting to
+                # shut off power outlets via LRU device
+                log_msg = "HPS Master shutdown failed."
                 self._logger.warning(log_msg)
-                return (ResultCode.OK, log_msg)
+                message.append(log_msg)
 
+            # Turn off all the LRUs currently in use
+            (lru_off, log_msg) = self._turn_off_lrus()
+            if not lru_off:
+                message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            # check final device states
+            (
+                op_state_error_list,
+                obs_state_error_list,
+            ) = self._check_subelements_off()
+
+            if len(op_state_error_list) > 0:
+                for fqdn, state in op_state_error_list:
+                    log_msg = (
+                        f"{fqdn} failed to turn OFF, current state: {state}"
+                    )
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            if len(obs_state_error_list) > 0:
+                for fqdn, obs_state in obs_state_error_list:
+                    log_msg = f"{fqdn} failed to restart, current obsState: {obs_state}"
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            if result_code == ResultCode.OK:
+                message.append("CbfController Off command completed OK")
+            return (result_code, "; ".join(message))
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
