@@ -269,9 +269,9 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # NOTE: order matters here
+        # - must set PDU online before LRU to establish outlet power states
+        # - must set VCC online after LRU to establish LRU power state
         # TODO: evaluate ordering and add further comments
-        # must set PDU online before LRU to establish outlet power states
-        # must set VCC online after LRU to establish LRU power state
         for fqdn in (
             self._fqdn_power_switch
             + self._fqdn_talon_lru
@@ -279,8 +279,7 @@ class ControllerComponentManager(CbfComponentManager):
             + self._fqdn_subarray
             + self._fqdn_fsp
             + self._fqdn_vcc
-            + self._fs_slim_fqdn
-            + self._vis_slim_fqdn
+            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
             if fqdn not in self._proxies:
                 try:
