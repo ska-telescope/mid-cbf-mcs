@@ -289,8 +289,20 @@ class ControllerComponentManager(CbfComponentManager):
                     # add proxy to proxies list
                     self._proxies[fqdn] = proxy
 
+                # write hardware configuration properties to PDU devices
+                if fqdn in self._fqdn_power_switch:
+                    self._logger.debug(
+                        f"Writing hardware configuration properties to {fqdn}"
+                    )
+                    switch_id = fqdn.split("/")[-1]
+                    switch_config = tango.utils.obj_2_property(
+                        self._hw_config["power_switch"][switch_id]
+                    )
+                    proxy.put_property(switch_config)
+                    proxy.Init()
+
                 # write hardware configuration properties to Talon LRU devices
-                if fqdn in self._fqdn_talon_lru:
+                elif fqdn in self._fqdn_talon_lru:
                     self._logger.debug(
                         f"Writing hardware configuration properties to {fqdn}"
                     )
@@ -316,18 +328,6 @@ class ControllerComponentManager(CbfComponentManager):
                         }
                     )
                     proxy.put_property(board_config)
-                    proxy.Init()
-
-                # write hardware configuration properties to PDU devices
-                elif fqdn in self._fqdn_power_switch:
-                    self._logger.debug(
-                        f"Writing hardware configuration properties to {fqdn}"
-                    )
-                    switch_id = fqdn.split("/")[-1]
-                    switch_config = tango.utils.obj_2_property(
-                        self._hw_config["power_switch"][switch_id]
-                    )
-                    proxy.put_property(switch_config)
                     proxy.Init()
 
                 # establish proxy connection to component
