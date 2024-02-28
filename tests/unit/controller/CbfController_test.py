@@ -18,7 +18,7 @@ import time
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
@@ -140,11 +140,12 @@ class TestCbfController:
             device_under_test.On()
             assert device_under_test.State() == DevState.ON
             expected_state = DevState.ON
-            result = device_under_test.On()
+            with pytest.raises(DevFailed):
+                device_under_test.On()
         elif command == "Off":
             expected_state = DevState.OFF
-            result = device_under_test.Off()
+            with pytest.raises(DevFailed):
+                device_under_test.Off()
 
         time.sleep(CONST_WAIT_TIME)
-        assert result[0][0] == ResultCode.FAILED
         assert device_under_test.State() == expected_state
