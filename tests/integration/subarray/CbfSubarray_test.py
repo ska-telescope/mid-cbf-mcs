@@ -4228,7 +4228,7 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
@@ -4390,7 +4390,7 @@ class TestCbfSubarray:
 
             # Clean up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].EndScan()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.READY,
@@ -4562,7 +4562,7 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
@@ -4728,7 +4728,7 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
@@ -4895,7 +4895,7 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
@@ -5060,7 +5060,7 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
@@ -5206,7 +5206,7 @@ class TestCbfSubarray:
                 test_proxies.subarray[sub_id].AddReceptors(receptors)
 
             # clean up
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
