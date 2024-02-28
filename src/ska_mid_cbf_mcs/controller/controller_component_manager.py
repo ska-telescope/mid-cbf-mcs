@@ -281,14 +281,22 @@ class ControllerComponentManager(CbfComponentManager):
             + self._fqdn_vcc
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
-            try:
-                if fqdn not in self._proxies:
+            if fqdn not in self._proxies:
+                try:
                     self._logger.debug(f"Trying connection to {fqdn}")
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                except tango.DevFailed as df:
+                    self._connected = False
+                    for item in df.args:
+                        self._logger.error(
+                            f"Failure in connection to {fqdn}: {item.reason}"
+                        )
+                    return
 
-                    # add proxy to proxies list
-                    self._proxies[fqdn] = proxy
+                # add proxy to proxies list
+                self._proxies[fqdn] = proxy
 
+            try:
                 # write hardware configuration properties to PDU devices
                 if fqdn in self._fqdn_power_switch:
                     self._logger.debug(
@@ -330,15 +338,23 @@ class ControllerComponentManager(CbfComponentManager):
                     proxy.put_property(board_config)
                     proxy.Init()
 
-                # establish proxy connection to component
-                self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-                self._proxies[fqdn].adminMode = AdminMode.ONLINE
-
             except tango.DevFailed as df:
                 self._connected = False
                 for item in df.args:
                     self._logger.error(
-                        f"Failure in connection to {fqdn}: {item.reason}"
+                        f"Failed to write {fqdn} HW config properties: {item.reason}"
+                    )
+                return
+
+            try:
+                # establish proxy connection to component
+                self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+                self._proxies[fqdn].adminMode = AdminMode.ONLINE
+            except tango.DevFailed as df:
+                self._connected = False
+                for item in df.args:
+                    self._logger.error(
+                        f"Failed to set AdminMode of {fqdn} to ONLINE: {item.reason}"
                     )
                 return
 
