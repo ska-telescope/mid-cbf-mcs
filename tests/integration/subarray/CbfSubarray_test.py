@@ -4382,7 +4382,7 @@ class TestCbfSubarray:
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
-            # attempt to remove receptors
+            # attempt to remove all receptors
             with pytest.raises(
                 DevFailed, match="Command not permitted by state model."
             ):
@@ -4390,14 +4390,14 @@ class TestCbfSubarray:
 
             # Clean up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.READY,
                 wait_time_s,
                 sleep_time_s,
             )
-            test_proxies.subarray[sub_id].End()
+            test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs(
                 [
                     test_proxies.vcc[i]
