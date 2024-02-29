@@ -139,11 +139,17 @@ class TestCbfController:
             device_under_test.On()
             assert device_under_test.State() == DevState.ON
             expected_state = DevState.ON
-            with pytest.raises(DevFailed):
+            with pytest.raises(
+                DevFailed,
+                match="Command On not allowed when the device is in ON state",
+            ):
                 device_under_test.On()
         elif command == "Off":
             expected_state = DevState.OFF
-            with pytest.raises(DevFailed):
+            with pytest.raises(
+                DevFailed,
+                match="Command Off not allowed when the device is in OFF state",
+            ):
                 device_under_test.Off()
 
         assert device_under_test.State() == expected_state
