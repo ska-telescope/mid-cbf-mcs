@@ -181,8 +181,8 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        # send the Off command
-        test_proxies.controller.Off()
+        if test_proxies.controller.State() == DevState.ON:
+            test_proxies.controller.Off()
 
         test_proxies.wait_timeout_dev(
             [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
