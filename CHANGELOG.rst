@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.27
+*******
+* CIP-2265: More integration tests added for AA0.5 selloff. 
+
 0.12.26
 *******
 * CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.
