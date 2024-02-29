@@ -145,5 +145,5 @@ class TestCbfController:
             expected_state = DevState.OFF
             with pytest.raises(DevFailed):
                 device_under_test.Off()
- 
+
         assert device_under_test.State() == expected_state
