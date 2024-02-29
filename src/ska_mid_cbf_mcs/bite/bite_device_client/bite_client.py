@@ -6,13 +6,14 @@ import math
 import os
 import os.path
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 import numpy as np
 import scipy.stats
 import tango
 import tqdm
+from astropy.time import Time
 from jsonschema import validate
 from tango import DeviceProxy
 
@@ -542,12 +543,28 @@ class BiteClient:
                 int(samples_per_cycle * 2**32),
             )
 
+            # Calculate start_utc_time_code relative to SKA epoch date
+            SKA_EPOCH = "1999-12-31T23:59:28Z"
+            ska_epoch_utc = Time(SKA_EPOCH, scale="utc")
+            ska_epoch_tai = ska_epoch_utc.unix_tai
+
+            start_utc_time = Time(datetime.utcnow(), scale="utc")
+            start_utc_time_offset = start_utc_time.unix_tai - ska_epoch_tai
+
+            self._logger.info(f"ska_epoch_utc = {ska_epoch_utc}")
+            self._logger.info(f"ska_epoch_tai = {ska_epoch_tai}")
+            self._logger.info(f"start_utc_time = {start_utc_time}")
+            self._logger.info(
+                f"start_utc_time.unix_tai = {start_utc_time.unix_tai}"
+            )
+            self._logger.info(
+                f"start_utc_time_offset = start_utc_time.unix_tai - ska_epoch_tai = {start_utc_time_offset}"
+            )
+
             self._write_attribute(
                 self._dp_dict["lstv_pbk"],
                 "start_utc_time_code",
-                int(
-                    datetime.utcnow().replace(tzinfo=timezone.utc).timestamp()
-                ),
+                int(start_utc_time_offset),
             )
 
             self._write_attribute(
