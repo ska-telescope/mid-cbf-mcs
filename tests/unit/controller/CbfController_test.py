@@ -130,7 +130,6 @@ class TestCbfController:
         """
 
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         assert device_under_test.State() == DevState.OFF
@@ -146,6 +145,5 @@ class TestCbfController:
             expected_state = DevState.OFF
             with pytest.raises(DevFailed):
                 device_under_test.Off()
-
-        time.sleep(CONST_WAIT_TIME)
+ 
         assert device_under_test.State() == expected_state

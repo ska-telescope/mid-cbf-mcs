@@ -364,7 +364,7 @@ class CbfController(SKAController):
         """
 
         def is_allowed(
-            self: CbfController.OffCommand, raise_if_disallowed=False
+            self: CbfController.OnCommand, raise_if_disallowed=False
         ) -> bool:
             """
             Determine if OnCommand is allowed.
