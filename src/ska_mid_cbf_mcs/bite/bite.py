@@ -459,7 +459,7 @@ class ECBite(SKABaseDevice):
                 ),
             )
             # Call the BITE device command
-            bite.start_lstv_replay(self._packet_rate_scale_factor)
+            bite.stop_lstv_replay()
         return "Placeholder for command to stop lstv replay on target Talons"
 
 
