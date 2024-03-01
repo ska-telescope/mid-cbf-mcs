@@ -391,11 +391,7 @@ class CbfController(SKAController):
 
             self.logger.info("Trying ON Command")
 
-            if self.is_allowed():
-                (result_code, message) = self.target.component_manager.on()
-            else:
-                result_code = ResultCode.FAILED
-                message = f"On command is not allowed when op state is {self.target.op_state_model.op_state}"
+            (result_code, message) = self.target.component_manager.on()
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.ON)
