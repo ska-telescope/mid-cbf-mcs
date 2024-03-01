@@ -190,8 +190,8 @@ class TestCbfController:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert test_proxies.controller.State() == DevState.OFF
 
+        assert test_proxies.controller.State() == DevState.ON
         # send the Off command
         test_proxies.controller.Off()
 
