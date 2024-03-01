@@ -4776,7 +4776,6 @@ class TestCbfSubarray:
             )
         ],
     )
-    @pytest.mark.skip(reason="Currently fails, CIP-2306")
     def test_configure_scan_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
