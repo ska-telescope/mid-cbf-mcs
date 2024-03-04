@@ -1055,9 +1055,7 @@ class CbfSubarrayComponentManager(
                         return (False, msg)
 
                     # Validate zoomWindowTuning.
-                    if (
-                        int(fsp["zoom_factor"]) > 0
-                    ):
+                    if int(fsp["zoom_factor"]) > 0:
                         if fsp["frequency_band"] not in [
                             "5a",
                             "5b",
@@ -1157,13 +1155,11 @@ class CbfSubarrayComponentManager(
 
                                 if (
                                     frequency_slice_range_1[0]
-                                    <= int(fsp["zoom_window_tuning"])
-                                    * 10**3
+                                    <= int(fsp["zoom_window_tuning"]) * 10**3
                                     <= frequency_slice_range_1[1]
                                 ) or (
                                     frequency_slice_range_2[0]
-                                    <= int(fsp["zoom_window_tuning"])
-                                    * 10**3
+                                    <= int(fsp["zoom_window_tuning"]) * 10**3
                                     <= frequency_slice_range_2[1]
                                 ):
                                     pass
