@@ -159,23 +159,20 @@ class PowerSwitch(SKABaseDevice):
         :param communication_status: the status of communications
             between the component manager and its component.
         """
-        # Note: PowerSwitch only using operating states OFF, FAULT and ON,
-        # set by this communication status change callback; PowerSwitch device
-        # operating state thus indicates the status of the component manager's
-        # communication with its specified PDU driver
-        #
-        # OFF: component manager power switch driver uninstantiated
-        # FAULT: component manager failed to instantiate power switch driver
-        # ON: component manager successfully instantiated power switch driver
 
         self._communication_status = communication_status
 
         if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_off")
+            self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_fault")
-        elif communication_status == CommunicationStatus.ESTABLISHED:
-            self.op_state_model.perform_action("component_on")
+            self.op_state_model.perform_action("component_unknown")
+        elif (
+            communication_status == CommunicationStatus.ESTABLISHED
+            and self._component_power_mode is not None
+        ):
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
 
     def _component_power_mode_changed(
         self: PowerSwitch, power_mode: PowerMode
@@ -189,9 +186,6 @@ class PowerSwitch(SKABaseDevice):
 
         :param power_mode: the power mode of the component.
         """
-        # Note: currently unused by component manager, due to communication status
-        # callback model detailed above in _communication_status_changed
-
         self._component_power_mode = power_mode
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
@@ -265,8 +259,6 @@ class PowerSwitch(SKABaseDevice):
             (result_code, message) = super().do()
 
             device = self.target
-            # create a new component manager to refresh HW config properties
-            device.component_manager = device.create_component_manager()
             device.write_simulationMode(True)
 
             return (result_code, message)
