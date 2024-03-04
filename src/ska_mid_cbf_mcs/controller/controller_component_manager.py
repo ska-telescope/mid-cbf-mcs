@@ -296,6 +296,9 @@ class ControllerComponentManager(CbfComponentManager):
                 # add proxy to proxies list
                 self._proxies[fqdn] = proxy
 
+            else:
+                proxy = self._proxies[fqdn]
+
             try:
                 # write hardware configuration properties to PDU devices
                 if fqdn in self._fqdn_power_switch:
