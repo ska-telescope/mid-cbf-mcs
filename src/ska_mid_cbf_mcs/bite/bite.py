@@ -441,7 +441,7 @@ class ECBite(SKABaseDevice):
         logger_.info("Started LSTV replay.")
         return "Started LSTV replay."
 
- # Stops LSTV replay using a configured bite client
+    # Stops LSTV replay using a configured bite client
     @command(dtype_out=str)
     def stop_lstv_replay(self):
         """Stops LSTV replay for configured boards"""
@@ -463,7 +463,7 @@ class ECBite(SKABaseDevice):
                 # Call the BITE device command
                 bite.start_lstv_replay(self._packet_rate_scale_factor)
         except Exception as e:
-                return repr(e)
+            return repr(e)
         logger_.info("Stopped LSTV replay.")
         return "Stopped LSTV replay."
 
