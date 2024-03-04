@@ -962,17 +962,6 @@ class CbfSubarrayComponentManager(
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
-                # Validate fsp_id.
-                if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
-                    fsp_id = int(fsp["fsp_id"])
-                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
-                else:
-                    msg = (
-                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
-
                 # Validate functionMode.
                 valid_function_modes = [
                     "IDLE",
@@ -1065,154 +1054,123 @@ class CbfSubarrayComponentManager(
                         self._logger.error(msg)
                         return (False, msg)
 
-                    # Validate zoom_factor.
-                    if int(fsp["zoom_factor"]) in list(range(0, 7)):
-                        pass
-                    else:
-                        msg = "'zoom_factor' must be an integer in the range [0, 6]."
-                        # this is a fatal error
-                        self._logger.error(msg)
-                        return (False, msg)
-
                     # Validate zoomWindowTuning.
                     if (
                         int(fsp["zoom_factor"]) > 0
-                    ):  # zoomWindowTuning is required
-                        if "zoom_window_tuning" in fsp:
-                            if fsp["frequency_band"] not in [
+                    ):
+                        if fsp["frequency_band"] not in [
+                            "5a",
+                            "5b",
+                        ]:  # frequency band is not band 5
+                            frequencyBand = [
+                                "1",
+                                "2",
+                                "3",
+                                "4",
                                 "5a",
                                 "5b",
-                            ]:  # frequency band is not band 5
-                                frequencyBand = [
-                                    "1",
-                                    "2",
-                                    "3",
-                                    "4",
-                                    "5a",
-                                    "5b",
-                                ].index(fsp["frequency_band"])
-                                frequency_band_start = [
-                                    *map(
-                                        lambda j: j[0] * 10**9,
-                                        [
-                                            const.FREQUENCY_BAND_1_RANGE,
-                                            const.FREQUENCY_BAND_2_RANGE,
-                                            const.FREQUENCY_BAND_3_RANGE,
-                                            const.FREQUENCY_BAND_4_RANGE,
-                                        ],
-                                    )
-                                ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream1"
-                                ]
+                            ].index(fsp["frequency_band"])
+                            frequency_band_start = [
+                                *map(
+                                    lambda j: j[0] * 10**9,
+                                    [
+                                        const.FREQUENCY_BAND_1_RANGE,
+                                        const.FREQUENCY_BAND_2_RANGE,
+                                        const.FREQUENCY_BAND_3_RANGE,
+                                        const.FREQUENCY_BAND_4_RANGE,
+                                    ],
+                                )
+                            ][frequencyBand] + fsp[
+                                "frequency_band_offset_stream1"
+                            ]
 
-                                frequency_slice_range = (
-                                    frequency_band_start
+                            frequency_slice_range = (
+                                frequency_band_start
+                                + (fsp["frequency_slice_id"] - 1)
+                                * const.FREQUENCY_SLICE_BW
+                                * 10**6,
+                                frequency_band_start
+                                + fsp["frequency_slice_id"]
+                                * const.FREQUENCY_SLICE_BW
+                                * 10**6,
+                            )
+
+                            if (
+                                frequency_slice_range[0]
+                                <= int(fsp["zoom_window_tuning"]) * 10**3
+                                <= frequency_slice_range[1]
+                            ):
+                                pass
+                            else:
+                                msg = "'zoomWindowTuning' must be within observed frequency slice."
+                                self._logger.error(msg)
+                                return (False, msg)
+                        # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                        else:
+                            if common_configuration["band_5_tuning"] == [
+                                0,
+                                0,
+                            ]:  # band5Tuning not specified
+                                pass
+                            else:
+                                # TODO: these validations of BW range are done many times
+                                # in many places - use a common function; also may be possible
+                                # to do them only once (ex. for band5Tuning)
+
+                                frequency_slice_range_1 = (
+                                    fsp["band_5_tuning"][0] * 10**9
+                                    + fsp["frequency_band_offset_stream1"]
+                                    - const.BAND_5_STREAM_BANDWIDTH
+                                    * 10**9
+                                    / 2
                                     + (fsp["frequency_slice_id"] - 1)
                                     * const.FREQUENCY_SLICE_BW
                                     * 10**6,
-                                    frequency_band_start
+                                    fsp["band_5_tuning"][0] * 10**9
+                                    + fsp["frequency_band_offset_stream1"]
+                                    - const.BAND_5_STREAM_BANDWIDTH
+                                    * 10**9
+                                    / 2
+                                    + fsp["frequency_slice_id"]
+                                    * const.FREQUENCY_SLICE_BW
+                                    * 10**6,
+                                )
+
+                                frequency_slice_range_2 = (
+                                    fsp["band_5_tuning"][1] * 10**9
+                                    + fsp["frequency_band_offset_stream2"]
+                                    - const.BAND_5_STREAM_BANDWIDTH
+                                    * 10**9
+                                    / 2
+                                    + (fsp["frequency_slice_id"] - 1)
+                                    * const.FREQUENCY_SLICE_BW
+                                    * 10**6,
+                                    fsp["band_5_tuning"][1] * 10**9
+                                    + fsp["frequency_band_offset_stream2"]
+                                    - const.BAND_5_STREAM_BANDWIDTH
+                                    * 10**9
+                                    / 2
                                     + fsp["frequency_slice_id"]
                                     * const.FREQUENCY_SLICE_BW
                                     * 10**6,
                                 )
 
                                 if (
-                                    frequency_slice_range[0]
-                                    <= int(fsp["zoom_window_tuning"]) * 10**3
-                                    <= frequency_slice_range[1]
+                                    frequency_slice_range_1[0]
+                                    <= int(fsp["zoom_window_tuning"])
+                                    * 10**3
+                                    <= frequency_slice_range_1[1]
+                                ) or (
+                                    frequency_slice_range_2[0]
+                                    <= int(fsp["zoom_window_tuning"])
+                                    * 10**3
+                                    <= frequency_slice_range_2[1]
                                 ):
                                     pass
                                 else:
                                     msg = "'zoomWindowTuning' must be within observed frequency slice."
                                     self._logger.error(msg)
                                     return (False, msg)
-                            # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                            else:
-                                if common_configuration["band_5_tuning"] == [
-                                    0,
-                                    0,
-                                ]:  # band5Tuning not specified
-                                    pass
-                                else:
-                                    # TODO: these validations of BW range are done many times
-                                    # in many places - use a common function; also may be possible
-                                    # to do them only once (ex. for band5Tuning)
-
-                                    frequency_slice_range_1 = (
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    frequency_slice_range_2 = (
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    if (
-                                        frequency_slice_range_1[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_1[1]
-                                    ) or (
-                                        frequency_slice_range_2[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_2[1]
-                                    ):
-                                        pass
-                                    else:
-                                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                        self._logger.error(msg)
-                                        return (False, msg)
-                        else:
-                            msg = "FSP specified, but 'zoomWindowTuning' not given."
-                            self._logger.error(msg)
-                            return (False, msg)
-
-                    # Validate integrationTime.
-                    if int(fsp["integration_factor"]) in list(
-                        range(
-                            const.MIN_INT_TIME,
-                            10 * const.MIN_INT_TIME + 1,
-                            const.MIN_INT_TIME,
-                        )
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "'integrationTime' must be an integer in the range"
-                            f" [1, 10] multiplied by {const.MIN_INT_TIME}."
-                        )
-                        self._logger.error(msg)
-                        return (False, msg)
 
                     # Validate fspChannelOffset
                     try:
