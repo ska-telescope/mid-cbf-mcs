@@ -419,48 +419,53 @@ class ECBite(SKABaseDevice):
     def start_lstv_replay(self):
         """Starts LSTV replay for configured boards as chosen in the BITE device"""
         logger_.info("Starting LSTV replay...")
-        # Iterate over board clients
-        for b, receptor in enumerate(self._bite_receptors):
-            # initialize a BITE server using formating for server instance, no UML logging
-            bite = BiteClient(
-                f"talon{self._bite_receptors[b]['talon']}_test", False
-            )
-            bite.init(
-                bite_config_id=receptor.get("bite_config_id"),
-                bite_configs_path=self.bite_configs_path,
-                filters_path=self.filters_path,
-                freq_offset_k=receptor.get(
-                    "k",
-                ),
-            )
-            # Call the BITE device command
-            bite.start_lstv_replay(self._packet_rate_scale_factor)
+        try:
+            # Iterate over board clients
+            for b, receptor in enumerate(self._bite_receptors):
+                # initialize a BITE server using formating for server instance, no UML logging
+                bite = BiteClient(
+                    f"talon{self._bite_receptors[b]['talon']}_test", False
+                )
+                bite.init(
+                    bite_config_id=receptor.get("bite_config_id"),
+                    bite_configs_path=self.bite_configs_path,
+                    filters_path=self.filters_path,
+                    freq_offset_k=receptor.get(
+                        "k",
+                    ),
+                )
+                # Call the BITE device command
+                bite.start_lstv_replay(self._packet_rate_scale_factor)
+        except Exception as e:
+            return repr(e)
+        logger_.info("Started LSTV replay.")
+        return "Started LSTV replay."
 
-        # init biteclient to communicate with board
-        # Send command to board to start LSTV replay
-        return "Placeholder for command to start lstv replay on target Talons"
-
-    # Stops LSTV replay using a configured bite client
+ # Stops LSTV replay using a configured bite client
     @command(dtype_out=str)
     def stop_lstv_replay(self):
         """Stops LSTV replay for configured boards"""
         logger_.info("Stopping LSTV replay...")
-        for b, receptor in enumerate(self._bite_receptors):
-            # initialize a BITE server using formating for server instance, no UML logging
-            bite = BiteClient(
-                f"talon{self._bite_receptors[b]['talon']}_test", False
-            )
-            bite.init(
-                bite_config_id=receptor.get("bite_config_id"),
-                bite_configs_path=self.bite_configs_path,
-                filters_path=self.filters_path,
-                freq_offset_k=receptor.get(
-                    "k",
-                ),
-            )
-            # Call the BITE device command
-            bite.stop_lstv_replay()
-        return "Placeholder for command to stop lstv replay on target Talons"
+        try:
+            for b, receptor in enumerate(self._bite_receptors):
+                # initialize a BITE server using formating for server instance, no UML logging
+                bite = BiteClient(
+                    f"talon{self._bite_receptors[b]['talon']}_test", False
+                )
+                bite.init(
+                    bite_config_id=receptor.get("bite_config_id"),
+                    bite_configs_path=self.bite_configs_path,
+                    filters_path=self.filters_path,
+                    freq_offset_k=receptor.get(
+                        "k",
+                    ),
+                )
+                # Call the BITE device command
+                bite.start_lstv_replay(self._packet_rate_scale_factor)
+        except Exception as e:
+                return repr(e)
+        logger_.info("Stopped LSTV replay.")
+        return "Stopped LSTV replay."
 
 
 def main(args=None, **kwargs):
