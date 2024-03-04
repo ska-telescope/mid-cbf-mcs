@@ -877,22 +877,21 @@ class CbfSubarrayComponentManager(
                 return (False, msg)
 
         # Validate delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["delay_model_subscription_point"],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['delay_model_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'delayModelSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
+        try:
+            attribute_proxy = CbfAttributeProxy(
+                fqdn=configuration["delay_model_subscription_point"],
+                logger=self._logger,
+            )
+            attribute_proxy.ping()
+        except (
+            tango.DevFailed
+        ):  # attribute doesn't exist or is not set up correctly
+            msg = (
+                f"Attribute {configuration['delay_model_subscription_point']}"
+                " not found or not set up correctly for "
+                "'delayModelSubscriptionPoint'. Aborting configuration."
+            )
+            return (False, msg)
 
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
@@ -962,6 +961,9 @@ class CbfSubarrayComponentManager(
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
+                fsp_id = int(fsp["fsp_id"])
+                fsp_proxy = self._proxies_fsp[fsp_id - 1]
+
                 # Validate functionMode.
                 valid_function_modes = [
                     "IDLE",
