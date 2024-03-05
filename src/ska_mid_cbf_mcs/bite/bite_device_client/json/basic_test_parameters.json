@@ -1,17 +1,39 @@
 {
     "tests": {
-        "Test_1": {
+        "basic_test": {
             "description": "Single talon basic correlation sequence. 1 receptor, band 1, 1 FSP, no options.",
-            "cbf_input_data": "talon3 basic gaussian noise"
+            "cbf_input_data": "basic gaussian noise"
         }
     },
     "cbf_input_data": {
-        "talon3 basic gaussian noise": {
+        "basic gaussian noise": {
             "receptors": [
                 {
-                    "dish_id": "SKA063",
+                    "talon": "1",
+                    "dish_id": "SKA001",
+                    "sample_rate_k" : 100,
                     "bite_config_id": "basic gaussian noise",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "talon": "2",
+                    "dish_id": "SKA036",
+                    "sample_rate_k" : 618,
+                    "bite_config_id": "basic gaussian noise",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
                     "talon": "3",
+                    "dish_id": "SKA063",
+                    "sample_rate_k" : 1220,
+                    "bite_config_id": "basic gaussian noise",
+                    "bite_initial_timestamp_time_offset": 60.0
+                },
+                {
+                    "talon": "4",
+                    "dish_id": "SKA100",
+                    "sample_rate_k" : 1815,
+                    "bite_config_id": "basic gaussian noise",
                     "bite_initial_timestamp_time_offset": 60.0
                 }
             ]
@@ -19,7 +41,7 @@
     },
     "bite_configs": {
         "basic gaussian noise": {
-            "description": "4 seconds of basic gaussian noise, with no filtering.",
+            "description": "4 seconds of basic gaussian noise with no filtering, using the default mean (0) and standard deviation (0.5).",
             "sources": [
                 {
                     "description": "Noise input, independent between X and Y pols; unique filter shapes for X and Y pols.",
@@ -38,7 +60,8 @@
                 }
             ],
             "tone_gens": [],
-            "lstv_seconds": 4
+            "lstv_seconds": 4,
+            "sample_rate_k": 100
         }
     },
     "filters": {

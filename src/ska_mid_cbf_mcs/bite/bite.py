@@ -137,7 +137,6 @@ class ECBite(SKABaseDevice):
         If no such directory exists, uses fallback test data.
         """
         # JSON file locations
-        return_message = ""
         TEST_PARAMS_DIR = os.path.join(
             os.path.dirname(__file__), self._test_param_location
         )
@@ -167,6 +166,7 @@ class ECBite(SKABaseDevice):
             not os.path.exists(self.test_data_path)
             or not os.path.exists(self.cbf_input_data_path)
             or not os.path.exists(self.bite_configs_path)
+            or self._config_method == ""
         ):
             logger_.warning(
                 "Couldn't find test data, using fallback basic test data file!"
@@ -175,10 +175,8 @@ class ECBite(SKABaseDevice):
             self.cbf_input_data_path = BASIC_TEST_PARAMETERS
             self.bite_configs_path = BASIC_TEST_PARAMETERS
             self.filters_path = BASIC_TEST_PARAMETERS
-            return_message = "Can't find dir, using fallback"
         else:
             logger_.info("Successfully found imported JSON config files.")
-            return_message = "Set to new JSON file directory"
         # Parse JSON for system configuration using either file provided or fallback
         with open(self.test_data_path, encoding="utf-8") as f:
             self.test_data = json.load(f)["tests"]
@@ -187,7 +185,7 @@ class ECBite(SKABaseDevice):
         with open(self.bite_configs_path, encoding="utf-8") as f:
             self.bite_config_data = json.load(f)["bite_configs"]
         # return status to TANGO client
-        return return_message
+        return
 
     # -- DEVICE INIT FUNCTION --
     def init_device(self):
@@ -196,34 +194,19 @@ class ECBite(SKABaseDevice):
         self.set_state(DevState.INIT)
 
         # Set default values for tests
-        self._test_id = "Test_1"
+        self._test_id = "basic_test"
         self._boards = [3]
         self._bite_json = "cbf_input_data"
         self._bite_config = "basic gaussian noise"
         self._bite_inital_timestamp_time_offset = 60.0
         self._bite_mac_address = "00:11:22:33:44:55"
         self._packet_rate_scale_factor = 1.0
-        self._input_data = "talon3 basic gaussian noise"
+        self._input_data = "basic gaussian noise"
         self._config_method = ""
         self._talon_instance = ""
 
         # Store of boards that we will be testing with
         self._bite_receptors = []
-        self.dish_id_lut = {}
-        self.k_lut = {}
-
-        # Fixed location for external config dir
-        EXTERNAL_CONFIG_DIR = os.path.join(os.getcwd(), "ext_config")
-        # Read in configuartion of dish parameters
-        with open(
-            os.path.join(EXTERNAL_CONFIG_DIR, "initial_system_param.json"),
-            encoding="utf-8",
-        ) as file:
-            self.sys_param = json.loads(file.read())
-        for r, v in self.sys_param["dish_parameters"].items():
-            self.dish_id_lut[str(v["vcc"])] = r
-            self.k_lut[str(v["vcc"])] = v["k"]
-
         # Set default directory for passing configuration data to BITE
         self._test_param_location = "temp_json_file_storage/test_parameters"
         # using the default test parameter location, load in the JSON to be used to configure tests
@@ -346,38 +329,24 @@ class ECBite(SKABaseDevice):
                 self.test_data[self._test_id]["cbf_input_data"]
             ).get("receptors")
 
-            for b in self._bite_receptors:
-                b["k"] = self.bite_config_data.get(b["bite_config_id"])[
-                    "sample_rate_k"
-                ]
         # Use CBF input data for config
         elif self._config_method == "input_data":
-            logger_.info("Running in input_data specification mode.")
+            logger_.info("Running in input data specification mode.")
             self._bite_receptors = self.cbf_input_data.get(
                 self._input_data
             ).get("receptors")
+
         # Data entry method not given, fall back to default test ID
         else:
-            logger_.info("Running with default test ID.")
-            bite_receptors_template = self.cbf_input_data.get(
-                self.test_data[self._test_id]["cbf_input_data"]
-            ).get("receptors")
-
-            for b in self._boards:
+            logger_.warning(
+                "No test parameter methods provided, falling back to default test parameters for board(s): %s",
+                self._boards,
+            )
+            for board in self._boards:
                 self._bite_receptors.append(
-                    {
-                        "dish_id": self.dish_id_lut[str(b)],
-                        "k": self.k_lut[str(b)],
-                        "talon": b,
-                        "bite_config_id": bite_receptors_template[0][
-                            "bite_config_id"
-                        ],
-                        "bite_initial_timestamp_time_offset": bite_receptors_template[
-                            0
-                        ][
-                            "bite_initial_timestamp_time_offset"
-                        ],
-                    }
+                    self.cbf_input_data.get(
+                        self.test_data["basic_test"]["cbf_input_data"]
+                    ).get("receptors")[board - 1]
                 )
         logger_.info("BITE Receptors successfully configured!")
 
@@ -389,7 +358,7 @@ class ECBite(SKABaseDevice):
                 bite_config_id=receptor.get("bite_config_id"),
                 bite_configs_path=self.bite_configs_path,
                 filters_path=self.filters_path,
-                freq_offset_k=receptor.get("k"),
+                freq_offset_k=receptor.get("sample_rate_k"),
             )
             logger_.info("BITE client initilized.")
             bite.configure_bite(
@@ -431,7 +400,7 @@ class ECBite(SKABaseDevice):
                     bite_configs_path=self.bite_configs_path,
                     filters_path=self.filters_path,
                     freq_offset_k=receptor.get(
-                        "k",
+                        "sample_rate_k",
                     ),
                 )
                 # Call the BITE device command
@@ -457,11 +426,11 @@ class ECBite(SKABaseDevice):
                     bite_configs_path=self.bite_configs_path,
                     filters_path=self.filters_path,
                     freq_offset_k=receptor.get(
-                        "k",
+                        "sample_rate_k",
                     ),
                 )
                 # Call the BITE device command
-                bite.start_lstv_replay(self._packet_rate_scale_factor)
+                bite.stop_lstv_replay()
         except Exception as e:
             return repr(e)
         logger_.info("Stopped LSTV replay.")
