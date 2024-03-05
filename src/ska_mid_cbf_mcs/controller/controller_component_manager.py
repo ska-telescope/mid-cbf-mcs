@@ -474,21 +474,32 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         self._proxies[fqdn].command_inout("On")
 
+                    # longer timeout may be needed because the links need to wait
+                    # for Tx/Rx to be ready. From experience this can be as late
+                    # as around 5s after HPS master completes configure.
                     with open(self._fs_slim_config_path) as f:
                         fs_slim_config = f.read()
+                    self._proxies[self._fs_slim_fqdn].set_timeout_millis(10000)
                     self._proxies[self._fs_slim_fqdn].command_inout(
                         "Configure", fs_slim_config
                     )
 
                     with open(self._vis_slim_config_path) as f:
                         vis_slim_config = f.read()
+                    self._proxies[self._vis_slim_fqdn].set_timeout_millis(
+                        10000
+                    )
                     self._proxies[self._vis_slim_fqdn].command_inout(
                         "Configure", vis_slim_config
                     )
+
+                    # restore default timeout
+                    self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
+                    self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
-                            f"Failed to configure SLIM links; {item.reason}"
+                            f"Failed to configure SLIM (mesh): {item.reason}"
                         )
                         self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)

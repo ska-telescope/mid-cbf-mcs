@@ -465,7 +465,7 @@ class CbfSubarrayComponentManager(
 
         if value is not None:
             if not self._ready:
-                log_msg = "Ignoring delay model (obsState not correct)."
+                log_msg = f"Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
                 self._logger.warning(log_msg)
                 return
             try:
@@ -1207,13 +1207,14 @@ class CbfSubarrayComponentManager(
 
                     # Validate fspChannelOffset
                     try:
-                        if int(fsp["channel_offset"]) >= 0:
-                            pass
-                        # TODO has to be a multiple of 14880
-                        else:
-                            msg = "fspChannelOffset must be greater than or equal to zero"
-                            self._logger.error(msg)
-                            return (False, msg)
+                        if "channel_offset" in fsp:
+                            if int(fsp["channel_offset"]) >= 0:
+                                pass
+                            # TODO has to be a multiple of 14880
+                            else:
+                                msg = "fspChannelOffset must be greater than or equal to zero"
+                                self._logger.error(msg)
+                                return (False, msg)
                     except (TypeError, ValueError):
                         msg = "fspChannelOffset must be an integer"
                         self._logger.error(msg)
@@ -1608,6 +1609,9 @@ class CbfSubarrayComponentManager(
             event_id = attribute_proxy.add_change_event_callback(
                 self._doppler_phase_correction_event_callback
             )
+            self._logger.info(
+                f"Subscribing to doppler phase correction event of id: {event_id}"
+            )
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure delayModelSubscriptionPoint.
@@ -1619,6 +1623,9 @@ class CbfSubarrayComponentManager(
             )
             event_id = attribute_proxy.add_change_event_callback(
                 self._delay_model_event_callback
+            )
+            self._logger.info(
+                f"Subscribing to delay model event of id: {event_id}"
             )
             self._events_telstate[event_id] = attribute_proxy
 
@@ -1632,6 +1639,9 @@ class CbfSubarrayComponentManager(
             event_id = attribute_proxy.add_change_event_callback(
                 self._jones_matrix_event_callback
             )
+            self._logger.info(
+                f"Subscribing to jones matrix event of id: {event_id}"
+            )
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure beamWeightsSubscriptionPoint
@@ -1643,6 +1653,9 @@ class CbfSubarrayComponentManager(
             )
             event_id = attribute_proxy.add_change_event_callback(
                 self._timing_beam_weights_event_callback
+            )
+            self._logger.info(
+                f"Subscribing to timing beam weights event of id: {event_id}"
             )
             self._events_telstate[event_id] = attribute_proxy
 
@@ -1733,6 +1746,13 @@ class CbfSubarrayComponentManager(
             fsp[
                 "frequency_band_offset_stream2"
             ] = self._frequency_band_offset_stream2
+
+            # Add channel_offset if it was omitted from the configuration (it is optional).
+            if "channel_offset" not in fsp:
+                self._logger.warning(
+                    "channel_offset not defined in configuration. Assigning default of 1."
+                )
+                fsp["channel_offset"] = 1
 
             # Add all receptor ids for subarray and for correlation to fsp
             # Parameter named "subarray_vcc_ids" used by HPS contains all the

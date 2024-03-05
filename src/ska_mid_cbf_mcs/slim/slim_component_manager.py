@@ -340,8 +340,12 @@ class SlimComponentManager(CbfComponentManager):
             for idx, txrx in enumerate(self._active_links):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
+
+                # The SLIM link may need to wait for Tx/Rx to initialize
+                self._dp_links[idx].set_timeout_millis(10000)
                 rc, msg = self._dp_links[idx].command_inout("ConnectTxRx")
 
+                self._dp_links[idx].set_timeout_millis(3000)
                 # poll link health every 20 seconds
                 self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:

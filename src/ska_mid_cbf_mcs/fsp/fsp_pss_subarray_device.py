@@ -208,6 +208,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             self._communication_status_changed,
             self._component_power_mode_changed,
             self._component_fault,
+            self._component_obsfault,
         )
 
     def delete_device(self: FspPssSubarray) -> None:
@@ -697,13 +698,16 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_fault")
             self.set_status("The device is in FAULT state")
 
-    def _component_obsfault(self: FspPssSubarray) -> None:
+    def _component_obsfault(self: FspPssSubarray, faulty: bool) -> None:
         """
         Handle notification that the component has obsfaulted.
 
         This is a callback hook.
         """
-        self.obs_state_model.perform_action("component_obsfault")
+        self.component_manager.obs_faulty = faulty
+        if faulty:
+            self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
 
     def _communication_status_changed(
         self: FspPssSubarray, communication_status: CommunicationStatus

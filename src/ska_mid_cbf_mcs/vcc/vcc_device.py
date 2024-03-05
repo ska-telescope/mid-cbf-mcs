@@ -259,6 +259,7 @@ class Vcc(CspSubElementObsDevice):
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
+            component_obs_fault_callback=self._component_obsfault,
         )
 
     def always_executed_hook(self: Vcc) -> None:
@@ -335,6 +336,17 @@ class Vcc(CspSubElementObsDevice):
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
+
+    def _component_obsfault(self: Vcc, faulty: bool) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.component_manager.obs_faulty = faulty
+        if faulty:
+            self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
 
     # ------------------
     # Attributes methods

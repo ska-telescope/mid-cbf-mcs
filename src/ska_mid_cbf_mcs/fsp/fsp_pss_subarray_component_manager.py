@@ -14,6 +14,7 @@ import json
 import logging
 from typing import Callable, List, Optional, Tuple
 
+import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
@@ -39,6 +40,7 @@ class FspPssSubarrayComponentManager(
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        component_obs_fault_callback: Callable[[bool], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -57,11 +59,17 @@ class FspPssSubarrayComponentManager(
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
-            component fault
+            component fault (for op state model)
+        :param component_obs_fault_callback: callback to be called in event of
+            component fault (for obs state model)
         """
         self._logger = logger
 
+        self._component_obs_fault_callback = component_obs_fault_callback
+
         self._connected = False
+
+        self.obs_faulty = False
 
         self._scan_id = 0
         self._search_window_id = 0
@@ -285,8 +293,14 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
         self._scan_id = scan_id
+        try:
+            # TODO: Scan command not implemented for the PSS application
+            pass
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPssSubarray Scan command failed")
 
         return (ResultCode.OK, "FspPssSubarray Scan command completed OK")
 
@@ -301,6 +315,13 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        try:
+            # TODO: EndScan command not implemented for the PSS application
+            pass
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPssSubarray EndScan command failed")
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
 
@@ -325,10 +346,17 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._deconfigure()
-
-        self._release_all_vcc()
+        try:
+            self._deconfigure()
+            self._release_all_vcc()
+            # TODO: GoToIdle command not implemented for the PSS application
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df))
+            return (
+                ResultCode.FAILED,
+                "FspPssSubarray GoToIdle command failed",
+            )
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
 
@@ -343,17 +371,37 @@ class FspPssSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._deconfigure()
-
-        self._release_all_vcc()
-
-        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+        try:
+            self._deconfigure()
+            self._release_all_vcc()()
+            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df))
+            return (
+                ResultCode.FAILED,
+                "FspPssSubarray ObsReset command failed",
+            )
 
         return (ResultCode.OK, "FspPssSubarray ObsReset command completed OK")
 
     def abort(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-        # TODO: Abort command not implemented for the HPS FSP application
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        try:
+            # TODO: Abort command not implemented for the HPS FSP application
+            pass
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df))
+            return (ResultCode.FAILED, "FspPssSubarray Abort command failed")
+
         return (ResultCode.OK, "Abort command not implemented")

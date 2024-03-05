@@ -48,6 +48,7 @@ class FspCorrSubarrayComponentManager(
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        component_obs_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
@@ -64,14 +65,19 @@ class FspCorrSubarrayComponentManager(
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
-            component fault
+            component fault (for op state model)
+        :param component_obs_fault_callback: callback to be called in event of
+            component fault (for obs state model)
         """
         self._logger = logger
 
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
         self._proxy_hps_fsp_corr_controller = None
 
+        self._component_obs_fault_callback = component_obs_fault_callback
+
         self._connected = False
+        self.obs_faulty = False
 
         self._vcc_ids = []
         self._freq_band_name = ""
@@ -193,9 +199,10 @@ class FspCorrSubarrayComponentManager(
     @property
     def fsp_channel_offset(self: FspCorrSubarrayComponentManager) -> int:
         """
-        FSP Channel Offset
+        ID of the first (lowest bandwidth) channel generated on this FSP.
+        See channel_offset in telescope model for more details.
 
-        :return: the FSP channel offset
+        :return: the starting channel ID assigned to this FSP
         :rtype: int
         """
         return self._fsp_channel_offset
@@ -639,8 +646,13 @@ class FspCorrSubarrayComponentManager(
             self._proxy_hps_fsp_corr_controller.ConfigureScan(
                 json.dumps(hps_fsp_configuration)
             )
-        except Exception as e:
-            self._logger.error(str(e))
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray ConfigureScan command failed",
+            )
 
         return (
             ResultCode.OK,
@@ -659,10 +671,13 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
         self._scan_id = scan_id
-
-        self._proxy_hps_fsp_corr_controller.Scan(scan_id)
+        try:
+            self._proxy_hps_fsp_corr_controller.Scan(scan_id)
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (ResultCode.FAILED, "FspCorrSubarray Scan command failed")
 
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
@@ -677,8 +692,15 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        self._proxy_hps_fsp_corr_controller.EndScan()
+        try:
+            self._proxy_hps_fsp_corr_controller.EndScan()
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray EndScan command failed",
+            )
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
@@ -727,12 +749,26 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+<<<<<<< src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
 
         self._deconfigure()
 
         self._release_all_vcc()
 
         self._proxy_hps_fsp_corr_controller.GoToIdle()
+=======
+        try:
+            self._deconfigure()
+            self._remove_all_receptors()
+            self._proxy_hps_fsp_corr_controller.GoToIdle()
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray GoToIdle command failed",
+            )
+>>>>>>> src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
@@ -747,17 +783,50 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        try:
+            self._deconfigure()
+            self._remove_all_receptors()
+            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+            # self._proxy_hps_fsp_corr_controller.ObsReset()
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray ObsReset command failed",
+            )
 
+<<<<<<< src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
         self._deconfigure()
 
         self._release_all_vcc()
 
         # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
         # self._proxy_hps_fsp_corr_controller.ObsReset()
+=======
+>>>>>>> src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def abort(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-        # TODO: Abort command not implemented for the HPS FSP application
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        try:
+            # TODO: Abort command not implemented for the HPS FSP application
+            pass
+        except tango.DevFailed as df:
+            self._component_obs_fault_callback(True)
+            self._logger.error(str(df.args[0].desc))
+            return (
+                ResultCode.FAILED,
+                "FspCorrSubarray Abort command failed",
+            )
+
         return (ResultCode.OK, "Abort command not implemented")
