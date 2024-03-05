@@ -373,7 +373,7 @@ class FspPssSubarrayComponentManager(
         """
         try:
             self._deconfigure()
-            self._release_all_vcc()()
+            self._release_all_vcc()
             # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
