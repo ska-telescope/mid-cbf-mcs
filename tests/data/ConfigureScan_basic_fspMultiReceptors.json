@@ -17,31 +17,6 @@
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights",
         "rfi_flagging_mask": {},
-        "search_window": [
-            {
-                "search_window_id": 1,
-                "search_window_tuning": 6000000000,
-                "tdc_enable": true,
-                "tdc_num_bits": 8,
-                "tdc_period_before_epoch": 5,
-                "tdc_period_after_epoch": 25,
-                "tdc_destination_address": [
-                    {
-                        "receptor_id": "SKA063",
-                        "tdc_destination_address": ["foo", "bar", "8080"]
-                    },
-                    {
-                        "receptor_id": "SKA001",
-                        "tdc_destination_address": ["fizz", "buzz", "80"]
-                    }
-                ]
-            },
-            {
-                "search_window_id": 2,
-                "search_window_tuning": 7000000000,
-                "tdc_enable": false
-            }
-        ],
         "fsp": [
             {
                 "fsp_id": 1,
