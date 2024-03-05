@@ -749,17 +749,9 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-<<<<<<< src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
-
-        self._deconfigure()
-
-        self._release_all_vcc()
-
-        self._proxy_hps_fsp_corr_controller.GoToIdle()
-=======
         try:
             self._deconfigure()
-            self._remove_all_receptors()
+            self._release_all_vcc()
             self._proxy_hps_fsp_corr_controller.GoToIdle()
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
@@ -768,7 +760,6 @@ class FspCorrSubarrayComponentManager(
                 ResultCode.FAILED,
                 "FspCorrSubarray GoToIdle command failed",
             )
->>>>>>> src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
 
@@ -785,7 +776,7 @@ class FspCorrSubarrayComponentManager(
         """
         try:
             self._deconfigure()
-            self._remove_all_receptors()
+            self._release_all_vcc()
             # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
             # self._proxy_hps_fsp_corr_controller.ObsReset()
         except tango.DevFailed as df:
@@ -795,16 +786,6 @@ class FspCorrSubarrayComponentManager(
                 ResultCode.FAILED,
                 "FspCorrSubarray ObsReset command failed",
             )
-
-<<<<<<< src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
-        self._deconfigure()
-
-        self._release_all_vcc()
-
-        # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-        # self._proxy_hps_fsp_corr_controller.ObsReset()
-=======
->>>>>>> src/ska_mid_cbf_mcs/fsp/fsp_corr_subarray_component_manager.py
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def abort(
