@@ -881,24 +881,16 @@ class TestCbfSubarray:
                             )
 
                     if "output_host" and "output_port" in fsp:
-                        assert str(
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].visDestinationAddress
-                        ).replace('"', "'") == str(
-                            {
-                                "outputHost": [
-                                    fsp["output_host"][0],
-                                    fsp["output_host"][1],
-                                ],
-                                "outputPort": [
-                                    fsp["output_port"][0],
-                                    fsp["output_port"][1],
-                                ],
-                            }
-                        ).replace(
-                            '"', "'"
-                        )
+                        assert test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].visDestinationAddress == {
+                            "outputHost": [
+                                host for host in fsp["output_host"]
+                            ],
+                            "outputPort": [
+                                port for port in fsp["output_port"]
+                            ],
+                        }
 
                 elif fsp["function_mode"] == "PSS-BF":
                     function_mode = FspModes.PSS_BF.value
@@ -1881,12 +1873,11 @@ class TestCbfSubarray:
                     for entry in input_delay_model_obj["delay_details"]:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
-                            # receptor as pair of str and int for comparison
-                            this_input_delay_model_obj["receptor"] = [
-                                entry["receptor"],
-                                test_proxies.dish_utils.dish_id_to_vcc_id[
-                                    entry["receptor"]
-                                ],
+                            # convert receptor to int for comparison
+                            this_input_delay_model_obj[
+                                "receptor"
+                            ] = test_proxies.dish_utils.dish_id_to_vcc_id[
+                                entry["receptor"]
                             ]
                             break
 
