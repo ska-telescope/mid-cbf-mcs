@@ -2,8 +2,8 @@
 # Project makefile for ska-mid-cbf-mcs project. 
 PROJECT = ska-mid-cbf-mcs
 
-KUBE_NAMESPACE ?= ci-ska-mid-cbf-sys-tests-1203484684-owendouglas ## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
-SDP_KUBE_NAMESPACE ?= $(KUBE_NAMESPACE)-sdp##namespace to be used
+KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
+SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
 DASHBOARD ?= webjive-dash.dump
 CLUSTER_DOMAIN ?= cluster.local
 
