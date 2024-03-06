@@ -58,6 +58,8 @@ include:
 
 
 k8s-test:
+  before_script:
+    - make k8s-namespace-credentials
   variables:
     KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
