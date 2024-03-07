@@ -1376,13 +1376,12 @@ class TestCbfSubarray:
 
                 time.sleep(2)
 
-                # convert receptor IDs to pair of str and int for FSPs
+                # convert DISH IDs to VCC ID integer for FSPs
                 for delay_detail in input_delay_model_obj["delay_details"]:
                     receptor_id = delay_detail["receptor"]
-                    delay_detail["receptor"] = [
-                        receptor_id,
-                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id],
-                    ]
+                    delay_detail[
+                        "receptor"
+                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # check the delay model was correctly updated for fsp
@@ -1927,13 +1926,12 @@ class TestCbfSubarray:
                     )
 
                 # check the delay model was correctly updated for FSP
-                # convert receptor IDs to pair of str and int for FSPs
+                # convert DISH IDs to VCC ID integer for FSPs
                 for model in input_delay_model_obj["delay_details"]:
                     receptor_id = model["receptor"]
-                    model["receptor"] = [
-                        receptor_id,
-                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id],
-                    ]
+                    model[
+                        "receptor"
+                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
                     test_proxies.fsp[i]
