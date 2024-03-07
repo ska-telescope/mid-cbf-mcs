@@ -44,6 +44,7 @@ MINIKUBE ?= true ## Minikube or not
 EXPOSE_All_DS ?= false ## Expose All Tango Services to the external network (enable Loadbalancer service)
 SKA_TANGO_OPERATOR ?= true
 ITANGO_ENABLED ?= true## ITango enabled in ska-tango-base
+K8S_TIMEOUT ?= 600s
 
 # define private overrides for above variables in here
 -include PrivateRules.mak
