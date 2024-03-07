@@ -883,14 +883,16 @@ class TestCbfSubarray:
                     if "output_host" and "output_port" in fsp:
                         assert test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id
-                        ].visDestinationAddress == {
-                            "outputHost": [
-                                host for host in fsp["output_host"]
-                            ],
-                            "outputPort": [
-                                port for port in fsp["output_port"]
-                            ],
-                        }
+                        ].visDestinationAddress == json.dumps(
+                            {
+                                "outputHost": [
+                                    host for host in fsp["output_host"]
+                                ],
+                                "outputPort": [
+                                    port for port in fsp["output_port"]
+                                ],
+                            }
+                        )
 
                 elif fsp["function_mode"] == "PSS-BF":
                     function_mode = FspModes.PSS_BF.value
