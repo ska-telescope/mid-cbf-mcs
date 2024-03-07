@@ -363,6 +363,20 @@ class CbfController(SKAController):
         A class for the CbfController's On() command.
         """
 
+        def is_allowed(
+            self: CbfController.OnCommand, raise_if_disallowed=False
+        ) -> bool:
+            """
+            Determine if OnCommand is allowed.
+
+            :return: if OnCommand is allowed
+            :rtype: bool
+            """
+            result = super().is_allowed(raise_if_disallowed)
+            if self.target.get_state() == tango.DevState.ON:
+                result = False
+            return result
+
         def do(
             self: CbfController.OnCommand,
         ) -> Tuple[ResultCode, str]:
@@ -392,6 +406,20 @@ class CbfController(SKAController):
         A class for the CbfController's Off() command.
         """
 
+        def is_allowed(
+            self: CbfController.OffCommand, raise_if_disallowed=False
+        ) -> bool:
+            """
+            Determine if OffCommand is allowed.
+
+            :return: if OffCommand is allowed
+            :rtype: bool
+            """
+            result = super().is_allowed(raise_if_disallowed)
+            if self.target.get_state() == tango.DevState.OFF:
+                result = False
+            return result
+
         def do(
             self: CbfController.OffCommand,
         ) -> Tuple[ResultCode, str]:
@@ -403,8 +431,11 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            (result_code, message) = self.target.component_manager.off()
+            if self.is_allowed():
+                (result_code, message) = self.target.component_manager.off()
+            else:
+                result_code = ResultCode.FAILED
+                message = f"Off command is not allowed when op state is {self.target.op_state_model.op_state}"
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.OFF)
