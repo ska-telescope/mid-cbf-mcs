@@ -4881,7 +4881,8 @@ class TestCbfSubarray:
             # attemp to configure scan
 
             with pytest.raises(
-                DevFailed, match="Action configure_invoked is not allowed in obs state SCANNING."
+                DevFailed,
+                match="Action configure_invoked is not allowed in obs state SCANNING.",
             ):
                 test_proxies.subarray[sub_id].ConfigureScan(json_string)
 
