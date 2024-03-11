@@ -1385,9 +1385,8 @@ class Vcc(CspSubElementObsDevice):
             if argin["tdc_enable"]:
                 try:
                     for receptor in argin["tdc_destination_address"]:
-                        # "receptor" value is a pair of str and int
                         if (
-                            receptor["receptor_id"][0]
+                            receptor["receptor_id"]
                             == device.component_manager.dish_id
                         ):
                             # TODO: validate tdc_destination_address

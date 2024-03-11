@@ -1018,10 +1018,10 @@ class CbfSubarrayComponentManager(
                     # configuration at all or the list
                     # of receptors may be empty
                     if "receptors" in fsp and len(fsp["receptors"]) > 0:
+                        self._logger.debug(
+                            f"List of receptors: {self._dish_ids}"
+                        )
                         for dish in fsp["receptors"]:
-                            self._logger.info(
-                                f"List of receptors: {self._dish_ids}"
-                            )
                             if dish not in self._dish_ids:
                                 msg = (
                                     f"Receptor {dish} does not belong to "
@@ -1754,7 +1754,7 @@ class CbfSubarrayComponentManager(
                 )
                 fsp["channel_offset"] = 1
 
-            # Add all receptor ids for subarray and for correlation to fsp
+            # Add all DISH IDs for subarray and for correlation to fsp
             # Parameter named "subarray_vcc_ids" used by HPS contains all the
             # VCCs assigned to the subarray
             # Parameter named "corr_vcc_ids" used by HPS contains the
@@ -1762,7 +1762,7 @@ class CbfSubarrayComponentManager(
             # are requested to be used in Mid.CBF output products (visibilities)
 
             fsp["subarray_vcc_ids"] = []
-            for i, dish in enumerate(self._dish_ids):
+            for dish in self._dish_ids:
                 fsp["subarray_vcc_ids"].append(
                     self._dish_utils.dish_id_to_vcc_id[dish]
                 )
@@ -1782,7 +1782,7 @@ class CbfSubarrayComponentManager(
                         # In this case by the ICD, all subarray allocated resources should be used.
                         fsp["corr_vcc_ids"] = fsp["subarray_vcc_ids"].copy()
                     else:
-                        for i, dish in enumerate(fsp["receptors"]):
+                        for dish in fsp["receptors"]:
                             fsp["corr_vcc_ids"].append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
@@ -1943,7 +1943,7 @@ class CbfSubarrayComponentManager(
                     return (ResultCode.FAILED, msg)
 
                 # clear the subarray ID off the talon board with the matching
-                # receptor ID
+                # DISH ID
                 self._assign_talon_board_subarray_id(
                     dish_id=dish_id, assign=False
                 )
@@ -1967,7 +1967,6 @@ class CbfSubarrayComponentManager(
         """
         Remove all receptors from subarray.
 
-        :param dish_id: The receptor to be released
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -2270,8 +2269,6 @@ class CbfSubarrayComponentManager(
         self._logger.info(log_msg)
 
         # convert the DISH ID to a VCC ID integer using DISHUtils
-
-        # CIP-1724 Using receptors dictionary to access receptor int instead
         vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
 
         # find the k value for this receptor

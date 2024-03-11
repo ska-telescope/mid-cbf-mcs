@@ -385,16 +385,12 @@ class FspCorrSubarrayComponentManager(
         errs = []  # list of error messages
 
         for vccID in argin:
-            try:
-                if vccID not in self._vcc_ids:
-                    self._logger.info(f"VCC {vccID} assigned.")
-                    self._vcc_ids.append(vccID)
-                else:
-                    log_msg = f"VCC {vccID} already assigned to current FSP CORR subarray."
-                    self._logger.warning(log_msg)
-
-            except KeyError:  # invalid VCC ID
-                errs.append(f"Invalid VCC ID: {vccID}")
+            if vccID not in self._vcc_ids:
+                self._logger.info(f"VCC {vccID} assigned.")
+                self._vcc_ids.append(vccID)
+            else:
+                log_msg = f"VCC {vccID} already assigned to current FSP CORR subarray."
+                self._logger.warning(log_msg)
 
         if errs:
             msg = "\n".join(errs)

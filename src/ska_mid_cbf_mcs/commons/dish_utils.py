@@ -17,8 +17,8 @@ class DISHUtils:
     Utilities for translation of DISH/receptor identifiers.
 
     for Mid.CBF (197 DISH IDs):
-        MKT DISH ID range: 1 - 64
-        SKA DISH ID range: 65 - 197
+        MKT DISH ID range: MKT000 - MKT063
+        SKA DISH ID range: SKA001 - SKA133
     """
 
     SKA_DISH_INSTANCE_MIN = 1

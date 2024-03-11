@@ -760,7 +760,7 @@ class ControllerComponentManager(CbfComponentManager):
                     return (ResultCode.FAILED, log_msg)
 
         # update talon boards. The VCC ID to IP address mapping comes
-        # from hw_config. Then map VCC ID to receptor ID.
+        # from hw_config. Then map VCC ID to DISH ID.
         for vcc_id_str, ip in self._hw_config["talon_board"].items():
             for fqdn in self._fqdn_talon_board:
                 try:
