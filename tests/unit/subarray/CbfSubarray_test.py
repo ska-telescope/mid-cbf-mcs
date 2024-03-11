@@ -19,7 +19,7 @@ import pytest
 
 # SKA imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, ObsState
+from ska_tango_base.control_model import AdminMode, ObsState, PowerMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -30,7 +30,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-CONST_WAIT_TIME = 4
+CONST_WAIT_TIME = 2
 
 
 class TestCbfSubarray:
@@ -417,7 +417,7 @@ class TestCbfSubarray:
         device_under_test.frequencyOffsetK = freq_offset_k
 
         assert device_under_test.obsState == ObsState.IDLE
-        
+
         # configure_scan command is only allowed in op state ON
         device_under_test.On()
         sleep(CONST_WAIT_TIME)
