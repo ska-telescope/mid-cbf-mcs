@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.27
+*******
+* CIP-2279: Overrode is_allowed for CbfController On/Off so these commands can't be called when already in execution.
+* CIP-2227: Refactored flow of CbfController start_communicating in setting sub-element adminMode to ONLINE
+
 0.12.26
 *******
 * CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.
