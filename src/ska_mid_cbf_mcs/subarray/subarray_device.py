@@ -662,7 +662,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: boolean
             """
             self.logger.info("1.HERE")
-            return command.is_allowed(raise_if_disallowed=True)
+            return self.is_allowed(raise_if_disallowed=True)
 
         def do(
             self: CbfSubarray.ConfigureScanCommand, argin: str
