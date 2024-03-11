@@ -489,7 +489,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
             component_manager = self.target
-            return component_manager.remove_receptors(argin)
+            return component_manager.release_vcc(argin)
 
         def validate_input(
             self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
@@ -560,7 +560,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
             component_manager = self.target
-            return component_manager.remove_all_receptors()
+            return component_manager.release_all_vcc()
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -602,7 +602,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
             component_manager = self.target
-            return component_manager.add_receptors(argin)
+            return component_manager.assign_vcc(argin)
 
         def validate_input(
             self: CbfSubarray.AddReceptorsCommand, argin: List[str]

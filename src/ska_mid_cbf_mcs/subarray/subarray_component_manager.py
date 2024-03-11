@@ -1343,6 +1343,7 @@ class CbfSubarrayComponentManager(
                             # Validate receptors.
                             # This is always given, due to implementation details.
                             # TODO assume always given, as there is currently only support for 1 receptor/beam
+                            # if not given, assign first DISH in subarray
                             if "receptor_ids" not in searchBeam:
                                 searchBeam[
                                     "receptor_ids"
@@ -1899,7 +1900,7 @@ class CbfSubarrayComponentManager(
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
     @check_communicating
-    def remove_receptors(
+    def release_vcc(
         self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
@@ -1961,7 +1962,7 @@ class CbfSubarrayComponentManager(
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
     @check_communicating
-    def remove_all_receptors(
+    def release_all_vcc(
         self: CbfSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
@@ -1973,7 +1974,7 @@ class CbfSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
         if len(self._dish_ids) > 0:
-            (rc, msg) = self.remove_receptors(self._dish_ids.copy())
+            (rc, msg) = self.release_vcc(self._dish_ids.copy())
             return (rc, msg.replace("RemoveReceptors", "RemoveAllReceptors"))
         return (
             ResultCode.FAILED,
@@ -1981,7 +1982,7 @@ class CbfSubarrayComponentManager(
         )
 
     @check_communicating
-    def add_receptors(
+    def assign_vcc(
         self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
@@ -2216,7 +2217,7 @@ class CbfSubarrayComponentManager(
         self.obsreset()
 
         # remove all assigned VCCs to return to EMPTY
-        self.remove_all_receptors()
+        self.release_all_vcc()
 
     def update_component_resources(
         self: CbfSubarrayComponentManager, resourced: bool

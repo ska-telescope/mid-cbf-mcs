@@ -745,14 +745,19 @@ class ControllerComponentManager(CbfComponentManager):
 
         # set VCC values
         for fqdn in self._fqdn_vcc:
-            proxy = self._proxies[fqdn]
+            self._logger.info(f"Assigning DISH ID {dish_id} to VCC {vcc_id}")
             try:
+                proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                self._logger.info(
-                    f"Assigning DISH ID {dish_id} to VCC {vcc_id}"
-                )
-                proxy.dishID = dish_id
+                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                else:
+                    log_msg = (
+                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                    )
+                    self._logger.warning(log_msg)
+                    proxy.dishID = dish_id
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
@@ -775,16 +780,18 @@ class ControllerComponentManager(CbfComponentManager):
                             dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                             proxy.write_attribute("dishID", dish_id)
                         else:
-                            self._logger.warn(
-                                "Unable to match VCC ID in the HW config with the DISH-VCC mapping."
+                            log_msg = (
+                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
+                            self._logger.warning(log_msg)
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
-    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
@@ -800,7 +807,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         results = [
             self._lru_on(
                 self._proxies[fqdn],
@@ -818,7 +825,7 @@ class ControllerComponentManager(CbfComponentManager):
                 out_status = False
         return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
 
-    def _lru_off(self, proxy, lru_fqdn) -> (bool, str):
+    def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning off LRU {lru_fqdn}")
             proxy.Off()
@@ -831,7 +838,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         if (
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
@@ -882,7 +889,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
         """
