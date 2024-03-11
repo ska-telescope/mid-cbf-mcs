@@ -19,7 +19,7 @@ import pytest
 
 # SKA imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState, PowerMode
+from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
