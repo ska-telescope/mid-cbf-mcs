@@ -745,19 +745,21 @@ class ControllerComponentManager(CbfComponentManager):
 
         # set VCC values
         for fqdn in self._fqdn_vcc:
-            self._logger.info(f"Assigning DISH ID {dish_id} to VCC {vcc_id}")
             try:
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                    proxy.dishID = dish_id
+                    self._logger.info(
+                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                    )
                 else:
                     log_msg = (
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                         f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                     )
                     self._logger.warning(log_msg)
-                    proxy.dishID = dish_id
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
