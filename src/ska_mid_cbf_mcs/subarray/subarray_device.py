@@ -661,7 +661,6 @@ class CbfSubarray(CspSubElementSubarray):
             :return: ``True`` if the command is allowed
             :rtype: boolean
             """
-            self.logger.info("1.HERE")
             return self.is_allowed(raise_if_disallowed=True)
 
         def do(
