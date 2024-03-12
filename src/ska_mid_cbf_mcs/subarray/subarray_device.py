@@ -831,7 +831,8 @@ class CbfSubarray(CspSubElementSubarray):
         :return: ``True`` if the command is allowed
         :rtype: boolean
         """
-        return self.is_allowed(raise_if_disallowed=True)
+        command = self.get_command_object("ConfigureScan")
+        return command.is_allowed(raise_if_disallowed=True)
 
     @command(
         dtype_in="str",
