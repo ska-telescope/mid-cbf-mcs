@@ -1319,6 +1319,9 @@ class CbfSubarrayComponentManager(
                                 searchBeamID = (
                                     fsp_pss_subarray_proxy.searchBeamID
                                 )
+                                fsp_id = fsp_pss_subarray_proxy.get_property(
+                                    "FspID"
+                                )["FspID"][0]
                                 if searchBeamID is None:
                                     pass
                                 else:
@@ -1335,20 +1338,17 @@ class CbfSubarrayComponentManager(
                                             pass
                                         else:
                                             msg = (
-                                                f"'searchBeamID' {searchBeam['search_beam_id']} "
-                                                "is already being used on another fspSubarray."
+                                                f"'searchBeamID' {search_beam_ID} is already "
+                                                f"being used in another subarray by FSP {fsp_id}"
                                             )
                                             return (False, msg)
 
-                            # Validate receptors.
-                            # This is always given, due to implementation details.
-                            # TODO assume always given, as there is currently only support for 1 receptor/beam
-                            # if not given, assign first DISH in subarray
+                            # Validate receptors
+                            # if not given, assign first DISH in subarray,
+                            # as there is currently only support for 1 receptor/beam
                             if "receptor_ids" not in searchBeam:
-                                searchBeam[
-                                    "receptor_ids"
-                                ] = self._dish_utils.dish_id_to_vcc_id[
-                                    self._dish_ids[0]
+                                searchBeam["receptor_ids"] = [
+                                    self._dish_ids.copy()[0]
                                 ]
 
                             # Sanity check:
@@ -1396,9 +1396,8 @@ class CbfSubarrayComponentManager(
                 if fsp["function_mode"] == "PST-BF":
                     if len(fsp["timing_beam"]) <= 16:
                         for timingBeam in fsp["timing_beam"]:
-                            if 1 <= int(timingBeam["timing_beam_id"]) <= 16:
-                                pass
-                            else:  # timingBeamID not in valid range
+                            if 1 > int(timingBeam["timing_beam_id"]) > 16:
+                                # timingBeamID not in valid range
                                 msg = (
                                     "'timingBeamID' must be within range 1-16 "
                                     f"(received {timingBeam['timing_beam_id']})."
@@ -1410,6 +1409,9 @@ class CbfSubarrayComponentManager(
                                 timingBeamID = (
                                     fsp_pst_subarray_proxy.timingBeamID
                                 )
+                                fsp_id = fsp_pst_subarray_proxy.get_property(
+                                    "FspID"
+                                )["FspID"][0]
                                 if timingBeamID is None:
                                     pass
                                 else:
@@ -1426,28 +1428,26 @@ class CbfSubarrayComponentManager(
                                             pass
                                         else:
                                             msg = (
-                                                f"'timingBeamID' {timingBeam['timing_beam_id']} "
-                                                "is already being used on another fspSubarray."
+                                                f"'timingBeamID' {timing_beam_ID} is already "
+                                                f"being used in another subarray by FSP {fsp_id}"
                                             )
                                             return (False, msg)
 
                             # Validate receptors.
-                            # This is always given, due to implementation details.
-                            if "receptor_ids" in timingBeam:
-                                for receptor in timingBeam["receptor_ids"]:
-                                    if receptor not in self._dish_ids:
-                                        msg = (
-                                            f"Receptor {receptor} does not belong to "
-                                            f"subarray {self._subarray_id}."
-                                        )
-                                        self._logger.error(msg)
-                                        return (False, msg)
-                            else:
-                                timingBeam["receptor_ids"] = [
-                                    self._dish_utils.dish_id_to_vcc_id[dish]
-                                    for dish in self._dish_ids
-                                ]
+                            # if not given, assign all DISH belonging to subarray
+                            if "receptor_ids" not in timingBeam:
+                                timingBeam[
+                                    "receptor_ids"
+                                ] = self._dish_ids.copy()
 
+                            for receptor in timingBeam["receptor_ids"]:
+                                if receptor not in self._dish_ids:
+                                    msg = (
+                                        f"Receptor {receptor} does not belong to "
+                                        f"subarray {self._subarray_id}."
+                                    )
+                                    self._logger.error(msg)
+                                    return (False, msg)
                             if (
                                 timingBeam["enable_output"] is False
                                 or timingBeam["enable_output"] is True
@@ -1797,19 +1797,12 @@ class CbfSubarrayComponentManager(
                 # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
                 case "PSS-BF":
                     for searchBeam in fsp["search_beam"]:
-                        if "receptor_ids" not in searchBeam:
-                            # In this case by the ICD, all subarray allocated resources should be used.
-                            searchBeam["receptor_ids"] = [
+                        search_beam_vcc_ids = []
+                        for dish in searchBeam["receptor_ids"]:
+                            search_beam_vcc_ids.append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
-                                for dish in self._dish_ids
-                            ]
-                        else:
-                            for i, dish in enumerate(
-                                searchBeam["receptor_ids"]
-                            ):
-                                searchBeam["receptor_ids"][
-                                    i
-                                ] = self._dish_utils.dish_id_to_vcc_id[dish]
+                            )
+                        searchBeam["receptor_ids"] = search_beam_vcc_ids
                     self._pss_config.append(fsp)
                     self._pss_fsp_list.append(fsp["fsp_id"])
                     self._group_fsp_pss_subarray.add(
@@ -1818,19 +1811,12 @@ class CbfSubarrayComponentManager(
 
                 case "PST-BF":
                     for timingBeam in fsp["timing_beam"]:
-                        if "receptor_ids" not in timingBeam:
-                            # In this case by the ICD, all subarray allocated resources should be used.
-                            timingBeam["receptor_ids"] = [
+                        timing_beam_vcc_ids = []
+                        for dish in timingBeam["receptor_ids"]:
+                            timing_beam_vcc_ids.append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
-                                for dish in self._dish_ids
-                            ]
-                        else:
-                            for i, dish in enumerate(
-                                timingBeam["receptor_ids"]
-                            ):
-                                timingBeam["receptor_ids"][
-                                    i
-                                ] = self._dish_utils.dish_id_to_vcc_id[dish]
+                            )
+                        timingBeam["receptor_ids"] = timing_beam_vcc_ids
                     self._pst_config.append(fsp)
                     self._pst_fsp_list.append(fsp["fsp_id"])
                     self._group_fsp_pst_subarray.add(
