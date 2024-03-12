@@ -2289,7 +2289,7 @@ class CbfSubarrayComponentManager(
             dish_sample_rate * vcc_oversampling_factor / total_num_fs
         )
         fs_sample_rate_for_band = {
-            "receptor_id": vcc_id,
+            "vcc_id": vcc_id,
             "fs_sample_rate": fs_sample_rate,
         }
         log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"

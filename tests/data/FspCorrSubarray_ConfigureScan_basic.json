@@ -31,7 +31,7 @@
     "frequency_band_offset_stream2": 0,
     "fs_sample_rates":[
         {
-            "receptor_id": 1,
+            "vcc_id": 1,
             "fs_sample_rate": 220011300
         }
     ]

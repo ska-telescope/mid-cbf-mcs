@@ -201,25 +201,15 @@ class FspPssSubarrayComponentManager(
 
         :param argin: IDs of VCCs to add.
         """
-        errs = []  # list of error messages
-
         for vccID in argin:
-            try:
-                if vccID not in self._vcc_ids:
-                    self._logger.info(f"VCC {vccID} added.")
-                    self._vcc_ids.append(vccID)
-                else:
-                    # TODO: this is not true if more VCCs can be
-                    #       specified for the same search beam
-                    log_msg = f"VCC {vccID} already assigned to current FSP PSS subarray."
-                    self._logger.warning(log_msg)
-
-            except KeyError:  # invalid VCC ID
-                errs.append(f"Invalid VCC ID: {vccID}")
-
-        if errs:
-            msg = "\n".join(errs)
-            self._logger.error(msg)
+            if vccID not in self._vcc_ids:
+                self._logger.info(f"VCC {vccID} added.")
+                self._vcc_ids.append(vccID)
+            else:
+                # TODO: this is not true if more VCCs can be
+                #       specified for the same search beam
+                log_msg = f"VCC {vccID} already assigned to current FSP PSS subarray."
+                self._logger.warning(log_msg)
 
     def _release_vcc(
         self: FspPssSubarrayComponentManager, argin: List[int]

@@ -382,7 +382,6 @@ class FspCorrSubarrayComponentManager(
 
         :param argin: IDs of VCCs to add.
         """
-        errs = []  # list of error messages
 
         for vccID in argin:
             if vccID not in self._vcc_ids:
@@ -391,16 +390,6 @@ class FspCorrSubarrayComponentManager(
             else:
                 log_msg = f"VCC {vccID} already assigned to current FSP CORR subarray."
                 self._logger.warning(log_msg)
-
-        if errs:
-            msg = "\n".join(errs)
-            self._logger.error(msg)
-            tango.Except.throw_exception(
-                "Command failed",
-                msg,
-                "_assign_vcc execution",
-                tango.ErrSeverity.ERR,
-            )
 
     def _release_vcc(
         self: FspCorrSubarrayComponentManager, argin: List[int]
