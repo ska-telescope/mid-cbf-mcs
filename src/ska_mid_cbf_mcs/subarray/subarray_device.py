@@ -854,7 +854,7 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
 
-        # command = self.get_command_object("ConfigureScan")
+        command = self.get_command_object("ConfigureScan")
         # command.is_ConfigureScan_allowed()
 
         (valid, msg) = command.validate_input(argin)
