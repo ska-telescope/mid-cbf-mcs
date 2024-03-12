@@ -205,7 +205,7 @@ class TestCbfSubarrayComponentManager:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
@@ -259,7 +259,7 @@ class TestCbfSubarrayComponentManager:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )

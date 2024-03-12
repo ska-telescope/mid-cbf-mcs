@@ -27,7 +27,6 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
-# FIXME: TEMP SKIP PSS/PST TESTING, ADD BACK ConfugureScan_basic.json CIP-1767
 class TestCbfSubarray:
     @pytest.mark.parametrize("sub_id", [1])
     def test_Connect(
@@ -549,7 +548,12 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            ),
+            (
+                "ConfigureScan_CORR_PSS_PST.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
@@ -1029,7 +1033,7 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
@@ -1191,7 +1195,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "jonesmatrix.json",
                 "delaymodel.json",
                 "timingbeamweights.json",
@@ -1486,7 +1490,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
@@ -1739,7 +1743,7 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "delaymodel.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -2000,7 +2004,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 "jonesmatrix.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -2260,7 +2264,7 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -2468,7 +2472,7 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -2667,8 +2671,8 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -3236,13 +3240,13 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
@@ -3486,13 +3490,13 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
@@ -3793,12 +3797,12 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
@@ -3898,12 +3902,12 @@ class TestCbfSubarray:
         vcc_ids",
         [
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
@@ -4007,7 +4011,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -4178,7 +4182,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -4346,7 +4350,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -4511,7 +4515,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -4677,7 +4681,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -4844,7 +4848,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -5010,7 +5014,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],

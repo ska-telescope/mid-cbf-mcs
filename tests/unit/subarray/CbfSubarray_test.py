@@ -388,7 +388,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
@@ -432,12 +432,12 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -475,12 +475,12 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -511,12 +511,12 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -547,12 +547,12 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -583,12 +583,12 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -618,10 +618,10 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
-            ("Configure_TM-CSP_v2.json", ["SKA100", "SKA001", "SKA036"]),
+            ("ConfigureScan_CORR_PSS_PST.json.json", ["SKA100", "SKA001", "SKA036"]),
         ],
     )
     def test_End(
