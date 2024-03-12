@@ -58,7 +58,7 @@ class TestCbfSubarrayComponentManager:
             (["SKA063", "SKA001", "SKA100"]),
         ],
     )
-    def test_add_remove_receptors_valid(
+    def test_add_release_vcc_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
@@ -76,14 +76,14 @@ class TestCbfSubarrayComponentManager:
             sp = f.read()
         subarray_component_manager.update_sys_param(sp)
 
-        subarray_component_manager.add_receptors(receptors)
+        subarray_component_manager.assign_vcc(receptors)
 
         assert [
             subarray_component_manager.dish_ids[i]
             for i in range(len(receptors))
         ] == receptors
 
-        subarray_component_manager.remove_receptors(receptors)
+        subarray_component_manager.release_vcc(receptors)
 
         assert subarray_component_manager.dish_ids == []
 
@@ -118,7 +118,7 @@ class TestCbfSubarrayComponentManager:
                 subarray_component_manager.subarray_id + 1
             )
 
-        subarray_component_manager.add_receptors(receptors[:-1])
+        subarray_component_manager.assign_vcc(receptors[:-1])
 
         assert subarray_component_manager.dish_ids == []
 
@@ -129,8 +129,8 @@ class TestCbfSubarrayComponentManager:
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
         # try adding same receptor twice
-        subarray_component_manager.add_receptors([receptors[-1]])
-        subarray_component_manager.add_receptors([receptors[-1]])
+        subarray_component_manager.assign_vcc([receptors[-1]])
+        subarray_component_manager.assign_vcc([receptors[-1]])
         assert subarray_component_manager.dish_ids == [receptors[-1]]
 
     @pytest.mark.parametrize(
@@ -156,12 +156,12 @@ class TestCbfSubarrayComponentManager:
 
         # try removing receptors before assignment
         assert subarray_component_manager.dish_ids == []
-        subarray_component_manager.remove_receptors(receptors)
+        subarray_component_manager.release_vcc(receptors)
         assert subarray_component_manager.dish_ids == []
 
         # try removing unassigned receptor
-        subarray_component_manager.add_receptors(receptors[:-1])
-        subarray_component_manager.remove_receptors([receptors[-1]])
+        subarray_component_manager.assign_vcc(receptors[:-1])
+        subarray_component_manager.release_vcc([receptors[-1]])
         assert subarray_component_manager.dish_ids == receptors[:-1]
 
     @pytest.mark.parametrize(
@@ -171,14 +171,14 @@ class TestCbfSubarrayComponentManager:
             (["SKA063", "SKA001", "SKA100"]),
         ],
     )
-    def test_remove_all_receptors_invalid_valid(
+    def test_release_all_vcc_invalid_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         receptors: List[str],
     ) -> None:
         """
-        Test valid use of remove_all_receptors command.
+        Test valid use of release_all_vcc command.
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
@@ -191,12 +191,12 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.update_sys_param(sp)
 
         # try removing receptors before assignment
-        result = subarray_component_manager.remove_all_receptors()
+        result = subarray_component_manager.release_all_vcc()
         assert result[0] == ResultCode.FAILED
 
         # remove all receptors
-        subarray_component_manager.add_receptors(receptors)
-        result = subarray_component_manager.remove_all_receptors()
+        subarray_component_manager.assign_vcc(receptors)
+        result = subarray_component_manager.release_all_vcc()
         assert result[0] == ResultCode.OK
         assert subarray_component_manager.dish_ids == []
 
@@ -235,7 +235,7 @@ class TestCbfSubarrayComponentManager:
         f.close()
         config_json = json.loads(config_string)
 
-        subarray_component_manager.add_receptors(receptors)
+        subarray_component_manager.assign_vcc(receptors)
 
         result = subarray_component_manager.validate_input(config_string)
         assert result[0]
