@@ -654,15 +654,6 @@ class CbfSubarray(CspSubElementSubarray):
         A class for CbfSubarray's ConfigureScan() command.
         """
 
-        def is_ConfigureScan_allowed(self):
-            """
-            Check if command `ConfigureScan` is allowed in the current device state.
-
-            :return: ``True`` if the command is allowed
-            :rtype: boolean
-            """
-            return self.is_allowed(raise_if_disallowed=True)
-
         def do(
             self: CbfSubarray.ConfigureScanCommand, argin: str
         ) -> Tuple[ResultCode, str]:
@@ -833,6 +824,15 @@ class CbfSubarray(CspSubElementSubarray):
                 json.dumps(full_configuration)
             )
 
+    def is_ConfigureScan_allowed(self):
+        """
+        Check if command `ConfigureScan` is allowed in the current device state.
+
+        :return: ``True`` if the command is allowed
+        :rtype: boolean
+        """
+        return self.is_allowed(raise_if_disallowed=True)
+
     @command(
         dtype_in="str",
         doc_in="Scan configuration",
@@ -855,7 +855,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
 
         command = self.get_command_object("ConfigureScan")
-        command.is_ConfigureScan_allowed()
+        # command.is_ConfigureScan_allowed()
 
         (valid, msg) = command.validate_input(argin)
         if not valid:
