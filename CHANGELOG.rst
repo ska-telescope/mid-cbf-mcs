@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.12.28
+*******
+* CIP-2306: Implemented is_ConfigureScan_allowed() to enforce state model for ConfigureScan.
+* STS-548: Updated k8s.mk to collect k8s-test logs in logs/ artifact folder after pipeline runs.
+
 0.12.27
 *******
 * CIP-2279: Overrode is_allowed for CbfController On/Off so these commands can't be called when already in execution.
