@@ -79,6 +79,10 @@ name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"
 
 
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = "https://pypi.org/simple"
+
 [tool.isort]
 multi_line_output = 3
 include_trailing_comma = true

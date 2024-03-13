@@ -824,6 +824,16 @@ class CbfSubarray(CspSubElementSubarray):
                 json.dumps(full_configuration)
             )
 
+    def is_ConfigureScan_allowed(self):
+        """
+        Check if command `ConfigureScan` is allowed in the current device state.
+
+        :return: ``True`` if the command is allowed
+        :rtype: boolean
+        """
+        command = self.get_command_object("ConfigureScan")
+        return command.is_allowed(raise_if_disallowed=True)
+
     @command(
         dtype_in="str",
         doc_in="Scan configuration",
