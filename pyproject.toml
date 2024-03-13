@@ -77,7 +77,13 @@ sphinxcontrib-plantuml = "^0.26"
 [[tool.poetry.source]]
 name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"
+priority = "primary"
 
+
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = "https://pypi.org/simple"
+priority = "primary"
 
 [tool.isort]
 multi_line_output = 3
