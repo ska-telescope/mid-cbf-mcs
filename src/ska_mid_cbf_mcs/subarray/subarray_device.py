@@ -856,7 +856,6 @@ class CbfSubarray(CspSubElementSubarray):
         """
 
         command = self.get_command_object("ConfigureScan")
-        # command.is_ConfigureScan_allowed()
 
         (valid, msg) = command.validate_input(argin)
         if not valid:
