@@ -121,11 +121,6 @@ jive: ## configure TANGO_HOST to enable Jive
 k8s-pre-test:
 	@kubectl exec -n $(KUBE_NAMESPACE) $(CBF_CTRL_POD) -- mkdir -p /app/mnt/talondx-config
 
-k8s-post-test:
-	@for i in $$(kubectl get pod -n $(KUBE_NAMESPACE) -o jsonpath='{.items[*].metadata.name}'); do \
-	kubectl logs $$i -n $(KUBE_NAMESPACE) | tee -a build/logs.txt; \
-	done;
-
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
 
