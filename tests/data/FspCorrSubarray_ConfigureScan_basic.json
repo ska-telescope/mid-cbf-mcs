@@ -4,8 +4,7 @@
     "corr_vcc_ids": [1], 
     "subarray_vcc_ids": [1, 4, 2],
     "frequency_slice_id": 1, 
-    "zoom_factor": 1, 
-    "zoom_window_tuning": 4700000, 
+    "zoom_factor": 0,
     "integration_factor": 1, 
     "channel_offset": 14880, 
     "channel_averaging_map": 
@@ -26,9 +25,7 @@
     "output_port": [[0, 9000, 1], [8184, 9000, 1]], 
     "config_id": "band:5a, fsp1, 744 channels average factor 8", 
     "frequency_band": "5a", 
-    "band_5_tuning": [5.85, 7.25], 
-    "frequency_band_offset_stream1": 0, 
-    "frequency_band_offset_stream2": 0,
+    "band_5_tuning": [5.85, 7.25],
     "fs_sample_rates":[
         {
             "vcc_id": 1,

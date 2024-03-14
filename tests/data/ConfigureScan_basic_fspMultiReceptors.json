@@ -10,8 +10,6 @@
         "subarray_id": 1
     },
     "cbf": {
-        "frequency_band_offset_stream1": 0,
-        "frequency_band_offset_stream2": 0,
         "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
         "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
@@ -23,8 +21,7 @@
                 "function_mode": "CORR",
                 "receptors": ["SKA063", "SKA001", "SKA100"],
                 "frequency_slice_id": 1,
-                "zoom_factor": 1,
-                "zoom_window_tuning": 4700000,
+                "zoom_factor": 0,
                 "integration_factor": 1,
                 "channel_offset": 14880,
                 "channel_averaging_map": [

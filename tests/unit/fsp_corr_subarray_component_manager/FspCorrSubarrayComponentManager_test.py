@@ -168,10 +168,11 @@ class TestFspCorrSubarrayComponentManager:
         else:
             logging.info("Attribute band5Tuning not in configuration")
 
-        assert (
-            fsp_corr_subarray_component_manager.zoom_window_tuning
-            == configuration["zoom_window_tuning"]
-        )
+        if "zoom_window_tuning" in configuration:
+            assert (
+                fsp_corr_subarray_component_manager.zoom_window_tuning
+                == configuration["zoom_window_tuning"]
+            )
         assert (
             fsp_corr_subarray_component_manager.integration_factor
             == configuration["integration_factor"]

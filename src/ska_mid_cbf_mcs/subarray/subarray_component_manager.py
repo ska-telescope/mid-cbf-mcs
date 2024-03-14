@@ -1000,12 +1000,14 @@ class CbfSubarrayComponentManager(
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
                 fsp["frequency_band"] = common_configuration["frequency_band"]
-                fsp["frequency_band_offset_stream1"] = configuration[
-                    "frequency_band_offset_stream1"
-                ]
-                fsp["frequency_band_offset_stream2"] = configuration[
-                    "frequency_band_offset_stream2"
-                ]
+                if "frequency_band_offset_stream1" in configuration:
+                    fsp["frequency_band_offset_stream1"] = configuration[
+                        "frequency_band_offset_stream1"
+                    ]
+                if "frequency_band_offset_stream2" in configuration:
+                    fsp["frequency_band_offset_stream2"] = configuration[
+                        "frequency_band_offset_stream2"
+                    ]
                 if fsp["frequency_band"] in ["5a", "5b"]:
                     fsp["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
@@ -1057,7 +1059,7 @@ class CbfSubarrayComponentManager(
                         return (False, msg)
 
                     # Validate zoom_factor.
-                    if int(fsp["zoom_factor"]) in list(range(0, 7)):
+                    if int(fsp["zoom_factor"]) in list(range(7)):
                         pass
                     else:
                         msg = "'zoom_factor' must be an integer in the range [0, 6]."
@@ -1738,15 +1740,18 @@ class CbfSubarrayComponentManager(
 
             # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
-            fsp["frequency_band"] = common_configuration["frequency_band"]
-            fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
             fsp["sub_id"] = common_configuration["subarray_id"]
-            fsp[
-                "frequency_band_offset_stream1"
-            ] = self._frequency_band_offset_stream1
-            fsp[
-                "frequency_band_offset_stream2"
-            ] = self._frequency_band_offset_stream2
+            fsp["frequency_band"] = common_configuration["frequency_band"]
+            if fsp["frequency_band"] in ["5a", "5b"]:
+                fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+            if "frequency_band_offset_stream1" in configuration:
+                fsp[
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
+            if "frequency_band_offset_stream2" in configuration:
+                fsp[
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
 
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp:

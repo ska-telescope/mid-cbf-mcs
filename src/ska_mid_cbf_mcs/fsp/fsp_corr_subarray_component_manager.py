@@ -435,14 +435,17 @@ class FspCorrSubarrayComponentManager(
             "band_index"
         ]
 
-        self._stream_tuning = configuration["band_5_tuning"]
+        if configuration["frequency_band"] in ["5a", "5b"]:
+            self._stream_tuning = configuration["band_5_tuning"]
 
-        self._frequency_band_offset_stream1 = int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        self._frequency_band_offset_stream2 = int(
-            configuration["frequency_band_offset_stream2"]
-        )
+        if "frequency_band_offset_stream1" in configuration:
+            self._frequency_band_offset_stream1 = int(
+                configuration["frequency_band_offset_stream1"]
+            )
+        if "frequency_band_offset_stream2" in configuration:
+            self._frequency_band_offset_stream2 = int(
+                configuration["frequency_band_offset_stream2"]
+            )
 
         # release previously assigned VCCs and assign newly specified VCCs
         self._release_all_vcc()
@@ -452,7 +455,7 @@ class FspCorrSubarrayComponentManager(
 
         self._bandwidth = int(configuration["zoom_factor"])
         self._bandwidth_actual = int(
-            const.FREQUENCY_SLICE_BW / 2 ** int(configuration["zoom_factor"])
+            const.FREQUENCY_SLICE_BW / 2 * int(configuration["zoom_factor"])
         )
 
         if self._bandwidth != 0:  # zoomWindowTuning is required
