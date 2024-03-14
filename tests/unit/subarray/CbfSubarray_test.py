@@ -437,7 +437,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -480,7 +480,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -516,7 +516,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -552,7 +552,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -588,7 +588,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
@@ -622,7 +622,7 @@ class TestCbfSubarray:
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "ConfigureScan_CORR_PSS_PST.json.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 ["SKA100", "SKA001", "SKA036"],
             ),
         ],
