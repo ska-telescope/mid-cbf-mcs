@@ -30,7 +30,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-CONST_WAIT_TIME = 4
+CONST_WAIT_TIME = 2
 
 
 class TestCbfSubarray:
@@ -417,6 +417,11 @@ class TestCbfSubarray:
         device_under_test.frequencyOffsetK = freq_offset_k
 
         assert device_under_test.obsState == ObsState.IDLE
+
+        # configure_scan command is only allowed in op state ON
+        device_under_test.On()
+        sleep(CONST_WAIT_TIME)
+        assert device_under_test.State() == DevState.ON
 
         # configure scan
         f = open(data_file_path + config_file_name)
