@@ -630,13 +630,12 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"Received sys params {params}")
 
         init_sys_param_json = json.loads(params)
-        #passed, msg = self._validate_init_sys_param(init_sys_param_json)
-        passed = True
-        if not passed:
-            return (
-                ResultCode.FAILED,
-                msg,
-            )
+        # passed, msg = self._validate_init_sys_param(init_sys_param_json)
+        # if not passed:
+        #    return (
+        #        ResultCode.FAILED,
+        #        msg,
+        #    )
         # If tm_data_filepath is provided, then we need to retrieve the
         # init sys param file from CAR via the telescope model
         if "tm_data_filepath" in init_sys_param_json:
@@ -645,13 +644,12 @@ class ControllerComponentManager(CbfComponentManager):
             )
             if not passed:
                 return (ResultCode.FAILED, msg)
-            #passed, msg = self._validate_init_sys_param(init_sys_param_json)
-            passed = True
-            if not passed:
-                return (
-                    ResultCode.FAILED,
-                    msg,
-                )
+            # passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            #   if not passed:
+            #       return (
+            #           ResultCode.FAILED,
+            #           msg,
+            #       )
             self._source_init_sys_param = params
             self._init_sys_param = json.dumps(init_sys_param_json)
         else:
