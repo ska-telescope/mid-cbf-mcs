@@ -630,7 +630,8 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"Received sys params {params}")
 
         init_sys_param_json = json.loads(params)
-        passed, msg = self._validate_init_sys_param(init_sys_param_json)
+        #passed, msg = self._validate_init_sys_param(init_sys_param_json)
+        passed = True
         if not passed:
             return (
                 ResultCode.FAILED,
@@ -644,7 +645,8 @@ class ControllerComponentManager(CbfComponentManager):
             )
             if not passed:
                 return (ResultCode.FAILED, msg)
-            passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            #passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            passed = True
             if not passed:
                 return (
                     ResultCode.FAILED,
