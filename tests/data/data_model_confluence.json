@@ -1,7 +1,6 @@
 {
     "id": "sbi-mvp01-20200325-00001-science_A",
     "frequencyBand": "1",
-    "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
     "jonesMatrixSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
     "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
     "fsp": [

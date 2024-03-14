@@ -12,7 +12,6 @@
     "cbf": {
         "frequency_band_offset_stream1": 0,
         "frequency_band_offset_stream2": 0,
-        "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
         "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights",
