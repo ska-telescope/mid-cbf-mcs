@@ -928,7 +928,7 @@ class TestCbfSubarray:
                         )
                         # TODO currently only one receptor supported
                         assert (
-                            searchBeam["receptor_ids"][0][1]
+                            searchBeam["receptor_ids"][0]
                             == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
@@ -3248,7 +3248,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3498,7 +3498,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3803,7 +3803,7 @@ class TestCbfSubarray:
             ),
             (
                 "ConfigureScan_CORR_PSS_PST.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3908,7 +3908,7 @@ class TestCbfSubarray:
             ),
             (
                 "ConfigureScan_CORR_PSS_PST.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
