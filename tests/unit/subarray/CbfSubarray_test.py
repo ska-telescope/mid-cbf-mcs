@@ -444,7 +444,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -487,7 +487,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -523,7 +523,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -559,7 +559,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -595,7 +595,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -628,11 +628,11 @@ class TestCbfSubarray:
             ),
             (
                 "ConfigureScan_CORR_PSS_PST.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
-    def test_End(
+    def test_GoToIdle(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
@@ -647,6 +647,6 @@ class TestCbfSubarray:
         device_under_test.On()
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.End()
+        device_under_test.GoToIdle()
 
         assert device_under_test.obsState == ObsState.IDLE
