@@ -387,6 +387,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_command("GoToIdle", None)
     builder.add_command("Scan", None)
     builder.add_command("EndScan", None)
+    builder.add_property("FspID", {"FspID": [1]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
