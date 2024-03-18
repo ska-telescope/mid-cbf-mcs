@@ -413,7 +413,7 @@ class CbfSubarrayComponentManager(
         sys_param = json.loads(sys_param_str)
         self._dish_utils = DISHUtils(sys_param)
         self._logger.info(
-            "Updated dish ID to VCC ID and frequency offset k mapping"
+            "Updated DISH ID to VCC ID and frequency offset k mapping"
         )
 
     @check_communicating
@@ -946,10 +946,10 @@ class CbfSubarrayComponentManager(
             for sw in configuration["search_window"]:
                 if sw["tdc_enable"]:
                     for receptor in sw["tdc_destination_address"]:
-                        dish_id = receptor["receptor_id"]
-                        if dish_id not in self._dish_ids:
+                        dish = receptor["receptor_id"]
+                        if dish not in self._dish_ids:
                             msg = (
-                                f"'searchWindow' receptor ID {dish_id} "
+                                f"'searchWindow' DISH ID {dish} "
                                 + "not assigned to subarray. Aborting configuration."
                             )
                             return (False, msg)
@@ -1016,9 +1016,8 @@ class CbfSubarrayComponentManager(
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
-                    # Receptors may not be specified in the
-                    # configuration at all or the list
-                    # of receptors may be empty
+                    # dishes may not be specified in the
+                    # configuration at all, or the list may be empty
                     if "receptors" in fsp and len(fsp["receptors"]) > 0:
                         self._logger.debug(
                             f"List of receptors: {self._dish_ids}"
@@ -1345,19 +1344,19 @@ class CbfSubarrayComponentManager(
                                             )
                                             return (False, msg)
 
-                            # Validate receptors
-                            # if not given, assign first DISH in subarray,
-                            # as there is currently only support for 1 receptor/beam
+                            # Validate dishes
+                            # if not given, assign first DISH ID in subarray, as
+                            # there is currently only support for 1 DISH per beam
                             if "receptor_ids" not in searchBeam:
                                 searchBeam["receptor_ids"] = [
                                     self._dish_ids.copy()[0]
                                 ]
 
                             # Sanity check:
-                            for receptor in searchBeam["receptor_ids"]:
-                                if receptor not in self._dish_ids:
+                            for dish in searchBeam["receptor_ids"]:
+                                if dish not in self._dish_ids:
                                     msg = (
-                                        f"Receptor {receptor} does not belong to "
+                                        f"Receptor {dish} does not belong to "
                                         f"subarray {self._subarray_id}."
                                     )
                                     self._logger.error(msg)
@@ -1435,17 +1434,17 @@ class CbfSubarrayComponentManager(
                                             )
                                             return (False, msg)
 
-                            # Validate receptors.
-                            # if not given, assign all DISH belonging to subarray
+                            # Validate dishes
+                            # if not given, assign all DISH IDs belonging to subarray
                             if "receptor_ids" not in timingBeam:
                                 timingBeam[
                                     "receptor_ids"
                                 ] = self._dish_ids.copy()
 
-                            for receptor in timingBeam["receptor_ids"]:
-                                if receptor not in self._dish_ids:
+                            for dish in timingBeam["receptor_ids"]:
+                                if dish not in self._dish_ids:
                                     msg = (
-                                        f"Receptor {receptor} does not belong to "
+                                        f"Receptor {dish} does not belong to "
                                         f"subarray {self._subarray_id}."
                                     )
                                     self._logger.error(msg)
@@ -1773,16 +1772,15 @@ class CbfSubarrayComponentManager(
                     self._dish_utils.dish_id_to_vcc_id[dish]
                 )
 
-            # Add the fs_sample_rate for all receptors
+            # Add the fs_sample_rate for all dishes
             fsp["fs_sample_rates"] = self._calculate_fs_sample_rates(
                 common_configuration["frequency_band"]
             )
 
             match fsp["function_mode"]:
                 case "CORR":
-                    # Receptors may not be specified in the
-                    # configuration at all or the list
-                    # of receptors may be empty
+                    # dishes may not be specified in the
+                    # configuration at all, or the list may be empty
                     fsp["corr_vcc_ids"] = []
                     if "receptors" not in fsp or len(fsp["receptors"]) == 0:
                         # In this case by the ICD, all subarray allocated resources should be used.
@@ -1895,15 +1893,15 @@ class CbfSubarrayComponentManager(
         self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
-        Remove receptor from subarray.
+        Remove receptor/dish from subarray.
 
-        :param argin: The receptors to be released
+        :param argin: The lsit of receptor/DISH IDs to be released
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._dish_ids,}")
+        self._logger.debug(f"Current receptors: {*self._dish_ids,}")
         for dish_id in argin:
             self._logger.debug(f"Attempting to remove {dish_id}")
             if dish_id in self._dish_ids:
@@ -1946,9 +1944,9 @@ class CbfSubarrayComponentManager(
 
         if len(self._dish_ids) == 0:
             self.update_component_resources(False)
-            self._logger.debug("No receptors remaining.")
+            self._logger.info("No receptors remaining.")
         else:
-            self._logger.debug(f"receptors remaining: {*self._dish_ids,}")
+            self._logger.info(f"Receptors remaining: {*self._dish_ids,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -1957,7 +1955,7 @@ class CbfSubarrayComponentManager(
         self: CbfSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Remove all receptors from subarray.
+        Remove all receptors/dishes from subarray.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -1977,20 +1975,20 @@ class CbfSubarrayComponentManager(
         self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
-        Add receptors to subarray.
+        Add receptors/dishes to subarray.
 
-        :param argin: The receptors to be assigned
+        :param argin: The lsit of receptor/DISH IDs to be assigned
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"current receptors: {*self._dish_ids,}")
+        self._logger.debug(f"Current receptors: {*self._dish_ids,}")
         for dish_id in argin:
             self._logger.debug(f"Attempting to add receptor {dish_id}")
 
             self._logger.debug(
-                f"receptor to vcc keys: {self._dish_utils.dish_id_to_vcc_id.keys()}"
+                f"Receptor to vcc keys: {self._dish_utils.dish_id_to_vcc_id.keys()}"
             )
 
             if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
@@ -2017,7 +2015,7 @@ class CbfSubarrayComponentManager(
             vccSubarrayID = vccProxy.subarrayMembership
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
 
-            # only add receptor if it does not already belong to a
+            # only add dish if it does not already belong to a
             # different subarray
             if vccSubarrayID not in [0, self._subarray_id]:
                 msg = (
@@ -2038,7 +2036,7 @@ class CbfSubarrayComponentManager(
                     vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
                     vccProxy.command_inout("On")
 
-                    # update resourced state once first receptor is added
+                    # update resourced state once first dish is added
                     if len(self._dish_ids) == 0:
                         self.update_component_resources(True)
 
@@ -2055,7 +2053,7 @@ class CbfSubarrayComponentManager(
                     )
 
                     # assign the subarray ID to the talon board with the matching
-                    # receptor ID
+                    # DISH ID
                     self._assign_talon_board_subarray_id(
                         dish_id=dish_id, assign=True
                     )
@@ -2067,7 +2065,7 @@ class CbfSubarrayComponentManager(
                 msg = f"{dish_id} already assigned to " + "subarray. Skipping."
                 self._logger.warning(msg)
 
-        self._logger.debug(f"receptors after adding: {*self._dish_ids,}")
+        self._logger.info(f"Receptors after adding: {*self._dish_ids,}")
 
         return (ResultCode.OK, "AddReceptors completed OK")
 
@@ -2263,7 +2261,7 @@ class CbfSubarrayComponentManager(
         # convert the DISH ID to a VCC ID integer using DISHUtils
         vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
 
-        # find the k value for this receptor
+        # find the k value for this DISH
         # array of k values is 0 index, so index of array value is vcc_id - 1
         freq_offset_k = self._dish_utils.dish_id_to_k[dish]
         freq_band_info = freq_band_dict()[freq_band]
