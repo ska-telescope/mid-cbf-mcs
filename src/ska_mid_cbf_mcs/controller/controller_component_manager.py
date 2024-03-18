@@ -629,7 +629,26 @@ class ControllerComponentManager(CbfComponentManager):
         """
         self._logger.debug(f"Received sys params {params}")
 
-        init_sys_param_json = json.loads(params)
+        def raise_on_duplicate_keys(pairs):
+            d = {}
+            for k, v in pairs:
+                if k in d:
+                    raise ValueError(f"duplicated key: {k}")
+                else:
+                    d[k] = v
+            return d
+
+        try:
+            init_sys_param_json = json.loads(
+                params, object_pairs_hook=raise_on_duplicate_keys
+            )
+        except ValueError as e:
+            self._logger.error(e)
+            return (
+                ResultCode.FAILED,
+                "Duplicated Dish ID in the init_sys_param json",
+            )
+
         passed, msg = self._validate_init_sys_param(init_sys_param_json)
         if not passed:
             return (
