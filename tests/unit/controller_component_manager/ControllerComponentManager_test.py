@@ -172,6 +172,11 @@ class TestControllerComponentManager:
         (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED
 
+        with open(json_file_path + "sys_param_dup_dishid.json") as f:
+            sp = f.read()
+        (result_code, _) = controller_component_manager.init_sys_param(sp)
+        assert result_code == ResultCode.FAILED
+
     def test_sys_param_valid_source_and_filepath(
         self: TestControllerComponentManager,
         controller_component_manager: ControllerComponentManager,
