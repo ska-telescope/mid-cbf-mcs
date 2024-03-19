@@ -229,6 +229,7 @@ class FspPstSubarrayComponentManager(
 
         configuration = json.loads(configuration)
 
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         for timingBeam in configuration["timing_beam"]:
             self._assign_vcc(timingBeam["receptor_ids"])
             self._timing_beams.append(json.dumps(timingBeam))

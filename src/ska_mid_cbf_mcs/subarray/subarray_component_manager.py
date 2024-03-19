@@ -1895,7 +1895,7 @@ class CbfSubarrayComponentManager(
         """
         Remove receptor/dish from subarray.
 
-        :param argin: The lsit of receptor/DISH IDs to be released
+        :param argin: The list of receptor/DISH IDs to be released
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -1977,7 +1977,7 @@ class CbfSubarrayComponentManager(
         """
         Add receptors/dishes to subarray.
 
-        :param argin: The lsit of receptor/DISH IDs to be assigned
+        :param argin: The list of receptor/DISH IDs to be assigned
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -2262,7 +2262,6 @@ class CbfSubarrayComponentManager(
         vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
 
         # find the k value for this DISH
-        # array of k values is 0 index, so index of array value is vcc_id - 1
         freq_offset_k = self._dish_utils.dish_id_to_k[dish]
         freq_band_info = freq_band_dict()[freq_band]
 

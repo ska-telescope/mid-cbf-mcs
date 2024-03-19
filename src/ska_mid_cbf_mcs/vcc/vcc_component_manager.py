@@ -870,6 +870,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     self._logger.warning(log_msg)
 
                 # Configure tdcDestinationAddress.
+                # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
                 if argin["tdc_enable"]:
                     for tdc_dest in argin["tdc_destination_address"]:
                         if tdc_dest["receptor_id"] == self._vcc_id:
@@ -899,6 +900,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         argin = json.loads(argin)
 
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         for dopplerDetails in argin:
             if dopplerDetails["receptor"] == self._vcc_id:
                 coeff = dopplerDetails["dopplerCoeff"]
@@ -916,16 +918,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         delay_model_obj = json.loads(argin)
 
-        # find the delay model that applies to this vcc's
-        # receptor and store it
+        # Find the delay model that applies to this VCC's DISH ID and store it
         dm_found = False
 
-        # the delay model schema allows for a set of
-        # receptors to be included in the delay model
-        # Even though there will only be one entry
-        # for a VCC, there should still be a list
-        # with a single entry so that the schema is followed
-        # Set up the delay model to be a list
+        # The delay model schema allows for a set of dishes to be included.
+        # Even though there will only be one entryfor a VCC, there should still
+        # be a list with a single entry so that the schema is followed.
+        # Set up the delay model to be a list.
+
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in delay_model_obj["delay_details"]:
             self._logger.debug(
@@ -940,9 +941,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 dm_found = True
                 break
         if not dm_found:
-            log_msg = (
-                f"Delay Model for VCC (receptor: {self._dish_id}) not found"
-            )
+            log_msg = f"Delay Model for VCC (DISH: {self._dish_id}) not found"
             self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
@@ -953,16 +952,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         matrix = json.loads(argin)
 
-        # find the Jones matrix that applies to this vcc's
-        # receptor and store it
+        # Find the Jones matrix that applies to this VCC's DISH ID and store it
         jm_found = False
 
-        # the Jones matrix schema allows for a set of
-        # receptors to be included in the Jones matrix
-        # Even though there will only be one entry
-        # for a VCC, there should still be a list
-        # with a single entry so that the schema is followed
-        # Set up the Jones matrix to be a list
+        # The Jones matrix schema allows for a set of receptors/dishes to be included.
+        # Even though there will only be one entry for a VCC, there should still
+        # be a list with a single entry so that the schema is followed.
+        # Set up the Jones matrix to be a list.
+
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in matrix["jones_matrix"]:
             self._logger.debug(
@@ -978,7 +976,5 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 break
 
         if not jm_found:
-            log_msg = (
-                f"Jones matrix for VCC (receptor: {self._dish_id}) not found"
-            )
+            log_msg = f"Jones matrix for VCC (DISH: {self._dish_id}) not found"
             self._logger.error(log_msg)

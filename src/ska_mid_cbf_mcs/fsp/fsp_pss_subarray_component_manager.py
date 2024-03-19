@@ -255,6 +255,7 @@ class FspPssSubarrayComponentManager(
 
         self._search_window_id = int(configuration["search_window_id"])
 
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         for searchBeam in configuration["search_beam"]:
             if len(searchBeam["receptor_ids"]) != 1:
                 # TODO - to add support for multiple receptors
