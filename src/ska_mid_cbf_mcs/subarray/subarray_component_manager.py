@@ -28,10 +28,10 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
-    PowerMode,
+    PowerState,
     SimulationMode,
 )
-from ska_tango_base.csp.subarray.component_manager import (
+from ska_csp_lmc_base.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
 from ska_telmodel.schema import validate as telmodel_validate
@@ -106,7 +106,7 @@ class CbfSubarrayComponentManager(
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable,
         component_obs_fault_callback: Callable,
     ) -> None:
@@ -344,7 +344,7 @@ class CbfSubarrayComponentManager(
                 proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as dev_failed:
-            self.update_component_power_mode(PowerMode.UNKNOWN)
+            self.update_component_power_mode(PowerState.UNKNOWN)
             self.update_communication_status(
                 CommunicationStatus.NOT_ESTABLISHED
             )
@@ -353,7 +353,7 @@ class CbfSubarrayComponentManager(
 
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
         self._component_op_fault_callback(False)
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
@@ -369,7 +369,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.adminMode = AdminMode.OFFLINE
         self.connected = False
-        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.update_component_power_mode(PowerState.UNKNOWN)
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
@@ -380,7 +380,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.On()
 
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerState.ON)
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
@@ -391,7 +391,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.Off()
 
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
 
     @check_communicating
     def standby(self: CbfSubarrayComponentManager) -> None:

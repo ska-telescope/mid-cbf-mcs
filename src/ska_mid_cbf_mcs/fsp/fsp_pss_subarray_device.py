@@ -28,7 +28,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
+from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -197,7 +197,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         """
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         return FspPssSubarrayComponentManager(
             self.logger,
@@ -343,7 +343,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                 "FspPssSubarray On command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerMode.ON)
+            self.target._component_power_mode_changed(PowerState.ON)
 
             self.logger.info(message)
             return (result_code, message)
@@ -372,7 +372,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                 "FspPssSubarray Off command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerMode.OFF)
+            self.target._component_power_mode_changed(PowerState.OFF)
 
             self.logger.info(message)
             return (result_code, message)
@@ -401,7 +401,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                 "FspPssSubarray Standby command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerMode.STANDBY)
+            self.target._component_power_mode_changed(PowerState.STANDBY)
 
             self.logger.info(message)
             return (result_code, message)
@@ -729,7 +729,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspPssSubarray, power_mode: PowerMode
+        self: FspPssSubarray, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -744,10 +744,10 @@ class FspPssSubarray(CspSubElementObsDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])

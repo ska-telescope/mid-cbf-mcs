@@ -23,9 +23,9 @@ from typing import List, Optional, Tuple
 
 # Tango imports
 import tango
-from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
-from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
+from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
+from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -241,7 +241,7 @@ class Vcc(CspSubElementObsDevice):
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         return VccComponentManager(
             talon_lru=self.TalonLRUAddress,
@@ -304,7 +304,7 @@ class Vcc(CspSubElementObsDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: Vcc, power_mode: PowerMode
+        self: Vcc, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -319,10 +319,10 @@ class Vcc(CspSubElementObsDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
             self.op_state_model.perform_action(action_map[power_mode])
 
@@ -633,7 +633,7 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.standby()
 
-    class ConfigureBandCommand(ResponseCommand):
+    class ConfigureBandCommand(FastCommand):
         """
         A class for the Vcc's ConfigureBand() command.
 
@@ -1029,7 +1029,7 @@ class Vcc(CspSubElementObsDevice):
 
             return (ResultCode.OK, "GoToIdle command completed OK")
 
-    class UpdateDopplerPhaseCorrectionCommand(BaseCommand):
+    class UpdateDopplerPhaseCorrectionCommand(FastCommand):
         """
         A class for the Vcc's UpdateDopplerPhaseCorrection() command.
 
@@ -1081,7 +1081,7 @@ class Vcc(CspSubElementObsDevice):
         self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDopplerPhaseCorrection
 
-    class UpdateDelayModelCommand(BaseCommand):
+    class UpdateDelayModelCommand(FastCommand):
         """
         A class for the Vcc's UpdateDelayModel() command.
 
@@ -1129,7 +1129,7 @@ class Vcc(CspSubElementObsDevice):
         self.get_command_object("UpdateDelayModel")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDelayModel
 
-    class UpdateJonesMatrixCommand(BaseCommand):
+    class UpdateJonesMatrixCommand(FastCommand):
         """
         A class for the Vcc's UpdateJonesMatrix() command.
 
@@ -1177,7 +1177,7 @@ class Vcc(CspSubElementObsDevice):
         self.get_command_object("UpdateJonesMatrix")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateJonesMatrix
 
-    class ConfigureSearchWindowCommand(ResponseCommand):
+    class ConfigureSearchWindowCommand(FastCommand):
         """
         A class for the Vcc's ConfigureSearchWindow() command.
 

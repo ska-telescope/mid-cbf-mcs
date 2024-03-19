@@ -16,7 +16,7 @@ from typing import Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerState, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -63,7 +63,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
@@ -173,13 +173,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
             self.power_switch_driver.initialize()
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerState.ON)
         self.connected = True
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
-        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.update_component_power_mode(PowerState.UNKNOWN)
         self.connected = False
 
         if not self._simulation_mode:
@@ -187,7 +187,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str
-    ) -> PowerMode:
+    ) -> PowerState:
         """
         Get the power mode of a specific outlet.
 

@@ -23,8 +23,8 @@ from typing import Callable, List, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs import CspObsComponentManager
+from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_csp_lmc_base.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -185,7 +185,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable,
         component_obs_fault_callback: Callable,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
@@ -330,10 +330,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
-        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.update_component_power_mode(PowerState.UNKNOWN)
         self.connected = False
 
-    def _get_power_mode(self: VccComponentManager) -> PowerMode:
+    def _get_power_mode(self: VccComponentManager) -> PowerState:
         """
         Get the power mode of this VCC based on the current power
         mode of the LRU this VCC belongs to.
@@ -341,25 +341,25 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :return: VCC power mode
         """
         try:
-            pdu1_power_mode = self._talon_lru_proxy.PDU1PowerMode
-            pdu2_power_mode = self._talon_lru_proxy.PDU2PowerMode
+            pdu1_power_mode = self._talon_lru_proxy.PDU1PowerState
+            pdu2_power_mode = self._talon_lru_proxy.PDU2PowerState
 
             if (
-                pdu1_power_mode == PowerMode.ON
-                or pdu2_power_mode == PowerMode.ON
+                pdu1_power_mode == PowerState.ON
+                or pdu2_power_mode == PowerState.ON
             ):
-                return PowerMode.ON
+                return PowerState.ON
             elif (
-                pdu1_power_mode == PowerMode.OFF
-                and pdu2_power_mode == PowerMode.OFF
+                pdu1_power_mode == PowerState.OFF
+                and pdu2_power_mode == PowerState.OFF
             ):
-                return PowerMode.OFF
+                return PowerState.OFF
             else:
-                return PowerMode.UNKNOWN
+                return PowerState.UNKNOWN
         except tango.DevFailed:
             self._logger.error("Could not connect to Talon LRU device")
             self.update_component_fault(True)
-            return PowerMode.UNKNOWN
+            return PowerState.UNKNOWN
 
     def on(self: VccComponentManager) -> Tuple[ResultCode, str]:
         """
@@ -396,7 +396,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             return (ResultCode.FAILED, "Failed to connect to HPS VCC devices")
 
         self._logger.info("Completed VccComponentManager.on")
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerState.ON)
         return (ResultCode.OK, "On command completed OK")
 
     def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -408,7 +408,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
     def standby(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -420,7 +420,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_power_mode(PowerMode.STANDBY)
+        self.update_component_power_mode(PowerState.STANDBY)
         return (ResultCode.OK, "Standby command completed OK")
 
     def configure_band(

@@ -21,11 +21,11 @@ from typing import Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+from ska_tango_base.commands import FastCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -111,7 +111,7 @@ class PowerSwitch(SKABaseDevice):
         :return: a component manager for this device
         """
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
             self.PowerSwitchModel,
@@ -139,7 +139,7 @@ class PowerSwitch(SKABaseDevice):
             "TurnOffOutlet", self.TurnOffOutletCommand(*device_args)
         )
         self.register_command_object(
-            "GetOutletPowerMode", self.GetOutletPowerModeCommand(*device_args)
+            "GetOutletPowerState", self.GetOutletPowerStateCommand(*device_args)
         )
 
     # ---------
@@ -175,7 +175,7 @@ class PowerSwitch(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: PowerSwitch, power_mode: PowerMode
+        self: PowerSwitch, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -190,10 +190,10 @@ class PowerSwitch(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
@@ -263,7 +263,7 @@ class PowerSwitch(SKABaseDevice):
 
             return (result_code, message)
 
-    class TurnOnOutletCommand(ResponseCommand):
+    class TurnOnOutletCommand(FastCommand):
         """
         The command class for the TurnOnOutlet command.
 
@@ -290,14 +290,14 @@ class PowerSwitch(SKABaseDevice):
                     return (result, msg)
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerMode.ON:
+                if power_mode != PowerState.ON:
                     # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
                     self.logger.info(
                         "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
                     )
                     time.sleep(5)
                     power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerMode.ON:
+                    if power_mode != PowerState.ON:
                         return (
                             ResultCode.FAILED,
                             f"Power on failed, outlet is in power mode {power_mode}",
@@ -327,7 +327,7 @@ class PowerSwitch(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
 
-    class TurnOffOutletCommand(ResponseCommand):
+    class TurnOffOutletCommand(FastCommand):
         """
         The command class for the TurnOffOutlet command.
 
@@ -354,14 +354,14 @@ class PowerSwitch(SKABaseDevice):
                     return (result, msg)
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerMode.OFF:
+                if power_mode != PowerState.OFF:
                     # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
                     self.logger.info(
                         "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
                     )
                     time.sleep(5)
                     power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerMode.OFF:
+                    if power_mode != PowerState.OFF:
                         return (
                             ResultCode.FAILED,
                             f"Power off failed, outlet is in power mode {power_mode}",
@@ -391,18 +391,18 @@ class PowerSwitch(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOffOutlet
 
-    class GetOutletPowerModeCommand(BaseCommand):
+    class GetOutletPowerStateCommand(FastCommand):
         """
-        The command class for the GetOutletPowerMode command.
+        The command class for the GetOutletPowerState command.
 
         Get the power mode of an individual outlet, specified by the outlet ID.
         """
 
         def do(
-            self: PowerSwitch.GetOutletPowerModeCommand, argin: str
-        ) -> PowerMode:
+            self: PowerSwitch.GetOutletPowerStateCommand, argin: str
+        ) -> PowerState:
             """
-            Implement GetOutletPowerMode command functionality.
+            Implement GetOutletPowerState command functionality.
 
             :param argin: the outlet ID to get the state of
 
@@ -413,7 +413,7 @@ class PowerSwitch(SKABaseDevice):
                 return component_manager.get_outlet_power_mode(argin)
             except AssertionError as e:
                 self.logger.error(e)
-                return PowerMode.UNKNOWN
+                return PowerState.UNKNOWN
 
     @command(
         dtype_in="DevString",
@@ -422,11 +422,11 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Power mode of the outlet.",
     )
     @DebugIt()
-    def GetOutletPowerMode(self: PowerSwitch, argin: str) -> int:
-        # PROTECTED REGION ID(PowerSwitch.GetOutletPowerMode) ENABLED START #
-        handler = self.get_command_object("GetOutletPowerMode")
+    def GetOutletPowerState(self: PowerSwitch, argin: str) -> int:
+        # PROTECTED REGION ID(PowerSwitch.GetOutletPowerState) ENABLED START #
+        handler = self.get_command_object("GetOutletPowerState")
         return int(handler(argin))
-        # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerMode
+        # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerState
 
 
 # ----------

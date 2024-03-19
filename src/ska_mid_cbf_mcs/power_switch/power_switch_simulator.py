@@ -15,7 +15,7 @@ import logging
 from typing import List
 
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -72,7 +72,7 @@ class PowerSwitchSimulator:
 
     def get_outlet_power_mode(
         self: PowerSwitchSimulator, outlet: str
-    ) -> PowerMode:
+    ) -> PowerState:
         """
         Get the power mode of a specific outlet.
 
@@ -107,7 +107,7 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerMode.ON
+        self.outlets[outlet_idx].power_mode = PowerState.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -127,7 +127,7 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerMode.OFF
+        self.outlets[outlet_idx].power_mode = PowerState.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def get_outlet_list(self: PowerSwitchSimulator) -> List(Outlet):
@@ -143,7 +143,7 @@ class PowerSwitchSimulator:
                 Outlet(
                     outlet_ID=self.outlet_id_list[i],
                     outlet_name=f"Outlet {i}",
-                    power_mode=PowerMode.OFF,
+                    power_mode=PowerState.OFF,
                 )
             )
 

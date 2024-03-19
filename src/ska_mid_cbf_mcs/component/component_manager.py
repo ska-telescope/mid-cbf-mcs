@@ -16,7 +16,7 @@ import logging
 from typing import Any, Callable, Optional
 
 from ska_tango_base.base import BaseComponentManager
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 __all__ = ["CommunicationStatus", "CbfComponentManager"]
 
@@ -87,7 +87,7 @@ class CbfComponentManager(BaseComponentManager):
             Callable[[CommunicationStatus], None]
         ],
         component_power_mode_changed_callback: Optional[
-            Callable[[PowerMode], None]
+            Callable[[PowerState], None]
         ],
         component_fault_callback: Optional[Callable[[bool], None]],
         *args: Any,
@@ -120,7 +120,7 @@ class CbfComponentManager(BaseComponentManager):
             communication_status_changed_callback
         )
 
-        self._power_mode: Optional[PowerMode] = None
+        self._power_mode: Optional[PowerState] = None
         self._component_power_mode_changed_callback = (
             component_power_mode_changed_callback
         )
@@ -192,7 +192,7 @@ class CbfComponentManager(BaseComponentManager):
         return self._communication_status
 
     def update_component_power_mode(
-        self: CbfComponentManager, power_mode: Optional[PowerMode]
+        self: CbfComponentManager, power_mode: Optional[PowerState]
     ) -> None:
         """
         Update the power mode, calling callbacks as required.
@@ -213,7 +213,7 @@ class CbfComponentManager(BaseComponentManager):
                 self._component_power_mode_changed_callback(power_mode)
 
     def component_power_mode_changed(
-        self: CbfComponentManager, power_mode: PowerMode
+        self: CbfComponentManager, power_mode: PowerState
     ) -> None:
         """
         Handle notification that the component's power mode has changed.
@@ -225,7 +225,7 @@ class CbfComponentManager(BaseComponentManager):
         self.update_component_power_mode(power_mode)
 
     @property
-    def power_mode(self: CbfComponentManager) -> Optional[PowerMode]:
+    def power_mode(self: CbfComponentManager) -> Optional[PowerState]:
         """
         Return the power mode of this component manager.
 

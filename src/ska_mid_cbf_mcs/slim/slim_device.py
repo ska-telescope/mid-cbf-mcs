@@ -19,8 +19,8 @@ from typing import List, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
+from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.control_model import HealthState, PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -172,7 +172,7 @@ class Slim(SKABaseDevice):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         # Simulation mode default true
         return SlimComponentManager(
@@ -239,7 +239,7 @@ class Slim(SKABaseDevice):
             component_manager = self.target
             return component_manager.off()
 
-    class ConfigureCommand(ResponseCommand):
+    class ConfigureCommand(FastCommand):
         """
         The command class for the Configure command.
         """
@@ -329,7 +329,7 @@ class Slim(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: Slim, power_mode: PowerMode
+        self: Slim, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -344,10 +344,10 @@ class Slim(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])

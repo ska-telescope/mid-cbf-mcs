@@ -16,7 +16,7 @@ from typing import List
 from ska_tango_base.commands import ResultCode
 
 # Local imports
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
@@ -33,9 +33,9 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
     assert num_outlets == 8
 
     # Check initial state
-    outlets: List[PowerMode] = []
+    outlets: List[PowerState] = []
     for i in range(0, num_outlets):
-        outlets.append(device_under_test.GetOutletPowerMode(str(i)))
+        outlets.append(device_under_test.GetOutletPowerState(str(i)))
 
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
@@ -43,10 +43,10 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
             [ResultCode.OK],
             [f"Outlet {i} power off"],
         ]
-        outlets[i] = PowerMode.OFF
+        outlets[i] = PowerState.OFF
 
         for j in range(0, num_outlets):
-            assert device_under_test.GetOutletPowerMode(str(j)) == outlets[j]
+            assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
@@ -54,10 +54,10 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
             [ResultCode.OK],
             [f"Outlet {i} power on"],
         ]
-        outlets[i] = PowerMode.ON
+        outlets[i] = PowerState.ON
 
         for j in range(0, num_outlets):
-            assert device_under_test.GetOutletPowerMode(str(j)) == outlets[j]
+            assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
 
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:

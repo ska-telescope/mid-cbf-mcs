@@ -16,7 +16,7 @@ from typing import Callable, Dict
 # Standard imports
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
@@ -109,7 +109,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     if param == "conn_success":
         # Connection to power switch is working as expected
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.OK, "Success msg"
         )
@@ -131,7 +131,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
         # Can communicate with the power switch, but one or both outlets are ON
         # when the TalonLRU device starts up
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.ON)
+        builder.add_command("GetOutletPowerState", PowerState.ON)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.OK, "Success msg"
         )
@@ -143,7 +143,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
         # Can communicate with the power switch, but the turn on/off outlet
         # commands fail
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
         )

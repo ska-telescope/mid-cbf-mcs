@@ -22,8 +22,8 @@ import tango
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
+from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_csp_lmc_base.subarray.subarray_device import CspSubElementSubarray
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
@@ -212,7 +212,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
         self.logger.info("Entering CbfSubarray.create_component_manager()")
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         self._simulation_mode = SimulationMode.TRUE
 
@@ -322,7 +322,7 @@ class CbfSubarray(CspSubElementSubarray):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: CbfSubarray, power_mode: PowerMode
+        self: CbfSubarray, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -337,10 +337,10 @@ class CbfSubarray(CspSubElementSubarray):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
             self.op_state_model.perform_action(action_map[power_mode])
 

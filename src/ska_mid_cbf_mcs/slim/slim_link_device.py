@@ -16,14 +16,14 @@ from typing import Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.commands import FastCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
 from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
-    PowerMode,
+    PowerState,
     SimulationMode,
 )
 from tango import AttrWriteType, DebugIt
@@ -137,7 +137,7 @@ class SlimLink(SKABaseDevice):
         :rtype: SlimLinkComponentManager
         """
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
         self._health_state = HealthState.UNKNOWN
 
         return SlimLinkComponentManager(
@@ -213,7 +213,7 @@ class SlimLink(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: SlimLink, power_mode: PowerMode
+        self: SlimLink, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -228,10 +228,10 @@ class SlimLink(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
             self.op_state_model.perform_action(action_map[power_mode])
 
@@ -408,7 +408,7 @@ class SlimLink(SKABaseDevice):
 
             return (result_code, message)
 
-    class ConnectTxRxCommand(ResponseCommand):
+    class ConnectTxRxCommand(FastCommand):
         """
         The command class for the ConnectTxRx command.
 
@@ -447,7 +447,7 @@ class SlimLink(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.ConnectTxRx
 
-    class VerifyConnectionCommand(ResponseCommand):
+    class VerifyConnectionCommand(FastCommand):
         """
         The command class for the VerifyConnection command.
 
@@ -484,7 +484,7 @@ class SlimLink(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.VerifyConnection
 
-    class DisconnectTxRxCommand(ResponseCommand):
+    class DisconnectTxRxCommand(FastCommand):
         """
         The command class for the DisconnectTxRx command.
 
@@ -523,7 +523,7 @@ class SlimLink(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.DisconnectTxRx
 
-    class ClearCountersCommand(ResponseCommand):
+    class ClearCountersCommand(FastCommand):
         """
         The command class for the ClearCounters command.
 

@@ -16,8 +16,8 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
+from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_csp_lmc_base.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -46,7 +46,7 @@ class FspCorrSubarrayComponentManager(
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable[[bool], None],
         component_obs_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
@@ -320,7 +320,7 @@ class FspCorrSubarrayComponentManager(
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
 
     def stop_communicating(self: FspCorrSubarrayComponentManager) -> None:
         """Stop communication with the component"""
