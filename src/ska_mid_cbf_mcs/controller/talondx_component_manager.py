@@ -528,7 +528,9 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.FALSE:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
-                    executor.submit(self._shutdown_talon_thread, shutdown_code, talon_cfg)
+                    executor.submit(
+                        self._shutdown_talon_thread, shutdown_code, talon_cfg
+                    )
                     for talon_cfg in self.talondx_config["config_commands"]
                 ]
                 results = [f.result() for f in futures]
@@ -540,7 +542,9 @@ class TalonDxComponentManager:
         return ret
 
     def _shutdown_talon_thread(
-        self: TalonDxComponentManager, shutdown_code: int, talon_cfg, 
+        self: TalonDxComponentManager,
+        shutdown_code: int,
+        talon_cfg,
     ) -> tuple(ResultCode, str):
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]

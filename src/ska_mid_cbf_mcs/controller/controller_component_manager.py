@@ -792,7 +792,17 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
-            proxy.On()
+
+            if proxy.State() == PowerMode.ON:
+                self._logger.info(
+                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
+                )
+                result = self._talondx_component_manager.shutdown(2)
+                if result == ResultCode.FAILED:
+                    self._logger.error("Failed to reboot Talon DX Board")
+                    return (False, lru_fqdn)
+            else:
+                proxy.On()
         except tango.DevFailed as e:
             self._logger.error(e)
             return (False, lru_fqdn)
