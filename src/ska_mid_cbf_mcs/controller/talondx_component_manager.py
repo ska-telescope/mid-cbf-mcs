@@ -546,7 +546,7 @@ class TalonDxComponentManager:
         shutdown_code: int,
         talon_cfg,
     ) -> tuple(ResultCode, str):
-        # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
+        # HPS master shutdown with given shutdown code
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
         try:
