@@ -83,22 +83,22 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._scan_id = scan_id
 
     @property
-    def receptor_id(self: VccComponentManager) -> int:
+    def dish_id(self: VccComponentManager) -> str:
         """
-        Receptor ID
+        DISH ID
 
-        :return: the receptor ID
+        :return: the DISH ID
         """
-        return self._receptor_id
+        return self._dish_id
 
-    @receptor_id.setter
-    def receptor_id(self: VccComponentManager, receptor_id: int) -> None:
+    @dish_id.setter
+    def dish_id(self: VccComponentManager, dish_id: str) -> None:
         """
-        Set the receptor ID.
+        Set the DISH ID.
 
-        :param receptor_id: Receptor ID
+        :param dish_id: DISH ID
         """
-        self._receptor_id = receptor_id
+        self._dish_id = dish_id
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
@@ -176,6 +176,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
+        vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: List[str],
@@ -193,6 +194,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         Initialize a new instance.
 
+        :param vcc_id: integer ID of this VCC
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
@@ -216,6 +218,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self._simulation_mode = simulation_mode
 
+        self._vcc_id = vcc_id
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -229,7 +232,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._component_obs_fault_callback = component_obs_fault_callback
 
         # Initialize attribute values
-        self._receptor_id = 0
+        self._dish_id = ""
 
         self._scan_id = 0
         self._config_id = ""
@@ -458,7 +461,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
+            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._dish_id}_band{freq_band_name}.json"
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
@@ -467,7 +470,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     json_string = f.read()
             except FileNotFoundError:
                 self._logger.info(
-                    f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
+                    f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
                 )
                 with open(
                     f"{VCC_PARAM_PATH}internal_params_default.json", "r"
@@ -867,10 +870,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     self._logger.warning(log_msg)
 
                 # Configure tdcDestinationAddress.
+                # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
                 if argin["tdc_enable"]:
                     for tdc_dest in argin["tdc_destination_address"]:
-                        # "receptor" value is a pair of str and int
-                        if tdc_dest["receptor_id"][1] == self._receptor_id:
+                        if tdc_dest["receptor_id"] == self._vcc_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = tdc_dest[
                                 "tdc_destination_address"
@@ -897,9 +900,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         argin = json.loads(argin)
 
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         for dopplerDetails in argin:
-            # "receptor" value is a pair of str and int
-            if dopplerDetails["receptor"][1] == self._receptor_id:
+            if dopplerDetails["receptor"] == self._vcc_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
                     self._doppler_phase_correction = coeff.copy()
@@ -915,22 +918,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         delay_model_obj = json.loads(argin)
 
-        # find the delay model that applies to this vcc's
-        # receptor and store it
+        # Find the delay model that applies to this VCC's DISH ID and store it
         dm_found = False
 
-        # the delay model schema allows for a set of
-        # receptors to be included in the delay model
-        # Even though there will only be one entry
-        # for a VCC, there should still be a list
-        # with a single entry so that the schema is followed
-        # Set up the delay model to be a list
+        # The delay model schema allows for a set of dishes to be included.
+        # Even though there will only be one entryfor a VCC, there should still
+        # be a list with a single entry so that the schema is followed.
+        # Set up the delay model to be a list.
+
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in delay_model_obj["delay_details"]:
             self._logger.debug(
-                f"Received delay model for receptor {entry['receptor'][0]}"
+                f"Received delay model for VCC {entry['receptor']}"
             )
-            if entry["receptor"][1] == self._receptor_id:
+            if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._delay_model = json.dumps(
@@ -939,7 +941,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 dm_found = True
                 break
         if not dm_found:
-            log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
+            log_msg = f"Delay Model for VCC (DISH: {self._dish_id}) not found"
             self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
@@ -950,22 +952,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         matrix = json.loads(argin)
 
-        # find the Jones matrix that applies to this vcc's
-        # receptor and store it
+        # Find the Jones matrix that applies to this VCC's DISH ID and store it
         jm_found = False
 
-        # the Jones matrix schema allows for a set of
-        # receptors to be included in the Jones matrix
-        # Even though there will only be one entry
-        # for a VCC, there should still be a list
-        # with a single entry so that the schema is followed
-        # Set up the Jones matrix to be a list
+        # The Jones matrix schema allows for a set of receptors/dishes to be included.
+        # Even though there will only be one entry for a VCC, there should still
+        # be a list with a single entry so that the schema is followed.
+        # Set up the Jones matrix to be a list.
+
+        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in matrix["jones_matrix"]:
             self._logger.debug(
-                f"Received Jones matrix for receptor {entry['receptor'][0]}"
+                f"Received Jones matrix for VCC {entry['receptor']}"
             )
-            if entry["receptor"][1] == self._receptor_id:
+            if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating Jones Matrix for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._jones_matrix = json.dumps(
@@ -975,5 +976,5 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 break
 
         if not jm_found:
-            log_msg = f"Jones matrix for VCC (receptor: {self._receptor_id}) not found"
+            log_msg = f"Jones matrix for VCC (DISH: {self._dish_id}) not found"
             self._logger.error(log_msg)
