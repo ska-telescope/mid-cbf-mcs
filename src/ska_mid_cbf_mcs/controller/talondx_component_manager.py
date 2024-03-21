@@ -63,6 +63,26 @@ class TalonDxComponentManager:
         self._hw_config_path = hw_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
+        self.talondx_config = {}
+        self._hw_config = {}
+
+    def read_config(self: TalonDxComponentManager) -> ResultCode:
+        """
+        Read in the configuration files for the Talon boards and the hardware
+
+        :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
+        """
+        try:
+            talondx_config_path = (
+                f"{self.talondx_config_path}/talondx-config.json"
+            )
+            with open(talondx_config_path) as json_fd:
+                self.talondx_config = json.load(json_fd)
+            with open(self._hw_config_path) as yaml_fd:
+                self._hw_config = yaml.safe_load(yaml_fd)
+        except IOError as e:
+            self.logger.error(e)
+            return ResultCode.FAILED
 
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -76,19 +96,12 @@ class TalonDxComponentManager:
         # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
-
-        # Try to read in the configuration file
-        try:
-            talondx_config_path = (
-                f"{self.talondx_config_path}/talondx-config.json"
-            )
-            with open(talondx_config_path) as json_fd:
-                self.talondx_config = json.load(json_fd)
-            with open(self._hw_config_path) as yaml_fd:
-                self._hw_config = yaml.safe_load(yaml_fd)
-        except IOError as e:
-            self.logger.error(e)
-            return ResultCode.FAILED
+        
+        if self.talondx_config == {} or self._hw_config == {}:
+            self.logger.info("Configuration files not read yet, reading now")
+            if self.read_config() == ResultCode.FAILED:
+                self.logger.error("Failed to read configuration files")
+                return ResultCode.FAILED
 
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
