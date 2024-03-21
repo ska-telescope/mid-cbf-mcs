@@ -96,7 +96,7 @@ class TalonDxComponentManager:
         # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
-        
+
         if self.talondx_config == {} or self._hw_config == {}:
             self.logger.info("Configuration files not read yet, reading now")
             if self.read_config() == ResultCode.FAILED:

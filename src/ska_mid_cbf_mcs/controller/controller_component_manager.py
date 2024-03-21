@@ -441,7 +441,6 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
-
             # Turn on all the LRUs with the boards we need
             lru_on_status, log_msg = self._turn_on_lrus()
             if not lru_on_status:
@@ -797,7 +796,9 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
-    def _lru_on(self, proxy, sim_mode, lru_fqdn, power_switch_fqdn) -> Tuple[bool, str]:
+    def _lru_on(
+        self, proxy, sim_mode, lru_fqdn, power_switch_fqdn
+    ) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
