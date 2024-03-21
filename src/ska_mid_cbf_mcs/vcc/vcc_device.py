@@ -70,11 +70,11 @@ class Vcc(CspSubElementObsDevice):
     # Attributes
     # ----------
 
-    receptorID = attribute(
-        dtype="uint16",
+    dishID = attribute(
+        dtype="str",
         access=AttrWriteType.READ_WRITE,
-        label="Receptor ID",
-        doc="Receptor ID",
+        label="DISH ID",
+        doc="DISH ID",
     )
 
     subarrayMembership = attribute(
@@ -244,6 +244,7 @@ class Vcc(CspSubElementObsDevice):
         self._component_power_mode: Optional[PowerState] = None
 
         return VccComponentManager(
+            vcc_id=self.VccID,
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
@@ -368,26 +369,26 @@ class Vcc(CspSubElementObsDevice):
         self.logger.info(f"Writing simulationMode to {value}")
         self.component_manager.simulation_mode = value
 
-    def read_receptorID(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
+    def read_dishID(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.dishID_read) ENABLED START #
         """
-        Read the receptorID attribute.
+        Read the dishID attribute.
 
-        :return: the Vcc's receptor id.
-        :rtype: int
+        :return: the Vcc's DISH ID.
+        :rtype: str
         """
-        return self.component_manager.receptor_id
-        # PROTECTED REGION END #    //  Vcc.receptorID_read
+        return self.component_manager.dish_id
+        # PROTECTED REGION END #    //  Vcc.dishID_read
 
-    def write_receptorID(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.receptorID_write) ENABLED START #
+    def write_dishID(self: Vcc, value: str) -> None:
+        # PROTECTED REGION ID(Vcc.dishID_write) ENABLED START #
         """
-        Write the receptorID attribute.
+        Write the dishID attribute.
 
-        :param value: the receptorID value.
+        :param value: the dishID value.
         """
-        self.component_manager.receptor_id = value
-        # PROTECTED REGION END #    //  Vcc.receptorID_write
+        self.component_manager.dish_id = value
+        # PROTECTED REGION END #    //  Vcc.dishID_write
 
     def read_subarrayMembership(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
@@ -717,10 +718,8 @@ class Vcc(CspSubElementObsDevice):
             :raises: ``CommandError`` if the configuration data validation fails.
             """
             device = self._device
-            # By this time, the receptor_ID should be set:
-            device.logger.debug(
-                f"receptorID: {device.component_manager.receptor_id}"
-            )
+            # By this time, the DISH ID should be set:
+            device.logger.debug(f"dishID: {device.component_manager.dish_id}")
 
             (result_code, msg) = device.component_manager.configure_scan(argin)
 
@@ -1394,18 +1393,16 @@ class Vcc(CspSubElementObsDevice):
             if argin["tdc_enable"]:
                 try:
                     for receptor in argin["tdc_destination_address"]:
-                        # "receptor" value is a pair of str and int
-                        receptor_index = receptor["receptor_id"][1]
                         if (
-                            receptor_index
-                            == device.component_manager.receptor_id
+                            receptor["receptor_id"]
+                            == device.component_manager.dish_id
                         ):
                             # TODO: validate tdc_destination_address
                             break
                         else:
                             pass
                 except KeyError:
-                    # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
+                    # tdcDestinationAddress not given or receptor_id not in tdcDestinationAddress
                     msg = (
                         "Search window specified with TDC enabled, but 'tdcDestinationAddress' "
                         "not given or missing receptors."

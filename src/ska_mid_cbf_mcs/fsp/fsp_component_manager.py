@@ -630,10 +630,6 @@ class FspComponentManager(CbfComponentManager):
             ]:
                 # the whole jones matrix object must be stored
                 self._jones_matrix = copy.deepcopy(argin)
-                jones_matrix = json.loads(argin)
-                # only send integer receptorID to HPS
-                for matrix in jones_matrix["jones_matrix"]:
-                    matrix["receptor"] = matrix["receptor"][1]
                 # TODO HPS jones matrix handling currently unimplemented
 
             else:
@@ -677,9 +673,6 @@ class FspComponentManager(CbfComponentManager):
                 # the whole delay model must be stored
                 self._delay_model = copy.deepcopy(argin)
                 delay_model = json.loads(argin)
-                # only send integer receptorID to HPS
-                for delay_detail in delay_model["delay_details"]:
-                    delay_detail["receptor"] = delay_detail["receptor"][1]
                 # TODO handle delay models in function modes other than CORR
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)
@@ -721,10 +714,6 @@ class FspComponentManager(CbfComponentManager):
             if self._function_mode == FspModes.PST_BF.value:
                 # the whole timing beam weights object must be stored
                 self._timing_beam_weights = copy.deepcopy(argin)
-                timing_beam_weights = json.loads(argin)
-                # only send integer receptorID to HPS
-                for weights in timing_beam_weights["timing_beam_weights"]:
-                    weights["receptor"] = weights["receptor"][1]
                 # TODO PST controller currently unimplemented
                 # self._proxy_hps_fsp_pst_controller.UpdateTimingBeamWeights(
                 #     json.dumps(timing_beam_weights)

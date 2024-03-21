@@ -75,13 +75,14 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Attributes
     # ----------
 
-    receptors = attribute(
+    vccIDs = attribute(
         dtype=("uint16",),
         access=AttrWriteType.READ,
         max_dim_x=197,
-        label="Receptors",
-        doc="List of receptors assigned to subarray",
+        label="VCC IDs",
+        doc="List of VCCs used for PSS beamforming",
     )
+
     searchBeams = attribute(
         dtype=("str",),
         access=AttrWriteType.READ,
@@ -89,6 +90,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         label="SearchBeams",
         doc="List of searchBeams assigned to fspsubarray",
     )
+
     searchWindowID = attribute(
         dtype="uint16",
         access=AttrWriteType.READ,
@@ -218,16 +220,16 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
-    def read_receptors(self: FspPssSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspPssSubarray.receptors_read) ENABLED START #
+    def read_vccIDs(self: FspPssSubarray) -> List[int]:
+        # PROTECTED REGION ID(FspPssSubarray.vccIDs_read) ENABLED START #
         """
-        Read the receptors attribute.
+        Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
 
-        :return: the receptors attribute.
+        :return: the list of assigned VCC IDs
         :rtype: List[int]
         """
-        return self.component_manager.receptors
-        # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
+        return self.component_manager.vcc_ids
+        # PROTECTED REGION END #    //  FspPssSubarray.vccIDs_read
 
     def read_searchBeams(self: FspPssSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #

@@ -77,10 +77,9 @@ class FspCorrSubarrayComponentManager(
         self._component_obs_fault_callback = component_obs_fault_callback
 
         self._connected = False
-
         self.obs_faulty = False
 
-        self._receptors = []
+        self._vcc_ids = []
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)
@@ -276,14 +275,14 @@ class FspCorrSubarrayComponentManager(
         return self._scan_id
 
     @property
-    def receptors(self: FspCorrSubarrayComponentManager) -> List[int]:
+    def vcc_ids(self: FspCorrSubarrayComponentManager) -> List[int]:
         """
-        Receptors
+        Assigned VCC IDs
 
-        :return: list of receptor ids
+        :return: list of VCC IDs
         :rtype: List[int]
         """
-        return self._receptors
+        return self._vcc_ids
 
     @property
     def simulation_mode(
@@ -375,57 +374,44 @@ class FspCorrSubarrayComponentManager(
             self.update_component_fault(True)
             return None
 
-    def _add_receptors(
+    def _assign_vcc(
         self: FspCorrSubarrayComponentManager, argin: List[int]
     ) -> None:
         """
-        Add specified receptors to the subarray.
+        Assign specified VCCs to the FSP CORR subarray.
 
-        :param argin: ids of receptors to add.
+        :param argin: IDs of VCCs to add.
         """
-        errs = []  # list of error messages
 
-        for receptorID in argin:
-            try:
-                if receptorID not in self._receptors:
-                    self._logger.info(f"Receptor {receptorID} added.")
-                    self._receptors.append(receptorID)
-                else:
-                    log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
-                    self._logger.warning(log_msg)
-
-            except KeyError:  # invalid receptor ID
-                errs.append(f"Invalid receptor ID: {receptorID}")
-
-        if errs:
-            msg = "\n".join(errs)
-            self._logger.error(msg)
-            tango.Except.throw_exception(
-                "Command failed",
-                msg,
-                "_add_receptors execution",
-                tango.ErrSeverity.ERR,
-            )
-
-    def _remove_receptors(
-        self: FspCorrSubarrayComponentManager, argin: List[int]
-    ) -> None:
-        """
-        Remove specified receptors from the subarray.
-
-        :param argin: ids of receptors to remove.
-        """
-        for receptorID in argin:
-            if receptorID in self._receptors:
-                self._logger.info(f"Receptor {receptorID} removed.")
-                self._receptors.remove(receptorID)
+        for vccID in argin:
+            if vccID not in self._vcc_ids:
+                self._logger.info(f"VCC {vccID} assigned.")
+                self._vcc_ids.append(vccID)
             else:
-                log_msg = "Receptor {receptorID} not assigned to FSP subarray. Skipping."
+                log_msg = f"VCC {vccID} already assigned to current FSP CORR subarray."
                 self._logger.warning(log_msg)
 
-    def _remove_all_receptors(self: FspCorrSubarrayComponentManager) -> None:
-        """Remove all Receptors of this subarray"""
-        self._remove_receptors(self._receptors[:])
+    def _release_vcc(
+        self: FspCorrSubarrayComponentManager, argin: List[int]
+    ) -> None:
+        """
+        Release assigned VCC from the FSP CORR subarray.
+
+        :param argin: IDs of VCCs to remove.
+        """
+        for vccID in argin:
+            if vccID in self._vcc_ids:
+                self._logger.info(f"VCC {vccID} released.")
+                self._vcc_ids.remove(vccID)
+            else:
+                log_msg = (
+                    "VCC {vccID} not assigned to FSP CORR subarray. Skipping."
+                )
+                self._logger.warning(log_msg)
+
+    def _release_all_vcc(self: FspCorrSubarrayComponentManager) -> None:
+        """Release all assigned VCCs from the FSP CORR subarray"""
+        self._release_vcc(self._vcc_ids.copy())
 
     def configure_scan(
         self: FspCorrSubarrayComponentManager, configuration: str
@@ -449,27 +435,27 @@ class FspCorrSubarrayComponentManager(
             "band_index"
         ]
 
-        self._stream_tuning = configuration["band_5_tuning"]
+        if configuration["frequency_band"] in ["5a", "5b"]:
+            self._stream_tuning = configuration["band_5_tuning"]
 
-        self._frequency_band_offset_stream1 = int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        self._frequency_band_offset_stream2 = int(
-            configuration["frequency_band_offset_stream2"]
-        )
+        if "frequency_band_offset_stream1" in configuration:
+            self._frequency_band_offset_stream1 = int(
+                configuration["frequency_band_offset_stream1"]
+            )
+        if "frequency_band_offset_stream2" in configuration:
+            self._frequency_band_offset_stream2 = int(
+                configuration["frequency_band_offset_stream2"]
+            )
 
-        self._remove_all_receptors()
-        # "receptor_ids" values are pairs of str and int
-        corr_receptor_id_int = [
-            receptor[1] for receptor in configuration["corr_receptor_ids"]
-        ]
-        self._add_receptors(corr_receptor_id_int)
+        # release previously assigned VCCs and assign newly specified VCCs
+        self._release_all_vcc()
+        self._assign_vcc(configuration["corr_vcc_ids"])
 
         self._frequency_slice_id = int(configuration["frequency_slice_id"])
 
         self._bandwidth = int(configuration["zoom_factor"])
         self._bandwidth_actual = int(
-            const.FREQUENCY_SLICE_BW / 2 ** int(configuration["zoom_factor"])
+            const.FREQUENCY_SLICE_BW / 2 * int(configuration["zoom_factor"])
         )
 
         if self._bandwidth != 0:  # zoomWindowTuning is required
@@ -628,15 +614,7 @@ class FspCorrSubarrayComponentManager(
             internal_params = f_in.read().replace("\n", "")
         internal_params_obj = json.loads(internal_params)
 
-        # append all internal parameters to the configuration to pass to
-        # HPS
-        # change receptor IDs to list of int for HPS
-        configuration["corr_receptor_ids"] = corr_receptor_id_int
-        subarray_receptor_id_int = [
-            receptor[1] for receptor in configuration["subarray_receptor_ids"]
-        ]
-        configuration["subarray_receptor_ids"] = subarray_receptor_id_int
-
+        # append all internal parameters to the configuration to pass to HPS
         # construct HPS ConfigureScan input
         sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
@@ -761,7 +739,7 @@ class FspCorrSubarrayComponentManager(
         """
         try:
             self._deconfigure()
-            self._remove_all_receptors()
+            self._release_all_vcc()
             self._proxy_hps_fsp_corr_controller.GoToIdle()
         except tango.DevFailed as df:
             self._component_obs_fault_callback(True)
@@ -786,7 +764,7 @@ class FspCorrSubarrayComponentManager(
         """
         try:
             self._deconfigure()
-            self._remove_all_receptors()
+            self._release_all_vcc()
             # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
             # self._proxy_hps_fsp_corr_controller.ObsReset()
         except tango.DevFailed as df:
@@ -796,7 +774,6 @@ class FspCorrSubarrayComponentManager(
                 ResultCode.FAILED,
                 "FspCorrSubarray ObsReset command failed",
             )
-
         return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def abort(

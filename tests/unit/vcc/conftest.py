@@ -298,6 +298,7 @@ def vcc_component_manager(
 ) -> VccComponentManager:
     """Return a VCC component manager."""
     return VccComponentManager(
+        vcc_id=1,
         talon_lru="mid_csp_cbf/talon_lru/001",
         vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[

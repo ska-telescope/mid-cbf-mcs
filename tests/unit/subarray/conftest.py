@@ -81,7 +81,7 @@ def mock_component_manager(
     mock = mocker.Mock()
     mock.is_communicating = False
     mock.connected = False
-    mock.receptors = []
+    mock.dish_ids = []
     mock._ready = False
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
@@ -116,41 +116,41 @@ def mock_component_manager(
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
     def _remove_receptor(
-        mock: unittest.mock.Mock, receptor_id: int
+        mock: unittest.mock.Mock, dish_id: str
     ) -> Tuple[ResultCode, str]:
-        if receptor_id in mock.receptors:
-            mock.receptors.remove(receptor_id)
-            if len(mock.receptors) == 0:
+        if dish_id in mock.dish_ids:
+            mock.dish_ids.remove(dish_id)
+            if len(mock.dish_ids) == 0:
                 mock._component_resourced_callback(False)
             return (ResultCode.OK, "RemoveReceptors completed OK")
         else:
             return (
                 ResultCode.FAILED,
-                f"Error in CbfSubarrayComponentManager; receptor {receptor_id} not found.",
+                f"Error in CbfSubarrayComponentManager; receptor {dish_id} not found.",
             )
 
     def _remove_all_receptors(
         mock: unittest.mock.Mock,
     ) -> Tuple[ResultCode, str]:
-        if mock.receptors == []:
+        if mock.dish_ids == []:
             return (ResultCode.FAILED, "RemoveAllReceptors failed")
-        mock.receptors = []
+        mock.dish_ids = []
         mock._component_resourced_callback(False)
         return (ResultCode.OK, "RemoveAllReceptors completed OK")
 
     def _add_receptor(
-        mock: unittest.mock.Mock, receptor_id: int
+        mock: unittest.mock.Mock, dish_id: str
     ) -> Tuple[ResultCode, str]:
-        if receptor_id not in mock.receptors:
-            if len(mock.receptors) == 0:
+        if dish_id not in mock.dish_ids:
+            if len(mock.dish_ids) == 0:
                 mock._component_resourced_callback(True)
-            mock.receptors.append(receptor_id)
+            mock.receptors.append(dish_id)
             return (ResultCode.OK, "AddReceptors completed OK")
         else:
             mock._component_fault_callback(True)
             return (
                 ResultCode.FAILED,
-                f"Receptor {receptor_id} already assigned to subarray component manager.",
+                f"Receptor {dish_id} already assigned to subarray component manager.",
             )
 
     def _scan() -> Tuple[ResultCode, str]:
@@ -387,6 +387,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_command("GoToIdle", None)
     builder.add_command("Scan", None)
     builder.add_command("EndScan", None)
+    builder.add_property("FspID", {"FspID": [1]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -412,7 +413,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayID", "")
-    builder.add_attribute("receptorID", "")
+    builder.add_attribute("dishID", "")
     builder.add_attribute("vccID", "")
     return builder()
 

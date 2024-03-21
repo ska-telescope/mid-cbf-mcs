@@ -82,12 +82,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # Attributes
     # ----------
 
-    receptors = attribute(
+    vccIDs = attribute(
         dtype=("uint16",),
         access=AttrWriteType.READ,
         max_dim_x=197,
-        label="Receptors",
-        doc="List of receptors for correlation",
+        label="VCC IDs",
+        doc="List of VCCs used for correlation",
     )
 
     frequencyBand = attribute(
@@ -306,16 +306,16 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
-    def read_receptors(self: FspCorrSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspCorrSubarray.receptors_read) ENABLED START #
+    def read_vccIDs(self: FspCorrSubarray) -> List[int]:
+        # PROTECTED REGION ID(FspCorrSubarray.vccIDs_read) ENABLED START #
         """
-        Read the receptors attribute.
+        Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
 
-        :return: the list of receptors
+        :return: the list of assigned VCC IDs
         :rtype: List[int]
         """
-        return self.component_manager.receptors
-        # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
+        return self.component_manager.vcc_ids
+        # PROTECTED REGION END #    //  FspCorrSubarray.vccIDs_read
 
     def read_frequencyBand(self: FspCorrSubarray) -> tango.DevEnum:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
