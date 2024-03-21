@@ -200,9 +200,9 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
 def mock_fsp_pss_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    # add receptors to the mock pss subarray
+    # add vccIDs to the mock pss subarray
     # (this is required for test_UpdateJonesMatrix)
-    builder.add_attribute("receptors", [1, 2, 3, 4])
+    builder.add_attribute("vccIDs", [1, 2, 3, 4])
     return builder()
 
 
@@ -218,9 +218,9 @@ def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
 def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    # add receptors to the mock pst subarray
+    # add vccIDs to the mock pst subarray
     # (this is required for test_UpdateBeamWeights)
-    builder.add_attribute("receptors", [1, 2, 3, 4])
+    builder.add_attribute("vccIDs", [1, 2, 3, 4])
     return builder()
 
 

@@ -92,7 +92,7 @@ class TestFspPssSubarrayComponentManager:
 
         fsp_pss_subarray_component_manager.start_communicating()
 
-        assert fsp_pss_subarray_component_manager.receptors == []
+        assert fsp_pss_subarray_component_manager.vcc_ids == []
         assert fsp_pss_subarray_component_manager.search_beams == []
         assert fsp_pss_subarray_component_manager.search_window_id == 0
         assert fsp_pss_subarray_component_manager.search_beam_id == []
@@ -113,6 +113,9 @@ class TestFspPssSubarrayComponentManager:
             configuration["search_window_id"]
         )
         for i, searchBeam in enumerate(configuration["search_beam"]):
+            assert sorted(
+                fsp_pss_subarray_component_manager.vcc_ids
+            ) == sorted(searchBeam["receptor_ids"])
             assert fsp_pss_subarray_component_manager.search_beams[
                 i
             ] == json.dumps(searchBeam)
@@ -168,7 +171,7 @@ class TestFspPssSubarrayComponentManager:
         assert fsp_pss_subarray_component_manager._output_enable == 0
         assert fsp_pss_subarray_component_manager.scan_id == 0
         assert fsp_pss_subarray_component_manager._config_id == ""
-        assert fsp_pss_subarray_component_manager._receptors == []
+        assert fsp_pss_subarray_component_manager.vcc_ids == []
 
     @pytest.mark.parametrize(
         "config_file_name",

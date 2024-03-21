@@ -212,15 +212,19 @@ class TestFspCorrSubarray:
             device_under_test.frequencyBand
             == freq_band_dict()[freq_band_name]["band_index"]
         )
-        assert list(device_under_test.band5Tuning) == list(
-            configuration["band_5_tuning"]
-        )
-        assert device_under_test.frequencyBandOffsetStream1 == int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        assert device_under_test.frequencyBandOffsetStream2 == int(
-            configuration["frequency_band_offset_stream2"]
-        )
+
+        if "band_5_tuning" in configuration:
+            assert list(device_under_test.band5Tuning) == list(
+                configuration["band_5_tuning"]
+            )
+        if "frequency_band_offset_stream1" in configuration:
+            assert device_under_test.frequencyBandOffsetStream1 == int(
+                configuration["frequency_band_offset_stream1"]
+            )
+        if "frequency_band_offset_stream2" in configuration:
+            assert device_under_test.frequencyBandOffsetStream2 == int(
+                configuration["frequency_band_offset_stream2"]
+            )
         assert (
             device_under_test.frequencySliceID
             == configuration["frequency_slice_id"]
@@ -228,9 +232,10 @@ class TestFspCorrSubarray:
         assert device_under_test.corrBandwidth == int(
             configuration["zoom_factor"]
         )
-        assert device_under_test.zoomWindowTuning == int(
-            configuration["zoom_window_tuning"]
-        )
+        if "zoom_window_tuning" in configuration:
+            assert device_under_test.zoomWindowTuning == int(
+                configuration["zoom_window_tuning"]
+            )
         assert device_under_test.integrationFactor == int(
             configuration["integration_factor"]
         )

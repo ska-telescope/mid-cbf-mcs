@@ -29,8 +29,8 @@ from ska_tango_base.control_model import (
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -138,7 +138,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._init_sys_param = ""
         self._source_init_sys_param = ""
-        self._receptor_utils = None
+        self.dish_utils = None
 
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
@@ -388,7 +388,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger.info("Trying to execute ON Command")
 
-        if self._receptor_utils is None:
+        if self.dish_utils is None:
             log_msg = "Dish-VCC mapping has not been provided."
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
@@ -676,7 +676,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._init_sys_param = params
 
         # store the attribute
-        self._receptor_utils = ReceptorUtils(init_sys_param_json)
+        self.dish_utils = DISHUtils(init_sys_param_json)
 
         # send init_sys_param to the subarrays
         try:
@@ -739,15 +739,21 @@ class ControllerComponentManager(CbfComponentManager):
 
         # set VCC values
         for fqdn in self._fqdn_vcc:
-            proxy = self._proxies[fqdn]
             try:
+                proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                rec_id = self._receptor_utils.vcc_id_to_receptor_id[vcc_id]
-                rec_id_int = self._receptor_utils.receptor_id_to_vcc_id[rec_id]
-                self._logger.info(
-                    f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
-                )
-                proxy.receptorID = rec_id_int
+                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                    proxy.dishID = dish_id
+                    self._logger.info(
+                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                    )
+                else:
+                    log_msg = (
+                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                    )
+                    self._logger.warning(log_msg)
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
@@ -755,7 +761,7 @@ class ControllerComponentManager(CbfComponentManager):
                     return (ResultCode.FAILED, log_msg)
 
         # update talon boards. The VCC ID to IP address mapping comes
-        # from hw_config. Then map VCC ID to receptor ID.
+        # from hw_config. Then map VCC ID to DISH ID.
         for vcc_id_str, ip in self._hw_config["talon_board"].items():
             for fqdn in self._fqdn_talon_board:
                 try:
@@ -766,27 +772,22 @@ class ControllerComponentManager(CbfComponentManager):
                     if board_ip == ip:
                         vcc_id = int(vcc_id_str)
                         proxy.write_attribute("vccID", str(vcc_id))
-                        if (
-                            vcc_id
-                            in self._receptor_utils.vcc_id_to_receptor_id
-                        ):
-                            receptor_id = (
-                                self._receptor_utils.vcc_id_to_receptor_id[
-                                    vcc_id
-                                ]
-                            )
-                            proxy.write_attribute("receptorID", receptor_id)
+                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                            proxy.write_attribute("dishID", dish_id)
                         else:
-                            self._logger.warn(
-                                "Unable to match VCC ID in the HW config with the receptor-VCC mapping."
+                            log_msg = (
+                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
+                            self._logger.warning(log_msg)
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = f"Failed to update {fqdn} with VCC ID and receptor ID; {item.reason}"
+                        log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
-    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
@@ -813,7 +814,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         results = [
             self._lru_on(
                 self._proxies[fqdn],
@@ -831,7 +832,7 @@ class ControllerComponentManager(CbfComponentManager):
                 out_status = False
         return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
 
-    def _lru_off(self, proxy, lru_fqdn) -> (bool, str):
+    def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning off LRU {lru_fqdn}")
             proxy.Off()
@@ -844,7 +845,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         if (
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
@@ -895,7 +896,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
-    ) -> (bool, str):
+    ) -> Tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
         """

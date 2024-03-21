@@ -92,7 +92,7 @@ class TestFspPstSubarrayComponentManager:
 
         fsp_pst_subarray_component_manager.start_communicating()
 
-        assert fsp_pst_subarray_component_manager.receptors == []
+        assert fsp_pst_subarray_component_manager.vcc_ids == []
         assert fsp_pst_subarray_component_manager.timing_beams == []
         assert fsp_pst_subarray_component_manager.timing_beam_id == []
         assert fsp_pst_subarray_component_manager.output_enable == 0
@@ -109,9 +109,9 @@ class TestFspPstSubarrayComponentManager:
             == configuration["fsp_id"]
         )
         for i, timingBeam in enumerate(configuration["timing_beam"]):
-            assert list(fsp_pst_subarray_component_manager.receptors) == [
-                receptor[1] for receptor in timingBeam["receptor_ids"]
-            ]
+            assert sorted(
+                fsp_pst_subarray_component_manager.vcc_ids
+            ) == sorted(timingBeam["receptor_ids"])
             assert fsp_pst_subarray_component_manager.timing_beams[
                 i
             ] == json.dumps(timingBeam)
@@ -162,7 +162,7 @@ class TestFspPstSubarrayComponentManager:
         assert fsp_pst_subarray_component_manager.timing_beam_id == []
         assert fsp_pst_subarray_component_manager.timing_beams == []
         assert fsp_pst_subarray_component_manager._output_enable == 0
-        assert fsp_pst_subarray_component_manager.receptors == []
+        assert fsp_pst_subarray_component_manager.vcc_ids == []
 
     @pytest.mark.parametrize(
         "config_file_name",
