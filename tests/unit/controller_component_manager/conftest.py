@@ -80,6 +80,7 @@ def controller_component_manager(
 
         def shutdown(
             self: MockTalonDxComponentManager,
+            shutdown_code: int,
         ) -> ResultCode:
             return ResultCode.OK
 
