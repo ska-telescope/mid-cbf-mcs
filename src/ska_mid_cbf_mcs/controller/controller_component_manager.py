@@ -793,7 +793,7 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            if proxy.State() == tango.DevState.ON:
+            if True:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
