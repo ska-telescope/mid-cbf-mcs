@@ -109,7 +109,7 @@ class VccSearchWindow(SKACapability):
 
             super().do()
 
-            device = self.target
+            device = self._device
 
             device.write_simulationMode(True)
 

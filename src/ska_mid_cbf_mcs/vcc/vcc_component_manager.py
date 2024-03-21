@@ -22,9 +22,9 @@ from typing import Callable, List, Optional, Tuple
 
 # tango imports
 import tango
+from ska_csp_lmc_base.obs import CspObsComponentManager
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
-from ska_csp_lmc_base.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import (

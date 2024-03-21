@@ -15,9 +15,9 @@ import logging
 from typing import Callable, List, Optional, Tuple
 
 import tango
+from ska_csp_lmc_base.obs.component_manager import CspObsComponentManager
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState
-from ska_csp_lmc_base.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,

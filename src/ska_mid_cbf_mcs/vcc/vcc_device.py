@@ -23,9 +23,9 @@ from typing import List, Optional, Tuple
 
 # Tango imports
 import tango
+from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
 from ska_tango_base.commands import FastCommand, ResultCode
 from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
-from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -178,7 +178,7 @@ class Vcc(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.logger)
+        device_args = (self, self.logger)
 
         self.register_command_object("On", self.OnCommand(*device_args))
 
@@ -351,13 +351,21 @@ class Vcc(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
+    def read_simulationMode(self: Vcc) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+    
     def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
-        super().write_simulationMode(value)
+        self.logger.info(f"Writing simulationMode to {value}")
         self.component_manager.simulation_mode = value
 
     def read_receptorID(self: Vcc) -> int:
@@ -552,10 +560,10 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
+            device = self._device
             (result_code, msg) = super().do()
 
-            device = self.target
+            
 
             # Make a private copy of the device properties:
             device._vcc_id = device.VccID
@@ -578,7 +586,7 @@ class Vcc(CspSubElementObsDevice):
 
             return (result_code, msg)
 
-    class OnCommand(CspSubElementObsDevice.OnCommand):
+    class OnCommand:
         """
         A class for the Vcc's on command.
         """
@@ -597,7 +605,7 @@ class Vcc(CspSubElementObsDevice):
             self.logger.info("Entering Vcc.OnCommand")
             return self.target.component_manager.on()
 
-    class OffCommand(CspSubElementObsDevice.OffCommand):
+    class OffCommand:
         """
         A class for the Vcc's off command.
         """
@@ -615,7 +623,7 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.off()
 
-    class StandbyCommand(CspSubElementObsDevice.StandbyCommand):
+    class StandbyCommand:
         """
         A class for the Vcc's standby command.
         """
@@ -657,7 +665,7 @@ class Vcc(CspSubElementObsDevice):
 
     @command(dtype_in="DevString", doc_in="Band config string.")
     @DebugIt()
-    def ConfigureBand(self, band_config: str) -> Tuple[ResultCode, str]:
+    def ConfigureBand(self, band_config: str) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
@@ -708,7 +716,7 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             :raises: ``CommandError`` if the configuration data validation fails.
             """
-            device = self.target
+            device = self._device
             # By this time, the receptor_ID should be set:
             device.logger.debug(
                 f"receptorID: {device.component_manager.receptor_id}"
@@ -860,7 +868,7 @@ class Vcc(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureScan(self, argin):
+    def ConfigureScan(self, argin) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
@@ -911,7 +919,7 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
 
-            device = self.target
+            device = self._device
             (result_code, msg) = device.component_manager.scan(argin)
 
             if result_code == ResultCode.STARTED:
@@ -927,7 +935,7 @@ class Vcc(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def Scan(self, argin):
+    def Scan(self, argin) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
         """
         Start an observing scan.
@@ -943,7 +951,7 @@ class Vcc(CspSubElementObsDevice):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+    class EndScanCommand:
         """
         A class for the Vcc's EndScan() command.
         """
@@ -957,7 +965,7 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
+            device = self._device
             (result_code, msg) = device.component_manager.end_scan()
 
             if result_code == ResultCode.OK:
@@ -965,7 +973,7 @@ class Vcc(CspSubElementObsDevice):
 
             return (result_code, msg)
 
-    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+    class ObsResetCommand:
         """A class for the VCC's ObsReset command."""
 
         def do(self):
@@ -977,7 +985,7 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
+            device = self._device
             return device.component_manager.obsreset()
 
     class AbortCommand(CspSubElementObsDevice.AbortCommand):
@@ -992,10 +1000,10 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
+            device = self._device
             return device.component_manager.abort()
 
-    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+    class GoToIdleCommand:
         """
         A class for the Vcc's GoToIdle command.
         """
@@ -1014,7 +1022,7 @@ class Vcc(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            device = self.target
+            device = self._device
 
             # Reset all values intialized in InitCommand.do():
             device.component_manager.deconfigure()
@@ -1211,7 +1219,7 @@ class Vcc(CspSubElementObsDevice):
             :param argin: JSON object with the search window parameters
             """
             self.logger.debug(f"Validating argin: {argin}")
-            device = self.target
+            device = self._device
 
             # try to deserialize input string to a JSON object
             try:
@@ -1432,7 +1440,7 @@ class Vcc(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureSearchWindow(self, argin):
+    def ConfigureSearchWindow(self, argin) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for a search window.

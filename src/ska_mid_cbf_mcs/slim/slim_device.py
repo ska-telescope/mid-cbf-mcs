@@ -20,7 +20,11 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import FastCommand, ResultCode
-from ska_tango_base.control_model import HealthState, PowerState, SimulationMode
+from ska_tango_base.control_model import (
+    HealthState,
+    PowerState,
+    SimulationMode,
+)
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -200,12 +204,12 @@ class Slim(SKABaseDevice):
             """
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
             device.write_simulationMode(True)
 
             return (result_code, message)
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         The command class for the On command.
         """
@@ -222,7 +226,7 @@ class Slim(SKABaseDevice):
             component_manager = self.target
             return component_manager.on()
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         The command class for the Off command.
         """
@@ -289,7 +293,7 @@ class Slim(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def Configure(self: Slim, argin: str) -> tango.DevVarLongStringArray:
+    def Configure(self: Slim, argin: str) -> None:
         # PROTECTED REGION ID(Slim.Configure) ENABLED START #
         handler = self.get_command_object("Configure")
         return_code, message = handler(argin)
@@ -366,6 +370,14 @@ class Slim(SKABaseDevice):
     # Attributes methods
     # ------------------
 
+    def read_simulationMode(self: Slim) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+    
     def write_simulationMode(self: Slim, value: SimulationMode) -> None:
         """
         Overrides the base class implementation. Additionally set the
@@ -374,7 +386,6 @@ class Slim(SKABaseDevice):
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
-        super().write_simulationMode(value)
         self.component_manager._simulation_mode = value
 
     def read_simulationMode(self: Slim) -> SimulationMode:

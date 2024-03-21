@@ -24,7 +24,7 @@ from typing import List, Optional, Tuple
 
 # tango imports
 import tango
-from ska_tango_base import SKABaseDevice, SKACapability
+from ska_tango_base import SKACapability
 from ska_tango_base.commands import FastCommand, ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType
@@ -137,7 +137,7 @@ class Fsp(SKACapability):
         """
         super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.logger)
+        device_args = (self, self.logger)
 
         self.register_command_object("On", self.OnCommand(*device_args))
 
@@ -214,13 +214,21 @@ class Fsp(SKACapability):
     # Attributes methods
     # ------------------
 
+    def read_simulationMode(self: Fsp) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+    
     def write_simulationMode(self: Fsp, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
-        super().write_simulationMode(value)
+        self.logger.info(f"Writing simulation mode: {value}")
         self.component_manager.simulation_mode = value
 
     def read_functionMode(self: Fsp) -> tango.DevEnum:
@@ -333,7 +341,7 @@ class Fsp(SKACapability):
 
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
 
             # Setting initial simulation mode to True
             device.write_simulationMode(SimulationMode.TRUE)
@@ -349,7 +357,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         A class for the Fsp's On() command.
         """
@@ -373,7 +381,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         A class for the Fsp's Off() command.
         """
@@ -397,7 +405,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
-    class StandbyCommand(SKABaseDevice.StandbyCommand):
+    class StandbyCommand:
         """
         A class for the Fsp's Standby() command.
         """

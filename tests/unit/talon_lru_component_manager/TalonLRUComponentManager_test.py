@@ -57,7 +57,9 @@ class TestTalonLRUComponentManager:
                 == mock_power_switch1.GetOutletPowerState()
             )
         else:
-            assert talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
+            assert (
+                talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
+            )
 
         # Check the device state and pdu2_power_mode based on mock_power_switch2 behaviour
         if mock_power_switch2.stimulusMode == "conn_fail":
@@ -71,7 +73,9 @@ class TestTalonLRUComponentManager:
                 == mock_power_switch2.GetOutletPowerState()
             )
         else:
-            assert talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            assert (
+                talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            )
 
     def test_On(
         self,
@@ -111,8 +115,12 @@ class TestTalonLRUComponentManager:
             and mock_power_switch2.stimulusMode == "command_fail"
         ):
             assert result_code == ResultCode.FAILED
-            assert talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
-            assert talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            assert (
+                talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
+            )
+            assert (
+                talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            )
         else:
             assert result_code == ResultCode.OK
 
@@ -123,7 +131,8 @@ class TestTalonLRUComponentManager:
                 )
             else:
                 assert (
-                    talon_lru_component_manager.pdu1_power_mode == PowerState.ON
+                    talon_lru_component_manager.pdu1_power_mode
+                    == PowerState.ON
                 )
 
             if mock_power_switch2.stimulusMode == "command_fail":
@@ -133,7 +142,8 @@ class TestTalonLRUComponentManager:
                 )
             else:
                 assert (
-                    talon_lru_component_manager.pdu2_power_mode == PowerState.ON
+                    talon_lru_component_manager.pdu2_power_mode
+                    == PowerState.ON
                 )
 
     def test_Off(
@@ -178,7 +188,9 @@ class TestTalonLRUComponentManager:
                 == initial_pdu1_power_mode
             )
         else:
-            assert talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
+            assert (
+                talon_lru_component_manager.pdu1_power_mode == PowerState.OFF
+            )
 
         if mock_power_switch2.stimulusMode == "command_fail":
             assert result_code == ResultCode.FAILED
@@ -187,7 +199,9 @@ class TestTalonLRUComponentManager:
                 == initial_pdu2_power_mode
             )
         else:
-            assert talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            assert (
+                talon_lru_component_manager.pdu2_power_mode == PowerState.OFF
+            )
 
         if (
             mock_power_switch1.stimulusMode != "command_fail"

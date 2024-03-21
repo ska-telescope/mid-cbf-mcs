@@ -19,8 +19,8 @@ from __future__ import annotations  # allow forward references in type hints
 from typing import List, Optional, Tuple
 
 import tango
-from ska_tango_base import SKABaseDevice, SKAController
-from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base import SKAController
+from ska_tango_base.commands import FastCommand, ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
@@ -162,7 +162,7 @@ class CbfController(SKAController):
             If property not found in db, then assign a default amount(197,27,16)
             """
 
-            device = self.target
+            device = self._device
 
             device.write_simulationMode(True)
 
@@ -215,7 +215,7 @@ class CbfController(SKAController):
 
             super().do()
 
-            device = self.target
+            device = self._device
 
             # initialize attribute values
             device._command_progress = 0
@@ -343,6 +343,14 @@ class CbfController(SKAController):
         return out_str
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
+    def read_simulationMode(self: CbfController) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self._talondx_component_manager.simulation_mode
+    
     def write_simulationMode(
         self: CbfController, value: SimulationMode
     ) -> None:
@@ -351,14 +359,14 @@ class CbfController(SKAController):
 
         :param value: SimulationMode
         """
-        super().write_simulationMode(value)
+        self.logger.info(f"Writing simulation mode: {value}")
         self._talondx_component_manager.simulation_mode = value
 
     # --------
     # Commands
     # --------
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         A class for the CbfController's On() command.
         """
@@ -401,7 +409,7 @@ class CbfController(SKAController):
 
             return (result_code, message)
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         A class for the CbfController's Off() command.
         """
@@ -445,7 +453,7 @@ class CbfController(SKAController):
 
             return (result_code, message)
 
-    class StandbyCommand(SKABaseDevice.StandbyCommand):
+    class StandbyCommand:
         """
         A class for the CbfController's Standby() command.
         """
@@ -471,7 +479,7 @@ class CbfController(SKAController):
             self.logger.info(message)
             return (result_code, message)
 
-    class InitSysParamCommand(ResponseCommand):
+    class InitSysParamCommand(FastCommand):
         """
         A class for the CbfController's InitSysParam() command.
         """

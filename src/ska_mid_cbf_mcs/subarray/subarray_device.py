@@ -19,11 +19,11 @@ from typing import List, Optional, Tuple
 # DebugIt is imported using "from tango import DebugIt"
 # then docs will not generate
 import tango
+from ska_csp_lmc_base.subarray.subarray_device import CspSubElementSubarray
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
-from ska_csp_lmc_base.subarray.subarray_device import CspSubElementSubarray
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
@@ -193,7 +193,7 @@ class CbfSubarray(CspSubElementSubarray):
             # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
 
             # TODO remove when upgrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
@@ -369,6 +369,14 @@ class CbfSubarray(CspSubElementSubarray):
     # Attributes methods
     # ------------------
 
+    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+    
     def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
         """
         Set the Simulation Mode of the device.
@@ -376,7 +384,6 @@ class CbfSubarray(CspSubElementSubarray):
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulation mode of {value}")
-        super().write_simulationMode(value)
         self.component_manager._simulation_mode = value
 
     def read_simulationMode(self: CbfSubarray) -> SimulationMode:
@@ -507,7 +514,7 @@ class CbfSubarray(CspSubElementSubarray):
     )
     def RemoveReceptors(
         self: CbfSubarray, argin: List[str]
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
         Uses RemoveReceptorsCommand class.
@@ -560,7 +567,7 @@ class CbfSubarray(CspSubElementSubarray):
         doc_out="(ReturnType, 'informational message')",
     )
     @tango.DebugIt()
-    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
+    def RemoveAllReceptors(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
         Remove all receptors. Turn Subarray OFF if no receptors assigned
@@ -620,7 +627,7 @@ class CbfSubarray(CspSubElementSubarray):
     @tango.DebugIt()
     def AddReceptors(
         self: CbfSubarray, argin: List[str]
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Assign Receptors to this subarray.
         Turn subarray to ObsState = IDLE if previously no receptor is assigned.
@@ -841,7 +848,7 @@ class CbfSubarray(CspSubElementSubarray):
         doc_out="(ReturnType, 'informational message')",
     )
     @tango.DebugIt()
-    def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
+    def ConfigureScan(self: CbfSubarray, argin: str) -> None:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """
         """Change state to CONFIGURING.
@@ -919,7 +926,7 @@ class CbfSubarray(CspSubElementSubarray):
         doc_out="A tuple containing a return code and a string  message indicating status."
         "The message is for information purpose only.",
     )
-    def GoToIdle(self):
+    def GoToIdle(self) -> None:
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
         """
         Transit the subarray from READY to IDLE obsState.

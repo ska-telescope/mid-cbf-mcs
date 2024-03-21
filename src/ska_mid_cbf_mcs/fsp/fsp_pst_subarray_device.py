@@ -21,7 +21,7 @@ from typing import List, Optional, Tuple
 
 # PyTango imports
 import tango
-from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
+from ska_csp_lmc_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
@@ -154,7 +154,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             super().do()
 
-            device = self.target
+            device = self._device
             device._configuring_from_idle = False
 
             # Setting initial simulation mode to True
@@ -283,7 +283,7 @@ class FspPstSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         A class for the FspPstSubarray's On() command.
         """
@@ -312,7 +312,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.logger.info(message)
             return (result_code, message)
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         A class for the FspPstSubarray's Off() command.
         """
@@ -341,7 +341,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.logger.info(message)
             return (result_code, message)
 
-    class StandbyCommand(SKABaseDevice.StandbyCommand):
+    class StandbyCommand:
         """
         A class for the FspPstSubarray's Standby() command.
         """
@@ -393,7 +393,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering ConfigureScanCommand()")
 
-            device = self.target
+            device = self._device
 
             (result_code, message) = device.component_manager.configure_scan(
                 argin
@@ -439,7 +439,7 @@ class FspPstSubarray(CspSubElementObsDevice):
     @DebugIt()
     def ConfigureScan(
         self: FspPstSubarray, argin: str
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
@@ -493,7 +493,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering ScanCommand()")
 
-            device = self.target
+            device = self._device
 
             (result_code, message) = device.component_manager.scan(argin)
 
@@ -510,7 +510,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def Scan(self, argin):
+    def Scan(self, argin) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
         """
         Start an observing scan.
@@ -526,7 +526,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+    class EndScanCommand:
         """
         A class for the FspPstSubarray's EndScan() command.
         """
@@ -546,7 +546,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering EndScanCommand()")
 
-            device = self.target
+            device = self._device
 
             (result_code, message) = device.component_manager.end_scan()
 
@@ -555,7 +555,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
-    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+    class GoToIdleCommand:
         """
         A class for the FspPstSubarray's GoToIdle command.
         """
@@ -574,7 +574,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            device = self.target
+            device = self._device
 
             (result_code, message) = device.component_manager.go_to_idle()
 
@@ -583,7 +583,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
-    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+    class ObsResetCommand:
         """A class for FspPstSubarray's ObsReset() command."""
 
         def do(self):

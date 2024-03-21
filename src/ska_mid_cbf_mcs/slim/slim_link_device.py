@@ -371,6 +371,14 @@ class SlimLink(SKABaseDevice):
         return self._health_state
         # PROTECTED REGION END #    //  SlimLink.healthState_read
 
+    def read_simulationMode(self: SlimLink) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+    
     def write_simulationMode(self, value):
         # PROTECTED REGION ID(SlimLink.simulationMode_write) ENABLED START #
         """
@@ -379,7 +387,7 @@ class SlimLink(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        super().write_simulationMode(value)
+        self.logger.info(f"Writing simulation mode: {value}")
         self.component_manager.simulation_mode = value
         # PROTECTED REGION END #    //  SlimLink.simulationMode_write
 
@@ -403,7 +411,7 @@ class SlimLink(SKABaseDevice):
             """
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
             device.write_simulationMode(True)
 
             return (result_code, message)
@@ -440,7 +448,7 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ConnectTxRx(self: SlimLink) -> tango.DevVarLongStringArray:
+    def ConnectTxRx(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.ConnectTxRx) ENABLED START #
         handler = self.get_command_object("ConnectTxRx")
         return_code, message = handler()
@@ -477,7 +485,7 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def VerifyConnection(self: SlimLink) -> tango.DevVarLongStringArray:
+    def VerifyConnection(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.VerifyConnection) ENABLED START #
         handler = self.get_command_object("VerifyConnection")
         return_code, message = handler()
@@ -516,7 +524,7 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def DisconnectTxRx(self: SlimLink) -> tango.DevVarLongStringArray:
+    def DisconnectTxRx(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.DisconnectTxRx) ENABLED START #
         handler = self.get_command_object("DisconnectTxRx")
         return_code, message = handler()
@@ -553,7 +561,7 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ClearCounters(self: SlimLink) -> tango.DevVarLongStringArray:
+    def ClearCounters(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.ClearCounters) ENABLED START #
         handler = self.get_command_object("ClearCounters")
         return_code, message = handler()

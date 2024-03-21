@@ -15,7 +15,11 @@ from typing import Callable, Optional
 import backoff
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerState, SimulationMode
+from ska_tango_base.control_model import (
+    HealthState,
+    PowerState,
+    SimulationMode,
+)
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,

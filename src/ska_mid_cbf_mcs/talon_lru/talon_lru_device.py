@@ -241,7 +241,7 @@ class TalonLRU(SKABaseDevice):
             """
             (result_code, msg) = super().do()
 
-            device = self.target
+            device = self._device
             device._power_switch_lock = Lock()
 
             # Setting initial simulation mode to True
@@ -252,7 +252,7 @@ class TalonLRU(SKABaseDevice):
 
             return (result_code, msg)
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         The command class for the On command.
 
@@ -268,7 +268,7 @@ class TalonLRU(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
+            device = self._device
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
@@ -277,7 +277,7 @@ class TalonLRU(SKABaseDevice):
                     simulation_mode=device.read_simulationMode()
                 )
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         The command class for the Off command.
 
@@ -293,7 +293,7 @@ class TalonLRU(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
+            device = self._device
 
             with device._power_switch_lock:
                 # Check that this command is still allowed since the

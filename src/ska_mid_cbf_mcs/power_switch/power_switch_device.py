@@ -139,7 +139,8 @@ class PowerSwitch(SKABaseDevice):
             "TurnOffOutlet", self.TurnOffOutletCommand(*device_args)
         )
         self.register_command_object(
-            "GetOutletPowerState", self.GetOutletPowerStateCommand(*device_args)
+            "GetOutletPowerState",
+            self.GetOutletPowerStateCommand(*device_args),
         )
 
     # ---------
@@ -210,6 +211,14 @@ class PowerSwitch(SKABaseDevice):
     # Attributes methods
     # ------------------
 
+    def read_simulationMode(self: PowerSwitch) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+
     def write_simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device. When simulation mode is set to
@@ -219,7 +228,6 @@ class PowerSwitch(SKABaseDevice):
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
-        super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 
     def read_numOutlets(self: PowerSwitch) -> int:
@@ -258,7 +266,7 @@ class PowerSwitch(SKABaseDevice):
 
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
             device.write_simulationMode(True)
 
             return (result_code, message)
@@ -320,7 +328,7 @@ class PowerSwitch(SKABaseDevice):
     @DebugIt()
     def TurnOnOutlet(
         self: PowerSwitch, argin: str
-    ) -> tango.DevVarLongStringArray:
+    ) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
         handler = self.get_command_object("TurnOnOutlet")
         return_code, message = handler(argin)
@@ -384,7 +392,7 @@ class PowerSwitch(SKABaseDevice):
     @DebugIt()
     def TurnOffOutlet(
         self: PowerSwitch, argin: str
-    ) -> tango.DevVarLongStringArray:
+    ) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
         handler = self.get_command_object("TurnOffOutlet")
         return_code, message = handler(argin)

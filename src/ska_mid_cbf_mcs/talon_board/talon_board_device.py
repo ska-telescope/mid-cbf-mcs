@@ -810,7 +810,7 @@ class TalonBoard(SKABaseDevice):
             """
             return super().do()
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         The command class for the On command.
 
@@ -829,7 +829,7 @@ class TalonBoard(SKABaseDevice):
             component_manager = self.target
             return component_manager.on()
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         The command class for the Off command.
 

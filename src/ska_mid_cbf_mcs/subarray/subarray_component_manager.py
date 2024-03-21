@@ -24,15 +24,15 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Tango imports
 import tango
+from ska_csp_lmc_base.subarray.component_manager import (
+    CspSubarrayComponentManager,
+)
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
     PowerState,
     SimulationMode,
-)
-from ska_csp_lmc_base.subarray.component_manager import (
-    CspSubarrayComponentManager,
 )
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
