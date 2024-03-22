@@ -437,7 +437,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.read_config()
                 == ResultCode.FAILED
             ):
-                log_msg = "Failed to read the configuration of Talon board"
+                log_msg = "Failed to read the configuration for Talon boards"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
@@ -796,16 +796,14 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
-    def _lru_on(
-        self, proxy, sim_mode, lru_fqdn, power_switch_fqdn
-    ) -> Tuple[bool, str]:
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            if power_switch_fqdn:
+            if True:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
