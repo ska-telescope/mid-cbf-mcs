@@ -327,7 +327,7 @@ class TalonLRU(SKABaseDevice):
         dtype_in=None, doc_in="Get the power mode of both PDUs of the LRU."
     )
     @DebugIt()
-    def GetPowerModeCommand(self) -> Tuple[PowerMode, PowerMode]:
+    def GetPowerMode(self) -> Tuple[PowerMode, PowerMode]:
         """
         Get the power mode of both outlets that provide power to the LRU.
 
