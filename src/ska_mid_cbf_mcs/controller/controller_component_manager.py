@@ -440,7 +440,7 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
-            
+
             # TODO: Temporarily configure all talon boards first
 
             # Turn on all the LRUs with the boards we need
