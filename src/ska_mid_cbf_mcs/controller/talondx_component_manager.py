@@ -582,3 +582,92 @@ class TalonDxComponentManager:
             ResultCode.OK,
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
+
+    def reboot(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
+        """
+        Reboot Talon DX boards by sending a linux reboot command to the HPS master
+
+        :return: ResultCode.OK if all configure commands were sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        if self.simulation_mode == SimulationMode.FALSE:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(self._reboot_talon_thread, talon_cfg)
+                    for talon_cfg in self.talondx_config["config_commands"]
+                ]
+                results = [f.result() for f in futures]
+
+            if any(r[0] == ResultCode.FAILED for r in results):
+                self.logger.error(f"Talon reboot thread results: {results}")
+                ret = ResultCode.FAILED
+        return ret
+    
+    def _reboot_talon_thread(
+        self: TalonDxComponentManager, talon_cfg
+    ) -> ResultCode:
+        """
+        Reboot the Talon board by sending a reboot command to the HPS master
+        
+        :return: ResultCode.OK if reboot command was sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        try:
+            target = talon_cfg["target"]
+            ip = self._hw_config["talon_board"][target]
+            talon_first_connect_timeout = talon_cfg[
+                "talon_first_connect_timeout"
+            ]
+            self.logger.info(
+                f"Rebooting OS of {target}"
+            )
+            with SSHClient() as ssh_client:
+
+                @backoff.on_exception(
+                    backoff.expo,
+                    NoValidConnectionsError,
+                    max_value=3,
+                    max_time=talon_first_connect_timeout,
+                )
+                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on.
+
+                    :param ip: IP address of the board
+                    :param ssh_client: SSH client to use for connection
+                    """
+                    ssh_client.connect(ip, username="root", password="")
+
+                ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                make_first_connect(ip, ssh_client)
+
+                environment = os.getenv("ENVIRONMENT")
+                if environment == "minikube":
+                    ssh_chan = ssh_client.get_transport().open_session()
+                    ssh_chan.exec_command(
+                        "reboot"
+                    )
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(
+                            f"Error rebooting OS: {exit_status}"
+                        )
+                        ret = ResultCode.FAILED
+
+        except NoValidConnectionsError as e:
+            self.logger.error(f"{e}")
+            self.logger.error(
+                f"NoValidConnectionsError while connecting to {target}"
+            )
+            ret = ResultCode.FAILED
+        except SSHException as e:
+            self.logger.error(f"{e}")
+            self.logger.error(f"SSHException while talking to {target}")
+            ret = ResultCode.FAILED
+
+        return ret

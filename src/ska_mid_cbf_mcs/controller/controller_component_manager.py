@@ -432,6 +432,15 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
+            # Read the Talon board configuration
+            if(
+                self._talondx_component_manager.read_config()
+                == ResultCode.FAILED
+            ):
+                log_msg = "Failed to read Talon board configuration"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
             # Turn on all the LRUs with the boards we need
             lru_on_status, log_msg = self._turn_on_lrus()
             if not lru_on_status:
@@ -794,12 +803,13 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            if True:
+            lru_power_modes = proxy.GetPowerMode()
+            if lru_power_modes[0] == PowerMode.ON and lru_power_modes[1] == PowerMode.ON:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
-                # reboot Talon DX Board with shutdown code 2
-                result = self._talondx_component_manager.shutdown(2)
+                # reboot Talon DX Board
+                result = self._talondx_component_manager.reboot()
                 if result == ResultCode.FAILED:
                     self._logger.error("Failed to reboot Talon DX Board")
                     return (False, lru_fqdn)
