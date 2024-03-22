@@ -539,7 +539,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(
         self: FspCorrSubarray, value: SimulationMode
     ) -> None:

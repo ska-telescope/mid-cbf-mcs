@@ -359,7 +359,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.
@@ -563,8 +563,6 @@ class Vcc(CspSubElementObsDevice):
             """
             device = self._device
             (result_code, msg) = super().do()
-
-            
 
             # Make a private copy of the device properties:
             device._vcc_id = device.VccID

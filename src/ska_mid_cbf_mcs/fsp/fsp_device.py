@@ -221,7 +221,7 @@ class Fsp(SKACapability):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(self: Fsp, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.

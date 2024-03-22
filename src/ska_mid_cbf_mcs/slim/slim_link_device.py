@@ -14,7 +14,6 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import FastCommand, ResultCode
 
@@ -378,7 +377,7 @@ class SlimLink(SKABaseDevice):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(self, value):
         # PROTECTED REGION ID(SlimLink.simulationMode_write) ENABLED START #
         """

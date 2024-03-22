@@ -20,7 +20,7 @@ from typing import List, Optional, Tuple
 
 import tango
 from ska_tango_base import SKAController
-from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
@@ -350,7 +350,7 @@ class CbfController(SKAController):
         :return: the current simulation mode
         """
         return self._talondx_component_manager.simulation_mode
-    
+
     def write_simulationMode(
         self: CbfController, value: SimulationMode
     ) -> None:
@@ -479,7 +479,7 @@ class CbfController(SKAController):
             self.logger.info(message)
             return (result_code, message)
 
-    class InitSysParamCommand(FastCommand):
+    class InitSysParamCommand:
         """
         A class for the CbfController's InitSysParam() command.
         """

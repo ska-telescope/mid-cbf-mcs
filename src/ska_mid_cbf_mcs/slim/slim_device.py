@@ -377,7 +377,7 @@ class Slim(SKABaseDevice):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(self: Slim, value: SimulationMode) -> None:
         """
         Overrides the base class implementation. Additionally set the
@@ -387,12 +387,6 @@ class Slim(SKABaseDevice):
         """
         self.logger.info(f"Writing simulationMode to {value}")
         self.component_manager._simulation_mode = value
-
-    def read_simulationMode(self: Slim) -> SimulationMode:
-        """
-        Reads simulation mode. Overrides the base class implementation.
-        """
-        return self.component_manager._simulation_mode
 
 
 # ----------

@@ -384,7 +384,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the current simulation mode
         """
         return self.component_manager.simulation_mode
-    
+
     def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
         """
         Set the Simulation Mode of the device.
@@ -393,12 +393,6 @@ class CbfSubarray(CspSubElementSubarray):
         """
         self.logger.info(f"Writing simulation mode of {value}")
         self.component_manager._simulation_mode = value
-
-    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
-        self.logger.info(
-            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
-        )
-        return self.component_manager._simulation_mode
 
     def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
@@ -519,9 +513,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    def RemoveReceptors(
-        self: CbfSubarray, argin: List[str]
-    ) -> None:
+    def RemoveReceptors(self: CbfSubarray, argin: List[str]) -> None:
         """
         Remove input from list of assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
@@ -633,9 +625,7 @@ class CbfSubarray(CspSubElementSubarray):
         doc_out="(ReturnType, 'informational message')",
     )
     @tango.DebugIt()
-    def AddReceptors(
-        self: CbfSubarray, argin: List[str]
-    ) -> None:
+    def AddReceptors(self: CbfSubarray, argin: List[str]) -> None:
         """
         Assign input receptors to this subarray.
         Set subarray to ObsState.IDLE if no receptors were previously assigned.

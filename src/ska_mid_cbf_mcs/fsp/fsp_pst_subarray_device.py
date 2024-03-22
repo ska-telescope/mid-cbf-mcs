@@ -437,9 +437,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureScan(
-        self: FspPstSubarray, argin: str
-    ) -> None:
+    def ConfigureScan(self: FspPstSubarray, argin: str) -> None:
         # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.

@@ -19,7 +19,6 @@ import time
 from typing import Optional, Tuple
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import FastCommand, ResultCode
 
@@ -326,9 +325,7 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOnOutlet(
-        self: PowerSwitch, argin: str
-    ) -> None:
+    def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
         handler = self.get_command_object("TurnOnOutlet")
         return_code, message = handler(argin)
@@ -390,9 +387,7 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOffOutlet(
-        self: PowerSwitch, argin: str
-    ) -> None:
+    def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
         handler = self.get_command_object("TurnOffOutlet")
         return_code, message = handler(argin)
