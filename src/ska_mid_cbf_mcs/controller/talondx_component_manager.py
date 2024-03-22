@@ -59,11 +59,13 @@ class TalonDxComponentManager:
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
-        self._hw_config_path = hw_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
-        self.talondx_config = {}
+
+        self._hw_config_path = hw_config_path
         self._hw_config = {}
+
+        self.talondx_config = {}
         self.proxies = {}
 
     def read_config(self: TalonDxComponentManager) -> ResultCode:

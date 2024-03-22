@@ -432,6 +432,11 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
+            # Turn on all the LRUs with the boards we need
+            lru_on_status, log_msg = self._turn_on_lrus()
+            if not lru_on_status:
+                return (ResultCode.FAILED, log_msg)
+
             # Configure all the Talon boards
             if (
                 self._talondx_component_manager.configure_talons()
@@ -439,13 +444,6 @@ class ControllerComponentManager(CbfComponentManager):
             ):
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            # TODO: Temporarily configure all talon boards first
-
-            # Turn on all the LRUs with the boards we need
-            lru_on_status, log_msg = self._turn_on_lrus()
-            if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
 
             try:

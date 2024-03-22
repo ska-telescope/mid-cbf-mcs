@@ -229,14 +229,14 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return None
 
-    def check_power_mode(
-        self: TalonLRUComponentManager, state: DevState
-    ) -> None:
+    def get_power_mode(
+        self: TalonLRUComponentManager,
+    ) -> Tuple[PowerMode, PowerMode]:
         """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state.
+        Get the power mode of both PDUs.
 
-        :param state: device operational state
+        :return: A tuple containing the power mode of PDU 1 and PDU 2 in that order
+        :rtype: (PowerMode, PowerMode)
         """
         if self._proxy_power_switch1 is not None:
             if self._proxy_power_switch1.numOutlets != 0:
@@ -266,6 +266,19 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu2_power_mode = PowerMode.UNKNOWN
         else:
             self.pdu2_power_mode = PowerMode.UNKNOWN
+
+        return (self.pdu1_power_mode, self.pdu2_power_mode)
+
+    def check_power_mode(
+        self: TalonLRUComponentManager, state: DevState
+    ) -> None:
+        """
+        Get the power mode of both PDUs and check that it is consistent with the
+        current device state.
+
+        :param state: device operational state
+        """
+        self.get_power_mode()
 
         # Check the expected power mode
         if state == DevState.INIT or state == DevState.OFF:
