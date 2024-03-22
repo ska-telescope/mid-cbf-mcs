@@ -57,7 +57,6 @@ class TalonDxComponentManager:
                                 is no simulator for the Talon boards, so the component
                             manager does nothing when in simulation mode
         :param logger: a logger for this object to use
-        :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
         self._hw_config_path = hw_config_path
@@ -65,6 +64,7 @@ class TalonDxComponentManager:
         self.logger = logger
         self.talondx_config = {}
         self._hw_config = {}
+        self.proxies = {}
 
     def read_config(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -106,8 +106,6 @@ class TalonDxComponentManager:
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
-        # Initialize proxies dict outside of the configure_talon_thread, so that the thread for each talon doesn't overwrite the previous one
-        self.proxies = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
