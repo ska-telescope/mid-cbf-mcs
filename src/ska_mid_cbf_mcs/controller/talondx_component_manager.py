@@ -605,13 +605,13 @@ class TalonDxComponentManager:
                 self.logger.error(f"Talon reboot thread results: {results}")
                 ret = ResultCode.FAILED
         return ret
-    
+
     def _reboot_talon_thread(
         self: TalonDxComponentManager, talon_cfg
     ) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
-        
+
         :return: ResultCode.OK if reboot command was sent successfully,
                  otherwise ResultCode.FAILED
         """
@@ -622,9 +622,7 @@ class TalonDxComponentManager:
             talon_first_connect_timeout = talon_cfg[
                 "talon_first_connect_timeout"
             ]
-            self.logger.info(
-                f"Rebooting OS of {target}"
-            )
+            self.logger.info(f"Rebooting OS of {target}")
             with SSHClient() as ssh_client:
 
                 @backoff.on_exception(
@@ -649,14 +647,10 @@ class TalonDxComponentManager:
                 environment = os.getenv("ENVIRONMENT")
                 if environment == "minikube":
                     ssh_chan = ssh_client.get_transport().open_session()
-                    ssh_chan.exec_command(
-                        "reboot"
-                    )
+                    ssh_chan.exec_command("reboot")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
-                        self.logger.error(
-                            f"Error rebooting OS: {exit_status}"
-                        )
+                        self.logger.error(f"Error rebooting OS: {exit_status}")
                         ret = ResultCode.FAILED
 
         except NoValidConnectionsError as e:
