@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import copy
 import json
+import time
 from typing import List, Optional, Tuple
 
 # tango imported to enable use of @tango.DebugIt. If
@@ -525,6 +526,7 @@ class CbfSubarray(CspSubElementSubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        t1 = time.time()
         command = self.get_command_object("RemoveReceptors")
 
         (valid, msg) = command.validate_input(argin)
@@ -539,6 +541,9 @@ class CbfSubarray(CspSubElementSubarray):
 
         self.logger.info(msg)
         (return_code, message) = command(argin)
+
+        t2 = time.time()
+        self._logger.error(f"RemoveReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     class RemoveAllReceptorsCommand(
@@ -578,9 +583,13 @@ class CbfSubarray(CspSubElementSubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        t1 = time.time()
 
         command = self.get_command_object("RemoveAllReceptors")
         (return_code, message) = command()
+
+        t2 = time.time()
+        self._logger.error(f"RemoveAllReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
@@ -639,6 +648,7 @@ class CbfSubarray(CspSubElementSubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        t1 = time.time()
         command = self.get_command_object("AddReceptors")
 
         (valid, msg) = command.validate_input(argin)
@@ -653,6 +663,8 @@ class CbfSubarray(CspSubElementSubarray):
         self.logger.info(msg)
 
         (return_code, message) = command(argin)
+        t2 = time.time()
+        self._logger.error(f"AddReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     #  Configure Related Commands   #
@@ -862,7 +874,7 @@ class CbfSubarray(CspSubElementSubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
+        t1 = time.time()
         command = self.get_command_object("ConfigureScan")
 
         (valid, msg) = command.validate_input(argin)
@@ -877,6 +889,9 @@ class CbfSubarray(CspSubElementSubarray):
         (result_code, message) = command(argin)
 
         self.logger.debug(f"obsState == {self.obsState}")
+
+        t2 = time.time()
+        self._logger.error(f"ConfigureScanCommand time: {t2 - t1}")
         return [[result_code], [message]]
 
     class GoToIdleCommand(CspSubElementSubarray.GoToIdleCommand):
@@ -939,9 +954,13 @@ class CbfSubarray(CspSubElementSubarray):
         # NOTE: ska-tango-base class also deletes self._last_scan_configuration
         # here, but we are choosing to preserve it even in IDLE state should there
         # be a need to check it
+        t1 = time.time()
 
         command = self.get_command_object("GoToIdle")
         (return_code, message) = command()
+
+        t2 = time.time()
+        self._logger.error(f"GoToIdleCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     class ScanCommand(CspSubElementSubarray.ScanCommand):
@@ -962,8 +981,12 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            t1 = time.time()
             component_manager = self.target
             (result_code, msg) = component_manager.scan(argin)
+
+            t2 = time.time()
+            self._logger.error(f"ScanCommand time: {t2 - t1}")
             return (result_code, msg)
 
     class EndScanCommand(CspSubElementSubarray.EndScanCommand):
@@ -980,8 +1003,12 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            t1 = time.time()
             component_manager = self.target
             (result_code, msg) = component_manager.end_scan()
+
+            t2 = time.time()
+            self._logger.error(f"EndScanCommand time: {t2 - t1}")
             return (result_code, msg)
 
 

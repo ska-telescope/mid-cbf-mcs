@@ -16,6 +16,7 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
+import time
 from typing import List, Optional, Tuple
 
 import tango
@@ -388,6 +389,7 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            t1 = time.time()
 
             self.logger.info("Trying ON Command")
 
@@ -399,6 +401,8 @@ class CbfController(SKAController):
             elif result_code == ResultCode.FAILED:
                 self.logger.error(message)
 
+            t2 = time.time()
+            self._logger.error(f"OnCommand time: {t2 - t1}")
             return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
@@ -431,6 +435,7 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            t1 = time.time()
             if self.is_allowed():
                 (result_code, message) = self.target.component_manager.off()
             else:
@@ -443,6 +448,8 @@ class CbfController(SKAController):
             elif result_code == ResultCode.FAILED:
                 self.logger.error(message)
 
+            t2 = time.time()
+            self._logger.error(f"OffCommand time: {t2 - t1}")
             return (result_code, message)
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
@@ -528,8 +535,12 @@ class CbfController(SKAController):
         self: CbfController, argin: str
     ) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(CbfController.InitSysParam) ENABLED START #
+        t1 = time.time()
         handler = self.get_command_object("InitSysParam")
         return_code, message = handler(argin)
+
+        t2 = time.time()
+        self._logger.error(f"InitSysParam time: {t2 - t1}")
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  CbfController.InitSysParam
 
