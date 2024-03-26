@@ -402,7 +402,7 @@ class CbfController(SKAController):
                 self.logger.error(message)
 
             t2 = time.time()
-            self._logger.error(f"OnCommand time: {t2 - t1}")
+            self.logger.error(f"OnCommand time: {t2 - t1}")
             return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
@@ -449,7 +449,7 @@ class CbfController(SKAController):
                 self.logger.error(message)
 
             t2 = time.time()
-            self._logger.error(f"OffCommand time: {t2 - t1}")
+            self.logger.error(f"OffCommand time: {t2 - t1}")
             return (result_code, message)
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
@@ -540,7 +540,7 @@ class CbfController(SKAController):
         return_code, message = handler(argin)
 
         t2 = time.time()
-        self._logger.error(f"InitSysParam time: {t2 - t1}")
+        self.logger.error(f"InitSysParam time: {t2 - t1}")
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  CbfController.InitSysParam
 

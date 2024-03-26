@@ -531,7 +531,7 @@ class CbfSubarray(CspSubElementSubarray):
 
         (valid, msg) = command.validate_input(argin)
         if not valid:
-            self._logger.error(msg)
+            self.logger.error(msg)
             tango.Except.throw_exception(
                 "Command failed",
                 msg,
@@ -543,7 +543,7 @@ class CbfSubarray(CspSubElementSubarray):
         (return_code, message) = command(argin)
 
         t2 = time.time()
-        self._logger.error(f"RemoveReceptorsCommand time: {t2 - t1}")
+        self.logger.error(f"RemoveReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     class RemoveAllReceptorsCommand(
@@ -589,7 +589,7 @@ class CbfSubarray(CspSubElementSubarray):
         (return_code, message) = command()
 
         t2 = time.time()
-        self._logger.error(f"RemoveAllReceptorsCommand time: {t2 - t1}")
+        self.logger.error(f"RemoveAllReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
@@ -653,7 +653,7 @@ class CbfSubarray(CspSubElementSubarray):
 
         (valid, msg) = command.validate_input(argin)
         if not valid:
-            self._logger.error(msg)
+            self.logger.error(msg)
             tango.Except.throw_exception(
                 "Command failed",
                 msg,
@@ -664,7 +664,7 @@ class CbfSubarray(CspSubElementSubarray):
 
         (return_code, message) = command(argin)
         t2 = time.time()
-        self._logger.error(f"AddReceptorsCommand time: {t2 - t1}")
+        self.logger.error(f"AddReceptorsCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     #  Configure Related Commands   #
@@ -891,7 +891,7 @@ class CbfSubarray(CspSubElementSubarray):
         self.logger.debug(f"obsState == {self.obsState}")
 
         t2 = time.time()
-        self._logger.error(f"ConfigureScanCommand time: {t2 - t1}")
+        self.logger.error(f"ConfigureScanCommand time: {t2 - t1}")
         return [[result_code], [message]]
 
     class GoToIdleCommand(CspSubElementSubarray.GoToIdleCommand):
@@ -960,7 +960,7 @@ class CbfSubarray(CspSubElementSubarray):
         (return_code, message) = command()
 
         t2 = time.time()
-        self._logger.error(f"GoToIdleCommand time: {t2 - t1}")
+        self.logger.error(f"GoToIdleCommand time: {t2 - t1}")
         return [[return_code], [message]]
 
     class ScanCommand(CspSubElementSubarray.ScanCommand):
@@ -986,7 +986,7 @@ class CbfSubarray(CspSubElementSubarray):
             (result_code, msg) = component_manager.scan(argin)
 
             t2 = time.time()
-            self._logger.error(f"ScanCommand time: {t2 - t1}")
+            self.logger.error(f"ScanCommand time: {t2 - t1}")
             return (result_code, msg)
 
     class EndScanCommand(CspSubElementSubarray.EndScanCommand):
@@ -1008,7 +1008,7 @@ class CbfSubarray(CspSubElementSubarray):
             (result_code, msg) = component_manager.end_scan()
 
             t2 = time.time()
-            self._logger.error(f"EndScanCommand time: {t2 - t1}")
+            self.logger.error(f"EndScanCommand time: {t2 - t1}")
             return (result_code, msg)
 
 
