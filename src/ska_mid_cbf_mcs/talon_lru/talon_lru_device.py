@@ -256,7 +256,7 @@ class TalonLRU(SKABaseDevice):
 
             return (result_code, msg)
 
-    class OnCommand(ResponseCommand):
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         The command class for the On command.
 
@@ -305,7 +305,7 @@ class TalonLRU(SKABaseDevice):
                 self.is_allowed()
                 return device.component_manager.off()
 
-    class GetPowerModeCommand(SKABaseDevice.GetPowerModeCommand):
+    class GetPowerModeCommand(ResponseCommand):
         """
         The command class for the GetPowerMode command.
 
