@@ -75,6 +75,9 @@ def controller_component_manager(
             self.simulation_mode = SimulationMode.TRUE
             pass
 
+        def read_config(self: MockTalonDxComponentManager) -> ResultCode:
+            return ResultCode.OK
+
         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
             return ResultCode.OK
 
@@ -307,6 +310,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_result_command("GetPowerMode", ResultCode.OK)
     return builder()
 
 
