@@ -5,7 +5,7 @@ PROJECT = ska-mid-cbf-mcs
 KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
 SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
 DASHBOARD ?= webjive-dash.dump
-CLUSTER_DOMAIN ?= cluster.local
+CLUSTER_DOMAIN ?= techops.internal.skao.int
 
 HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources will be labelled with
 
