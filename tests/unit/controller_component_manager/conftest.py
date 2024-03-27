@@ -25,6 +25,7 @@ from ska_tango_base.control_model import (
     HealthState,
     ObsState,
     SimulationMode,
+    PowerMode,
 )
 
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
@@ -310,7 +311,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("GetPowerMode", ResultCode.OK)
+    builder.add_result_command("GetPowerMode", (PowerMode.On, PowerMode.On))
     return builder()
 
 
