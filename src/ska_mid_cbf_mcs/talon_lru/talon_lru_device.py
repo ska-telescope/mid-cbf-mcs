@@ -19,7 +19,7 @@ from typing import Any, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command, device_property, run
@@ -256,7 +256,7 @@ class TalonLRU(SKABaseDevice):
 
             return (result_code, msg)
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand(ResponseCommand):
         """
         The command class for the On command.
 
