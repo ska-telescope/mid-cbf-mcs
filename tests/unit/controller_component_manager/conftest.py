@@ -87,6 +87,9 @@ def controller_component_manager(
         ) -> ResultCode:
             return ResultCode.OK
 
+        def reboot(self: MockTalonDxComponentManager) -> ResultCode:
+            return ResultCode.OK
+
     f = open(file_path + "/../../data/test_fqdns.json")
     json_string = f.read().replace("\n", "")
     f.close()
