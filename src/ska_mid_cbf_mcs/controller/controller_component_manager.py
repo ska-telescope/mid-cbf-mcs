@@ -803,11 +803,10 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            print(
-                f'Grabbing PDU1PowerMode attribute: {proxy.read_attribute("PDU1PowerMode").value}'
-            )
-            print(
-                f'Grabbing PDU2PowerMode attribute: {proxy.read_attribute("PDU2PowerMode").value}'
+            lru_pdu1_powermode = proxy.read_attribute("PDU1PowerMode").value
+            lru_pdu2_powermode = proxy.read_attribute("PDU2PowerMode").value
+            self._logger.info(
+                f"LRU {lru_fqdn} currently on? {lru_pdu1_powermode == PowerMode.ON or lru_pdu2_powermode == PowerMode.ON:}"
             )
 
             if True:

@@ -601,7 +601,7 @@ class TalonDxComponentManager:
                 ]
                 results = [f.result() for f in futures]
 
-            if any(r[0] == ResultCode.FAILED for r in results):
+            if any(r == ResultCode.FAILED for r in results):
                 self.logger.error(f"Talon reboot thread results: {results}")
                 ret = ResultCode.FAILED
         return ret
