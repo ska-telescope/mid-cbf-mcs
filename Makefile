@@ -5,7 +5,7 @@ PROJECT = ska-mid-cbf-mcs
 KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
 SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
 DASHBOARD ?= webjive-dash.dump
-CLUSTER_DOMAIN ?= techops.internal.skao.int
+CLUSTER_DOMAIN ?= cluster.local
 
 HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources will be labelled with
 
@@ -86,6 +86,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
 	--set ska-tango-base.itango.enabled=$(ITANGO_ENABLED) \
+	--set ska-mid-cbf-mcs.hostInfo.clusterDomain="$(CLUSTER_DOMAIN) \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
 
