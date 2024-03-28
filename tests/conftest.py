@@ -7,6 +7,7 @@
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
+# Add junk to test commit
 
 """
 A module defining a list of fixture functions that are shared across all the
