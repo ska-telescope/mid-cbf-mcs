@@ -24,7 +24,6 @@ from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
     ObsState,
-    PowerMode,
     SimulationMode,
 )
 

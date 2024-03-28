@@ -21,8 +21,7 @@ import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import DebugIt
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
