@@ -803,8 +803,7 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            lru_power_modes = proxy.GetPowerMode()
-            print(lru_power_modes)
+            lru_power_mode = proxy.read_attribute("powerMode").value
             if True:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"

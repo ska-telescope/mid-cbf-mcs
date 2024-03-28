@@ -311,7 +311,6 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("GetPowerMode", (PowerMode.ON, PowerMode.ON))
     return builder()
 
 

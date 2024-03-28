@@ -19,7 +19,7 @@ from typing import Any, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command, device_property, run
@@ -102,9 +102,6 @@ class TalonLRU(SKABaseDevice):
         device_args = (self, self.op_state_model, self.logger)
         self.register_command_object("On", self.OnCommand(*device_args))
         self.register_command_object("Off", self.OffCommand(*device_args))
-        self.register_command_object(
-            "GetPowerMode", self.GetPowerModeCommand(*device_args)
-        )
 
     # ------------------
     # Attributes methods
@@ -304,37 +301,6 @@ class TalonLRU(SKABaseDevice):
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
                 return device.component_manager.off()
-
-    class GetPowerModeCommand(ResponseCommand):
-        """
-        The command class for the GetPowerMode command.
-
-        Get the power mode of both PDUs of the LRU.
-        """
-
-        def do(
-            self: TalonLRU.GetPowerModeCommand,
-        ) -> Tuple[PowerMode, PowerMode]:
-            """
-            Implement GetPowerMode command functionality.
-
-            :return: A Tuple containing powermode of PDU1 and powermode of PDU2 in that order.
-            """
-            device = self.target
-            return device.component_manager.get_power_mode()
-
-    @command(
-        dtype_in=None, doc_in="Get the power mode of both PDUs of the LRU."
-    )
-    @DebugIt()
-    def GetPowerMode(self) -> Tuple[PowerMode, PowerMode]:
-        """
-        Get the power mode of both outlets that provide power to the LRU.
-
-        :return: A Tuple containing powermode of PDU1 and powermode of PDU2 in that order.
-        """
-        command = self.get_command_object("GetPowerMode")
-        return command()
 
 
 # ----------

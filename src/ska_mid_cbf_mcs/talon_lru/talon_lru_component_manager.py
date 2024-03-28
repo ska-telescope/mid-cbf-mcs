@@ -229,7 +229,51 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return None
 
-    def get_power_mode(
+    def check_power_mode(
+        self: TalonLRUComponentManager, state: DevState
+    ) -> None:
+        """
+        Get the power mode of both PDUs and check that it is consistent with the
+        current device state.
+
+        :param state: device operational state
+        """
+        self._get_power_mode()
+
+        # Check the expected power mode
+        if state == DevState.INIT or state == DevState.OFF:
+            expected_power_mode = PowerMode.OFF
+        elif state == DevState.ON:
+            expected_power_mode = PowerMode.ON
+        else:
+            # In other device states, we don't know what the expected power
+            # mode should be. Don't check it.
+            return
+
+        if (
+            self.pdu1_power_mode == expected_power_mode
+            and self.pdu2_power_mode == expected_power_mode
+        ):
+            return
+
+        if self.pdu1_power_mode != expected_power_mode:
+            self._logger.error(
+                f"PDU outlet 1 expected power mode: ({expected_power_mode}),"
+                f" actual power mode: ({self.pdu1_power_mode})"
+            )
+
+        if self.pdu2_power_mode != expected_power_mode:
+            self._logger.error(
+                f"PDU outlet 2 expected power mode: ({expected_power_mode}),"
+                f" actual power mode: ({self.pdu2_power_mode})"
+            )
+
+        # Temporary fix to avoid redeploying MCS (CIP-1561)
+        # PDU outlet state mismatch is logged but fault is not triggered
+        # self.update_component_fault(True)
+        return
+
+    def _get_power_mode(
         self: TalonLRUComponentManager,
     ) -> Tuple[PowerMode, PowerMode]:
         """
@@ -268,50 +312,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.pdu2_power_mode = PowerMode.UNKNOWN
 
         return (self.pdu1_power_mode, self.pdu2_power_mode)
-
-    def check_power_mode(
-        self: TalonLRUComponentManager, state: DevState
-    ) -> None:
-        """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state.
-
-        :param state: device operational state
-        """
-        self.get_power_mode()
-
-        # Check the expected power mode
-        if state == DevState.INIT or state == DevState.OFF:
-            expected_power_mode = PowerMode.OFF
-        elif state == DevState.ON:
-            expected_power_mode = PowerMode.ON
-        else:
-            # In other device states, we don't know what the expected power
-            # mode should be. Don't check it.
-            return
-
-        if (
-            self.pdu1_power_mode == expected_power_mode
-            and self.pdu2_power_mode == expected_power_mode
-        ):
-            return
-
-        if self.pdu1_power_mode != expected_power_mode:
-            self._logger.error(
-                f"PDU outlet 1 expected power mode: ({expected_power_mode}),"
-                f" actual power mode: ({self.pdu1_power_mode})"
-            )
-
-        if self.pdu2_power_mode != expected_power_mode:
-            self._logger.error(
-                f"PDU outlet 2 expected power mode: ({expected_power_mode}),"
-                f" actual power mode: ({self.pdu2_power_mode})"
-            )
-
-        # Temporary fix to avoid redeploying MCS (CIP-1561)
-        # PDU outlet state mismatch is logged but fault is not triggered
-        # self.update_component_fault(True)
-        return
 
     def on(
         self: TalonLRUComponentManager, simulation_mode: SimulationMode
