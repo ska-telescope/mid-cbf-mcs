@@ -57,10 +57,12 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/deploy.gitlab-ci.yml'
 
-
 k8s-test:
   variables:
     KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+    SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
+  before_script:
+    - curl -s https://gitlab.com/ska-telescope/templates-repository/-/raw/master/scripts/namespace_auth.sh | bash -s $(SERVICE_ACCOUNT) $(KUBE_NAMESPACE) || true
 
 stop-k8s-test:
   variables:
