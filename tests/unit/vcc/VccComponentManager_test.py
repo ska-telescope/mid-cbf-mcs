@@ -427,6 +427,79 @@ class TestVccComponentManager:
             f"{vcc_component_manager.frequency_band}"
         )
         mock_vcc_band.ConfigureScan.assert_not_called()
+        
+    
+    @pytest.mark.parametrize(
+        "config_file_name", ["Vcc_ConfigureScan_basic.json"]
+    )
+    def test_configure_scan_dish_id_mismatch(
+        self: TestVccComponentManager,
+        vcc_component_manager: VccComponentManager,
+        mock_wib: unittest.mock.Mock,
+        mock_vcc_band: unittest.mock.Mock,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test a scan configuration with ExpectedDishID != DishID.
+
+        :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_controller: VCC controller mock fixture
+        :param mock_vcc_band: VCC band mock fixture
+        :param config_file_name: JSON file for the configuration
+        """
+        vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
+
+        # assert mock_wib.State == DevState.ON
+        
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        configuration = json.loads(json_str)
+        f.close()
+
+        vcc_component_manager.configure_band(
+            json.dumps(
+                {
+                    "frequency_band": configuration["frequency_band"],
+                    "dish_sample_rate": 999999,
+                    "samples_per_frame": 18,
+                }
+            )
+        )
+        assert (
+            vcc_component_manager.frequency_band
+            == freq_band_dict()[configuration["frequency_band"]]["band_index"]
+        )
+
+        (result_code, _) = vcc_component_manager.configure_scan(json_str)
+        assert result_code == ResultCode.OK
+
+        # assert vcc_component_manager.config_id == configuration["config_id"]
+        # assert (
+        #     vcc_component_manager.stream_tuning
+        #     == configuration["band_5_tuning"]
+        # )
+        # assert (
+        #     vcc_component_manager.frequency_band_offset_stream1
+        #     == configuration["frequency_band_offset_stream1"]
+        # )
+        # assert (
+        #     vcc_component_manager.frequency_band_offset_stream2
+        #     == configuration["frequency_band_offset_stream2"]
+        # )
+        # assert vcc_component_manager.rfi_flagging_mask == str(
+        #     configuration["rfi_flagging_mask"]
+        # )
+        mock_vcc_band.ConfigureScan.assert_next_call(json_str)
+
+        vcc_component_manager.deconfigure()
+        assert vcc_component_manager.frequency_band == 0
+        assert vcc_component_manager.config_id == ""
+        assert vcc_component_manager.stream_tuning == (0, 0)
+        assert vcc_component_manager.frequency_band_offset_stream1 == 0
+        assert vcc_component_manager.frequency_band_offset_stream2 == 0
+        assert vcc_component_manager.rfi_flagging_mask == ""
+        # mock_vcc_controller.Unconfigure.assert_next_call() # TODO CIP-1850
 
     @pytest.mark.parametrize(
         "config_file_name, \
