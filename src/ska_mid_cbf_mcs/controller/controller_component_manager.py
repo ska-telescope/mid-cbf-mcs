@@ -806,7 +806,7 @@ class ControllerComponentManager(CbfComponentManager):
             lru_pdu1_powermode = proxy.read_attribute("PDU1PowerMode").value
             lru_pdu2_powermode = proxy.read_attribute("PDU2PowerMode").value
             self._logger.info(
-                f"LRU {lru_fqdn} currently on? {lru_pdu1_powermode == PowerMode.ON or lru_pdu2_powermode == PowerMode.ON:}"
+                f"LRU {lru_fqdn} currently on? {lru_pdu1_powermode == PowerMode.ON or lru_pdu2_powermode == PowerMode.ON}"
             )
 
             if True:
