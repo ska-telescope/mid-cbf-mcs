@@ -61,6 +61,7 @@ include:
 
 k8s-test:
   before_script:
+    - make k8s-namespace
     - make k8s-namespace-credentials
 
 stop-k8s-test:
