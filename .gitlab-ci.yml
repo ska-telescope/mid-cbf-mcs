@@ -61,9 +61,7 @@ include:
 
 k8s-test:
   before_script:
-    - export SERVICE_ACCOUNT=$SERVICE_ACCOUNT
-    - export KUBE_NAMESPACE=$KUBE_NAMESPACE
-    - curl -s https://gitlab.com/ska-telescope/templates-repository/-/raw/master/scripts/namespace_auth.sh | bash -s $SERVICE_ACCOUNT $KUBE_NAMESPACE || true
+    - make k8s-namespace-credentials
 
 stop-k8s-test:
   variables:
