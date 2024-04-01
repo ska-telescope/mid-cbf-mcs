@@ -5,6 +5,15 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.13.1
+******
+* CIP-2238/REL-1337: bumped engineering console version
+
+0.13.0
+******
+* CIP-2238: Internally, MCS no longer refers to dishes/DISH IDs as receptors/receptor IDs, 
+  and the distinction has been made when those integer indices actually refer to VCC IDs
+
 0.12.28
 *******
 * CIP-2306: Implemented is_ConfigureScan_allowed() to enforce state model for ConfigureScan.
