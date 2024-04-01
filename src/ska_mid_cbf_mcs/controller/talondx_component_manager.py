@@ -645,6 +645,7 @@ class TalonDxComponentManager:
                 self.logger.info(f"Sending reboot command to {target}")
 
                 environment = os.getenv("ENVIRONMENT")
+                self.logger.info(f"Environment: {environment}")
                 if environment == "minikube":
                     self.logger.info("In minikube environment")
                     ssh_chan = ssh_client.get_transport().open_session()
