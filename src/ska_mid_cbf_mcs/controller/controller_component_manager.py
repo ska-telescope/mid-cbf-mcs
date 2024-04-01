@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -445,6 +446,8 @@ class ControllerComponentManager(CbfComponentManager):
             lru_on_status, log_msg = self._turn_on_lrus()
             if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
+
+            time.sleep(20)
 
             # Configure all the Talon boards
             if (

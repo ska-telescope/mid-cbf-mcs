@@ -638,6 +638,7 @@ class TalonDxComponentManager:
                     ssh_client.connect(ip, username="root", password="")
 
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                self.logger.info(f"Connecting to {target} to reboot")
                 make_first_connect(ip, ssh_client)
 
                 # TODO: remove logging
