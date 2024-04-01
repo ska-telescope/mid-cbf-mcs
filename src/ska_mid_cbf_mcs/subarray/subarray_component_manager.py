@@ -1663,35 +1663,37 @@ class CbfSubarrayComponentManager(
 
         # Configure searchWindow.
         if "search_window" in configuration:
-            for search_window in configuration["search_window"]:
-                search_window["frequency_band"] = common_configuration[
-                    "frequency_band"
-                ]
-                search_window[
-                    "frequency_band_offset_stream1"
-                ] = self._frequency_band_offset_stream1
-                search_window[
-                    "frequency_band_offset_stream2"
-                ] = self._frequency_band_offset_stream2
-                if search_window["frequency_band"] in ["5a", "5b"]:
-                    search_window["band_5_tuning"] = common_configuration[
-                        "band_5_tuning"
-                    ]
-                # pass DISH ID as VCC ID integer to VCCs
-                if search_window["tdc_enable"]:
-                    for tdc_dest in search_window["tdc_destination_address"]:
-                        tdc_dest[
-                            "receptor_id"
-                        ] = self._dish_utils.dish_id_to_vcc_id[
-                            tdc_dest["receptor_id"]
-                        ]
-                # pass on configuration to VCC
-                data = tango.DeviceData()
-                data.insert(tango.DevString, json.dumps(search_window))
-                self._logger.debug(
-                    f"configuring search window: {json.dumps(search_window)}"
-                )
-                self._group_vcc.command_inout("ConfigureSearchWindow", data)
+            # TODO: CIP-1470 comment to remove VCC search window
+            pass
+            # for search_window in configuration["search_window"]:
+            #     search_window["frequency_band"] = common_configuration[
+            #         "frequency_band"
+            #     ]
+            #     search_window[
+            #         "frequency_band_offset_stream1"
+            #     ] = self._frequency_band_offset_stream1
+            #     search_window[
+            #         "frequency_band_offset_stream2"
+            #     ] = self._frequency_band_offset_stream2
+            #     if search_window["frequency_band"] in ["5a", "5b"]:
+            #         search_window["band_5_tuning"] = common_configuration[
+            #             "band_5_tuning"
+            #         ]
+            #     # pass DISH ID as VCC ID integer to VCCs
+            #     if search_window["tdc_enable"]:
+            #         for tdc_dest in search_window["tdc_destination_address"]:
+            #             tdc_dest[
+            #                 "receptor_id"
+            #             ] = self._dish_utils.dish_id_to_vcc_id[
+            #                 tdc_dest["receptor_id"]
+            #             ]
+            #     # pass on configuration to VCC
+            #     data = tango.DeviceData()
+            #     data.insert(tango.DevString, json.dumps(search_window))
+            #     self._logger.debug(
+            #         f"configuring search window: {json.dumps(search_window)}"
+            #     )
+            #     self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."
             self._logger.warning(log_msg)

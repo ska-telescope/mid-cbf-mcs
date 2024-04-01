@@ -449,17 +449,18 @@ def init_proxies_fixture():
             ]:
                 self.vcc.append(proxy)
 
-            self.vccSw = [None]
-            for i in range(1, self.num_vcc + 1):
-                sw = [None]
-                for j in range(1, 3):  # 2 search windows
-                    sw.append(
-                        CbfDeviceProxy(
-                            fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
-                            logger=logging.getLogger(),
-                        )
-                    )
-                self.vccSw.append(sw)
+            # TODO: CIP-1470 removed VCC SW
+            # self.vccSw = [None]
+            # for i in range(1, self.num_vcc + 1):
+            #     sw = [None]
+            #     for j in range(1, 3):  # 2 search windows
+            #         sw.append(
+            #             CbfDeviceProxy(
+            #                 fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
+            #                 logger=logging.getLogger(),
+            #             )
+            #         )
+            #     self.vccSw.append(sw)
 
             # Talon LRU
             self.talon_lru = []

@@ -479,6 +479,7 @@ class TestVccComponentManager:
         assert result_code == ResultCode.OK
         mock_vcc_band.EndScan.assert_next_call()
 
+    @pytest.mark.skip(reason="CIP-1470 removed unused VCC search window")
     @pytest.mark.parametrize(
         "sw_config_file_name, \
         config_file_name",

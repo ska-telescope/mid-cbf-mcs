@@ -316,10 +316,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 fqdn=self._talon_lru_fqdn, logger=self._logger
             )
 
-            self._sw_proxies = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._search_window_fqdn
-            ]
+            # TODO: CIP-1470 comment to remove VCC search window
+            # self._sw_proxies = [
+            #     CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+            #     for fqdn in self._search_window_fqdn
+            # ]
         except tango.DevFailed:
             self.update_component_fault(True)
             self._logger.error("Error in proxy connection")

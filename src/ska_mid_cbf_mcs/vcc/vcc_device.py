@@ -1425,7 +1425,12 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
             self.logger.debug(f"argin: {argin}")
-            return self.target.component_manager.configure_search_window(argin)
+            # TODO: CIP-1470 comment to remove VCC search window
+            # return self.target.component_manager.configure_search_window(argin)
+            return (
+                ResultCode.OK,
+                "Vcc.ConfigureSearchWindowCommand unimplemented.",
+            )
 
     @command(
         dtype_in="DevString",
