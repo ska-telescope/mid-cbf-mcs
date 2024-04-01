@@ -803,6 +803,7 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
+            # check if LRU is already on
             lru_pdu1_powermode = proxy.read_attribute("PDU1PowerMode").value
             lru_pdu2_powermode = proxy.read_attribute("PDU2PowerMode").value
             self._logger.info(

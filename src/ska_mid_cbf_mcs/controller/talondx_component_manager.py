@@ -650,13 +650,25 @@ class TalonDxComponentManager:
                     ssh_chan.exec_command("reboot")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
-                        self.logger.error(f"Error rebooting OS: {exit_status}")
+                        self.logger.error(f"Failed sending reboot command: {exit_status}")
                         ret = ResultCode.FAILED
+
+                    # Wait for the reboot to take effect, try to reconnect until sucessful
+                    max_retries = 10
+                    retries = 0
+                    while retries < max_retries:
+                        try:
+                            make_first_connect(ip, ssh_client)
+                            self.logger.info(f"Reconnected to {target} after reboot")
+                        except NoValidConnectionsError:
+                            self.logger.info(f"Waiting for {target} to reboot, attempt #{retries} to re-establish connection...")
+                            time.sleep(2)   
+                            retries += 1
 
         except NoValidConnectionsError as e:
             self.logger.error(f"{e}")
             self.logger.error(
-                f"NoValidConnectionsError while connecting to {target}"
+                f"NoValidConnectionsError while initially connecting to {target}"
             )
             ret = ResultCode.FAILED
         except SSHException as e:
