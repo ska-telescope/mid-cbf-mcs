@@ -664,6 +664,10 @@ class TalonDxComponentManager:
                             self.logger.info(f"Waiting for {target} to reboot, attempt #{retries} to re-establish connection...")
                             time.sleep(2)   
                             retries += 1
+                            
+                    if retries == max_retries:
+                        self.logger.error(f"Failed to reconnect to {target} after reboot")
+                        ret = ResultCode.FAILED
 
         except NoValidConnectionsError as e:
             self.logger.error(f"{e}")
