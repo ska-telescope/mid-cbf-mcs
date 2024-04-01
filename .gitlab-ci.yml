@@ -63,6 +63,8 @@ k8s-test:
   before_script:
     - make k8s-namespace
     - make k8s-namespace-credentials
+    - make k8s-install-chart
+    - make k8s-wait
 
 stop-k8s-test:
   variables:
