@@ -590,25 +590,21 @@ class TalonDxComponentManager:
         Reboot Talon DX boards by sending a linux reboot command to the HPS master
 
         :return: ResultCode.OK if all configure commands were sent successfully,
-                 otherwise ResultCode.FAILED
+                otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(self._reboot_talon_thread, talon_cfg)
-                    for talon_cfg in self.talondx_config["config_commands"]
-                ]
-                results = [f.result() for f in futures]
+            results = [
+                self._reboot_talon(talon_cfg)
+                for talon_cfg in self.talondx_config["config_commands"]
+            ]
 
             if any(r == ResultCode.FAILED for r in results):
-                self.logger.error(f"Talon reboot thread results: {results}")
+                self.logger.error(f"Talon reboot results: {results}")
                 ret = ResultCode.FAILED
         return ret
 
-    def _reboot_talon_thread(
-        self: TalonDxComponentManager, talon_cfg
-    ) -> ResultCode:
+    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
@@ -643,6 +639,9 @@ class TalonDxComponentManager:
 
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
+
+                # TODO: remove logging
+                self.logger.info(f"Sending reboot command to {target}")
 
                 environment = os.getenv("ENVIRONMENT")
                 if environment == "minikube":
