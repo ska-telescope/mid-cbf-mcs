@@ -5,6 +5,8 @@ variables:
   MINIKUBE: "false"
   SHARED_K8S_CHART: "ska-mid-cbf-mcs"
   CLUSTER_DOMAIN: "techops.internal.skao.int"
+  SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
+  KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
 stages:
   - lint
@@ -58,9 +60,6 @@ include:
     file: 'gitlab-ci/includes/deploy.gitlab-ci.yml'
 
 k8s-test:
-  variables:
-    KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
-    SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
   before_script:
     - curl -s https://gitlab.com/ska-telescope/templates-repository/-/raw/master/scripts/namespace_auth.sh | bash -s $(SERVICE_ACCOUNT) $(KUBE_NAMESPACE) || true
 
