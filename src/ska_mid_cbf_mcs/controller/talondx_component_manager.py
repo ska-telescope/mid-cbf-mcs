@@ -595,7 +595,7 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
             results = [
-                self._reboot_talon(talon_cfg)
+                self._reboot_hps_master(talon_cfg)
                 for talon_cfg in self.talondx_config["config_commands"]
             ]
 
@@ -604,7 +604,7 @@ class TalonDxComponentManager:
                 ret = ResultCode.FAILED
         return ret
 
-    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+    def _reboot_hps_master(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
@@ -612,74 +612,43 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
+
+        talon = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][talon]
+        target = f"root@{ip}"
+
+        self.logger.info(f"Rebooting Talon board {talon}")
+
         try:
-            target = talon_cfg["target"]
-            ip = self._hw_config["talon_board"][target]
-            talon_first_connect_timeout = talon_cfg[
-                "talon_first_connect_timeout"
-            ]
-            self.logger.info(f"Rebooting OS of {target}")
             with SSHClient() as ssh_client:
-
-                @backoff.on_exception(
-                    backoff.expo,
-                    NoValidConnectionsError,
-                    max_value=3,
-                    max_time=talon_first_connect_timeout,
-                )
-                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
-                    """
-                    Attempts to connect to the Talon board for the first time
-                    after power-on.
-
-                    :param ip: IP address of the board
-                    :param ssh_client: SSH client to use for connection
-                    """
-                    ssh_client.connect(ip, username="root", password="")
-
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                self.logger.info(f"Connecting to {target} to reboot")
-                make_first_connect(ip, ssh_client)
+                ssh_client.connect(ip, username="root", password="")
+                ssh_chan = ssh_client.get_transport().open_session()
+                ssh_chan.exec_command("reboot")
+                exit_status = ssh_chan.recv_exit_status()
 
-                # TODO: remove logging
-                self.logger.info(f"Sending reboot command to {target}")
+                if exit_status != 0:
+                    self.logger.error(
+                        f"Error sending reboot command to HPS master on {target}: {exit_status}"
+                    )
+                    ret = ResultCode.FAILED
+                self.logger.info(f"Reboot command sent to {target}")
 
-                environment = os.getenv("ENVIRONMENT")
-                self.logger.info(f"Environment: {environment}")
-                if environment == "minikube":
-                    self.logger.info("In minikube environment")
-                    ssh_chan = ssh_client.get_transport().open_session()
-                    self.logger.info("Opened SSH channel")
-                    ssh_chan.exec_command("reboot")
-                    self.logger.info("Executed reboot command")
-                    exit_status = ssh_chan.recv_exit_status()
-                    if exit_status != 0:
-                        self.logger.error(
-                            f"Failed sending reboot command: {exit_status}"
+                # Wait for the reboot to take effect, try to reconnect until sucessful
+                max_retries = 10
+                retries = 0
+                while retries < max_retries:
+                    try:
+                        ssh_client.connect(ip, username="root", password="")
+                        self.logger.info(
+                            f"Reconnected to {target} after reboot"
                         )
-                        ret = ResultCode.FAILED
-
-                    # Wait for the reboot to take effect, try to reconnect until sucessful
-                    max_retries = 10
-                    retries = 0
-                    while retries < max_retries:
-                        try:
-                            make_first_connect(ip, ssh_client)
-                            self.logger.info(
-                                f"Reconnected to {target} after reboot"
-                            )
-                        except NoValidConnectionsError:
-                            self.logger.info(
-                                f"Waiting for {target} to reboot, attempt #{retries} to re-establish connection..."
-                            )
-                            time.sleep(2)
-                            retries += 1
-
-                    if retries == max_retries:
-                        self.logger.error(
-                            f"Failed to reconnect to {target} after reboot"
+                    except NoValidConnectionsError:
+                        self.logger.info(
+                            f"Waiting for {target} to reboot, attempt #{retries} to re-establish connection..."
                         )
-                        ret = ResultCode.FAILED
+                        time.sleep(2)
+                        retries += 1
 
         except NoValidConnectionsError as e:
             self.logger.error(f"{e}")
