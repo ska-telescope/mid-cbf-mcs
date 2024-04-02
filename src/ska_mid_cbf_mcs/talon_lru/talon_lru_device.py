@@ -66,12 +66,9 @@ class TalonLRU(SKABaseDevice):
     # Attributes
     # ----------
 
-    PDU1PowerMode = attribute(
-        dtype="uint16", doc="Power mode of the Talon LRU PDU 1"
-    )
-
-    PDU2PowerMode = attribute(
-        dtype="uint16", doc="Power mode of the Talon LRU PDU 2"
+    LRUPowerMode = attribute(
+        dtype="uint16",
+        doc="Power mode of the Talon LRU",
     )
 
     # ---------------
@@ -106,21 +103,19 @@ class TalonLRU(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def read_PDU1PowerMode(self: TalonLRU) -> PowerMode:
+    def read_LRUPowerMode(self: TalonLRU) -> PowerMode:
         """
-        Read the power mode of the outlet specified by PDU 1.
+        Read the power mode of the LRU by checking the power mode of the PDUs.
 
-        :return: Power mode of PDU 1
+        :return: Power mode of the LRU.
         """
-        return self.component_manager.pdu1_power_mode
-
-    def read_PDU2PowerMode(self: TalonLRU) -> PowerMode:
-        """
-        Read the power mode of the outlet specified by PDU 2.
-
-        :return: Power mode of PDU 2
-        """
-        return self.component_manager.pdu2_power_mode
+        self.component_manager.check_power_mode(self.get_state())
+        if (
+            self.component_manager.pdu1_power_mode == PowerMode.ON
+            or self.component_manager.pdu2_power_mode == PowerMode.ON
+        ):
+            return PowerMode.ON
+        return PowerMode.OFF
 
     # ----------
     # Callbacks

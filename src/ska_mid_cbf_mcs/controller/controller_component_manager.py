@@ -447,8 +447,6 @@ class ControllerComponentManager(CbfComponentManager):
             if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
 
-            time.sleep(20)
-
             # Configure all the Talon boards
             if (
                 self._talondx_component_manager.configure_talons()
@@ -806,14 +804,9 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            # check if LRU is already on
-            lru_pdu1_powermode = proxy.read_attribute("PDU1PowerMode").value
-            lru_pdu2_powermode = proxy.read_attribute("PDU2PowerMode").value
-            self._logger.info(
-                f"LRU {lru_fqdn} currently on? {lru_pdu1_powermode == PowerMode.ON or lru_pdu2_powermode == PowerMode.ON}"
-            )
-
-            if True:
+            # if lru is already ON, reboot the Talon DX board instead
+            lru_powermode = proxy.read_attribute("LRUPowerMode").value
+            if lru_powermode == PowerMode.ON:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
