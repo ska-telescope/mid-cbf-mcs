@@ -238,7 +238,38 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         :param state: device operational state
         """
-        self._get_power_mode()
+        if self._proxy_power_switch1 is not None:
+            if self._proxy_power_switch1.numOutlets != 0:
+                self.pdu1_power_mode = (
+                    self._proxy_power_switch1.GetOutletPowerMode(
+                        self._pdu_outlets[0]
+                    )
+                )
+            else:
+                self.pdu1_power_mode = PowerMode.UNKNOWN
+        else:
+            self.pdu1_power_mode = PowerMode.UNKNOWN
+
+        if self._proxy_power_switch2 is not None:
+            if self._proxy_power_switch2.numOutlets != 0:
+                if (self._pdus[1] == self._pdus[0]) and (
+                    self._pdu_outlets[1] == self._pdu_outlets[0]
+                ):
+                    self.pdu2_power_mode = self.pdu1_power_mode
+                else:
+                    self.pdu2_power_mode = (
+                        self._proxy_power_switch2.GetOutletPowerMode(
+                            self._pdu_outlets[1]
+                        )
+                    )
+            else:
+                self.pdu2_power_mode = PowerMode.UNKNOWN
+        else:
+            self.pdu2_power_mode = PowerMode.UNKNOWN
+
+        # TODO: remove temp logs
+        self._logger.info(f"PDU 1 power mode: {self.pdu1_power_mode}")
+        self._logger.info(f"PDU 2 power mode: {self.pdu2_power_mode}")
 
         # Check the expected power mode
         if state == DevState.INIT or state == DevState.OFF:
@@ -272,46 +303,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         # PDU outlet state mismatch is logged but fault is not triggered
         # self.update_component_fault(True)
         return
-
-    def _get_power_mode(
-        self: TalonLRUComponentManager,
-    ) -> Tuple[PowerMode, PowerMode]:
-        """
-        Get the power mode of both PDUs.
-
-        :return: A tuple containing the power mode of PDU 1 and PDU 2 in that order
-        :rtype: (PowerMode, PowerMode)
-        """
-        if self._proxy_power_switch1 is not None:
-            if self._proxy_power_switch1.numOutlets != 0:
-                self.pdu1_power_mode = (
-                    self._proxy_power_switch1.GetOutletPowerMode(
-                        self._pdu_outlets[0]
-                    )
-                )
-            else:
-                self.pdu1_power_mode = PowerMode.UNKNOWN
-        else:
-            self.pdu1_power_mode = PowerMode.UNKNOWN
-
-        if self._proxy_power_switch2 is not None:
-            if self._proxy_power_switch2.numOutlets != 0:
-                if (self._pdus[1] == self._pdus[0]) and (
-                    self._pdu_outlets[1] == self._pdu_outlets[0]
-                ):
-                    self.pdu2_power_mode = self.pdu1_power_mode
-                else:
-                    self.pdu2_power_mode = (
-                        self._proxy_power_switch2.GetOutletPowerMode(
-                            self._pdu_outlets[1]
-                        )
-                    )
-            else:
-                self.pdu2_power_mode = PowerMode.UNKNOWN
-        else:
-            self.pdu2_power_mode = PowerMode.UNKNOWN
-
-        return (self.pdu1_power_mode, self.pdu2_power_mode)
 
     def on(
         self: TalonLRUComponentManager, simulation_mode: SimulationMode
