@@ -7,6 +7,7 @@ variables:
   CLUSTER_DOMAIN: "techops.internal.skao.int"
   SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
   KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  K8S_TIMEOUT: 500
 
 stages:
   - lint
