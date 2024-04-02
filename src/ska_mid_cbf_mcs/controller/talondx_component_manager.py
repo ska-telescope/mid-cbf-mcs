@@ -590,7 +590,7 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.FALSE:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
-                    executor.submit(self._reboot_hps_master(talon_cfg))
+                    executor.submit(self._reboot_hps_master, talon_cfg)
                     for talon_cfg in self.talondx_config["config_commands"]
                 ]
                 results = [f.result() for f in futures]
