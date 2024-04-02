@@ -651,6 +651,7 @@ class TalonDxComponentManager:
                 self.logger.info(f"Reboot command sent to {target}")
                 # Reconnect to the board after reboot
                 make_first_connect(ip, ssh_client)
+                self.logger.info(f"Reconnected to {target} after reboot")
 
         except NoValidConnectionsError as e:
             self.logger.error(f"{e}")
