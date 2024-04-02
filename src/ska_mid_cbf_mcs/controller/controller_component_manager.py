@@ -806,7 +806,7 @@ class ControllerComponentManager(CbfComponentManager):
             # if lru is already ON, reboot the Talon DX board instead
             lru_powermode = proxy.read_attribute("LRUPowerMode").value
             self._logger.info(f"LRU power mode: {lru_powermode}")
-            if lru_powermode == PowerMode.ON:
+            if True:
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
