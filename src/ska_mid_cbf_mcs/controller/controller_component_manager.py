@@ -817,7 +817,6 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.info(
                     f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
                 )
-                # reboot Talon DX Board
                 result = self._talondx_component_manager.reboot()
                 if result == ResultCode.FAILED:
                     self._logger.error("Failed to reboot Talon DX Board")

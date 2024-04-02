@@ -604,7 +604,9 @@ class TalonDxComponentManager:
                 ret = ResultCode.FAILED
         return ret
 
-    def _reboot_hps_master(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+    def _reboot_hps_master(
+        self: TalonDxComponentManager, talon_cfg
+    ) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
