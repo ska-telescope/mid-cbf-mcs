@@ -588,14 +588,17 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
-            results = [
-                self._reboot_hps_master(talon_cfg)
-                for talon_cfg in self.talondx_config["config_commands"]
-            ]
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(self._reboot_hps_master(talon_cfg))
+                    for talon_cfg in self.talondx_config["config_commands"]
+                ]
+                results = [f.result() for f in futures]
 
-            if any(r == ResultCode.FAILED for r in results):
-                self.logger.error(f"Talon reboot results: {results}")
-                ret = ResultCode.FAILED
+                if any(r == ResultCode.FAILED for r in results):
+                    self.logger.error(f"Talon reboot results: {results}")
+                    ret = ResultCode.FAILED
+
         return ret
 
     def _reboot_hps_master(
