@@ -12,11 +12,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional, Tuple
+import threading
+from time import sleep
+from typing import Any, Callable, Optional, Tuple
 
 import tango
+from ska_control_model import PowerState, SimulationMode, TaskStatus
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -37,7 +40,9 @@ from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
 __all__ = ["PowerSwitchComponentManager"]
 
 
-class PowerSwitchComponentManager(CbfComponentManager):
+class PowerSwitchComponentManager(
+    TaskExecutorComponentManager, CbfComponentManager
+):
     """
     A component manager for the power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
@@ -202,7 +207,28 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
-        self: PowerSwitchComponentManager, outlet: str
+        self: PowerSwitchComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> tuple[TaskStatus, str]:
+        """
+        Turn the device on.
+
+        :param task_callback: callback to be called when the status of
+            the command changes
+
+        :return: a result code and message
+        """
+        logging.info("B. Here")
+        return self.submit_task(self._turn_on_outlet, args=[argin])
+
+    def _turn_on_outlet(
+        self: PowerSwitchComponentManager,
+        outlet: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
     ) -> Tuple[ResultCode, str]:
         """
         Tell the power switch to turn on a specific outlet.
@@ -213,11 +239,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
+        logging.info(f"Sim mode={self.simulation_mode}")
         if self.simulation_mode:
-            return self.power_switch_simulator.turn_on_outlet(outlet)
+            logging.info("A-sim. HERE")
+            result, msg = self.power_switch_simulator.turn_on_outlet(outlet)
         else:
-            return self.power_switch_driver.turn_on_outlet(outlet)
+            logging.info("A. HERE")
+            result, msg = self.power_switch_driver.turn_on_outlet(outlet)
+
+        
 
     def turn_off_outlet(
         self: PowerSwitchComponentManager, outlet: str

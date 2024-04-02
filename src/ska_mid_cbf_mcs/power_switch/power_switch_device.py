@@ -15,12 +15,19 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-import time
-from typing import Optional, Tuple
+import logging
+from time import sleep
+from typing import Any, Callable, Optional, Tuple
+
+from ska_tango_base import SKABaseDevice
 
 # tango imports
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.base import CommandTracker
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
@@ -129,14 +136,27 @@ class PowerSwitch(SKABaseDevice):
         Sets up the command objects.
         """
         super().init_command_objects()
-
+        self.register_command_object(
+            "TurnOnOutlet",
+            SubmittedSlowCommand(
+                "TurnOnOutlet",
+                self._command_tracker,
+                self.component_manager,
+                "turn_on_outlet",
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "TurnOffOutlet",
+            SubmittedSlowCommand(
+                "TurnOffOutlet",
+                self._command_tracker,
+                self.component_manager,
+                "turn_off_outlet",
+                logger=self.logger,
+            ),
+        )
         device_args = (self.component_manager, self.logger)
-        self.register_command_object(
-            "TurnOnOutlet", self.TurnOnOutletCommand(*device_args)
-        )
-        self.register_command_object(
-            "TurnOffOutlet", self.TurnOffOutletCommand(*device_args)
-        )
         self.register_command_object(
             "GetOutletPowerState",
             self.GetOutletPowerStateCommand(*device_args),
@@ -270,53 +290,82 @@ class PowerSwitch(SKABaseDevice):
 
             return (result_code, message)
 
-    class TurnOnOutletCommand(FastCommand):
+    class TurnOnOutletCommand(SubmittedSlowCommand):
         """
         The command class for the TurnOnOutlet command.
 
         Turn on an individual outlet, specified by the outlet ID
         """
 
-        def do(
-            self: PowerSwitch.TurnOnOutletCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
+        def __init__(  # pylint: disable=too-many-arguments
+            self: PowerSwitch.TurnOnOutletCommand,
+            command_tracker: CommandTracker,
+            component_manager: PowerSwitchComponentManager,
+            callback: Callable[[bool], None] | None = None,
+            logger: logging.Logger | None = None,
+            schema: dict[str, Any] | None = None,
+        ) -> None:
             """
-            Implement TurnOnOutlet command functionality.
+            Initialise a new instance.
 
-            :param argin: the outlet ID of the outlet to switch on
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
+            :param command_tracker: the device's command tracker
+            :param component_manager: the device's component manager
+            :param callback: an optional callback to be called when this
+                command starts and finishes.
+            :param logger: a logger for this command to log with.
+            :param schema: an optional JSON schema for the command
+                argument.
             """
-            component_manager = self.target
+            logger.info("1. HERE")
+            super().__init__(
+                "TurnOnOutlet",
+                command_tracker,
+                component_manager,
+                "turn_on_outlet",
+                callback=callback,
+                logger=logger,
+            )
 
-            try:
-                result, msg = component_manager.turn_on_outlet(argin)
-                if result != ResultCode.OK:
-                    return (result, msg)
+        # def do(
+        #     self: PowerSwitch.TurnOnOutletCommand, argin: str
+        # ) -> Tuple[ResultCode, str]:
+        #     """
+        #     Implement TurnOnOutlet command functionality.
 
-                power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerState.ON:
-                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                    self.logger.info(
-                        "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                    )
-                    time.sleep(5)
-                    power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerState.ON:
-                        return (
-                            ResultCode.FAILED,
-                            f"Power on failed, outlet is in power mode {power_mode}",
-                        )
-            except AssertionError as e:
-                self.logger.error(e)
-                return (
-                    ResultCode.FAILED,
-                    "Unable to read outlet state after power on",
-                )
+        #     :param argin: the outlet ID of the outlet to switch on
 
-            return (result, msg)
+        #     :return: A tuple containing a return code and a string
+        #         message indicating status. The message is for
+        #         information purpose only.
+        #     """
+        #     component_manager = self.target
+
+        #     try:
+        #         result, msg = component_manager.turn_on_outlet(argin)
+        #         if result != ResultCode.OK:
+        #             return (result, msg)
+
+        #         power_mode = component_manager.get_outlet_power_mode(argin)
+        #         if power_mode != PowerState.ON:
+        #             # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+        #             self.logger.info(
+        #                 "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
+        #             )
+        #             time.sleep(5)
+        #             power_mode = component_manager.get_outlet_power_mode(argin)
+        #             if power_mode != PowerState.ON:
+        #                 return (
+        #                     ResultCode.FAILED,
+        #                     f"Power on failed, outlet is in power mode {power_mode}",
+        #                 )
+        #     except AssertionError as e:
+        #         self.logger.error(e)
+        #         return (
+        #             ResultCode.FAILED,
+        #             "Unable to read outlet state after power on",
+        #         )
+
+        #     return (result, msg)
 
     @command(
         dtype_in="DevString",
@@ -327,58 +376,79 @@ class PowerSwitch(SKABaseDevice):
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
+        self.logger.info("2. HERE")
         handler = self.get_command_object("TurnOnOutlet")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
+        self.logger.info("3. HERE")
+        self.logger.info(f"HANDLER={handler}")
+        result_code, message = handler(argin)
+        self.logger.info("4. HERE")
+        if result_code != ResultCode.OK:
+            self.logger.info(f"Result={result_code}")
+            return ([result_code], [message])
+        power_mode = self.get_outlet_power_mode(argin)
+        if power_mode != PowerState.ON:
+            # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+            self.logger.info(
+                "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
+            )
+            sleep(5)
+            power_mode = self.get_outlet_power_mode(argin)
+            if power_mode != PowerState.ON:
+                return (
+                    [ResultCode.FAILED],
+                    [f"Power on failed, outlet is in power mode {power_mode}"],
+                )
+        self.logger.info("5. HERE")
+        return [[result_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
 
-    class TurnOffOutletCommand(FastCommand):
-        """
-        The command class for the TurnOffOutlet command.
+    # class TurnOffOutletCommand(SubmittedSlowCommand):
+    #     """
+    #     The command class for the TurnOffOutlet command.
 
-        Turn off an individual outlet, specified by the outlet ID.
-        """
+    #     Turn off an individual outlet, specified by the outlet ID.
+    #     """
 
-        def do(
-            self: PowerSwitch.TurnOffOutletCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement TurnOffOutlet command functionality.
+    #     def do(
+    #         self: PowerSwitch.TurnOffOutletCommand, argin: str
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Implement TurnOffOutlet command functionality.
 
-            :param argin: the outlet ID of the outlet to switch off
+    #         :param argin: the outlet ID of the outlet to switch off
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         """
+    #         component_manager = self.target
 
-            try:
-                result, msg = component_manager.turn_off_outlet(argin)
-                if result != ResultCode.OK:
-                    return (result, msg)
+    #         try:
+    #             result, msg = component_manager.turn_off_outlet(argin)
+    #             if result != ResultCode.OK:
+    #                 return (result, msg)
 
-                power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerState.OFF:
-                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                    self.logger.info(
-                        "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                    )
-                    time.sleep(5)
-                    power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerState.OFF:
-                        return (
-                            ResultCode.FAILED,
-                            f"Power off failed, outlet is in power mode {power_mode}",
-                        )
-            except AssertionError as e:
-                self.logger.error(e)
-                return (
-                    ResultCode.FAILED,
-                    "Unable to read outlet state after power off",
-                )
+    #             power_mode = component_manager.get_outlet_power_mode(argin)
+    #             if power_mode != PowerState.OFF:
+    #                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
+    #                 self.logger.info(
+    #                     "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
+    #                 )
+    #                 time.sleep(5)
+    #                 power_mode = component_manager.get_outlet_power_mode(argin)
+    #                 if power_mode != PowerState.OFF:
+    #                     return (
+    #                         ResultCode.FAILED,
+    #                         f"Power off failed, outlet is in power mode {power_mode}",
+    #                     )
+    #         except AssertionError as e:
+    #             self.logger.error(e)
+    #             return (
+    #                 ResultCode.FAILED,
+    #                 "Unable to read outlet state after power off",
+    #             )
 
-            return (result, msg)
+    #         return (result, msg)
 
     @command(
         dtype_in="DevString",
@@ -390,8 +460,8 @@ class PowerSwitch(SKABaseDevice):
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
         handler = self.get_command_object("TurnOffOutlet")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
+        result_code, message = handler(argin)
+        return [[result_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOffOutlet
 
     class GetOutletPowerStateCommand(FastCommand):
