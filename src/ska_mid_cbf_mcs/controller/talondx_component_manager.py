@@ -622,7 +622,7 @@ class TalonDxComponentManager:
 
                 @backoff.on_exception(
                     backoff.expo,
-                    NoValidConnectionsError,
+                    (NoValidConnectionsError, SSHException),
                     max_value=3,
                     max_time=talon_first_connect_timeout,
                 )
