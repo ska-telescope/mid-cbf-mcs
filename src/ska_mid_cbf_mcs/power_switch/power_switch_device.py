@@ -15,14 +15,11 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-import logging
-from time import sleep
-from typing import Any, Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 from ska_tango_base import SKABaseDevice
 
 # tango imports
-from ska_tango_base.base import CommandTracker
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
@@ -139,10 +136,10 @@ class PowerSwitch(SKABaseDevice):
         self.register_command_object(
             "TurnOnOutlet",
             SubmittedSlowCommand(
-                "TurnOnOutlet",
-                self._command_tracker,
-                self.component_manager,
-                "turn_on_outlet",
+                command_name="TurnOnOutlet",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="turn_on_outlet",
                 logger=self.logger,
             ),
         )
@@ -290,82 +287,12 @@ class PowerSwitch(SKABaseDevice):
 
             return (result_code, message)
 
-    class TurnOnOutletCommand(SubmittedSlowCommand):
-        """
-        The command class for the TurnOnOutlet command.
+    # class TurnOnOutletCommand(SubmittedSlowCommand):
+    #     """
+    #     The command class for the TurnOnOutlet command.
 
-        Turn on an individual outlet, specified by the outlet ID
-        """
-
-        def __init__(  # pylint: disable=too-many-arguments
-            self: PowerSwitch.TurnOnOutletCommand,
-            command_tracker: CommandTracker,
-            component_manager: PowerSwitchComponentManager,
-            callback: Callable[[bool], None] | None = None,
-            logger: logging.Logger | None = None,
-            schema: dict[str, Any] | None = None,
-        ) -> None:
-            """
-            Initialise a new instance.
-
-            :param command_tracker: the device's command tracker
-            :param component_manager: the device's component manager
-            :param callback: an optional callback to be called when this
-                command starts and finishes.
-            :param logger: a logger for this command to log with.
-            :param schema: an optional JSON schema for the command
-                argument.
-            """
-            logger.info("1. HERE")
-            super().__init__(
-                "TurnOnOutlet",
-                command_tracker,
-                component_manager,
-                "turn_on_outlet",
-                callback=callback,
-                logger=logger,
-            )
-
-        # def do(
-        #     self: PowerSwitch.TurnOnOutletCommand, argin: str
-        # ) -> Tuple[ResultCode, str]:
-        #     """
-        #     Implement TurnOnOutlet command functionality.
-
-        #     :param argin: the outlet ID of the outlet to switch on
-
-        #     :return: A tuple containing a return code and a string
-        #         message indicating status. The message is for
-        #         information purpose only.
-        #     """
-        #     component_manager = self.target
-
-        #     try:
-        #         result, msg = component_manager.turn_on_outlet(argin)
-        #         if result != ResultCode.OK:
-        #             return (result, msg)
-
-        #         power_mode = component_manager.get_outlet_power_mode(argin)
-        #         if power_mode != PowerState.ON:
-        #             # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-        #             self.logger.info(
-        #                 "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
-        #             )
-        #             time.sleep(5)
-        #             power_mode = component_manager.get_outlet_power_mode(argin)
-        #             if power_mode != PowerState.ON:
-        #                 return (
-        #                     ResultCode.FAILED,
-        #                     f"Power on failed, outlet is in power mode {power_mode}",
-        #                 )
-        #     except AssertionError as e:
-        #         self.logger.error(e)
-        #         return (
-        #             ResultCode.FAILED,
-        #             "Unable to read outlet state after power on",
-        #         )
-
-        #     return (result, msg)
+    #     Turn on an individual outlet, specified by the outlet ID
+    #     """
 
     @command(
         dtype_in="DevString",
@@ -376,30 +303,10 @@ class PowerSwitch(SKABaseDevice):
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
-        self.logger.info("2. HERE")
-        handler = self.get_command_object("TurnOnOutlet")
-        self.logger.info("3. HERE")
-        self.logger.info(f"HANDLER={handler}")
+        handler = self.get_command_object(command_name="TurnOnOutlet")
         result_code, message = handler(argin)
-        self.logger.info("4. HERE")
-        if result_code != ResultCode.OK:
-            self.logger.info(f"Result={result_code}")
-            return ([result_code], [message])
-        power_mode = self.get_outlet_power_mode(argin)
-        if power_mode != PowerState.ON:
-            # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-            self.logger.info(
-                "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
-            )
-            sleep(5)
-            power_mode = self.get_outlet_power_mode(argin)
-            if power_mode != PowerState.ON:
-                return (
-                    [ResultCode.FAILED],
-                    [f"Power on failed, outlet is in power mode {power_mode}"],
-                )
-        self.logger.info("5. HERE")
-        return [[result_code], [message]]
+
+        return result_code, message
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
 
     # class TurnOffOutletCommand(SubmittedSlowCommand):

@@ -206,6 +206,10 @@ class PowerSwitchComponentManager(
         else:
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
+    def is_turn_outlet_on_allowed(self) -> bool:
+        self._logger.info("Checking if TurnOnOutlet is allowed.")
+        return True
+
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -220,8 +224,13 @@ class PowerSwitchComponentManager(
 
         :return: a result code and message
         """
-        logging.info("B. Here")
-        return self.submit_task(self._turn_on_outlet, args=[argin])
+        self._logger.info(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._turn_on_outlet,
+            args=[argin],
+            is_cmd_allowed=self.is_turn_outlet_on_allowed,
+            task_callback=task_callback,
+        )
 
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
@@ -239,15 +248,69 @@ class PowerSwitchComponentManager(
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        logging.info(f"Sim mode={self.simulation_mode}")
-        if self.simulation_mode:
-            logging.info("A-sim. HERE")
-            result, msg = self.power_switch_simulator.turn_on_outlet(outlet)
-        else:
-            logging.info("A. HERE")
-            result, msg = self.power_switch_driver.turn_on_outlet(outlet)
+        try:
+            if task_callback:
+                task_callback(status=TaskStatus.IN_PROGRESS)
+            else:
+                self._logger.warning(
+                    "task_callback not set for this long-running command."
+                )
+            if self.simulation_mode:
+                (
+                    result_code,
+                    message,
+                ) = self.power_switch_simulator.turn_on_outlet(outlet)
+            else:
+                result_code, message = self.power_switch_driver.turn_on_outlet(
+                    outlet
+                )
 
-        
+            if task_callback:
+                task_callback(progress=10)
+            if result_code != ResultCode.OK:
+                task_callback(
+                    status=TaskStatus.FAILED, result=(result_code, message)
+                )
+                return (result_code, message)
+            power_mode = self.get_outlet_power_mode(outlet)
+            if task_callback:
+                task_callback(progress=20)
+            if power_mode != PowerState.ON:
+                # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
+                self._logger.info(
+                    "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
+                )
+                if task_abort_event and task_abort_event.is_set():
+                    message = f"Power on aborted, outlet is in power mode {power_mode}"
+                    task_callback(
+                        status=TaskStatus.ABORTED,
+                        result=(ResultCode.ABORTED, message),
+                    )
+                    return (
+                        ResultCode.ABORTED,
+                        message,
+                    )
+                sleep(5)
+                power_mode = self.get_outlet_power_mode(outlet)
+                if power_mode != PowerState.ON:
+                    task_callback(
+                        status=TaskStatus.FAILED, result=(result_code, message)
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        f"Power on failed, outlet is in power mode {power_mode}",
+                    )
+            task_callback(progress=100)
+            task_callback(
+                status=TaskStatus.COMPLETED, result=(result_code, message)
+            )
+        except AssertionError as e:
+            self._logger.error(e)
+            task_callback(exception=e, status=TaskStatus.FAILED)
+            return (
+                ResultCode.FAILED,
+                "Unable to read outlet state after power on",
+            )
 
     def turn_off_outlet(
         self: PowerSwitchComponentManager, outlet: str
