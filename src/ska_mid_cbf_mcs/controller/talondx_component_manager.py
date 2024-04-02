@@ -99,12 +99,6 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 
-        if self.talondx_config == {} or self._hw_config == {}:
-            self.logger.info("Configuration files not read yet, reading now")
-            if self.read_config() == ResultCode.FAILED:
-                self.logger.error("Failed to read configuration files")
-                return ResultCode.FAILED
-
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
@@ -615,16 +609,35 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
 
-        talon = talon_cfg["target"]
-        ip = self._hw_config["talon_board"][talon]
-        target = f"root@{ip}"
-
-        self.logger.info(f"Rebooting Talon board {talon}")
+        target = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][target]
+        talon_first_connect_timeout = talon_cfg[
+                "talon_first_connect_timeout"
+        ]
+        self.logger.info(f"Rebooting Talon board {target}")
 
         try:
             with SSHClient() as ssh_client:
+                
+                @backoff.on_exception(
+                    backoff.expo,
+                    NoValidConnectionsError,
+                    max_value=3,
+                    max_time=talon_first_connect_timeout,
+                )
+                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on or reboot.
+
+                    :param ip: IP address of the board
+                    :param ssh_client: SSH client to use for connection
+                    """
+                    ssh_client.connect(ip, username="root", password="")
+                    
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                ssh_client.connect(ip, username="root", password="")
+                make_first_connect(ip, ssh_client)
+
                 ssh_chan = ssh_client.get_transport().open_session()
                 ssh_chan.exec_command("reboot")
                 exit_status = ssh_chan.recv_exit_status()
@@ -635,22 +648,8 @@ class TalonDxComponentManager:
                     )
                     ret = ResultCode.FAILED
                 self.logger.info(f"Reboot command sent to {target}")
-
-                # Wait for the reboot to take effect, try to reconnect until sucessful
-                max_retries = 10
-                retries = 0
-                while retries < max_retries:
-                    try:
-                        ssh_client.connect(ip, username="root", password="")
-                        self.logger.info(
-                            f"Reconnected to {target} after reboot"
-                        )
-                    except NoValidConnectionsError:
-                        self.logger.info(
-                            f"Waiting for {target} to reboot, attempt #{retries} to re-establish connection..."
-                        )
-                        time.sleep(2)
-                        retries += 1
+                # Reconnect to the board after reboot
+                make_first_connect(ip, ssh_client)
 
         except NoValidConnectionsError as e:
             self.logger.error(f"{e}")
