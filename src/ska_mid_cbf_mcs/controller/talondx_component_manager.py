@@ -611,14 +611,12 @@ class TalonDxComponentManager:
 
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
-        talon_first_connect_timeout = talon_cfg[
-                "talon_first_connect_timeout"
-        ]
+        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
         self.logger.info(f"Rebooting Talon board {target}")
 
         try:
             with SSHClient() as ssh_client:
-                
+
                 @backoff.on_exception(
                     backoff.expo,
                     NoValidConnectionsError,
@@ -634,7 +632,7 @@ class TalonDxComponentManager:
                     :param ssh_client: SSH client to use for connection
                     """
                     ssh_client.connect(ip, username="root", password="")
-                    
+
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
 
