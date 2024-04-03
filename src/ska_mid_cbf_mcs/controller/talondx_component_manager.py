@@ -620,6 +620,9 @@ class TalonDxComponentManager:
 
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
+        talon_first_connect_timeout = talon_cfg[
+                "talon_first_connect_timeout"
+        ]
         self.logger.info(f"Rebooting Talon board {target}")
 
         try:
@@ -629,7 +632,7 @@ class TalonDxComponentManager:
                     backoff.expo,
                     (NoValidConnectionsError, SSHException),
                     max_value=3,
-                    max_time=5,
+                    max_time=talon_first_connect_timeout,
                 )
                 def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
                     """
@@ -646,13 +649,6 @@ class TalonDxComponentManager:
 
                 ssh_chan = ssh_client.get_transport().open_session()
                 ssh_chan.exec_command("reboot")
-                exit_status = ssh_chan.recv_exit_status()
-
-                if exit_status != 0:
-                    self.logger.error(
-                        f"Error sending reboot command to HPS master on {target}: {exit_status}"
-                    )
-                    ret = ResultCode.FAILED
                 self.logger.info(f"Reboot command sent to {target}")
                 # Reconnect to the board after reboot
                 make_first_connect(ip, ssh_client)
