@@ -594,9 +594,7 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.FALSE:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
-                    executor.submit(
-                        self._reboot_hps_master, talon_cfg
-                    )
+                    executor.submit(self._reboot_hps_master, talon_cfg)
                     for talon_cfg in self.talondx_config["config_commands"]
                 ]
                 results = [f.result() for f in futures]
@@ -620,9 +618,7 @@ class TalonDxComponentManager:
 
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
-        talon_first_connect_timeout = talon_cfg[
-                "talon_first_connect_timeout"
-        ]
+        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
         self.logger.info(f"Rebooting Talon board {target}")
 
         try:
