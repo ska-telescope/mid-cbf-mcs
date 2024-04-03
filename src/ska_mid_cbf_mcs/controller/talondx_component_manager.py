@@ -624,7 +624,7 @@ class TalonDxComponentManager:
                     backoff.expo,
                     (NoValidConnectionsError, SSHException),
                     max_value=3,
-                    max_time=talon_first_connect_timeout,
+                    max_time=5,
                 )
                 def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
                     """
