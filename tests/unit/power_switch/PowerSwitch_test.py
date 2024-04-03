@@ -42,7 +42,11 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
     device_under_test.subscribe_event("longRunningCommandResult",
                                       tango.EventType.CHANGE_EVENT,
                                       change_event_callback["longRunningCommandResult"])
+    device_under_test.subscribe_event("longRunningCommandProgress",
+                                      tango.EventType.CHANGE_EVENT,
+                                      change_event_callback["longRunningCommandProgress"])
     change_event_callback.assert_change_event("longRunningCommandResult", ('',''))
+    change_event_callback.assert_change_event("longRunningCommandProgress", ())
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
 
@@ -66,20 +70,18 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
     for i in range(0, num_outlets):
         result_code, command_id = device_under_test.TurnOnOutlet(str(i))
         assert result_code == [ResultCode.QUEUED]
-        
-        for progress_point in FakePowerSwitchComponent.PROGRESS_REPORTING_POINTS:
-            change_event_callbacks.assert_change_event(
-                "longRunningCommandProgress",(command_id, progress_point)
-            )
         outlets[i] = PowerState.ON
+        for progress_point in (10,20,100):
+            x = change_event_callback["longRunningCommandProgress"].assert_change_event((f'{command_id[0]}', f'{progress_point}'))
+            pprint.pp(f"HERE {x}")
 
         # ('1712178696.8231559_230456126214572_TurnOnOutlet', '[0, "Outlet 1 power on"]')
         # x = change_event_callback.assert_change_event("longRunningCommandResult", (f'{command_id[0]}', f'[0, {"Outlet {i} power on"}]'))
-        x = change_event_callback.assert_change_event("longRunningCommandResult", (f'{command_id[0]}', Anything))
+        x = change_event_callback["longRunningCommandResult"].assert_change_event((f'{command_id[0]}', Anything))
         pprint.pp(x)
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
-
+    
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     """
