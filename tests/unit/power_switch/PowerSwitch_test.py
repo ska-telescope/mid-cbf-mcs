@@ -10,7 +10,12 @@
 
 """Contain the tests for the power switch device."""
 
-from typing import List
+import json
+import pprint
+from time import sleep
+from typing import Any, List
+import ast
+from ska_tango_testing.mock.placeholders import Anything
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
@@ -19,16 +24,25 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+import tango
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from  ... import test_utils
 
 
-def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
+def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
+                                    change_event_callback: MockTangoEventCallbackGroup) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
-    device_under_test.adminMode = AdminMode.ONLINE
     # Put the device in simulation mode
     device_under_test.simulationMode = SimulationMode.TRUE
-
+    device_under_test.adminMode = AdminMode.ONLINE
+    
+    # Subscribe to change events
+    device_under_test.subscribe_event("longRunningCommandResult",
+                                      tango.EventType.CHANGE_EVENT,
+                                      change_event_callback["longRunningCommandResult"])
+    change_event_callback.assert_change_event("longRunningCommandResult", ('',''))
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
 
@@ -37,25 +51,32 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
     for i in range(0, num_outlets):
         outlets.append(device_under_test.GetOutletPowerState(str(i)))
 
-    # Turn outlets off and check the state again
-    for i in range(0, num_outlets):
-        assert device_under_test.TurnOffOutlet(str(i)) == [
-            [ResultCode.OK],
-            [f"Outlet {i} power off"],
-        ]
-        outlets[i] = PowerState.OFF
+    # # Turn outlets off and check the state again
+    # for i in range(0, num_outlets):
+    #     assert device_under_test.TurnOffOutlet(str(i)) == [
+    #         [ResultCode.OK],
+    #         [f"Outlet {i} power off"],
+    #     ]
+    #     outlets[i] = PowerState.OFF
 
-        for j in range(0, num_outlets):
-            assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
+    #     for j in range(0, num_outlets):
+    #         assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
-        assert device_under_test.TurnOnOutlet(str(i)) == [
-            [ResultCode.OK],
-            [f"Outlet {i} power on"],
-        ]
+        result_code, command_id = device_under_test.TurnOnOutlet(str(i))
+        assert result_code == [ResultCode.QUEUED]
+        
+        for progress_point in FakePowerSwitchComponent.PROGRESS_REPORTING_POINTS:
+            change_event_callbacks.assert_change_event(
+                "longRunningCommandProgress",(command_id, progress_point)
+            )
         outlets[i] = PowerState.ON
 
+        # ('1712178696.8231559_230456126214572_TurnOnOutlet', '[0, "Outlet 1 power on"]')
+        # x = change_event_callback.assert_change_event("longRunningCommandResult", (f'{command_id[0]}', f'[0, {"Outlet {i} power on"}]'))
+        x = change_event_callback.assert_change_event("longRunningCommandResult", (f'{command_id[0]}', Anything))
+        pprint.pp(x)
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
 

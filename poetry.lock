@@ -4324,6 +4324,26 @@ url = "https://artefact.skao.int/repository/pypi-internal/simple"
 reference = "ska-nexus"
 
 [[package]]
+name = "ska-tango-testing"
+version = "0.6.1"
+description = "Test harness for testing SKA Tango devices"
+optional = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "ska_tango_testing-0.6.1-py3-none-any.whl", hash = "sha256:c8d636719d5aef6499e144b340f007dbee0944c83320db83c8fbcdb941486abe"},
+    {file = "ska_tango_testing-0.6.1.tar.gz", hash = "sha256:defbb84b6dc2bc6675828fd393f8521cc4cc768252ad5d7c786e5dfab2ff381f"},
+]
+
+[package.dependencies]
+numpy = ">=1.19.0,<2.0.0"
+pytango = ">=9.3.3,<10.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+reference = "ska-nexus"
+
+[[package]]
 name = "ska-telmodel"
 version = "1.14.1"
 description = "SKA telescope model library"
@@ -5183,4 +5203,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "3b0896994a0ba3f991adb7bb988fdaa2e360a361a9b7910fd32dcaeec9cc465b"
+content-hash = "77d8ac8dfc2738dfc9a59b95d85285729fb8b95dc142366141b36471643970c9"

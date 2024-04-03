@@ -222,7 +222,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 task_callback(status=TaskStatus.IN_PROGRESS)
             else:
                 self.logger.warning(
-                    "task_callback not set for this long-running command."
+                    "task_callback is not set for this long-running command."
                 )
             if self.simulation_mode:
                 (
