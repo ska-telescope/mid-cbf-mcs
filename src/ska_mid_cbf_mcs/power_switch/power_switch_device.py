@@ -117,15 +117,17 @@ class PowerSwitch(SKABaseDevice):
         self._component_power_mode: Optional[PowerState] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
-            self.PowerSwitchModel,
-            self.PowerSwitchIp,
-            self.PowerSwitchLogin,
-            self.PowerSwitchPassword,
-            self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            model=self.PowerSwitchModel,
+            ip=self.PowerSwitchIp,
+            login=self.PowerSwitchLogin,
+            password=self.PowerSwitchPassword,
+            logger=self.logger,
+            simulation_mode=self.simulationMode,
+            state_callback=self._update_state,
+            admin_mode_callback=self._update_admin_mode,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_status_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     def init_command_objects(self: PowerSwitch) -> None:
@@ -191,7 +193,7 @@ class PowerSwitch(SKABaseDevice):
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
 
-    def _component_power_mode_changed(
+    def _component_state_changed(
         self: PowerSwitch, power_mode: PowerState
     ) -> None:
         """
@@ -214,14 +216,6 @@ class PowerSwitch(SKABaseDevice):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: PowerSwitch, faulty: bool) -> None:
-        """
-        Handle component fault
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
 
     # ------------------
     # Attributes methods
@@ -306,7 +300,7 @@ class PowerSwitch(SKABaseDevice):
         handler = self.get_command_object(command_name="TurnOnOutlet")
         result_code, message = handler(argin)
 
-        return result_code, message
+        return [[result_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
 
     # class TurnOffOutletCommand(SubmittedSlowCommand):

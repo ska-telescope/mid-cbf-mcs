@@ -11,21 +11,25 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Any, Optional, cast
+from threading import Lock
+from typing import Any, Callable, Optional, cast
 
 from ska_tango_base.control_model import (
     AdminMode,
     CommunicationStatus,
+    HealthState,
     PowerState,
 )
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
+from tango import DevState
 
 __all__ = ["CbfComponentManager"]
 
 
 class CbfComponentManager(TaskExecutorComponentManager):
+
     """
     TODO
     A base component manager for SKA Mid.CBF MCS
@@ -50,37 +54,109 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: Any,
+        state_callback: Callable[[DevState, str], None] | None = None,
+        admin_mode_callback: Callable[[AdminMode], None] | None = None,
+        health_state_callback: Callable[[HealthState], None] | None = None,
         **kwargs: Any,
     ):
-        super().__init__(None, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Here we have statically defined the states useful in Mid.CBF component
         # management, allowing the use of the _update_component_state method in
         # the BaseComponentManager to execute the device state changes callback
         # any number of states
         self._component_state = {
-            "admin_mode": None,
             "fault": None,
-            "health_state": None,
-            "obs_mode": None,
-            "obs_state": None,
-            "op_state": None,
-            "power_state": None,
-            "simulation_mode": None,
+            "power": None,
         }
+        self._device_state_callback = state_callback
+        self._state_lock = Lock()
+        self._state = DevState.UNKNOWN
+
+        self._device_admin_mode_callback = admin_mode_callback
+        self._admin_mode_lock = Lock()
+        self._admin_mode = AdminMode.OFFLINE
+
+        self._device_health_state_callback = health_state_callback
+        self._health_state_lock = Lock()
+        self._health_state = HealthState.UNKNOWN
+
+    ###########
+    # Callbacks
+    ###########
+    def _update_device_state(
+        self: CbfComponentManager,
+        state: DevState,
+    ) -> None:
+        """
+        Handle a state change.
+        This is a helper method for use by subclasses.
+        :param state: the new state of the
+            component manager.
+        """
+        with self._state_lock:
+            if self._state != state:
+                self._state = state
+                self._push_state_update(state)
+
+    def _push_state_update(self: CbfComponentManager, state: DevState) -> None:
+        if self._device_state_callback is not None:
+            self._device_state_callback(state)
+
+    def _update_device_admin_mode(
+        self: CbfComponentManager,
+        admin_mode: AdminMode,
+    ) -> None:
+        """
+        Handle a admin mode change.
+        This is a helper method for use by subclasses.
+        :param state: the new admin mode of the
+            component manager.
+        """
+        with self._admin_mode_lock:
+            if self._admin_mode != admin_mode:
+                self._admin_mode = admin_mode
+                self._push_admin_mode_update(admin_mode)
+
+    def _push_admin_mode_update(
+        self: CbfComponentManager, admin_mode: AdminMode
+    ) -> None:
+        if self._device_admin_mode_callback is not None:
+            self._device_admin_mode_callback(admin_mode)
+
+    def _update_device_health_state(
+        self: CbfComponentManager,
+        health_state: HealthState,
+    ) -> None:
+        """
+        Handle a health state change.
+        This is a helper method for use by subclasses.
+        :param state: the new health state of the
+            component manager.
+        """
+        with self._health_state_lock:
+            if self._health_state != health_state:
+                self._health_state = health_state
+                self._push_health_state_update(health_state)
+
+    def _push_health_state_update(
+        self: CbfComponentManager, health_state: HealthState
+    ) -> None:
+        if self._device_health_state_callback is not None:
+            self._device_health_state_callback(health_state)
 
     def start_communicating(self: CbfComponentManager) -> None:
         """Start communicating with the component."""
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
-        self._update_component_state(admin_mode=AdminMode.ONLINE)
+        self._update_device_admin_mode(AdminMode.ONLINE)
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
-        self._update_component_state(admin_mode=AdminMode.OFFLINE)
+        self._update_device_admin_mode(AdminMode.OFFLINE)
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:

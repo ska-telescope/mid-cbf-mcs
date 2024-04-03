@@ -19,12 +19,8 @@ from typing import Any, Callable, Optional, Tuple
 import tango
 from ska_control_model import PowerState, SimulationMode, TaskStatus
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.executor import TaskExecutorComponentManager
 
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
-)
+from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
 from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
 from ska_mid_cbf_mcs.power_switch.apc_snmp_driver import ApcSnmpDriver
 from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
@@ -40,9 +36,7 @@ from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
 __all__ = ["PowerSwitchComponentManager"]
 
 
-class PowerSwitchComponentManager(
-    TaskExecutorComponentManager, CbfComponentManager
-):
+class PowerSwitchComponentManager(CbfComponentManager):
     """
     A component manager for the power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
@@ -59,18 +53,13 @@ class PowerSwitchComponentManager(
 
     def __init__(
         self: PowerSwitchComponentManager,
+        *args: Any,
         model: str,
         ip: str,
         login: str,
         password: str,
-        logger: logging.Logger,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
-        component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
+        **kwargs: Any,
     ) -> None:
         """
         Initialize a new instance.
@@ -93,24 +82,20 @@ class PowerSwitchComponentManager(
                 driver or the simulator should be used
 
         """
-        self.connected = False
+        super().__init__(*args, **kwargs)
 
         self._simulation_mode = simulation_mode
 
         self.power_switch_driver = self.get_power_switch_driver(
-            model=model, ip=ip, login=login, password=password, logger=logger
+            model=model,
+            ip=ip,
+            login=login,
+            password=password,
+            logger=self.logger,
         )
 
         self.power_switch_simulator = PowerSwitchSimulator(
-            model=model, logger=logger
-        )
-
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
+            model=model, logger=self.logger
         )
 
     @property
@@ -132,13 +117,7 @@ class PowerSwitchComponentManager(
 
         :return: whether the power switch is communicating
         """
-        # If we haven't started communicating yet, don't check power switch
-        # communication status
-        if self.connected is False:
-            return False
-
-        # If we have started communicating, check the actual communication
-        # status of the power switch
+        # Check the communication status of the power switch
         if self.simulation_mode:
             return self.power_switch_simulator.is_communicating
         else:
@@ -168,24 +147,14 @@ class PowerSwitchComponentManager(
         """
         Perform any setup needed for communicating with the power switch.
         """
-        if self.connected:
-            self._logger.info("Already communicating.")
-            return
-
         super().start_communicating()
 
         if not self._simulation_mode:
             self.power_switch_driver.initialize()
 
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerState.ON)
-        self.connected = True
-
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
-        self.update_component_power_mode(PowerState.UNKNOWN)
-        self.connected = False
 
         if not self._simulation_mode:
             self.power_switch_driver.stop()
@@ -207,7 +176,7 @@ class PowerSwitchComponentManager(
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def is_turn_outlet_on_allowed(self) -> bool:
-        self._logger.info("Checking if TurnOnOutlet is allowed.")
+        self.logger.info("Checking if TurnOnOutlet is allowed.")
         return True
 
     def turn_on_outlet(
@@ -224,7 +193,7 @@ class PowerSwitchComponentManager(
 
         :return: a result code and message
         """
-        self._logger.info(f"ComponentState={self._component_state}")
+        self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._turn_on_outlet,
             args=[argin],
@@ -252,7 +221,7 @@ class PowerSwitchComponentManager(
             if task_callback:
                 task_callback(status=TaskStatus.IN_PROGRESS)
             else:
-                self._logger.warning(
+                self.logger.warning(
                     "task_callback not set for this long-running command."
                 )
             if self.simulation_mode:
@@ -277,7 +246,7 @@ class PowerSwitchComponentManager(
                 task_callback(progress=20)
             if power_mode != PowerState.ON:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
-                self._logger.info(
+                self.logger.info(
                     "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
                 )
                 if task_abort_event and task_abort_event.is_set():
@@ -305,7 +274,7 @@ class PowerSwitchComponentManager(
                 status=TaskStatus.COMPLETED, result=(result_code, message)
             )
         except AssertionError as e:
-            self._logger.error(e)
+            self.logger.error(e)
             task_callback(exception=e, status=TaskStatus.FAILED)
             return (
                 ResultCode.FAILED,
