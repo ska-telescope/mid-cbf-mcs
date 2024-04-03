@@ -173,7 +173,7 @@ def power_switch_test_context() -> tango.DeviceProxy:
     )
     
     with harness as context:
-        yield context.get_device("mid_csp_cbf/power_switch/001")
+        yield context.get_device("mid_csp_cbf/power_switch/001") 
 
 @pytest.fixture(name="change_event_callback")
 def change_event_callbacks_fixture() -> MockTangoEventCallbackGroup:

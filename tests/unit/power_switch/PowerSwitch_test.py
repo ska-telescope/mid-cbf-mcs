@@ -39,10 +39,10 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
     device_under_test.adminMode = AdminMode.ONLINE
     
     # Subscribe to change events
-    device_under_test.subscribe_event("longRunningCommandResult",
+    eid_1 = device_under_test.subscribe_event("longRunningCommandResult",
                                       tango.EventType.CHANGE_EVENT,
                                       change_event_callback["longRunningCommandResult"])
-    device_under_test.subscribe_event("longRunningCommandProgress",
+    eid_2 = device_under_test.subscribe_event("longRunningCommandProgress",
                                       tango.EventType.CHANGE_EVENT,
                                       change_event_callback["longRunningCommandProgress"])
     change_event_callback.assert_change_event("longRunningCommandResult", ('',''))
@@ -72,16 +72,14 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
         assert result_code == [ResultCode.QUEUED]
         outlets[i] = PowerState.ON
         for progress_point in (10,20,100):
-            x = change_event_callback["longRunningCommandProgress"].assert_change_event((f'{command_id[0]}', f'{progress_point}'))
-            pprint.pp(f"HERE {x}")
+            change_event_callback["longRunningCommandProgress"].assert_change_event((f'{command_id[0]}', f'{progress_point}'))
 
-        # ('1712178696.8231559_230456126214572_TurnOnOutlet', '[0, "Outlet 1 power on"]')
-        # x = change_event_callback.assert_change_event("longRunningCommandResult", (f'{command_id[0]}', f'[0, {"Outlet {i} power on"}]'))
-        x = change_event_callback["longRunningCommandResult"].assert_change_event((f'{command_id[0]}', Anything))
-        pprint.pp(x)
+        change_event_callback["longRunningCommandResult"].assert_change_event((f'{command_id[0]}', Anything))
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
-    
+    change_event_callback.assert_not_called()
+    device_under_test.unsubscribe_event(eid_1)
+    device_under_test.unsubscribe_event(eid_2)
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     """
