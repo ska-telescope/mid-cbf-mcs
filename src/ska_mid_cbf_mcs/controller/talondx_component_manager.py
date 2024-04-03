@@ -614,7 +614,6 @@ class TalonDxComponentManager:
 
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
-        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
         self.logger.info(f"Rebooting Talon board {target}")
 
         try:
