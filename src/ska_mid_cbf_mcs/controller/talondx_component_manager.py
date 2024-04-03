@@ -646,7 +646,7 @@ class TalonDxComponentManager:
                 ssh_chan = ssh_client.get_transport().open_session()
                 ssh_chan.exec_command("reboot")
                 self.logger.info(f"Reboot command sent to {target}")
-                
+
                 # Wait and connect to the board after reboot
                 time.sleep(const.DEFAULT_TIMEOUT)
                 make_first_connect(ip, ssh_client)
