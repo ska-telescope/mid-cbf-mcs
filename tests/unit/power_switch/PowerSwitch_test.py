@@ -26,42 +26,60 @@ from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 import tango
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from  ... import test_utils
+from ... import test_utils
 
-def change_event_subscriber(dut: tango.DeviceProxy, change_attr: dict) -> dict:
+
+import logging
+
+
+def change_event_subscriber(
+    dut: tango.DeviceProxy, change_event_callback, list_of_event_types
+) -> dict:
     eid_dict = {}
-    for key, value in change_attr.items():
-        eid_dict[key] = dut.subscribe_event(key,
-                                      tango.EventType.CHANGE_EVENT,
-                                      value)
-        value.assert_change_event(key, (Anything))
+    for event_type in list_of_event_types:
+        eid_dict[event_type] = dut.subscribe_event(
+            event_type,
+            tango.EventType.CHANGE_EVENT,
+            change_event_callback[event_type],
+        )
+        change_event_callback.assert_change_event(event_type, Anything)
     return eid_dict
+
 
 def change_event_unsubscriber(dut: tango.DeviceProxy, eid_dict: dict) -> None:
     for key, value in eid_dict.items():
         eid_dict[key] = dut.unsubscribe_event(value)
 
-def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
-                                    change_event_callback: MockTangoEventCallbackGroup) -> None:
+
+def test_TurnOnOutlet_TurnOffOutlet(
+    device_under_test: tango.DeviceProxy,
+    change_event_callback: MockTangoEventCallbackGroup,
+) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
     # Put the device in simulation mode
     device_under_test.simulationMode = SimulationMode.TRUE
     device_under_test.adminMode = AdminMode.ONLINE
-    
+
     # Subscribe to change events
     # eid_1 = device_under_test.subscribe_event("longRunningCommandResult",
     #                                   tango.EventType.CHANGE_EVENT,
     #                                   change_event_callback["longRunningCommandResult"])
-    
+
     # eid_dict.append(eid_1)
     # eid_2 = device_under_test.subscribe_event("longRunningCommandProgress",
     #                                   tango.EventType.CHANGE_EVENT,
     #                                   change_event_callback["longRunningCommandProgress"])
-    eid_dict = change_event_subscriber(device_under_test, {"longRunningCommandResult":change_event_callback["longRunningCommandResult"],
-                                                "longRunningCommandProgress":change_event_callback["longRunningCommandProgress"]})
-    
+
+    attribute_callbacks = [
+        "longRunningCommandResult",
+        "longRunningCommandProgress",
+    ]
+    eid_dict = change_event_subscriber(
+        device_under_test, change_event_callback, attribute_callbacks
+    )
+
     # change_event_callback.assert_change_event("longRunningCommandResult", (Anything))
     # change_event_callback.assert_change_event("longRunningCommandProgress", (Anything))
     num_outlets = device_under_test.numOutlets
@@ -88,14 +106,19 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
         result_code, command_id = device_under_test.TurnOnOutlet(str(i))
         assert result_code == [ResultCode.QUEUED]
         outlets[i] = PowerState.ON
-        for progress_point in (10,20,100):
-            change_event_callback["longRunningCommandProgress"].assert_change_event((f'{command_id[0]}', f'{progress_point}'))
+        for progress_point in (10, 20, 100):
+            change_event_callback[
+                "longRunningCommandProgress"
+            ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
-        change_event_callback["longRunningCommandResult"].assert_change_event((f'{command_id[0]}', Anything))
+        change_event_callback["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", Anything)
+        )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
     change_event_callback.assert_not_called()
     change_event_unsubscriber(device_under_test, eid_dict)
+
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     """
