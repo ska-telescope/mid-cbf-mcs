@@ -157,7 +157,9 @@ class PowerSwitch(SKABaseDevice):
         )
         self.register_command_object(
             "GetOutletPowerState",
-            self.GetOutletPowerStateCommand(component_manager=self.component_manager, logger=self.logger),
+            self.GetOutletPowerStateCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
         )
 
     # ---------

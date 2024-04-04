@@ -10,50 +10,30 @@
 
 """Contain the tests for the power switch device."""
 
+import ast
 import json
 import pprint
 from time import sleep
 from typing import Any, List
-import ast
-from ska_tango_testing.mock.placeholders import Anything
+
+import tango
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
 
 # Local imports
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
+from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-import tango
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+
 from ... import test_utils
-
-
-import logging
-
-
-def change_event_subscriber(
-    dut: tango.DeviceProxy, change_event_callback, list_of_event_types
-) -> dict:
-    eid_dict = {}
-    for event_type in list_of_event_types:
-        eid_dict[event_type] = dut.subscribe_event(
-            event_type,
-            tango.EventType.CHANGE_EVENT,
-            change_event_callback[event_type],
-        )
-        change_event_callback.assert_change_event(event_type, Anything)
-    return eid_dict
-
-
-def change_event_unsubscriber(dut: tango.DeviceProxy, eid_dict: dict) -> None:
-    for key, value in eid_dict.items():
-        eid_dict[key] = dut.unsubscribe_event(value)
 
 
 def test_TurnOnOutlet_TurnOffOutlet(
     device_under_test: tango.DeviceProxy,
-    change_event_callback: MockTangoEventCallbackGroup,
+    change_event_callbacks: MockTangoEventCallbackGroup,
 ) -> None:
     """
     Tests that the outlets can be turned on and off individually.
@@ -62,26 +42,14 @@ def test_TurnOnOutlet_TurnOffOutlet(
     device_under_test.simulationMode = SimulationMode.TRUE
     device_under_test.adminMode = AdminMode.ONLINE
 
-    # Subscribe to change events
-    # eid_1 = device_under_test.subscribe_event("longRunningCommandResult",
-    #                                   tango.EventType.CHANGE_EVENT,
-    #                                   change_event_callback["longRunningCommandResult"])
-
-    # eid_dict.append(eid_1)
-    # eid_2 = device_under_test.subscribe_event("longRunningCommandProgress",
-    #                                   tango.EventType.CHANGE_EVENT,
-    #                                   change_event_callback["longRunningCommandProgress"])
-
-    attribute_callbacks = [
+    change_event_attr_list = [
         "longRunningCommandResult",
         "longRunningCommandProgress",
     ]
-    eid_dict = change_event_subscriber(
-        device_under_test, change_event_callback, attribute_callbacks
+    attr_event_ids = test_utils.change_event_subscriber(
+        device_under_test, change_event_callbacks, change_event_attr_list
     )
 
-    # change_event_callback.assert_change_event("longRunningCommandResult", (Anything))
-    # change_event_callback.assert_change_event("longRunningCommandProgress", (Anything))
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
 
@@ -107,17 +75,19 @@ def test_TurnOnOutlet_TurnOffOutlet(
         assert result_code == [ResultCode.QUEUED]
         outlets[i] = PowerState.ON
         for progress_point in (10, 20, 100):
-            change_event_callback[
+            change_event_callbacks[
                 "longRunningCommandProgress"
             ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
-        change_event_callback["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", Anything)
         )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
-    change_event_callback.assert_not_called()
-    change_event_unsubscriber(device_under_test, eid_dict)
+
+    # assert if any captured events have gone unaddressed
+    change_event_callbacks.assert_not_called()
+    test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
 
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:

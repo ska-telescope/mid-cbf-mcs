@@ -19,7 +19,10 @@ from typing import Any, Callable, List
 
 import pytest
 import requests
+import tango
 from ska_tango_base.control_model import SimulationMode
+from ska_tango_testing.harness import TangoTestHarness
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
@@ -28,11 +31,6 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
 
 # Local imports
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
-from ska_tango_testing.harness import TangoTestHarness
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-import tango
-
-
 
 # @pytest.fixture(scope="function")
 # def power_switch_component_manager(
@@ -171,18 +169,20 @@ def power_switch_test_context() -> tango.DeviceProxy:
         PowerSwitchModel="DLI LPC9",
         PowerSwitchPassword="1234",
     )
-    
-    with harness as context:
-        yield context.get_device("mid_csp_cbf/power_switch/001") 
 
-@pytest.fixture(name="change_event_callback")
+    with harness as context:
+        yield context.get_device("mid_csp_cbf/power_switch/001")
+
+
+@pytest.fixture(name="change_event_callbacks")
 def change_event_callbacks_fixture() -> MockTangoEventCallbackGroup:
     return MockTangoEventCallbackGroup(
         "longRunningCommandResult",
         "longRunningCommandProgress",
         timeout=10,
     )
-   
+
+
 @pytest.fixture()
 def communication_status_changed_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
