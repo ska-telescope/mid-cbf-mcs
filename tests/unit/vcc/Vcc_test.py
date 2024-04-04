@@ -21,9 +21,13 @@ import pytest
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DevState
+from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from tango import DeviceProxy, DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+
+from ... import test_utils
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -95,7 +99,10 @@ class TestVcc:
         "config_file_name", [("Vcc_ConfigureScan_basic.json")]
     )
     def test_Vcc_ConfigureScan(
-        self, device_under_test: CbfDeviceProxy, config_file_name: str
+        self: TestVcc,
+        device_under_test: DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        config_file_name: str,
     ) -> None:
         """
         Test a minimal successful scan configuration.
@@ -107,9 +114,17 @@ class TestVcc:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.ON
+        # assert device_under_test.state() == DevState.ON
 
-        device_under_test.On()
+        # device_under_test.On()
+
+        change_event_attr_list = [
+            "longRunningCommandResult",
+            "longRunningCommandProgress",
+        ]
+        attr_event_ids = test_utils.change_event_subscriber(
+            device_under_test, change_event_callbacks, change_event_attr_list
+        )
 
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
@@ -121,10 +136,23 @@ class TestVcc:
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
-        device_under_test.ConfigureBand(json.dumps(band_configuration))
+        result_code, command_id = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        assert result_code == [ResultCode.QUEUED]
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", f"{100}"))
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "ConfigureBand completed OK."]')
+        )
 
-        device_under_test.ConfigureScan(json_str)
-        assert device_under_test.obsState == ObsState.READY
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
+
+        # device_under_test.ConfigureScan(json_str)
+        # assert device_under_test.obsState == ObsState.READY
 
     @pytest.mark.parametrize(
         "config_file_name", [("Vcc_ConfigureScan_basic.json")]

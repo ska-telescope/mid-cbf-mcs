@@ -20,6 +20,8 @@ import unittest
 
 import pytest
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager

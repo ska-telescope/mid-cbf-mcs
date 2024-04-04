@@ -203,7 +203,7 @@ class VccComponentManager(CbfObsComponentManager):
         """
         super().__init__(*args, **kwargs)
 
-        self._simulation_mode = simulation_mode
+        self.simulation_mode = simulation_mode
 
         self._vcc_id = vcc_id
         self._talon_lru_fqdn = talon_lru
@@ -256,59 +256,24 @@ class VccComponentManager(CbfObsComponentManager):
             self._band_simulators[3],
         )
 
-    @property
-    def simulation_mode(self: VccComponentManager) -> SimulationMode:
-        """
-        Get the simulation mode of the component manager.
-
-        :return: simulation mode of the component manager
-        """
-        return self._simulation_mode
-
-    @simulation_mode.setter
-    def simulation_mode(
-        self: VccComponentManager, value: SimulationMode
-    ) -> None:
-        """
-        Set the simulation mode of the component manager.
-
-        :param value: value to set simulation mode to
-        """
-        self._simulation_mode = value
-
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-        if self.connected:
-            self.logger.info("Already connected.")
-            return
+        # try:
+        #     self._talon_lru_proxy = CbfDeviceProxy(
+        #         fqdn=self._talon_lru_fqdn, logger=self.logger
+        #     )
+        # except tango.DevFailed:
+        #     self._update_component_state(fault=True)
+        #     self.logger.error("Error in proxy connection")
+        #     return
 
         super().start_communicating()
-
-        try:
-            self._talon_lru_proxy = CbfDeviceProxy(
-                fqdn=self._talon_lru_fqdn, logger=self.logger
-            )
-
-            # TODO: CIP-1470 comment to remove VCC search window
-            # self._sw_proxies = [
-            #     CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
-            #     for fqdn in self._search_window_fqdn
-            # ]
-        except tango.DevFailed:
-            self.update_component_fault(True)
-            self.logger.error("Error in proxy connection")
-            return
-
-        self.connected = True
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(self._get_power_mode())
-        self.update_component_fault(False)
+        # self._update_component_state(power=self._get_power_mode())
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
-        self.update_component_power_mode(PowerState.UNKNOWN)
-        self.connected = False
+        self._update_component_state(power=PowerState.UNKNOWN)
 
     def _get_power_mode(self: VccComponentManager) -> PowerState:
         """
@@ -320,22 +285,26 @@ class VccComponentManager(CbfObsComponentManager):
         try:
             pdu1_power_mode = self._talon_lru_proxy.PDU1PowerState
             pdu2_power_mode = self._talon_lru_proxy.PDU2PowerState
-
-            if (
-                pdu1_power_mode == PowerState.ON
-                or pdu2_power_mode == PowerState.ON
-            ):
-                return PowerState.ON
-            elif (
-                pdu1_power_mode == PowerState.OFF
-                and pdu2_power_mode == PowerState.OFF
-            ):
-                return PowerState.OFF
-            else:
-                return PowerState.UNKNOWN
         except tango.DevFailed:
             self.logger.error("Could not connect to Talon LRU device")
-            self.update_component_fault(True)
+            self._update_component_state(fault=True)
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return PowerState.UNKNOWN
+
+        self._update_component_state(fault=False)
+        if (
+            pdu1_power_mode == PowerState.ON
+            or pdu2_power_mode == PowerState.ON
+        ):
+            return PowerState.ON
+        elif (
+            pdu1_power_mode == PowerState.OFF
+            and pdu2_power_mode == PowerState.OFF
+        ):
+            return PowerState.OFF
+        else:
             return PowerState.UNKNOWN
 
     def on(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -353,7 +322,7 @@ class VccComponentManager(CbfObsComponentManager):
         self.logger.info("Entering VccComponentManager.on")
         try:
             # Try to connect to HPS devices, they should be running at this point
-            if not self._simulation_mode:
+            if not self.simulation_mode:
                 self.logger.info(
                     "Connecting to HPS VCC controller and band devices"
                 )
@@ -402,9 +371,9 @@ class VccComponentManager(CbfObsComponentManager):
 
     def is_configure_band_allowed(self) -> bool:
         self.logger.info("Checking if VCC ConfigureBand is allowed.")
-        if self._obs_state not in [ObsState.IDLE, ObsState.READY]:
+        if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
             self.logger.warning(
-                f"VCC ConfigureBand not allowed in ObsState {self._obs_state}; must be in ObsState.IDLE or READY"
+                f"VCC ConfigureBand not allowed in ObsState {self.obs_state}; must be in ObsState.IDLE or READY"
             )
             return False
         return True
@@ -429,7 +398,22 @@ class VccComponentManager(CbfObsComponentManager):
             self.logger.info(f"Configuring VCC band {freq_band_name}")
             frequency_band = freq_band_dict()[freq_band_name]["band_index"]
 
-            if self._simulation_mode:
+            self.logger.info(f"simulation mode: {self.simulation_mode}")
+
+            # TODO CIP-2380
+            if task_abort_event and task_abort_event.is_set():
+                message = f"Vcc.ConfigureBand command aborted by task executor Abort Event."
+                task_callback(
+                    progress=33,
+                    status=TaskStatus.ABORTED,
+                    result=(ResultCode.ABORTED, message),
+                )
+                return (
+                    ResultCode.ABORTED,
+                    message,
+                )
+
+            if self.simulation_mode:
                 self._vcc_controller_simulator.ConfigureBand(frequency_band)
             else:
                 self._vcc_controller_proxy.ConfigureBand(frequency_band)
@@ -465,14 +449,34 @@ class VccComponentManager(CbfObsComponentManager):
             json_string = json.dumps(args)
 
             idx = self._freq_band_index[freq_band_name]
-            if self._simulation_mode:
+
+            # TODO CIP-2380
+            if task_abort_event and task_abort_event.is_set():
+                message = f"Vcc.ConfigureBand command aborted by task executor Abort Event."
+                task_callback(
+                    progress=66,
+                    status=TaskStatus.ABORTED,
+                    result=(ResultCode.ABORTED, message),
+                )
+                return (
+                    ResultCode.ABORTED,
+                    message,
+                )
+
+            if self.simulation_mode:
                 self._band_simulators[idx].SetInternalParameters(json_string)
             else:
                 self._band_proxies[idx].SetInternalParameters(json_string)
 
             self._freq_band_name = freq_band_name
+
             self._frequency_band = frequency_band
-            self._push_attr_change_event("frequencyBand", self._frequency_band)
+            self._device_attr_change_callback(
+                "frequencyBand", self._frequency_band
+            )
+            self._device_attr_archive_callback(
+                "frequencyBand", self._frequency_band
+            )
 
         except tango.DevFailed as df:
             self.logger.error(str(df.args[0].desc))
@@ -539,7 +543,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._scan_id = 0
 
         if self._ready:
-            if self._simulation_mode:
+            if self.simulation_mode:
                 self._vcc_controller_simulator.Unconfigure()
             else:
                 try:
@@ -599,7 +603,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the ConfigureScan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
-        if self._simulation_mode:
+        if self.simulation_mode:
             self._band_simulators[idx].ConfigureScan(argin)
         else:
             try:
@@ -633,7 +637,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the Scan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
-        if self._simulation_mode:
+        if self.simulation_mode:
             self._band_simulators[idx].Scan(scan_id)
         else:
             try:
@@ -661,7 +665,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the EndScan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
-        if self._simulation_mode:
+        if self.simulation_mode:
             self._band_simulators[idx].EndScan()
         else:
             try:
@@ -680,7 +684,7 @@ class VccComponentManager(CbfObsComponentManager):
         """Tell the current VCC band device to abort whatever it was doing."""
         if self._freq_band_name != "":
             idx = self._freq_band_index[self._freq_band_name]
-            if self._simulation_mode:
+            if self.simulation_mode:
                 self._band_simulators[idx].Abort()
             else:
                 try:
@@ -711,7 +715,7 @@ class VccComponentManager(CbfObsComponentManager):
         """Reset the configuration."""
         if self._freq_band_name != "":
             idx = self._freq_band_index[self._freq_band_name]
-            if self._simulation_mode:
+            if self.simulation_mode:
                 self._band_simulators[idx].ObsReset()
             else:
                 try:

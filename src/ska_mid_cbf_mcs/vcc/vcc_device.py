@@ -19,11 +19,12 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 # Tango imports
 import tango
 from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
@@ -161,15 +162,6 @@ class Vcc(CspSubElementObsDevice):
         doc="config ID",
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -182,15 +174,15 @@ class Vcc(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.logger)
+        # device_args = (self, self.logger)
 
-        self.register_command_object("On", self.OnCommand(*device_args))
+        # self.register_command_object("On", self.OnCommand(*device_args))
 
-        self.register_command_object("Off", self.OffCommand(*device_args))
+        # self.register_command_object("Off", self.OffCommand(*device_args))
 
-        self.register_command_object(
-            "Standby", self.StandbyCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "Standby", self.StandbyCommand(*device_args)
+        # )
         self.register_command_object(
             "ConfigureBand",
             SubmittedSlowCommand(
@@ -202,57 +194,61 @@ class Vcc(CspSubElementObsDevice):
             ),
         )
 
-        self.register_command_object(
-            "UpdateDopplerPhaseCorrection",
-            self.UpdateDopplerPhaseCorrectionCommand(*device_args),
-        )
+        # self.register_command_object(
+        #     "UpdateDopplerPhaseCorrection",
+        #     self.UpdateDopplerPhaseCorrectionCommand(*device_args),
+        # )
 
-        self.register_command_object(
-            "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
+        # )
 
-        self.register_command_object(
-            "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
+        # )
 
-        self.register_command_object(
-            "ConfigureSearchWindow",
-            self.ConfigureSearchWindowCommand(*device_args),
-        )
+        # self.register_command_object(
+        #     "ConfigureSearchWindow",
+        #     self.ConfigureSearchWindowCommand(*device_args),
+        # )
 
-        device_args = (
-            self,
-            self.op_state_model,
-            self.obs_state_model,
-            self.logger,
-        )
+        # device_args = (
+        #     self,
+        #     self.op_state_model,
+        #     self.obs_state_model,
+        #     self.logger,
+        # )
 
-        self.register_command_object(
-            "ConfigureScan", self.ConfigureScanCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "ConfigureScan", self.ConfigureScanCommand(*device_args)
+        # )
 
-        self.register_command_object("Scan", self.ScanCommand(*device_args))
+        # self.register_command_object("Scan", self.ScanCommand(*device_args))
 
-        self.register_command_object(
-            "EndScan", self.EndScanCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "EndScan", self.EndScanCommand(*device_args)
+        # )
 
-        self.register_command_object("Abort", self.AbortCommand(*device_args))
+        # self.register_command_object("Abort", self.AbortCommand(*device_args))
 
-        self.register_command_object(
-            "ObsReset", self.ObsResetCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "ObsReset", self.ObsResetCommand(*device_args)
+        # )
 
-        self.register_command_object(
-            "GoToIdle", self.GoToIdleCommand(*device_args)
-        )
+        # self.register_command_object(
+        #     "GoToIdle", self.GoToIdleCommand(*device_args)
+        # )
 
     # PROTECTED REGION END #    //  Vcc.class_variable
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerState] = None
+        self.logger.info(f"device simulation mode: {self._simulation_mode}")
 
+        # note: not setting simulation mode so that the component manager defaults
+        # to SimulationMode.TRUE, as self._simulation_mode here is SimulationMode.FALSE,
+        # which is the default during the base class initialization
         return VccComponentManager(
             vcc_id=self.VccID,
             talon_lru=self.TalonLRUAddress,
@@ -265,11 +261,8 @@ class Vcc(CspSubElementObsDevice):
             ],
             search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
-            simulation_mode=self.simulationMode,
-            attr_callback=self.push_change_event,
-            obs_state_callback=self._component_state_changed,
-            state_callback=self._update_state,
-            admin_mode_callback=self._update_admin_mode,
+            attr_change_callback=self.push_change_event,
+            attr_archive_callback=self.push_archive_event,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_status_changed,
             component_state_callback=self._component_state_changed,
@@ -365,21 +358,24 @@ class Vcc(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
-    def read_simulationMode(self: Vcc) -> SimulationMode:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: Vcc) -> SimulationMode:
         """
-        Get the simulation mode.
+        Read the Simulation Mode of the device.
 
-        :return: the current simulation mode
+        :return: Simulation Mode of the device.
         """
-        return self.component_manager.simulation_mode
+        return self._simulation_mode
 
-    def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
+    @simulationMode.write
+    def simulationMode(self: Vcc, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
     def read_dishID(self: Vcc) -> str:
@@ -565,6 +561,8 @@ class Vcc(CspSubElementObsDevice):
 
         def do(
             self: Vcc.InitCommand,
+            *args: Any,
+            **kwargs: Any,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -575,26 +573,23 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
             device = self._device
-            (result_code, msg) = super().do()
+            (result_code, msg) = super().do(*args, **kwargs)
 
             # Make a private copy of the device properties:
             device._vcc_id = device.VccID
 
             # initialize attribute values
             device._subarray_membership = 0
-            device._last_scan_configuration = ""
 
             device._configuring_from_idle = False
 
-            device.set_change_event("frequencyBand", True, True)
+            device.set_change_event("frequencyBand", True)
+            device.set_archive_event("frequencyBand", True)
+            device.set_change_event("subarrayMembership", True)
+            device.set_archive_event("subarrayMembership", True)
 
             # Setting initial simulation mode to True
-            device.write_simulationMode(SimulationMode.TRUE)
-
-            device.set_change_event("subarrayMembership", True, True)
-
-            # TODO remove when upgrading base class from 0.11.3
-            device.set_change_event("healthState", True, True)
+            device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, msg)
 
@@ -653,10 +648,15 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.standby()
 
-    @command(dtype_in="DevString", doc_in="Band config string.")
+    @command(
+        dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
+        doc_in="Band config string.",
+    )
     @DebugIt()
-    def ConfigureBand(self: Vcc, band_config: str) -> None:
-        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
+    def ConfigureBand(
+        self: Vcc, band_config: str
+    ) -> DevVarLongStringArrayType:
         """
         Turn on the corresponding band device and disable all the others.
 
@@ -665,12 +665,11 @@ class Vcc(CspSubElementObsDevice):
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (ResultCode, str)
+        :rtype: DevVarLongStringArrayType
         """
         command_handler = self.get_command_object(command_name="ConfigureBand")
         command_id, result_code_message = command_handler(band_config)
         return [[command_id], [result_code_message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(
         self: Vcc, msg: str, cmd: str

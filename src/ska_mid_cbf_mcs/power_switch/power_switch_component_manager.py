@@ -68,16 +68,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param ip: IP address of the power switch
         :param login: Login username of the power switch
         :param password: Login password for the power switch
-        :param logger: a logger for this object to use
-        :param push_change_event: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be
-            called when the component has faulted
         :param simulation_mode: simulation mode identifies if the real power switch
                 driver or the simulator should be used
 
