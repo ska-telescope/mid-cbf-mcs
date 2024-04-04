@@ -80,7 +80,7 @@ def test_TurnOnOutlet_TurnOffOutlet(
             ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", Anything)
+            (f"{command_id[0]}", f'[0, {"Outlet {i} power on"}]')
         )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
