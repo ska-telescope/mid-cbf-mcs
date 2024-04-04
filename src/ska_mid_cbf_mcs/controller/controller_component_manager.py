@@ -803,19 +803,19 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
-            # if lru is already ON, reboot the Talon DX board instead
             lru_powermode = proxy.read_attribute("LRUPowerMode").value
             self._logger.info(f"LRU power mode: {lru_powermode}")
+            
             if True:
                 self._logger.info(
-                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board instead"
+                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board to clear state"
                 )
                 result = self._talondx_component_manager.reboot()
                 if result == ResultCode.FAILED:
                     self._logger.error("Failed to reboot Talon DX Board")
                     return (False, lru_fqdn)
-            else:
-                proxy.On()
+            
+            proxy.On()
         except tango.DevFailed as e:
             self._logger.error(e)
             return (False, lru_fqdn)
