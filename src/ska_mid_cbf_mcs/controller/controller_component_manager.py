@@ -549,7 +549,7 @@ class ControllerComponentManager(CbfComponentManager):
                 result_code = ResultCode.FAILED
 
             # HPS master shutdown
-            result = self._talondx_component_manager.shutdown(3)
+            result = self._talondx_component_manager.shutdown()
             if result == ResultCode.FAILED:
                 # if HPS master shutdown failed, continue with attempting to
                 # shut off power outlets via LRU device

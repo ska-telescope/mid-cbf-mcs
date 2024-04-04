@@ -523,10 +523,9 @@ class TalonDxComponentManager:
 
     def shutdown(
         self: TalonDxComponentManager,
-        shutdown_code: int,
     ) -> ResultCode:
         """
-        Shutdown the DsHpsMaster device with given shutdown code.
+        Shutdown the DsHpsMaster device with shutdown code 3.
         For reference, shutdown command codes:
             0. Child Tango DSs only
             1. Child and HPS Master Tango DSs
@@ -539,9 +538,7 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.FALSE:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
-                    executor.submit(
-                        self._shutdown_talon_thread, shutdown_code, talon_cfg
-                    )
+                    executor.submit(self._shutdown_talon_thread, talon_cfg)
                     for talon_cfg in self.talondx_config["config_commands"]
                 ]
                 results = [f.result() for f in futures]
@@ -554,14 +551,13 @@ class TalonDxComponentManager:
 
     def _shutdown_talon_thread(
         self: TalonDxComponentManager,
-        shutdown_code: int,
         talon_cfg,
     ) -> tuple(ResultCode, str):
-        # HPS master shutdown with given shutdown code
+        # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
         try:
-            hps_master.shutdown(shutdown_code)
+            hps_master.shutdown(3)
         except tango.DevFailed as df:
             for item in df.args:
                 self.logger.warning(
