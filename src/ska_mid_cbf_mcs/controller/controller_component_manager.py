@@ -804,7 +804,9 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
 
             lru_powermode = proxy.read_attribute("LRUPowerMode").value
-            self._logger.info(f"LRU power mode: {lru_powermode}, DevState: {proxy.state()}")
+            self._logger.info(
+                f"LRU power mode: {lru_powermode}, DevState: {proxy.state()}"
+            )
 
             if lru_powermode == PowerMode.ON:
                 self._logger.info(
