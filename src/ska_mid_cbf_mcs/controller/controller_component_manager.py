@@ -808,14 +808,14 @@ class ControllerComponentManager(CbfComponentManager):
                 f"LRU power mode: {lru_powermode}, DevState: {proxy.state()}"
             )
 
-            if lru_powermode == PowerMode.ON:
-                self._logger.info(
-                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board to clear state"
-                )
-                result = self._talondx_component_manager.reboot()
-                if result == ResultCode.FAILED:
-                    self._logger.error("Failed to reboot Talon DX Board")
-                    return (False, lru_fqdn)
+            # if lru_powermode == PowerMode.ON:
+            #     self._logger.info(
+            #         f"LRU {lru_fqdn} already ON, rebooting Talon DX Board to clear state"
+            #     )
+            #     result = self._talondx_component_manager.reboot()
+            #     if result == ResultCode.FAILED:
+            #         self._logger.error("Failed to reboot Talon DX Board")
+            #         return (False, lru_fqdn)
 
             proxy.On()
         except tango.DevFailed as e:
