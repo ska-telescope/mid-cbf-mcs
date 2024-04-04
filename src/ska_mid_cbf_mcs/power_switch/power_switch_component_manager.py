@@ -220,10 +220,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         try:
             if task_callback:
                 task_callback(status=TaskStatus.IN_PROGRESS)
-            else:
-                self.logger.warning(
-                    "task_callback is not set for this long-running command."
-                )
             if self.simulation_mode:
                 (
                     result_code,
@@ -269,9 +265,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         ResultCode.FAILED,
                         f"Power on failed, outlet is in power mode {power_mode}",
                     )
-            task_callback(progress=100)
             task_callback(
-                status=TaskStatus.COMPLETED, result=(result_code, message)
+                progress=100,
+                result=(result_code, message),
+                status=TaskStatus.COMPLETED,
             )
         except AssertionError as e:
             self.logger.error(e)

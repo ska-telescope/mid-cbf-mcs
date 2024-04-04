@@ -24,7 +24,11 @@ from typing import List, Optional, Tuple
 # Tango imports
 import tango
 from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
-from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
@@ -187,9 +191,15 @@ class Vcc(CspSubElementObsDevice):
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
         )
-
         self.register_command_object(
-            "ConfigureBand", self.ConfigureBandCommand(*device_args)
+            "ConfigureBand",
+            SubmittedSlowCommand(
+                "ConfigureBand",
+                self._command_tracker,
+                self.component_manager,
+                "configure_band",
+                logger=self.logger,
+            ),
         )
 
         self.register_command_object(
@@ -255,11 +265,14 @@ class Vcc(CspSubElementObsDevice):
             ],
             search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
-            component_obs_fault_callback=self._component_obsfault,
+            simulation_mode=self.simulationMode,
+            attr_callback=self.push_change_event,
+            obs_state_callback=self._component_state_changed,
+            state_callback=self._update_state,
+            admin_mode_callback=self._update_admin_mode,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_status_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     def always_executed_hook(self: Vcc) -> None:
@@ -640,31 +653,9 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.standby()
 
-    class ConfigureBandCommand(FastCommand):
-        """
-        A class for the Vcc's ConfigureBand() command.
-
-        Turn on the corresponding band device and disable all the others.
-        """
-
-        def do(
-            self: Vcc.ConfigureBandCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for ConfigureBand() command functionality.
-
-            :param freq_band_name: the frequency band name
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.target.component_manager.configure_band(argin)
-
     @command(dtype_in="DevString", doc_in="Band config string.")
     @DebugIt()
-    def ConfigureBand(self, band_config: str) -> None:
+    def ConfigureBand(self: Vcc, band_config: str) -> None:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
@@ -676,9 +667,9 @@ class Vcc(CspSubElementObsDevice):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("ConfigureBand")
-        (result_code, message) = command(band_config)
-        return [[result_code], [message]]
+        command_handler = self.get_command_object(command_name="ConfigureBand")
+        command_id, result_code_message = command_handler(band_config)
+        return [[command_id], [result_code_message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(

@@ -54,6 +54,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: Any,
+        attr_callback: Callable[[str, Any], None] | None = None,
         state_callback: Callable[[DevState, str], None] | None = None,
         admin_mode_callback: Callable[[AdminMode], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
@@ -68,6 +69,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
             "fault": None,
             "power": None,
         }
+
+        self._device_attr_callback = attr_callback
+        self._attr_lock = Lock()
+
         self._device_state_callback = state_callback
         self._state_lock = Lock()
         self._state = DevState.UNKNOWN
@@ -83,6 +88,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
     ###########
     # Callbacks
     ###########
+    def _update_attribute(
+        self: CbfComponentManager, attr_name: str, value: Any
+    ):
+        """
+        Handle an attribute change pushed by the component manager.
+
+        :param attr_name: the attribute name
+        :param value: the new attribute value
+        """
+
     def _update_device_state(
         self: CbfComponentManager,
         state: DevState,

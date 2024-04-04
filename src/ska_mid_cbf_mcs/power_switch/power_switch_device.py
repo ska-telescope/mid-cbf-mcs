@@ -291,10 +291,10 @@ class PowerSwitch(SKABaseDevice):
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
-        handler = self.get_command_object(command_name="TurnOnOutlet")
-        result_code, message = handler(argin)
+        command_handler = self.get_command_object(command_name="TurnOnOutlet")
+        command_id, result_code_message = command_handler(argin)
 
-        return [[result_code], [message]]
+        return [[command_id], [result_code_message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
 
     class TurnOffOutletCommand(SubmittedSlowCommand):
