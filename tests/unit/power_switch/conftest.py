@@ -182,7 +182,7 @@ def change_event_callbacks_fixture() -> MockTangoEventCallbackGroup:
         "longRunningCommandProgress",
         timeout=10,
     )
-
+   
 @pytest.fixture()
 def communication_status_changed_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],

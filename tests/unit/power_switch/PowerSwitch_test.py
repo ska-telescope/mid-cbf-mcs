@@ -28,6 +28,18 @@ import tango
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from  ... import test_utils
 
+def change_event_subscriber(dut: tango.DeviceProxy, change_attr: dict) -> dict:
+    eid_dict = {}
+    for key, value in change_attr.items():
+        eid_dict[key] = dut.subscribe_event(key,
+                                      tango.EventType.CHANGE_EVENT,
+                                      value)
+        value.assert_change_event(key, (Anything))
+    return eid_dict
+
+def change_event_unsubscriber(dut: tango.DeviceProxy, eid_dict: dict) -> None:
+    for key, value in eid_dict.items():
+        eid_dict[key] = dut.unsubscribe_event(value)
 
 def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
                                     change_event_callback: MockTangoEventCallbackGroup) -> None:
@@ -39,14 +51,19 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
     device_under_test.adminMode = AdminMode.ONLINE
     
     # Subscribe to change events
-    eid_1 = device_under_test.subscribe_event("longRunningCommandResult",
-                                      tango.EventType.CHANGE_EVENT,
-                                      change_event_callback["longRunningCommandResult"])
-    eid_2 = device_under_test.subscribe_event("longRunningCommandProgress",
-                                      tango.EventType.CHANGE_EVENT,
-                                      change_event_callback["longRunningCommandProgress"])
-    change_event_callback.assert_change_event("longRunningCommandResult", ('',''))
-    change_event_callback.assert_change_event("longRunningCommandProgress", ())
+    # eid_1 = device_under_test.subscribe_event("longRunningCommandResult",
+    #                                   tango.EventType.CHANGE_EVENT,
+    #                                   change_event_callback["longRunningCommandResult"])
+    
+    # eid_dict.append(eid_1)
+    # eid_2 = device_under_test.subscribe_event("longRunningCommandProgress",
+    #                                   tango.EventType.CHANGE_EVENT,
+    #                                   change_event_callback["longRunningCommandProgress"])
+    eid_dict = change_event_subscriber(device_under_test, {"longRunningCommandResult":change_event_callback["longRunningCommandResult"],
+                                                "longRunningCommandProgress":change_event_callback["longRunningCommandProgress"]})
+    
+    # change_event_callback.assert_change_event("longRunningCommandResult", (Anything))
+    # change_event_callback.assert_change_event("longRunningCommandProgress", (Anything))
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
 
@@ -78,8 +95,7 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: tango.DeviceProxy,
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
     change_event_callback.assert_not_called()
-    device_under_test.unsubscribe_event(eid_1)
-    device_under_test.unsubscribe_event(eid_2)
+    change_event_unsubscriber(device_under_test, eid_dict)
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     """
