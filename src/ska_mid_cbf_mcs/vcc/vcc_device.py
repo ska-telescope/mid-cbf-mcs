@@ -223,6 +223,17 @@ class Vcc(CspSubElementObsDevice):
         #     "ConfigureScan", self.ConfigureScanCommand(*device_args)
         # )
 
+        self.register_command_object(
+            "ConfigureScan",
+            SubmittedSlowCommand(
+                "ConfigureScan",
+                self._command_tracker,
+                self.component_manager,
+                "configure_scan",
+                logger=self.logger,
+            ),
+        )
+
         # self.register_command_object("Scan", self.ScanCommand(*device_args))
 
         # self.register_command_object(
@@ -690,36 +701,36 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's ConfigureScan() command.
         """
 
-        def do(
-            self: Vcc.ConfigureScanCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for ConfigureScan() command functionality.
+        # def do(
+        #     self: Vcc.ConfigureScanCommand, argin: str
+        # ) -> Tuple[ResultCode, str]:
+        #     """
+        #     Stateless hook for ConfigureScan() command functionality.
 
-            :param argin: The configuration as JSON formatted string
-            :type argin: str
+        #     :param argin: The configuration as JSON formatted string
+        #     :type argin: str
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            :raises: ``CommandError`` if the configuration data validation fails.
-            """
-            device = self._device
-            # By this time, the DISH ID should be set:
-            device.logger.debug(f"dishID: {device.component_manager.dish_id}")
+        #     :return: A tuple containing a return code and a string
+        #         message indicating status. The message is for
+        #         information purpose only.
+        #     :rtype: (ResultCode, str)
+        #     :raises: ``CommandError`` if the configuration data validation fails.
+        #     """
+        #     device = self._device
+        #     # By this time, the DISH ID should be set:
+        #     device.logger.debug(f"dishID: {device.component_manager.dish_id}")
 
-            (result_code, msg) = device.component_manager.configure_scan(argin)
+        #     (result_code, msg) = device.component_manager.configure_scan(argin)
 
-            if result_code == ResultCode.OK:
-                # store the configuration on command success
-                device._last_scan_configuration = argin
-                if device._configuring_from_idle:
-                    device.obs_state_model.perform_action(
-                        "component_configured"
-                    )
+        #     if result_code == ResultCode.OK:
+        #         # store the configuration on command success
+        #         device._last_scan_configuration = argin
+        #         if device._configuring_from_idle:
+        #             device.obs_state_model.perform_action(
+        #                 "component_configured"
+        #             )
 
-            return (result_code, msg)
+        #     return (result_code, msg)
 
         def validate_input(
             self: Vcc.ConfigureScanCommand, argin: str
@@ -847,6 +858,13 @@ class Vcc(CspSubElementObsDevice):
 
             return (True, "Configuration validated OK")
 
+    def is_ConfigureScan_allowed(self: Vcc) -> bool:
+        # Overriding LMC Base-provided method as ConfigureScan is a
+        # Long Running Command and we want to rely solely on the
+        # is_<cmd>_allowed method for this command in the component manager
+        # which is submitted to the task executor queue
+        return True
+    
     @command(
         dtype_in="DevString",
         doc_in="JSON formatted string with the scan configuration.",
@@ -871,9 +889,9 @@ class Vcc(CspSubElementObsDevice):
         # TODO: Improve validation (validation should only be done once,
         # most of the validation can be done through a schema instead of manually
         # through functions).
-        command = self.get_command_object("ConfigureScan")
+        command_handler = self.get_command_object("ConfigureScan")
 
-        (valid, message) = command.validate_input(argin)
+        (valid, message) = command_handler.validate_input(argin)
         if not valid:
             self._raise_configuration_fatal_error(message, "ConfigureScan")
         else:
@@ -881,11 +899,15 @@ class Vcc(CspSubElementObsDevice):
                 self._configuring_from_idle = True
             else:
                 self._configuring_from_idle = False
-            (result_code, message) = command(argin)
+            
+            self.logger.debug(f"dishID: {self.component_manager.dish_id}")
+
+            command_id, result_code_message = command_handler(argin)
+
             # store the configuration on command success
             self._last_scan_configuration = argin
 
-        return [[result_code], [message]]
+        return [[command_id], [result_code_message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):

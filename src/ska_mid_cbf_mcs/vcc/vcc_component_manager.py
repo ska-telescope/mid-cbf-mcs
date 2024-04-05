@@ -506,7 +506,7 @@ class VccComponentManager(CbfObsComponentManager):
         argin: str,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+    ) -> Tuple[TaskStatus, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
         FPGA to the correct bitstream and enables the respective band device. All
@@ -517,7 +517,7 @@ class VccComponentManager(CbfObsComponentManager):
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (ResultCode, str)
+        :rtype: (TaskStatus, str)
         """
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
@@ -555,8 +555,21 @@ class VccComponentManager(CbfObsComponentManager):
                     self._component_obs_fault_callback(True)
             self._ready = False
 
-    def configure_scan(
-        self: VccComponentManager, argin: str
+    def is_configure_scan_allowed(self) -> bool:
+        self.logger.info("Checking if VCC ConfigureScan is allowed.")
+        if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
+            self.logger.warning(
+                f"VCC ConfigureScan not allowed in ObsState {self.obs_state}; must be in ObsState.IDLE or READY"
+            )
+            return False
+        return True
+    
+    def _configure_scan(
+        self: VccComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
     ) -> Tuple[ResultCode, str]:
         """
         Execute configure scan operation.
@@ -617,7 +630,36 @@ class VccComponentManager(CbfObsComponentManager):
                 )
 
         self._ready = True
+
+        # Update obsState callback
+        self._update_component_state(configured=True)
+        
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
+
+    def configure_scan(
+        self: VccComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Tuple[TaskStatus, str]: 
+        """
+        Execute configure scan operation.
+
+        :param argin: JSON string with the configure scan parameters
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
+        self.logger.info(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._configure_scan,
+            args=[argin],
+            is_cmd_allowed=self.is_configure_scan_allowed,
+            task_callback=task_callback,
+        )
+                
 
     def scan(
         self: VccComponentManager, scan_id: int
