@@ -54,8 +54,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: Any,
-        state_callback: Callable[[DevState, str], None] | None = None,
-        admin_mode_callback: Callable[[AdminMode], None] | None = None,
+        attr_change_callback: Callable[[str, Any], None] | None = None,
+        attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
         **kwargs: Any,
     ):
@@ -68,13 +68,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             "fault": None,
             "power": None,
         }
-        self._device_state_callback = state_callback
-        self._state_lock = Lock()
-        self._state = DevState.UNKNOWN
 
-        self._device_admin_mode_callback = admin_mode_callback
-        self._admin_mode_lock = Lock()
-        self._admin_mode = AdminMode.OFFLINE
+        self._device_attr_change_callback = attr_change_callback
+        self._device_attr_archive_callback = attr_archive_callback
 
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
@@ -83,45 +79,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
     ###########
     # Callbacks
     ###########
-    def _update_device_state(
-        self: CbfComponentManager,
-        state: DevState,
-    ) -> None:
-        """
-        Handle a state change.
-        This is a helper method for use by subclasses.
-        :param state: the new state of the
-            component manager.
-        """
-        with self._state_lock:
-            if self._state != state:
-                self._state = state
-                self._push_state_update(state)
-
-    def _push_state_update(self: CbfComponentManager, state: DevState) -> None:
-        if self._device_state_callback is not None:
-            self._device_state_callback(state)
-
-    def _update_device_admin_mode(
-        self: CbfComponentManager,
-        admin_mode: AdminMode,
-    ) -> None:
-        """
-        Handle a admin mode change.
-        This is a helper method for use by subclasses.
-        :param state: the new admin mode of the
-            component manager.
-        """
-        with self._admin_mode_lock:
-            if self._admin_mode != admin_mode:
-                self._admin_mode = admin_mode
-                self._push_admin_mode_update(admin_mode)
-
-    def _push_admin_mode_update(
-        self: CbfComponentManager, admin_mode: AdminMode
-    ) -> None:
-        if self._device_admin_mode_callback is not None:
-            self._device_admin_mode_callback(admin_mode)
 
     def _update_device_health_state(
         self: CbfComponentManager,
@@ -149,14 +106,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
-        self._update_device_admin_mode(AdminMode.ONLINE)
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
-        self._update_device_admin_mode(AdminMode.OFFLINE)
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
