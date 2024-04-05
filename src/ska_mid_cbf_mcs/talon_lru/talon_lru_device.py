@@ -115,7 +115,13 @@ class TalonLRU(SKABaseDevice):
             or self.component_manager.pdu2_power_mode == PowerMode.ON
         ):
             return PowerMode.ON
-        return PowerMode.OFF
+        elif (
+            self.component_manager.pdu1_power_mode == PowerMode.OFF
+            and self.component_manager.pdu2_power_mode == PowerMode.OFF
+        ):
+            return PowerMode.OFF
+        else:
+            return PowerMode.UNKNOWN
 
     # ----------
     # Callbacks
