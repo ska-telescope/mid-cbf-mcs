@@ -95,6 +95,10 @@ class TalonDxComponentManager:
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
 
+        if self.talondx_config == {} or self._hw_config == {}:
+            if self.read_config() == ResultCode.FAILED:
+                return ResultCode.FAILED
+
         # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
