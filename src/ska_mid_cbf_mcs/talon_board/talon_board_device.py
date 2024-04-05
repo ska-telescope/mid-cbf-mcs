@@ -13,14 +13,17 @@ TANGO device class for monitoring a Talon board.
 
 from __future__ import annotations
 
+import threading
+import time
+from asyncio import exceptions
 from typing import Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
-from tango import AttrWriteType
-from tango.server import attribute, device_property, run
+from tango import AttrWriteType, EnsureOmniThread
+from tango.server import DevFailed, attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
@@ -35,12 +38,53 @@ from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
 
 __all__ = ["TalonBoard", "main"]
 
+stop_thread = False
+comms = False
+thread = None
+init_counter = 0
+
 
 class TalonBoard(SKABaseDevice):
     """
     TANGO device class for consuming logs from the Tango devices run on the Talon boards,
     converting them to the SKA format, and outputting them via the logging framework.
     """
+
+    def push_event_thread(self):
+        global stop_thread, comms
+        with EnsureOmniThread():
+            while stop_thread is False:
+                time.sleep(1.0)
+                if comms is False and init_counter != 2:
+                    continue
+                else:
+                    try:
+                        self.logger.info("Pushing two change events")
+                        temperature = (
+                            self.component_manager.fpga_die_temperature()
+                        )
+                        self.push_change_event(
+                            "FpgaDieTemperature", temperature
+                        )
+                        self.push_archive_event(
+                            "FpgaDieTemperature", temperature
+                        )
+                    except DevFailed as e:
+                        self.logger.info(f"Cannot pull temp attr yet:{e}")
+                    except exceptions.TimeoutError as t:
+                        self.logger.info(f"Timeout: {t}")
+
+    def init_device(self):
+        global stop_thread, thread, comms, init_counter
+        comms = False
+        super().init_device()
+        self.set_change_event("FpgaDieTemperature", True, True)
+        self.set_archive_event("FpgaDieTemperature", True, True)
+        stop_thread = False
+        self.logger.info("Creating thread now")
+        thread = threading.Thread(target=self.push_event_thread)
+        init_counter = init_counter + 1
+        self.logger.info(f"Init Counter is now: {init_counter}")
 
     # PROTECTED REGION ID(TalonBoard.class_variable) ENABLED START #
 
@@ -247,7 +291,10 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(
-        dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature"
+        dtype=float,
+        label="FPGA Die Temperature",
+        doc="FPGA Die Temperature",
+        abs_change=0.1,
     )
     def FpgaDieTemperature(self: TalonBoard) -> float:
         """
@@ -686,7 +733,11 @@ class TalonBoard(SKABaseDevice):
         # PROTECTED REGION END #    //  TalonBoard.always_executed_hook
 
     def delete_device(self: TalonBoard) -> None:
+        global stop_thread, comms
         # PROTECTED REGION ID(TalonBoard.delete_device) ENABLED START #
+        stop_thread = True
+        comms = False
+        time.sleep(1.1)
         pass
         # PROTECTED REGION END #    //  TalonBoard.delete_device
 
@@ -819,6 +870,8 @@ class TalonBoard(SKABaseDevice):
         """
 
         def do(self: TalonBoard.OnCommand) -> Tuple[ResultCode, str]:
+            global thread, comms, init_counter
+
             """
             Implement On command functionality.
 
@@ -827,7 +880,12 @@ class TalonBoard(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-            return component_manager.on()
+            mgr = component_manager.on()
+            if init_counter == 2:
+                thread.start()
+                comms = True
+                self.logger.info("Started thread")
+            return mgr
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -837,6 +895,7 @@ class TalonBoard(SKABaseDevice):
         """
 
         def do(self: TalonBoard.OffCommand) -> Tuple[ResultCode, str]:
+            global comms
             """
             Implement Off command functionality.
 
@@ -845,6 +904,7 @@ class TalonBoard(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
+            comms = False
             return component_manager.off()
 
 
