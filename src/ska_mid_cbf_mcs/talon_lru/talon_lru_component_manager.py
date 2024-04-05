@@ -268,8 +268,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.pdu2_power_mode = PowerMode.UNKNOWN
 
         # TODO: remove temp logs
-        self._logger.info(f"PDU 1 power mode: {self.pdu1_power_mode}")
-        self._logger.info(f"PDU 2 power mode: {self.pdu2_power_mode}")
+        self._logger.info(
+            f"Check Power Mode's PDU state grab, device state: {state}, PDU 1 power mode: {self.pdu1_power_mode}, PDU 2 power mode: {self.pdu2_power_mode}"
+        )
 
         # Check the expected power mode
         if state == DevState.INIT or state == DevState.OFF:
