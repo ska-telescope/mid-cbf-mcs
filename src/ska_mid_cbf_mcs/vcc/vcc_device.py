@@ -864,7 +864,7 @@ class Vcc(CspSubElementObsDevice):
         # is_<cmd>_allowed method for this command in the component manager
         # which is submitted to the task executor queue
         return True
-    
+
     @command(
         dtype_in="DevString",
         doc_in="JSON formatted string with the scan configuration.",
@@ -895,17 +895,17 @@ class Vcc(CspSubElementObsDevice):
         if not valid:
             self._raise_configuration_fatal_error(message, "ConfigureScan")
         else:
-            if self._obs_state == ObsState.IDLE:
-                self._configuring_from_idle = True
-            else:
-                self._configuring_from_idle = False
-            
+            # if self._obs_state == ObsState.IDLE:
+            #     self._configuring_from_idle = True
+            # else:
+            #     self._configuring_from_idle = False
+
             self.logger.debug(f"dishID: {self.component_manager.dish_id}")
 
             command_id, result_code_message = command_handler(argin)
 
-            # store the configuration on command success
-            self._last_scan_configuration = argin
+        # store the configuration
+        self._last_scan_configuration = argin
 
         return [[command_id], [result_code_message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
