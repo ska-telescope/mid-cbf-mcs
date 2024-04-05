@@ -546,12 +546,12 @@ class TalonDxComponentManager:
         return ret
 
     def _shutdown_talon_thread(
-        self: TalonDxComponentManager,
-        talon_cfg,
+        self: TalonDxComponentManager, talon_cfg
     ) -> tuple(ResultCode, str):
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
+        self._logger.info(f"Shutting down {hps_master_fqdn} device")
         try:
             hps_master.shutdown(3)
         except tango.DevFailed as df:
