@@ -586,8 +586,26 @@ class VccComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+
+        #TODO JN: should we check immediately if 
+        # there is an abort event?
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
         configuration = json.loads(argin)
         self._config_id = configuration["config_id"]
+
+        # TODO CIP-2380
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                progress=33,
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    f"Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                ),
+            )
+            return        
 
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used
@@ -598,11 +616,15 @@ class VccComponentManager(CbfObsComponentManager):
             "band_index"
         ]
         if self._frequency_band != freq_band:
-            return (
-                ResultCode.FAILED,
-                f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} "
-                + f"not the same as enabled band device {self._frequency_band}",
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} "
+                    + f"not the same as enabled band device {self._frequency_band}",
+                ),
             )
+            return
 
         if self._frequency_band in [4, 5]:
             self._stream_tuning = configuration["band_5_tuning"]
@@ -619,6 +641,18 @@ class VccComponentManager(CbfObsComponentManager):
         else:
             self.logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
+        # TODO CIP-2380
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                progress=66,
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    f"Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                ),
+            )
+            return
+
         # Send the ConfigureScan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
@@ -628,18 +662,27 @@ class VccComponentManager(CbfObsComponentManager):
                 self._band_proxies[idx].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
-                self._component_obs_fault_callback(True)
-                return (
-                    ResultCode.FAILED,
-                    "Failed to connect to VCC band device",
+                self._update_component_state(fault=True)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to connect to HPS VCC devices.",
+                    ),
                 )
+                return
 
         self._ready = True
 
         # Update obsState callback
         self._update_component_state(configured=True)
 
-        return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
+        task_callback(
+            progress=100,
+            result=(ResultCode.OK, "ConfigureScan completed OK."),
+            status=TaskStatus.COMPLETED,
+        )
+        return
 
     def configure_scan(
         self: VccComponentManager,

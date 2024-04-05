@@ -680,7 +680,7 @@ class Vcc(CspSubElementObsDevice):
         """
         command_handler = self.get_command_object(command_name="ConfigureBand")
         command_id, result_code_message = command_handler(band_config)
-        return [[command_id], [result_code_message]]
+        return [[result_code_message], [command_id]]
 
     def _raise_configuration_fatal_error(
         self: Vcc, msg: str, cmd: str
@@ -696,167 +696,131 @@ class Vcc(CspSubElementObsDevice):
             "Command failed", msg, cmd + " execution", tango.ErrSeverity.ERR
         )
 
-    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
+    def _validate_input_configure_scan(
+        self: Vcc, argin: str
+    ) -> Tuple[bool, str]:
         """
-        A class for the Vcc's ConfigureScan() command.
+        Validate the configuration parameters against allowed values, as needed.
+
+        :param argin: The JSON formatted string with configuration for the device.
+            :type argin: 'DevString'
+        :return: A tuple containing a boolean and a string message.
+        :rtype: (bool, str)
         """
+        try:
+            configuration = json.loads(argin)
+        except json.JSONDecodeError:
+            msg = (
+                "Scan configuration object is not a valid JSON object."
+                " Aborting configuration."
+            )
+            return (False, msg)
 
-        # def do(
-        #     self: Vcc.ConfigureScanCommand, argin: str
-        # ) -> Tuple[ResultCode, str]:
-        #     """
-        #     Stateless hook for ConfigureScan() command functionality.
+        # Validate config_id.
+        if "config_id" not in configuration:
+            msg = "'configID' attribute is required."
+            return (False, msg)
 
-        #     :param argin: The configuration as JSON formatted string
-        #     :type argin: str
+        # Validate frequency_band.
+        if "frequency_band" not in configuration:
+            msg = "'frequencyBand' attribute is required."
+            return (False, msg)
 
-        #     :return: A tuple containing a return code and a string
-        #         message indicating status. The message is for
-        #         information purpose only.
-        #     :rtype: (ResultCode, str)
-        #     :raises: ``CommandError`` if the configuration data validation fails.
-        #     """
-        #     device = self._device
-        #     # By this time, the DISH ID should be set:
-        #     device.logger.debug(f"dishID: {device.component_manager.dish_id}")
+        # Validate frequency_band_offset_stream1.
+        if "frequency_band_offset_stream1" not in configuration:
+            configuration["frequency_band_offset_stream1"] = 0
+        if (
+            abs(int(configuration["frequency_band_offset_stream1"]))
+            <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+        ):
+            pass
+        else:
+            msg = (
+                "Absolute value of 'frequencyBandOffsetStream1' must be at "
+                "most half of the frequency slice bandwidth. Aborting configuration."
+            )
+            return (False, msg)
 
-        #     (result_code, msg) = device.component_manager.configure_scan(argin)
+        # Validate frequency_band_offset_stream2.
+        if "frequency_band_offset_stream2" not in configuration:
+            configuration["frequency_band_offset_stream2"] = 0
+        if (
+            abs(int(configuration["frequency_band_offset_stream2"]))
+            <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+        ):
+            pass
+        else:
+            msg = (
+                "Absolute value of 'frequencyBandOffsetStream2' must be at "
+                "most half of the frequency slice bandwidth. Aborting configuration."
+            )
+            return (False, msg)
 
-        #     if result_code == ResultCode.OK:
-        #         # store the configuration on command success
-        #         device._last_scan_configuration = argin
-        #         if device._configuring_from_idle:
-        #             device.obs_state_model.perform_action(
-        #                 "component_configured"
-        #             )
+        # Validate frequency_band.
+        valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
+        if configuration["frequency_band"] not in valid_freq_bands:
+            msg = (
+                configuration["frequency_band"]
+                + " not a valid frequency band. Aborting configuration."
+            )
+            return (False, msg)
 
-        #     return (result_code, msg)
-
-        def validate_input(
-            self: Vcc.ConfigureScanCommand, argin: str
-        ) -> Tuple[bool, str]:
-            """
-            Validate the configuration parameters against allowed values, as needed.
-
-            :param argin: The JSON formatted string with configuration for the device.
-                :type argin: 'DevString'
-            :return: A tuple containing a boolean and a string message.
-            :rtype: (bool, str)
-            """
-            try:
-                configuration = json.loads(argin)
-            except json.JSONDecodeError:
-                msg = (
-                    "Scan configuration object is not a valid JSON object."
-                    " Aborting configuration."
-                )
-                return (False, msg)
-
-            # Validate config_id.
-            if "config_id" not in configuration:
-                msg = "'configID' attribute is required."
-                return (False, msg)
-
-            # Validate frequency_band.
-            if "frequency_band" not in configuration:
-                msg = "'frequencyBand' attribute is required."
-                return (False, msg)
-
-            # Validate frequency_band_offset_stream1.
-            if "frequency_band_offset_stream1" not in configuration:
-                configuration["frequency_band_offset_stream1"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
+        # Validate band_5_tuning, frequency_band_offset_stream2
+        # if frequency_band is 5a or 5b.
+        if configuration["frequency_band"] in ["5a", "5b"]:
+            # band_5_tuning is optional
+            if "band_5_tuning" in configuration:
                 pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream1' must be at "
-                    "most half of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
+                # check if stream_tuning is an array of length 2
+                try:
+                    assert len(configuration["band_5_tuning"]) == 2
+                except (TypeError, AssertionError):
+                    msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
+                    return (False, msg)
 
-            # Validate frequency_band_offset_stream2.
-            if "frequency_band_offset_stream2" not in configuration:
-                configuration["frequency_band_offset_stream2"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
-                pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream2' must be at "
-                    "most half of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
-
-            # Validate frequency_band.
-            valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
-            if configuration["frequency_band"] not in valid_freq_bands:
-                msg = (
-                    configuration["frequency_band"]
-                    + " not a valid frequency band. Aborting configuration."
-                )
-                return (False, msg)
-
-            # Validate band_5_tuning, frequency_band_offset_stream2
-            # if frequency_band is 5a or 5b.
-            if configuration["frequency_band"] in ["5a", "5b"]:
-                # band_5_tuning is optional
-                if "band_5_tuning" in configuration:
-                    pass
-                    # check if stream_tuning is an array of length 2
-                    try:
-                        assert len(configuration["band_5_tuning"]) == 2
-                    except (TypeError, AssertionError):
-                        msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
+                stream_tuning = [
+                    *map(float, configuration["band_5_tuning"])
+                ]
+                if configuration["frequency_band"] == "5a":
+                    if all(
+                        [
+                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
+                            <= stream_tuning[i]
+                            <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
+                            for i in [0, 1]
+                        ]
+                    ):
+                        pass
+                    else:
+                        msg = (
+                            "Elements in 'band_5_tuning must be floats between "
+                            + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+                            + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+                            + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                            + " for a 'frequencyBand' of 5a. Aborting configuration."
+                        )
+                        return (False, msg)
+                else:  # configuration["frequency_band"] == "5b"
+                    if all(
+                        [
+                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
+                            <= stream_tuning[i]
+                            <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
+                            for i in [0, 1]
+                        ]
+                    ):
+                        pass
+                    else:
+                        msg = (
+                            "Elements in 'band_5_tuning must be floats between "
+                            + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+                            + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+                            + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                            + " for a 'frequencyBand' of 5b. Aborting configuration."
+                        )
                         return (False, msg)
 
-                    stream_tuning = [
-                        *map(float, configuration["band_5_tuning"])
-                    ]
-                    if configuration["frequency_band"] == "5a":
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band_5_tuning must be floats between "
-                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                + " for a 'frequencyBand' of 5a. Aborting configuration."
-                            )
-                            return (False, msg)
-                    else:  # configuration["frequency_band"] == "5b"
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band_5_tuning must be floats between "
-                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                + " for a 'frequencyBand' of 5b. Aborting configuration."
-                            )
-                            return (False, msg)
-
-            return (True, "Configuration validated OK")
+        return (True, "Configuration validated OK")
 
     def is_ConfigureScan_allowed(self: Vcc) -> bool:
         # Overriding LMC Base-provided method as ConfigureScan is a
@@ -866,9 +830,7 @@ class Vcc(CspSubElementObsDevice):
         return True
 
     @command(
-        dtype_in="DevString",
-        doc_in="JSON formatted string with the scan configuration.",
-        dtype_out="DevVarLongStringArray",
+        doc_in="JSON formatted string with the scan configuration.",    
         doc_out="A tuple containing a return code and a string message indicating status. "
         "The message is for information purpose only.",
     )
@@ -891,7 +853,8 @@ class Vcc(CspSubElementObsDevice):
         # through functions).
         command_handler = self.get_command_object("ConfigureScan")
 
-        (valid, message) = command_handler.validate_input(argin)
+        (valid, message) = self._validate_input_configure_scan(argin)
+
         if not valid:
             self._raise_configuration_fatal_error(message, "ConfigureScan")
         else:
@@ -907,7 +870,7 @@ class Vcc(CspSubElementObsDevice):
         # store the configuration
         self._last_scan_configuration = argin
 
-        return [[command_id], [result_code_message]]
+        return [[result_code_message], [command_id]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
