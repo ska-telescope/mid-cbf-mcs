@@ -882,9 +882,10 @@ class TalonBoard(SKABaseDevice):
             component_manager = self.target
             mgr = component_manager.on()
             if init_counter == 2:
-                thread.start()
-                comms = True
-                self.logger.info("Started thread")
+                if not thread.is_alive():
+                    thread.start()
+                    comms = True
+                    self.logger.info("Started thread")
             return mgr
 
     class OffCommand(SKABaseDevice.OffCommand):
