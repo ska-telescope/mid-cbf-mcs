@@ -308,7 +308,7 @@ class ControllerComponentManager(CbfComponentManager):
                         self._hw_config["power_switch"][switch_id]
                     )
                     proxy.put_property(switch_config)
-                    proxy.Init()
+                    # proxy.Init()
 
                 # write hardware configuration properties to Talon LRU devices
                 elif fqdn in self._fqdn_talon_lru:
@@ -320,7 +320,7 @@ class ControllerComponentManager(CbfComponentManager):
                         self._hw_config["talon_lru"][lru_id]
                     )
                     proxy.put_property(lru_config)
-                    proxy.Init()
+                    # proxy.Init()
                     proxy.set_timeout_millis(self._lru_timeout * 1000)
 
                 # write hardware configuration properties to Talon board devices

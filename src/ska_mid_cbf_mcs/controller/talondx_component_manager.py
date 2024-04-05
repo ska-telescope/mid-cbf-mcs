@@ -59,12 +59,11 @@ class TalonDxComponentManager:
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
+        self._hw_config_path = hw_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
 
-        self._hw_config_path = hw_config_path
         self._hw_config = {}
-
         self.talondx_config = {}
         self.proxies = {}
 
@@ -95,9 +94,6 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-
-        # Temp read config to avoid key error
-        self.read_config()
 
         # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
