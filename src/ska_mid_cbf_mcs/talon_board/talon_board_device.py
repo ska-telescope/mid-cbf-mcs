@@ -73,6 +73,10 @@ class TalonBoard(SKABaseDevice):
                         self.logger.info(f"Cannot pull temp attr yet:{e}")
                     except exceptions.TimeoutError as t:
                         self.logger.info(f"Timeout: {t}")
+                    except Exception as o:
+                        self.logger.info(
+                            f"Other exception being caught here: {o}"
+                        )
 
     def init_device(self):
         global stop_thread, thread, comms, init_counter
