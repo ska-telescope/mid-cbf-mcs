@@ -167,7 +167,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_power_switch1.simulationMode = self.simulation_mode
             self._proxy_power_switch1.adminMode = AdminMode.ONLINE
 
-
         if self._proxy_power_switch2 is not None:
             if self._pdus[1] != self._pdus[0]:
                 # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
