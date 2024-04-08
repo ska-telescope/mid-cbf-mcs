@@ -122,7 +122,14 @@ class TalonLRU(SKABaseDevice):
             return PowerMode.OFF
         else:
             return PowerMode.UNKNOWN
-
+        
+    def write_simulationMode(self: TalonLRU, value: SimulationMode) -> None:
+        """
+        Write the simulation mode to the component manager.
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+        
     # ----------
     # Callbacks
     # ----------
@@ -274,9 +281,7 @@ class TalonLRU(SKABaseDevice):
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on(
-                    simulation_mode=device.read_simulationMode()
-                )
+                return device.component_manager.on()
 
     class OffCommand(SKABaseDevice.OffCommand):
         """

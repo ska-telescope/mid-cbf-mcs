@@ -80,6 +80,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._proxy_power_switch1 = None
         self._proxy_power_switch2 = None
 
+        self.simulation_mode = SimulationMode.TRUE
         self._simulation_mode_events = [None, None]
 
         self._check_power_mode_callback = check_power_mode_callback
