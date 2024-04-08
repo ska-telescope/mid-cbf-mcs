@@ -122,14 +122,14 @@ class TalonLRU(SKABaseDevice):
             return PowerMode.OFF
         else:
             return PowerMode.UNKNOWN
-        
+
     def write_simulationMode(self: TalonLRU, value: SimulationMode) -> None:
         """
         Write the simulation mode to the component manager.
         """
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
-        
+
     # ----------
     # Callbacks
     # ----------
