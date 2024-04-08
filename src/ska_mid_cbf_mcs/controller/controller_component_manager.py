@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -808,6 +809,8 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
+
+            time.sleep(3)
 
             lru_powermode = proxy.read_attribute("LRUPowerMode").value
             self._logger.info(
