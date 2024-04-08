@@ -587,25 +587,23 @@ class VccComponentManager(CbfObsComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        #TODO JN: should we check immediately if 
-        # there is an abort event?
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-
-        configuration = json.loads(argin)
-        self._config_id = configuration["config_id"]
 
         # TODO CIP-2380
         if task_abort_event and task_abort_event.is_set():
             task_callback(
-                progress=33,
+                progress=0,
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
                     f"Vcc.ConfigureScan command aborted by task executor Abort Event.",
                 ),
             )
-            return        
+            return
+
+        configuration = json.loads(argin)
+        self._config_id = configuration["config_id"]     
 
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used
@@ -644,7 +642,7 @@ class VccComponentManager(CbfObsComponentManager):
         # TODO CIP-2380
         if task_abort_event and task_abort_event.is_set():
             task_callback(
-                progress=66,
+                progress=33,
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,

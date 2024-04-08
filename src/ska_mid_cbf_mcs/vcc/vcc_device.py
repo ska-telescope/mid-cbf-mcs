@@ -186,10 +186,10 @@ class Vcc(CspSubElementObsDevice):
         self.register_command_object(
             "ConfigureBand",
             SubmittedSlowCommand(
-                "ConfigureBand",
-                self._command_tracker,
-                self.component_manager,
-                "configure_band",
+                command_name="ConfigureBand",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="configure_band",
                 logger=self.logger,
             ),
         )
@@ -226,10 +226,10 @@ class Vcc(CspSubElementObsDevice):
         self.register_command_object(
             "ConfigureScan",
             SubmittedSlowCommand(
-                "ConfigureScan",
-                self._command_tracker,
-                self.component_manager,
-                "configure_scan",
+                command_name="ConfigureScan",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="configure_scan",
                 logger=self.logger,
             ),
         )
@@ -583,24 +583,23 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self._device
             (result_code, msg) = super().do(*args, **kwargs)
 
             # Make a private copy of the device properties:
-            device._vcc_id = device.VccID
+            self._device._vcc_id = self._device.VccID
 
             # initialize attribute values
-            device._subarray_membership = 0
+            self._device._subarray_membership = 0
 
-            device._configuring_from_idle = False
+            self._device._configuring_from_idle = False
 
-            device.set_change_event("frequencyBand", True)
-            device.set_archive_event("frequencyBand", True)
-            device.set_change_event("subarrayMembership", True)
-            device.set_archive_event("subarrayMembership", True)
+            self._device.set_change_event("frequencyBand", True)
+            self._device.set_archive_event("frequencyBand", True)
+            self._device.set_change_event("subarrayMembership", True)
+            self._device.set_archive_event("subarrayMembership", True)
 
             # Setting initial simulation mode to True
-            device._simulation_mode = SimulationMode.TRUE
+            self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, msg)
 
