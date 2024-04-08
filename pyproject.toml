@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-cbf-mcs"
-version = "0.13.2"
+version = "0.12.22"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
@@ -27,7 +27,7 @@ backoff = "^2.2.1"
 typing-extensions = "^4.8.0"
 numpy = "^1.26.0"
 jsonschema = "4.17.3"
-pytango = "9.5.0"
+pytango = "9.4.2"
 pyyaml = "^6.0.1"
 scp = "^0.14.5"
 paramiko = "^3.3.1"
@@ -37,12 +37,10 @@ yarl = "^1.9.2"
 aiohttp = "^3.8.5"
 aiocsv = "^1.2.4"
 requests = "2.28.0"
-ska-tango-base = "0.19.3"
-ska-csp-lmc-base = "0.2.1"
-ska-tango-testing = "0.6.1"
+ska-tango-base = "0.11.4"
 ska-ser-logging = "^0.4.1+0a677a67"
 ska-ser-log-transactions = "^0.2.2+ae0f5c92"
-ska-telmodel = "^1.14.1"
+ska-telmodel = "^1.11.2"
 nbmake = "^1.4.3"
 nbqa = "^1.7.0"
 jupyterhub = "^4.0.2"
@@ -80,10 +78,6 @@ sphinxcontrib-plantuml = "^0.26"
 name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"
 
-
-[[tool.poetry.source]]
-name = "PyPI-public"
-url = "https://pypi.org/simple"
 
 [tool.isort]
 multi_line_output = 3
