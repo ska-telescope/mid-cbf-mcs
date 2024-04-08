@@ -15,21 +15,23 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-import time
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 # tango imports
-import tango
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
 )
@@ -39,7 +41,7 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
 __all__ = ["PowerSwitch", "main"]
 
 
-class PowerSwitch(SKABaseDevice):
+class PowerSwitch(CbfDevice):
     """
     TANGO device class for controlling and monitoring the web power switch that
     distributes power to the Talon LRUs.
@@ -75,15 +77,6 @@ class PowerSwitch(SKABaseDevice):
         doc="Number of outlets in this power switch",
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -111,18 +104,19 @@ class PowerSwitch(SKABaseDevice):
         :return: a component manager for this device
         """
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
-            self.PowerSwitchModel,
-            self.PowerSwitchIp,
-            self.PowerSwitchLogin,
-            self.PowerSwitchPassword,
-            self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            model=self.PowerSwitchModel,
+            ip=self.PowerSwitchIp,
+            login=self.PowerSwitchLogin,
+            password=self.PowerSwitchPassword,
+            logger=self.logger,
+            state_callback=self._update_state,
+            admin_mode_callback=self._update_admin_mode,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_status_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     def init_command_objects(self: PowerSwitch) -> None:
@@ -130,16 +124,31 @@ class PowerSwitch(SKABaseDevice):
         Sets up the command objects.
         """
         super().init_command_objects()
-
-        device_args = (self.component_manager, self.logger)
         self.register_command_object(
-            "TurnOnOutlet", self.TurnOnOutletCommand(*device_args)
+            "TurnOnOutlet",
+            SubmittedSlowCommand(
+                command_name="TurnOnOutlet",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="turn_on_outlet",
+                logger=self.logger,
+            ),
         )
         self.register_command_object(
-            "TurnOffOutlet", self.TurnOffOutletCommand(*device_args)
+            "TurnOffOutlet",
+            SubmittedSlowCommand(
+                command_name="TurnOffOutlet",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="turn_off_outlet",
+                logger=self.logger,
+            ),
         )
         self.register_command_object(
-            "GetOutletPowerMode", self.GetOutletPowerModeCommand(*device_args)
+            "GetOutletPowerState",
+            self.GetOutletPowerStateCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
         )
 
     # ---------
@@ -174,8 +183,8 @@ class PowerSwitch(SKABaseDevice):
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
 
-    def _component_power_mode_changed(
-        self: PowerSwitch, power_mode: PowerMode
+    def _component_state_changed(
+        self: PowerSwitch, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -190,36 +199,36 @@ class PowerSwitch(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: PowerSwitch, faulty: bool) -> None:
-        """
-        Handle component fault
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
 
     # ------------------
     # Attributes methods
     # ------------------
 
-    def write_simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: PowerSwitch) -> SimulationMode:
         """
-        Set the simulation mode of the device. When simulation mode is set to
-        True, the power switch software simulator is used in place of the hardware.
-        When simulation mode is set to False, the real power switch driver is used.
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
-        super().write_simulationMode(value)
+        self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
     def read_numOutlets(self: PowerSwitch) -> int:
@@ -242,7 +251,7 @@ class PowerSwitch(SKABaseDevice):
     # Commands
     # --------
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the PowerSwitch's init_device() "command".
         """
@@ -257,59 +266,9 @@ class PowerSwitch(SKABaseDevice):
             """
 
             (result_code, message) = super().do()
-
-            device = self.target
-            device.write_simulationMode(True)
+            self._device._simulation_mode = True
 
             return (result_code, message)
-
-    class TurnOnOutletCommand(ResponseCommand):
-        """
-        The command class for the TurnOnOutlet command.
-
-        Turn on an individual outlet, specified by the outlet ID
-        """
-
-        def do(
-            self: PowerSwitch.TurnOnOutletCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement TurnOnOutlet command functionality.
-
-            :param argin: the outlet ID of the outlet to switch on
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-
-            try:
-                result, msg = component_manager.turn_on_outlet(argin)
-                if result != ResultCode.OK:
-                    return (result, msg)
-
-                power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerMode.ON:
-                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                    self.logger.info(
-                        "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                    )
-                    time.sleep(5)
-                    power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerMode.ON:
-                        return (
-                            ResultCode.FAILED,
-                            f"Power on failed, outlet is in power mode {power_mode}",
-                        )
-            except AssertionError as e:
-                self.logger.error(e)
-                return (
-                    ResultCode.FAILED,
-                    "Unable to read outlet state after power on",
-                )
-
-            return (result, msg)
 
     @command(
         dtype_in="DevString",
@@ -318,62 +277,10 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOnOutlet(
-        self: PowerSwitch, argin: str
-    ) -> tango.DevVarLongStringArray:
-        # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
-        handler = self.get_command_object("TurnOnOutlet")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
-
-    class TurnOffOutletCommand(ResponseCommand):
-        """
-        The command class for the TurnOffOutlet command.
-
-        Turn off an individual outlet, specified by the outlet ID.
-        """
-
-        def do(
-            self: PowerSwitch.TurnOffOutletCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement TurnOffOutlet command functionality.
-
-            :param argin: the outlet ID of the outlet to switch off
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-
-            try:
-                result, msg = component_manager.turn_off_outlet(argin)
-                if result != ResultCode.OK:
-                    return (result, msg)
-
-                power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerMode.OFF:
-                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                    self.logger.info(
-                        "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                    )
-                    time.sleep(5)
-                    power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerMode.OFF:
-                        return (
-                            ResultCode.FAILED,
-                            f"Power off failed, outlet is in power mode {power_mode}",
-                        )
-            except AssertionError as e:
-                self.logger.error(e)
-                return (
-                    ResultCode.FAILED,
-                    "Unable to read outlet state after power off",
-                )
-
-            return (result, msg)
+    def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
+        command_handler = self.get_command_object(command_name="TurnOnOutlet")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
     @command(
         dtype_in="DevString",
@@ -382,38 +289,43 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOffOutlet(
-        self: PowerSwitch, argin: str
-    ) -> tango.DevVarLongStringArray:
-        # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
-        handler = self.get_command_object("TurnOffOutlet")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  PowerSwitch.TurnOffOutlet
+    # TODO: Discuss type hint. Thomas sent a hack that can be added to allow 2d arrays without throwing a fit.
+    def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
+        command_handler = self.get_command_object(command_name="TurnOffOutlet")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
-    class GetOutletPowerModeCommand(BaseCommand):
+    class GetOutletPowerStateCommand(FastCommand):
         """
-        The command class for the GetOutletPowerMode command.
+        The command class for the GetOutletPowerState command.
 
         Get the power mode of an individual outlet, specified by the outlet ID.
         """
 
+        def __init__(
+            self: PowerSwitch.GetOutletPowerStateCommand,
+            *args: Any,
+            component_manager: PowerSwitchComponentManager,
+            **kwargs: Any,
+        ) -> None:
+            self.component_manager = component_manager
+            super().__init__(*args, **kwargs)
+
         def do(
-            self: PowerSwitch.GetOutletPowerModeCommand, argin: str
-        ) -> PowerMode:
+            self: PowerSwitch.GetOutletPowerStateCommand, argin: str
+        ) -> PowerState:
             """
-            Implement GetOutletPowerMode command functionality.
+            Implement GetOutletPowerState command functionality.
 
             :param argin: the outlet ID to get the state of
 
             :return: power mode of the outlet
             """
-            component_manager = self.target
             try:
-                return component_manager.get_outlet_power_mode(argin)
+                return self.component_manager.get_outlet_power_mode(argin)
             except AssertionError as e:
                 self.logger.error(e)
-                return PowerMode.UNKNOWN
+                return PowerState.UNKNOWN
 
     @command(
         dtype_in="DevString",
@@ -422,11 +334,11 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Power mode of the outlet.",
     )
     @DebugIt()
-    def GetOutletPowerMode(self: PowerSwitch, argin: str) -> int:
-        # PROTECTED REGION ID(PowerSwitch.GetOutletPowerMode) ENABLED START #
-        handler = self.get_command_object("GetOutletPowerMode")
+    def GetOutletPowerState(self: PowerSwitch, argin: str) -> int:
+        # PROTECTED REGION ID(PowerSwitch.GetOutletPowerState) ENABLED START #
+        handler = self.get_command_object("GetOutletPowerState")
         return int(handler(argin))
-        # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerMode
+        # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerState
 
 
 # ----------

@@ -13,7 +13,7 @@
 # Standard imports
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
@@ -39,7 +39,7 @@ def test_get_outlet_state(
     for i in range(0, num_outlets):
         assert (
             power_switch_component_manager.get_outlet_power_mode(str(i))
-            == PowerMode.ON
+            == PowerState.ON
         )
 
 
@@ -63,7 +63,7 @@ def test_turn_outlet_on_off(
     for i in range(0, num_outlets):
         assert (
             power_switch_component_manager.get_outlet_power_mode(str(i))
-            == PowerMode.ON
+            == PowerState.ON
         )
 
     # Turn outlets off and check the state again
@@ -87,7 +87,7 @@ def test_turn_outlet_on_off(
                     power_switch_component_manager.get_outlet_power_mode(
                         str(j)
                     )
-                    == PowerMode.ON
+                    == PowerState.ON
                 )
 
     # Turn on outlets and check the state again
@@ -103,7 +103,7 @@ def test_turn_outlet_on_off(
                     power_switch_component_manager.get_outlet_power_mode(
                         str(j)
                     )
-                    == PowerMode.ON
+                    == PowerState.ON
                 )
             else:
                 with pytest.raises(

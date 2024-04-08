@@ -19,7 +19,7 @@ from typing import List
 
 import paramiko
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -60,7 +60,7 @@ class ApcPduDriver:
         # init outlet states to unknown first. The outlets can be polled
         # before initialize is called.
         self.outlets = [
-            Outlet(outlet_ID=id, outlet_name="", power_mode=PowerMode.UNKNOWN)
+            Outlet(outlet_ID=id, outlet_name="", power_mode=PowerState.UNKNOWN)
             for id in self.outlet_id_list
         ]
 
@@ -144,15 +144,15 @@ class ApcPduDriver:
             return None
         for o in outlets:
             if o[2] == "On":
-                status = PowerMode.ON
+                status = PowerState.ON
             elif o[2] == "Off":
-                status = PowerMode.OFF
+                status = PowerState.OFF
             else:
-                status = PowerMode.UNKNOWN
+                status = PowerState.UNKNOWN
             out_list.append(Outlet(o[0], o[1], status))
         return out_list
 
-    def get_outlet_power_mode(self: ApcPduDriver, outlet: str) -> PowerMode:
+    def get_outlet_power_mode(self: ApcPduDriver, outlet: str) -> PowerState:
         """
         Get the power mode of a specific outlet.
 
@@ -189,7 +189,7 @@ class ApcPduDriver:
             return (ResultCode.FAILED, err)
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            self.outlets[outlet_idx].power_mode = PowerMode.ON
+            self.outlets[outlet_idx].power_mode = PowerState.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -213,7 +213,7 @@ class ApcPduDriver:
             return (ResultCode.FAILED, err)
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            self.outlets[outlet_idx].power_mode = PowerMode.OFF
+            self.outlets[outlet_idx].power_mode = PowerState.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def _outlet_on(self: ApcPduDriver, outlet: str):
