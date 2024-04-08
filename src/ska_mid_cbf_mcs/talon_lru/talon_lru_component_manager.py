@@ -320,7 +320,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         # self.update_component_fault(True)
         return
 
-    def on(self: TalonLRUComponentManager) -> Tuple[ResultCode, str]:
+    def on(
+        self: TalonLRUComponentManager, simulation_mode: SimulationMode
+    ) -> Tuple[ResultCode, str]:
         """
         Turn on the TalonLRU and its subordinate devices
 

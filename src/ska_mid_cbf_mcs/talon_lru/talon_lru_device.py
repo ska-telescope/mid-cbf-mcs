@@ -17,7 +17,7 @@ from threading import Lock
 from typing import Any, Optional, Tuple
 
 # tango imports
-import tango
+from tango import AttrWriteType
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -69,6 +69,16 @@ class TalonLRU(SKABaseDevice):
     LRUPowerMode = attribute(
         dtype="uint16",
         doc="Power mode of the Talon LRU",
+    )
+
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        hw_memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
 
     # ---------------
@@ -282,7 +292,9 @@ class TalonLRU(SKABaseDevice):
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on()
+                return device.component_manager.on(
+                    simulation_mode=device.read_simulationMode()
+                )
 
     class OffCommand(SKABaseDevice.OffCommand):
         """

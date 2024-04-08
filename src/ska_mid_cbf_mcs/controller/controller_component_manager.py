@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import time
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -309,7 +308,6 @@ class ControllerComponentManager(CbfComponentManager):
                         self._hw_config["power_switch"][switch_id]
                     )
                     proxy.put_property(switch_config)
-
                     proxy.Init()
 
                 # write hardware configuration properties to Talon LRU devices
@@ -805,14 +803,13 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.info(
                 f"Setting LRU {lru_fqdn} to simulation mode {sim_mode}"
             )
+            proxy.adminMode = AdminMode.OFFLINE
+            proxy.simulationMode = sim_mode
+            proxy.adminMode = AdminMode.ONLINE
 
-            proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            proxy.write_attribute("simulationMode", sim_mode)
-            proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            self._logger.info(f"LRU {lru_fqdn} has been set to simulation mode {proxy.simulationMode}")
 
-            time.sleep(3)
-
-            lru_powermode = proxy.read_attribute("LRUPowerMode").value
+            lru_powermode = proxy.LRUPowerMode
             self._logger.info(
                 f"LRU power mode: {lru_powermode}, DevState: {proxy.state()}"
             )
