@@ -800,6 +800,11 @@ class ControllerComponentManager(CbfComponentManager):
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
+
+            self._logger.info(
+                f"Setting LRU {lru_fqdn} to simulation mode {sim_mode}"
+            )
+            
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
