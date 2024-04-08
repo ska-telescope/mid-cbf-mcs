@@ -48,10 +48,6 @@ def test_TurnOnOutlet_TurnOffOutlet(
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
 
-    # This is only done to avoid overfilling the queue.
-    # Max Queue size has been updated in BC 0.20.1
-    num_outlets = 4
-
     # Check initial state
     outlets: List[PowerState] = []
     for i in range(0, num_outlets):

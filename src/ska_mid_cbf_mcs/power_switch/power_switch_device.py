@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from typing import Any, Optional, Tuple
 
-from ska_tango_base import SKABaseDevice
-
 # tango imports
 from ska_tango_base.commands import (
     FastCommand,
@@ -33,6 +31,7 @@ from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
 )
@@ -42,7 +41,7 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
 __all__ = ["PowerSwitch", "main"]
 
 
-class PowerSwitch(SKABaseDevice):
+class PowerSwitch(CbfDevice):
     """
     TANGO device class for controlling and monitoring the web power switch that
     distributes power to the Talon LRUs.
@@ -252,7 +251,7 @@ class PowerSwitch(SKABaseDevice):
     # Commands
     # --------
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the PowerSwitch's init_device() "command".
         """
