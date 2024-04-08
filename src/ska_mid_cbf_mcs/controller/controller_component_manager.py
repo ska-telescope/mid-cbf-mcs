@@ -807,7 +807,9 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.simulationMode = sim_mode
             proxy.adminMode = AdminMode.ONLINE
 
-            self._logger.info(f"LRU {lru_fqdn} has been set to simulation mode {proxy.simulationMode}")
+            self._logger.info(
+                f"LRU {lru_fqdn} has been set to simulation mode {proxy.simulationMode}"
+            )
 
             lru_powermode = proxy.LRUPowerMode
             self._logger.info(
