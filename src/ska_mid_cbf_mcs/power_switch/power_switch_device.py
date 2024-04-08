@@ -19,11 +19,6 @@ from typing import Any, Optional, Tuple
 
 from ska_tango_base import SKABaseDevice
 
-## Maybe a solution for overfilling Queue??
-# import ska_tango_base 
-# ska_tango_base.base.base_device.INPUT_QUEUE_SIZE_LIMIT = 32
-
-
 # tango imports
 from ska_tango_base.commands import (
     FastCommand,
@@ -237,7 +232,6 @@ class PowerSwitch(SKABaseDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-
     def read_numOutlets(self: PowerSwitch) -> int:
         """
         Get the number of outlets.
@@ -274,7 +268,7 @@ class PowerSwitch(SKABaseDevice):
 
             (result_code, message) = super().do()
             self._device._simulation_mode = True
-            
+
             return (result_code, message)
 
     @command(
@@ -299,7 +293,7 @@ class PowerSwitch(SKABaseDevice):
     # TODO: Discuss type hint. Thomas sent a hack that can be added to allow 2d arrays without throwing a fit.
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
         command_handler = self.get_command_object(command_name="TurnOffOutlet")
-        result_code_message, command_id  = command_handler(argin)
+        result_code_message, command_id = command_handler(argin)
         return [[result_code_message], [command_id]]
 
     class GetOutletPowerStateCommand(FastCommand):

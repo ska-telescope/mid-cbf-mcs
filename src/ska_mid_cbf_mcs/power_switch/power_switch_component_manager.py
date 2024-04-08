@@ -17,7 +17,12 @@ from time import sleep
 from typing import Any, Callable, Optional, Tuple
 
 import tango
-from ska_control_model import (PowerState, SimulationMode, TaskStatus, CommunicationStatus)
+from ska_control_model import (
+    CommunicationStatus,
+    PowerState,
+    SimulationMode,
+    TaskStatus,
+)
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -128,8 +133,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         if not self.simulation_mode:
             self.power_switch_driver.initialize()
-            
-        # We only want CommunicationStatus.Established if 
+
+        # We only want CommunicationStatus.Established if
         # the PDU responded with a valid list of outlets.
         if self.power_switch_driver.outlets:
             super().start_communicating()
@@ -231,7 +236,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         except AssertionError as e:
             self.logger.error(e)
             task_callback(exception=e, status=TaskStatus.FAILED)
-            
+
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -257,7 +262,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
     def is_turn_outlet_off_allowed(self) -> bool:
         self.logger.info("Checking if TurnOffOutlet is allowed.")
         return True
-    
+
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
         outlet: str,
@@ -278,10 +283,16 @@ class PowerSwitchComponentManager(CbfComponentManager):
             if task_callback:
                 task_callback(status=TaskStatus.IN_PROGRESS)
             if self.simulation_mode:
-                (result_code,message,) = self.power_switch_simulator.turn_off_outlet(outlet)
+                (
+                    result_code,
+                    message,
+                ) = self.power_switch_simulator.turn_off_outlet(outlet)
             else:
-                result_code, message = self.power_switch_driver.turn_off_outlet(outlet)
-                
+                (
+                    result_code,
+                    message,
+                ) = self.power_switch_driver.turn_off_outlet(outlet)
+
             if task_callback:
                 task_callback(progress=10)
             if result_code != ResultCode.OK:
@@ -292,7 +303,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             power_mode = self.get_outlet_power_mode(outlet)
             if task_callback:
                 task_callback(progress=20)
-    
+
             if power_mode != PowerState.OFF:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
                 self.logger.info(
@@ -319,7 +330,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         except AssertionError as e:
             self.logger.error(e)
             task_callback(exception=e, status=TaskStatus.FAILED)
-        
 
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -342,7 +352,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_turn_outlet_off_allowed,
             task_callback=task_callback,
         )
-        
+
     def get_power_switch_driver(
         self: PowerSwitchComponentManager,
         model: str,
