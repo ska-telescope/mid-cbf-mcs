@@ -7,7 +7,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# Copyright (c) 2019 National Research Council of Canada
+# Copyright (c) 2024 National Research Council of Canada
 
 from __future__ import annotations  # allow forward references in type hints
 

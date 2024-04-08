@@ -23,7 +23,6 @@ from typing import Any, List, Optional, Tuple
 
 # Tango imports
 import tango
-from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import (
     FastCommand,
@@ -37,6 +36,7 @@ from tango.server import attribute, command, device_property, run
 # SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # PROTECTED REGION END #    //  Vcc.additional_import
@@ -44,7 +44,7 @@ from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 __all__ = ["Vcc", "main"]
 
 
-class Vcc(CspSubElementObsDevice):
+class Vcc(CbfObsDevice):
     """
     Vcc TANGO device class for the prototype
     """
@@ -565,7 +565,7 @@ class Vcc(CspSubElementObsDevice):
     # Commands
     # --------
 
-    class InitCommand(CspSubElementObsDevice.InitCommand):
+    class InitCommand(CbfObsDevice.InitCommand):
         """
         A class for the Vcc's init_device() "command".
         """
@@ -777,9 +777,7 @@ class Vcc(CspSubElementObsDevice):
                     msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
                     return (False, msg)
 
-                stream_tuning = [
-                    *map(float, configuration["band_5_tuning"])
-                ]
+                stream_tuning = [*map(float, configuration["band_5_tuning"])]
                 if configuration["frequency_band"] == "5a":
                     if all(
                         [
@@ -829,13 +827,13 @@ class Vcc(CspSubElementObsDevice):
         return True
 
     @command(
-        doc_in="JSON formatted string with the scan configuration.",    
+        doc_in="JSON formatted string with the scan configuration.",
         doc_out="A tuple containing a return code and a string message indicating status. "
         "The message is for information purpose only.",
     )
     @DebugIt()
     def ConfigureScan(self, argin) -> None:
-        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
 
@@ -870,9 +868,9 @@ class Vcc(CspSubElementObsDevice):
         self._last_scan_configuration = argin
 
         return [[result_code_message], [command_id]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
+        # PROTECTED REGION END #    //  CbfObsDevice.ConfigureScan
 
-    class ScanCommand(CspSubElementObsDevice.ScanCommand):
+    class ScanCommand(CbfObsDevice.ScanCommand):
         """
         A class for the Vcc's Scan() command.
         """
@@ -907,7 +905,7 @@ class Vcc(CspSubElementObsDevice):
     )
     @DebugIt()
     def Scan(self, argin) -> None:
-        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.Scan) ENABLED START #
         """
         Start an observing scan.
 
@@ -959,7 +957,7 @@ class Vcc(CspSubElementObsDevice):
             device = self._device
             return device.component_manager.obsreset()
 
-    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+    class AbortCommand(CbfObsDevice.AbortCommand):
         """A class for the VCC's Abort command."""
 
         def do(self):
@@ -1053,12 +1051,12 @@ class Vcc(CspSubElementObsDevice):
     )
     @DebugIt()
     def UpdateDopplerPhaseCorrection(self, argin: str):
-        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateDopplerPhaseCorrection) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.UpdateDopplerPhaseCorrection) ENABLED START #
         """
         Update Vcc's doppler phase correction.
         """
         self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDopplerPhaseCorrection
+        # PROTECTED REGION END #    //  CbfObsDevice.UpdateDopplerPhaseCorrection
 
     class UpdateDelayModelCommand(FastCommand):
         """
@@ -1101,12 +1099,12 @@ class Vcc(CspSubElementObsDevice):
     )
     @DebugIt()
     def UpdateDelayModel(self, argin: str):
-        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateDelayModel) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.UpdateDelayModel) ENABLED START #
         """
         Update Vcc's delay model.
         """
         self.get_command_object("UpdateDelayModel")(argin)
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDelayModel
+        # PROTECTED REGION END #    //  CbfObsDevice.UpdateDelayModel
 
     class UpdateJonesMatrixCommand(FastCommand):
         """
@@ -1149,12 +1147,12 @@ class Vcc(CspSubElementObsDevice):
     )
     @DebugIt()
     def UpdateJonesMatrix(self, argin: str):
-        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateJonesMatrix) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.UpdateJonesMatrix) ENABLED START #
         """
         Update Vcc's Jones matrix.
         """
         self.get_command_object("UpdateJonesMatrix")(argin)
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateJonesMatrix
+        # PROTECTED REGION END #    //  CbfObsDevice.UpdateJonesMatrix
 
     class ConfigureSearchWindowCommand(FastCommand):
         """
@@ -1415,7 +1413,7 @@ class Vcc(CspSubElementObsDevice):
     )
     @DebugIt()
     def ConfigureSearchWindow(self, argin) -> None:
-        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
+        # PROTECTED REGION ID(CbfObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for a search window.
 
@@ -1447,7 +1445,7 @@ class Vcc(CspSubElementObsDevice):
 
         self.logger.debug(f"ConfigureSearchWindow result: {message}")
         return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
+        # PROTECTED REGION END #    //  CbfObsDevice.ConfigureScan
 
 
 # ----------

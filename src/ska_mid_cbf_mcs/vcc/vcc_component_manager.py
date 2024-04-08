@@ -603,7 +603,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         configuration = json.loads(argin)
-        self._config_id = configuration["config_id"]     
+        self._config_id = configuration["config_id"]
 
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used

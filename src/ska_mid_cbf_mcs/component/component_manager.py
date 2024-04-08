@@ -15,7 +15,6 @@ from threading import Lock
 from typing import Any, Callable, Optional, cast
 
 from ska_tango_base.control_model import (
-    AdminMode,
     CommunicationStatus,
     HealthState,
     PowerState,
@@ -23,7 +22,8 @@ from ska_tango_base.control_model import (
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
-from tango import DevState
+
+from ska_mid_cbf_mcs.device.base_device import INPUT_QUEUE_SIZE_LIMIT
 
 __all__ = ["CbfComponentManager"]
 
@@ -59,7 +59,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         health_state_callback: Callable[[HealthState], None] | None = None,
         **kwargs: Any,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args, max_queue_size=INPUT_QUEUE_SIZE_LIMIT, **kwargs
+        )
         # Here we have statically defined the states useful in Mid.CBF component
         # management, allowing the use of the _update_component_state method in
         # the BaseComponentManager to execute the device state changes callback
