@@ -17,7 +17,6 @@ from __future__ import annotations  # allow forward references in type hints
 
 import copy
 import json
-import logging
 import threading
 from typing import Any, Callable, List, Optional, Tuple
 
@@ -39,9 +38,6 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
-
-# SKA Specific imports
-
 
 __all__ = ["VccComponentManager"]
 

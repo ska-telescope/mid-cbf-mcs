@@ -15,7 +15,6 @@
 
 # Vcc TANGO device class
 
-# PROTECTED REGION ID(Vcc.additional_import) ENABLED START #
 from __future__ import annotations  # allow forward references in type hints
 
 import json
@@ -38,8 +37,6 @@ from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-
-# PROTECTED REGION END #    //  Vcc.additional_import
 
 __all__ = ["Vcc", "main"]
 
@@ -166,8 +163,6 @@ class Vcc(CbfObsDevice):
     # General methods
     # ---------------
 
-    # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
-
     def init_command_objects(self: Vcc) -> None:
         """
         Sets up the command objects
@@ -250,8 +245,6 @@ class Vcc(CbfObsDevice):
         #     "GoToIdle", self.GoToIdleCommand(*device_args)
         # )
 
-    # PROTECTED REGION END #    //  Vcc.class_variable
-
     def create_component_manager(self: Vcc) -> VccComponentManager:
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerState] = None
@@ -280,14 +273,10 @@ class Vcc(CbfObsDevice):
         )
 
     def always_executed_hook(self: Vcc) -> None:
-        # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
-        # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
         """Hook to delete device."""
-        # PROTECTED REGION END #    //  Vcc.delete_device
 
     # ---------
     # Callbacks
@@ -390,7 +379,6 @@ class Vcc(CbfObsDevice):
         self.component_manager.simulation_mode = value
 
     def read_dishID(self: Vcc) -> str:
-        # PROTECTED REGION ID(Vcc.dishID_read) ENABLED START #
         """
         Read the dishID attribute.
 
@@ -398,20 +386,16 @@ class Vcc(CbfObsDevice):
         :rtype: str
         """
         return self.component_manager.dish_id
-        # PROTECTED REGION END #    //  Vcc.dishID_read
 
     def write_dishID(self: Vcc, value: str) -> None:
-        # PROTECTED REGION ID(Vcc.dishID_write) ENABLED START #
         """
         Write the dishID attribute.
 
         :param value: the dishID value.
         """
         self.component_manager.dish_id = value
-        # PROTECTED REGION END #    //  Vcc.dishID_write
 
     def read_subarrayMembership(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
         """
         Read the subarrayMembership attribute.
 
@@ -419,10 +403,8 @@ class Vcc(CbfObsDevice):
         :rtype: int
         """
         return self._subarray_membership
-        # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
 
     def write_subarrayMembership(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
         """
         Write the subarrayMembership attribute.
 
@@ -434,10 +416,8 @@ class Vcc(CbfObsDevice):
         self._subarray_membership = value
         self.push_change_event("subarrayMembership", value)
         self.component_manager.deconfigure()
-        # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
     def read_frequencyBand(self: Vcc) -> tango.DevEnum:
-        # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
         """
         Read the frequencyBand attribute.
 
@@ -446,10 +426,8 @@ class Vcc(CbfObsDevice):
         :rtype: tango.DevEnum
         """
         return self.component_manager.frequency_band
-        # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
     def read_band5Tuning(self: Vcc) -> List[float]:
-        # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
         """
         Read the band5Tuning attribute.
 
@@ -457,10 +435,8 @@ class Vcc(CbfObsDevice):
         :rtype: list of float
         """
         return self.component_manager.stream_tuning
-        # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
     def read_frequencyBandOffsetStream1(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
         """
         Read the frequencyBandOffsetStream1 attribute.
 
@@ -468,10 +444,8 @@ class Vcc(CbfObsDevice):
         :rtype: int
         """
         return self.component_manager.frequency_band_offset_stream1
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
     def read_frequencyBandOffsetStream2(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
         """
         Read the frequencyBandOffsetStream2 attribute.
 
@@ -479,10 +453,8 @@ class Vcc(CbfObsDevice):
         :rtype: int
         """
         return self.component_manager.frequency_band_offset_stream2
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
 
     def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
-        # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
         """
         Read the dopplerPhaseCorrection attribute.
 
@@ -490,20 +462,16 @@ class Vcc(CbfObsDevice):
         :rtype: list of float
         """
         return self.component_manager.doppler_phase_correction
-        # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_read
 
     def write_dopplerPhaseCorrection(self: Vcc, value: List[float]) -> None:
-        # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_write) ENABLED START #
         """
         Write the dopplerPhaseCorrection attribute.
 
         :param value: the dopplerPhaseCorrection attribute value.
         """
         self.component_manager.doppler_phase_correction = value
-        # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_write
 
     def read_rfiFlaggingMask(self: Vcc) -> str:
-        # PROTECTED REGION ID(Vcc.rfiFlaggingMask_read) ENABLED START #
         """
         Read the rfiFlaggingMask attribute.
 
@@ -511,10 +479,8 @@ class Vcc(CbfObsDevice):
         :rtype: str/JSON
         """
         return self.component_manager.rfi_flagging_mask
-        # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
     def read_delayModel(self: Vcc) -> str:
-        # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
         """
         Read the delayModel attribute.
 
@@ -525,10 +491,8 @@ class Vcc(CbfObsDevice):
         :rtype: list of list of float
         """
         return self.component_manager.delay_model
-        # PROTECTED REGION END #    //  Vcc.delayModel_read
 
     def read_jonesMatrix(self: Vcc) -> str:
-        # PROTECTED REGION ID(Vcc.jonesMatrix_read) ENABLED START #
         """
         Read the jonesMatrix attribute.
 
@@ -537,10 +501,8 @@ class Vcc(CbfObsDevice):
         :rtype: str
         """
         return self.component_manager.jones_matrix
-        # PROTECTED REGION END #    //  Vcc.jonesMatrix_read
 
     def read_scanID(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scanID_read) ENABLED START #
         """
         Read the scanID attribute.
 
@@ -548,10 +510,8 @@ class Vcc(CbfObsDevice):
         :rtype: int
         """
         return self.component_manager.scan_id
-        # PROTECTED REGION END #    //  Vcc.scanID_read
 
     def read_configID(self: Vcc) -> str:
-        # PROTECTED REGION ID(Vcc.configID_read) ENABLED START #
         """
         Read the configID attribute.
 
@@ -559,7 +519,6 @@ class Vcc(CbfObsDevice):
         :rtype: str
         """
         return self.component_manager.config_id
-        # PROTECTED REGION END #    //  Vcc.configID_read
 
     # --------
     # Commands
@@ -833,7 +792,6 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def ConfigureScan(self, argin) -> None:
-        # PROTECTED REGION ID(CbfObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
 
@@ -868,7 +826,6 @@ class Vcc(CbfObsDevice):
         self._last_scan_configuration = argin
 
         return [[result_code_message], [command_id]]
-        # PROTECTED REGION END #    //  CbfObsDevice.ConfigureScan
 
     class ScanCommand(CbfObsDevice.ScanCommand):
         """
@@ -905,7 +862,6 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def Scan(self, argin) -> None:
-        # PROTECTED REGION ID(CbfObsDevice.Scan) ENABLED START #
         """
         Start an observing scan.
 
@@ -1051,12 +1007,10 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateDopplerPhaseCorrection(self, argin: str):
-        # PROTECTED REGION ID(CbfObsDevice.UpdateDopplerPhaseCorrection) ENABLED START #
         """
         Update Vcc's doppler phase correction.
         """
         self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
-        # PROTECTED REGION END #    //  CbfObsDevice.UpdateDopplerPhaseCorrection
 
     class UpdateDelayModelCommand(FastCommand):
         """
@@ -1099,12 +1053,10 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateDelayModel(self, argin: str):
-        # PROTECTED REGION ID(CbfObsDevice.UpdateDelayModel) ENABLED START #
         """
         Update Vcc's delay model.
         """
         self.get_command_object("UpdateDelayModel")(argin)
-        # PROTECTED REGION END #    //  CbfObsDevice.UpdateDelayModel
 
     class UpdateJonesMatrixCommand(FastCommand):
         """
@@ -1147,12 +1099,10 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateJonesMatrix(self, argin: str):
-        # PROTECTED REGION ID(CbfObsDevice.UpdateJonesMatrix) ENABLED START #
         """
         Update Vcc's Jones matrix.
         """
         self.get_command_object("UpdateJonesMatrix")(argin)
-        # PROTECTED REGION END #    //  CbfObsDevice.UpdateJonesMatrix
 
     class ConfigureSearchWindowCommand(FastCommand):
         """
@@ -1413,7 +1363,6 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def ConfigureSearchWindow(self, argin) -> None:
-        # PROTECTED REGION ID(CbfObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for a search window.
 
@@ -1445,7 +1394,6 @@ class Vcc(CbfObsDevice):
 
         self.logger.debug(f"ConfigureSearchWindow result: {message}")
         return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CbfObsDevice.ConfigureScan
 
 
 # ----------
@@ -1454,9 +1402,7 @@ class Vcc(CbfObsDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(Vcc.main) ENABLED START #
     return run((Vcc,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  Vcc.main
 
 
 if __name__ == "__main__":
