@@ -16,12 +16,11 @@ from __future__ import annotations
 from threading import Lock
 from typing import Any, Optional, Tuple
 
+# tango imports
+import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-
-# tango imports
-import tango
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
