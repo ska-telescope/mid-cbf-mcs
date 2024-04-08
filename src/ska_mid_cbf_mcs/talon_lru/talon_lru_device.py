@@ -21,6 +21,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
 # tango imports
+import tango
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
