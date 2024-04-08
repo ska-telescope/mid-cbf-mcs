@@ -52,22 +52,31 @@ def test_TurnOnOutlet_TurnOffOutlet(
 
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
+    
+    # This is only done to avoid overfilling the queue. 
+    # Max Queue size has been updated in BC 0.20.1
+    num_outlets = 4
 
     # Check initial state
     outlets: List[PowerState] = []
     for i in range(0, num_outlets):
         outlets.append(device_under_test.GetOutletPowerState(str(i)))
 
-    # # Turn outlets off and check the state again
-    # for i in range(0, num_outlets):
-    #     assert device_under_test.TurnOffOutlet(str(i)) == [
-    #         [ResultCode.OK],
-    #         [f"Outlet {i} power off"],
-    #     ]
-    #     outlets[i] = PowerState.OFF
-
-    #     for j in range(0, num_outlets):
-    #         assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
+    # Turn outlets off and check the state again
+    for i in range(0, num_outlets):
+        result_code, command_id = device_under_test.TurnOffOutlet(str(i))
+        assert result_code == [ResultCode.QUEUED]
+        outlets[i] = PowerState.OFF
+        for progress_point in (10, 20, 100):
+            change_event_callbacks[
+                "longRunningCommandProgress"
+            ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
+            
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", f'[0, "Outlet {i} power off"]')
+        )
+        for j in range(0, num_outlets):
+            assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
@@ -80,7 +89,7 @@ def test_TurnOnOutlet_TurnOffOutlet(
             ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[0, {"Outlet {i} power on"}]')
+            (f"{command_id[0]}", f'[0, "Outlet {i} power on"]')
         )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]

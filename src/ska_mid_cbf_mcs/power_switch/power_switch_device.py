@@ -15,9 +15,14 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 from ska_tango_base import SKABaseDevice
+
+## Maybe a solution for overfilling Queue??
+# import ska_tango_base 
+# ska_tango_base.base.base_device.INPUT_QUEUE_SIZE_LIMIT = 32
+
 
 # tango imports
 from ska_tango_base.commands import (
@@ -78,15 +83,6 @@ class PowerSwitch(SKABaseDevice):
         doc="Number of outlets in this power switch",
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -122,7 +118,8 @@ class PowerSwitch(SKABaseDevice):
             login=self.PowerSwitchLogin,
             password=self.PowerSwitchPassword,
             logger=self.logger,
-            simulation_mode=self.simulationMode,
+            state_callback=self._update_state,
+            admin_mode_callback=self._update_admin_mode,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
@@ -146,10 +143,10 @@ class PowerSwitch(SKABaseDevice):
         self.register_command_object(
             "TurnOffOutlet",
             SubmittedSlowCommand(
-                "TurnOffOutlet",
-                self._command_tracker,
-                self.component_manager,
-                "turn_off_outlet",
+                command_name="TurnOffOutlet",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="turn_off_outlet",
                 logger=self.logger,
             ),
         )
@@ -164,24 +161,26 @@ class PowerSwitch(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def read_simulationMode(self: PowerSwitch) -> SimulationMode:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: PowerSwitch) -> SimulationMode:
         """
-        Get the simulation mode.
+        Read the Simulation Mode of the device.
 
-        :return: the current simulation mode
+        :return: Simulation Mode of the device.
         """
-        return self.component_manager.simulation_mode
+        return self._simulation_mode
 
-    def write_simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
+    @simulationMode.write
+    def simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
         """
-        Set the simulation mode of the device. When simulation mode is set to
-        True, the power switch software simulator is used in place of the hardware.
-        When simulation mode is set to False, the real power switch driver is used.
+        Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
         self.component_manager.simulation_mode = value
+
 
     def read_numOutlets(self: PowerSwitch) -> int:
         """
@@ -218,10 +217,8 @@ class PowerSwitch(SKABaseDevice):
             """
 
             (result_code, message) = super().do()
-
-            device = self._device
-            device.write_simulationMode(True)
-
+            self._device._simulation_mode = True
+            
             return (result_code, message)
 
     @command(
@@ -232,60 +229,9 @@ class PowerSwitch(SKABaseDevice):
     )
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
-        # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
         command_handler = self.get_command_object(command_name="TurnOnOutlet")
-        command_id, result_code_message = command_handler(argin)
-
-        return [[command_id], [result_code_message]]
-        # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
-
-    class TurnOffOutletCommand(SubmittedSlowCommand):
-        """
-        The command class for the TurnOffOutlet command.
-
-        Turn off an individual outlet, specified by the outlet ID.
-        """
-
-        def do(
-            self: PowerSwitch.TurnOffOutletCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement TurnOffOutlet command functionality.
-
-            :param argin: the outlet ID of the outlet to switch off
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-
-            try:
-                result, msg = component_manager.turn_off_outlet(argin)
-                if result != ResultCode.OK:
-                    return (result, msg)
-
-                power_mode = component_manager.get_outlet_power_mode(argin)
-                if power_mode != PowerState.OFF:
-                    # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                    self.logger.info(
-                        "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                    )
-                    time.sleep(5)
-                    power_mode = component_manager.get_outlet_power_mode(argin)
-                    if power_mode != PowerState.OFF:
-                        return (
-                            ResultCode.FAILED,
-                            f"Power off failed, outlet is in power mode {power_mode}",
-                        )
-            except AssertionError as e:
-                self.logger.error(e)
-                return (
-                    ResultCode.FAILED,
-                    "Unable to read outlet state after power off",
-                )
-
-            return (result, msg)
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
     @command(
         dtype_in="DevString",
@@ -294,12 +240,11 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
+    # TODO: Discuss type hint. Thomas sent a hack that can be added to allow 2d arrays without throwing a fit.
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
-        # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
-        handler = self.get_command_object("TurnOffOutlet")
-        result_code, message = handler(argin)
-        return [[result_code], [message]]
-        # PROTECTED REGION END #    //  PowerSwitch.TurnOffOutlet
+        command_handler = self.get_command_object(command_name="TurnOffOutlet")
+        result_code_message, command_id  = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
     class GetOutletPowerStateCommand(FastCommand):
         """
