@@ -10,11 +10,7 @@
 
 """Contain the tests for the power switch device."""
 
-import ast
-import json
-import pprint
-from time import sleep
-from typing import Any, List
+from typing import List
 
 import tango
 
@@ -23,7 +19,6 @@ from ska_tango_base.commands import ResultCode
 
 # Local imports
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
-from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -52,8 +47,8 @@ def test_TurnOnOutlet_TurnOffOutlet(
 
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
-    
-    # This is only done to avoid overfilling the queue. 
+
+    # This is only done to avoid overfilling the queue.
     # Max Queue size has been updated in BC 0.20.1
     num_outlets = 4
 
@@ -71,7 +66,7 @@ def test_TurnOnOutlet_TurnOffOutlet(
             change_event_callbacks[
                 "longRunningCommandProgress"
             ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
-            
+
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[0, "Outlet {i} power off"]')
         )

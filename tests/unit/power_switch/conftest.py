@@ -9,28 +9,24 @@
 
 from __future__ import annotations
 
-import json
-import logging
-
 # Standard imports
-import re
 import unittest
-from typing import Any, Callable, List
+from typing import Callable
 
 import pytest
-import requests
 import tango
-from ska_tango_base.control_model import SimulationMode
 from ska_tango_testing.harness import TangoTestHarness
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
-    PowerSwitchComponentManager,
-)
 
 # Local imports
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DevicesToLoadType,
+    TangoHarness,
+)
 
 # @pytest.fixture(scope="function")
 # def power_switch_component_manager(

@@ -15,7 +15,6 @@ from threading import Lock
 from typing import Any, Callable, Optional, cast
 
 from ska_tango_base.control_model import (
-    AdminMode,
     CommunicationStatus,
     HealthState,
     PowerState,
@@ -23,7 +22,6 @@ from ska_tango_base.control_model import (
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
-from tango import DevState
 
 __all__ = ["CbfComponentManager"]
 
