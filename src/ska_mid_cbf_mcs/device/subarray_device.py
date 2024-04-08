@@ -18,9 +18,9 @@ Generic subarray device for Mid.CBF
 from __future__ import annotations
 
 from typing import cast
-from tango.server import attribute
-from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
 
+from ska_csp_lmc_base.obs.obs_device import CspSubElementObsDevice
+from tango.server import attribute
 
 __all__ = ["CbfSubarrayDevice", "main"]
 
@@ -92,6 +92,7 @@ class CbfSubarrayDevice(CspSubElementObsDevice):
         """
         return self._command_progresses
 
+
 # ----------
 # Run server
 # ----------
@@ -111,4 +112,3 @@ def main(*args: str, **kwargs: str) -> int:
 
 if __name__ == "__main__":
     main()
-    

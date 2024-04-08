@@ -18,14 +18,15 @@ Generic Tango device for Mid.CBF
 from __future__ import annotations
 
 from typing import cast
-from tango.server import attribute
-from ska_tango_base.base.base_device import SKABaseDevice
 
+from ska_tango_base.base.base_device import SKABaseDevice
+from tango.server import attribute
 
 __all__ = ["CbfDevice", "main"]
 
 
 INPUT_QUEUE_SIZE_LIMIT = 32
+
 
 class CbfDevice(SKABaseDevice):
     """
@@ -91,6 +92,7 @@ class CbfDevice(SKABaseDevice):
         """
         return self._command_progresses
 
+
 # ----------
 # Run server
 # ----------
@@ -110,4 +112,3 @@ def main(*args: str, **kwargs: str) -> int:
 
 if __name__ == "__main__":
     main()
-    

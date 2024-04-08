@@ -60,9 +60,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         **kwargs: Any,
     ):
         super().__init__(
-            *args,
-            max_queue_size=INPUT_QUEUE_SIZE_LIMIT,
-            **kwargs
+            *args, max_queue_size=INPUT_QUEUE_SIZE_LIMIT, **kwargs
         )
         # Here we have statically defined the states useful in Mid.CBF component
         # management, allowing the use of the _update_component_state method in
