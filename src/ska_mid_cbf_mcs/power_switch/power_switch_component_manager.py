@@ -12,20 +12,16 @@
 from __future__ import annotations
 
 import logging
-import threading
-from time import sleep
-from typing import Any, Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import tango
-from ska_control_model import (
-    CommunicationStatus,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
-from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
 from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
 from ska_mid_cbf_mcs.power_switch.apc_snmp_driver import ApcSnmpDriver
 from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
@@ -58,13 +54,18 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def __init__(
         self: PowerSwitchComponentManager,
-        *args: Any,
         model: str,
         ip: str,
         login: str,
         password: str,
+        logger: logging.Logger,
+        push_change_event_callback: Optional[Callable],
+        communication_status_changed_callback: Callable[
+            [CommunicationStatus], None
+        ],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
     ) -> None:
         """
         Initialize a new instance.
@@ -87,19 +88,24 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 driver or the simulator should be used
 
         """
-        super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
+        self.connected = False
+
+        self._simulation_mode = simulation_mode
 
         self.power_switch_driver = self.get_power_switch_driver(
-            model=model,
-            ip=ip,
-            login=login,
-            password=password,
-            logger=self.logger,
+            model=model, ip=ip, login=login, password=password, logger=logger
         )
 
         self.power_switch_simulator = PowerSwitchSimulator(
-            model=model, logger=self.logger
+            model=model, logger=logger
+        )
+
+        super().__init__(
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback,
         )
 
     @property
@@ -121,39 +127,67 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :return: whether the power switch is communicating
         """
-        # Check the communication status of the power switch
+        # If we haven't started communicating yet, don't check power switch
+        # communication status
+        if self.connected is False:
+            return False
+
+        # If we have started communicating, check the actual communication
+        # status of the power switch
         if self.simulation_mode:
             return self.power_switch_simulator.is_communicating
         else:
             return self.power_switch_driver.is_communicating
 
+    @property
+    def simulation_mode(self: PowerSwitchComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(
+        self: PowerSwitchComponentManager, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
+        """
+        self._simulation_mode = value
+
     def start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
-        if not self.simulation_mode:
+        if self.connected:
+            self._logger.info("Already communicating.")
+            return
+
+        super().start_communicating()
+
+        if not self._simulation_mode:
             self.power_switch_driver.initialize()
 
-        # We only want CommunicationStatus.Established if
-        # the PDU responded with a valid list of outlets.
-        if self.power_switch_driver.outlets:
-            super().start_communicating()
-            self._update_component_state(power=PowerState.ON)
-        else:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(PowerMode.ON)
+        self.connected = True
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
+        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.connected = False
 
-        if not self.simulation_mode:
+        if not self._simulation_mode:
             self.power_switch_driver.stop()
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str
-    ) -> PowerState:
+    ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
 
@@ -167,16 +201,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         else:
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
-    def is_turn_outlet_on_allowed(self) -> bool:
-        self.logger.info("Checking if TurnOnOutlet is allowed.")
-        return True
-
-    def _turn_on_outlet(
-        self: PowerSwitchComponentManager,
-        outlet: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
+    def turn_on_outlet(
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the power switch to turn on a specific outlet.
@@ -187,88 +213,14 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        try:
-            if task_callback:
-                task_callback(status=TaskStatus.IN_PROGRESS)
-            if self.simulation_mode:
-                (
-                    result_code,
-                    message,
-                ) = self.power_switch_simulator.turn_on_outlet(outlet)
-            else:
-                result_code, message = self.power_switch_driver.turn_on_outlet(
-                    outlet
-                )
 
-            if task_callback:
-                task_callback(progress=10)
-            if result_code != ResultCode.OK:
-                task_callback(
-                    status=TaskStatus.FAILED, result=(result_code, message)
-                )
-                return
-            power_mode = self.get_outlet_power_mode(outlet)
-            if task_callback:
-                task_callback(progress=20)
-            if power_mode != PowerState.ON:
-                # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
-                self.logger.info(
-                    "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                )
-                if task_abort_event and task_abort_event.is_set():
-                    message = f"Power on aborted, outlet is in power mode {power_mode}"
-                    task_callback(
-                        status=TaskStatus.ABORTED,
-                        result=(ResultCode.ABORTED, message),
-                    )
-                    return
-                sleep(5)
-                power_mode = self.get_outlet_power_mode(outlet)
-                if power_mode != PowerState.ON:
-                    task_callback(
-                        status=TaskStatus.FAILED, result=(result_code, message)
-                    )
-                    return
-            task_callback(progress=100)
-            task_callback(
-                status=TaskStatus.COMPLETED, result=(result_code, message)
-            )
-        except AssertionError as e:
-            self.logger.error(e)
-            task_callback(exception=e, status=TaskStatus.FAILED)
+        if self.simulation_mode:
+            return self.power_switch_simulator.turn_on_outlet(outlet)
+        else:
+            return self.power_switch_driver.turn_on_outlet(outlet)
 
-    def turn_on_outlet(
-        self: PowerSwitchComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> tuple[TaskStatus, str]:
-        """
-        Turn the device on.
-
-        :param task_callback: callback to be called when the status of
-            the command changes
-
-        :return: a result code and message
-        """
-        self.logger.info(f"ComponentState={self._component_state}")
-        return self.submit_task(
-            self._turn_on_outlet,
-            args=[argin],
-            is_cmd_allowed=self.is_turn_outlet_on_allowed,
-            task_callback=task_callback,
-        )
-
-    def is_turn_outlet_off_allowed(self) -> bool:
-        self.logger.info("Checking if TurnOffOutlet is allowed.")
-        return True
-
-    def _turn_off_outlet(
-        self: PowerSwitchComponentManager,
-        outlet: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
+    def turn_off_outlet(
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the power switch to turn off a specific outlet.
@@ -279,79 +231,11 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        try:
-            if task_callback:
-                task_callback(status=TaskStatus.IN_PROGRESS)
-            if self.simulation_mode:
-                (
-                    result_code,
-                    message,
-                ) = self.power_switch_simulator.turn_off_outlet(outlet)
-            else:
-                (
-                    result_code,
-                    message,
-                ) = self.power_switch_driver.turn_off_outlet(outlet)
 
-            if task_callback:
-                task_callback(progress=10)
-            if result_code != ResultCode.OK:
-                task_callback(
-                    status=TaskStatus.FAILED, result=(result_code, message)
-                )
-                return
-            power_mode = self.get_outlet_power_mode(outlet)
-            if task_callback:
-                task_callback(progress=20)
-
-            if power_mode != PowerState.OFF:
-                # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                self.logger.info(
-                    "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
-                )
-                if task_abort_event and task_abort_event.is_set():
-                    message = f"Power off aborted, outlet is in power mode {power_mode}"
-                    task_callback(
-                        status=TaskStatus.ABORTED,
-                        result=(ResultCode.ABORTED, message),
-                    )
-                    return
-                sleep(5)
-                power_mode = self.get_outlet_power_mode(outlet)
-                if power_mode != PowerState.OFF:
-                    task_callback(
-                        status=TaskStatus.FAILED, result=(result_code, message)
-                    )
-                    return
-            task_callback(progress=100)
-            task_callback(
-                status=TaskStatus.COMPLETED, result=(result_code, message)
-            )
-        except AssertionError as e:
-            self.logger.error(e)
-            task_callback(exception=e, status=TaskStatus.FAILED)
-
-    def turn_off_outlet(
-        self: PowerSwitchComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> tuple[TaskStatus, str]:
-        """
-        Turn the device off.
-
-        :param task_callback: callback to be called when the status of
-            the command changes
-
-        :return: a result code and message
-        """
-        self.logger.info(f"ComponentState={self._component_state}")
-        return self.submit_task(
-            self._turn_off_outlet,
-            args=[argin],
-            is_cmd_allowed=self.is_turn_outlet_off_allowed,
-            task_callback=task_callback,
-        )
+        if self.simulation_mode:
+            return self.power_switch_simulator.turn_off_outlet(outlet)
+        else:
+            return self.power_switch_driver.turn_off_outlet(outlet)
 
     def get_power_switch_driver(
         self: PowerSwitchComponentManager,

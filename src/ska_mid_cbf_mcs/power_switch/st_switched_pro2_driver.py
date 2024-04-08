@@ -17,7 +17,7 @@ from typing import List
 import requests
 from requests.structures import CaseInsensitiveDict
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -141,7 +141,7 @@ class STSwitchedPRO2Driver:
 
     def get_outlet_power_mode(
         self: STSwitchedPRO2Driver, outlet: str
-    ) -> PowerState:
+    ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
 
@@ -176,14 +176,14 @@ class STSwitchedPRO2Driver:
                     state = str(resp["state"])
 
                     if state == self.state_on:
-                        power_mode = PowerState.ON
+                        power_mode = PowerMode.ON
                     elif state == self.state_off:
-                        power_mode = PowerState.OFF
+                        power_mode = PowerMode.OFF
                     else:
-                        power_mode = PowerState.UNKNOWN
+                        power_mode = PowerMode.UNKNOWN
 
                 except IndexError:
-                    power_mode = PowerState.UNKNOWN
+                    power_mode = PowerMode.UNKNOWN
 
                 if power_mode != self.outlets[outlet_idx].power_mode:
                     raise AssertionError(
@@ -195,13 +195,13 @@ class STSwitchedPRO2Driver:
                 self.logger.error(
                     f"HTTP response error: {response.status_code}"
                 )
-                return PowerState.UNKNOWN
+                return PowerMode.UNKNOWN
         except (
             requests.exceptions.ConnectTimeout,
             requests.exceptions.ConnectionError,
         ):
             self.logger.error("Failed to connect to power switch")
-            return PowerState.UNKNOWN
+            return PowerMode.UNKNOWN
 
     def turn_on_outlet(
         self: STSwitchedPRO2Driver, outlet: str
@@ -237,7 +237,7 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.ON
+                self.outlets[outlet_idx].power_mode = PowerMode.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -286,7 +286,7 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.OFF
+                self.outlets[outlet_idx].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
                 self.logger.error(
@@ -330,14 +330,14 @@ class STSwitchedPRO2Driver:
                         state = str(resp_dict["state"])
 
                         if state == self.state_on:
-                            power_mode = PowerState.ON
+                            power_mode = PowerMode.ON
                         elif state == self.state_off:
-                            power_mode = PowerState.OFF
+                            power_mode = PowerMode.OFF
                         else:
-                            power_mode = PowerState.UNKNOWN
+                            power_mode = PowerMode.UNKNOWN
 
                     except IndexError:
-                        power_mode = PowerState.UNKNOWN
+                        power_mode = PowerMode.UNKNOWN
 
                     outlets.append(
                         Outlet(
