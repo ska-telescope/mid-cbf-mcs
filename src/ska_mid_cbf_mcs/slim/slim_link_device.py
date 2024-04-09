@@ -15,7 +15,7 @@ from typing import Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import FastCommand, ResultCode
+from ska_tango_base.commands import (FastCommand, ResultCode, SubmittedSlowCommand)
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
@@ -27,7 +27,7 @@ from ska_tango_base.control_model import (
 )
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, run
-
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
@@ -38,7 +38,7 @@ from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
 __all__ = ["SlimLink", "main"]
 
 
-class SlimLink(SKABaseDevice):
+class SlimLink(CbfDevice):
     """
     TANGO device class for SLIM link device.
     """
@@ -115,15 +115,6 @@ class SlimLink(SKABaseDevice):
         """,
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -140,12 +131,10 @@ class SlimLink(SKABaseDevice):
         self._health_state = HealthState.UNKNOWN
 
         return SlimLinkComponentManager(
-            update_health_state=self._update_health_state,
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     def init_command_objects(self: SlimLink) -> None:
@@ -156,7 +145,14 @@ class SlimLink(SKABaseDevice):
 
         device_args = (self, self.logger)
         self.register_command_object(
-            "ConnectTxRx", self.ConnectTxRxCommand(*device_args)
+            "ConnectTxRx", 
+            SubmittedSlowCommand(
+                command_name="ConnectTxRx",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="connect_tx_rx",
+                logger=self.logger,
+            ),
         )
         self.register_command_object(
             "VerifyConnection", self.VerifyConnectionCommand(*device_args)
@@ -183,79 +179,8 @@ class SlimLink(SKABaseDevice):
     # Callbacks
     # ----------
 
-    def _communication_status_changed(
-        self: SlimLink, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-        elif (
-            communication_status == CommunicationStatus.ESTABLISHED
-            and self._component_power_mode is not None
-        ):
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
-
-    def _component_power_mode_changed(
-        self: SlimLink, power_mode: PowerState
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
-            }
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: SlimLink, faulty: bool) -> None:
-        """
-        Handle component fault
-
-        :param faulty: True if component is faulty.
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
-        else:
-            self.set_status("The device has recovered from FAULT state.")
-
-    def _update_health_state(self: SlimLink, state: HealthState) -> None:
-        """
-        Update the device's health state
-
-        :param state: HealthState describing the link's status.
-        """
-        if self._health_state != state:
-            self.logger.info(f"Updating health state to {state}")
-            self._health_state = state
-            self.push_change_event("healthState", self._health_state)
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
     # -----------------
     # Attribute Methods
@@ -370,25 +295,25 @@ class SlimLink(SKABaseDevice):
         return self._health_state
         # PROTECTED REGION END #    //  SlimLink.healthState_read
 
-    def read_simulationMode(self: SlimLink) -> SimulationMode:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: SlimLink) -> SimulationMode:
         """
-        Get the simulation mode.
+        Read the Simulation Mode of the device.
 
-        :return: the current simulation mode
+        :return: Simulation Mode of the device.
         """
-        return self.component_manager.simulation_mode
+        return self._simulation_mode
 
-    def write_simulationMode(self, value):
-        # PROTECTED REGION ID(SlimLink.simulationMode_write) ENABLED START #
+    @simulationMode.write
+    def simulationMode(self: SlimLink, value: SimulationMode) -> None:
         """
-        Set the Simulation Mode of the device. This overrides the ska-tango-base
-        implementation.
+        Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
-        self.logger.info(f"Writing simulation mode: {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
         self.component_manager.simulation_mode = value
-        # PROTECTED REGION END #    //  SlimLink.simulationMode_write
 
     # --------
     # Commands
@@ -409,38 +334,36 @@ class SlimLink(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
-
-            device = self._device
-            device.write_simulationMode(True)
+            self._device._simulation_mode = True
 
             return (result_code, message)
 
-    class ConnectTxRxCommand(FastCommand):
-        """
-        The command class for the ConnectTxRx command.
+    # class ConnectTxRxCommand(FastCommand):
+    #     """
+    #     The command class for the ConnectTxRx command.
 
-        Connect the SLIM Tx and Rx HPS devices to form the link.
-        """
+    #     Connect the SLIM Tx and Rx HPS devices to form the link.
+    #     """
 
-        def do(
-            self: SlimLink.ConnectTxRxCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement ConnectTxRx command functionality.
+    #     def do(
+    #         self: SlimLink.ConnectTxRxCommand,
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Implement ConnectTxRx command functionality.
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if self.target.read_adminMode() == AdminMode.ONLINE:
-                component_manager = self.target.component_manager
-                return component_manager.connect_slim_tx_rx()
-            else:
-                return (
-                    ResultCode.FAILED,
-                    "Device is offline. Failed to issue ConnectTxRx command.",
-                )
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         if self.target.read_adminMode() == AdminMode.ONLINE:
+    #             component_manager = self.target.component_manager
+    #             return component_manager.connect_slim_tx_rx()
+    #         else:
+    #             return (
+    #                 ResultCode.FAILED,
+    #                 "Device is offline. Failed to issue ConnectTxRx command.",
+    #             )
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -448,11 +371,9 @@ class SlimLink(SKABaseDevice):
     )
     @DebugIt()
     def ConnectTxRx(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.ConnectTxRx) ENABLED START #
-        handler = self.get_command_object("ConnectTxRx")
-        return_code, message = handler()
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  SlimLink.ConnectTxRx
+        command_handler = self.get_command_object("ConnectTxRx")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
     class VerifyConnectionCommand(FastCommand):
         """

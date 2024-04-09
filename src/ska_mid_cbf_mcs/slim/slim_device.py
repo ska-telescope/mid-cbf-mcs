@@ -27,14 +27,14 @@ from ska_tango_base.control_model import (
 )
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
-
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
 __all__ = ["Slim", "main"]
 
 
-class Slim(SKABaseDevice):
+class Slim(CbfDevice):
     """
     TANGO device class for controlling and monitoring the SLIM
     """

@@ -32,12 +32,10 @@ class SlimLinkSimulator:
     def __init__(
         self: SlimLinkSimulator,
         logger: logging.Logger,
-        update_health_state: Callable[[HealthState], None],
     ) -> None:
         """
         Initialize a new instance.
         :param logger: a logger for this object to use
-        :param update_health_state: method to call when link health state changes
         """
         self._logger = logger
 
@@ -50,8 +48,7 @@ class SlimLinkSimulator:
         self._link_enabled = False
         self._read_counters = [0] * 9
         self._block_lost_cdr_lost_count = [0] * 2
-        self._update_health_state = update_health_state
-        self._update_health_state(HealthState.UNKNOWN)
+        self._health_state = HealthState.UNKNOWN
 
     @property
     def tx_device_name(self: SlimLinkSimulator) -> str:
@@ -171,15 +168,15 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         if not self._link_enabled:
-            self._update_health_state(HealthState.UNKNOWN)
+            self._health_state = HealthState.UNKNOWN
             return ResultCode.OK, "link is not active"
         if self._tx_idle_ctrl_word != self._rx_idle_ctrl_word:
-            self._update_health_state(HealthState.FAILED)
+            self._health_state = HealthState.FAILED
             return ResultCode.OK, "link is not healthy"
         if self._bit_error_rate > BER_PASS_THRESHOLD:
-            self._update_health_state(HealthState.FAILED)
+            self._health_state = HealthState.FAILED
             return ResultCode.OK, "link is not healthy"
-        self._update_health_state(HealthState.OK)
+        self._health_state = HealthState.OK
         return ResultCode.OK, "link is healthy"
 
     def disconnect_slim_tx_rx(
