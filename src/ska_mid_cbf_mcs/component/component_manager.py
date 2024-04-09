@@ -11,62 +11,32 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import enum
-import logging
-from typing import Any, Callable, Optional
+from threading import Lock
+from typing import Any, Callable, Optional, cast
 
-from ska_tango_base.base import BaseComponentManager
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import (
+    CommunicationStatus,
+    HealthState,
+    PowerState,
+)
+from ska_tango_base.executor.executor_component_manager import (
+    TaskExecutorComponentManager,
+)
 
-__all__ = ["CommunicationStatus", "CbfComponentManager"]
+from ska_mid_cbf_mcs.device.base_device import INPUT_QUEUE_SIZE_LIMIT
+
+__all__ = ["CbfComponentManager"]
 
 
-class CommunicationStatus(enum.Enum):
-    """The status of a component manager's communication with its component."""
+class CbfComponentManager(TaskExecutorComponentManager):
 
-    DISABLED = 1
     """
-    The component manager is not trying to establish/maintain a channel
-    of communication with its component. For example:
-
-    * if communication with the component is connection-oriented, then
-      there is no connection, and the component manager is not trying to
-      establish a connection.
-    * if communication with the component is by event subscription, then
-      the component manager is unsubscribed from events.
-    * if communication with the component is by periodic connectionless
-      polling, then the component manager is not performing that
-      polling.
-    """
-
-    NOT_ESTABLISHED = 2
-    """
-    The component manager is trying to establish/maintain a channel of
-    communication with its component, but that channel is not currently
-    established. For example:
-
-    * if communication with the component is connection-oriented, then
-      the component manager has failed to establish/maintain the
-      connection.
-    """
-
-    ESTABLISHED = 3
-    """
-    The component manager has established a channel of communication
-    with its component. For example:
-
-    * if communication with the component is connection-oriented, then
-      the component manager has connected to its component.
-    """
-
-
-class CbfComponentManager(BaseComponentManager):
-    """
+    TODO
     A base component manager for SKA Mid.CBF MCS
 
     This class exists to modify the interface of the
-    :py:class:`ska_tango_base.base.component_manager.BaseComponentManager`.
-    The ``BaseComponentManager`` accepts an ``op_state_model`` argument,
+    :py:class:`ska_tango_base.base.component_manager.TaskExecutorComponentManager`.
+    The ``TaskExecutorComponentManager`` accepts an ``op_state_model`` argument,
     and is expected to interact directly with it. This is not a very
     good design decision. It is better to leave the ``op_state_model``
     behind in the device, and drive it indirectly through callbacks.
@@ -77,94 +47,73 @@ class CbfComponentManager(BaseComponentManager):
     status changes. In the last two cases, callback hooks are provided
     so that the component can indicate the change to this component
     manager.
+    TODO
     """
 
+    # TODO - remove rely on TaskExecutor.__init__?
     def __init__(
         self: CbfComponentManager,
-        logger: logging.Logger,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Optional[
-            Callable[[CommunicationStatus], None]
-        ],
-        component_power_mode_changed_callback: Optional[
-            Callable[[PowerMode], None]
-        ],
-        component_fault_callback: Optional[Callable[[bool], None]],
         *args: Any,
+        attr_change_callback: Callable[[str, Any], None] | None = None,
+        attr_archive_callback: Callable[[str, Any], None] | None = None,
+        health_state_callback: Callable[[HealthState], None] | None = None,
         **kwargs: Any,
     ):
-        """
-        Initialise a new instance.
-
-        :param logger: a logger for this instance to use
-        :param push_change_event_callback: mechanism to inform the base classes
-            what method to call; typically device.push_change_event.
-        :param communication_status_changed_callback: callback to be
-            called when the status of communications between the
-            component manager and its component changes.
-        :param component_power_mode_changed_callback: callback to be
-            called when the power mode of the component changes.
-        :param component_fault_callback: callback to be called when the
-            fault status of the component changes.
-        :param args: other positional args
-        :param kwargs: other keyword args
-        """
-
-        self._logger = logger
-
-        assert push_change_event_callback
-        self._push_change_event = push_change_event_callback
-
-        self._communication_status = CommunicationStatus.DISABLED
-        self._communication_status_changed_callback = (
-            communication_status_changed_callback
+        super().__init__(
+            *args, max_queue_size=INPUT_QUEUE_SIZE_LIMIT, **kwargs
         )
+        # Here we have statically defined the states useful in Mid.CBF component
+        # management, allowing the use of the _update_component_state method in
+        # the BaseComponentManager to execute the device state changes callback
+        # any number of states
+        self._component_state = {
+            "fault": None,
+            "power": None,
+        }
 
-        self._power_mode: Optional[PowerMode] = None
-        self._component_power_mode_changed_callback = (
-            component_power_mode_changed_callback
-        )
+        self._device_attr_change_callback = attr_change_callback
+        self._device_attr_archive_callback = attr_archive_callback
 
-        self._faulty: Optional[bool] = None
-        self._component_fault_callback = component_fault_callback
+        self._device_health_state_callback = health_state_callback
+        self._health_state_lock = Lock()
+        self._health_state = HealthState.UNKNOWN
 
-        super().__init__(None, *args, **kwargs)
+    ###########
+    # Callbacks
+    ###########
+
+    def _update_device_health_state(
+        self: CbfComponentManager,
+        health_state: HealthState,
+    ) -> None:
+        """
+        Handle a health state change.
+        This is a helper method for use by subclasses.
+        :param state: the new health state of the
+            component manager.
+        """
+        with self._health_state_lock:
+            if self._health_state != health_state:
+                self._health_state = health_state
+                self._push_health_state_update(health_state)
+
+    def _push_health_state_update(
+        self: CbfComponentManager, health_state: HealthState
+    ) -> None:
+        if self._device_health_state_callback is not None:
+            self._device_health_state_callback(health_state)
 
     def start_communicating(self: CbfComponentManager) -> None:
         """Start communicating with the component."""
-        if self.communication_status == CommunicationStatus.ESTABLISHED:
-            return
-        if self.communication_status == CommunicationStatus.DISABLED:
-            self.update_communication_status(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
+        self._update_communication_state(
+            communication_state=CommunicationStatus.ESTABLISHED
+        )
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
-        if self.communication_status == CommunicationStatus.DISABLED:
-            return
-
-        self.update_communication_status(CommunicationStatus.DISABLED)
-        self.update_component_power_mode(None)
-        self.update_component_fault(None)
-
-    def update_communication_status(
-        self: CbfComponentManager, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle a change in communication status.
-
-        This is a helper method for use by subclasses.
-
-        :param communication_status: the new communication status of the
-            component manager.
-        """
-        if self._communication_status != communication_status:
-            self._communication_status = communication_status
-            if self._communication_status_changed_callback is not None:
-                self._communication_status_changed_callback(
-                    communication_status
-                )
+        self._update_communication_state(
+            communication_state=CommunicationStatus.DISABLED
+        )
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
@@ -177,92 +126,16 @@ class CbfComponentManager(BaseComponentManager):
         :return: whether communication with the component is
             established.
         """
-        return self.communication_status == CommunicationStatus.ESTABLISHED
+        return self.communication_state == CommunicationStatus.ESTABLISHED
 
     @property
-    def communication_status(self: CbfComponentManager) -> CommunicationStatus:
-        """
-        Return the communication status of this component manager.
-
-        This is implemented as a replacement for the
-        ``is_communicating`` property, which should be deprecated.
-
-        :return: status of the communication channel with the component.
-        """
-        return self._communication_status
-
-    def update_component_power_mode(
-        self: CbfComponentManager, power_mode: Optional[PowerMode]
-    ) -> None:
-        """
-        Update the power mode, calling callbacks as required.
-
-        This is a helper method for use by subclasses.
-
-        :param power_mode: the new power mode of the component. This can
-            be None, in which case the internal value is updated but no
-            callback is called. This is useful to ensure that the
-            callback is called next time a real value is pushed.
-        """
-        if self._power_mode != power_mode:
-            self._power_mode = power_mode
-            if (
-                self._component_power_mode_changed_callback is not None
-                and power_mode is not None
-            ):
-                self._component_power_mode_changed_callback(power_mode)
-
-    def component_power_mode_changed(
-        self: CbfComponentManager, power_mode: PowerMode
-    ) -> None:
-        """
-        Handle notification that the component's power mode has changed.
-
-        This is a callback hook, to be passed to the managed component.
-
-        :param power_mode: the new power mode of the component
-        """
-        self.update_component_power_mode(power_mode)
-
-    @property
-    def power_mode(self: CbfComponentManager) -> Optional[PowerMode]:
+    def power_state(self: CbfComponentManager) -> Optional[PowerState]:
         """
         Return the power mode of this component manager.
 
         :return: the power mode of this component manager.
         """
-        return self._power_mode
-
-    def update_component_fault(
-        self: CbfComponentManager, faulty: Optional[bool]
-    ) -> None:
-        """
-        Update the component fault status, calling callbacks as required.
-
-        This is a helper method for use by subclasses.
-
-        :param faulty: whether the component has faulted. If ``False``,
-            then this is a notification that the component has
-            *recovered* from a fault.
-        """
-        if self._faulty != faulty:
-            self._faulty = faulty
-        if self._component_fault_callback is not None and faulty is not None:
-            self._component_fault_callback(faulty)
-
-    def component_fault_changed(
-        self: CbfComponentManager, faulty: bool
-    ) -> None:
-        """
-        Handle notification that the component's fault status has changed.
-
-        This is a callback hook, to be passed to the managed component.
-
-        :param faulty: whether the component has faulted. If ``False``,
-            then this is a notification that the component has
-            *recovered* from a fault.
-        """
-        self.update_component_fault(faulty)
+        return self._component_state["power_state"]
 
     @property
     def faulty(self: CbfComponentManager) -> Optional[bool]:
@@ -272,4 +145,4 @@ class CbfComponentManager(BaseComponentManager):
         :return: whether this component manager is currently
             experiencing a fault.
         """
-        return self._faulty
+        return cast(bool, self._component_state["fault"])
