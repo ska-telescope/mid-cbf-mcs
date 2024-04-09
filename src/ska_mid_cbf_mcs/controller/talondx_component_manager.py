@@ -73,6 +73,9 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ResultCode.OK
+        
         try:
             talondx_config_path = (
                 f"{self.talondx_config_path}/talondx-config.json"
