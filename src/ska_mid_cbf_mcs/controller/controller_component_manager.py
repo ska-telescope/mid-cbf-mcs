@@ -799,25 +799,13 @@ class ControllerComponentManager(CbfComponentManager):
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
-
-            self._logger.info(
-                f"Setting LRU {lru_fqdn} to simulation mode {sim_mode}"
-            )
             proxy.adminMode = AdminMode.OFFLINE
             proxy.simulationMode = sim_mode
             proxy.adminMode = AdminMode.ONLINE
 
-            self._logger.info(
-                f"LRU {lru_fqdn} has been set to simulation mode {proxy.simulationMode}"
-            )
-
-            lru_powermode = proxy.LRUPowerMode
-            self._logger.info(
-                f"LRU power mode: {lru_powermode}, DevState: {proxy.state()}"
-            )
-            if lru_powermode == PowerMode.ON:
+            if proxy.LRUPowerMode == PowerMode.ON:
                 self._logger.info(
-                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board to clear state"
+                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board first to clear state"
                 )
                 result = self._talondx_component_manager.reboot()
                 if result == ResultCode.FAILED:

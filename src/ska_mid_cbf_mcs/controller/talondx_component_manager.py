@@ -613,12 +613,10 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
-        self.logger.info(f"Rebooting Talon board {target}")
-
+        
         try:
             with SSHClient() as ssh_client:
 
@@ -637,13 +635,14 @@ class TalonDxComponentManager:
                     :param ssh_client: SSH client to use for connection
                     """
                     ssh_client.connect(ip, username="root", password="")
+                
 
+                self.logger.info(f"Rebooting Talon board {target}")
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
 
                 ssh_chan = ssh_client.get_transport().open_session()
                 ssh_chan.exec_command("reboot")
-                self.logger.info(f"Reboot command sent to {target}")
 
                 # Wait and connect to the board after reboot
                 time.sleep(const.DEFAULT_TIMEOUT)

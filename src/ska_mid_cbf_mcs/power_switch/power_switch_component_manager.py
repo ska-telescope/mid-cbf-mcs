@@ -198,14 +198,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
 
         if self.simulation_mode:
-            self._logger.info("IN SIMULATION MODE!!!!")
             return self.power_switch_simulator.get_outlet_power_mode(outlet)
         else:
-            self._logger.info(f"Getting power mode for outlet {outlet}")
-            outlet_power_mode = self.power_switch_driver.get_outlet_power_mode(
-                outlet
-            )
-            return outlet_power_mode
+            return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
         self: PowerSwitchComponentManager, outlet: str

@@ -138,7 +138,6 @@ class TalonLRU(SKABaseDevice):
         """
         Write the simulation mode to the component manager.
         """
-        self.logger.info(f"Setting simulation mode to {value}")
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 
