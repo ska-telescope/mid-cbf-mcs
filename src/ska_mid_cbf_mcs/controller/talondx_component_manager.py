@@ -75,7 +75,7 @@ class TalonDxComponentManager:
         """
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
-        
+
         try:
             talondx_config_path = (
                 f"{self.talondx_config_path}/talondx-config.json"
