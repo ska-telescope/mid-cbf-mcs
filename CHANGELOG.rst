@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.13.2
+******
+* REL-1345: STFC cluster domain name change
+* Updated ska-telmodel version to allow for duplicate k values
+
 0.13.1
 ******
 * CIP-2238/REL-1337: bumped engineering console version
