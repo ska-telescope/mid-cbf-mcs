@@ -48,7 +48,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
     used to drive the operational state (opState) model from the component manager.
     """
 
-    # TODO - remove rely on TaskExecutor.__init__?
     def __init__(
         self: CbfComponentManager,
         *args: Any,
