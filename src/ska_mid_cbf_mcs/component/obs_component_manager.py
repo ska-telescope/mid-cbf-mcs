@@ -13,22 +13,28 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import Any
 
-from ska_tango_base.control_model import ObsState
-
 from .component_manager import CbfComponentManager
 
 __all__ = ["CbfObsComponentManager"]
 
 
 class CbfObsComponentManager(CbfComponentManager):
-    """A stub for an observing device component manager."""
+    """
+    A base observing device component manager for SKA Mid.CBF MCS
+    """
 
-    # TODO - remove rely on TaskExecutor.__init__?
     def __init__(
         self: CbfObsComponentManager,
         *args: Any,
         **kwargs: Any,
-    ):
+    ) -> None:
+        """
+        Initialise a new CbfObsComponentManager instance.
+        """
         super().__init__(*args, **kwargs)
-
-        self.obs_state = ObsState.IDLE
+        # Here we have statically defined the observing state keywords useful in Mid.CBF
+        # component management, allowing the use of the _update_component_state
+        # method in the BaseComponentManager to issue the component state change
+        # callback in the CspSubElementObsDevice to drive the observing state model
+        self._component_state["configured"] = None
+        self._component_state["scanning"] = None
