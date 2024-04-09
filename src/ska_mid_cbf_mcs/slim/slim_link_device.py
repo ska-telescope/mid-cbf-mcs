@@ -14,16 +14,15 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.commands import FastCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
 from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
-    PowerMode,
+    PowerState,
     SimulationMode,
 )
 from tango import AttrWriteType, DebugIt
@@ -137,7 +136,7 @@ class SlimLink(SKABaseDevice):
         :rtype: SlimLinkComponentManager
         """
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
         self._health_state = HealthState.UNKNOWN
 
         return SlimLinkComponentManager(
@@ -213,7 +212,7 @@ class SlimLink(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: SlimLink, power_mode: PowerMode
+        self: SlimLink, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -228,10 +227,10 @@ class SlimLink(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
             self.op_state_model.perform_action(action_map[power_mode])
 
@@ -371,6 +370,14 @@ class SlimLink(SKABaseDevice):
         return self._health_state
         # PROTECTED REGION END #    //  SlimLink.healthState_read
 
+    def read_simulationMode(self: SlimLink) -> SimulationMode:
+        """
+        Get the simulation mode.
+
+        :return: the current simulation mode
+        """
+        return self.component_manager.simulation_mode
+
     def write_simulationMode(self, value):
         # PROTECTED REGION ID(SlimLink.simulationMode_write) ENABLED START #
         """
@@ -379,7 +386,7 @@ class SlimLink(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        super().write_simulationMode(value)
+        self.logger.info(f"Writing simulation mode: {value}")
         self.component_manager.simulation_mode = value
         # PROTECTED REGION END #    //  SlimLink.simulationMode_write
 
@@ -403,12 +410,12 @@ class SlimLink(SKABaseDevice):
             """
             (result_code, message) = super().do()
 
-            device = self.target
+            device = self._device
             device.write_simulationMode(True)
 
             return (result_code, message)
 
-    class ConnectTxRxCommand(ResponseCommand):
+    class ConnectTxRxCommand(FastCommand):
         """
         The command class for the ConnectTxRx command.
 
@@ -440,14 +447,14 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ConnectTxRx(self: SlimLink) -> tango.DevVarLongStringArray:
+    def ConnectTxRx(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.ConnectTxRx) ENABLED START #
         handler = self.get_command_object("ConnectTxRx")
         return_code, message = handler()
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.ConnectTxRx
 
-    class VerifyConnectionCommand(ResponseCommand):
+    class VerifyConnectionCommand(FastCommand):
         """
         The command class for the VerifyConnection command.
 
@@ -477,14 +484,14 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def VerifyConnection(self: SlimLink) -> tango.DevVarLongStringArray:
+    def VerifyConnection(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.VerifyConnection) ENABLED START #
         handler = self.get_command_object("VerifyConnection")
         return_code, message = handler()
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.VerifyConnection
 
-    class DisconnectTxRxCommand(ResponseCommand):
+    class DisconnectTxRxCommand(FastCommand):
         """
         The command class for the DisconnectTxRx command.
 
@@ -516,14 +523,14 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def DisconnectTxRx(self: SlimLink) -> tango.DevVarLongStringArray:
+    def DisconnectTxRx(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.DisconnectTxRx) ENABLED START #
         handler = self.get_command_object("DisconnectTxRx")
         return_code, message = handler()
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  SlimLink.DisconnectTxRx
 
-    class ClearCountersCommand(ResponseCommand):
+    class ClearCountersCommand(FastCommand):
         """
         The command class for the ClearCounters command.
 
@@ -553,7 +560,7 @@ class SlimLink(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ClearCounters(self: SlimLink) -> tango.DevVarLongStringArray:
+    def ClearCounters(self: SlimLink) -> None:
         # PROTECTED REGION ID(SlimLink.ClearCounters) ENABLED START #
         handler = self.get_command_object("ClearCounters")
         return_code, message = handler()
