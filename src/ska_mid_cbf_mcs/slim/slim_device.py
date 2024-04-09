@@ -19,12 +19,8 @@ from typing import List, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import FastCommand, ResultCode
-from ska_tango_base.control_model import (
-    HealthState,
-    PowerState,
-    SimulationMode,
-)
+from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -176,7 +172,7 @@ class Slim(SKABaseDevice):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
         # Simulation mode default true
         return SlimComponentManager(
@@ -204,12 +200,12 @@ class Slim(SKABaseDevice):
             """
             (result_code, message) = super().do()
 
-            device = self._device
+            device = self.target
             device.write_simulationMode(True)
 
             return (result_code, message)
 
-    class OnCommand:
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         The command class for the On command.
         """
@@ -226,7 +222,7 @@ class Slim(SKABaseDevice):
             component_manager = self.target
             return component_manager.on()
 
-    class OffCommand:
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         The command class for the Off command.
         """
@@ -243,7 +239,7 @@ class Slim(SKABaseDevice):
             component_manager = self.target
             return component_manager.off()
 
-    class ConfigureCommand(FastCommand):
+    class ConfigureCommand(ResponseCommand):
         """
         The command class for the Configure command.
         """
@@ -293,7 +289,7 @@ class Slim(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def Configure(self: Slim, argin: str) -> None:
+    def Configure(self: Slim, argin: str) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(Slim.Configure) ENABLED START #
         handler = self.get_command_object("Configure")
         return_code, message = handler(argin)
@@ -333,7 +329,7 @@ class Slim(SKABaseDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: Slim, power_mode: PowerState
+        self: Slim, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -348,10 +344,10 @@ class Slim(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
@@ -370,14 +366,6 @@ class Slim(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def read_simulationMode(self: Slim) -> SimulationMode:
-        """
-        Get the simulation mode.
-
-        :return: the current simulation mode
-        """
-        return self.component_manager.simulation_mode
-
     def write_simulationMode(self: Slim, value: SimulationMode) -> None:
         """
         Overrides the base class implementation. Additionally set the
@@ -386,7 +374,14 @@ class Slim(SKABaseDevice):
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
+        super().write_simulationMode(value)
         self.component_manager._simulation_mode = value
+
+    def read_simulationMode(self: Slim) -> SimulationMode:
+        """
+        Reads simulation mode. Overrides the base class implementation.
+        """
+        return self.component_manager._simulation_mode
 
 
 # ----------

@@ -15,11 +15,7 @@ from typing import Callable, Optional
 import backoff
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    HealthState,
-    PowerState,
-    SimulationMode,
-)
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -45,7 +41,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
@@ -293,7 +289,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.stop_communicating()"
         )
         super().stop_communicating()
-        self.update_component_power_mode(PowerState.UNKNOWN)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     def connect_slim_tx_rx(
