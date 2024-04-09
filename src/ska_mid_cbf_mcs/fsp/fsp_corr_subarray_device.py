@@ -28,9 +28,9 @@ from typing import List, Optional, Tuple
 
 # tango imports
 import tango
-from ska_csp_lmc_base import CspSubElementObsDevice
+from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -255,7 +255,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             super().do()
 
-            device = self._device
+            device = self.target
             device._configuring_from_idle = False
 
             # Setting initial simulation mode to True
@@ -284,7 +284,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
         return FspCorrSubarrayComponentManager(
             self.logger,
@@ -532,14 +532,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         self.component_manager.config_id = value
 
-    def read_simulationMode(self: FspCorrSubarray) -> SimulationMode:
-        """
-        Get the simulation mode.
-
-        :return: the current simulation mode
-        """
-        return self.component_manager.simulation_mode
-
     def write_simulationMode(
         self: FspCorrSubarray, value: SimulationMode
     ) -> None:
@@ -549,6 +541,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulation mode: {value}")
+        super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
@@ -653,7 +646,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    class OnCommand:
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the FspCorrSubarray's On() command.
         """
@@ -675,12 +668,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 "FspCorrSubarray On command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerState.ON)
+            self.target._component_power_mode_changed(PowerMode.ON)
 
             self.logger.info(message)
             return (result_code, message)
 
-    class OffCommand:
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the FspCorrSubarray's Off() command.
         """
@@ -702,12 +695,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 "FspCorrSubarray Off command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerState.OFF)
+            self.target._component_power_mode_changed(PowerMode.OFF)
 
             self.logger.info(message)
             return (result_code, message)
 
-    class StandbyCommand:
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the FspCorrSubarray's Standby() command.
         """
@@ -729,7 +722,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 "FspCorrSubarray Standby command completed OK",
             )
 
-            self.target._component_power_mode_changed(PowerState.STANDBY)
+            self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             self.logger.info(message)
             return (result_code, message)
@@ -757,7 +750,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering ConfigureScanCommand()")
 
-            device = self._device
+            device = self.target
 
             (result_code, message) = device.component_manager.configure_scan(
                 argin
@@ -855,7 +848,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering ScanCommand()")
 
-            device = self._device
+            device = self.target
 
             (result_code, message) = device.component_manager.scan(argin)
 
@@ -872,7 +865,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def Scan(self, argin) -> None:
+    def Scan(self, argin):
         # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
         """
         Start an observing scan.
@@ -888,7 +881,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    class EndScanCommand:
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
         A class for the FspCorrSubarray's Scan() command.
         """
@@ -908,7 +901,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering EndScanCommand()")
 
-            device = self._device
+            device = self.target
 
             (result_code, message) = device.component_manager.end_scan()
 
@@ -917,7 +910,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
-    class GoToIdleCommand:
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
         A class for the FspCorrSubarray's GoToIdle command.
         """
@@ -936,7 +929,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            device = self._device
+            device = self.target
 
             (result_code, message) = device.component_manager.go_to_idle()
 
@@ -945,7 +938,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
-    class ObsResetCommand:
+    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
         """
         A class for the FspCorrSubarray's ObsReset() command.
         """
@@ -1130,7 +1123,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspCorrSubarray, power_mode: PowerState
+        self: FspCorrSubarray, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -1145,10 +1138,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])

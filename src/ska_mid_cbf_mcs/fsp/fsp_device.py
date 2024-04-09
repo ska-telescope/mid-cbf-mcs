@@ -24,9 +24,9 @@ from typing import List, Optional, Tuple
 
 # tango imports
 import tango
-from ska_tango_base import SKACapability
-from ska_tango_base.commands import FastCommand, ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base import SKABaseDevice, SKACapability
+from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -137,7 +137,7 @@ class Fsp(SKACapability):
         """
         super().init_command_objects()
 
-        device_args = (self, self.logger)
+        device_args = (self, self.op_state_model, self.logger)
 
         self.register_command_object("On", self.OnCommand(*device_args))
 
@@ -189,7 +189,7 @@ class Fsp(SKACapability):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
         return FspComponentManager(
             logger=self.logger,
@@ -214,21 +214,13 @@ class Fsp(SKACapability):
     # Attributes methods
     # ------------------
 
-    def read_simulationMode(self: Fsp) -> SimulationMode:
-        """
-        Get the simulation mode.
-
-        :return: the current simulation mode
-        """
-        return self.component_manager.simulation_mode
-
     def write_simulationMode(self: Fsp, value: SimulationMode) -> None:
         """
         Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
-        self.logger.info(f"Writing simulation mode: {value}")
+        super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 
     def read_functionMode(self: Fsp) -> tango.DevEnum:
@@ -341,7 +333,7 @@ class Fsp(SKACapability):
 
             (result_code, message) = super().do()
 
-            device = self._device
+            device = self.target
 
             # Setting initial simulation mode to True
             device.write_simulationMode(SimulationMode.TRUE)
@@ -357,7 +349,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
-    class OnCommand:
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the Fsp's On() command.
         """
@@ -377,11 +369,11 @@ class Fsp(SKACapability):
             (result_code, message) = self.target.component_manager.on()
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.ON)
+                self.target._component_power_mode_changed(PowerMode.ON)
 
             return (result_code, message)
 
-    class OffCommand:
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the Fsp's Off() command.
         """
@@ -401,11 +393,11 @@ class Fsp(SKACapability):
             (result_code, message) = self.target.component_manager.off()
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.OFF)
+                self.target._component_power_mode_changed(PowerMode.OFF)
 
             return (result_code, message)
 
-    class StandbyCommand:
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the Fsp's Standby() command.
         """
@@ -425,11 +417,11 @@ class Fsp(SKACapability):
             (result_code, message) = self.target.component_manager.standby()
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.STANDBY)
+                self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             return (result_code, message)
 
-    class SetFunctionModeCommand(FastCommand):
+    class SetFunctionModeCommand(ResponseCommand):
         """
         A class for the Fsp's SetFunctionMode() command.
         """
@@ -477,7 +469,7 @@ class Fsp(SKACapability):
             return True
         return False
 
-    class AddSubarrayMembershipCommand(FastCommand):
+    class AddSubarrayMembershipCommand(ResponseCommand):
         """
         A class for the Fsp's AddSubarrayMembership() command.
         """
@@ -523,7 +515,7 @@ class Fsp(SKACapability):
             return True
         return False
 
-    class RemoveSubarrayMembershipCommand(FastCommand):
+    class RemoveSubarrayMembershipCommand(ResponseCommand):
         """
         A class for the Fsp's RemoveSubarrayMembership() command.
         """
@@ -588,7 +580,7 @@ class Fsp(SKACapability):
         return self.component_manager.get_fsp_corr_config_id()
         # PROTECTED REGION END #    //  Fsp.getConfigID
 
-    class UpdateJonesMatrixCommand(FastCommand):
+    class UpdateJonesMatrixCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateJonesMatrix() command.
         """
@@ -636,7 +628,7 @@ class Fsp(SKACapability):
             return True
         return False
 
-    class UpdateDelayModelCommand(FastCommand):
+    class UpdateDelayModelCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateDelayModel() command.
         """
@@ -687,7 +679,7 @@ class Fsp(SKACapability):
             return True
         return False
 
-    class UpdateTimingBeamWeightsCommand(FastCommand):
+    class UpdateTimingBeamWeightsCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateTimingBeamWeights() command.
         """
@@ -763,7 +755,7 @@ class Fsp(SKACapability):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: Fsp, power_mode: PowerState
+        self: Fsp, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -778,10 +770,10 @@ class Fsp(SKACapability):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])

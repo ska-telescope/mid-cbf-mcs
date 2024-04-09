@@ -15,9 +15,9 @@ import logging
 from typing import Callable, List, Optional, Tuple
 
 import tango
-from ska_csp_lmc_base.obs.component_manager import CspObsComponentManager
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
+from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -38,7 +38,7 @@ class FspPstSubarrayComponentManager(
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
         component_obs_fault_callback: Callable[[bool], None],
     ) -> None:
@@ -160,7 +160,7 @@ class FspPstSubarrayComponentManager(
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
 
     def stop_communicating(self: FspPstSubarrayComponentManager) -> None:
         """Stop communication with the component"""

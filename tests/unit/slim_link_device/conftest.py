@@ -22,7 +22,7 @@ import pytest_mock
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
@@ -104,7 +104,7 @@ def mock_component_manager(
         mock._communication_status_changed_callback(
             CommunicationStatus.ESTABLISHED
         )
-        # mock._component_power_mode_changed_callback(PowerState.OFF)
+        # mock._component_power_mode_changed_callback(PowerMode.OFF)
 
     def _connect_slim_tx_rx(mock: unittest.mock.Mock) -> None:
         mock.message = "SlimLink ConnectTxRx command completed OK"
@@ -162,7 +162,7 @@ def patched_slim_link_device_class(
             :return: a mock component manager
             """
             self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerState] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
             mock_component_manager._communication_status_changed_callback = (
                 self._communication_status_changed

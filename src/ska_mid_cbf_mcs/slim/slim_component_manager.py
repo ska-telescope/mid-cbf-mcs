@@ -22,7 +22,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
-    PowerState,
+    PowerMode,
     SimulationMode,
 )
 
@@ -50,7 +50,7 @@ class SlimComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
@@ -106,7 +106,7 @@ class SlimComponentManager(CbfComponentManager):
                 self._dp_links.append(dp)
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
         self.connected = True
 
     def stop_communicating(self) -> None:
@@ -115,7 +115,7 @@ class SlimComponentManager(CbfComponentManager):
         super().stop_communicating()
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
-        self.update_component_power_mode(PowerState.UNKNOWN)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     @property
@@ -139,7 +139,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self._logger.debug("Entering SlimComponentManager.on")
-        self.update_component_power_mode(PowerState.ON)
+        self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
     def off(self) -> Tuple[ResultCode, str]:
@@ -152,7 +152,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self._logger.debug("Entering SlimComponentManager.off")
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
         if self._mesh_configured:
             self._disconnect_links()
         return (ResultCode.OK, "Off command completed OK")

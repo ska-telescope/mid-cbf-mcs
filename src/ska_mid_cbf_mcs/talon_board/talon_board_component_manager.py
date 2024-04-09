@@ -16,7 +16,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -58,7 +58,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
@@ -140,7 +140,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         super().start_communicating()
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
         self.connected = True
 
     def stop_communicating(self) -> None:
@@ -151,7 +151,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         super().stop_communicating()
         # update component power mode to unknown when monitoring communications
         # to the component (talon board here) are halted
-        self.update_component_power_mode(PowerState.UNKNOWN)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     def _get_devices_in_server(self, server: str):
@@ -225,7 +225,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         # return (ResultCode.FAILED, "Failed to connect to InfluxDB")
 
         self._logger.info("Completed TalonBoardComponentManager.on")
-        self.update_component_power_mode(PowerState.ON)
+        self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
     def _subscribe_change_events(self):
@@ -389,7 +389,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_attrs = {}
         self._talon_status_attrs = {}
 
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(
@@ -1016,7 +1016,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def _throw_if_device_off(self):
-        if self.power_mode != PowerState.ON:
+        if self.power_mode != PowerMode.ON:
             tango.Except.throw_exception(
                 "Talon_Board_Off",
                 "Talon Board is OFF",

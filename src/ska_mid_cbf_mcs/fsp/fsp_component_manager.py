@@ -17,7 +17,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -51,7 +51,7 @@ class FspComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
@@ -200,7 +200,7 @@ class FspComponentManager(CbfComponentManager):
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
 
     def stop_communicating(self: FspComponentManager) -> None:
         """Stop communication with the component"""

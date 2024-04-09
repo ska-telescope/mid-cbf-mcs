@@ -682,77 +682,74 @@ class TestCbfSubarray:
                     )
 
             time.sleep(1)
-
-            # TODO: CIP-1470 removed VCC SW
             # check configured attributes of VCC search windows
             if "search_window" in configuration["cbf"]:
-                pass
-                # for idx, search_window in enumerate(
-                #     configuration["cbf"]["search_window"]
-                # ):
-                #     for vcc_id in vcc_ids:
-                #         assert (
-                #             test_proxies.vccSw[vcc_id][idx + 1].tdcEnable
-                #             == search_window["tdc_enable"]
-                #         )
-                #         # TODO implement VCC SW functionality and
-                #         # correct power states
-                #         if search_window["tdc_enable"]:
-                #             assert (
-                #                 test_proxies.vccSw[vcc_id][idx + 1].State()
-                #                 == DevState.DISABLE
-                #             )
-                #         else:
-                #             assert (
-                #                 test_proxies.vccSw[vcc_id][idx + 1].State()
-                #                 == DevState.DISABLE
-                #             )
-                #         assert (
-                #             test_proxies.vccSw[vcc_id][
-                #                 idx + 1
-                #             ].searchWindowTuning
-                #             == search_window["search_window_tuning"]
-                #         )
-                #         if "tdc_num_bits" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[vcc_id][idx + 1].tdcNumBits
-                #                 == search_window["tdc_num_bits"]
-                #             )
-                #         if "tdc_period_before_epoch" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[vcc_id][
-                #                     idx + 1
-                #                 ].tdcPeriodBeforeEpoch
-                #                 == search_window["tdc_period_before_epoch"]
-                #             )
-                #         if "tdc_period_after_epoch" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[vcc_id][
-                #                     idx + 1
-                #                 ].tdcPeriodAfterEpoch
-                #                 == search_window["tdc_period_after_epoch"]
-                #             )
-                #         if "tdc_destination_address" in search_window:
-                #             for dest in search_window[
-                #                 "tdc_destination_address"
-                #             ]:
-                #                 if (
-                #                     test_proxies.dish_utils.dish_id_to_vcc_id[
-                #                         dest["receptor_id"]
-                #                     ]
-                #                     == vcc_id
-                #                 ):
-                #                     tdcDestAddr = dest[
-                #                         "tdc_destination_address"
-                #                     ]
-                #                     assert (
-                #                         list(
-                #                             test_proxies.vccSw[vcc_id][
-                #                                 idx + 1
-                #                             ].tdcDestinationAddress
-                #                         )
-                #                         == tdcDestAddr
-                #                     )
+                for idx, search_window in enumerate(
+                    configuration["cbf"]["search_window"]
+                ):
+                    for vcc_id in vcc_ids:
+                        assert (
+                            test_proxies.vccSw[vcc_id][idx + 1].tdcEnable
+                            == search_window["tdc_enable"]
+                        )
+                        # TODO implement VCC SW functionality and
+                        # correct power states
+                        if search_window["tdc_enable"]:
+                            assert (
+                                test_proxies.vccSw[vcc_id][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        else:
+                            assert (
+                                test_proxies.vccSw[vcc_id][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        assert (
+                            test_proxies.vccSw[vcc_id][
+                                idx + 1
+                            ].searchWindowTuning
+                            == search_window["search_window_tuning"]
+                        )
+                        if "tdc_num_bits" in search_window:
+                            assert (
+                                test_proxies.vccSw[vcc_id][idx + 1].tdcNumBits
+                                == search_window["tdc_num_bits"]
+                            )
+                        if "tdc_period_before_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[vcc_id][
+                                    idx + 1
+                                ].tdcPeriodBeforeEpoch
+                                == search_window["tdc_period_before_epoch"]
+                            )
+                        if "tdc_period_after_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[vcc_id][
+                                    idx + 1
+                                ].tdcPeriodAfterEpoch
+                                == search_window["tdc_period_after_epoch"]
+                            )
+                        if "tdc_destination_address" in search_window:
+                            for dest in search_window[
+                                "tdc_destination_address"
+                            ]:
+                                if (
+                                    test_proxies.dish_utils.dish_id_to_vcc_id[
+                                        dest["receptor_id"]
+                                    ]
+                                    == vcc_id
+                                ):
+                                    tdcDestAddr = dest[
+                                        "tdc_destination_address"
+                                    ]
+                                    assert (
+                                        list(
+                                            test_proxies.vccSw[vcc_id][
+                                                idx + 1
+                                            ].tdcDestinationAddress
+                                        )
+                                        == tdcDestAddr
+                                    )
 
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration["cbf"]["fsp"]:
@@ -2830,71 +2827,68 @@ class TestCbfSubarray:
                     )
 
             time.sleep(1)
-
-            # TODO: CIP-1470 removed VCC SW
             # check configured attributes of VCC search windows
             if "search_window" in configuration_2["cbf"]:
-                pass
-                # for idx, search_window in enumerate(
-                #     configuration_2["cbf"]["search_window"]
-                # ):
-                #     for r in vcc_ids:
-                #         assert (
-                #             test_proxies.vccSw[r][idx + 1].tdcEnable
-                #             == search_window["tdc_enable"]
-                #         )
-                #         # TODO implement VCC SW functionality and
-                #         # correct power states
-                #         if search_window["tdc_enable"]:
-                #             assert (
-                #                 test_proxies.vccSw[r][idx + 1].State()
-                #                 == DevState.DISABLE
-                #             )
-                #         else:
-                #             assert (
-                #                 test_proxies.vccSw[r][idx + 1].State()
-                #                 == DevState.DISABLE
-                #             )
-                #         assert (
-                #             test_proxies.vccSw[r][idx + 1].searchWindowTuning
-                #             == search_window["search_window_tuning"]
-                #         )
-                #         if "tdc_num_bits" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[r][idx + 1].tdcNumBits
-                #                 == search_window["tdc_num_bits"]
-                #             )
-                #         if "tdc_period_before_epoch" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[r][
-                #                     idx + 1
-                #                 ].tdcPeriodBeforeEpoch
-                #                 == search_window["tdc_period_before_epoch"]
-                #             )
-                #         if "tdc_period_after_epoch" in search_window:
-                #             assert (
-                #                 test_proxies.vccSw[r][
-                #                     idx + 1
-                #                 ].tdcPeriodAfterEpoch
-                #                 == search_window["tdc_period_after_epoch"]
-                #             )
-                #         if "tdc_destination_address" in search_window:
-                #             for t in search_window["tdc_destination_address"]:
-                #                 if (
-                #                     test_proxies.dish_utils.dish_id_to_vcc_id[
-                #                         t["receptor_id"]
-                #                     ]
-                #                     == r
-                #                 ):
-                #                     tdcDestAddr = t["tdc_destination_address"]
-                #                     assert (
-                #                         list(
-                #                             test_proxies.vccSw[r][
-                #                                 idx + 1
-                #                             ].tdcDestinationAddress
-                #                         )
-                #                         == tdcDestAddr
-                #                     )
+                for idx, search_window in enumerate(
+                    configuration_2["cbf"]["search_window"]
+                ):
+                    for r in vcc_ids:
+                        assert (
+                            test_proxies.vccSw[r][idx + 1].tdcEnable
+                            == search_window["tdc_enable"]
+                        )
+                        # TODO implement VCC SW functionality and
+                        # correct power states
+                        if search_window["tdc_enable"]:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        else:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].State()
+                                == DevState.DISABLE
+                            )
+                        assert (
+                            test_proxies.vccSw[r][idx + 1].searchWindowTuning
+                            == search_window["search_window_tuning"]
+                        )
+                        if "tdc_num_bits" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][idx + 1].tdcNumBits
+                                == search_window["tdc_num_bits"]
+                            )
+                        if "tdc_period_before_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodBeforeEpoch
+                                == search_window["tdc_period_before_epoch"]
+                            )
+                        if "tdc_period_after_epoch" in search_window:
+                            assert (
+                                test_proxies.vccSw[r][
+                                    idx + 1
+                                ].tdcPeriodAfterEpoch
+                                == search_window["tdc_period_after_epoch"]
+                            )
+                        if "tdc_destination_address" in search_window:
+                            for t in search_window["tdc_destination_address"]:
+                                if (
+                                    test_proxies.dish_utils.dish_id_to_vcc_id[
+                                        t["receptor_id"]
+                                    ]
+                                    == r
+                                ):
+                                    tdcDestAddr = t["tdc_destination_address"]
+                                    assert (
+                                        list(
+                                            test_proxies.vccSw[r][
+                                                idx + 1
+                                            ].tdcDestinationAddress
+                                        )
+                                        == tdcDestAddr
+                                    )
 
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration_2["cbf"]["fsp"]:

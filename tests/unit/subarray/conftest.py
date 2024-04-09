@@ -25,7 +25,7 @@ from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
     ObsState,
-    PowerState,
+    PowerMode,
     SimulationMode,
 )
 from tango.server import command
@@ -90,7 +90,7 @@ def mock_component_manager(
         mock._communication_status_changed_callback(
             CommunicationStatus.NOT_ESTABLISHED
         )
-        mock._component_power_mode_changed_callback(PowerState.ON)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         mock._communication_status_changed_callback(
             CommunicationStatus.ESTABLISHED
         )
@@ -164,13 +164,13 @@ def mock_component_manager(
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: mock._component_power_mode_changed_callback(
-        PowerState.ON
+        PowerMode.ON
     )
     mock.off.side_effect = lambda: mock._component_power_mode_changed_callback(
-        PowerState.OFF
+        PowerMode.OFF
     )
     mock.standby.side_effect = (
-        lambda: mock._component_power_mode_changed_callback(PowerState.STANDBY)
+        lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
     )
     mock.raise_configure_scan_fatal_error.side_effect = (
         lambda: _raise_configure_scan_fatal_error()
@@ -222,7 +222,7 @@ def patched_subarray_device_class(
             :return: a mock component manager
             """
             self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerState] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
             mock_component_manager._component_resourced_callback = (
                 self._component_resourced

@@ -19,9 +19,9 @@ from __future__ import annotations  # allow forward references in type hints
 from typing import List, Optional, Tuple
 
 import tango
-from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base import SKABaseDevice, SKAController
+from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
@@ -162,7 +162,7 @@ class CbfController(SKAController):
             If property not found in db, then assign a default amount(197,27,16)
             """
 
-            device = self._device
+            device = self.target
 
             device.write_simulationMode(True)
 
@@ -215,7 +215,7 @@ class CbfController(SKAController):
 
             super().do()
 
-            device = self._device
+            device = self.target
 
             # initialize attribute values
             device._command_progress = 0
@@ -252,7 +252,7 @@ class CbfController(SKAController):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
         # Create the Talon-DX component manager and initialize simulation
         # mode to on
@@ -343,14 +343,6 @@ class CbfController(SKAController):
         return out_str
         # PROTECTED REGION END #    //  CbfController.vccToDish_read
 
-    def read_simulationMode(self: CbfController) -> SimulationMode:
-        """
-        Get the simulation mode.
-
-        :return: the current simulation mode
-        """
-        return self._talondx_component_manager.simulation_mode
-
     def write_simulationMode(
         self: CbfController, value: SimulationMode
     ) -> None:
@@ -359,14 +351,14 @@ class CbfController(SKAController):
 
         :param value: SimulationMode
         """
-        self.logger.info(f"Writing simulation mode: {value}")
+        super().write_simulationMode(value)
         self._talondx_component_manager.simulation_mode = value
 
     # --------
     # Commands
     # --------
 
-    class OnCommand:
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the CbfController's On() command.
         """
@@ -402,14 +394,14 @@ class CbfController(SKAController):
             (result_code, message) = self.target.component_manager.on()
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.ON)
+                self.target._component_power_mode_changed(PowerMode.ON)
                 self.logger.info(message)
             elif result_code == ResultCode.FAILED:
                 self.logger.error(message)
 
             return (result_code, message)
 
-    class OffCommand:
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the CbfController's Off() command.
         """
@@ -446,14 +438,14 @@ class CbfController(SKAController):
                 message = f"Off command is not allowed when op state is {self.target.op_state_model.op_state}"
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.OFF)
+                self.target._component_power_mode_changed(PowerMode.OFF)
                 self.logger.info(message)
             elif result_code == ResultCode.FAILED:
                 self.logger.error(message)
 
             return (result_code, message)
 
-    class StandbyCommand:
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the CbfController's Standby() command.
         """
@@ -474,12 +466,12 @@ class CbfController(SKAController):
             (result_code, message) = self.target.component_manager.standby()
 
             if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.STANDBY)
+                self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             self.logger.info(message)
             return (result_code, message)
 
-    class InitSysParamCommand:
+    class InitSysParamCommand(ResponseCommand):
         """
         A class for the CbfController's InitSysParam() command.
         """
@@ -566,7 +558,7 @@ class CbfController(SKAController):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: CbfController, power_mode: PowerState
+        self: CbfController, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -581,10 +573,10 @@ class CbfController(SKAController):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])

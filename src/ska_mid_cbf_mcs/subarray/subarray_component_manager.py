@@ -24,15 +24,15 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Tango imports
 import tango
-from ska_csp_lmc_base.subarray.component_manager import (
-    CspSubarrayComponentManager,
-)
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
-    PowerState,
+    PowerMode,
     SimulationMode,
+)
+from ska_tango_base.csp.subarray.component_manager import (
+    CspSubarrayComponentManager,
 )
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
@@ -111,7 +111,7 @@ class CbfSubarrayComponentManager(
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable,
         component_obs_fault_callback: Callable,
     ) -> None:
@@ -350,7 +350,7 @@ class CbfSubarrayComponentManager(
                 proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as dev_failed:
-            self.update_component_power_mode(PowerState.UNKNOWN)
+            self.update_component_power_mode(PowerMode.UNKNOWN)
             self.update_communication_status(
                 CommunicationStatus.NOT_ESTABLISHED
             )
@@ -359,7 +359,7 @@ class CbfSubarrayComponentManager(
 
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
         self._component_op_fault_callback(False)
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
@@ -375,7 +375,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.adminMode = AdminMode.OFFLINE
         self.connected = False
-        self.update_component_power_mode(PowerState.UNKNOWN)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
@@ -386,7 +386,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.On()
 
-        self.update_component_power_mode(PowerState.ON)
+        self.update_component_power_mode(PowerMode.ON)
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
@@ -397,7 +397,7 @@ class CbfSubarrayComponentManager(
         for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.Off()
 
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
 
     @check_communicating
     def standby(self: CbfSubarrayComponentManager) -> None:
@@ -1663,37 +1663,35 @@ class CbfSubarrayComponentManager(
 
         # Configure searchWindow.
         if "search_window" in configuration:
-            # TODO: CIP-1470 comment to remove VCC search window
-            pass
-            # for search_window in configuration["search_window"]:
-            #     search_window["frequency_band"] = common_configuration[
-            #         "frequency_band"
-            #     ]
-            #     search_window[
-            #         "frequency_band_offset_stream1"
-            #     ] = self._frequency_band_offset_stream1
-            #     search_window[
-            #         "frequency_band_offset_stream2"
-            #     ] = self._frequency_band_offset_stream2
-            #     if search_window["frequency_band"] in ["5a", "5b"]:
-            #         search_window["band_5_tuning"] = common_configuration[
-            #             "band_5_tuning"
-            #         ]
-            #     # pass DISH ID as VCC ID integer to VCCs
-            #     if search_window["tdc_enable"]:
-            #         for tdc_dest in search_window["tdc_destination_address"]:
-            #             tdc_dest[
-            #                 "receptor_id"
-            #             ] = self._dish_utils.dish_id_to_vcc_id[
-            #                 tdc_dest["receptor_id"]
-            #             ]
-            #     # pass on configuration to VCC
-            #     data = tango.DeviceData()
-            #     data.insert(tango.DevString, json.dumps(search_window))
-            #     self._logger.debug(
-            #         f"configuring search window: {json.dumps(search_window)}"
-            #     )
-            #     self._group_vcc.command_inout("ConfigureSearchWindow", data)
+            for search_window in configuration["search_window"]:
+                search_window["frequency_band"] = common_configuration[
+                    "frequency_band"
+                ]
+                search_window[
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
+                search_window[
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
+                if search_window["frequency_band"] in ["5a", "5b"]:
+                    search_window["band_5_tuning"] = common_configuration[
+                        "band_5_tuning"
+                    ]
+                # pass DISH ID as VCC ID integer to VCCs
+                if search_window["tdc_enable"]:
+                    for tdc_dest in search_window["tdc_destination_address"]:
+                        tdc_dest[
+                            "receptor_id"
+                        ] = self._dish_utils.dish_id_to_vcc_id[
+                            tdc_dest["receptor_id"]
+                        ]
+                # pass on configuration to VCC
+                data = tango.DeviceData()
+                data.insert(tango.DevString, json.dumps(search_window))
+                self._logger.debug(
+                    f"configuring search window: {json.dumps(search_window)}"
+                )
+                self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."
             self._logger.warning(log_msg)

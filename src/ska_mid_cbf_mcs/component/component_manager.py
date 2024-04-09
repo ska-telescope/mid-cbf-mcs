@@ -30,7 +30,6 @@ __all__ = ["CbfComponentManager"]
 
 class CbfComponentManager(TaskExecutorComponentManager):
     """
-    TODO
     A base component manager for SKA Mid.CBF MCS
 
     This class exists to modify the interface of the
@@ -49,7 +48,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
     used to drive the operational state (opState) model from the component manager.
     """
 
-    # TODO - remove rely on TaskExecutor.__init__?
     def __init__(
         self: CbfComponentManager,
         *args: Any,

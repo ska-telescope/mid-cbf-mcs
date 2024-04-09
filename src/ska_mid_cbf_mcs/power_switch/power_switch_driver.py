@@ -20,7 +20,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from requests.structures import CaseInsensitiveDict
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 
 __all__ = ["PowerSwitchDriver"]
 
@@ -29,7 +29,7 @@ class Outlet:
     """Represents a single outlet in the power switch."""
 
     def __init__(
-        self: Outlet, outlet_ID: str, outlet_name: str, power_mode: PowerState
+        self: Outlet, outlet_ID: str, outlet_name: str, power_mode: PowerMode
     ) -> None:
         """
         Initialize a new instance.
@@ -176,7 +176,7 @@ class PowerSwitchDriver:
 
     def get_outlet_power_mode(
         self: PowerSwitchDriver, outlet: str
-    ) -> PowerState:
+    ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
 
@@ -211,14 +211,14 @@ class PowerSwitchDriver:
                     state = str(resp["state"])
 
                     if state == self.state_on:
-                        power_mode = PowerState.ON
+                        power_mode = PowerMode.ON
                     elif state == self.state_off:
-                        power_mode = PowerState.OFF
+                        power_mode = PowerMode.OFF
                     else:
-                        power_mode = PowerState.UNKNOWN
+                        power_mode = PowerMode.UNKNOWN
 
                 except IndexError:
-                    power_mode = PowerState.UNKNOWN
+                    power_mode = PowerMode.UNKNOWN
 
                 if power_mode != self.outlets[outlet_idx].power_mode:
                     raise AssertionError(
@@ -230,13 +230,13 @@ class PowerSwitchDriver:
                 self.logger.error(
                     f"HTTP response error: {response.status_code}"
                 )
-                return PowerState.UNKNOWN
+                return PowerMode.UNKNOWN
         except (
             requests.exceptions.ConnectTimeout,
             requests.exceptions.ConnectionError,
         ):
             self.logger.error("Failed to connect to power switch")
-            return PowerState.UNKNOWN
+            return PowerMode.UNKNOWN
 
     def turn_on_outlet(
         self: PowerSwitchDriver, outlet: str
@@ -272,7 +272,7 @@ class PowerSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.ON
+                self.outlets[outlet_idx].power_mode = PowerMode.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -321,7 +321,7 @@ class PowerSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.OFF
+                self.outlets[outlet_idx].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
                 self.logger.error(
@@ -375,14 +375,14 @@ class PowerSwitchDriver:
                         state = str(resp_dict["state"])
 
                         if state == self.state_on:
-                            power_mode = PowerState.ON
+                            power_mode = PowerMode.ON
                         elif state == self.state_off:
-                            power_mode = PowerState.OFF
+                            power_mode = PowerMode.OFF
                         else:
-                            power_mode = PowerState.UNKNOWN
+                            power_mode = PowerMode.UNKNOWN
 
                     except IndexError:
-                        power_mode = PowerState.UNKNOWN
+                        power_mode = PowerMode.UNKNOWN
 
                     outlets.append(
                         Outlet(

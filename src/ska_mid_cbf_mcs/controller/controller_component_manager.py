@@ -23,7 +23,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
-    PowerState,
+    PowerMode,
     SimulationMode,
 )
 from ska_telmodel.data import TMData
@@ -67,7 +67,7 @@ class ControllerComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable,
     ) -> None:
         """
@@ -362,7 +362,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
-        self.update_component_power_mode(PowerState.OFF)
+        self.update_component_power_mode(PowerMode.OFF)
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""

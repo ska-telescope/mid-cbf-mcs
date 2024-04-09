@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
@@ -728,7 +728,7 @@ class TalonBoard(SKABaseDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: TalonBoard, power_mode: PowerState
+        self: TalonBoard, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -743,10 +743,10 @@ class TalonBoard(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
@@ -775,7 +775,7 @@ class TalonBoard(SKABaseDevice):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
         return TalonBoardComponentManager(
             hostname=self.TalonDxBoardAddress,
@@ -810,7 +810,7 @@ class TalonBoard(SKABaseDevice):
             """
             return super().do()
 
-    class OnCommand:
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         The command class for the On command.
 
@@ -829,7 +829,7 @@ class TalonBoard(SKABaseDevice):
             component_manager = self.target
             return component_manager.on()
 
-    class OffCommand:
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         The command class for the Off command.
 

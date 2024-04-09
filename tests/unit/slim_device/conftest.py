@@ -22,7 +22,7 @@ import pytest_mock
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
+from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
@@ -104,15 +104,15 @@ def mock_component_manager(
         mock._communication_status_changed_callback(
             CommunicationStatus.ESTABLISHED
         )
-        mock._component_power_mode_changed_callback(PowerState.OFF)
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
 
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.ON)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         mock.message = "Slim On command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.OFF)
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
         mock.message = "Slim Off command completed OK"
         return (ResultCode.OK, mock.message)
 
@@ -159,7 +159,7 @@ def patched_slim_device_class(
             :return: a mock component manager
             """
             self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerState] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
             mock_component_manager._communication_status_changed_callback = (
                 self._communication_status_changed
