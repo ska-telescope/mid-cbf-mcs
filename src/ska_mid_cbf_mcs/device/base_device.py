@@ -31,7 +31,7 @@ INPUT_QUEUE_SIZE_LIMIT = 32
 class CbfDevice(SKABaseDevice):
     """
     A generic base device for Mid.CBF.
-    Extends the SKABaseDevice to override certain key values.
+    Extends SKABaseDevice to override certain key values.
     """
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"

@@ -234,7 +234,7 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_attribute("frequencyOffsetF", 0)
     builder.add_attribute("frequencyOffsetDeltaK", 0)
     builder.add_attribute("obsState", ObsState.IDLE)
-    builder.add_property("VccID", {"VccID": ["1"]})
+    builder.add_property("DeviceID", {"DeviceID": ["1"]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()

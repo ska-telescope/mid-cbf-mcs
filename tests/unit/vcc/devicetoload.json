@@ -49,7 +49,7 @@
                             "SW2Address": [
                                 "mid_csp_cbf/vcc_sw2/001"
                             ],
-                            "VccID": [
+                            "DeviceID": [
                                 "1"
                             ],
                             "polled_attr": [

@@ -13,6 +13,8 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import Any
 
+from ska_control_model import ObsState
+
 from .component_manager import CbfComponentManager
 
 __all__ = ["CbfObsComponentManager"]
@@ -38,3 +40,5 @@ class CbfObsComponentManager(CbfComponentManager):
         # callback in the CspSubElementObsDevice to drive the observing state model
         self._component_state["configured"] = None
         self._component_state["scanning"] = None
+
+        self.obs_state = ObsState.IDLE

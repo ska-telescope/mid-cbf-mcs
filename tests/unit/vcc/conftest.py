@@ -200,7 +200,7 @@ def power_switch_test_context() -> tango.DeviceProxy:
         Band5Address="talondx-001/vcc-app/vcc-band-5",
         SW1Address="mid_csp_cbf/vcc_sw1/001",
         SW2Address="mid_csp_cbf/vcc_sw2/001",
-        VccID="1",
+        DeviceID="1",
     )
 
     with harness as context:
