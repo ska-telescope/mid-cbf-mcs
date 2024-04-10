@@ -281,22 +281,13 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.logger.info(
             f"Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  {self._tx_device_name}->{self._rx_device_name}"
         )
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         if self.simulation_mode == SimulationMode.TRUE:
-            # TODO: Do we need to pass the task_callback to simulator and update status/progress in there?
-            result_code, msg = self.slim_link_simulator.connect_slim_tx_rx()
-            task_callback(
-                progress=100,
-                status=TaskStatus.COMPLETED,
-                result=(result_code, msg),
-            )
-            return
-
-        # Tx and Rx device names must be set to create proxies.
-        if self._rx_device_name == "" or self._tx_device_name == "":
-            if task_callback:
+            self.slim_link_simulator.connect_slim_tx_rx()
+        else:
+            # Tx and Rx device names must be set to create proxies.
+            if self._rx_device_name == "" or self._tx_device_name == "":
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -304,110 +295,94 @@ class SlimLinkComponentManager(CbfComponentManager):
                         "Tx or Rx device FQDN have not been set.",
                     ),
                 )
-            return
-
-        if task_callback:
+                return
             task_callback(progress=10)
 
-        try:
-            self._tx_device_proxy = CbfDeviceProxy(
-                fqdn=self._tx_device_name, logger=self.logger
-            )
-            self._rx_device_proxy = CbfDeviceProxy(
-                fqdn=self._rx_device_name, logger=self.logger
-            )
-
-            if task_callback:
+            try:
+                self._tx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._tx_device_name, logger=self.logger
+                )
+                self._rx_device_proxy = CbfDeviceProxy(
+                    fqdn=self._rx_device_name, logger=self.logger
+                )
                 task_callback(progress=20)
 
-            if task_abort_event and task_abort_event.is_set():
-                message = f"Connect Tx Rx aborted for {self._tx_device_name}->{self._rx_device_name}"
-                if task_callback:
+                if task_abort_event and task_abort_event.is_set():
+                    message = f"Connect Tx Rx aborted for {self._tx_device_name}->{self._rx_device_name}"
                     task_callback(
                         status=TaskStatus.ABORTED,
                         result=(ResultCode.ABORTED, message),
                     )
-                return
+                    return
 
-            @backoff.on_exception(
-                backoff.constant,
-                (Exception, tango.DevFailed),
-                max_tries=6,
-                interval=1.5,
-                jitter=None,
-            )
-            def ping_slim_tx_rx() -> None:
-                """
-                Attempts to connect to the Talon board for the first time
-                after power-on.
-                """
-                self._ping_count += 1
-                self._tx_device_proxy.ping()
-                self._rx_device_proxy.ping()
+                @backoff.on_exception(
+                    backoff.constant,
+                    (Exception, tango.DevFailed),
+                    max_tries=6,
+                    interval=1.5,
+                    jitter=None,
+                )
+                def ping_slim_tx_rx() -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on.
+                    """
+                    self._ping_count += 1
+                    self._tx_device_proxy.ping()
+                    self._rx_device_proxy.ping()
 
-            self._ping_count = 0
-            ping_slim_tx_rx()
-            self.logger.debug(
-                f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
-            )
-            if task_callback:
+                self._ping_count = 0
+                ping_slim_tx_rx()
+                self.logger.debug(
+                    f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
+                )
                 task_callback(progress=30)
 
-            # Sync the idle ctrl word between Tx and Rx
-            idle_ctrl_word = self.tx_idle_ctrl_word
+                # Sync the idle ctrl word between Tx and Rx
+                idle_ctrl_word = self.tx_idle_ctrl_word
 
-            # If Tx's IdleCtrlWord reads as None, regenerate.
-            if idle_ctrl_word is None:
-                idle_ctrl_word = (
-                    hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
-                )
-                self.logger.warning(
-                    f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
-                )
-                self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
-            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
+                # If Tx's IdleCtrlWord reads as None, regenerate.
+                if idle_ctrl_word is None:
+                    idle_ctrl_word = (
+                        hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+                    )
+                    self.logger.warning(
+                        f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
+                    )
+                    self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
+                self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
-            if task_callback:
                 task_callback(progress=60)
 
-            self.logger.info(
-                f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}\n"
-                + f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
-            )
+                self.logger.info(
+                    f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}\n"
+                    + f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
+                )
 
-            # Take SLIM Rx out of serial loopback
-            self._rx_device_proxy.initialize_connection(False)
-            self.clear_counters()
-            if task_callback:
+                # Take SLIM Rx out of serial loopback
+                self._rx_device_proxy.initialize_connection(False)
+                self.clear_counters()
                 task_callback(progress=80)
-
-        except tango.DevFailed as df:
-            msg = f"Failed to connect Tx Rx for {self._tx_device_name}->{self._rx_device_name}: {df.args[0].desc}"
-            self.logger.error(msg)
-            # TODO: Is this the proper way to set fault state?
-            self._update_component_state({"fault": True})
-            task_callback(
-                exception=df,
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, msg),
-            )
-
+            except tango.DevFailed as df:
+                msg = f"Failed to connect Tx Rx for {self._tx_device_name}->{self._rx_device_name}: {df.args[0].desc}"
+                self.logger.error(msg)
+                # TODO: Is this the proper way to set fault state?
+                self._update_component_state(fault=True)
+                task_callback(
+                    exception=df,
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, msg),
+                )
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        if task_callback:
-            task_callback(
-                progress=100,
-                status=TaskStatus.COMPLETED,
-                result=(
-                    ResultCode.OK,
-                    f"Connected Tx Rx successfully: {self._link_name}",
-                ),
-            )
-
-    # # TODO: Can we use this to avoid checking the condition every time? put in CbfComponentManager??
-    # def task_callback_wrapper(self: SlimLinkComponentManager, task_callback: Optional[Callable] = None, **kwargs: Any):
-    #     if task_callback:
-    #         task_callback(**kwargs)
+        task_callback(
+            progress=100,
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                f"Connected Tx Rx successfully: {self._link_name}",
+            ),
+        )
 
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,

@@ -138,7 +138,7 @@ class SlimLinkSimulator:
 
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,
-    ) -> tuple[ResultCode, str]:
+    ) -> None:
         """
         Link the tx and rx devices by synchronizing their idle control words.
 
@@ -153,7 +153,6 @@ class SlimLinkSimulator:
         self.clear_counters()
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        return ResultCode.OK, f"Connection to {self._link_name} (simulator) successful"
 
     def verify_connection(
         self: SlimLinkSimulator,

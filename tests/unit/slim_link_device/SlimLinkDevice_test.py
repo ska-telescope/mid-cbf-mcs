@@ -118,16 +118,20 @@ class TestSlimLink:
         )
         device_under_test.txDeviceName = "test_tx"
         device_under_test.rxDeviceName = "test_rx"
+        
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
-        for progress_point in (10, 20, 30, 60, 80, 100):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", "100"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[0, "Connection to {device_under_test.linkName} (simulator) successful"]')
+            (f"{command_id[0]}", f'[0, "Connected Tx Rx successfully: {device_under_test.linkName}"]')
         )
+        
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
 
     def test_VerifyConnection(
         self: TestSlimLink,
