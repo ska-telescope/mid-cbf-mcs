@@ -5,7 +5,7 @@ variables:
   MINIKUBE: "false"
   SHARED_K8S_CHART: "ska-mid-cbf-mcs"
   SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
-  K8S_TIMEOUT: 500s
+  K8S_TIMEOUT: 450s
   KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
 stages:
