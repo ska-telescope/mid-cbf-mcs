@@ -4,7 +4,9 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   MINIKUBE: "false"
   SHARED_K8S_CHART: "ska-mid-cbf-mcs"
-  K8S_TIMEOUT: 500
+  SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
+  K8S_TIMEOUT: 500s
+  KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
 stages:
   - lint
@@ -57,14 +59,18 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/deploy.gitlab-ci.yml'
 
-
 k8s-test:
   variables:
-    KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  before_script:
+    - make k8s-namespace
+    - make k8s-namespace-credentials
+    - make k8s-install-chart
+    - make k8s-wait
 
 stop-k8s-test:
   variables:
-    KUBE_NAMESPACE: "ci-k8s-test-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
 helm-chart-lint:
   allow_failure: true

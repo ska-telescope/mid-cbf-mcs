@@ -47,7 +47,7 @@ class TalonBoard(SKABaseDevice):
     # Some of these IDs are typically integers. But it is easier to use
     # empty string to show the board is not assigned.
     subarrayID_ = ""
-    receptorID_ = ""
+    dishID_ = ""
     vccID_ = ""
 
     # PROTECTED REGION END #    //  TalonBoard.class_variable
@@ -87,11 +87,11 @@ class TalonBoard(SKABaseDevice):
         doc="The Subarray ID assigned to the board. This attribute is only used for labelling.",
     )
 
-    receptorID = attribute(
+    dishID = attribute(
         dtype="DevString",
         access=AttrWriteType.READ_WRITE,
-        label="Receptor ID",
-        doc="The Receptor ID assigned to the board. This attribute is only used for labelling.",
+        label="DISH ID",
+        doc="The DISH ID assigned to the board. This attribute is only used for labelling.",
     )
 
     vccID = attribute(
@@ -628,33 +628,33 @@ class TalonBoard(SKABaseDevice):
     def write_subarrayID(self: TalonBoard, value: str) -> None:
         # PROTECTED REGION ID(TalonBoard.subarrayID_write) ENABLED START #
         """
-        Write the receptorID attribute.
+        Write the subarrayID attribute.
 
         :param value: the vcc ID
         """
         self.subarrayID_ = value
         # PROTECTED REGION END #    //  TalonBoard.subarrayID_write
 
-    def read_receptorID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_receptorID) ENABLED START #
+    def read_dishID(self: TalonBoard) -> str:
+        # PROTECTED REGION ID(TalonBoard.read_dishID) ENABLED START #
         """
-        Read the receptorID attribute.
+        Read the dishID attribute.
 
-        :return: the receptor ID
+        :return: the DISH ID
         :rtype: str
         """
-        return self.receptorID_
-        # PROTECTED REGION END #    //  TalonBoard.receptorID_read
+        return self.dishID_
+        # PROTECTED REGION END #    //  TalonBoard.dishID_read
 
-    def write_receptorID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.receptorID_write) ENABLED START #
+    def write_dishID(self: TalonBoard, value: str) -> None:
+        # PROTECTED REGION ID(TalonBoard.dishID_write) ENABLED START #
         """
-        Write the receptorID attribute.
+        Write the dishID attribute.
 
-        :param value: the receptor ID
+        :param value: the DISH ID
         """
-        self.receptorID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.receptorID_write
+        self.dishID_ = value
+        # PROTECTED REGION END #    //  TalonBoard.dishID_write
 
     def read_vccID(self: TalonBoard) -> str:
         # PROTECTED REGION ID(TalonBoard.read_vccID) ENABLED START #
@@ -670,7 +670,7 @@ class TalonBoard(SKABaseDevice):
     def write_vccID(self: TalonBoard, value: str) -> None:
         # PROTECTED REGION ID(TalonBoard.vccID_write) ENABLED START #
         """
-        Write the receptorID attribute.
+        Write the vccID attribute.
 
         :param value: the vcc ID
         """
