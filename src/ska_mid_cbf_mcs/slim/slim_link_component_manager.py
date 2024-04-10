@@ -319,7 +319,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
             if task_callback:
                 task_callback(progress=20)
-            
+
             if task_abort_event and task_abort_event.is_set():
                 message = f"Connect Tx Rx aborted for {self._tx_device_name}->{self._rx_device_name}"
                 if task_callback:
@@ -411,14 +411,12 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
-        argin: Any = None,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
     ) -> Tuple[ResultCode, str]:
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
-            args=[argin],
             is_cmd_allowed=self.is_connect_slim_tx_rx_allowed,
             task_callback=task_callback,
         )

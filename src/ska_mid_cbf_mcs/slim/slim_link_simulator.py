@@ -153,7 +153,7 @@ class SlimLinkSimulator:
         self.clear_counters()
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        return ResultCode.OK, "Connection to SLIM TX simulator successful"
+        return ResultCode.OK, f"Connection to {self._link_name} (simulator) successful"
 
     def verify_connection(
         self: SlimLinkSimulator,
