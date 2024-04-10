@@ -4,6 +4,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   MINIKUBE: "false"
   SHARED_K8S_CHART: "ska-mid-cbf-mcs"
+  K8S_TIMEOUT: 450
 
 stages:
   - lint
