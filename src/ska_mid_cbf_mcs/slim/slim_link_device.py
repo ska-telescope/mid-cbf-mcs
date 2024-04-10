@@ -22,7 +22,6 @@ from ska_tango_base.commands import (
 )
 
 # Additional import
-# PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
 from ska_tango_base.control_model import (
     AdminMode,
     HealthState,
@@ -38,8 +37,6 @@ from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )
 
-# PROTECTED REGION END #    //  SlimLink.additional_import
-
 __all__ = ["SlimLink", "main"]
 
 
@@ -47,9 +44,6 @@ class SlimLink(CbfDevice):
     """
     TANGO device class for SLIM link device.
     """
-
-    # PROTECTED REGION ID(SlimLink.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  SlimLink.class_variable
 
     # -----------------
     # Device Properties
@@ -164,21 +158,23 @@ class SlimLink(CbfDevice):
         )
         self.register_command_object(
             "DisconnectTxRx",
-            self.DisconnectTxRxCommand(*device_args),
+            SubmittedSlowCommand(
+                command_name="DisconnectTxRx",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="disconnect_slim_tx_rx",
+                logger=self.logger,
+            ),
         )
         self.register_command_object(
             "ClearCounters", self.ClearCountersCommand(*device_args)
         )
 
     def always_executed_hook(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        # PROTECTED REGION END #    //  SlimLink.always_executed_hook
 
     def delete_device(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.delete_device) ENABLED START #
         """Hook to delete device."""
-        # PROTECTED REGION END #    //  SlimLink.delete_device
 
     # ----------
     # Callbacks
@@ -192,7 +188,6 @@ class SlimLink(CbfDevice):
     # -----------------
 
     def read_txDeviceName(self: SlimLink) -> str:
-        # PROTECTED REGION ID(SlimLink.txDeviceName_read) ENABLED START #
         """
         Read the txDeviceName attribute.
 
@@ -200,20 +195,16 @@ class SlimLink(CbfDevice):
         :rtype: str
         """
         return self.component_manager.tx_device_name
-        # PROTECTED REGION END #    //  SlimLink.txDeviceName_read
 
     def write_txDeviceName(self: SlimLink, value: str) -> None:
-        # PROTECTED REGION ID(SlimLink.txDeviceName_write) ENABLED START #
         """
         Write the txDeviceName attribute.
 
         :param value: the txDeviceName FQDN.
         """
         self.component_manager.tx_device_name = value
-        # PROTECTED REGION END #    //  SlimLink.txDeviceName_write
 
     def read_rxDeviceName(self: SlimLink) -> str:
-        # PROTECTED REGION ID(SlimLink.rxDeviceName_read) ENABLED START #
         """
         Read the rxDeviceName attribute.
 
@@ -221,20 +212,16 @@ class SlimLink(CbfDevice):
         :rtype: str
         """
         return self.component_manager.rx_device_name
-        # PROTECTED REGION END #    //  SlimLink.rxDeviceName_read
 
     def write_rxDeviceName(self: SlimLink, value: str) -> None:
-        # PROTECTED REGION ID(SlimLink.rxDeviceName_write) ENABLED START #
         """
         Write the rxDeviceName attribute.
 
         :param value: the rxDeviceName FQDN.
         """
         self.component_manager.rx_device_name = value
-        # PROTECTED REGION END #    //  SlimLink.rxDeviceName_write
 
     def read_linkName(self: SlimLink) -> str:
-        # PROTECTED REGION ID(SlimLink.linkName_read) ENABLED START #
         """
         Read the linkName attribute.
 
@@ -242,10 +229,8 @@ class SlimLink(CbfDevice):
         :rtype: str
         """
         return self.component_manager.link_name
-        # PROTECTED REGION END #    //  SlimLink.linkName_read
 
     def read_txIdleCtrlWord(self: SlimLink) -> int:
-        # PROTECTED REGION ID(SlimLink.txIdleCtrlWord_read) ENABLED START #
         """
         Read the txIdleCtrlWord attribute.
 
@@ -253,10 +238,8 @@ class SlimLink(CbfDevice):
         :rtype: int
         """
         return self.component_manager.tx_idle_ctrl_word
-        # PROTECTED REGION END #    //  SlimLink.txIdleCtrlWord_read
 
     def read_rxIdleCtrlWord(self: SlimLink) -> int:
-        # PROTECTED REGION ID(SlimLink.rxIdleCtrlWord_read) ENABLED START #
         """
         Read the rxIdleCtrlWord attribute.
 
@@ -264,10 +247,8 @@ class SlimLink(CbfDevice):
         :rtype: int
         """
         return self.component_manager.rx_idle_ctrl_word
-        # PROTECTED REGION END #    //  SlimLink.rxIdleCtrlWord_read
 
     def read_bitErrorRate(self: SlimLink) -> float:
-        # PROTECTED REGION ID(SlimLink.bitErrorRate_read) ENABLED START #
         """
         Read the bitErrorRate attribute.
 
@@ -275,10 +256,8 @@ class SlimLink(CbfDevice):
         :rtype: float
         """
         return self.component_manager.bit_error_rate
-        # PROTECTED REGION END #    //  SlimLink.bitErrorRate_read
 
     def read_counters(self: SlimLink) -> list[int]:
-        # PROTECTED REGION ID(SlimLink.counters_read) ENABLED START #
         """
         Read the counters attribute.
 
@@ -286,10 +265,8 @@ class SlimLink(CbfDevice):
         :rtype: list[int]
         """
         return self.component_manager.read_counters()
-        # PROTECTED REGION END #    //  SlimLink.counters_read
 
     def read_healthState(self: SlimLink):
-        # PROTECTED REGION ID(SlimLink.healthState_read) ENABLED START #
         """
         Read the Health State of the device. This overrides the ska-tango-base
         implementation.
@@ -298,7 +275,6 @@ class SlimLink(CbfDevice):
         :rtype: HealthState
         """
         return self._health_state
-        # PROTECTED REGION END #    //  SlimLink.healthState_read
 
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: SlimLink) -> SimulationMode:
@@ -411,38 +387,36 @@ class SlimLink(CbfDevice):
     )
     @DebugIt()
     def VerifyConnection(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.VerifyConnection) ENABLED START #
         handler = self.get_command_object("VerifyConnection")
         return_code, message = handler()
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  SlimLink.VerifyConnection
 
-    class DisconnectTxRxCommand(FastCommand):
-        """
-        The command class for the DisconnectTxRx command.
+    # class DisconnectTxRxCommand(FastCommand):
+    #     """
+    #     The command class for the DisconnectTxRx command.
 
-        Disconnect the Tx and Rx devices. Set Rx to serial loopback mode.
-        """
+    #     Disconnect the Tx and Rx devices. Set Rx to serial loopback mode.
+    #     """
 
-        def do(
-            self: SlimLink.DisconnectTxRxCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Implement DisconnectTxRx command functionality.
+    #     def do(
+    #         self: SlimLink.DisconnectTxRxCommand,
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Implement DisconnectTxRx command functionality.
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if self.target.read_adminMode() == AdminMode.ONLINE:
-                component_manager = self.target.component_manager
-                return component_manager.disconnect_slim_tx_rx()
-            else:
-                return (
-                    ResultCode.FAILED,
-                    "Device is offline. Failed to issue DisconnectTxRx command.",
-                )
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         if self.target.read_adminMode() == AdminMode.ONLINE:
+    #             component_manager = self.target.component_manager
+    #             return component_manager.disconnect_slim_tx_rx()
+    #         else:
+    #             return (
+    #                 ResultCode.FAILED,
+    #                 "Device is offline. Failed to issue DisconnectTxRx command.",
+    #             )
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -450,11 +424,9 @@ class SlimLink(CbfDevice):
     )
     @DebugIt()
     def DisconnectTxRx(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.DisconnectTxRx) ENABLED START #
-        handler = self.get_command_object("DisconnectTxRx")
-        return_code, message = handler()
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  SlimLink.DisconnectTxRx
+        command_handler = self.get_command_object("DisconnectTxRx")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
     class ClearCountersCommand(FastCommand):
         """

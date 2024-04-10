@@ -180,7 +180,7 @@ class SlimLinkSimulator:
 
     def disconnect_slim_tx_rx(
         self: SlimLinkSimulator,
-    ) -> tuple[ResultCode, str]:
+    ) -> None:
         """
         Stops controlling the tx and rx devices. The link
         becomes inactive.
@@ -191,9 +191,8 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         self.clear_counters()
+        self._link_name = ""
         self._link_enabled = False
-        result_msg = "Disconnected from SLIM Tx simulator."
-        return ResultCode.OK, result_msg
 
     def clear_counters(
         self: SlimLinkSimulator,

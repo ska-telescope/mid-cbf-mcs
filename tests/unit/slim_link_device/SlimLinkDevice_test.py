@@ -118,7 +118,7 @@ class TestSlimLink:
         )
         device_under_test.txDeviceName = "test_tx"
         device_under_test.rxDeviceName = "test_rx"
-        
+
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
         change_event_callbacks[
@@ -126,9 +126,12 @@ class TestSlimLink:
         ].assert_change_event((f"{command_id[0]}", "100"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[0, "Connected Tx Rx successfully: {device_under_test.linkName}"]')
+            (
+                f"{command_id[0]}",
+                f'[0, "Connected Tx Rx successfully: {device_under_test.linkName}"]',
+            )
         )
-        
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
         test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
@@ -150,7 +153,8 @@ class TestSlimLink:
 
     def test_DisconnectTxRx(
         self: TestSlimLink,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: tango.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the DisconnectTxRx() command
@@ -159,9 +163,35 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
-        result = device_under_test.DisconnectTxRx()
-        assert result[0][0] == ResultCode.OK
+        # Put the device in simulation mode
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.adminMode = AdminMode.ONLINE
+
+        change_event_attr_list = [
+            "longRunningCommandResult",
+            "longRunningCommandProgress",
+        ]
+        attr_event_ids = test_utils.change_event_subscriber(
+            device_under_test, change_event_callbacks, change_event_attr_list
+        )
+        device_under_test.rxDeviceName = "test_rx"
+        
+        result_code, command_id = device_under_test.DisconnectTxRx()
+        assert result_code == [ResultCode.QUEUED]
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", "100"))
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[0, "Disonnected Tx Rx. {device_under_test.rxDeviceName} now in serial loopback."]',
+            )
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
 
     def test_ClearCounters(
         self: TestSlimLink,
