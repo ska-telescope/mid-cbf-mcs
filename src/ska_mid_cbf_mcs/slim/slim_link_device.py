@@ -15,7 +15,11 @@ from typing import Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import (FastCommand, ResultCode, SubmittedSlowCommand)
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 
 # Additional import
 # PROTECTED REGION ID(SlimLink.additional_import) ENABLED START #
@@ -27,8 +31,9 @@ from ska_tango_base.control_model import (
 )
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, run
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )
@@ -145,12 +150,12 @@ class SlimLink(CbfDevice):
 
         device_args = (self, self.logger)
         self.register_command_object(
-            "ConnectTxRx", 
+            "ConnectTxRx",
             SubmittedSlowCommand(
                 command_name="ConnectTxRx",
                 command_tracker=self._command_tracker,
                 component_manager=self.component_manager,
-                method_name="connect_tx_rx",
+                method_name="connect_slim_tx_rx",
                 logger=self.logger,
             ),
         )
