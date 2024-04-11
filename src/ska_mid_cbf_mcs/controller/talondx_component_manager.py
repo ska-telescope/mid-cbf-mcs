@@ -540,7 +540,7 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.TRUE:
             return ret
-        
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._shutdown_talon_thread, talon_cfg)
@@ -593,7 +593,7 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.TRUE:
             return ret
-        
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._reboot_talon, talon_cfg)
@@ -607,9 +607,7 @@ class TalonDxComponentManager:
 
         return ret
 
-    def _reboot_talon(
-        self: TalonDxComponentManager, talon_cfg
-    ) -> ResultCode:
+    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
