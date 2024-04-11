@@ -22,11 +22,15 @@ from typing import Any, Callable, Optional, cast
 
 from ska_control_model import ObsState, ObsStateModel, PowerState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
 from ska_tango_base.obs.obs_device import SKAObsDevice
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
+
+from ska_mid_cbf_mcs.component.obs_component_manager import (
+    CbfObsComponentManager,
+)
 
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
@@ -261,7 +265,10 @@ class CbfSubElementObsStateMachine(Machine):
             self._callback(self.state)
 
 
-INPUT_QUEUE_SIZE_LIMIT = 32
+# NOTE: to update max LRC queue size the following constants must be updated
+# see TODO in SKABaseDevice for rationale
+MAX_QUEUED_COMMANDS = 64
+MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2
 
 
 class CbfObsDevice(SKAObsDevice):
@@ -327,18 +334,7 @@ class CbfObsDevice(SKAObsDevice):
         return self._last_scan_configuration
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=ObsState
-    )
-    def obsState(self: CbfObsDevice) -> ObsState:
-        """
-        Read the Observation State of the device.
-
-        :return: the current obs_state value
-        """
-        return self.component_manager.obs_state
-
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT
+        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
     )
     def longRunningCommandsInQueue(self: CbfObsDevice) -> list[str]:
         """
@@ -352,9 +348,11 @@ class CbfObsDevice(SKAObsDevice):
         return self._commands_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT
+        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
     )
-    def longRunningCommandIDsInQueue(self: CbfObsDevice) -> list[str]:
+    def longRunningCommandIDsInQueue(
+        self: CbfObsDevice,
+    ) -> list[str]:
         """
         Read the IDs of the long running commands in the queue.
 
@@ -366,7 +364,7 @@ class CbfObsDevice(SKAObsDevice):
         return self._command_ids_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT * 2  # 2 per command
+        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS * 2  # 2 per command
     )
     def longRunningCommandStatus(self: CbfObsDevice) -> list[str]:
         """
@@ -379,21 +377,6 @@ class CbfObsDevice(SKAObsDevice):
         :return: ID, status pairs of the currently executing commands
         """
         return self._command_statuses
-
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT * 2  # 2 per command
-    )
-    def longRunningCommandProgress(self: CbfObsDevice) -> list[str]:
-        """
-        Read the progress of the currently executing long running command.
-
-        ID, progress of the currently executing command.
-        Clients can subscribe to on_change event and wait
-        for the ID they are interested in.
-
-        :return: ID, progress of the currently executing command.
-        """
-        return self._command_progresses
 
     # ----------
     # Callbacks
@@ -434,9 +417,9 @@ class CbfObsDevice(SKAObsDevice):
 
         :param obs_state: the new obs_state value
         """
-        self.component_manager.obs_state = obs_state
-        self.push_change_event("obsState", obs_state)
-        self.push_archive_event("obsState", obs_state)
+        super()._update_obs_state(obs_state=obs_state)
+        if hasattr(self, "component_manager"):
+            self.component_manager.obs_state = obs_state
 
     # ---------------
     # General methods
@@ -456,6 +439,23 @@ class CbfObsDevice(SKAObsDevice):
     def init_command_objects(self: CbfObsDevice) -> None:
         """Set up the command objects."""
         super().init_command_objects()
+
+        self.register_command_object(
+            "On",
+            self.OnCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
+        )
+        self.register_command_object(
+            "Off",
+            self.OffCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
+        )
+        # overriding StandbyCommand which is currently unused by Mid.CBF
+        self.register_command_object(
+            "Standby", self.StandbyCommand(logger=self.logger)
+        )
 
         def _callback(hook: str, running: bool) -> None:
             action = "invoked" if running else "completed"
@@ -509,17 +509,91 @@ class CbfObsDevice(SKAObsDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            super().do(*args, **kwargs)
+            (result_code, msg) = super().do(*args, **kwargs)
 
             self._device._obs_state = ObsState.IDLE
+            self._device._commanded_obs_state = ObsState.IDLE
 
             # JSON string, deliberately left in Tango layer
             self._device._last_scan_configuration = ""
 
-            message = "CbfObsDevice Init command completed OK"
-            self.logger.info(message)
             self._completed()
-            return (ResultCode.OK, message)
+            return (result_code, msg)
+
+    class OnCommand(FastCommand):
+        """
+        A class for the CbfObsDevice's on command.
+        """
+
+        def __init__(
+            self: CbfObsDevice.OnCommand,
+            *args,
+            component_manager: CbfObsComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: CbfObsDevice.OnCommand,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.on()
+
+    class OffCommand(FastCommand):
+        """
+        A class for the CbfObsDevice's off command.
+        """
+
+        def __init__(
+            self: CbfObsDevice.OffCommand,
+            *args,
+            component_manager: CbfObsComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: CbfObsDevice.OffCommand,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.off()
+
+    class StandbyCommand(FastCommand):
+        """
+        A class for the CbfObsDevice's standby command.
+        """
+
+        def do(
+            self: CbfObsDevice.StandbyCommand,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return (
+                ResultCode.REJECTED,
+                "Mid.CBF does not currently implement standby state.",
+            )
 
     @command(
         dtype_in="DevString",
