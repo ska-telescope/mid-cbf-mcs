@@ -15,7 +15,7 @@ import pytest
 
 # Local imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
