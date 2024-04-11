@@ -538,17 +538,19 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        if self.simulation_mode == SimulationMode.FALSE:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(self._shutdown_talon_thread, talon_cfg)
-                    for talon_cfg in self.talondx_config["config_commands"]
-                ]
-                results = [f.result() for f in futures]
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ret
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._shutdown_talon_thread, talon_cfg)
+                for talon_cfg in self.talondx_config["config_commands"]
+            ]
+            results = [f.result() for f in futures]
 
-            if any(r[0] == ResultCode.FAILED for r in results):
-                self.logger.error(f"Talon shutdown thread results: {results}")
-                ret = ResultCode.FAILED
+        if any(r[0] == ResultCode.FAILED for r in results):
+            self.logger.error(f"Talon shutdown thread results: {results}")
+            ret = ResultCode.FAILED
 
         return ret
 
@@ -589,21 +591,23 @@ class TalonDxComponentManager:
                 otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        if self.simulation_mode == SimulationMode.FALSE:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(self._reboot_hps_master, talon_cfg)
-                    for talon_cfg in self.talondx_config["config_commands"]
-                ]
-                results = [f.result() for f in futures]
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ret
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._reboot_talon, talon_cfg)
+                for talon_cfg in self.talondx_config["config_commands"]
+            ]
+            results = [f.result() for f in futures]
 
-                if any(r == ResultCode.FAILED for r in results):
-                    self.logger.error(f"Talon reboot results: {results}")
-                    ret = ResultCode.FAILED
+            if any(r == ResultCode.FAILED for r in results):
+                self.logger.error(f"Talon reboot results: {results}")
+                ret = ResultCode.FAILED
 
         return ret
 
-    def _reboot_hps_master(
+    def _reboot_talon(
         self: TalonDxComponentManager, talon_cfg
     ) -> ResultCode:
         """
