@@ -42,7 +42,7 @@ class TestSlimLink:
     """
 
     def test_State(
-        self: TestSlimLink, device_under_test: CbfDeviceProxy
+        self: TestSlimLink, device_under_test: tango.DeviceProxy
     ) -> None:
         """
         Test State
@@ -54,7 +54,7 @@ class TestSlimLink:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestSlimLink, device_under_test: CbfDeviceProxy
+        self: TestSlimLink, device_under_test: tango.DeviceProxy
     ) -> None:
         """
         Test Status
@@ -66,7 +66,7 @@ class TestSlimLink:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestSlimLink, device_under_test: CbfDeviceProxy
+        self: TestSlimLink, device_under_test: tango.DeviceProxy
     ) -> None:
         """
         Test Admin Mode
@@ -79,7 +79,7 @@ class TestSlimLink:
 
     def test_adminModeOnline(
         self: TestSlimLink,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: tango.DeviceProxy,
     ) -> None:
         """
         Test Admin Mode Online
@@ -91,7 +91,7 @@ class TestSlimLink:
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.UNKNOWN
+        assert device_under_test.State() == DevState.ON
 
     def test_ConnectTxRx(
         self: TestSlimLink,
@@ -138,7 +138,7 @@ class TestSlimLink:
 
     def test_VerifyConnection(
         self: TestSlimLink,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: tango.DeviceProxy,
     ) -> None:
         """
         Test the VerifyConnection() command
