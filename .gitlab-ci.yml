@@ -7,6 +7,7 @@ variables:
   SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
   K8S_TIMEOUT: 550s
   KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  SKA_TANGO_OPERATOR: "false"
 
 stages:
   - lint
