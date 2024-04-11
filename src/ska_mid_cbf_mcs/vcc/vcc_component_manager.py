@@ -344,21 +344,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :return: VCC power mode
         """
         try:
-            pdu1_power_mode = self._talon_lru_proxy.PDU1PowerMode
-            pdu2_power_mode = self._talon_lru_proxy.PDU2PowerMode
-
-            if (
-                pdu1_power_mode == PowerMode.ON
-                or pdu2_power_mode == PowerMode.ON
-            ):
-                return PowerMode.ON
-            elif (
-                pdu1_power_mode == PowerMode.OFF
-                and pdu2_power_mode == PowerMode.OFF
-            ):
-                return PowerMode.OFF
-            else:
-                return PowerMode.UNKNOWN
+            return self._talon_lru_proxy.LRUPowerMode
         except tango.DevFailed:
             self._logger.error("Could not connect to Talon LRU device")
             self.update_component_fault(True)
