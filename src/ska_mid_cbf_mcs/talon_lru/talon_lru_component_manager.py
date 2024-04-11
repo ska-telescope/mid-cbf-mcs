@@ -312,7 +312,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         return
 
     def on(
-        self: TalonLRUComponentManager, simulation_mode: SimulationMode
+        self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
         Turn on the TalonLRU and its subordinate devices

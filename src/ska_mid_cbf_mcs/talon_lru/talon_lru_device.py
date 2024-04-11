@@ -292,9 +292,7 @@ class TalonLRU(SKABaseDevice):
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on(
-                    simulation_mode=device.read_simulationMode()
-                )
+                return device.component_manager.on()
 
     class OffCommand(SKABaseDevice.OffCommand):
         """

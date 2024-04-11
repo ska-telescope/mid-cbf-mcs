@@ -101,9 +101,7 @@ class TestTalonLRUComponentManager:
 
         talon_lru_component_manager.start_communicating()
         # Send the On command
-        (result_code, _) = talon_lru_component_manager.on(
-            simulation_mode=SimulationMode.TRUE
-        )
+        (result_code, _) = talon_lru_component_manager.on()
 
         # Check the command result, device state and PDU power modes
         if (
