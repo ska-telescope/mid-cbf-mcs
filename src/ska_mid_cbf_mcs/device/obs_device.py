@@ -437,6 +437,7 @@ class CbfObsDevice(SKAObsDevice):
         """Set up the command objects."""
         super().init_command_objects()
 
+        # overriding base On/Off SubmittedSlowCommand register with FastCommand objects
         self.register_command_object(
             "On",
             self.OnCommand(

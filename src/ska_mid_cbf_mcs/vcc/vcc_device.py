@@ -415,7 +415,7 @@ class Vcc(CbfObsDevice):
         :rtype: DevVarLongStringArrayType
         """
         command_handler = self.get_command_object(command_name="ConfigureBand")
-        command_id, result_code_message = command_handler(band_config)
+        result_code_message, command_id = command_handler(band_config)
         return [[result_code_message], [command_id]]
 
     def _raise_configuration_fatal_error(
@@ -557,12 +557,14 @@ class Vcc(CbfObsDevice):
         return (True, "Configuration validated OK")
 
     @command(
+        dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
         doc_in="JSON formatted string with the scan configuration.",
         doc_out="A tuple containing a return code and a string message indicating status. "
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureScan(self, argin) -> None:
+    def ConfigureScan(self: Vcc, argin: str) -> DevVarLongStringArrayType:
         """
         Configure the observing device parameters for the current scan.
 
@@ -577,7 +579,6 @@ class Vcc(CbfObsDevice):
         # TODO: Improve validation (validation should only be done once,
         # most of the validation can be done through a schema instead of manually
         # through functions).
-        command_handler = self.get_command_object("ConfigureScan")
 
         (valid, message) = self._validate_input_configure_scan(argin)
 
@@ -591,7 +592,8 @@ class Vcc(CbfObsDevice):
 
             self.logger.debug(f"dishID: {self.component_manager.dish_id}")
 
-            command_id, result_code_message = command_handler(argin)
+            command_handler = self.get_command_object("ConfigureScan")
+            result_code_message, command_id = command_handler(argin)
 
         # store the configuration
         self._last_scan_configuration = argin

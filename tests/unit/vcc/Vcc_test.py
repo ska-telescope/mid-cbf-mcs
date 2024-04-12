@@ -23,12 +23,12 @@ import ska_tango_testing.context
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from ska_tango_testing.context import ThreadedTestTangoContextManager
 from ska_tango_testing.harness import TangoTestHarness, TangoTestHarnessContext
 from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ... import test_utils
@@ -60,6 +60,25 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/vcc/001")
 
 
+@pytest.fixture(name="change_event_callbacks")
+def vcc_change_event_callbacks(
+    device_under_test: ska_tango_testing.context.DeviceProxy,
+) -> MockTangoEventCallbackGroup:
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "longRunningCommandProgress",
+        "frequencyBand",
+        "obsState",
+    ]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list, timeout=15.0
+    )
+    test_utils.change_event_subscriber(
+        device_under_test, change_event_attr_list, change_event_callbacks
+    )
+    return change_event_callbacks
+
+
 class TestVcc:
     """
     Test class for Vcc tests.
@@ -67,7 +86,7 @@ class TestVcc:
 
     @pytest.fixture(name="test_context")
     def vcc_test_context(self: TestVcc) -> Iterator[TangoTestHarnessContext]:
-        harness = ThreadedTestTangoContextManager()
+        harness = ska_tango_testing.context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
             device_class=Vcc,
@@ -127,7 +146,6 @@ class TestVcc:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
 
         assert device_under_test.State() == DevState.OFF
 
@@ -144,17 +162,16 @@ class TestVcc:
             expected_state = DevState.OFF
             result = device_under_test.Standby()
 
-        time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == expected_result
         assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize(
-        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+        "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
     )
-    def test_Vcc_ConfigureScan(
+    def test_Scan(
         self: TestVcc,
-        device_under_test: DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: ska_tango_testing.context.DeviceProxy,
         config_file_name: str,
     ) -> None:
         """
@@ -167,25 +184,19 @@ class TestVcc:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.state() == DevState.OFF
+        device_under_test.On()
         assert device_under_test.state() == DevState.ON
 
-        device_under_test.On()
+        with open(file_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = json.loads(json_str)
 
-        change_event_attr_list = [
-            "longRunningCommandResult",
-            "longRunningCommandProgress",
-        ]
-        attr_event_ids = test_utils.change_event_subscriber(
-            device_under_test, change_event_callbacks, change_event_attr_list
-        )
+        freq_band_name = configuration["frequency_band"]
 
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
-        f.close()
-
+        # test ConfigureBand
         band_configuration = {
-            "frequency_band": configuration["frequency_band"],
+            "frequency_band": freq_band_name,
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
@@ -193,40 +204,58 @@ class TestVcc:
             json.dumps(band_configuration)
         )
         assert result_code == [ResultCode.QUEUED]
+
+        # assert command progress and result OK
         change_event_callbacks[
             "longRunningCommandProgress"
         ].assert_change_event((f"{command_id[0]}", f"{100}"))
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "ConfigureBand completed OK."]')
         )
+        # assert frequencyBand attribute updated
+        change_event_callbacks["frequencyBand"].assert_change_event(
+            freq_band_dict()[freq_band_name]["band_index"]
+        )
 
-        # device_under_test.ConfigureScan(json_str)
-        # assert device_under_test.obsState == ObsState.READY
+        # test ConfigureScan
+        result_code, command_id = device_under_test.ConfigureScan(json_str)
+        assert result_code == [ResultCode.QUEUED]
+
+        # assert command progress and result OK
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", f"{100}"))
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "ConfigureScan completed OK."]')
+        )
+        # assert obsState updated
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.CONFIGURING.value
+        )
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.READY.value
+        )
+
+        # test GoToIdle
+        (
+            result_code,
+            command_id,
+        ) = (
+            device_under_test.GoToIdle()
+        )  # assert command progress and result OK
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", f"{100}"))
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "GoToIdle completed OK."]')
+        )
+        # assert obsState updated
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.IDLE.value
+        )
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
-        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
-
-    # @pytest.mark.parametrize(
-    #     "config_file_name", [("Vcc_ConfigureScan_basic.json")]
-    # )
-    # def test_GoToIdle(
-    #     self, device_under_test: CbfDeviceProxy, config_file_name: str
-    # ) -> None:
-    #     """
-    #     Test a the GoToIdle command from a successful scan configuration.
-
-    #     First calls test_Vcc_ConfigureScan to get it in the ready state
-    #     :param device_under_test: fixture that provides a
-    #         :py:class:`tango.DeviceProxy` to the device under test, in a
-    #         :py:class:`tango.test_context.DeviceTestContext`.
-    #     :param config_file_name: JSON file for the configuration
-    #     """
-    #     self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
-
-    #     device_under_test.GoToIdle()
-    #     time.sleep(CONST_WAIT_TIME)
-    #     assert device_under_test.obsState == ObsState.IDLE
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
