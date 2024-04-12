@@ -25,7 +25,6 @@ from ska_tango_base.commands import (
 )
 
 # Additional import
-# PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
@@ -36,8 +35,6 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
 )
 
-# PROTECTED REGION END #    //  PowerSwitch.additionnal_import
-
 __all__ = ["PowerSwitch", "main"]
 
 
@@ -46,9 +43,6 @@ class PowerSwitch(CbfDevice):
     TANGO device class for controlling and monitoring the web power switch that
     distributes power to the Talon LRUs.
     """
-
-    # PROTECTED REGION ID(PowerSwitch.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  PowerSwitch.class_variable
 
     # -----------------
     # Device Properties
@@ -85,15 +79,11 @@ class PowerSwitch(CbfDevice):
         """
         Hook to be executed before any attribute access or command.
         """
-        # PROTECTED REGION ID(PowerSwitch.always_executed_hook) ENABLED START #
-        # PROTECTED REGION END #    //  PowerSwitch.always_executed_hook
 
     def delete_device(self: PowerSwitch) -> None:
         """
         Uninitialize the device.
         """
-        # PROTECTED REGION ID(PowerSwitch.delete_device) ENABLED START #
-        # PROTECTED REGION END #    //  PowerSwitch.delete_device
 
     def create_component_manager(
         self: PowerSwitch,
@@ -103,8 +93,6 @@ class PowerSwitch(CbfDevice):
 
         :return: a component manager for this device
         """
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
             model=self.PowerSwitchModel,
@@ -112,10 +100,7 @@ class PowerSwitch(CbfDevice):
             login=self.PowerSwitchLogin,
             password=self.PowerSwitchPassword,
             logger=self.logger,
-            state_callback=self._update_state,
-            admin_mode_callback=self._update_admin_mode,
-            health_state_callback=self._update_health_state,
-            communication_state_callback=self._communication_status_changed,
+            communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
 
@@ -155,57 +140,8 @@ class PowerSwitch(CbfDevice):
     # Callbacks
     # ---------
 
-    def _communication_status_changed(
-        self: PowerSwitch, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-        elif (
-            communication_status == CommunicationStatus.ESTABLISHED
-            and self._component_power_mode is not None
-        ):
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
-
-    def _component_state_changed(
-        self: PowerSwitch, power_mode: PowerState
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
     # ------------------
     # Attributes methods
@@ -289,7 +225,6 @@ class PowerSwitch(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    # TODO: Discuss type hint. Thomas sent a hack that can be added to allow 2d arrays without throwing a fit.
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
         command_handler = self.get_command_object(command_name="TurnOffOutlet")
         result_code_message, command_id = command_handler(argin)

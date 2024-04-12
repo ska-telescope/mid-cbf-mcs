@@ -47,13 +47,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
     switch driver or the power switch simulator based on the value of simulation
     mode.
 
-    :param simulation_mode: simulation mode identifies if the real power switch
-                          driver or the simulator should be used
-    :param protocol: Connection protocol (HTTP or HTTPS) for the power switch
+    :param model: Name of the power switch model
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
     :param password: Login password for the power switch
-    :param logger: a logger for this object to use
+    :param simulation_mode: simulation mode identifies if the real power switch
+                          driver or the simulator should be used
     """
 
     def __init__(
@@ -73,16 +72,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param ip: IP address of the power switch
         :param login: Login username of the power switch
         :param password: Login password for the power switch
-        :param logger: a logger for this object to use
-        :param push_change_event: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be
-            called when the component has faulted
         :param simulation_mode: simulation mode identifies if the real power switch
                 driver or the simulator should be used
 
@@ -146,10 +135,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
-        super().stop_communicating()
-
         if not self.simulation_mode:
             self.power_switch_driver.stop()
+            
+        self._update_component_state(PowerState.UNKNOWN)
+        super().stop_communicating()
+
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str
@@ -177,19 +168,20 @@ class PowerSwitchComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Tell the power switch to turn on a specific outlet.
 
         :param outlet: outlet ID to turn on
+        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: a tuple containing a return code and a string
                  message indicating status
 
         :raise AssertionError: if outlet ID is out of bounds
         """
         try:
-            if task_callback:
-                task_callback(status=TaskStatus.IN_PROGRESS)
+            task_callback(status=TaskStatus.IN_PROGRESS)
             if self.simulation_mode:
                 (
                     result_code,
@@ -200,16 +192,14 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     outlet
                 )
 
-            if task_callback:
-                task_callback(progress=10)
+            task_callback(progress=10)
             if result_code != ResultCode.OK:
                 task_callback(
                     status=TaskStatus.FAILED, result=(result_code, message)
                 )
                 return
             power_mode = self.get_outlet_power_mode(outlet)
-            if task_callback:
-                task_callback(progress=20)
+            task_callback(progress=20)
             if power_mode != PowerState.ON:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
                 self.logger.info(
@@ -229,9 +219,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         status=TaskStatus.FAILED, result=(result_code, message)
                     )
                     return
-            task_callback(progress=100)
             task_callback(
-                status=TaskStatus.COMPLETED, result=(result_code, message)
+                progress=100,
+                status=TaskStatus.COMPLETED,
+                result=(result_code, message),
             )
         except AssertionError as e:
             self.logger.error(e)
@@ -274,14 +265,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
         Tell the power switch to turn off a specific outlet.
 
         :param outlet: outlet ID to turn off
+        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: a tuple containing a return code and a string
                 message indicating status
 
         :raise AssertionError: if outlet ID is out of bounds
         """
         try:
-            if task_callback:
-                task_callback(status=TaskStatus.IN_PROGRESS)
+            task_callback(status=TaskStatus.IN_PROGRESS)
             if self.simulation_mode:
                 (
                     result_code,
@@ -293,16 +285,14 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     message,
                 ) = self.power_switch_driver.turn_off_outlet(outlet)
 
-            if task_callback:
-                task_callback(progress=10)
+            task_callback(progress=10)
             if result_code != ResultCode.OK:
                 task_callback(
                     status=TaskStatus.FAILED, result=(result_code, message)
                 )
                 return
             power_mode = self.get_outlet_power_mode(outlet)
-            if task_callback:
-                task_callback(progress=20)
+            task_callback(progress=20)
 
             if power_mode != PowerState.OFF:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
@@ -323,9 +313,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         status=TaskStatus.FAILED, result=(result_code, message)
                     )
                     return
-            task_callback(progress=100)
             task_callback(
-                status=TaskStatus.COMPLETED, result=(result_code, message)
+                progress=100,
+                status=TaskStatus.COMPLETED,
+                result=(result_code, message),
             )
         except AssertionError as e:
             self.logger.error(e)
