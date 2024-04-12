@@ -48,14 +48,11 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         Initialize a new instance.
 
-        :param *args: TODO: discuss with Taylor the best definition
-        :param simulation_mode: identifies if the simulator should be used
-        :param **kwargs: TODO: discuss with Taylor the best definition
+        :param simulation_mode: Enum that identifies if the simulator should be used
         """
         super().__init__(*args, **kwargs)
         self.simulation_mode = simulation_mode
 
-        self.connected = False
         self._link_name = ""
         self._tx_device_name = ""
         self._rx_device_name = ""
@@ -237,41 +234,33 @@ class SlimLinkComponentManager(CbfComponentManager):
     def start_communicating(self: SlimLinkComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
 
-        if self.connected:
-            self.logger.info("Already communicating.")
-            return
-
         super().start_communicating()
-        self.connected = True
-        # This last call moves the op state model
+        # This moves the op state model
         self._update_component_state(power=PowerState.ON)
 
     def stop_communicating(self: SlimLinkComponentManager) -> None:
         """Stop communication with the component."""
 
-        self._update_component_state(PowerState.UNKNOWN)
-        self.connected = False
-        # This last call moves the op state model
+        self._update_component_state(power=PowerState.UNKNOWN)
+        # This moves the op state model
         super().stop_communicating()
 
     def is_connect_slim_tx_rx_allowed(self: SlimLinkComponentManager) -> bool:
         self.logger.info("Checking if ConnectTxRx is allowed.")
-        # Device do() had an admin_mode = True condition...
-        # Maybe want to call super().is_allowed()..?
-        return True
+        return self.communication_state == CommunicationStatus.ESTABLISHED
 
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Link the HPS tx and rx devices by synchronizing their idle control words
         and disabling serial loopback. Begin monitoring the Tx and Rx.
 
-        :param task_callback: TODO:
-        :param task_abort_event: TODO:
+        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -365,7 +354,6 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self.clear_counters()
                 task_callback(progress=80)
             except tango.DevFailed as df:
-                # TODO: Is this the proper way to set fault state?
                 self._update_component_state(fault=True)
                 task_callback(
                     exception=df,
@@ -466,22 +454,20 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> bool:
         self.logger.info("Checking if DisconnectTxRx is allowed.")
-        # Device do() had an admin_mode = True condition...
-        # Maybe want to call super().is_allowed()..?
-        return True
+        return self.communication_state == CommunicationStatus.ESTABLISHED
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Stops controlling and monitoring the HPS tx and rx devices. The link
         becomes inactive. Serial loopback is re-established.
 
-        :param task_callback: TODO:
-        :param task_abort_event: TODO:
+        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -512,7 +498,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                         + "-tx"
                         + index
                     )
-                    
+
                     self._tx_device_name = tx
                     task_callback(progress=20)
 

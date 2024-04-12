@@ -319,33 +319,6 @@ class SlimLink(CbfDevice):
 
             return (result_code, message)
 
-    # class ConnectTxRxCommand(FastCommand):
-    #     """
-    #     The command class for the ConnectTxRx command.
-
-    #     Connect the SLIM Tx and Rx HPS devices to form the link.
-    #     """
-
-    #     def do(
-    #         self: SlimLink.ConnectTxRxCommand,
-    #     ) -> Tuple[ResultCode, str]:
-    #         """
-    #         Implement ConnectTxRx command functionality.
-
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         if self.target.read_adminMode() == AdminMode.ONLINE:
-    #             component_manager = self.target.component_manager
-    #             return component_manager.connect_slim_tx_rx()
-    #         else:
-    #             return (
-    #                 ResultCode.FAILED,
-    #                 "Device is offline. Failed to issue ConnectTxRx command.",
-    #             )
-
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
@@ -390,33 +363,6 @@ class SlimLink(CbfDevice):
         handler = self.get_command_object("VerifyConnection")
         return_code, message = handler()
         return [[return_code], [message]]
-
-    # class DisconnectTxRxCommand(FastCommand):
-    #     """
-    #     The command class for the DisconnectTxRx command.
-
-    #     Disconnect the Tx and Rx devices. Set Rx to serial loopback mode.
-    #     """
-
-    #     def do(
-    #         self: SlimLink.DisconnectTxRxCommand,
-    #     ) -> Tuple[ResultCode, str]:
-    #         """
-    #         Implement DisconnectTxRx command functionality.
-
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         if self.target.read_adminMode() == AdminMode.ONLINE:
-    #             component_manager = self.target.component_manager
-    #             return component_manager.disconnect_slim_tx_rx()
-    #         else:
-    #             return (
-    #                 ResultCode.FAILED,
-    #                 "Device is offline. Failed to issue DisconnectTxRx command.",
-    #             )
 
     @command(
         dtype_out="DevVarLongStringArray",

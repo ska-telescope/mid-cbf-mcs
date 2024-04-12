@@ -17,10 +17,13 @@ import time
 
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode
+from ska_tango_base.control_model import AdminMode, SimulationMode
 from tango import DevState
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+import tango
+from ... import test_utils
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -80,30 +83,134 @@ class TestSlim:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(CONST_WAIT_TIME)
+        device_under_test.adminMode = AdminMode.ONLINE
+        # time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
+        
+    def test_On(
+        self: TestSlim,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test Admin Mode Online
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        self.test_adminModeOnline(device_under_test)
+        device_under_test.On()
+        
+        assert device_under_test.State() == DevState.ON
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
-        [("./mnt/slim/fs_slim_config.yaml")],
+        [("./tests/data/slim_test_config.yaml")],
     )
     def test_Configure(
         self: TestSlim,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: tango.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         mesh_config_filename: str,
     ) -> None:
         """
         Test the Configure() command
 
         :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        # Put the device in simulation mode
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.adminMode = AdminMode.ONLINE
+
+        change_event_attr_list = [
+            "longRunningCommandResult",
+            "longRunningCommandProgress",
+        ]
+        attr_event_ids = test_utils.change_event_subscriber(
+            device_under_test, change_event_callbacks, change_event_attr_list
+        )
+        
         device_under_test.On()
         time.sleep(CONST_WAIT_TIME)
         with open(mesh_config_filename, "r") as mesh_config:
-            result = device_under_test.Configure(mesh_config.read())
-            assert result[0][0] == ResultCode.OK
+            result_code, command_id = device_under_test.Configure(mesh_config.read())
+
+        assert result_code == [ResultCode.QUEUED]
+        for progress_point in (25,50,100):
+            change_event_callbacks[
+                "longRunningCommandProgress"
+            ].assert_change_event((f"{command_id[0]}", {progress_point}))
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[0, "Configured SLIM successfully"]',
+            )
+        )
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
+        
+    def test_Off(
+        self: TestSlim,
+        device_under_test: tango.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the Off() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        # Put the device in simulation mode
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.adminMode = AdminMode.ONLINE
+
+        change_event_attr_list = [
+            "longRunningCommandResult",
+            "longRunningCommandProgress",
+        ]
+        attr_event_ids = test_utils.change_event_subscriber(
+            device_under_test, change_event_callbacks, change_event_attr_list
+        )
+        
+        device_under_test.On()
+        time.sleep(CONST_WAIT_TIME)
+        with open(mesh_config_filename, "r") as mesh_config:
+            result_code, command_id = device_under_test.Configure(mesh_config.read())
+
+        assert result_code == [ResultCode.QUEUED]
+        for progress_point in (25,50,100):
+            change_event_callbacks[
+                "longRunningCommandProgress"
+            ].assert_change_event((f"{command_id[0]}", {progress_point}))
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[0, "Configured SLIM successfully"]',
+            )
+        )
+        
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
+        
+        for progress_point in (50,100):
+            change_event_callbacks[
+                "longRunningCommandProgress"
+            ].assert_change_event((f"{command_id[0]}", {progress_point}))
+        
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[0, "SLIM shutdown successfully"]',
+            )
+        )
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)

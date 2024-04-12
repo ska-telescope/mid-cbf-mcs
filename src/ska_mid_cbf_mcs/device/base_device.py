@@ -19,23 +19,32 @@ from __future__ import annotations
 
 from typing import cast
 
-from ska_tango_base.base.base_device import SKABaseDevice
-from tango.server import attribute
+from ska_control_model import ResultCode
+from ska_tango_base.base.base_device import (
+    DevVarLongStringArrayType,
+    SKABaseDevice,
+)
+from ska_tango_base.base.component_manager import BaseComponentManager
+from ska_tango_base.commands import FastCommand
+from tango import DebugIt
+from tango.server import attribute, command
 
 __all__ = ["CbfDevice", "main"]
 
-
-INPUT_QUEUE_SIZE_LIMIT = 32
+# NOTE: to update max LRC queue size the following constants must be updated
+# see TODO in SKABaseDevice for rationale
+MAX_QUEUED_COMMANDS = 64
+MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2
 
 
 class CbfDevice(SKABaseDevice):
     """
     A generic base device for Mid.CBF.
-    Extends the SKABaseDevice to override certain key values.
+    Extends SKABaseDevice to override certain key values.
     """
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT
+        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
     )
     def longRunningCommandsInQueue(self: CbfDevice) -> list[str]:
         """
@@ -49,9 +58,11 @@ class CbfDevice(SKABaseDevice):
         return self._commands_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT
+        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
     )
-    def longRunningCommandIDsInQueue(self: CbfDevice) -> list[str]:
+    def longRunningCommandIDsInQueue(
+        self: CbfDevice,
+    ) -> list[str]:
         """
         Read the IDs of the long running commands in the queue.
 
@@ -63,7 +74,7 @@ class CbfDevice(SKABaseDevice):
         return self._command_ids_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT * 2  # 2 per command
+        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS * 2  # 2 per command
     )
     def longRunningCommandStatus(self: CbfDevice) -> list[str]:
         """
@@ -77,20 +88,106 @@ class CbfDevice(SKABaseDevice):
         """
         return self._command_statuses
 
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=INPUT_QUEUE_SIZE_LIMIT * 2  # 2 per command
+    # ---------------
+    # General methods
+    # ---------------
+
+    def init_command_objects(self: CbfDevice) -> None:
+        """Set up the command objects."""
+        super().init_command_objects()
+
+        self.register_command_object(
+            "On",
+            self.OnCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
+        )
+        self.register_command_object(
+            "Off",
+            self.OffCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
+        )
+
+    # --------
+    # Commands
+    # --------
+
+    @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+        dtype_out="DevVarLongStringArray"
     )
-    def longRunningCommandProgress(self: CbfDevice) -> list[str]:
+    @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
-        Read the progress of the currently executing long running command.
+        Put the device into standby mode.
 
-        ID, progress of the currently executing command.
-        Clients can subscribe to on_change event and wait
-        for the ID they are interested in.
+        To modify behaviour for this command, modify the do() method of
+        the command class.
 
-        :return: ID, progress of the currently executing command.
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
         """
-        return self._command_progresses
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Standby command rejected; Mid.CBF does not currently implement standby state."
+            ],
+        )
+
+    class OnCommand(FastCommand):
+        """
+        A class for the CbfDevice's on command.
+        """
+
+        def __init__(
+            self: CbfDevice.OnCommand,
+            *args,
+            component_manager: BaseComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: CbfDevice.OnCommand,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.on()
+
+    class OffCommand(FastCommand):
+        """
+        A class for the CbfDevice's off command.
+        """
+
+        def __init__(
+            self: CbfDevice.OffCommand,
+            *args,
+            component_manager: BaseComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: CbfDevice.OffCommand,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.off()
 
 
 # ----------

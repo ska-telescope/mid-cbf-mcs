@@ -175,7 +175,7 @@ class TestSlimLink:
             device_under_test, change_event_callbacks, change_event_attr_list
         )
         device_under_test.rxDeviceName = "test_rx"
-        
+
         result_code, command_id = device_under_test.DisconnectTxRx()
         assert result_code == [ResultCode.QUEUED]
         change_event_callbacks[
