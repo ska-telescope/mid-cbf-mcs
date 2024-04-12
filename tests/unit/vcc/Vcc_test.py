@@ -168,11 +168,12 @@ class TestVcc:
     @pytest.mark.parametrize(
         "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
     )
-    def test_Scan(
+    def test_happy_path_Scan(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: ska_tango_testing.context.DeviceProxy,
         config_file_name: str,
+        scan_id: int,
     ) -> None:
         """
         Test a minimal successful scan configuration.
@@ -236,13 +237,37 @@ class TestVcc:
             ObsState.READY.value
         )
 
+        # test Scan
+        result_code, command_id = device_under_test.Scan(scan_id)
+        # assert command progress and result OK
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", f"{100}"))
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "Scan completed OK."]')
+        )
+        # assert obsState updated
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.SCANNING.value
+        )
+
+        # test EndScan
+        result_code, command_id = device_under_test.EndScan()
+        # assert command progress and result OK
+        change_event_callbacks[
+            "longRunningCommandProgress"
+        ].assert_change_event((f"{command_id[0]}", f"{100}"))
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "EndScan completed OK."]')
+        )
+        # assert obsState updated
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.READY.value
+        )
+
         # test GoToIdle
-        (
-            result_code,
-            command_id,
-        ) = (
-            device_under_test.GoToIdle()
-        )  # assert command progress and result OK
+        result_code, command_id = device_under_test.GoToIdle()
+        # assert command progress and result OK
         change_event_callbacks[
             "longRunningCommandProgress"
         ].assert_change_event((f"{command_id[0]}", f"{100}"))

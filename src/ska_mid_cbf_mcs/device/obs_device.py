@@ -458,7 +458,7 @@ class CbfObsDevice(SKAObsDevice):
         for command_name, method_name, state_model_hook in [
             ("ConfigureScan", "configure_scan", "configure"),
             ("Scan", "scan", None),
-            ("EndScan", "deconfigure", None),
+            ("EndScan", "end_scan", None),
             ("GoToIdle", "go_to_idle", None),
             ("Abort", "abort", "abort"),
             ("ObsReset", "obsreset", "obsreset"),
@@ -618,7 +618,7 @@ class CbfObsDevice(SKAObsDevice):
         return [[result_code_message], [command_id]]
 
     @command(
-        dtype_in="DevString",
+        dtype_in="uint64",
         doc_in="A string with the scan ID",
         dtype_out="DevVarLongStringArray",
         doc_out=(
@@ -628,11 +628,11 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def Scan(self: CbfObsDevice, argin: str) -> DevVarLongStringArrayType:
+    def Scan(self: CbfObsDevice, argin: int) -> DevVarLongStringArrayType:
         """
         Start an observing scan.
 
-        :param argin: A string with the scan ID
+        :param argin: Scan ID integer
 
         :return: A tuple containing a return code and a string message
             indicating status. The message is for information purpose

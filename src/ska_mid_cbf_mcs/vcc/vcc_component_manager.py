@@ -651,8 +651,6 @@ class VccComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        self._ready = True
-
         # Update obsState callback
         self._update_component_state(configured=True)
 
@@ -687,9 +685,22 @@ class VccComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    def scan(
-        self: VccComponentManager, scan_id: int
-    ) -> Tuple[ResultCode, str]:
+    def is_scan_allowed(self: VccComponentManager) -> bool:
+        self.logger.debug("Checking if VCC Scan is allowed.")
+        if self.obs_state not in [ObsState.READY]:
+            self.logger.warning(
+                f"VCC Scan not allowed in ObsState {self.obs_state}; must be in ObsState.READY"
+            )
+            return False
+        return True
+
+    def _scan(
+        self: VccComponentManager,
+        argin: int,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Begin scan operation.
 
@@ -700,25 +711,74 @@ class VccComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.info("Starting scan")
-        self._scan_id = scan_id
+
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        # TODO CIP-2380
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                ),
+            )
+            return
+
+        self._scan_id = argin
 
         # Send the Scan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
-            self._band_simulators[idx].Scan(scan_id)
+            self._band_simulators[idx].Scan(self._scan_id)
         else:
             try:
-                self._band_proxies[idx].Scan(scan_id)
+                self._band_proxies[idx].Scan(self._scan_id)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
-                self._component_obs_fault_callback(True)
-                return (
-                    ResultCode.FAILED,
-                    "Failed to connect to VCC band device",
+                self._update_component_state(fault=True)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to connect to HPS VCC devices.",
+                    ),
                 )
+                return
 
-        return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
+        # Update obsState callback
+        self._update_component_state(scanning=True)
+
+        task_callback(
+            progress=100,
+            result=(ResultCode.OK, "Scan completed OK."),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def scan(
+        self: VccComponentManager,
+        argin: int,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Tuple[TaskStatus, str]:
+        """
+        Submit scan operation method to task executor queue.
+
+        :param argin: Scan ID integer
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._scan,
+            args=[argin],
+            is_cmd_allowed=self.is_scan_allowed,
+            task_callback=task_callback,
+        )
 
     def is_end_scan_allowed(self: VccComponentManager) -> bool:
         self.logger.debug("Checking if VCC EndScan is allowed.")
