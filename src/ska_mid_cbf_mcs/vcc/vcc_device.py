@@ -18,7 +18,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 # Tango imports
 import tango
@@ -28,13 +28,12 @@ from ska_tango_base.commands import (
     ResultCode,
     SubmittedSlowCommand,
 )
-from ska_tango_base.control_model import ObsState, PowerState, SimulationMode
+from ska_tango_base.control_model import ObsState, SimulationMode
 from tango import AttrWriteType, DebugIt
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, command, device_property
 
 # SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
@@ -395,61 +394,6 @@ class Vcc(CbfObsDevice):
             self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, msg)
-
-    class OnCommand:
-        """
-        A class for the Vcc's on command.
-        """
-
-        def do(
-            self: Vcc.OnCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            self.logger.info("Entering Vcc.OnCommand")
-            return self.target.component_manager.on()
-
-    class OffCommand:
-        """
-        A class for the Vcc's off command.
-        """
-
-        def do(
-            self: Vcc.OffCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.target.component_manager.off()
-
-    class StandbyCommand:
-        """
-        A class for the Vcc's standby command.
-        """
-
-        def do(
-            self: Vcc.StandbyCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.target.component_manager.standby()
 
     @command(
         dtype_in="DevString",
@@ -1094,7 +1038,7 @@ class Vcc(CbfObsDevice):
 
 
 def main(args=None, **kwargs):
-    return run((Vcc,), args=args, **kwargs)
+    return Vcc.run_server(args=args or None, **kwargs)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ import pytest_mock
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_testing.context import ThreadedTestTangoContextManager
 from ska_tango_testing.harness import TangoTestHarness
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -184,27 +185,6 @@ def patched_vcc_device_class(
             return mock_component_manager
 
     return PatchedVcc
-
-
-@pytest.fixture(name="device_under_test")
-def power_switch_test_context() -> tango.DeviceProxy:
-    harness = TangoTestHarness()
-    harness.add_device(
-        "mid_csp_cbf/vcc/001",
-        Vcc,
-        TalonLRUAddress="mid_csp_cbf/talon_lru/001",
-        VccControllerAddress="talondx-001/vcc-app/vcc-controller",
-        Band1And2Address="talondx-001/vcc-app/vcc-band-1-and-2",
-        Band3Address="talondx-001/vcc-app/vcc-band-3",
-        Band4Address="talondx-001/vcc-app/vcc-band-4",
-        Band5Address="talondx-001/vcc-app/vcc-band-5",
-        SW1Address="mid_csp_cbf/vcc_sw1/001",
-        SW2Address="mid_csp_cbf/vcc_sw2/001",
-        DeviceID="1",
-    )
-
-    with harness as context:
-        yield context.get_device("mid_csp_cbf/vcc/001")
 
 
 @pytest.fixture(name="change_event_callbacks")

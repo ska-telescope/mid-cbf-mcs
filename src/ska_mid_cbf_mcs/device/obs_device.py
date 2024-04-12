@@ -22,15 +22,12 @@ from typing import Any, Callable, Optional, cast
 
 from ska_control_model import ObsState, ObsStateModel, PowerState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
 from ska_tango_base.obs.obs_device import SKAObsDevice
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
-
-from ska_mid_cbf_mcs.component.obs_component_manager import (
-    CbfObsComponentManager,
-)
 
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
@@ -452,10 +449,6 @@ class CbfObsDevice(SKAObsDevice):
                 component_manager=self.component_manager, logger=self.logger
             ),
         )
-        # overriding StandbyCommand which is currently unused by Mid.CBF
-        self.register_command_object(
-            "Standby", self.StandbyCommand(logger=self.logger)
-        )
 
         def _callback(hook: str, running: bool) -> None:
             action = "invoked" if running else "completed"
@@ -520,6 +513,28 @@ class CbfObsDevice(SKAObsDevice):
             self._completed()
             return (result_code, msg)
 
+    @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+        dtype_out="DevVarLongStringArray"
+    )
+    @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    def Standby(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Put the device into standby mode.
+
+        To modify behaviour for this command, modify the do() method of
+        the command class.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Standby command rejected; Mid.CBF does not currently implement standby state."
+            ],
+        )
+
     class OnCommand(FastCommand):
         """
         A class for the CbfObsDevice's on command.
@@ -528,7 +543,7 @@ class CbfObsDevice(SKAObsDevice):
         def __init__(
             self: CbfObsDevice.OnCommand,
             *args,
-            component_manager: CbfObsComponentManager,
+            component_manager: BaseComponentManager,
             **kwargs,
         ) -> None:
             super().__init__(*args, **kwargs)
@@ -555,7 +570,7 @@ class CbfObsDevice(SKAObsDevice):
         def __init__(
             self: CbfObsDevice.OffCommand,
             *args,
-            component_manager: CbfObsComponentManager,
+            component_manager: BaseComponentManager,
             **kwargs,
         ) -> None:
             super().__init__(*args, **kwargs)
@@ -573,27 +588,6 @@ class CbfObsDevice(SKAObsDevice):
             :rtype: (ResultCode, str)
             """
             return self.component_manager.off()
-
-    class StandbyCommand(FastCommand):
-        """
-        A class for the CbfObsDevice's standby command.
-        """
-
-        def do(
-            self: CbfObsDevice.StandbyCommand,
-        ) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return (
-                ResultCode.REJECTED,
-                "Mid.CBF does not currently implement standby state.",
-            )
 
     @command(
         dtype_in="DevString",

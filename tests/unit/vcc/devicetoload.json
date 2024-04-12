@@ -1,6 +1,6 @@
 {
     "servers": {
-        "VccMulti": {
+        "Vcc": {
             "vcc-001": {
                 "Vcc": {
                     "mid_csp_cbf/vcc/001": {

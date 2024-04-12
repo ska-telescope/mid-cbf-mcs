@@ -265,12 +265,13 @@ class VccComponentManager(CbfObsComponentManager):
         #     return
 
         super().start_communicating()
+        self._update_component_state(power=PowerState.OFF)
         # self._update_component_state(power=self._get_power_mode())
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
-        super().stop_communicating()
         self._update_component_state(power=PowerState.UNKNOWN)
+        super().stop_communicating()
 
     def _get_power_mode(self: VccComponentManager) -> PowerState:
         """
@@ -318,7 +319,8 @@ class VccComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Entering VccComponentManager.on")
         try:
-            # Try to connect to HPS devices, they should be running at this point
+            # Try to connect to HPS devices, which are deployed during the
+            # CbfController OnCommand sequence
             if not self.simulation_mode:
                 self.logger.info(
                     "Connecting to HPS VCC controller and band devices"
@@ -335,11 +337,12 @@ class VccComponentManager(CbfObsComponentManager):
 
         except tango.DevFailed as df:
             self.logger.error(str(df.args[0].desc))
-            self.update_component_fault(True)
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             return (ResultCode.FAILED, "Failed to connect to HPS VCC devices")
 
-        self.logger.info("Completed VccComponentManager.on")
-        self.update_component_power_mode(PowerState.ON)
+        self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On command completed OK")
 
     def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -351,20 +354,8 @@ class VccComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_power_mode(PowerState.OFF)
+        self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off command completed OK")
-
-    def standby(self: VccComponentManager) -> Tuple[ResultCode, str]:
-        """
-        Turn VCC component to standby; currently unimplemented.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.update_component_power_mode(PowerState.STANDBY)
-        return (ResultCode.OK, "Standby command completed OK")
 
     def is_configure_band_allowed(self) -> bool:
         self.logger.info("Checking if VCC ConfigureBand is allowed.")
@@ -401,7 +392,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    f"Vcc.ConfigureBand command aborted by task executor Abort Event.",
+                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -475,7 +466,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    f"Vcc.ConfigureBand command aborted by task executor Abort Event.",
+                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -520,7 +511,7 @@ class VccComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (TaskStatus, str)
         """
-        self.logger.info(f"ComponentState={self._component_state}")
+        self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             self._configure_band,
             args=[argin],
@@ -556,8 +547,8 @@ class VccComponentManager(CbfObsComponentManager):
                     self._component_obs_fault_callback(True)
             self._ready = False
 
-    def is_configure_scan_allowed(self) -> bool:
-        self.logger.info("Checking if VCC ConfigureScan is allowed.")
+    def is_configure_scan_allowed(self: VccComponentManager) -> bool:
+        self.logger.debug("Checking if VCC ConfigureScan is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
             self.logger.warning(
                 f"VCC ConfigureScan not allowed in ObsState {self.obs_state}; must be in ObsState.IDLE or READY"
@@ -593,7 +584,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    f"Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -642,7 +633,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    f"Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -685,7 +676,7 @@ class VccComponentManager(CbfObsComponentManager):
         **kwargs: Any,
     ) -> Tuple[TaskStatus, str]:
         """
-        Execute configure scan operation.
+        Submit configure scan operation method to task executor queue.
 
         :param argin: JSON string with the configure scan parameters
 
@@ -694,7 +685,7 @@ class VccComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (TaskStatus, str)
         """
-        self.logger.info(f"ComponentState={self._component_state}")
+        self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             self._configure_scan,
             args=[argin],
