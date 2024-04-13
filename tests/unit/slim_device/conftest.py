@@ -52,7 +52,7 @@ import tango
 #     return tango_harness.get_device("mid_csp_cbf/slim/slim-fs")
 
 @pytest.fixture(name="device_under_test")
-def slim_link_test_context() -> tango.DeviceProxy:
+def slim_link_test_context(mock_slim_link: unittest.mock.Mock) -> tango.DeviceProxy:
     harness = TangoTestHarness()
     harness.add_device(
         "mid_csp_cbf/slim/001",
@@ -206,6 +206,8 @@ def unique_id() -> str:
 def mock_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("txDeviceName", "")
+    builder.add_attribute("rxDeviceName", "")
     builder.add_command("ConnectTxRx", None)
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
