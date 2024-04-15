@@ -15,7 +15,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -39,7 +39,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable[[bool], None],
         check_power_mode_callback: Callable,
     ) -> None:
@@ -72,15 +72,14 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._pdu_outlets = pdu_outlets
         self._pdu_cmd_timeout = pdu_cmd_timeout
 
-        self.pdu1_power_mode = PowerMode.UNKNOWN
-        self.pdu2_power_mode = PowerMode.UNKNOWN
+        self.pdu1_power_mode = PowerState.UNKNOWN
+        self.pdu2_power_mode = PowerState.UNKNOWN
 
         self._proxy_talondx_board1 = None
         self._proxy_talondx_board2 = None
         self._proxy_power_switch1 = None
         self._proxy_power_switch2 = None
 
-        self.simulation_mode = SimulationMode.TRUE
         self._simulation_mode_events = [None, None]
 
         self._check_power_mode_callback = check_power_mode_callback
@@ -157,17 +156,12 @@ class TalonLRUComponentManager(CbfComponentManager):
                 stateless=True,
             )
             self.pdu1_power_mode = (
-                self._proxy_power_switch1.GetOutletPowerMode(
+                self._proxy_power_switch1.GetOutletPowerState(
                     self._pdu_outlets[0]
                 )
             )
             if self._proxy_power_switch1.numOutlets == 0:
-                self.pdu1_power_mode = PowerMode.UNKNOWN
-
-            # Set the power switch 1's simulation mode
-            self._proxy_power_switch1.adminMode = AdminMode.OFFLINE
-            self._proxy_power_switch1.simulationMode = self.simulation_mode
-            self._proxy_power_switch1.adminMode = AdminMode.ONLINE
+                self.pdu1_power_mode = PowerState.UNKNOWN
 
         if self._proxy_power_switch2 is not None:
             if self._pdus[1] != self._pdus[0]:
@@ -184,22 +178,17 @@ class TalonLRUComponentManager(CbfComponentManager):
                     stateless=True,
                 )
                 self.pdu2_power_mode = (
-                    self._proxy_power_switch2.GetOutletPowerMode(
+                    self._proxy_power_switch2.GetOutletPowerState(
                         self._pdu_outlets[1]
                     )
                 )
                 if self._proxy_power_switch2.numOutlets == 0:
-                    self.pdu2_power_mode = PowerMode.UNKNOWN
-
-                # Set the power switch 2's simulation mode
-                self._proxy_power_switch2.adminMode = AdminMode.OFFLINE
-                self._proxy_power_switch2.simulationMode = self.simulation_mode
-                self._proxy_power_switch2.adminMode = AdminMode.ONLINE
+                    self.pdu2_power_mode = PowerState.UNKNOWN
 
         self.connected = True
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """Stop communication with the component."""
@@ -252,14 +241,14 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self._proxy_power_switch1 is not None:
             if self._proxy_power_switch1.numOutlets != 0:
                 self.pdu1_power_mode = (
-                    self._proxy_power_switch1.GetOutletPowerMode(
+                    self._proxy_power_switch1.GetOutletPowerState(
                         self._pdu_outlets[0]
                     )
                 )
             else:
-                self.pdu1_power_mode = PowerMode.UNKNOWN
+                self.pdu1_power_mode = PowerState.UNKNOWN
         else:
-            self.pdu1_power_mode = PowerMode.UNKNOWN
+            self.pdu1_power_mode = PowerState.UNKNOWN
 
         if self._proxy_power_switch2 is not None:
             if self._proxy_power_switch2.numOutlets != 0:
@@ -269,20 +258,20 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self.pdu2_power_mode = self.pdu1_power_mode
                 else:
                     self.pdu2_power_mode = (
-                        self._proxy_power_switch2.GetOutletPowerMode(
+                        self._proxy_power_switch2.GetOutletPowerState(
                             self._pdu_outlets[1]
                         )
                     )
             else:
-                self.pdu2_power_mode = PowerMode.UNKNOWN
+                self.pdu2_power_mode = PowerState.UNKNOWN
         else:
-            self.pdu2_power_mode = PowerMode.UNKNOWN
+            self.pdu2_power_mode = PowerState.UNKNOWN
 
         # Check the expected power mode
         if state == DevState.INIT or state == DevState.OFF:
-            expected_power_mode = PowerMode.OFF
+            expected_power_mode = PowerState.OFF
         elif state == DevState.ON:
-            expected_power_mode = PowerMode.ON
+            expected_power_mode = PowerState.ON
         else:
             # In other device states, we don't know what the expected power
             # mode should be. Don't check it.
@@ -312,7 +301,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         return
 
     def on(
-        self: TalonLRUComponentManager,
+        self: TalonLRUComponentManager, simulation_mode: SimulationMode
     ) -> Tuple[ResultCode, str]:
         """
         Turn on the TalonLRU and its subordinate devices
@@ -327,11 +316,16 @@ class TalonLRUComponentManager(CbfComponentManager):
             # Power on both outlets
             result1 = ResultCode.FAILED
             if self._proxy_power_switch1 is not None:
+                # set PDU 1 simulation mode
+                self._proxy_power_switch1.adminMode = AdminMode.OFFLINE
+                self._proxy_power_switch1.simulationMode = simulation_mode
+                self._proxy_power_switch1.adminMode = AdminMode.ONLINE
+
                 result1 = self._proxy_power_switch1.TurnOnOutlet(
                     self._pdu_outlets[0]
                 )[0][0]
                 if result1 == ResultCode.OK:
-                    self.pdu1_power_mode = PowerMode.ON
+                    self.pdu1_power_mode = PowerState.ON
                     self._logger.info("PDU 1 successfully turned on.")
 
             result2 = ResultCode.FAILED
@@ -343,11 +337,16 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._logger.info("PDU 2 is not used.")
                     result2 = result1
                 else:
+                    # set PDU 2 simulation mode
+                    self._proxy_power_switch2.adminMode = AdminMode.OFFLINE
+                    self._proxy_power_switch2.simulationMode = simulation_mode
+                    self._proxy_power_switch2.adminMode = AdminMode.ONLINE
+
                     result2 = self._proxy_power_switch2.TurnOnOutlet(
                         self._pdu_outlets[1]
                     )[0][0]
                     if result2 == ResultCode.OK:
-                        self.pdu2_power_mode = PowerMode.ON
+                        self.pdu2_power_mode = PowerState.ON
                         self._logger.info("PDU 2 successfully turned on.")
 
             # Start monitoring talon board telemetries and fault status
@@ -372,13 +371,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to turn on both outlets")
             elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-                self.update_component_power_mode(PowerMode.ON)
+                self.update_component_power_mode(PowerState.ON)
                 return (
                     ResultCode.OK,
                     "Only one outlet successfully turned on",
                 )
             else:
-                self.update_component_power_mode(PowerMode.ON)
+                self.update_component_power_mode(PowerState.ON)
                 return (ResultCode.OK, "Both outlets successfully turned on")
         else:
             log_msg = "Proxies not connected"
@@ -406,7 +405,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._pdu_outlets[0]
                 )[0][0]
                 if result1 == ResultCode.OK:
-                    self.pdu1_power_mode = PowerMode.OFF
+                    self.pdu1_power_mode = PowerState.OFF
                     self._logger.info("PDU 1 successfully turned off.")
 
             result2 = ResultCode.FAILED
@@ -422,7 +421,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                         self._pdu_outlets[1]
                     )[0][0]
                     if result2 == ResultCode.OK:
-                        self.pdu2_power_mode = PowerMode.OFF
+                        self.pdu2_power_mode = PowerState.OFF
                         self._logger.info("PDU 2 successfully turned off.")
 
             # Stop monitoring talon board telemetries and fault status
@@ -464,7 +463,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     "Only one outlet successfully turned off",
                 )
             else:
-                self.update_component_power_mode(PowerMode.OFF)
+                self.update_component_power_mode(PowerState.OFF)
                 return (ResultCode.OK, "Both outlets successfully turned off")
 
         else:

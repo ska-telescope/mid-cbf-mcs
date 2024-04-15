@@ -20,8 +20,7 @@ from typing import Any, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import AttrWriteType
+from ska_tango_base.control_model import PowerState, SimulationMode
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -67,19 +66,12 @@ class TalonLRU(SKABaseDevice):
     # Attributes
     # ----------
 
-    LRUPowerMode = attribute(
-        dtype="uint16",
-        doc="Power mode of the Talon LRU",
+    PDU1PowerState = attribute(
+        dtype="uint16", doc="Power mode of the Talon LRU PDU 1"
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        hw_memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
+    PDU2PowerState = attribute(
+        dtype="uint16", doc="Power mode of the Talon LRU PDU 2"
     )
 
     # ---------------
@@ -114,32 +106,21 @@ class TalonLRU(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def read_LRUPowerMode(self: TalonLRU) -> PowerMode:
+    def read_PDU1PowerState(self: TalonLRU) -> PowerState:
         """
-        Read the power mode of the LRU by checking the power mode of the PDUs.
+        Read the power mode of the outlet specified by PDU 1.
 
-        :return: Power mode of the LRU.
+        :return: Power mode of PDU 1
         """
-        self.component_manager.check_power_mode(self.get_state())
-        if (
-            self.component_manager.pdu1_power_mode == PowerMode.ON
-            or self.component_manager.pdu2_power_mode == PowerMode.ON
-        ):
-            return PowerMode.ON
-        elif (
-            self.component_manager.pdu1_power_mode == PowerMode.OFF
-            and self.component_manager.pdu2_power_mode == PowerMode.OFF
-        ):
-            return PowerMode.OFF
-        else:
-            return PowerMode.UNKNOWN
+        return self.component_manager.pdu1_power_mode
 
-    def write_simulationMode(self: TalonLRU, value: SimulationMode) -> None:
+    def read_PDU2PowerState(self: TalonLRU) -> PowerState:
         """
-        Write the simulation mode to the component manager.
+        Read the power mode of the outlet specified by PDU 2.
+
+        :return: Power mode of PDU 2
         """
-        super().write_simulationMode(value)
-        self.component_manager.simulation_mode = value
+        return self.component_manager.pdu2_power_mode
 
     # ----------
     # Callbacks
@@ -167,7 +148,7 @@ class TalonLRU(SKABaseDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: TalonLRU, power_mode: PowerMode
+        self: TalonLRU, power_mode: PowerState
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -182,10 +163,10 @@ class TalonLRU(SKABaseDevice):
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
+                PowerState.OFF: "component_off",
+                PowerState.STANDBY: "component_standby",
+                PowerState.ON: "component_on",
+                PowerState.UNKNOWN: "component_unknown",
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
@@ -229,7 +210,7 @@ class TalonLRU(SKABaseDevice):
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         return TalonLRUComponentManager(
             talons=[self.TalonDxBoard1, self.TalonDxBoard2],
@@ -260,7 +241,7 @@ class TalonLRU(SKABaseDevice):
             """
             (result_code, msg) = super().do()
 
-            device = self.target
+            device = self._device
             device._power_switch_lock = Lock()
 
             # Setting initial simulation mode to True
@@ -271,7 +252,7 @@ class TalonLRU(SKABaseDevice):
 
             return (result_code, msg)
 
-    class OnCommand(SKABaseDevice.OnCommand):
+    class OnCommand:
         """
         The command class for the On command.
 
@@ -287,14 +268,16 @@ class TalonLRU(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
+            device = self._device
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on()
+                return device.component_manager.on(
+                    simulation_mode=device.read_simulationMode()
+                )
 
-    class OffCommand(SKABaseDevice.OffCommand):
+    class OffCommand:
         """
         The command class for the Off command.
 
@@ -310,7 +293,7 @@ class TalonLRU(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
+            device = self._device
 
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
