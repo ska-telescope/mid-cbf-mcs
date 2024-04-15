@@ -84,6 +84,9 @@ deviceServers:
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
+  pyalarm:
+    enabled: true
+    file: "data/pyalarm.yaml"
 
 
 nodeSelector: {}

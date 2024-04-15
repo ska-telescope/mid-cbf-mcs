@@ -1,0 +1,34 @@
+name: pyalarm
+function: pyalarm
+domain: mid-csp-cbf
+command: "python /usr/local/lib/python2.7/dist-packages/panic/ds/PyAlarm.py 01"
+instances: ["pyalarm"]
+depends_on:
+  - device: sys/database/2
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "PyAlarm"
+  instances:
+  - name: "pyalarm"
+    classes:
+    - name: "PyAlarm"
+      devices:
+      - name: "mid_csp_cbf/alarm/pyalarm"
+environment_variables:
+- name: TANGO_HOST
+  value: "{{ .Values.global.tango_host }}"
+image:
+  repository: registry.gitlab.com/s2innovation/internal/icams/icams-containers/panic
+  pullPolicy: Always
+  tag: "7.3.1"
