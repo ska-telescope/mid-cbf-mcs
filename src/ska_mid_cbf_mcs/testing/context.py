@@ -16,16 +16,6 @@ from ska_tango_testing import context
 # https://gitlab.com/tango-controls/pytango/-/issues/459 has been fixed.
 
 
-class _AttributeProxyFactory:  # pylint: disable=too-few-public-methods
-    def __init__(self) -> None:
-        self.factory = tango.AttributeProxy
-
-    def __call__(
-        self, attr_name: str, *args: Any, **kwargs: Any
-    ) -> tango.AttributeProxy:
-        return self.factory(attr_name, *args, **kwargs)
-
-
 class _GroupFactory:  # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
         self.factory = tango.Group
@@ -36,13 +26,11 @@ class _GroupFactory:  # pylint: disable=too-few-public-methods
     # TODO: add/remove?
 
 
-AttributeProxy = _AttributeProxyFactory()
 DeviceProxy = context._DeviceProxyFactory()
 Group = _GroupFactory()
 
 """
-Drop-in replacements for :py:class:`tango.AttributeProxy`, :py:class:`tango.DeviceProxy`
-and :py:class:`tango.Group`.
+Drop-in replacements for :py:class:`tango.DeviceProxy`and :py:class:`tango.Group`.
 
 There is a known bug in :py:class:`tango.test_context.MultiDeviceTestContext`
 for which the workaround is a patch to :py:class:`tango.DeviceProxy`.
@@ -61,7 +49,7 @@ https://gitlab.com/tango-controls/pytango/-/issues/459.)
 class TTCMExt(context.ThreadedTestTangoContextManager):
     """
     An extension of the ska_tango_testing ThreadedTestTangoContextManager.
-    Adds factories for attribute and group proxies.
+    Adds factories for group proxies.
     """
 
     def __init__(self) -> None:
@@ -71,24 +59,6 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
         ] = {}
         self._context: Optional[TTCMExt._TangoContext] = None
         self._mocks: dict[str, unittest.mock.Mock] = {}
-
-    def add_mock_attribute(
-        self: TTCMExt,
-        attr_name: str,
-        attr_mock: unittest.mock.Mock,
-    ) -> None:
-        """
-        Register a mock at a given attribute name.
-
-        Registering this mock means that when an attempts is made to create a
-        `ska_mid_cbf_mcs.context.AttributeProxy` to that attribute name,
-        this mock is returned instead.
-
-        :param attr_name: name of the attribute for which the mock is to
-            be registered.
-        :param attr_mock: the mock to be registered at this name.
-        """
-        self._mocks[attr_name] = attr_mock
 
     def add_mock_device(
         self: TTCMExt,
@@ -146,23 +116,8 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
             self._mocks = mocks
 
         def __enter__(self: TTCMExt._TCExt) -> context.TangoContextProtocol:
-            AttributeProxy.factory = self._attr_proxy_factory
             Group.factory = self._group_factory
             super().__enter__()
-
-        def _attr_proxy_factory(
-            self: TTCMExt._TCExt, name: str, *args: Any, **kwargs: Any
-        ) -> tango.AttributeProxy:
-            if name in self._mocks:
-                return self._mocks[name]
-            if self._context is None:
-                raise KeyError(
-                    f"Test context has no mock for {name}, "
-                    "and no devices at all."
-                )
-            return tango.AttributeProxy(
-                self._context.get_device_access(name), *args, **kwargs
-            )
 
         def _group_factory(
             self: TTCMExt._TCExt, name: str, *args: Any, **kwargs: Any
