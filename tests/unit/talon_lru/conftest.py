@@ -17,7 +17,7 @@ import pytest
 import pytest_mock
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -107,7 +107,7 @@ def mock_component_manager(
             mock._communication_status_changed_callback(
                 CommunicationStatus.ESTABLISHED
             )
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
+            mock._component_power_mode_changed_callback(PowerState.OFF)
         elif (
             mock_power_switch1.stimulusMode == "command_fail"
             or mock_power_switch2.stimulusMode == "command_fail"
@@ -117,7 +117,7 @@ def mock_component_manager(
             mock._communication_status_changed_callback(
                 CommunicationStatus.ESTABLISHED
             )
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
+            mock._component_power_mode_changed_callback(PowerState.OFF)
         else:
             mock.is_communicating = False
             mock.connected = False
@@ -134,7 +134,7 @@ def mock_component_manager(
             mock._component_fault_callback(True)
             return (ResultCode.FAILED, "On command failed")
         else:
-            mock._component_power_mode_changed_callback(PowerMode.ON)
+            mock._component_power_mode_changed_callback(PowerState.ON)
             return (ResultCode.OK, "On command completed OK")
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
@@ -145,7 +145,7 @@ def mock_component_manager(
             mock._component_fault_callback(True)
             return (ResultCode.FAILED, "Off command failed")
         else:
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
+            mock._component_power_mode_changed_callback(PowerState.OFF)
             return (ResultCode.OK, "Off command completed OK")
 
     def _check_power_mode(
@@ -191,7 +191,7 @@ def patched_talon_lru_device_class(
             :return: a mock component manager
             """
             self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerMode] = None
+            self._component_power_mode: Optional[PowerState] = None
 
             mock_component_manager._communication_status_changed_callback = (
                 self._communication_status_changed
@@ -252,7 +252,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     if param == "conn_success":
         # Connection to power switch is working as expected
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.OK, "Success msg"
         )
@@ -274,7 +274,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
         # Can communicate with the power switch, but one or both outlets are ON
         # when the TalonLRU device starts up
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.ON)
+        builder.add_command("GetOutletPowerState", PowerState.ON)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.OK, "Success msg"
         )
@@ -286,7 +286,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
         # Can communicate with the power switch, but the turn on/off outlet
         # commands fail
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
         )
