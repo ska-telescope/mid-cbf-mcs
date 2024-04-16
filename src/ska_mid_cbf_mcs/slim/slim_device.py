@@ -161,7 +161,7 @@ class Slim(CbfDevice):
                 logger=self.logger,
             ),
         )
-        
+
         self.register_command_object(
             "Off",
             SubmittedSlowCommand(
@@ -229,10 +229,10 @@ class Slim(CbfDevice):
         command_handler = self.get_command_object("Configure")
         result_code_message, command_id = command_handler(argin)
         return [[result_code_message], [command_id]]
-    
+
     def is_Off_allowed(self: Slim) -> bool:
         return True
-    
+
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="""Tuple of a string containing a return code and message indicating 
