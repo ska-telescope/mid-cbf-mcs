@@ -24,10 +24,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-"""
-Bryan's TODO List (remember to remove):
-- Figure out wtf that check_power_mode_callback is doing
-"""
+
 class TalonLRUComponentManager(CbfComponentManager):
     """A component manager for the TalonLRU device."""
 
@@ -194,8 +191,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
-        
-
 
     def _get_device_proxy(
         self: TalonLRUComponentManager, fqdn: str
@@ -221,7 +216,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_state(fault = True)
             return None
 
-    # TODO: SRP violation here for sure, refactor
+    # TODO: SRP violation here for sure, split into helpers for getting state and checking expected
     def check_power_mode(
         self: TalonLRUComponentManager, state: DevState
     ) -> None:
@@ -293,8 +288,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         # self.update_component_fault(True)
         return
 
-
-    
     def on(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:

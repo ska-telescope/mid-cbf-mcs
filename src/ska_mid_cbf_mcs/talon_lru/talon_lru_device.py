@@ -17,6 +17,7 @@ from threading import Lock
 from typing import Any, Optional, Tuple
 
 # tango imports
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 import tango
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base import SKABaseDevice
@@ -40,7 +41,7 @@ from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
 __all__ = ["TalonLRU", "main"]
 
 
-class TalonLRU(SKABaseDevice):
+class TalonLRU(CbfDevice):
     """
     TANGO device class for controlling and monitoring a Talon LRU.
     """
@@ -130,29 +131,8 @@ class TalonLRU(SKABaseDevice):
         """
         Sets up the command objects.
         """
-        super().init_command_objects()
+        super(CbfDevice, self).init_command_objects()
 
-        self.register_command_object(
-            "On", 
-            SubmittedSlowCommand(
-                command_name = "On",
-                command_tracker = self._command_tracker,
-                component_manager = self.create_component_manager,
-                method_name = "on",
-                logger = self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "Off", 
-            SubmittedSlowCommand(
-                command_name = "Off",
-                command_tracker = self._command_tracker,
-                component_manager = self.create_component_manager,
-                method_name = "off",
-                logger = self.logger,
-            ),
-        )
 
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
