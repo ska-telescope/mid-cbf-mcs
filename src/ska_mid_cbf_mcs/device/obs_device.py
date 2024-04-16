@@ -49,10 +49,10 @@ class CbfSubElementObsStateMachine(Machine):
 
     * **IDLE**: the device is unconfigured.
 
-    * **CONFIGURING_IDLE**: the device in unconfigured, but
+    * **CONFIGURING_IDLE**: the device is unconfigured, but
       configuration is in progress.
 
-    * **CONFIGURING_READY**: the device in configured, and configuration
+    * **CONFIGURING_READY**: the device is configured, but configuration
       is in progress.
 
     * **READY**: the device is configured and is ready to perform
@@ -66,7 +66,7 @@ class CbfSubElementObsStateMachine(Machine):
 
     * **FAULT**: the device component has experienced an error from
       which it can be recovered only via manual intervention invoking a
-      reset command that force the device to the base state (IDLE).
+      reset command that forces the device to the base state (IDLE).
 
     The actions supported divide into command-oriented actions and
     component monitoring actions.
@@ -357,7 +357,7 @@ class CbfObsDevice(SKAObsDevice):
         return self._command_ids_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS * 2  # 2 per command
+        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS
     )
     def longRunningCommandStatus(self: CbfObsDevice) -> list[str]:
         """
