@@ -706,9 +706,9 @@ def init_delay_model_test_fixture():
                             delay_model_all_obj[i_dm]["receptor_delays"]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["receptor_delays"].pop(
-                                    jj
-                                )
+                                delay_model_all_obj[i_dm][
+                                    "receptor_delays"
+                                ].pop(jj)
 
             return delay_model_all_obj
 
