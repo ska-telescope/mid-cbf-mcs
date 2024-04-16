@@ -19,7 +19,11 @@ from typing import Any, Optional, Tuple
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
@@ -72,16 +76,6 @@ class TalonLRU(SKABaseDevice):
         doc="Power mode of the Talon LRU",
     )
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        hw_memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -90,15 +84,11 @@ class TalonLRU(SKABaseDevice):
         """
         Hook to be executed before any attribute access or command.
         """
-        # PROTECTED REGION ID(TalonLRU.always_executed_hook) ENABLED START #
-        # PROTECTED REGION END #    //  TalonLRU.always_executed_hook
 
     def delete_device(self: TalonLRU) -> None:
         """
         Uninitialize the device.
         """
-        # PROTECTED REGION ID(TalonLRU.delete_device) ENABLED START #
-        # PROTECTED REGION END #    //  TalonLRU.delete_device
 
     def init_command_objects(self: TalonLRU) -> None:
         """
@@ -107,8 +97,27 @@ class TalonLRU(SKABaseDevice):
         super().init_command_objects()
 
         device_args = (self, self.op_state_model, self.logger)
-        self.register_command_object("On", self.OnCommand(*device_args))
-        self.register_command_object("Off", self.OffCommand(*device_args))
+
+        self.register_command_object(
+            "On", 
+            SubmittedSlowCommand(
+                command_name = "On",
+                command_tracker = self._command_tracker,
+                component_manager = self.create_component_manager,
+                method_name = "on",
+                logger = self.logger,
+            ),
+        )
+        self.register_command_object(
+            "Off", 
+            SubmittedSlowCommand(
+                command_name = "Off",
+                command_tracker = self._command_tracker,
+                component_manager = self.create_component_manager,
+                method_name = "off",
+                logger = self.logger,
+            ),
+        )
 
     # ------------------
     # Attributes methods
@@ -133,13 +142,6 @@ class TalonLRU(SKABaseDevice):
             return PowerState.OFF
         else:
             return PowerState.UNKNOWN
-
-    def write_simulationMode(self: TalonLRU, value: SimulationMode) -> None:
-        """
-        Write the simulation mode to the component manager.
-        """
-        super().write_simulationMode(value)
-        self.component_manager.simulation_mode = value
 
     # ----------
     # Callbacks
@@ -214,109 +216,6 @@ class TalonLRU(SKABaseDevice):
         """
         with self._power_switch_lock:
             self.component_manager.check_power_mode(self.get_state())
-
-    # --------
-    # Commands
-    # --------
-
-    def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
-        """
-        Create and return a component manager for this device.
-
-        :return: a component manager for this device.
-        """
-
-        self.logger.debug("Entering create_component_manager()")
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        return TalonLRUComponentManager(
-            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
-            pdus=[self.PDU1, self.PDU2],
-            pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
-            pdu_cmd_timeout=int(self.PDUCommandTimeout),
-            logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
-            check_power_mode_callback=self._check_power_mode,
-        )
-
-    class InitCommand(SKABaseDevice.InitCommand):
-        """
-        A class for the TalonLRU's init_device() "command".
-        """
-
-        def do(self: TalonLRU.InitCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation. Creates the device proxies
-            to the power switch devices.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            (result_code, msg) = super().do()
-
-            device = self._device
-            device._power_switch_lock = Lock()
-
-            # Setting initial simulation mode to True
-            device.write_simulationMode(SimulationMode.TRUE)
-
-            # check power mode in case of fault during communication establishment
-            # device.component_manager.check_power_mode(device.get_state())
-
-            return (result_code, msg)
-
-    class OnCommand(SKABaseDevice.OnCommand):
-        """
-        The command class for the On command.
-
-        Turn on both outlets that provide power to the LRU. Device is put into
-        ON state if at least one outlet was successfully turned on.
-        """
-
-        def do(self: TalonLRU.OnCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement On command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            device = self._device
-            with device._power_switch_lock:
-                # Check that this command is still allowed since the
-                # _check_power_mode_callback could have changed the state
-                self.is_allowed()
-                return device.component_manager.on()
-
-    class OffCommand(SKABaseDevice.OffCommand):
-        """
-        The command class for the Off command.
-
-        Turn off both outlets that provide power to the LRU. Device is put in
-        the OFF state if both outlets were successfully turned off.
-        """
-
-        def do(self: TalonLRU.OffCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement Off command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            device = self._device
-
-            with device._power_switch_lock:
-                # Check that this command is still allowed since the
-                # _check_power_mode_callback could have changed the state
-                self.is_allowed()
-                return device.component_manager.off()
 
 
 # ----------
