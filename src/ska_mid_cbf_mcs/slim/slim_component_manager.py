@@ -446,7 +446,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 # The SLIM link may need to wait for Tx/Rx to initialize
                 # self._dp_links[idx].set_timeout_millis(10000)
-                rc, msg = self._dp_links[idx].ConnectTxRx()
+                self._dp_links[idx].ConnectTxRx()
                 
 
                 # self._dp_links[idx].set_timeout_millis(3000)
