@@ -13,6 +13,7 @@ import concurrent.futures
 import logging
 from typing import Any, Callable, List, Optional, Tuple
 
+from ska_control_model import TaskStatus
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
@@ -28,6 +29,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 class TalonLRUComponentManager(CbfComponentManager):
     """A component manager for the TalonLRU device."""
 
+    # TODO: Find out if we can remove check_power_mode_callback
     def __init__(
         *args: Any,
         self: TalonLRUComponentManager,
@@ -295,6 +297,25 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def on(
         self: TalonLRUComponentManager,
+        argin: str = "",
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Tuple[TaskStatus, str]:
+        """
+        Turn on the TalonLRU and its subordinate devices
+
+        :param argin: unused
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._on,
+            args=argin,
+            is_cmd_allowed=self.is_configure_band_allowed,
+            task_callback=task_callback,
+        )
+
+    def _on(
+        self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
         Turn on the TalonLRU and its subordinate devices
@@ -305,7 +326,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        if self.connected:
+        if self._communication_state == CommunicationStatus.ESTABLISHED:
             # Power on both outlets
             result1 = ResultCode.FAILED
             if self._proxy_power_switch1 is not None:
@@ -369,6 +390,25 @@ class TalonLRUComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
     def off(
+        self: TalonLRUComponentManager,
+        argin: str = "",
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Tuple[TaskStatus, str]:
+        """
+        Turn off the TalonLRU and its subordinate devices
+
+        :param argin: unused
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._off,
+            args=argin,
+            is_cmd_allowed=self.is_configure_band_allowed,
+            task_callback=task_callback,
+        )
+
+    def _off(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
