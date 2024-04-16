@@ -10,6 +10,7 @@ import tango
 import tango.server
 import tango.test_context
 from ska_tango_testing import context
+from typing_extensions import Literal, Protocol
 
 # PROXY WRAPPERS START
 # TODO: Remove proxy wrappers once pytango issue
@@ -96,11 +97,11 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
         """
         self._mocks[group_name] = group_mock
 
-    class _TCExt(context.ThreadedTestTangoContextManager._TangoContext):
+    class TCExt(context.ThreadedTestTangoContextManager._TangoContext):
         """Tango testing context class; sets the default factories for proxy types."""
 
         def __init__(
-            self: TTCMExt._TCExt,
+            self: TTCMExt.TCExt,
             device_info: list[dict[str, Any]],
             mocks: dict[str, unittest.mock.Mock],
         ) -> None:
@@ -115,12 +116,12 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
                 self._context = None
             self._mocks = mocks
 
-        def __enter__(self: TTCMExt._TCExt) -> context.TangoContextProtocol:
+        def __enter__(self: TTCMExt.TCExt) -> context.TangoContextProtocol:
             Group.factory = self._group_factory
-            super().__enter__()
+            return super().__enter__()
 
         def _group_factory(
-            self: TTCMExt._TCExt, name: str, *args: Any, **kwargs: Any
+            self: TTCMExt.TCExt, name: str, *args: Any, **kwargs: Any
         ) -> tango.Group:
             if name in self._mocks:
                 return self._mocks[name]
@@ -146,30 +147,5 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
             {"class": class_name, "devices": devices}
             for class_name, devices in self._device_info_by_class.items()
         ]
-        self._context = self._TCExt(device_info=device_info, mocks=self._mocks)
+        self._context = self.TCExt(device_info=device_info, mocks=self._mocks)
         return self._context.__enter__()
-
-    def __exit__(
-        self: TTCMExt,
-        exc_type: Optional[Type[BaseException]],
-        exception: Optional[BaseException],
-        trace: Optional[TracebackType],
-    ) -> bool:
-        """
-        Exit method for "with" context.
-
-        :param exc_type: the type of exception thrown in the with block
-        :param exception: the exception thrown in the with block
-        :param trace: a traceback
-
-        :returns: whether the exception (if any) has been fully handled
-            by this method and should be swallowed i.e. not re-raised
-        """
-        assert self._context is not None  # for the type checker
-        try:
-            # pylint: disable-next=assignment-from-no-return
-            return self._context.__exit__(
-                exc_type=exc_type, exception=exception, trace=trace
-            )
-        finally:
-            self._context = None
