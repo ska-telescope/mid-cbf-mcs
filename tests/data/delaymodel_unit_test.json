@@ -1,59 +1,27 @@
 {
   "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
-  "epoch": 11000000.0,
-  "validity_period": 400.0,
-  "delay_details": [
+  "start_validity_sec": 11000000.0,
+  "cadence_sec": 400.0,
+  "receptor_delays": [
     {
       "receptor": 1,
-      "poly_info": [
-        {
-          "polarization": "X",
-          "coeffs": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
-        },
-        {
-          "polarization": "Y",
-          "coeffs": [1.7, 1.8, 1.9, 1.1, 1.2, 1.3]
-        }
-      ]
+      "xypol_coeffs_ns": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
+      "ypol_offset_ns": 0.6
     },
     {
       "receptor": 4,
-      "poly_info": [
-        {
-          "polarization": "X",
-          "coeffs": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6]
-        },
-        {
-          "polarization": "Y",
-          "coeffs": [2.7, 2.8, 2.9, 2.1, 2.2, 2.3]
-        }
-      ]
+      "xypol_coeffs_ns": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6],
+      "ypol_offset_ns": 0.6
     },
     {
       "receptor": 2,
-      "poly_info": [
-        {
-          "polarization": "X",
-          "coeffs": [3.1, 3.2, 3.3, 3.4, 3.5, 3.6]
-        },
-        {
-          "polarization": "Y",
-          "coeffs": [3.7, 3.8, 3.9, 3.1, 3.2, 3.3]
-        }
-      ]
+      "xypol_coeffs_ns": [3.1, 3.2, 3.3, 3.4, 3.5, 3.6],
+      "ypol_offset_ns": 0.6
     },
     {
       "receptor": 3,
-      "poly_info": [
-        {
-          "polarization": "X",
-          "coeffs": [4.1, 4.2, 4.3, 4.4, 4.5, 4.6]
-        },
-        {
-          "polarization": "Y",
-          "coeffs": [4.7, 4.8, 4.9, 4.1, 4.2, 4.3]
-        }
-      ]
+      "xypol_coeffs_ns": [4.1, 4.2, 4.3, 4.4, 4.5, 4.6],
+      "ypol_offset_ns": 0.6
     }
   ]
 }

@@ -1381,9 +1381,9 @@ class TestCbfSubarray:
                 time.sleep(2)
 
                 # convert DISH IDs to VCC ID integer for FSPs
-                for delay_detail in input_delay_model_obj["delay_details"]:
-                    receptor_id = delay_detail["receptor"]
-                    delay_detail[
+                for receptor_delay in input_delay_model_obj["receptor_delays"]:
+                    receptor_id = receptor_delay["receptor"]
+                    receptor_delay[
                         "receptor"
                     ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
                 input_delay_model = json.dumps(input_delay_model_obj)
@@ -1875,7 +1875,7 @@ class TestCbfSubarray:
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_details"]:
+                    for entry in input_delay_model_obj["receptor_delay"]:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             # convert receptor to int for comparison
@@ -1894,12 +1894,12 @@ class TestCbfSubarray:
 
                     # the one delay model should have only 1 entry
                     # for the given receptor
-                    # remove the "delay_details" key and get the first item
+                    # remove the "receptor_delay" key and get the first item
                     # in the list so we can compare
                     # just the list of dictionaries that includes the
                     # receptor, epoch, etc
                     vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
-                        "delay_details"
+                        "receptor_delay"
                     ][0]
 
                     # want to compare strings
@@ -1931,7 +1931,7 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for FSP
                 # convert DISH IDs to VCC ID integer for FSPs
-                for model in input_delay_model_obj["delay_details"]:
+                for model in input_delay_model_obj["receptor_delay"]:
                     receptor_id = model["receptor"]
                     model[
                         "receptor"

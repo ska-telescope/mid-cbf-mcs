@@ -492,7 +492,7 @@ class CbfSubarrayComponentManager(
                     self.raise_update_delay_model_fatal_error(msg)
 
                 # pass DISH ID as VCC ID integer to FSPs and VCCs
-                for delay_detail in delay_model_json["delay_details"]:
+                for delay_detail in delay_model_json["receptor_delays"]:
                     dish_id = delay_detail["receptor"]
                     delay_detail[
                         "receptor"
