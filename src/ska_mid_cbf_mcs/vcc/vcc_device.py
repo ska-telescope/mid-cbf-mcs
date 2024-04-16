@@ -29,7 +29,6 @@ from ska_tango_base.commands import (
     SubmittedSlowCommand,
 )
 from ska_tango_base.control_model import ObsState, SimulationMode
-from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property
 
 # SKA imports
@@ -163,28 +162,28 @@ class Vcc(CbfObsDevice):
     band5Tuning = attribute(
         dtype=("float",),
         max_dim_x=2,
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="Stream tuning (GHz)",
         doc="Stream tuning (GHz)",
     )
 
     frequencyBandOffsetStream1 = attribute(
         dtype="int",
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="Frequency band offset (stream 1) (Hz)",
         doc="Frequency band offset (stream 1) (Hz)",
     )
 
     frequencyBandOffsetStream2 = attribute(
         dtype="int",
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="Frequency band offset (stream 2) (Hz)",
         doc="Frequency band offset (stream 2) (Hz)",
     )
 
     dopplerPhaseCorrection = attribute(
         dtype=("float",),
-        access=AttrWriteType.READ_WRITE,
+        access=tango.AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction coefficients",
         doc="Doppler phase correction coefficients",
@@ -192,21 +191,21 @@ class Vcc(CbfObsDevice):
 
     rfiFlaggingMask = attribute(
         dtype="str",
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="RFI Flagging Mask",
         doc="RFI Flagging Mask",
     )
 
     delayModel = attribute(
         dtype="str",
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="Delay model coefficients",
         doc="Delay model coefficients, given per frequency slice",
     )
 
     jonesMatrix = attribute(
         dtype=str,
-        access=AttrWriteType.READ,
+        access=tango.AttrWriteType.READ,
         label="Jones Matrix elements",
         doc="Jones Matrix elements, given per frequency slice",
     )
@@ -400,7 +399,7 @@ class Vcc(CbfObsDevice):
         dtype_out="DevVarLongStringArray",
         doc_in="Band config string.",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def ConfigureBand(
         self: Vcc, band_config: str
     ) -> DevVarLongStringArrayType:
@@ -417,20 +416,6 @@ class Vcc(CbfObsDevice):
         command_handler = self.get_command_object(command_name="ConfigureBand")
         result_code_message, command_id = command_handler(band_config)
         return [[result_code_message], [command_id]]
-
-    def _raise_configuration_fatal_error(
-        self: Vcc, msg: str, cmd: str
-    ) -> None:
-        """
-        Throw an error message if ConfigureScan/ConfigureSearchWindow fails
-
-        :param msg: the error message
-        ::param cmd: the failed command
-        """
-        self.logger.error(msg)
-        tango.Except.throw_exception(
-            "Command failed", msg, cmd + " execution", tango.ErrSeverity.ERR
-        )
 
     def _validate_input_configure_scan(
         self: Vcc, argin: str
@@ -563,7 +548,7 @@ class Vcc(CbfObsDevice):
         doc_out="A tuple containing a return code and a string message indicating status. "
         "The message is for information purpose only.",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def ConfigureScan(self: Vcc, argin: str) -> DevVarLongStringArrayType:
         """
         Configure the observing device parameters for the current scan.
@@ -583,7 +568,13 @@ class Vcc(CbfObsDevice):
         (valid, message) = self._validate_input_configure_scan(argin)
 
         if not valid:
-            self._raise_configuration_fatal_error(message, "ConfigureScan")
+            self.logger.error(message)
+            tango.Except.throw_exception(
+                "Command failed",
+                message,
+                "ConfigureScan execution",
+                tango.ErrSeverity.ERR,
+            )
         else:
             # if self._obs_state == ObsState.IDLE:
             #     self._configuring_from_idle = True
@@ -600,438 +591,439 @@ class Vcc(CbfObsDevice):
 
         return [[result_code_message], [command_id]]
 
-    class UpdateDopplerPhaseCorrectionCommand(FastCommand):
-        """
-        A class for the Vcc's UpdateDopplerPhaseCorrection() command.
+    # TODO: where to put deprecated code?
+    # class UpdateDopplerPhaseCorrectionCommand(FastCommand):
+    #     """
+    #     A class for the Vcc's UpdateDopplerPhaseCorrection() command.
 
-        Update Vcc's doppler phase correction.
-        """
+    #     Update Vcc's doppler phase correction.
+    #     """
 
-        def is_allowed(self: Vcc.UpdateDopplerPhaseCorrectionCommand) -> bool:
-            """
-            Determine if UpdateDopplerPhaseCorrection is allowed
-            (allowed when Devstate is ON and ObsState is READY OR SCANNING).
+    #     def is_allowed(self: Vcc.UpdateDopplerPhaseCorrectionCommand) -> bool:
+    #         """
+    #         Determine if UpdateDopplerPhaseCorrection is allowed
+    #         (allowed when Devstate is ON and ObsState is READY OR SCANNING).
 
-            :return: if UpdateDopplerPhaseCorrection is allowed
-            :rtype: bool
-            """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [
-                    ObsState.READY,
-                    ObsState.SCANNING,
-                ]
-            ):
-                return True
-            return False
+    #         :return: if UpdateDopplerPhaseCorrection is allowed
+    #         :rtype: bool
+    #         """
+    #         if (
+    #             self.target.get_state() == tango.DevState.ON
+    #             and self.target._obs_state
+    #             in [
+    #                 ObsState.READY,
+    #                 ObsState.SCANNING,
+    #             ]
+    #         ):
+    #             return True
+    #         return False
 
-        def do(
-            self: Vcc.UpdateDopplerPhaseCorrectionCommand, argin: str
-        ) -> None:
-            """
-            Stateless hook for UpdateDopplerPhaseCorrection() command functionality.
+    #     def do(
+    #         self: Vcc.UpdateDopplerPhaseCorrectionCommand, argin: str
+    #     ) -> None:
+    #         """
+    #         Stateless hook for UpdateDopplerPhaseCorrection() command functionality.
 
-            :param argin: the doppler phase correction JSON
-            """
-            if self.is_allowed():
-                self.target.component_manager.update_doppler_phase_correction(
-                    argin
-                )
+    #         :param argin: the doppler phase correction JSON
+    #         """
+    #         if self.is_allowed():
+    #             self.target.component_manager.update_doppler_phase_correction(
+    #                 argin
+    #             )
 
-    @command(
-        dtype_in="DevString",
-        doc_in="JSON formatted string with the Doppler phase correction model.",
-    )
-    @DebugIt()
-    def UpdateDopplerPhaseCorrection(self, argin: str):
-        """
-        Update Vcc's doppler phase correction.
-        """
-        self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
+    # @command(
+    #     dtype_in="DevString",
+    #     doc_in="JSON formatted string with the Doppler phase correction model.",
+    # )
+    # @tango.DebugIt()
+    # def UpdateDopplerPhaseCorrection(self, argin: str):
+    #     """
+    #     Update Vcc's doppler phase correction.
+    #     """
+    #     self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
 
-    class UpdateDelayModelCommand(FastCommand):
-        """
-        A class for the Vcc's UpdateDelayModel() command.
+    # class UpdateDelayModelCommand(FastCommand):
+    #     """
+    #     A class for the Vcc's UpdateDelayModel() command.
 
-        Update Vcc's delay model.
-        """
+    #     Update Vcc's delay model.
+    #     """
 
-        def is_allowed(self: Vcc.UpdateDelayModelCommand) -> bool:
-            """
-            Determine if UpdateDelayModel is allowed
-            (allowed when Devstate is ON and ObsState is READY OR SCANNING).
+    #     def is_allowed(self: Vcc.UpdateDelayModelCommand) -> bool:
+    #         """
+    #         Determine if UpdateDelayModel is allowed
+    #         (allowed when Devstate is ON and ObsState is READY OR SCANNING).
 
-            :return: if UpdateDelayModel is allowed
-            :rtype: bool
-            """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [
-                    ObsState.READY,
-                    ObsState.SCANNING,
-                ]
-            ):
-                return True
-            return False
+    #         :return: if UpdateDelayModel is allowed
+    #         :rtype: bool
+    #         """
+    #         if (
+    #             self.target.get_state() == tango.DevState.ON
+    #             and self.target._obs_state
+    #             in [
+    #                 ObsState.READY,
+    #                 ObsState.SCANNING,
+    #             ]
+    #         ):
+    #             return True
+    #         return False
 
-        def do(self: Vcc.UpdateDelayModelCommand, argin: str) -> None:
-            """
-            Stateless hook for UpdateDelayModel() command functionality.
+    #     def do(self: Vcc.UpdateDelayModelCommand, argin: str) -> None:
+    #         """
+    #         Stateless hook for UpdateDelayModel() command functionality.
 
-            :param argin: the delay model JSON
-            """
-            if self.is_allowed():
-                self.target.component_manager.update_delay_model(argin)
+    #         :param argin: the delay model JSON
+    #         """
+    #         if self.is_allowed():
+    #             self.target.component_manager.update_delay_model(argin)
 
-    @command(
-        dtype_in="DevString",
-        doc_in="JSON formatted string with the delay model.",
-    )
-    @DebugIt()
-    def UpdateDelayModel(self, argin: str):
-        """
-        Update Vcc's delay model.
-        """
-        self.get_command_object("UpdateDelayModel")(argin)
+    # @command(
+    #     dtype_in="DevString",
+    #     doc_in="JSON formatted string with the delay model.",
+    # )
+    # @tango.DebugIt()
+    # def UpdateDelayModel(self, argin: str):
+    #     """
+    #     Update Vcc's delay model.
+    #     """
+    #     self.get_command_object("UpdateDelayModel")(argin)
 
-    class UpdateJonesMatrixCommand(FastCommand):
-        """
-        A class for the Vcc's UpdateJonesMatrix() command.
+    # class UpdateJonesMatrixCommand(FastCommand):
+    #     """
+    #     A class for the Vcc's UpdateJonesMatrix() command.
 
-        Update Vcc's Jones matrix.
-        """
+    #     Update Vcc's Jones matrix.
+    #     """
 
-        def is_allowed(self: Vcc.UpdateJonesMatrixCommand) -> bool:
-            """
-            Determine if UpdateJonesMatrix is allowed
-            (allowed when Devstate is ON and ObsState is READY OR SCANNING).
+    #     def is_allowed(self: Vcc.UpdateJonesMatrixCommand) -> bool:
+    #         """
+    #         Determine if UpdateJonesMatrix is allowed
+    #         (allowed when Devstate is ON and ObsState is READY OR SCANNING).
 
-            :return: if UpdateJonesMatrix is allowed
-            :rtype: bool
-            """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [
-                    ObsState.READY,
-                    ObsState.SCANNING,
-                ]
-            ):
-                return True
-            return False
+    #         :return: if UpdateJonesMatrix is allowed
+    #         :rtype: bool
+    #         """
+    #         if (
+    #             self.target.get_state() == tango.DevState.ON
+    #             and self.target._obs_state
+    #             in [
+    #                 ObsState.READY,
+    #                 ObsState.SCANNING,
+    #             ]
+    #         ):
+    #             return True
+    #         return False
 
-        def do(self: Vcc.UpdateJonesMatrixCommand, argin: str) -> None:
-            """
-            Stateless hook for UpdateJonesMatrix() command functionality.
+    #     def do(self: Vcc.UpdateJonesMatrixCommand, argin: str) -> None:
+    #         """
+    #         Stateless hook for UpdateJonesMatrix() command functionality.
 
-            :param argin: the Jones Matrix JSON
-            """
-            if self.is_allowed():
-                self.target.component_manager.update_jones_matrix(argin)
+    #         :param argin: the Jones Matrix JSON
+    #         """
+    #         if self.is_allowed():
+    #             self.target.component_manager.update_jones_matrix(argin)
 
-    @command(
-        dtype_in="DevString",
-        doc_in="JSON formatted string with the delay model.",
-    )
-    @DebugIt()
-    def UpdateJonesMatrix(self, argin: str):
-        """
-        Update Vcc's Jones matrix.
-        """
-        self.get_command_object("UpdateJonesMatrix")(argin)
+    # @command(
+    #     dtype_in="DevString",
+    #     doc_in="JSON formatted string with the delay model.",
+    # )
+    # @tango.DebugIt()
+    # def UpdateJonesMatrix(self, argin: str):
+    #     """
+    #     Update Vcc's Jones matrix.
+    #     """
+    #     self.get_command_object("UpdateJonesMatrix")(argin)
 
-    class ConfigureSearchWindowCommand(FastCommand):
-        """
-        A class for the Vcc's ConfigureSearchWindow() command.
+    # class ConfigureSearchWindowCommand(FastCommand):
+    #     """
+    #     A class for the Vcc's ConfigureSearchWindow() command.
 
-        Configure a search window by sending parameters from the input(JSON) to
-        SearchWindow device.
-        This function is called by the subarray after the configuration has
-        already been validated.
-        """
+    #     Configure a search window by sending parameters from the input(JSON) to
+    #     SearchWindow device.
+    #     This function is called by the subarray after the configuration has
+    #     already been validated.
+    #     """
 
-        def is_allowed(self: Vcc.ConfigureSearchWindowCommand) -> bool:
-            """
-            Determine if ConfigureSearchWindow is allowed
-            (allowed if DevState is ON and ObsState is CONFIGURING)
+    #     def is_allowed(self: Vcc.ConfigureSearchWindowCommand) -> bool:
+    #         """
+    #         Determine if ConfigureSearchWindow is allowed
+    #         (allowed if DevState is ON and ObsState is CONFIGURING)
 
-            :return: if ConfigureSearchWindow is allowed
-            :rtype: bool
-            """
-            if self.target.get_state() == tango.DevState.ON and (
-                self.target._obs_state == ObsState.CONFIGURING
-                or self.target._obs_state == ObsState.READY
-            ):
-                return True
-            return False
+    #         :return: if ConfigureSearchWindow is allowed
+    #         :rtype: bool
+    #         """
+    #         if self.target.get_state() == tango.DevState.ON and (
+    #             self.target._obs_state == ObsState.CONFIGURING
+    #             or self.target._obs_state == ObsState.READY
+    #         ):
+    #             return True
+    #         return False
 
-        def validate_input(
-            self: Vcc.ConfigureSearchWindowCommand, argin: str
-        ) -> Tuple[bool, str]:
-            """
-            Validate a search window configuration
+    #     def validate_input(
+    #         self: Vcc.ConfigureSearchWindowCommand, argin: str
+    #     ) -> Tuple[bool, str]:
+    #         """
+    #         Validate a search window configuration
 
-            :param argin: JSON object with the search window parameters
-            """
-            self.logger.debug(f"Validating argin: {argin}")
-            device = self._device
+    #         :param argin: JSON object with the search window parameters
+    #         """
+    #         self.logger.debug(f"Validating argin: {argin}")
+    #         device = self._device
 
-            # try to deserialize input string to a JSON object
-            try:
-                argin = json.loads(argin)
-            except json.JSONDecodeError:  # argument not a valid JSON object
-                msg = "Search window configuration object is not a valid JSON object."
-                return (False, msg)
+    #         # try to deserialize input string to a JSON object
+    #         try:
+    #             argin = json.loads(argin)
+    #         except json.JSONDecodeError:  # argument not a valid JSON object
+    #             msg = "Search window configuration object is not a valid JSON object."
+    #             return (False, msg)
 
-            # Validate searchWindowID.
-            if "search_window_id" in argin:
-                sw_id = argin["search_window_id"]
-                if sw_id in [1, 2]:
-                    pass
-                else:  # searchWindowID not in valid range
-                    msg = f"'search_window_id' must be one of [1, 2] (received {sw_id})."
-                    return (False, msg)
-            else:
-                msg = "Search window specified, but 'search_window_id' not given."
-                return (False, msg)
+    #         # Validate searchWindowID.
+    #         if "search_window_id" in argin:
+    #             sw_id = argin["search_window_id"]
+    #             if sw_id in [1, 2]:
+    #                 pass
+    #             else:  # searchWindowID not in valid range
+    #                 msg = f"'search_window_id' must be one of [1, 2] (received {sw_id})."
+    #                 return (False, msg)
+    #         else:
+    #             msg = "Search window specified, but 'search_window_id' not given."
+    #             return (False, msg)
 
-            self.logger.debug(
-                f"Validated search_window_id: {argin['search_window_id']}"
-            )
+    #         self.logger.debug(
+    #             f"Validated search_window_id: {argin['search_window_id']}"
+    #         )
 
-            # Validate searchWindowTuning.
-            if "search_window_tuning" in argin:
-                freq_band_name = argin["frequency_band"]
-                if freq_band_name not in [
-                    "5a",
-                    "5b",
-                ]:  # frequency band is not band 5
-                    frequencyBand_mi = freq_band_dict()[freq_band_name][
-                        "band_index"
-                    ]
+    #         # Validate searchWindowTuning.
+    #         if "search_window_tuning" in argin:
+    #             freq_band_name = argin["frequency_band"]
+    #             if freq_band_name not in [
+    #                 "5a",
+    #                 "5b",
+    #             ]:  # frequency band is not band 5
+    #                 frequencyBand_mi = freq_band_dict()[freq_band_name][
+    #                     "band_index"
+    #                 ]
 
-                    frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(
-                        argin["frequency_band"]
-                    )
+    #                 frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(
+    #                     argin["frequency_band"]
+    #                 )
 
-                    assert frequencyBand_mi == frequencyBand
+    #                 assert frequencyBand_mi == frequencyBand
 
-                    start_freq_Hz, stop_freq_Hz = [
-                        const.FREQUENCY_BAND_1_RANGE_HZ,
-                        const.FREQUENCY_BAND_2_RANGE_HZ,
-                        const.FREQUENCY_BAND_3_RANGE_HZ,
-                        const.FREQUENCY_BAND_4_RANGE_HZ,
-                    ][frequencyBand]
+    #                 start_freq_Hz, stop_freq_Hz = [
+    #                     const.FREQUENCY_BAND_1_RANGE_HZ,
+    #                     const.FREQUENCY_BAND_2_RANGE_HZ,
+    #                     const.FREQUENCY_BAND_3_RANGE_HZ,
+    #                     const.FREQUENCY_BAND_4_RANGE_HZ,
+    #                 ][frequencyBand]
 
-                    device.logger.debug(f"start_freq_Hz = {start_freq_Hz}")
-                    device.logger.debug(f"stop_freq_Hz = {stop_freq_Hz}")
+    #                 device.logger.debug(f"start_freq_Hz = {start_freq_Hz}")
+    #                 device.logger.debug(f"stop_freq_Hz = {stop_freq_Hz}")
 
-                    if (
-                        start_freq_Hz + argin["frequency_band_offset_stream1"]
-                        <= int(argin["search_window_tuning"])
-                        <= stop_freq_Hz
-                        + argin["frequency_band_offset_stream1"]
-                    ):
-                        pass
-                    else:
-                        msg = "'search_window_tuning' must be within observed band."
-                        return (False, msg)
-                # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                else:
-                    if argin["band_5_tuning"] == [
-                        0,
-                        0,
-                    ]:  # band 5 tuning not specified in configuration
-                        pass
-                    else:
-                        frequency_band_range_1 = (
-                            argin["band_5_tuning"][0] * 10**9
-                            + argin["frequency_band_offset_stream1"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                            argin["band_5_tuning"][0] * 10**9
-                            + argin["frequency_band_offset_stream1"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                        )
+    #                 if (
+    #                     start_freq_Hz + argin["frequency_band_offset_stream1"]
+    #                     <= int(argin["search_window_tuning"])
+    #                     <= stop_freq_Hz
+    #                     + argin["frequency_band_offset_stream1"]
+    #                 ):
+    #                     pass
+    #                 else:
+    #                     msg = "'search_window_tuning' must be within observed band."
+    #                     return (False, msg)
+    #             # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+    #             else:
+    #                 if argin["band_5_tuning"] == [
+    #                     0,
+    #                     0,
+    #                 ]:  # band 5 tuning not specified in configuration
+    #                     pass
+    #                 else:
+    #                     frequency_band_range_1 = (
+    #                         argin["band_5_tuning"][0] * 10**9
+    #                         + argin["frequency_band_offset_stream1"]
+    #                         - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                         argin["band_5_tuning"][0] * 10**9
+    #                         + argin["frequency_band_offset_stream1"]
+    #                         + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                     )
 
-                        frequency_band_range_2 = (
-                            argin["band_5_tuning"][1] * 10**9
-                            + argin["frequency_band_offset_stream2"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                            argin["band_5_tuning"][1] * 10**9
-                            + argin["frequency_band_offset_stream2"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                        )
+    #                     frequency_band_range_2 = (
+    #                         argin["band_5_tuning"][1] * 10**9
+    #                         + argin["frequency_band_offset_stream2"]
+    #                         - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                         argin["band_5_tuning"][1] * 10**9
+    #                         + argin["frequency_band_offset_stream2"]
+    #                         + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                     )
 
-                        if (
-                            frequency_band_range_1[0]
-                            <= int(argin["search_window_tuning"])
-                            <= frequency_band_range_1[1]
-                        ) or (
-                            frequency_band_range_2[0]
-                            <= int(argin["search_window_tuning"])
-                            <= frequency_band_range_2[1]
-                        ):
-                            pass
-                        else:
-                            msg = "'searchWindowTuning' must be within observed band."
-                            device.logger.error(msg)
-                            tango.Except.throw_exception(
-                                "Command failed",
-                                msg,
-                                "ConfigureSearchWindow execution",
-                                tango.ErrSeverity.ERR,
-                            )
-            else:
-                msg = "Search window specified, but 'search_window_tuning' not given."
-                return (False, msg)
+    #                     if (
+    #                         frequency_band_range_1[0]
+    #                         <= int(argin["search_window_tuning"])
+    #                         <= frequency_band_range_1[1]
+    #                     ) or (
+    #                         frequency_band_range_2[0]
+    #                         <= int(argin["search_window_tuning"])
+    #                         <= frequency_band_range_2[1]
+    #                     ):
+    #                         pass
+    #                     else:
+    #                         msg = "'searchWindowTuning' must be within observed band."
+    #                         device.logger.error(msg)
+    #                         tango.Except.throw_exception(
+    #                             "Command failed",
+    #                             msg,
+    #                             "ConfigureSearchWindow execution",
+    #                             tango.ErrSeverity.ERR,
+    #                         )
+    #         else:
+    #             msg = "Search window specified, but 'search_window_tuning' not given."
+    #             return (False, msg)
 
-            self.logger.debug(
-                f"Validated search_window_tuning: {json.dumps(argin['search_window_tuning'])}"
-            )
+    #         self.logger.debug(
+    #             f"Validated search_window_tuning: {json.dumps(argin['search_window_tuning'])}"
+    #         )
 
-            # Validate tdcEnable.
-            if "tdc_enable" in argin:
-                if argin["tdc_enable"] in [True, False]:
-                    pass
-                else:
-                    msg = (
-                        "Search window specified, but 'tdc_enable' not given."
-                    )
-                    return (False, msg)
-            else:
-                msg = "Search window specified, but 'tdc_enable' not given."
-                return (False, msg)
+    #         # Validate tdcEnable.
+    #         if "tdc_enable" in argin:
+    #             if argin["tdc_enable"] in [True, False]:
+    #                 pass
+    #             else:
+    #                 msg = (
+    #                     "Search window specified, but 'tdc_enable' not given."
+    #                 )
+    #                 return (False, msg)
+    #         else:
+    #             msg = "Search window specified, but 'tdc_enable' not given."
+    #             return (False, msg)
 
-            self.logger.debug("Validated tdcEnable")
+    #         self.logger.debug("Validated tdcEnable")
 
-            # Validate tdcNumBits.
-            if argin["tdc_enable"]:
-                if "tdc_num_bits" in argin:
-                    tdc_num_bits = argin["tdc_num_bits"]
-                    if tdc_num_bits in [2, 4, 8]:
-                        pass
-                    else:
-                        msg = f"'tdcNumBits' must be one of [2, 4, 8] (received {tdc_num_bits})."
-                        return (False, msg)
-                else:
-                    msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
-                    return (False, msg)
+    #         # Validate tdcNumBits.
+    #         if argin["tdc_enable"]:
+    #             if "tdc_num_bits" in argin:
+    #                 tdc_num_bits = argin["tdc_num_bits"]
+    #                 if tdc_num_bits in [2, 4, 8]:
+    #                     pass
+    #                 else:
+    #                     msg = f"'tdcNumBits' must be one of [2, 4, 8] (received {tdc_num_bits})."
+    #                     return (False, msg)
+    #             else:
+    #                 msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
+    #                 return (False, msg)
 
-            self.logger.debug("Validated tdcNumBits")
+    #         self.logger.debug("Validated tdcNumBits")
 
-            # Validate tdcPeriodBeforeEpoch.
-            if "tdc_period_before_epoch" in argin:
-                tdc_pbe = argin["tdc_period_before_epoch"]
-                if tdc_pbe > 0:
-                    pass
-                else:
-                    msg = f"'tdcPeriodBeforeEpoch' must be a positive integer (received {tdc_pbe})."
-                    return (False, msg)
-            else:
-                pass
+    #         # Validate tdcPeriodBeforeEpoch.
+    #         if "tdc_period_before_epoch" in argin:
+    #             tdc_pbe = argin["tdc_period_before_epoch"]
+    #             if tdc_pbe > 0:
+    #                 pass
+    #             else:
+    #                 msg = f"'tdcPeriodBeforeEpoch' must be a positive integer (received {tdc_pbe})."
+    #                 return (False, msg)
+    #         else:
+    #             pass
 
-            self.logger.debug("Validated tdcPeriodBeforeEpoch")
+    #         self.logger.debug("Validated tdcPeriodBeforeEpoch")
 
-            # Validate tdcPeriodAfterEpoch.
-            if "tdc_period_after_epoch" in argin:
-                tdc_pae = argin["tdc_period_after_epoch"]
-                if tdc_pae > 0:
-                    pass
-                else:
-                    msg = f"'tdcPeriodAfterEpoch' must be a positive integer (received {tdc_pae})."
-                    return (False, msg)
-            else:
-                pass
+    #         # Validate tdcPeriodAfterEpoch.
+    #         if "tdc_period_after_epoch" in argin:
+    #             tdc_pae = argin["tdc_period_after_epoch"]
+    #             if tdc_pae > 0:
+    #                 pass
+    #             else:
+    #                 msg = f"'tdcPeriodAfterEpoch' must be a positive integer (received {tdc_pae})."
+    #                 return (False, msg)
+    #         else:
+    #             pass
 
-            self.logger.debug("Validated tdcPeriodAfterEpoch")
+    #         self.logger.debug("Validated tdcPeriodAfterEpoch")
 
-            # Validate tdcDestinationAddress.
-            if argin["tdc_enable"]:
-                try:
-                    for receptor in argin["tdc_destination_address"]:
-                        if (
-                            receptor["receptor_id"]
-                            == device.component_manager.dish_id
-                        ):
-                            # TODO: validate tdc_destination_address
-                            break
-                        else:
-                            pass
-                except KeyError:
-                    # tdcDestinationAddress not given or receptor_id not in tdcDestinationAddress
-                    msg = (
-                        "Search window specified with TDC enabled, but 'tdcDestinationAddress' "
-                        "not given or missing receptors."
-                    )
-                    return (False, msg)
+    #         # Validate tdcDestinationAddress.
+    #         if argin["tdc_enable"]:
+    #             try:
+    #                 for receptor in argin["tdc_destination_address"]:
+    #                     if (
+    #                         receptor["receptor_id"]
+    #                         == device.component_manager.dish_id
+    #                     ):
+    #                         # TODO: validate tdc_destination_address
+    #                         break
+    #                     else:
+    #                         pass
+    #             except KeyError:
+    #                 # tdcDestinationAddress not given or receptor_id not in tdcDestinationAddress
+    #                 msg = (
+    #                     "Search window specified with TDC enabled, but 'tdcDestinationAddress' "
+    #                     "not given or missing receptors."
+    #                 )
+    #                 return (False, msg)
 
-            self.logger.debug("Validated tdcDestinationAddress")
-            self.logger.debug("Search window validation complete")
-            return (True, "Search window validated.")
+    #         self.logger.debug("Validated tdcDestinationAddress")
+    #         self.logger.debug("Search window validation complete")
+    #         return (True, "Search window validated.")
 
-        def do(
-            self: Vcc.ConfigureSearchWindowCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for ConfigureSearchWindow() command functionality.
+    #     def do(
+    #         self: Vcc.ConfigureSearchWindowCommand, argin: str
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Stateless hook for ConfigureSearchWindow() command functionality.
 
-            :param argin: JSON object with the search window parameters
+    #         :param argin: JSON object with the search window parameters
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            self.logger.debug(f"argin: {argin}")
-            # TODO: CIP-1470 comment to remove VCC search window
-            # return self.target.component_manager.configure_search_window(argin)
-            return (
-                ResultCode.OK,
-                "Vcc.ConfigureSearchWindowCommand unimplemented.",
-            )
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         self.logger.debug(f"argin: {argin}")
+    #         # TODO: CIP-1470 comment to remove VCC search window
+    #         # return self.target.component_manager.configure_search_window(argin)
+    #         return (
+    #             ResultCode.OK,
+    #             "Vcc.ConfigureSearchWindowCommand unimplemented.",
+    #         )
 
-    @command(
-        dtype_in="DevString",
-        doc_in="JSON formatted string with the search window configuration.",
-        dtype_out="DevVarLongStringArray",
-        doc_out="A tuple containing a return code and a string message indicating status. "
-        "The message is for information purpose only.",
-    )
-    @DebugIt()
-    def ConfigureSearchWindow(self, argin) -> None:
-        """
-        Configure the observing device parameters for a search window.
+    # @command(
+    #     dtype_in="DevString",
+    #     doc_in="JSON formatted string with the search window configuration.",
+    #     dtype_out="DevVarLongStringArray",
+    #     doc_out="A tuple containing a return code and a string message indicating status. "
+    #     "The message is for information purpose only.",
+    # )
+    # @tango.DebugIt()
+    # def ConfigureSearchWindow(self, argin) -> None:
+    #     """
+    #     Configure the observing device parameters for a search window.
 
-        :param argin: JSON formatted string with the search window configuration.
-        :type argin: 'DevString'
+    #     :param argin: JSON formatted string with the search window configuration.
+    #     :type argin: 'DevString'
 
-        :return: A tuple containing a return code and a string message indicating status.
-            The message is for information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        # This validation is already performed in the CbfSubarray ConfigureScan.
-        # TODO: Improve validation (validation should only be done once,
-        # most of the validation can be done through a schema instead of manually
-        # through functions).
-        command = self.get_command_object("ConfigureSearchWindow")
-        self.logger.debug(f"argin: {argin}")
+    #     :return: A tuple containing a return code and a string message indicating status.
+    #         The message is for information purpose only.
+    #     :rtype: (ResultCode, str)
+    #     """
+    #     # This validation is already performed in the CbfSubarray ConfigureScan.
+    #     # TODO: Improve validation (validation should only be done once,
+    #     # most of the validation can be done through a schema instead of manually
+    #     # through functions).
+    #     command = self.get_command_object("ConfigureSearchWindow")
+    #     self.logger.debug(f"argin: {argin}")
 
-        (valid, message) = command.validate_input(argin)
-        self.logger.debug(
-            f"ConfigureSearchWindow validation result: {message}"
-        )
+    #     (valid, message) = command.validate_input(argin)
+    #     self.logger.debug(
+    #         f"ConfigureSearchWindow validation result: {message}"
+    #     )
 
-        if not valid:
-            self._raise_configuration_fatal_error(
-                message, "ConfigureSearchWindow"
-            )
+    #     if not valid:
+    #         self._raise_configuration_fatal_error(
+    #             message, "ConfigureSearchWindow"
+    #         )
 
-        (result_code, message) = command(argin)
+    #     (result_code, message) = command(argin)
 
-        self.logger.debug(f"ConfigureSearchWindow result: {message}")
-        return [[result_code], [message]]
+    #     self.logger.debug(f"ConfigureSearchWindow result: {message}")
+    #     return [[result_code], [message]]
 
 
 # ----------

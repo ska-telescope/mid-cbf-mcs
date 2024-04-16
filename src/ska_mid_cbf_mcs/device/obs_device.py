@@ -29,6 +29,8 @@ from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
 
+from .base_device import MAX_QUEUED_COMMANDS, MAX_REPORTED_COMMANDS
+
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
 
@@ -262,12 +264,6 @@ class CbfSubElementObsStateMachine(Machine):
             self._callback(self.state)
 
 
-# NOTE: to update max LRC queue size the following constants must be updated
-# see TODO in SKABaseDevice for rationale
-MAX_QUEUED_COMMANDS = 64
-MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2
-
-
 class CbfObsDevice(SKAObsDevice):
     """
     A generic base observing device for Mid.CBF.
@@ -460,8 +456,8 @@ class CbfObsDevice(SKAObsDevice):
             ("Scan", "scan", None),
             ("EndScan", "end_scan", None),
             ("GoToIdle", "go_to_idle", None),
-            ("Abort", "abort", "abort"),
-            ("ObsReset", "obsreset", "obsreset"),
+            ("AbortScan", "abort_scan", "abort"),
+            ("ObsReset", "obs_reset", "obsreset"),
         ]:
             callback = (
                 None
@@ -716,7 +712,7 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def Abort(self: CbfObsDevice) -> DevVarLongStringArrayType:
+    def AbortScan(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Abort the current observing process and move to ABORTED obsState.
 
@@ -724,7 +720,7 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
-        command_handler = self.get_command_object("Abort")
+        command_handler = self.get_command_object("AbortScan")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 

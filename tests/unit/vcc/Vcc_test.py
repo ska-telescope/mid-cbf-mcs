@@ -12,44 +12,36 @@
 from __future__ import annotations
 
 import json
-
-# Standard imports
 import os
-import time
 from typing import Iterator
 
 import pytest
-import ska_tango_testing.context
-import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from ska_tango_testing.harness import TangoTestHarness, TangoTestHarnessContext
-from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+
+# from ska_tango_testing import context
+from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ... import test_utils
 
+# TODO: needed?
 # import gc
 # gc.disable()
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-# Tango imports
-
-# SKA imports
-
-CONST_WAIT_TIME = 1
+test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 @pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
-) -> ska_tango_testing.context.DeviceProxy:
+) -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
 
@@ -62,7 +54,7 @@ def device_under_test_fixture(
 
 @pytest.fixture(name="change_event_callbacks")
 def vcc_change_event_callbacks(
-    device_under_test: ska_tango_testing.context.DeviceProxy,
+    device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
@@ -71,7 +63,7 @@ def vcc_change_event_callbacks(
         "obsState",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=15.0
+        *change_event_attr_list
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks
@@ -85,8 +77,8 @@ class TestVcc:
     """
 
     @pytest.fixture(name="test_context")
-    def vcc_test_context(self: TestVcc) -> Iterator[TangoTestHarnessContext]:
-        harness = ska_tango_testing.context.ThreadedTestTangoContextManager()
+    def vcc_test_context(self: TestVcc) -> Iterator[context.TTCMExt.TCExt]:
+        harness = context.TTCMExt()
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
             device_class=Vcc,
@@ -105,36 +97,36 @@ class TestVcc:
             yield test_context
 
     def test_State(
-        self: TestVcc, device_under_test: ska_tango_testing.context.DeviceProxy
+        self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test State
 
         :param device_under_test: fixture that provides a
             :py:class: proxy to the device under test, in a
-            :py:class:`ska_tango_testing.context.DeviceProxy`.
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.state() == DevState.DISABLE
 
     def test_Status(
-        self: TestVcc, device_under_test: ska_tango_testing.context.DeviceProxy
+        self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestVcc, device_under_test: ska_tango_testing.context.DeviceProxy
+        self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_adminMode(
-        self: TestVcc, device_under_test: ska_tango_testing.context.DeviceProxy
+        self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
         self: TestVcc,
-        device_under_test: ska_tango_testing.context.DeviceProxy,
+        device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
@@ -142,7 +134,7 @@ class TestVcc:
 
         :param device_under_test: fixture that provides a
             :py:class: proxy to the device under test, in a
-            :py:class:`ska_tango_testing.context.DeviceProxy`.
+            :py:class:`context.DeviceProxy`.
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
@@ -171,7 +163,7 @@ class TestVcc:
     def test_happy_path_Scan(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        device_under_test: ska_tango_testing.context.DeviceProxy,
+        device_under_test: context.DeviceProxy,
         config_file_name: str,
         scan_id: int,
     ) -> None:
@@ -189,7 +181,7 @@ class TestVcc:
         device_under_test.On()
         assert device_under_test.state() == DevState.ON
 
-        with open(file_path + config_file_name) as f:
+        with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = json.loads(json_str)
 
@@ -290,70 +282,6 @@ class TestVcc:
     #         ("Vcc_ConfigureScan_basic.json", 2),
     #     ],
     # )
-    # def test_Scan(
-    #     self: TestVcc,
-    #     device_under_test: CbfDeviceProxy,
-    #     config_file_name: str,
-    #     scan_id: int,
-    # ) -> None:
-    #     """
-    #     Test Vcc's Scan command state changes.
-
-    #     First calls test_Vcc_ConfigureScan to get it in the ready state
-    #     :param device_under_test: fixture that provides a
-    #         :py:class:`tango.DeviceProxy` to the device under test, in a
-    #         :py:class:`tango.test_context.DeviceTestContext`.
-    #     :param config_file_name: JSON file for the configuration
-    #     :param scan_id: the scan id
-    #     """
-    #     # turn on device and configure scan
-    #     self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
-
-    #     scan_id_device_data = tango.DeviceData()
-    #     scan_id_device_data.insert(tango.DevShort, scan_id)
-
-    #     # Use callable 'Scan'  API
-    #     (result_code, _) = device_under_test.Scan(scan_id_device_data)
-    #     assert result_code == ResultCode.STARTED
-    #     assert device_under_test.obsState == ObsState.SCANNING
-
-    # @pytest.mark.parametrize(
-    #     "config_file_name, \
-    #     scan_id",
-    #     [
-    #         ("Vcc_ConfigureScan_basic.json", 1),
-    #         ("Vcc_ConfigureScan_basic.json", 2),
-    #     ],
-    # )
-    # def test_EndScan(
-    #     self: TestVcc,
-    #     device_under_test: CbfDeviceProxy,
-    #     config_file_name: str,
-    #     scan_id: int,
-    # ) -> None:
-    #     """
-    #     Test Vcc's EndScan command state changes.
-
-    #     First calls test_Scan to get it in the Scanning state
-    #     :param device_under_test: fixture that provides a
-    #         :py:class:`tango.DeviceProxy` to the device under test, in a
-    #         :py:class:`tango.test_context.DeviceTestContext`.
-    #     :param config_file_name: JSON file for the configuration
-    #     :param scan_id: the scan id
-    #     """
-    #     self.test_Scan(device_under_test, config_file_name, scan_id)
-
-    #     (result_code, _) = device_under_test.EndScan()
-    #     assert device_under_test.obsState == ObsState.READY
-
-    # @pytest.mark.parametrize(
-    #     "config_file_name, \
-    #     scan_id",
-    #     [
-    #         ("Vcc_ConfigureScan_basic.json", 1),
-    #         ("Vcc_ConfigureScan_basic.json", 2),
-    #     ],
-    # )
     # def test_Reconfigure_Scan_EndScan_GoToIdle(
     #     self: TestVcc,
     #     device_under_test: CbfDeviceProxy,
@@ -373,7 +301,7 @@ class TestVcc:
     #     self.test_EndScan(device_under_test, config_file_name, scan_id)
 
     #     # try reconfiguring and scanning again (w/o power cycling)
-    #     f = open(file_path + config_file_name)
+    #     f = open(test_data_path + config_file_name)
     #     json_str = f.read().replace("\n", "")
     #     configuration = json.loads(json_str)
     #     f.close()
@@ -503,13 +431,13 @@ class TestVcc:
     #     device_under_test.loggingLevel = LoggingLevel.DEBUG
     #     # set dishID to SKA001 to correctly test tdcDestinationAddress
     #     device_under_test.dishID = "SKA001"
-    #     f = open(file_path + config_file_name)
+    #     f = open(test_data_path + config_file_name)
     #     json_string = f.read().replace("\n", "")
     #     f.close()
     #     device_under_test.ConfigureScan(json_string)
     #     time.sleep(3)
 
     #     # configure search window
-    #     f = open(file_path + sw_config_file_name)
+    #     f = open(test_data_path + sw_config_file_name)
     #     device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
     #     f.close()

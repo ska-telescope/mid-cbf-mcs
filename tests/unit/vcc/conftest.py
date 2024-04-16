@@ -11,22 +11,21 @@ from __future__ import annotations
 
 import logging
 import unittest
-
-# Standard imports
 from typing import Callable, Dict, Optional, Tuple, Type
 
 import pytest
 import pytest_mock
-
-# Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
-from ska_tango_testing.context import ThreadedTestTangoContextManager
-from ska_tango_testing.harness import TangoTestHarness
+from ska_tango_base.control_model import (
+    CommunicationStatus,
+    PowerState,
+    SimulationMode,
+)
+from ska_tango_testing import context
+from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
@@ -38,9 +37,9 @@ from ska_mid_cbf_mcs.testing.tango_harness import (
     TangoHarness,
 )
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-
-# Local imports
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
+
+from ... import test_utils
 
 
 @pytest.fixture
@@ -187,15 +186,6 @@ def patched_vcc_device_class(
     return PatchedVcc
 
 
-@pytest.fixture(name="change_event_callbacks")
-def change_event_callbacks_fixture() -> MockTangoEventCallbackGroup:
-    return MockTangoEventCallbackGroup(
-        "longRunningCommandResult",
-        "longRunningCommandProgress",
-        timeout=10,
-    )
-
-
 @pytest.fixture()
 def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
     """
@@ -316,108 +306,3 @@ def vcc_component_manager(
         component_obs_fault_callback=component_obs_fault_callback,
         simulation_mode=SimulationMode.FALSE,
     )
-
-
-@pytest.fixture()
-def communication_status_changed_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component manager communication status.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the communication status
-        of a component manager changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def component_power_mode_changed_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component power mode change.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the component manager
-        detects that the power mode of its component has changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def component_fault_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component fault.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the component manager
-        detects that the power mode of its component has changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def component_obs_fault_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component manager obs fault.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the communication status
-        of a component manager changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[
-        [str], MockChangeEventCallback
-    ],
-) -> Callable[[], MockChangeEventCallback]:
-    """
-    Return a mock change event callback factory
-
-    :param mock_change_event_callback_factory: fixture that provides a
-        mock change event callback factory (i.e. an object that returns
-        mock callbacks when called).
-
-    :return: a mock change event callback factory
-    """
-
-    def _factory() -> MockChangeEventCallback:
-        return mock_change_event_callback_factory("adminMode")
-
-    return _factory
-
-
-@pytest.fixture()
-def push_change_event_callback(
-    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
-) -> MockChangeEventCallback:
-    """
-    Return a mock change event callback
-
-    :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory
-
-    :return: a mock change event callback
-    """
-    return push_change_event_callback_factory()

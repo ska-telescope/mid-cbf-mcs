@@ -18,7 +18,7 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import threading
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 # tango imports
 import tango
@@ -30,12 +30,12 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
 
@@ -46,42 +46,6 @@ VCC_PARAM_PATH = "mnt/vcc_param/"
 
 class VccComponentManager(CbfObsComponentManager):
     """Component manager for Vcc class."""
-
-    @property
-    def config_id(self: VccComponentManager) -> str:
-        """
-        Configuration ID
-
-        :return: the configuration ID
-        """
-        return self._config_id
-
-    @config_id.setter
-    def config_id(self: VccComponentManager, config_id: str) -> None:
-        """
-        Set the configuration ID.
-
-        :param config_id: Configuration ID
-        """
-        self._config_id = config_id
-
-    @property
-    def scan_id(self: VccComponentManager) -> int:
-        """
-        Scan ID
-
-        :return: the scan ID
-        """
-        return self._scan_id
-
-    @scan_id.setter
-    def scan_id(self: VccComponentManager, scan_id: int) -> None:
-        """
-        Set the scan ID.
-
-        :param scan_id: Scan ID
-        """
-        self._scan_id = scan_id
 
     @property
     def dish_id(self: VccComponentManager) -> str:
@@ -112,7 +76,7 @@ class VccComponentManager(CbfObsComponentManager):
         return self._frequency_band
 
     @property
-    def stream_tuning(self: VccComponentManager) -> List[float]:
+    def stream_tuning(self: VccComponentManager) -> list[float]:
         """
         Band 5 Stream Tuning
 
@@ -167,7 +131,7 @@ class VccComponentManager(CbfObsComponentManager):
         return self._delay_model
 
     @property
-    def doppler_phase_correction(self: VccComponentManager) -> List[float]:
+    def doppler_phase_correction(self: VccComponentManager) -> list[float]:
         """
         Doppler Phase Correction
 
@@ -181,8 +145,8 @@ class VccComponentManager(CbfObsComponentManager):
         vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
-        vcc_band: List[str],
-        search_window: List[str],
+        vcc_band: list[str],
+        search_window: list[str],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
@@ -206,8 +170,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
         self._search_window_fqdn = search_window
-
-        self._ready = False
 
         # Initialize attribute values
         self._dish_id = ""
@@ -256,11 +218,9 @@ class VccComponentManager(CbfObsComponentManager):
         """Establish communication with the component, then start monitoring."""
         # TODO: uncomment
         # try:
-        #     self._talon_lru_proxy = CbfDeviceProxy(
-        #         fqdn=self._talon_lru_fqdn, logger=self.logger
-        #     )
+        #     self._talon_lru_proxy = context.DeviceProxy(device_name=self._talon_lru_fqdn)
         # except tango.DevFailed:
-        #     self._update_component_state(fault=True)
+        #     self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
         #     self.logger.error("Error in proxy connection")
         #     return
 
@@ -305,27 +265,7 @@ class VccComponentManager(CbfObsComponentManager):
         else:
             return PowerState.UNKNOWN
 
-    def _deconfigure(self: VccComponentManager) -> None:
-        """Deconfigure scan configuration parameters."""
-        self._doppler_phase_correction = [0 for _ in range(4)]
-        self._jones_matrix = ""
-        self._delay_model = ""
-        self._rfi_flagging_mask = ""
-        self._frequency_band_offset_stream2 = 0
-        self._frequency_band_offset_stream1 = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band = 0
-        self._device_attr_change_callback(
-            "frequencyBand", self._frequency_band
-        )
-        self._device_attr_archive_callback(
-            "frequencyBand", self._frequency_band
-        )
-        self._freq_band_name = ""
-        self._config_id = ""
-        self._scan_id = 0
-
-    def on(self: VccComponentManager) -> Tuple[ResultCode, str]:
+    def on(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
         Turn on VCC component. This attempts to establish communication
         with the VCC devices on the HPS.
@@ -346,12 +286,12 @@ class VccComponentManager(CbfObsComponentManager):
                     "Connecting to HPS VCC controller and band devices"
                 )
 
-                self._vcc_controller_proxy = CbfDeviceProxy(
-                    fqdn=self._vcc_controller_fqdn, logger=self.logger
+                self._vcc_controller_proxy = context.DeviceProxy(
+                    device_name=self._vcc_controller_fqdn
                 )
 
                 self._band_proxies = [
-                    CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                    context.DeviceProxy(device_name=fqdn)
                     for fqdn in self._vcc_band_fqdn
                 ]
 
@@ -365,7 +305,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On command completed OK")
 
-    def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
+    def off(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
         Turn off VCC component; currently unimplemented.
 
@@ -377,11 +317,32 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
+    def _deconfigure(self: VccComponentManager) -> None:
+        """Deconfigure scan configuration parameters."""
+        self._doppler_phase_correction = [0 for _ in range(4)]
+        self._jones_matrix = ""
+        self._delay_model = ""
+        self._rfi_flagging_mask = ""
+        self._frequency_band_offset_stream2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._stream_tuning = (0, 0)
+        self._frequency_band = 0
+        self._device_attr_change_callback(
+            "frequencyBand", self._frequency_band
+        )
+        self._device_attr_archive_callback(
+            "frequencyBand", self._frequency_band
+        )
+        self._freq_band_name = ""
+        self._config_id = ""
+        self._scan_id = 0
+
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
             self.logger.warning(
-                f"VCC ConfigureBand not allowed in ObsState {self.obs_state}; must be in ObsState.IDLE or READY"
+                f"VCC ConfigureBand not allowed in ObsState {self.obs_state}; \
+                    must be in ObsState.IDLE or READY"
             )
             return False
         return True
@@ -393,7 +354,24 @@ class VccComponentManager(CbfObsComponentManager):
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
     ) -> None:
+        """
+        Configure VCC band-specific devices
+
+        :param argin: JSON string with the configure band parameters
+
+        :return: None
+        """
         task_callback(status=TaskStatus.IN_PROGRESS)
+        # TODO CIP-2380
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
+                ),
+            )
+            return
 
         band_config = json.loads(argin)
         freq_band_name = band_config["frequency_band"]
@@ -403,17 +381,6 @@ class VccComponentManager(CbfObsComponentManager):
         frequency_band = freq_band_dict()[freq_band_name]["band_index"]
 
         self.logger.info(f"simulation mode: {self.simulation_mode}")
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
-                ),
-            )
-            return
 
         if self.simulation_mode:
             self._vcc_controller_simulator.ConfigureBand(frequency_band)
@@ -485,7 +452,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
+                    "Vcc ConfigureBand command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -517,7 +484,7 @@ class VccComponentManager(CbfObsComponentManager):
         argin: str,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
+    ) -> tuple[TaskStatus, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
         FPGA to the correct bitstream and enables the respective band device. All
@@ -538,19 +505,6 @@ class VccComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    def is_configure_scan_allowed(self: VccComponentManager) -> bool:
-        self.logger.debug("Checking if VCC ConfigureScan is allowed.")
-        if self.obs_state not in [
-            ObsState.IDLE,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-        ]:
-            self.logger.warning(
-                f"VCC ConfigureScan not allowed in ObsState {self.obs_state}; must be in ObsState.IDLE or READY"
-            )
-            return False
-        return True
-
     def _configure_scan(
         self: VccComponentManager,
         argin: str,
@@ -563,10 +517,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         :param argin: JSON string with the configure scan parameters
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :return: None
         """
 
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -661,39 +612,6 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def configure_scan(
-        self: VccComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
-        """
-        Submit configure scan operation method to task executor queue.
-
-        :param argin: JSON string with the configure scan parameters
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (TaskStatus, str)
-        """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._configure_scan,
-            args=[argin],
-            is_cmd_allowed=self.is_configure_scan_allowed,
-            task_callback=task_callback,
-        )
-
-    def is_scan_allowed(self: VccComponentManager) -> bool:
-        self.logger.debug("Checking if VCC Scan is allowed.")
-        if self.obs_state not in [ObsState.READY]:
-            self.logger.warning(
-                f"VCC Scan not allowed in ObsState {self.obs_state}; must be in ObsState.READY"
-            )
-            return False
-        return True
-
     def _scan(
         self: VccComponentManager,
         argin: int,
@@ -706,10 +624,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         :param argin: scan ID integer
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :return: None
         """
 
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -720,7 +635,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                    "Vcc Scan command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -756,39 +671,6 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def scan(
-        self: VccComponentManager,
-        argin: int,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
-        """
-        Submit scan operation method to task executor queue.
-
-        :param argin: Scan ID integer
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (TaskStatus, str)
-        """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._scan,
-            args=[argin],
-            is_cmd_allowed=self.is_scan_allowed,
-            task_callback=task_callback,
-        )
-
-    def is_end_scan_allowed(self: VccComponentManager) -> bool:
-        self.logger.debug("Checking if VCC EndScan is allowed.")
-        if self.obs_state not in [ObsState.SCANNING]:
-            self.logger.warning(
-                f"VCC EndScan not allowed in ObsState {self.obs_state}; must be in ObsState.READY"
-            )
-            return False
-        return True
-
     def _end_scan(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
@@ -798,10 +680,7 @@ class VccComponentManager(CbfObsComponentManager):
         """
         End scan operation.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :return: None
         """
         task_callback(status=TaskStatus.IN_PROGRESS)
 
@@ -811,7 +690,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                    "Vcc EndScan command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -835,6 +714,7 @@ class VccComponentManager(CbfObsComponentManager):
                         "Failed to connect to HPS VCC band devices.",
                     ),
                 )
+                return
 
         # Update obsState callback
         self._update_component_state(scanning=False)
@@ -846,35 +726,6 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def end_scan(
-        self: VccComponentManager,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
-        """
-        Transition observing state from SCANNING to READY
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (TaskStatus, str)
-        """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._end_scan,
-            is_cmd_allowed=self.is_end_scan_allowed,
-            task_callback=task_callback,
-        )
-
-    def is_go_to_idle_allowed(self: VccComponentManager) -> bool:
-        self.logger.debug("Checking if VCC GoToIdle is allowed.")
-        if self.obs_state not in [ObsState.READY]:
-            self.logger.warning(
-                f"VCC GoToIdle not allowed in ObsState {self.obs_state}; must be in ObsState.READY"
-            )
-            return False
-        return True
-
     def _go_to_idle(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
@@ -882,12 +733,9 @@ class VccComponentManager(CbfObsComponentManager):
         **kwargs,
     ) -> None:
         """
-        Execute observing state transition from READY to IDLE
+        Execute observing state transition from READY to IDLE.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :return: None
         """
         task_callback(status=TaskStatus.IN_PROGRESS)
 
@@ -897,7 +745,7 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.ABORTED,
                 result=(
                     ResultCode.ABORTED,
-                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
+                    "Vcc GoToIdle command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -921,6 +769,7 @@ class VccComponentManager(CbfObsComponentManager):
                         "Failed to connect to HPS VCC band devices.",
                     ),
                 )
+                return
 
         # Update obsState callback
         self._update_component_state(configured=False)
@@ -932,28 +781,30 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def go_to_idle(
+    def _abort_scan(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
         """
-        Transition observing state from READY to IDLE
+        Abort the current scan operation.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (TaskStatus, str)
+        :return: None
         """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._go_to_idle,
-            is_cmd_allowed=self.is_go_to_idle_allowed,
-            task_callback=task_callback,
-        )
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
-    def abort(self):
-        """Tell the current VCC band device to abort whatever it was doing."""
+        # TODO CIP-2380
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Vcc AbortScan command aborted by task executor Abort Event.",
+                ),
+            )
+            return
+
         if self._freq_band_name != "":
             idx = self._freq_band_index[self._freq_band_name]
             if self.simulation_mode:
@@ -966,14 +817,17 @@ class VccComponentManager(CbfObsComponentManager):
                     # self._band_proxies[idx].Abort()
                 except tango.DevFailed as df:
                     self.logger.error(str(df.args[0].desc))
-                    self._component_obs_fault_callback(True)
-                    return (
-                        ResultCode.FAILED,
-                        "Failed to connect to VCC band device",
+                    self._update_communication_state(
+                        communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
-                # If the VCC has been aborted from READY, update accordingly.
-                if self._ready:
-                    self._ready = False
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=(
+                            ResultCode.FAILED,
+                            "Failed to connect to HPS VCC band devices.",
+                        ),
+                    )
+                    return
         else:
             # if no value for _freq_band_name, assume in IDLE state,
             # either from initialization or after deconfigure has been called
@@ -981,10 +835,33 @@ class VccComponentManager(CbfObsComponentManager):
                 "Aborting from IDLE; not issuing Abort command to VCC band devices"
             )
 
-        return (ResultCode.OK, "Vcc Abort command completed OK")
+        task_callback(
+            progress=100,
+            result=(ResultCode.OK, "Abort completed OK."),
+            status=TaskStatus.COMPLETED,
+        )
+        return
 
-    def obsreset(self):
+    def _obs_reset(
+        self: VccComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
         """Reset the configuration."""
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        # TODO CIP-2380
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Vcc AbortScan command aborted by task executor Abort Event.",
+                ),
+            )
+            return
+
         if self._freq_band_name != "":
             idx = self._freq_band_index[self._freq_band_name]
             if self.simulation_mode:
@@ -996,11 +873,17 @@ class VccComponentManager(CbfObsComponentManager):
                     # self._band_proxies[idx].ObsReset()
                 except tango.DevFailed as df:
                     self.logger.error(str(df.args[0].desc))
-                    self._component_obs_fault_callback(True)
-                    return (
-                        ResultCode.FAILED,
-                        "Failed to connect to VCC band device",
+                    self._update_communication_state(
+                        communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=(
+                            ResultCode.FAILED,
+                            "Failed to connect to HPS VCC band devices.",
+                        ),
+                    )
+                    return
         else:
             # if no value for _freq_band_name, assume in IDLE state,
             # either from initialization or after deconfigure has been called
@@ -1008,263 +891,269 @@ class VccComponentManager(CbfObsComponentManager):
                 "Aborted from IDLE; not issuing ObsReset command to VCC band devices"
             )
 
-        return (ResultCode.OK, "Vcc ObsReset command completed OK")
+        task_callback(
+            progress=100,
+            result=(ResultCode.OK, "ObsReset completed OK."),
+            status=TaskStatus.COMPLETED,
+        )
+        return
 
-    def configure_search_window(
-        self: VccComponentManager, argin: str
-    ) -> Tuple[ResultCode, str]:
-        """
-        Configure a search window by sending parameters from the input(JSON) to
-        SearchWindow self. This function is called by the subarray after the
-        configuration has already been validated, so the checks here have been
-        removed to reduce overhead.
+    # TODO: where to put deprecated code?
+    # def configure_search_window(
+    #     self: VccComponentManager, argin: str
+    # ) -> tuple[ResultCode, str]:
+    #     """
+    #     Configure a search window by sending parameters from the input(JSON) to
+    #     SearchWindow self. This function is called by the subarray after the
+    #     configuration has already been validated, so the checks here have been
+    #     removed to reduce overhead.
 
-        :param argin: JSON string with the search window parameters
+    #     :param argin: JSON string with the search window parameters
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        result_code = ResultCode.OK
-        message = "ConfigureSearchWindow completed OK"
+    #     :return: A tuple containing a return code and a string
+    #         message indicating status. The message is for
+    #         information purpose only.
+    #     :rtype: (ResultCode, str)
+    #     """
+    #     result_code = ResultCode.OK
+    #     message = "ConfigureSearchWindow completed OK"
 
-        argin = json.loads(argin)
-        self.logger.debug(f"vcc argin: {json.dumps(argin)}")
+    #     argin = json.loads(argin)
+    #     self.logger.debug(f"vcc argin: {json.dumps(argin)}")
 
-        # variable to use as SW proxy
-        proxy_sw = None
-        # Configure searchWindowID.
-        if int(argin["search_window_id"]) == 1:
-            proxy_sw = self._sw_proxies[0]
-        elif int(argin["search_window_id"]) == 2:
-            proxy_sw = self._sw_proxies[1]
+    #     # variable to use as SW proxy
+    #     proxy_sw = None
+    #     # Configure searchWindowID.
+    #     if int(argin["search_window_id"]) == 1:
+    #         proxy_sw = self._sw_proxies[0]
+    #     elif int(argin["search_window_id"]) == 2:
+    #         proxy_sw = self._sw_proxies[1]
 
-        self.logger.debug(f"search_window_id == {argin['search_window_id']}")
+    #     self.logger.debug(f"search_window_id == {argin['search_window_id']}")
 
-        try:
-            # Configure searchWindowTuning.
-            if self._frequency_band in list(
-                range(4)
-            ):  # frequency band is not band 5
-                proxy_sw.searchWindowTuning = argin["search_window_tuning"]
+    #     try:
+    #         # Configure searchWindowTuning.
+    #         if self._frequency_band in list(
+    #             range(4)
+    #         ):  # frequency band is not band 5
+    #             proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
-                start_freq_Hz, stop_freq_Hz = [
-                    const.FREQUENCY_BAND_1_RANGE_HZ,
-                    const.FREQUENCY_BAND_2_RANGE_HZ,
-                    const.FREQUENCY_BAND_3_RANGE_HZ,
-                    const.FREQUENCY_BAND_4_RANGE_HZ,
-                ][self._frequency_band]
+    #             start_freq_Hz, stop_freq_Hz = [
+    #                 const.FREQUENCY_BAND_1_RANGE_HZ,
+    #                 const.FREQUENCY_BAND_2_RANGE_HZ,
+    #                 const.FREQUENCY_BAND_3_RANGE_HZ,
+    #                 const.FREQUENCY_BAND_4_RANGE_HZ,
+    #             ][self._frequency_band]
 
-                if (
-                    start_freq_Hz
-                    + self._frequency_band_offset_stream1
-                    + const.SEARCH_WINDOW_BW_HZ / 2
-                    <= int(argin["search_window_tuning"])
-                    <= stop_freq_Hz
-                    + self._frequency_band_offset_stream1
-                    - const.SEARCH_WINDOW_BW_HZ / 2
-                ):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_message = (
-                        "'searchWindowTuning' partially out of observed band. "
-                        "Proceeding."
-                    )
-                    self.logger.warning(log_message)
-            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                proxy_sw.searchWindowTuning = argin["search_window_tuning"]
+    #             if (
+    #                 start_freq_Hz
+    #                 + self._frequency_band_offset_stream1
+    #                 + const.SEARCH_WINDOW_BW_HZ / 2
+    #                 <= int(argin["search_window_tuning"])
+    #                 <= stop_freq_Hz
+    #                 + self._frequency_band_offset_stream1
+    #                 - const.SEARCH_WINDOW_BW_HZ / 2
+    #             ):
+    #                 # this is the acceptable range
+    #                 pass
+    #             else:
+    #                 # log a warning message
+    #                 log_message = (
+    #                     "'searchWindowTuning' partially out of observed band. "
+    #                     "Proceeding."
+    #                 )
+    #                 self.logger.warning(log_message)
+    #         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+    #             proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
-                frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                    self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream1
-                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                )
+    #             frequency_band_range_1 = (
+    #                 self._stream_tuning[0] * 10**9
+    #                 + self._frequency_band_offset_stream1
+    #                 - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                 self._stream_tuning[0] * 10**9
+    #                 + self._frequency_band_offset_stream1
+    #                 + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #             )
 
-                frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                    self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream2
-                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                )
+    #             frequency_band_range_2 = (
+    #                 self._stream_tuning[1] * 10**9
+    #                 + self._frequency_band_offset_stream2
+    #                 - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #                 self._stream_tuning[1] * 10**9
+    #                 + self._frequency_band_offset_stream2
+    #                 + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+    #             )
 
-                if (
-                    frequency_band_range_1[0]
-                    + const.SEARCH_WINDOW_BW * 10**6 / 2
-                    <= int(argin["search_window_tuning"])
-                    <= frequency_band_range_1[1]
-                    - const.SEARCH_WINDOW_BW * 10**6 / 2
-                ) or (
-                    frequency_band_range_2[0]
-                    + const.SEARCH_WINDOW_BW * 10**6 / 2
-                    <= int(argin["search_window_tuning"])
-                    <= frequency_band_range_2[1]
-                    - const.SEARCH_WINDOW_BW * 10**6 / 2
-                ):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_message = (
-                        "'searchWindowTuning' partially out of observed band. "
-                        "Proceeding."
-                    )
-                    self.logger.warning(log_message)
+    #             if (
+    #                 frequency_band_range_1[0]
+    #                 + const.SEARCH_WINDOW_BW * 10**6 / 2
+    #                 <= int(argin["search_window_tuning"])
+    #                 <= frequency_band_range_1[1]
+    #                 - const.SEARCH_WINDOW_BW * 10**6 / 2
+    #             ) or (
+    #                 frequency_band_range_2[0]
+    #                 + const.SEARCH_WINDOW_BW * 10**6 / 2
+    #                 <= int(argin["search_window_tuning"])
+    #                 <= frequency_band_range_2[1]
+    #                 - const.SEARCH_WINDOW_BW * 10**6 / 2
+    #             ):
+    #                 # this is the acceptable range
+    #                 pass
+    #             else:
+    #                 # log a warning message
+    #                 log_message = (
+    #                     "'searchWindowTuning' partially out of observed band. "
+    #                     "Proceeding."
+    #                 )
+    #                 self.logger.warning(log_message)
 
-                # Configure tdcEnable.
-                proxy_sw.tdcEnable = argin["tdc_enable"]
-                # if argin["tdc_enable"]:
-                #     proxy_sw.On()
-                # else:
-                #     proxy_sw.Off()
+    #             # Configure tdcEnable.
+    #             proxy_sw.tdcEnable = argin["tdc_enable"]
+    #             # if argin["tdc_enable"]:
+    #             #     proxy_sw.On()
+    #             # else:
+    #             #     proxy_sw.Off()
 
-                # Configure tdcNumBits.
-                if argin["tdc_enable"]:
-                    proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
+    #             # Configure tdcNumBits.
+    #             if argin["tdc_enable"]:
+    #                 proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
 
-                # Configure tdcPeriodBeforeEpoch.
-                if "tdc_period_before_epoch" in argin:
-                    proxy_sw.tdcPeriodBeforeEpoch = int(
-                        argin["tdc_period_before_epoch"]
-                    )
-                else:
-                    proxy_sw.tdcPeriodBeforeEpoch = 2
-                    log_message = (
-                        "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
-                        "Defaulting to 2."
-                    )
-                    self.logger.warning(log_message)
+    #             # Configure tdcPeriodBeforeEpoch.
+    #             if "tdc_period_before_epoch" in argin:
+    #                 proxy_sw.tdcPeriodBeforeEpoch = int(
+    #                     argin["tdc_period_before_epoch"]
+    #                 )
+    #             else:
+    #                 proxy_sw.tdcPeriodBeforeEpoch = 2
+    #                 log_message = (
+    #                     "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
+    #                     "Defaulting to 2."
+    #                 )
+    #                 self.logger.warning(log_message)
 
-                # Configure tdcPeriodAfterEpoch.
-                if "tdc_period_after_epoch" in argin:
-                    proxy_sw.tdcPeriodAfterEpoch = int(
-                        argin["tdc_period_after_epoch"]
-                    )
-                else:
-                    proxy_sw.tdcPeriodAfterEpoch = 22
-                    log_message = (
-                        "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
-                        "Defaulting to 22."
-                    )
-                    self.logger.warning(log_message)
+    #             # Configure tdcPeriodAfterEpoch.
+    #             if "tdc_period_after_epoch" in argin:
+    #                 proxy_sw.tdcPeriodAfterEpoch = int(
+    #                     argin["tdc_period_after_epoch"]
+    #                 )
+    #             else:
+    #                 proxy_sw.tdcPeriodAfterEpoch = 22
+    #                 log_message = (
+    #                     "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
+    #                     "Defaulting to 22."
+    #                 )
+    #                 self.logger.warning(log_message)
 
-                # Configure tdcDestinationAddress.
-                # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-                if argin["tdc_enable"]:
-                    for tdc_dest in argin["tdc_destination_address"]:
-                        if tdc_dest["receptor_id"] == self._vcc_id:
-                            # TODO: validate input
-                            proxy_sw.tdcDestinationAddress = tdc_dest[
-                                "tdc_destination_address"
-                            ]
-                            break
+    #             # Configure tdcDestinationAddress.
+    #             # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
+    #             if argin["tdc_enable"]:
+    #                 for tdc_dest in argin["tdc_destination_address"]:
+    #                     if tdc_dest["receptor_id"] == self._vcc_id:
+    #                         # TODO: validate input
+    #                         proxy_sw.tdcDestinationAddress = tdc_dest[
+    #                             "tdc_destination_address"
+    #                         ]
+    #                         break
 
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._component_obs_fault_callback(True)
-            (result_code, message) = (
-                ResultCode.FAILED,
-                "Error configuring search window.",
-            )
+    #     except tango.DevFailed as df:
+    #         self.logger.error(str(df.args[0].desc))
+    #         self._component_obs_fault_callback(True)
+    #         (result_code, message) = (
+    #             ResultCode.FAILED,
+    #             "Error configuring search window.",
+    #         )
 
-        return (result_code, message)
+    #     return (result_code, message)
 
-    def update_doppler_phase_correction(
-        self: VccComponentManager, argin: str
-    ) -> None:
-        """
-        Update Vcc's doppler phase correction
+    # def update_doppler_phase_correction(
+    #     self: VccComponentManager, argin: str
+    # ) -> None:
+    #     """
+    #     Update Vcc's doppler phase correction
 
-        :param argin: the doppler phase correction JSON string
-        """
-        argin = json.loads(argin)
+    #     :param argin: the doppler phase correction JSON string
+    #     """
+    #     argin = json.loads(argin)
 
-        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-        for dopplerDetails in argin:
-            if dopplerDetails["receptor"] == self._vcc_id:
-                coeff = dopplerDetails["dopplerCoeff"]
-                if len(coeff) == 4:
-                    self._doppler_phase_correction = coeff.copy()
-                else:
-                    log_message = "Invalid length for 'dopplerCoeff' "
-                    self.logger.error(log_message)
+    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
+    #     for dopplerDetails in argin:
+    #         if dopplerDetails["receptor"] == self._vcc_id:
+    #             coeff = dopplerDetails["dopplerCoeff"]
+    #             if len(coeff) == 4:
+    #                 self._doppler_phase_correction = coeff.copy()
+    #             else:
+    #                 log_message = "Invalid length for 'dopplerCoeff' "
+    #                 self.logger.error(log_message)
 
-    def update_delay_model(self: VccComponentManager, argin: str) -> None:
-        """
-        Update Vcc's delay model
+    # def update_delay_model(self: VccComponentManager, argin: str) -> None:
+    #     """
+    #     Update Vcc's delay model
 
-        :param argin: the delay model JSON string
-        """
-        delay_model_obj = json.loads(argin)
+    #     :param argin: the delay model JSON string
+    #     """
+    #     delay_model_obj = json.loads(argin)
 
-        # Find the delay model that applies to this VCC's DISH ID and store it
-        dm_found = False
+    #     # Find the delay model that applies to this VCC's DISH ID and store it
+    #     dm_found = False
 
-        # The delay model schema allows for a set of dishes to be included.
-        # Even though there will only be one entryfor a VCC, there should still
-        # be a list with a single entry so that the schema is followed.
-        # Set up the delay model to be a list.
+    #     # The delay model schema allows for a set of dishes to be included.
+    #     # Even though there will only be one entryfor a VCC, there should still
+    #     # be a list with a single entry so that the schema is followed.
+    #     # Set up the delay model to be a list.
 
-        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-        list_of_entries = []
-        for entry in delay_model_obj["delay_details"]:
-            self.logger.debug(
-                f"Received delay model for VCC {entry['receptor']}"
-            )
-            if entry["receptor"] == self._vcc_id:
-                self.logger.debug("Updating delay model for this VCC")
-                list_of_entries.append(copy.deepcopy(entry))
-                self._delay_model = json.dumps(
-                    {"delay_details": list_of_entries}
-                )
-                dm_found = True
-                break
-        if not dm_found:
-            log_message = (
-                f"Delay Model for VCC (DISH: {self._dish_id}) not found"
-            )
-            self.logger.error(log_message)
+    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
+    #     list_of_entries = []
+    #     for entry in delay_model_obj["delay_details"]:
+    #         self.logger.debug(
+    #             f"Received delay model for VCC {entry['receptor']}"
+    #         )
+    #         if entry["receptor"] == self._vcc_id:
+    #             self.logger.debug("Updating delay model for this VCC")
+    #             list_of_entries.append(copy.deepcopy(entry))
+    #             self._delay_model = json.dumps(
+    #                 {"delay_details": list_of_entries}
+    #             )
+    #             dm_found = True
+    #             break
+    #     if not dm_found:
+    #         log_message = (
+    #             f"Delay Model for VCC (DISH: {self._dish_id}) not found"
+    #         )
+    #         self.logger.error(log_message)
 
-    def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
-        """
-        Update Vcc's jones matrix
+    # def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
+    #     """
+    #     Update Vcc's jones matrix
 
-        :param argin: the jones matrix JSON string
-        """
-        matrix = json.loads(argin)
+    #     :param argin: the jones matrix JSON string
+    #     """
+    #     matrix = json.loads(argin)
 
-        # Find the Jones matrix that applies to this VCC's DISH ID and store it
-        jm_found = False
+    #     # Find the Jones matrix that applies to this VCC's DISH ID and store it
+    #     jm_found = False
 
-        # The Jones matrix schema allows for a set of receptors/dishes to be included.
-        # Even though there will only be one entry for a VCC, there should still
-        # be a list with a single entry so that the schema is followed.
-        # Set up the Jones matrix to be a list.
+    #     # The Jones matrix schema allows for a set of receptors/dishes to be included.
+    #     # Even though there will only be one entry for a VCC, there should still
+    #     # be a list with a single entry so that the schema is followed.
+    #     # Set up the Jones matrix to be a list.
 
-        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-        list_of_entries = []
-        for entry in matrix["jones_matrix"]:
-            self.logger.debug(
-                f"Received Jones matrix for VCC {entry['receptor']}"
-            )
-            if entry["receptor"] == self._vcc_id:
-                self.logger.debug("Updating Jones Matrix for this VCC")
-                list_of_entries.append(copy.deepcopy(entry))
-                self._jones_matrix = json.dumps(
-                    {"jones_matrix": list_of_entries}
-                )
-                jm_found = True
-                break
+    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
+    #     list_of_entries = []
+    #     for entry in matrix["jones_matrix"]:
+    #         self.logger.debug(
+    #             f"Received Jones matrix for VCC {entry['receptor']}"
+    #         )
+    #         if entry["receptor"] == self._vcc_id:
+    #             self.logger.debug("Updating Jones Matrix for this VCC")
+    #             list_of_entries.append(copy.deepcopy(entry))
+    #             self._jones_matrix = json.dumps(
+    #                 {"jones_matrix": list_of_entries}
+    #             )
+    #             jm_found = True
+    #             break
 
-        if not jm_found:
-            log_message = (
-                f"Jones matrix for VCC (DISH: {self._dish_id}) not found"
-            )
-            self.logger.error(log_message)
+    #     if not jm_found:
+    #         log_message = (
+    #             f"Jones matrix for VCC (DISH: {self._dish_id}) not found"
+    #         )
+    #         self.logger.error(log_message)
