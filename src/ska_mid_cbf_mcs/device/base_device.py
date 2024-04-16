@@ -34,7 +34,7 @@ __all__ = ["CbfDevice", "main"]
 # NOTE: to update max LRC queue size the following constants must be updated
 # see TODO in SKABaseDevice for rationale
 MAX_QUEUED_COMMANDS = 64
-MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2
+MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2  # 2 per command
 
 
 class CbfDevice(SKABaseDevice):
@@ -74,7 +74,7 @@ class CbfDevice(SKABaseDevice):
         return self._command_ids_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS * 2  # 2 per command
+        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS
     )
     def longRunningCommandStatus(self: CbfDevice) -> list[str]:
         """
@@ -96,6 +96,7 @@ class CbfDevice(SKABaseDevice):
         """Set up the command objects."""
         super().init_command_objects()
 
+        # overriding base On/Off SubmittedSlowCommand register with FastCommand objects
         self.register_command_object(
             "On",
             self.OnCommand(
@@ -119,10 +120,7 @@ class CbfDevice(SKABaseDevice):
     @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
-        Put the device into standby mode.
-
-        To modify behaviour for this command, modify the do() method of
-        the command class.
+        Put the device into standby mode; currently unimplemented in Mid.CBF
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for

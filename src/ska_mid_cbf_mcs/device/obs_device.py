@@ -29,6 +29,8 @@ from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
 
+from .base_device import MAX_QUEUED_COMMANDS, MAX_REPORTED_COMMANDS
+
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
 
@@ -47,10 +49,10 @@ class CbfSubElementObsStateMachine(Machine):
 
     * **IDLE**: the device is unconfigured.
 
-    * **CONFIGURING_IDLE**: the device in unconfigured, but
+    * **CONFIGURING_IDLE**: the device is unconfigured, but
       configuration is in progress.
 
-    * **CONFIGURING_READY**: the device in configured, and configuration
+    * **CONFIGURING_READY**: the device is configured, but configuration
       is in progress.
 
     * **READY**: the device is configured and is ready to perform
@@ -64,7 +66,7 @@ class CbfSubElementObsStateMachine(Machine):
 
     * **FAULT**: the device component has experienced an error from
       which it can be recovered only via manual intervention invoking a
-      reset command that force the device to the base state (IDLE).
+      reset command that forces the device to the base state (IDLE).
 
     The actions supported divide into command-oriented actions and
     component monitoring actions.
@@ -262,12 +264,6 @@ class CbfSubElementObsStateMachine(Machine):
             self._callback(self.state)
 
 
-# NOTE: to update max LRC queue size the following constants must be updated
-# see TODO in SKABaseDevice for rationale
-MAX_QUEUED_COMMANDS = 64
-MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2
-
-
 class CbfObsDevice(SKAObsDevice):
     """
     A generic base observing device for Mid.CBF.
@@ -361,7 +357,7 @@ class CbfObsDevice(SKAObsDevice):
         return self._command_ids_in_queue
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS * 2  # 2 per command
+        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS
     )
     def longRunningCommandStatus(self: CbfObsDevice) -> list[str]:
         """
@@ -437,6 +433,7 @@ class CbfObsDevice(SKAObsDevice):
         """Set up the command objects."""
         super().init_command_objects()
 
+        # overriding base On/Off SubmittedSlowCommand register with FastCommand objects
         self.register_command_object(
             "On",
             self.OnCommand(
@@ -457,10 +454,10 @@ class CbfObsDevice(SKAObsDevice):
         for command_name, method_name, state_model_hook in [
             ("ConfigureScan", "configure_scan", "configure"),
             ("Scan", "scan", None),
-            ("EndScan", "deconfigure", None),
+            ("EndScan", "end_scan", None),
             ("GoToIdle", "go_to_idle", None),
-            ("Abort", "abort", "abort"),
-            ("ObsReset", "obsreset", "obsreset"),
+            ("AbortScan", "abort_scan", "abort"),
+            ("ObsReset", "obs_reset", "obsreset"),
         ]:
             callback = (
                 None
@@ -617,7 +614,7 @@ class CbfObsDevice(SKAObsDevice):
         return [[result_code_message], [command_id]]
 
     @command(
-        dtype_in="DevString",
+        dtype_in="uint64",
         doc_in="A string with the scan ID",
         dtype_out="DevVarLongStringArray",
         doc_out=(
@@ -627,11 +624,11 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def Scan(self: CbfObsDevice, argin: str) -> DevVarLongStringArrayType:
+    def Scan(self: CbfObsDevice, argin: int) -> DevVarLongStringArrayType:
         """
         Start an observing scan.
 
-        :param argin: A string with the scan ID
+        :param argin: Scan ID integer
 
         :return: A tuple containing a return code and a string message
             indicating status. The message is for information purpose
@@ -715,7 +712,7 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def Abort(self: CbfObsDevice) -> DevVarLongStringArrayType:
+    def AbortScan(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Abort the current observing process and move to ABORTED obsState.
 
@@ -723,7 +720,7 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
-        command_handler = self.get_command_object("Abort")
+        command_handler = self.get_command_object("AbortScan")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
