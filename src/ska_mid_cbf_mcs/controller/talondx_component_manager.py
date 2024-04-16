@@ -57,27 +57,25 @@ class TalonDxComponentManager:
                                 is no simulator for the Talon boards, so the component
                             manager does nothing when in simulation mode
         :param logger: a logger for this object to use
-        :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
         self._hw_config_path = hw_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
 
-    def configure_talons(self: TalonDxComponentManager) -> ResultCode:
+        self._hw_config = {}
+        self.talondx_config = {}
+        self.proxies = {}
+
+    def read_config(self: TalonDxComponentManager) -> ResultCode:
         """
-        Performs all actions to configure the Talon boards after power on and
-        start the HPS device servers. This includes: copying the device server
-        binaries and FPGA bitstream to the Talon boards, starting the HPS master
-        device server and sending the configure command to each DsHpsMaster.
+        Read in the configuration files for the Talon boards and the hardware
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-        # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 
-        # Try to read in the configuration file
         try:
             talondx_config_path = (
                 f"{self.talondx_config_path}/talondx-config.json"
@@ -90,11 +88,27 @@ class TalonDxComponentManager:
             self.logger.error(e)
             return ResultCode.FAILED
 
+    def configure_talons(self: TalonDxComponentManager) -> ResultCode:
+        """
+        Performs all actions to configure the Talon boards after power on and
+        start the HPS device servers. This includes: copying the device server
+        binaries and FPGA bitstream to the Talon boards, starting the HPS master
+        device server and sending the configure command to each DsHpsMaster.
+
+        :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
+        """
+
+        # TODO Simulation mode does not do anything yet
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ResultCode.OK
+
+        if self.talondx_config == {} or self._hw_config == {}:
+            if self.read_config() == ResultCode.FAILED:
+                return ResultCode.FAILED
+
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
-        # Initialize proxies dict outside of the configure_talon_thread, so that the thread for each talon doesn't overwrite the previous one
-        self.proxies = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
@@ -524,17 +538,19 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        if self.simulation_mode == SimulationMode.FALSE:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(self._shutdown_talon_thread, talon_cfg)
-                    for talon_cfg in self.talondx_config["config_commands"]
-                ]
-                results = [f.result() for f in futures]
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ret
 
-            if any(r[0] == ResultCode.FAILED for r in results):
-                self.logger.error(f"Talon shutdown thread results: {results}")
-                ret = ResultCode.FAILED
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._shutdown_talon_thread, talon_cfg)
+                for talon_cfg in self.talondx_config["config_commands"]
+            ]
+            results = [f.result() for f in futures]
+
+        if any(r[0] == ResultCode.FAILED for r in results):
+            self.logger.error(f"Talon shutdown thread results: {results}")
+            ret = ResultCode.FAILED
 
         return ret
 
@@ -564,3 +580,85 @@ class TalonDxComponentManager:
             ResultCode.OK,
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
+
+    def reboot(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
+        """
+        Reboot Talon DX boards by sending a linux reboot command to the HPS master
+
+        :return: ResultCode.OK if all configure commands were sent successfully,
+                otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        if self.simulation_mode == SimulationMode.TRUE:
+            return ret
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._reboot_talon, talon_cfg)
+                for talon_cfg in self.talondx_config["config_commands"]
+            ]
+            results = [f.result() for f in futures]
+
+            if any(r == ResultCode.FAILED for r in results):
+                self.logger.error(f"Talon reboot results: {results}")
+                ret = ResultCode.FAILED
+
+        return ret
+
+    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+        """
+        Reboot the Talon board by sending a reboot command to the HPS master
+
+        :return: ResultCode.OK if reboot command was sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        target = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][target]
+        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
+
+        try:
+            with SSHClient() as ssh_client:
+
+                @backoff.on_exception(
+                    backoff.expo,
+                    (NoValidConnectionsError, SSHException),
+                    max_value=3,
+                    max_time=talon_first_connect_timeout,
+                )
+                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on or reboot.
+
+                    :param ip: IP address of the board
+                    :param ssh_client: SSH client to use for connection
+                    """
+                    ssh_client.connect(ip, username="root", password="")
+
+                self.logger.info(f"Rebooting Talon board {target}")
+                ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                make_first_connect(ip, ssh_client)
+
+                ssh_chan = ssh_client.get_transport().open_session()
+                ssh_chan.exec_command("reboot")
+
+                # Wait and connect to the board after reboot
+                time.sleep(const.DEFAULT_TIMEOUT)
+                make_first_connect(ip, ssh_client)
+                self.logger.info(f"Reconnected to {target} after reboot")
+
+        except NoValidConnectionsError as e:
+            self.logger.error(f"{e}")
+            self.logger.error(
+                f"NoValidConnectionsError while initially connecting to {target}"
+            )
+            ret = ResultCode.FAILED
+        except SSHException as e:
+            self.logger.error(f"{e}")
+            self.logger.error(f"SSHException while talking to {target}")
+            ret = ResultCode.FAILED
+
+        return ret
