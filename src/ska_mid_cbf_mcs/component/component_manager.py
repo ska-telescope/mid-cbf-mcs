@@ -23,7 +23,7 @@ from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
 
-from ska_mid_cbf_mcs.device.base_device import INPUT_QUEUE_SIZE_LIMIT
+from ska_mid_cbf_mcs.device.base_device import MAX_QUEUED_COMMANDS
 
 __all__ = ["CbfComponentManager"]
 
@@ -59,7 +59,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Initialise a new CbfComponentManager instance.
 
-        max_queue_size of the parent is set to match the INPUT_QUEUE_SIZE_LIMIT
+        max_queue_size of the parent is set to match the MAX_QUEUED_COMMANDS
         of the base device class, as this constant is also used to limit the
         dimensions of the longRunningCommandsInQueue, longRunningCommandIDsInQueue,
         longRunningCommandStatus and longRunningCommandProgress attributes used
@@ -73,9 +73,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             HealthState of the component changes
         """
 
-        super().__init__(
-            *args, max_queue_size=INPUT_QUEUE_SIZE_LIMIT, **kwargs
-        )
+        super().__init__(*args, max_queue_size=MAX_QUEUED_COMMANDS, **kwargs)
         # Here we have statically defined the state keywords useful in Mid.CBF
         # component management, allowing the use of the _update_component_state
         # method in the BaseComponentManager to issue the component state change
@@ -149,7 +147,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :return: the power state of this component manager.
         """
-        return self._component_state["power_state"]
+        return self._component_state["power"]
 
     @property
     def faulty(self: CbfComponentManager) -> Optional[bool]:
