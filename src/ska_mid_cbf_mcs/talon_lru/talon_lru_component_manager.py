@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
@@ -24,24 +24,22 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-
+"""
+Bryan's TODO List (remember to remove):
+- Figure out wtf that check_power_mode_callback is doing
+"""
 class TalonLRUComponentManager(CbfComponentManager):
     """A component manager for the TalonLRU device."""
 
     def __init__(
+        *args: Any,
         self: TalonLRUComponentManager,
         talons: List[str],
         pdus: List[str],
         pdu_outlets: List[str],
         pdu_cmd_timeout: int,
-        logger: logging.Logger,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerState], None],
-        component_fault_callback: Callable[[bool], None],
         check_power_mode_callback: Callable,
+        **kwargs: Any,
     ) -> None:
         """
         Initialise a new instance.
@@ -49,56 +47,36 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param talons: FQDNs of the Talon DX board
         :param pdus: FQDNs of the power switch devices
         :param pdu_outlets: IDs of the PDU outlets
-        :param logger: a logger for this object to use
-        :param push_change_event_callback: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
-            component fault
+        :param pdu_cmd_timeout: timeout for PDU commands in seconds
         :param check_power_mode_callback: callback to be called in event of
             power switch simulationMode change
         """
-        self.connected = False
+        super().__init__(*args, **kwargs)
+        self.simulation_mode = SimulationMode.TRUE
 
         # Get the device proxies of all the devices we care about
         # TODO: the talondx_board proxies are not currently used for anything
-        # as the mirroring device on the HPS has not yet been created
+        #       as the mirroring device on the HPS has not yet been created
         self._talons = talons
         self._pdus = pdus
         self._pdu_outlets = pdu_outlets
         self._pdu_cmd_timeout = pdu_cmd_timeout
-
-        self.pdu1_power_mode = PowerState.UNKNOWN
-        self.pdu2_power_mode = PowerState.UNKNOWN
+        self._check_power_mode_callback = check_power_mode_callback
 
         self._proxy_talondx_board1 = None
         self._proxy_talondx_board2 = None
         self._proxy_power_switch1 = None
         self._proxy_power_switch2 = None
 
-        self.simulation_mode = SimulationMode.TRUE
+        self.pdu1_power_mode = PowerState.UNKNOWN
+        self.pdu2_power_mode = PowerState.UNKNOWN
+
         self._simulation_mode_events = [None, None]
 
-        self._check_power_mode_callback = check_power_mode_callback
 
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
-        )
 
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-
-        if self.connected:
-            self._logger.info("Already communicating.")
-            return
 
         super().start_communicating()
 
@@ -110,10 +88,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                 "start_communicating()",
             )
 
-        self._proxy_talondx_board1 = self.get_device_proxy(
+        # TODO: Refactor entire connection logic to helpers
+        self._proxy_talondx_board1 = self._get_device_proxy(
             "mid_csp_cbf/talon_board/" + self._talons[0]
         )
-        self._proxy_talondx_board2 = self.get_device_proxy(
+        self._proxy_talondx_board2 = self._get_device_proxy(
             "mid_csp_cbf/talon_board/" + self._talons[1]
         )
 
@@ -121,13 +100,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
         self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
 
-        self._proxy_power_switch1 = self.get_device_proxy(
+        self._proxy_power_switch1 = self._get_device_proxy(
             "mid_csp_cbf/power_switch/" + self._pdus[0]
         )
         if self._pdus[1] == self._pdus[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1
         else:
-            self._proxy_power_switch2 = self.get_device_proxy(
+            self._proxy_power_switch2 = self._get_device_proxy(
                 "mid_csp_cbf/power_switch/" + self._pdus[1]
             )
 
@@ -196,14 +175,12 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_power_switch2.simulationMode = self.simulation_mode
                 self._proxy_power_switch2.adminMode = AdminMode.ONLINE
 
-        self.connected = True
-
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerState.OFF)
+        self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """Stop communication with the component."""
-        super().stop_communicating()
+
+        # TODO: can I removed this???
         if self._simulation_mode_events[0]:
             self._proxy_power_switch1.remove_event(
                 "simulationMode", self._simulation_mode_events[0]
@@ -214,9 +191,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 "simulationMode", self._simulation_mode_events[1]
             )
             self._simulation_mode_events[1] = None
-        self.connected = False
 
-    def get_device_proxy(
+        self._update_component_state(power=PowerState.UNKNOWN)
+        super().stop_communicating()
+        
+
+
+    def _get_device_proxy(
         self: TalonLRUComponentManager, fqdn: str
     ) -> CbfDeviceProxy | None:
         """
@@ -237,9 +218,10 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._logger.error(
                     f"Failed connection to {fqdn} device: {item.reason}"
                 )
-            self.update_component_fault(True)
+            self.update_component_state(fault = True)
             return None
 
+    # TODO: SRP violation here for sure, refactor
     def check_power_mode(
         self: TalonLRUComponentManager, state: DevState
     ) -> None:
@@ -311,6 +293,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         # self.update_component_fault(True)
         return
 
+
+    
     def on(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
