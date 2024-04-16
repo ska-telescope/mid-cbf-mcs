@@ -295,25 +295,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         # self.update_component_fault(True)
         return
 
-    def on(
-        self: TalonLRUComponentManager,
-        argin: str = "",
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[TaskStatus, str]:
-        """
-        Turn on the TalonLRU and its subordinate devices
-
-        :param argin: unused
-        """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._on,
-            args=argin,
-            is_cmd_allowed=self.is_configure_band_allowed,
-            task_callback=task_callback,
-        )
-
     def _on(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -389,25 +370,20 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
-    def off(
+    def on(
         self: TalonLRUComponentManager,
-        argin: str = "",
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> Tuple[TaskStatus, str]:
         """
-        Turn off the TalonLRU and its subordinate devices
+        Turn on the TalonLRU and its subordinate devices
 
         :param argin: unused
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            self._off,
-            args=argin,
-            is_cmd_allowed=self.is_configure_band_allowed,
-            task_callback=task_callback,
+            self._on,
+            is_cmd_allowed=True,
         )
-
+    
     def _off(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -495,6 +471,20 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
+    def off(
+        self: TalonLRUComponentManager,
+    ) -> Tuple[TaskStatus, str]:
+        """
+        Turn off the TalonLRU and its subordinate devices
+
+        :param argin: unused
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._off,
+            is_cmd_allowed=True,
+        )
+    
     def _turn_off_boards(
         self: TalonLRUComponentManager, board_id, talondx_board_proxy
     ):
