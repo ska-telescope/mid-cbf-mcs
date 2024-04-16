@@ -15,32 +15,31 @@
 
 # Vcc TANGO device class
 
+# PROTECTED REGION ID(Vcc.additional_import) ENABLED START #
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-from typing import Any, List, Tuple
+from typing import List, Optional, Tuple
 
 # Tango imports
 import tango
-from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
-from ska_tango_base.control_model import ObsState, SimulationMode
+from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
+from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
 from tango import AttrWriteType, DebugIt
-from tango.server import attribute, command, device_property
+from tango.server import attribute, command, device_property, run
 
 # SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
+
+# PROTECTED REGION END #    //  Vcc.additional_import
 
 __all__ = ["Vcc", "main"]
 
 
-class Vcc(CbfObsDevice):
+class Vcc(CspSubElementObsDevice):
     """
     Vcc TANGO device class for the prototype
     """
@@ -48,6 +47,8 @@ class Vcc(CbfObsDevice):
     # -----------------
     # Device Properties
     # -----------------
+
+    VccID = device_property(dtype="DevUShort")
 
     TalonLRUAddress = device_property(dtype="str")
 
@@ -69,96 +70,27 @@ class Vcc(CbfObsDevice):
     # Attributes
     # ----------
 
-    @attribute(
+    dishID = attribute(
         dtype="str",
-        memorized=True,
-        hw_memorized=True,
-        doc="VCC's associated DISH ID",
+        access=AttrWriteType.READ_WRITE,
+        label="DISH ID",
+        doc="DISH ID",
     )
-    def dishID(self: Vcc) -> str:
-        """
-        Read the dishID attribute.
 
-        :return: the Vcc's DISH ID.
-        :rtype: str
-        """
-        return self.component_manager.dish_id
-
-    @dishID.write
-    def dishID(self: Vcc, value: str) -> None:
-        """
-        Write the dishID attribute.
-
-        :param value: the dishID value.
-        """
-        self.component_manager.dish_id = value
-
-    @attribute(
+    subarrayMembership = attribute(
         dtype="uint16",
-        memorized=True,
-        hw_memorized=True,
+        access=AttrWriteType.READ_WRITE,
+        label="subarrayMembership",
         doc="Subarray membership",
     )
-    def subarrayMembership(self: Vcc) -> int:
-        """
-        Read the subarrayMembership attribute.
 
-        :return: the subarray membership (0 = no affiliation).
-        :rtype: int
-        """
-        return self._subarray_membership
-
-    @subarrayMembership.write
-    def subarrayMembership(self: Vcc, value: int) -> None:
-        """
-        Write the subarrayMembership attribute.
-
-        :param value: the subarray membership value (0 = no affiliation).
-        """
-        self.logger.debug(
-            f"Entering write_subarrayMembership(), value = {value}"
-        )
-        if self._subarray_membership != value:
-            self._subarray_membership = value
-            self.push_change_event("subarrayMembership", value)
-            self.push_archive_event("subarrayMembership", value)
-            # TODO: determine when to deconfigure vcc, is this needed?
-            # self.component_manager.deconfigure()
-
-    @attribute(
-        dtype=tango.DevEnum,
-        enum_labels=["1", "2", "3", "4", "5a", "5b"],
+    frequencyBand = attribute(
+        dtype="DevEnum",
+        access=AttrWriteType.READ,
+        label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
+        enum_labels=["1", "2", "3", "4", "5a", "5b"],
     )
-    def frequencyBand(self: Vcc) -> tango.DevEnum:
-        """
-        Read the frequencyBand attribute.
-
-        :return: the frequency band (being observed by the current scan, one of
-            ["1", "2", "3", "4", "5a", "5b"]).
-        :rtype: tango.DevEnum
-        """
-        return self.component_manager.frequency_band
-
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: Vcc) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: Vcc, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.debug(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
 
     band5Tuning = attribute(
         dtype=("float",),
@@ -211,88 +143,34 @@ class Vcc(CbfObsDevice):
         doc="Jones Matrix elements, given per frequency slice",
     )
 
-    # ------------------
-    # Attributes methods
-    # ------------------
+    scanID = attribute(
+        dtype="DevULong",
+        access=AttrWriteType.READ,
+        label="scanID",
+        doc="scan ID",
+    )
 
-    def read_band5Tuning(self: Vcc) -> List[float]:
-        """
-        Read the band5Tuning attribute.
+    configID = attribute(
+        dtype="DevString",
+        access=AttrWriteType.READ,
+        label="config ID",
+        doc="config ID",
+    )
 
-        :return: the band5Tuning attribute (stream tuning (GHz)).
-        :rtype: list of float
-        """
-        return self.component_manager.stream_tuning
-
-    def read_frequencyBandOffsetStream1(self: Vcc) -> int:
-        """
-        Read the frequencyBandOffsetStream1 attribute.
-
-        :return: the frequencyBandOffsetStream1 attribute.
-        :rtype: int
-        """
-        return self.component_manager.frequency_band_offset_stream1
-
-    def read_frequencyBandOffsetStream2(self: Vcc) -> int:
-        """
-        Read the frequencyBandOffsetStream2 attribute.
-
-        :return: the frequencyBandOffsetStream2 attribute.
-        :rtype: int
-        """
-        return self.component_manager.frequency_band_offset_stream2
-
-    def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
-        """
-        Read the dopplerPhaseCorrection attribute.
-
-        :return: the dopplerPhaseCorrection attribute.
-        :rtype: list of float
-        """
-        return self.component_manager.doppler_phase_correction
-
-    def write_dopplerPhaseCorrection(self: Vcc, value: List[float]) -> None:
-        """
-        Write the dopplerPhaseCorrection attribute.
-
-        :param value: the dopplerPhaseCorrection attribute value.
-        """
-        self.component_manager.doppler_phase_correction = value
-
-    def read_rfiFlaggingMask(self: Vcc) -> str:
-        """
-        Read the rfiFlaggingMask attribute.
-
-        :return: the rfiFlaggingMask attribute.
-        :rtype: str/JSON
-        """
-        return self.component_manager.rfi_flagging_mask
-
-    def read_delayModel(self: Vcc) -> str:
-        """
-        Read the delayModel attribute.
-
-        :return: the delayModel attribute (delay model coefficients,
-            :return: the delayModel attribute (delay model coefficients,
-        :return: the delayModel attribute (delay model coefficients,
-            given per frequency slice).
-        :rtype: list of list of float
-        """
-        return self.component_manager.delay_model
-
-    def read_jonesMatrix(self: Vcc) -> str:
-        """
-        Read the jonesMatrix attribute.
-
-        :return: the jonesMatrix attribute (jones matrix values,
-            given per frequency slice).
-        :rtype: str
-        """
-        return self.component_manager.jones_matrix
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
+    )
 
     # ---------------
     # General methods
     # ---------------
+
+    # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
 
     def init_command_objects(self: Vcc) -> None:
         """
@@ -300,41 +178,73 @@ class Vcc(CbfObsDevice):
         """
         super().init_command_objects()
 
+        device_args = (self, self.op_state_model, self.logger)
+
+        self.register_command_object("On", self.OnCommand(*device_args))
+
+        self.register_command_object("Off", self.OffCommand(*device_args))
+
         self.register_command_object(
-            "ConfigureBand",
-            SubmittedSlowCommand(
-                command_name="ConfigureBand",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="configure_band",
-                logger=self.logger,
-            ),
+            "Standby", self.StandbyCommand(*device_args)
         )
 
-        # self.register_command_object(
-        #     "UpdateDopplerPhaseCorrection",
-        #     self.UpdateDopplerPhaseCorrectionCommand(*device_args),
-        # )
+        self.register_command_object(
+            "ConfigureBand", self.ConfigureBandCommand(*device_args)
+        )
 
-        # self.register_command_object(
-        #     "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
-        # )
+        self.register_command_object(
+            "UpdateDopplerPhaseCorrection",
+            self.UpdateDopplerPhaseCorrectionCommand(*device_args),
+        )
 
-        # self.register_command_object(
-        #     "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
-        # )
+        self.register_command_object(
+            "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
+        )
 
-        # self.register_command_object(
-        #     "ConfigureSearchWindow",
-        #     self.ConfigureSearchWindowCommand(*device_args),
-        # )
+        self.register_command_object(
+            "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "ConfigureSearchWindow",
+            self.ConfigureSearchWindowCommand(*device_args),
+        )
+
+        device_args = (
+            self,
+            self.op_state_model,
+            self.obs_state_model,
+            self.logger,
+        )
+
+        self.register_command_object(
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
+        )
+
+        self.register_command_object("Scan", self.ScanCommand(*device_args))
+
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
+        )
+
+        self.register_command_object("Abort", self.AbortCommand(*device_args))
+
+        self.register_command_object(
+            "ObsReset", self.ObsResetCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
+
+    # PROTECTED REGION END #    //  Vcc.class_variable
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
-        # NOTE: using component manager default of SimulationMode.TRUE,
-        # as self._simulation_mode at this point during init_device()
-        # SimulationMode.FALSE
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
         return VccComponentManager(
-            vcc_id=self.DeviceID,
+            vcc_id=self.VccID,
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
@@ -345,32 +255,295 @@ class Vcc(CbfObsDevice):
             ],
             search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
-            attr_change_callback=self.push_change_event,
-            attr_archive_callback=self.push_archive_event,
-            health_state_callback=self._update_health_state,
-            communication_state_callback=self._communication_state_changed,
-            component_state_callback=self._component_state_changed,
+            push_change_event_callback=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault,
+            component_obs_fault_callback=self._component_obsfault,
         )
 
     def always_executed_hook(self: Vcc) -> None:
+        # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
+        # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
+        # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
         """Hook to delete device."""
+        # PROTECTED REGION END #    //  Vcc.delete_device
+
+    # ---------
+    # Callbacks
+    # ---------
+
+    def _communication_status_changed(
+        self: Vcc, communication_status: CommunicationStatus
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif (
+            communication_status == CommunicationStatus.ESTABLISHED
+            and self._component_power_mode is not None
+        ):
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+
+    def _component_power_mode_changed(
+        self: Vcc, power_mode: PowerMode
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+            self.op_state_model.perform_action(action_map[power_mode])
+
+    def _component_fault(self: Vcc, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state.")
+        else:
+            self.set_status("The device has recovered from FAULT state.")
+
+    def _component_obsfault(self: Vcc, faulty: bool) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.component_manager.obs_faulty = faulty
+        if faulty:
+            self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
+
+    # ------------------
+    # Attributes methods
+    # ------------------
+
+    def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+
+    def read_dishID(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.dishID_read) ENABLED START #
+        """
+        Read the dishID attribute.
+
+        :return: the Vcc's DISH ID.
+        :rtype: str
+        """
+        return self.component_manager.dish_id
+        # PROTECTED REGION END #    //  Vcc.dishID_read
+
+    def write_dishID(self: Vcc, value: str) -> None:
+        # PROTECTED REGION ID(Vcc.dishID_write) ENABLED START #
+        """
+        Write the dishID attribute.
+
+        :param value: the dishID value.
+        """
+        self.component_manager.dish_id = value
+        # PROTECTED REGION END #    //  Vcc.dishID_write
+
+    def read_subarrayMembership(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
+        """
+        Read the subarrayMembership attribute.
+
+        :return: the subarray membership (0 = no affiliation).
+        :rtype: int
+        """
+        return self._subarray_membership
+        # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
+
+    def write_subarrayMembership(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
+        """
+        Write the subarrayMembership attribute.
+
+        :param value: the subarray membership value (0 = no affiliation).
+        """
+        self.logger.debug(
+            f"Entering write_subarrayMembership(), value = {value}"
+        )
+        self._subarray_membership = value
+        self.push_change_event("subarrayMembership", value)
+        self.component_manager.deconfigure()
+        # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
+
+    def read_frequencyBand(self: Vcc) -> tango.DevEnum:
+        # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
+        """
+        Read the frequencyBand attribute.
+
+        :return: the frequency band (being observed by the current scan, one of
+            ["1", "2", "3", "4", "5a", "5b"]).
+        :rtype: tango.DevEnum
+        """
+        return self.component_manager.frequency_band
+        # PROTECTED REGION END #    //  Vcc.frequencyBand_read
+
+    def read_band5Tuning(self: Vcc) -> List[float]:
+        # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
+        """
+        Read the band5Tuning attribute.
+
+        :return: the band5Tuning attribute (stream tuning (GHz)).
+        :rtype: list of float
+        """
+        return self.component_manager.stream_tuning
+        # PROTECTED REGION END #    //  Vcc.band5Tuning_read
+
+    def read_frequencyBandOffsetStream1(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
+        """
+        Read the frequencyBandOffsetStream1 attribute.
+
+        :return: the frequencyBandOffsetStream1 attribute.
+        :rtype: int
+        """
+        return self.component_manager.frequency_band_offset_stream1
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
+
+    def read_frequencyBandOffsetStream2(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
+        """
+        Read the frequencyBandOffsetStream2 attribute.
+
+        :return: the frequencyBandOffsetStream2 attribute.
+        :rtype: int
+        """
+        return self.component_manager.frequency_band_offset_stream2
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
+
+    def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
+        # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
+        """
+        Read the dopplerPhaseCorrection attribute.
+
+        :return: the dopplerPhaseCorrection attribute.
+        :rtype: list of float
+        """
+        return self.component_manager.doppler_phase_correction
+        # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_read
+
+    def write_dopplerPhaseCorrection(self: Vcc, value: List[float]) -> None:
+        # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_write) ENABLED START #
+        """
+        Write the dopplerPhaseCorrection attribute.
+
+        :param value: the dopplerPhaseCorrection attribute value.
+        """
+        self.component_manager.doppler_phase_correction = value
+        # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_write
+
+    def read_rfiFlaggingMask(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.rfiFlaggingMask_read) ENABLED START #
+        """
+        Read the rfiFlaggingMask attribute.
+
+        :return: the rfiFlaggingMask attribute.
+        :rtype: str/JSON
+        """
+        return self.component_manager.rfi_flagging_mask
+        # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
+
+    def read_delayModel(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
+        """
+        Read the delayModel attribute.
+
+        :return: the delayModel attribute (delay model coefficients,
+            :return: the delayModel attribute (delay model coefficients,
+        :return: the delayModel attribute (delay model coefficients,
+            given per frequency slice).
+        :rtype: list of list of float
+        """
+        return self.component_manager.delay_model
+        # PROTECTED REGION END #    //  Vcc.delayModel_read
+
+    def read_jonesMatrix(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.jonesMatrix_read) ENABLED START #
+        """
+        Read the jonesMatrix attribute.
+
+        :return: the jonesMatrix attribute (jones matrix values,
+            given per frequency slice).
+        :rtype: str
+        """
+        return self.component_manager.jones_matrix
+        # PROTECTED REGION END #    //  Vcc.jonesMatrix_read
+
+    def read_scanID(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.scanID_read) ENABLED START #
+        """
+        Read the scanID attribute.
+
+        :return: the scanID attribute.
+        :rtype: int
+        """
+        return self.component_manager.scan_id
+        # PROTECTED REGION END #    //  Vcc.scanID_read
+
+    def read_configID(self: Vcc) -> str:
+        # PROTECTED REGION ID(Vcc.configID_read) ENABLED START #
+        """
+        Read the configID attribute.
+
+        :return: the configID attribute.
+        :rtype: str
+        """
+        return self.component_manager.config_id
+        # PROTECTED REGION END #    //  Vcc.configID_read
 
     # --------
     # Commands
     # --------
 
-    class InitCommand(CbfObsDevice.InitCommand):
+    class InitCommand(CspSubElementObsDevice.InitCommand):
         """
         A class for the Vcc's init_device() "command".
         """
 
         def do(
             self: Vcc.InitCommand,
-            *args: Any,
-            **kwargs: Any,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -380,30 +553,113 @@ class Vcc(CbfObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code, msg) = super().do(*args, **kwargs)
+
+            (result_code, msg) = super().do()
+
+            device = self.target
+
+            # Make a private copy of the device properties:
+            device._vcc_id = device.VccID
 
             # initialize attribute values
-            self._device._subarray_membership = 0
+            device._subarray_membership = 0
+            device._last_scan_configuration = ""
 
-            self._device.set_change_event("frequencyBand", True)
-            self._device.set_archive_event("frequencyBand", True)
-            self._device.set_change_event("subarrayMembership", True)
-            self._device.set_archive_event("subarrayMembership", True)
+            device._configuring_from_idle = False
+
+            device.set_change_event("frequencyBand", True, True)
 
             # Setting initial simulation mode to True
-            self._device._simulation_mode = SimulationMode.TRUE
+            device.write_simulationMode(SimulationMode.TRUE)
+
+            device.set_change_event("subarrayMembership", True, True)
+
+            # TODO remove when upgrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             return (result_code, msg)
 
-    @command(
-        dtype_in="DevString",
-        dtype_out="DevVarLongStringArray",
-        doc_in="Band config string.",
-    )
+    class OnCommand(CspSubElementObsDevice.OnCommand):
+        """
+        A class for the Vcc's on command.
+        """
+
+        def do(
+            self: Vcc.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            self.logger.info("Entering Vcc.OnCommand")
+            return self.target.component_manager.on()
+
+    class OffCommand(CspSubElementObsDevice.OffCommand):
+        """
+        A class for the Vcc's off command.
+        """
+
+        def do(
+            self: Vcc.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.off()
+
+    class StandbyCommand(CspSubElementObsDevice.StandbyCommand):
+        """
+        A class for the Vcc's standby command.
+        """
+
+        def do(
+            self: Vcc.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.standby()
+
+    class ConfigureBandCommand(ResponseCommand):
+        """
+        A class for the Vcc's ConfigureBand() command.
+
+        Turn on the corresponding band device and disable all the others.
+        """
+
+        def do(
+            self: Vcc.ConfigureBandCommand, argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for ConfigureBand() command functionality.
+
+            :param freq_band_name: the frequency band name
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.configure_band(argin)
+
+    @command(dtype_in="DevString", doc_in="Band config string.")
     @DebugIt()
-    def ConfigureBand(
-        self: Vcc, band_config: str
-    ) -> DevVarLongStringArrayType:
+    def ConfigureBand(self, band_config: str) -> Tuple[ResultCode, str]:
+        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
 
@@ -412,11 +668,12 @@ class Vcc(CbfObsDevice):
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: DevVarLongStringArrayType
+        :rtype: (ResultCode, str)
         """
-        command_handler = self.get_command_object(command_name="ConfigureBand")
-        result_code_message, command_id = command_handler(band_config)
-        return [[result_code_message], [command_id]]
+        command = self.get_command_object("ConfigureBand")
+        (result_code, message) = command(band_config)
+        return [[result_code], [message]]
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(
         self: Vcc, msg: str, cmd: str
@@ -432,139 +689,178 @@ class Vcc(CbfObsDevice):
             "Command failed", msg, cmd + " execution", tango.ErrSeverity.ERR
         )
 
-    def _validate_input_configure_scan(
-        self: Vcc, argin: str
-    ) -> Tuple[bool, str]:
+    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
-        Validate the configuration parameters against allowed values, as needed.
-
-        :param argin: The JSON formatted string with configuration for the device.
-            :type argin: 'DevString'
-        :return: A tuple containing a boolean and a string message.
-        :rtype: (bool, str)
+        A class for the Vcc's ConfigureScan() command.
         """
-        try:
-            configuration = json.loads(argin)
-        except json.JSONDecodeError:
-            msg = (
-                "Scan configuration object is not a valid JSON object."
-                " Aborting configuration."
-            )
-            return (False, msg)
 
-        # Validate config_id.
-        if "config_id" not in configuration:
-            msg = "'configID' attribute is required."
-            return (False, msg)
+        def do(
+            self: Vcc.ConfigureScanCommand, argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for ConfigureScan() command functionality.
 
-        # Validate frequency_band.
-        if "frequency_band" not in configuration:
-            msg = "'frequencyBand' attribute is required."
-            return (False, msg)
+            :param argin: The configuration as JSON formatted string
+            :type argin: str
 
-        # Validate frequency_band_offset_stream1.
-        if "frequency_band_offset_stream1" not in configuration:
-            configuration["frequency_band_offset_stream1"] = 0
-        if (
-            abs(int(configuration["frequency_band_offset_stream1"]))
-            <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-        ):
-            pass
-        else:
-            msg = (
-                "Absolute value of 'frequencyBandOffsetStream1' must be at "
-                "most half of the frequency slice bandwidth. Aborting configuration."
-            )
-            return (False, msg)
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+            device = self.target
+            # By this time, the DISH ID should be set:
+            device.logger.debug(f"dishID: {device.component_manager.dish_id}")
 
-        # Validate frequency_band_offset_stream2.
-        if "frequency_band_offset_stream2" not in configuration:
-            configuration["frequency_band_offset_stream2"] = 0
-        if (
-            abs(int(configuration["frequency_band_offset_stream2"]))
-            <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-        ):
-            pass
-        else:
-            msg = (
-                "Absolute value of 'frequencyBandOffsetStream2' must be at "
-                "most half of the frequency slice bandwidth. Aborting configuration."
-            )
-            return (False, msg)
+            (result_code, msg) = device.component_manager.configure_scan(argin)
 
-        # Validate frequency_band.
-        valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
-        if configuration["frequency_band"] not in valid_freq_bands:
-            msg = (
-                configuration["frequency_band"]
-                + " not a valid frequency band. Aborting configuration."
-            )
-            return (False, msg)
+            if result_code == ResultCode.OK:
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+                if device._configuring_from_idle:
+                    device.obs_state_model.perform_action(
+                        "component_configured"
+                    )
 
-        # Validate band_5_tuning, frequency_band_offset_stream2
-        # if frequency_band is 5a or 5b.
-        if configuration["frequency_band"] in ["5a", "5b"]:
-            # band_5_tuning is optional
-            if "band_5_tuning" in configuration:
+            return (result_code, msg)
+
+        def validate_input(
+            self: Vcc.ConfigureScanCommand, argin: str
+        ) -> Tuple[bool, str]:
+            """
+            Validate the configuration parameters against allowed values, as needed.
+
+            :param argin: The JSON formatted string with configuration for the device.
+                :type argin: 'DevString'
+            :return: A tuple containing a boolean and a string message.
+            :rtype: (bool, str)
+            """
+            try:
+                configuration = json.loads(argin)
+            except json.JSONDecodeError:
+                msg = (
+                    "Scan configuration object is not a valid JSON object."
+                    " Aborting configuration."
+                )
+                return (False, msg)
+
+            # Validate config_id.
+            if "config_id" not in configuration:
+                msg = "'configID' attribute is required."
+                return (False, msg)
+
+            # Validate frequency_band.
+            if "frequency_band" not in configuration:
+                msg = "'frequencyBand' attribute is required."
+                return (False, msg)
+
+            # Validate frequency_band_offset_stream1.
+            if "frequency_band_offset_stream1" not in configuration:
+                configuration["frequency_band_offset_stream1"] = 0
+            if (
+                abs(int(configuration["frequency_band_offset_stream1"]))
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+            ):
                 pass
-                # check if stream_tuning is an array of length 2
-                try:
-                    assert len(configuration["band_5_tuning"]) == 2
-                except (TypeError, AssertionError):
-                    msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
-                    return (False, msg)
+            else:
+                msg = (
+                    "Absolute value of 'frequencyBandOffsetStream1' must be at "
+                    "most half of the frequency slice bandwidth. Aborting configuration."
+                )
+                return (False, msg)
 
-                stream_tuning = [*map(float, configuration["band_5_tuning"])]
-                if configuration["frequency_band"] == "5a":
-                    if all(
-                        [
-                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
-                            <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
-                            for i in [0, 1]
-                        ]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band_5_tuning must be floats between "
-                            + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                            + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                            + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            + " for a 'frequencyBand' of 5a. Aborting configuration."
-                        )
-                        return (False, msg)
-                else:  # configuration["frequency_band"] == "5b"
-                    if all(
-                        [
-                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
-                            <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
-                            for i in [0, 1]
-                        ]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band_5_tuning must be floats between "
-                            + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                            + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                            + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            + " for a 'frequencyBand' of 5b. Aborting configuration."
-                        )
+            # Validate frequency_band_offset_stream2.
+            if "frequency_band_offset_stream2" not in configuration:
+                configuration["frequency_band_offset_stream2"] = 0
+            if (
+                abs(int(configuration["frequency_band_offset_stream2"]))
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+            ):
+                pass
+            else:
+                msg = (
+                    "Absolute value of 'frequencyBandOffsetStream2' must be at "
+                    "most half of the frequency slice bandwidth. Aborting configuration."
+                )
+                return (False, msg)
+
+            # Validate frequency_band.
+            valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
+            if configuration["frequency_band"] not in valid_freq_bands:
+                msg = (
+                    configuration["frequency_band"]
+                    + " not a valid frequency band. Aborting configuration."
+                )
+                return (False, msg)
+
+            # Validate band_5_tuning, frequency_band_offset_stream2
+            # if frequency_band is 5a or 5b.
+            if configuration["frequency_band"] in ["5a", "5b"]:
+                # band_5_tuning is optional
+                if "band_5_tuning" in configuration:
+                    pass
+                    # check if stream_tuning is an array of length 2
+                    try:
+                        assert len(configuration["band_5_tuning"]) == 2
+                    except (TypeError, AssertionError):
+                        msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
                         return (False, msg)
 
-        return (True, "Configuration validated OK")
+                    stream_tuning = [
+                        *map(float, configuration["band_5_tuning"])
+                    ]
+                    if configuration["frequency_band"] == "5a":
+                        if all(
+                            [
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
+                                <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
+                                for i in [0, 1]
+                            ]
+                        ):
+                            pass
+                        else:
+                            msg = (
+                                "Elements in 'band_5_tuning must be floats between "
+                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                + " for a 'frequencyBand' of 5a. Aborting configuration."
+                            )
+                            return (False, msg)
+                    else:  # configuration["frequency_band"] == "5b"
+                        if all(
+                            [
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
+                                <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
+                                for i in [0, 1]
+                            ]
+                        ):
+                            pass
+                        else:
+                            msg = (
+                                "Elements in 'band_5_tuning must be floats between "
+                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                + " for a 'frequencyBand' of 5b. Aborting configuration."
+                            )
+                            return (False, msg)
+
+            return (True, "Configuration validated OK")
 
     @command(
         dtype_in="DevString",
-        dtype_out="DevVarLongStringArray",
         doc_in="JSON formatted string with the scan configuration.",
+        dtype_out="DevVarLongStringArray",
         doc_out="A tuple containing a return code and a string message indicating status. "
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureScan(self: Vcc, argin: str) -> DevVarLongStringArrayType:
+    def ConfigureScan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
 
@@ -579,28 +875,160 @@ class Vcc(CbfObsDevice):
         # TODO: Improve validation (validation should only be done once,
         # most of the validation can be done through a schema instead of manually
         # through functions).
+        command = self.get_command_object("ConfigureScan")
 
-        (valid, message) = self._validate_input_configure_scan(argin)
-
+        (valid, message) = command.validate_input(argin)
         if not valid:
             self._raise_configuration_fatal_error(message, "ConfigureScan")
         else:
-            # if self._obs_state == ObsState.IDLE:
-            #     self._configuring_from_idle = True
-            # else:
-            #     self._configuring_from_idle = False
+            if self._obs_state == ObsState.IDLE:
+                self._configuring_from_idle = True
+            else:
+                self._configuring_from_idle = False
+            (result_code, message) = command(argin)
+            # store the configuration on command success
+            self._last_scan_configuration = argin
 
-            self.logger.debug(f"dishID: {self.component_manager.dish_id}")
+        return [[result_code], [message]]
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
-            command_handler = self.get_command_object("ConfigureScan")
-            result_code_message, command_id = command_handler(argin)
+    class ScanCommand(CspSubElementObsDevice.ScanCommand):
+        """
+        A class for the Vcc's Scan() command.
+        """
 
-        # store the configuration
-        self._last_scan_configuration = argin
+        def do(self: Vcc.ScanCommand, argin: int) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
 
-        return [[result_code_message], [command_id]]
+            :param argin: The scan ID as JSON formatted string
+            :type argin: int
 
-    class UpdateDopplerPhaseCorrectionCommand(FastCommand):
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            device = self.target
+            (result_code, msg) = device.component_manager.scan(argin)
+
+            if result_code == ResultCode.STARTED:
+                device.obs_state_model.perform_action("component_scanning")
+
+            return (result_code, msg)
+
+    @command(
+        dtype_in="DevShort",
+        doc_in="An integer with the scan ID",
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string message indicating status."
+        "The message is for information purpose only.",
+    )
+    @DebugIt()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        """
+        Start an observing scan.
+
+        :param argin: A string with the scan ID
+        :type argin: 'DevShort'
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("Scan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
+
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+        """
+        A class for the Vcc's EndScan() command.
+        """
+
+        def do(self: Vcc.EndScanCommand) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for EndScan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            (result_code, msg) = device.component_manager.end_scan()
+
+            if result_code == ResultCode.OK:
+                device.obs_state_model.perform_action("component_not_scanning")
+
+            return (result_code, msg)
+
+    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+        """A class for the VCC's ObsReset command."""
+
+        def do(self):
+            """
+            Stateless hook for ObsReset() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.obsreset()
+
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for the VCC's Abort command."""
+
+        def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.abort()
+
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+        """
+        A class for the Vcc's GoToIdle command.
+        """
+
+        def do(
+            self: Vcc.GoToIdleCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering GoToIdleCommand()")
+
+            device = self.target
+
+            # Reset all values intialized in InitCommand.do():
+            device.component_manager.deconfigure()
+
+            if device._obs_state == ObsState.IDLE:
+                return (
+                    ResultCode.OK,
+                    "GoToIdle command completed OK. Device already IDLE",
+                )
+
+            device.obs_state_model.perform_action("component_unconfigured")
+
+            return (ResultCode.OK, "GoToIdle command completed OK")
+
+    class UpdateDopplerPhaseCorrectionCommand(BaseCommand):
         """
         A class for the Vcc's UpdateDopplerPhaseCorrection() command.
 
@@ -645,12 +1073,14 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateDopplerPhaseCorrection(self, argin: str):
+        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateDopplerPhaseCorrection) ENABLED START #
         """
         Update Vcc's doppler phase correction.
         """
         self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDopplerPhaseCorrection
 
-    class UpdateDelayModelCommand(FastCommand):
+    class UpdateDelayModelCommand(BaseCommand):
         """
         A class for the Vcc's UpdateDelayModel() command.
 
@@ -691,12 +1121,14 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateDelayModel(self, argin: str):
+        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateDelayModel) ENABLED START #
         """
         Update Vcc's delay model.
         """
         self.get_command_object("UpdateDelayModel")(argin)
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDelayModel
 
-    class UpdateJonesMatrixCommand(FastCommand):
+    class UpdateJonesMatrixCommand(BaseCommand):
         """
         A class for the Vcc's UpdateJonesMatrix() command.
 
@@ -737,12 +1169,14 @@ class Vcc(CbfObsDevice):
     )
     @DebugIt()
     def UpdateJonesMatrix(self, argin: str):
+        # PROTECTED REGION ID(CspSubElementObsDevice.UpdateJonesMatrix) ENABLED START #
         """
         Update Vcc's Jones matrix.
         """
         self.get_command_object("UpdateJonesMatrix")(argin)
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateJonesMatrix
 
-    class ConfigureSearchWindowCommand(FastCommand):
+    class ConfigureSearchWindowCommand(ResponseCommand):
         """
         A class for the Vcc's ConfigureSearchWindow() command.
 
@@ -776,7 +1210,7 @@ class Vcc(CbfObsDevice):
             :param argin: JSON object with the search window parameters
             """
             self.logger.debug(f"Validating argin: {argin}")
-            device = self._device
+            device = self.target
 
             # try to deserialize input string to a JSON object
             try:
@@ -985,12 +1419,7 @@ class Vcc(CbfObsDevice):
             :rtype: (ResultCode, str)
             """
             self.logger.debug(f"argin: {argin}")
-            # TODO: CIP-1470 comment to remove VCC search window
-            # return self.target.component_manager.configure_search_window(argin)
-            return (
-                ResultCode.OK,
-                "Vcc.ConfigureSearchWindowCommand unimplemented.",
-            )
+            return self.target.component_manager.configure_search_window(argin)
 
     @command(
         dtype_in="DevString",
@@ -1000,7 +1429,8 @@ class Vcc(CbfObsDevice):
         "The message is for information purpose only.",
     )
     @DebugIt()
-    def ConfigureSearchWindow(self, argin) -> None:
+    def ConfigureSearchWindow(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for a search window.
 
@@ -1032,6 +1462,7 @@ class Vcc(CbfObsDevice):
 
         self.logger.debug(f"ConfigureSearchWindow result: {message}")
         return [[result_code], [message]]
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
 
 # ----------
@@ -1040,7 +1471,9 @@ class Vcc(CbfObsDevice):
 
 
 def main(args=None, **kwargs):
-    return Vcc.run_server(args=args or None, **kwargs)
+    # PROTECTED REGION ID(Vcc.main) ENABLED START #
+    return run((Vcc,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  Vcc.main
 
 
 if __name__ == "__main__":

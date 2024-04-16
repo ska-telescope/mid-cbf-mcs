@@ -120,10 +120,7 @@ class CbfDevice(SKABaseDevice):
     @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
-        Put the device into standby mode.
-
-        To modify behaviour for this command, modify the do() method of
-        the command class.
+        Put the device into standby mode; currently unimplemented in Mid.CBF
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for

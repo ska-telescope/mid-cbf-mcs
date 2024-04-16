@@ -20,8 +20,6 @@ import unittest
 
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_testing.mock.placeholders import Anything
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
@@ -481,7 +479,6 @@ class TestVccComponentManager:
         assert result_code == ResultCode.OK
         mock_vcc_band.EndScan.assert_next_call()
 
-    @pytest.mark.skip(reason="CIP-1470 removed unused VCC search window")
     @pytest.mark.parametrize(
         "sw_config_file_name, \
         config_file_name",

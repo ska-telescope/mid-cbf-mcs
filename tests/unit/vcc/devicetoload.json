@@ -1,6 +1,6 @@
 {
     "servers": {
-        "Vcc": {
+        "VccMulti": {
             "vcc-001": {
                 "Vcc": {
                     "mid_csp_cbf/vcc/001": {
@@ -49,7 +49,7 @@
                             "SW2Address": [
                                 "mid_csp_cbf/vcc_sw2/001"
                             ],
-                            "DeviceID": [
+                            "VccID": [
                                 "1"
                             ],
                             "polled_attr": [

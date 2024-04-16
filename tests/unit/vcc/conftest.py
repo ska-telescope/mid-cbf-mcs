@@ -21,10 +21,7 @@ import pytest_mock
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState, SimulationMode
-from ska_tango_testing.context import ThreadedTestTangoContextManager
-from ska_tango_testing.harness import TangoTestHarness
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -81,21 +78,21 @@ def mock_component_manager(
         mock._communication_status_changed_callback(
             CommunicationStatus.NOT_ESTABLISHED
         )
-        mock._component_power_mode_changed_callback(PowerState.ON)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         mock._communication_status_changed_callback(
             CommunicationStatus.ESTABLISHED
         )
 
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.ON)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.OFF)
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
     def _standby(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.STANDBY)
+        mock._component_power_mode_changed_callback(PowerMode.STANDBY)
         return (ResultCode.OK, "Standby command completed OK")
 
     def _configure_scan() -> Tuple[ResultCode, str]:
@@ -173,7 +170,7 @@ def patched_vcc_device_class(
             :return: a mock component manager
             """
             self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerState] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
             mock_component_manager._communication_status_changed_callback = (
                 self._communication_status_changed
@@ -187,13 +184,16 @@ def patched_vcc_device_class(
     return PatchedVcc
 
 
-@pytest.fixture(name="change_event_callbacks")
-def change_event_callbacks_fixture() -> MockTangoEventCallbackGroup:
-    return MockTangoEventCallbackGroup(
-        "longRunningCommandResult",
-        "longRunningCommandProgress",
-        timeout=10,
-    )
+@pytest.fixture()
+def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
+    """
+    Fixture that returns the device under test.
+
+    :param tango_harness: a test harness for Tango devices
+
+    :return: the device under test
+    """
+    return tango_harness.get_device("mid_csp_cbf/vcc/001")
 
 
 @pytest.fixture()
@@ -216,8 +216,8 @@ def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_attribute("PDU1PowerState", PowerState.OFF)
-    builder.add_attribute("PDU2PowerState", PowerState.OFF)
+    builder.add_attribute("PDU1PowerMode", PowerMode.OFF)
+    builder.add_attribute("PDU2PowerMode", PowerMode.OFF)
     return builder()
 
 
