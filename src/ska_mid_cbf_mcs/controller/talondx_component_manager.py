@@ -652,33 +652,6 @@ class TalonDxComponentManager:
                     """
                     ssh_client.connect(ip, username="root", password="")
 
-                def ping_talon(ip: str) -> bool:
-                    """
-                    Ping the Talon board to check if it's up.
-
-                    :param ip: IP address of the Talon board
-                    :return: True if the board is up, False otherwise
-                    """
-                    try:
-                        output = subprocess.check_output(
-                            "ping -c 1 " + ip, shell=True
-                        )
-                        if (
-                            "1 packets transmitted, 1 received"
-                            in output.decode("utf-8")
-                        ):
-                            return True
-                        else:
-                            return False
-                    except Exception:
-                        return False
-
-                if not ping_talon(ip):
-                    self.logger.info(
-                        f"Talon board {target} is not up, do not need to clear"
-                    )
-                    return ret
-
                 self.logger.info(f"Clearing Talon board {target}")
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
