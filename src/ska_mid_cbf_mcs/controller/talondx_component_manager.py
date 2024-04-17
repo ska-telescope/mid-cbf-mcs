@@ -607,7 +607,9 @@ class TalonDxComponentManager:
 
         return ret
 
-    def _reboot_talon_thread(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+    def _reboot_talon_thread(
+        self: TalonDxComponentManager, talon_cfg
+    ) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
