@@ -624,7 +624,7 @@ class TalonDxComponentManager:
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
 
-        script_path = "../scripts/kill_talon_process.sh"
+        script_path = "../scripts/kill_talondx_processes.sh"
         with open(script_path, "r") as file:
             script = file.read()
 
@@ -672,6 +672,7 @@ class TalonDxComponentManager:
                     self.logger.info(
                         f"Talon board {target} is not up, do not need to clear"
                     )
+                    return ret
 
                 self.logger.info(f"Clearing Talon board {target}")
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
