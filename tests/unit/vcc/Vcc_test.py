@@ -14,11 +14,11 @@ from __future__ import annotations
 import json
 import os
 from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, ObsState
-from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
@@ -28,8 +28,6 @@ from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
-from ... import test_utils
-
 # TODO: needed?
 # import gc
 # gc.disable()
@@ -38,46 +36,15 @@ from ... import test_utils
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
-@pytest.fixture(name="device_under_test")
-def device_under_test_fixture(
-    test_context: TangoTestHarnessContext,
-) -> context.DeviceProxy:
-    """
-    Fixture that returns the device under test.
-
-    :param test_context: the context in which the tests run
-
-    :return: the device under test
-    """
-    return test_context.get_device("mid_csp_cbf/vcc/001")
-
-
-@pytest.fixture(name="change_event_callbacks")
-def vcc_change_event_callbacks(
-    device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = [
-        "longRunningCommandResult",
-        "longRunningCommandProgress",
-        "frequencyBand",
-        "obsState",
-    ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
-
-
 class TestVcc:
     """
     Test class for Vcc tests.
     """
 
     @pytest.fixture(name="test_context")
-    def vcc_test_context(self: TestVcc) -> Iterator[context.TTCMExt.TCExt]:
+    def vcc_test_context(
+        self: TestVcc, initial_mocks: dict[str, Mock]
+    ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
@@ -92,6 +59,8 @@ class TestVcc:
             SW2Address="mid_csp_cbf/vcc_sw2/001",
             DeviceID="1",
         )
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
@@ -112,11 +81,6 @@ class TestVcc:
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
-
-    def test_adminMode(
-        self: TestVcc, device_under_test: context.DeviceProxy
-    ) -> None:
-        assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_adminMode(
         self: TestVcc, device_under_test: context.DeviceProxy

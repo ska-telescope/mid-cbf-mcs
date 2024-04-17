@@ -15,7 +15,6 @@ Sub-element VCC component manager for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 
-import copy
 import json
 import threading
 from typing import Any, Callable, Optional
@@ -32,7 +31,7 @@ from ska_control_model import (
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
@@ -217,16 +216,19 @@ class VccComponentManager(CbfObsComponentManager):
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
         # TODO: uncomment
-        # try:
-        #     self._talon_lru_proxy = context.DeviceProxy(device_name=self._talon_lru_fqdn)
-        # except tango.DevFailed:
-        #     self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
-        #     self.logger.error("Error in proxy connection")
-        #     return
+        try:
+            self._talon_lru_proxy = context.DeviceProxy(
+                device_name=self._talon_lru_fqdn
+            )
+        except tango.DevFailed:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error("Error in proxy connection")
+            return
 
         super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
-        # self._update_component_state(power=self._get_power_mode())
+        self._update_component_state(power=self._get_power_mode())
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
@@ -250,8 +252,6 @@ class VccComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return PowerState.UNKNOWN
-
-        self._update_component_state(fault=False)
         if (
             pdu1_power_mode == PowerState.ON
             or pdu2_power_mode == PowerState.ON

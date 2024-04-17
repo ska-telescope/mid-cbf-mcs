@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import unittest.mock
-from types import TracebackType
 from typing import Any, Optional, Type, Union
 
 import tango
 import tango.server
 import tango.test_context
 from ska_tango_testing import context
-from typing_extensions import Literal, Protocol
 
 # PROXY WRAPPERS START
 # TODO: Remove proxy wrappers once pytango issue

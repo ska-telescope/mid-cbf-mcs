@@ -23,16 +23,12 @@ from typing import Any, List, Tuple
 # Tango imports
 import tango
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
-from ska_tango_base.control_model import ObsState, SimulationMode
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.control_model import SimulationMode
 from tango.server import attribute, command, device_property
 
 # SKA imports
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 

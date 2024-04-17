@@ -9,198 +9,52 @@
 
 from __future__ import annotations
 
-import logging
 import unittest
-from typing import Callable, Dict, Optional, Tuple, Type
 
 import pytest
-import pytest_mock
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    CommunicationStatus,
-    PowerState,
-    SimulationMode,
-)
+from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DeviceToLoadType,
-    TangoHarness,
-)
-from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ... import test_utils
 
 
-@pytest.fixture
-def unique_id() -> str:
+@pytest.fixture(name="device_under_test")
+def device_under_test_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
     """
-    Return a unique ID used to test Tango layer infrastructure.
+    Fixture that returns the device under test.
 
-    :return: a unique ID
+    :param test_context: the context in which the tests run
+
+    :return: the device under test
     """
-    return "a unique id"
+    return test_context.get_device("mid_csp_cbf/vcc/001")
 
 
-@pytest.fixture()
-def mock_component_manager(
-    mocker: pytest_mock.mocker, unique_id: str
-) -> unittest.mock.Mock:
-    """
-    Return a mock component manager.
-
-    The mock component manager is a simple mock except for one bit of
-    extra functionality: when we call start_communicating() on it, it
-    makes calls to callbacks signaling that communication is established
-    and the component is off.
-
-    :param mocker: pytest wrapper for unittest.mock
-    :param unique_id: a unique id used to check Tango layer functionality
-
-    :return: a mock component manager
-    """
-    mock = mocker.Mock()
-    mock.is_communicating = False
-    mock.connected = False
-    mock.receptor_id = 1
-
-    def _start_communicating(mock: unittest.mock.Mock) -> None:
-        mock.is_communicating = True
-        mock.connected = True
-        mock._communication_status_changed_callback(
-            CommunicationStatus.NOT_ESTABLISHED
-        )
-        mock._component_power_mode_changed_callback(PowerState.ON)
-        mock._communication_status_changed_callback(
-            CommunicationStatus.ESTABLISHED
-        )
-
-    def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.ON)
-        return (ResultCode.OK, "On command completed OK")
-
-    def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.OFF)
-        return (ResultCode.OK, "Off command completed OK")
-
-    def _standby(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        mock._component_power_mode_changed_callback(PowerState.STANDBY)
-        return (ResultCode.OK, "Standby command completed OK")
-
-    def _configure_scan() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "ConfigureScan command completed OK")
-
-    def _scan() -> Tuple[ResultCode, str]:
-        return (ResultCode.STARTED, "Scan command started")
-
-    def _end_scan() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "EndScan command completed OK")
-
-    def _configure_band(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "ConfigureBand command completed OK")
-
-    def _deconfigure() -> None:
-        pass
-
-    def _configure_search_window() -> Tuple[ResultCode, str]:
-        return (
-            ResultCode.OK,
-            "Vcc ConfigureSearchWindow command completed OK",
-        )
-
-    def _abort() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "Vcc Abort command completed OK")
-
-    def _obsreset() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "Vcc Obsreset command completed OK")
-
-    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda: _on(mock)
-    mock.off.side_effect = lambda: _off(mock)
-    mock.standby.side_effect = lambda: _standby(mock)
-    mock.configure_scan.side_effect = lambda argin: _configure_scan()
-    mock.scan.side_effect = lambda argin: _scan()
-    mock.end_scan.side_effect = lambda: _end_scan()
-    mock.configure_band.side_effect = lambda argin: _configure_band(mock)
-    mock.deconfigure.side_effect = lambda: _deconfigure()
-    mock.configure_search_window.side_effect = (
-        lambda argin: _configure_search_window()
+@pytest.fixture(name="change_event_callbacks")
+def vcc_change_event_callbacks(
+    device_under_test: context.DeviceProxy,
+) -> MockTangoEventCallbackGroup:
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "longRunningCommandProgress",
+        "frequencyBand",
+        "obsState",
+    ]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list
     )
-    mock.abort.side_effect = lambda: _abort()
-    mock.obsreset.side_effect = lambda: _obsreset()
-
-    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
-
-    return mock
-
-
-@pytest.fixture()
-def patched_vcc_device_class(
-    mock_component_manager: unittest.mock.Mock,
-) -> Type[Vcc]:
-    """
-    Return a Vcc device class, patched with extra methods for testing.
-
-    :return: a patched Vcc device class, patched with extra methods
-        for testing
-    """
-
-    class PatchedVcc(Vcc):
-        """
-        Vcc patched with extra commands for testing purposes.
-
-        The extra commands allow us to mock the receipt of obs state
-        change events from subservient devices.
-        """
-
-        def create_component_manager(
-            self: PatchedVcc,
-        ) -> unittest.mock.Mock:
-            """
-            Return a mock component manager instead of the usual one.
-
-            :return: a mock component manager
-            """
-            self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerState] = None
-
-            mock_component_manager._communication_status_changed_callback = (
-                self._communication_status_changed
-            )
-            mock_component_manager._component_power_mode_changed_callback = (
-                self._component_power_mode_changed
-            )
-
-            return mock_component_manager
-
-    return PatchedVcc
-
-
-@pytest.fixture()
-def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
-    """
-    Fixture that specifies the device to be loaded for testing.
-
-    :return: specification of the device to be loaded
-    """
-    return {
-        "path": "tests/unit/vcc/devicetoload.json",
-        "package": "ska_mid_cbf_mcs.vcc.vcc_device",
-        "device": "vcc-001",
-        "device_class": "Vcc",
-        "proxy": CbfDeviceProxy,
-        "patch": patched_vcc_device_class,
-    }
+    test_utils.change_event_subscriber(
+        device_under_test, change_event_attr_list, change_event_callbacks
+    )
+    return change_event_callbacks
 
 
 @pytest.fixture()
@@ -255,7 +109,7 @@ def initial_mocks(
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
     mock_sw: unittest.mock.Mock,
-) -> Dict[str, unittest.mock.Mock]:
+) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
@@ -274,35 +128,3 @@ def initial_mocks(
         "mid_csp_cbf/vcc_sw1/001": mock_sw,
         "mid_csp_cbf/vcc_sw2/001": mock_sw,
     }
-
-
-@pytest.fixture()
-def vcc_component_manager(
-    logger: logging.Logger,
-    tango_harness: TangoHarness,  # sets the connection_factory
-    push_change_event_callback: MockChangeEventCallback,
-    communication_status_changed_callback: MockCallable,
-    component_power_mode_changed_callback: MockCallable,
-    component_fault_callback: MockCallable,
-    component_obs_fault_callback: MockCallable,
-) -> VccComponentManager:
-    """Return a VCC component manager."""
-    return VccComponentManager(
-        vcc_id=1,
-        talon_lru="mid_csp_cbf/talon_lru/001",
-        vcc_controller="talondx-001/vcc-app/vcc-controller",
-        vcc_band=[
-            "talondx-001/vcc-app/vcc-band-1-and-2",
-            "talondx-001/vcc-app/vcc-band-3",
-            "talondx-001/vcc-app/vcc-band-4",
-            "talondx-001/vcc-app/vcc-band-5",
-        ],
-        search_window=["mid_csp_cbf/vcc_sw1/001", "mid_csp_cbf/vcc_sw2/001"],
-        logger=logger,
-        push_change_event_callback=push_change_event_callback,
-        communication_status_changed_callback=communication_status_changed_callback,
-        component_power_mode_changed_callback=component_power_mode_changed_callback,
-        component_fault_callback=component_fault_callback,
-        component_obs_fault_callback=component_obs_fault_callback,
-        simulation_mode=SimulationMode.FALSE,
-    )
