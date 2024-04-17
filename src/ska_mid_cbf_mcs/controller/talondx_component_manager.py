@@ -624,7 +624,12 @@ class TalonDxComponentManager:
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
 
-        script_path = "../scripts/kill_talondx_processes.sh"
+        script_path = os.path.normpath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "../commons/kill_talondx_processes.sh",
+            )
+        )
         with open(script_path, "r") as file:
             script = file.read()
 
