@@ -596,7 +596,7 @@ class TalonDxComponentManager:
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(self._reboot_talon_thread, talon_cfg)
+                executor.submit(self._reboot_talon, talon_cfg)
                 for talon_cfg in self.talondx_config["config_commands"]
             ]
             results = [f.result() for f in futures]
@@ -607,47 +607,89 @@ class TalonDxComponentManager:
 
         return ret
 
-    def _reboot_talon_thread(
-        self: TalonDxComponentManager, talon_cfg
-    ) -> ResultCode:
+    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
         Reboot the Talon board by sending a reboot command to the HPS master
 
         :return: ResultCode.OK if reboot command was sent successfully,
                  otherwise ResultCode.FAILED
         """
-        if not self.proxies:
-            if (
-                self._create_hps_master_device_proxies(talon_cfg)
-                == ResultCode.FAILED
-            ):
-                return (
-                    ResultCode.FAILED,
-                    "_create_hps_master_device_proxies FAILED",
-                )
+        ret = ResultCode.OK
+        target = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][target]
+        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
 
-        hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
-        hps_master = self.proxies[hps_master_fqdn]
-        self.logger.info(
-            f"Sending reboot command to {hps_master_fqdn}, {hps_master}"
-        )
         try:
-            hps_master.shutdown(2)
-        except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.warning(
-                    f"Exception while sending shutdown command"
-                    f" to {hps_master_fqdn} device: {str(item.reason)}"
+            with SSHClient() as ssh_client:
+
+                @backoff.on_exception(
+                    backoff.expo,
+                    (NoValidConnectionsError, SSHException),
+                    max_value=3,
+                    max_time=talon_first_connect_timeout,
                 )
-            # TODO: determine behaviour here; the shutdown command will
-            # inevitably throw an exception, as the device is shut off
-            # there may be a more elegant way to handle the expected shutdown
-            # for CIP-1673 just logging a warning here
+                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on or reboot.
 
-        # wait for linux shutdown
-        time.sleep(const.DEFAULT_TIMEOUT)
+                    :param ip: IP address of the board
+                    :param ssh_client: SSH client to use for connection
+                    """
+                    ssh_client.connect(ip, username="root", password="")
 
-        return (
-            ResultCode.OK,
-            f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
-        )
+                self.logger.info(f"Rebooting Talon board {target}")
+                ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                make_first_connect(ip, ssh_client)
+
+                ssh_chan = ssh_client.get_transport().open_session()
+
+                script = """
+                #!/bin/sh
+
+                # sh script for Talon-DX HPS that stops all SPFRx related device server processes
+
+                pid=$(ps alx | grep ska-mid-spfrx-controller-ds | grep -v grep | awk '{print $3}')
+                if [ $pid -gt 0 ]
+                then echo "Stopping SKA Mid SPFRx Controller Device Server pid=$pid ..."
+                    kill -9 $pid
+                else echo 'Unable to find SKA Mid SPFRx Controller Device Server process, skipping ...'
+                fi
+
+                pid=$(ps alx | grep ska-mid-spfrx-system | grep -v grep | awk '{print $3}')
+                if [ $pid -gt 0 ]
+                then echo "Stopping SKA Mid SPFRx Low Level Device Server pid=$pid ..."
+                    kill -9 $pid
+                else echo 'Unable to find SKA Mid SPFRx Low Level Device Server process, skipping ...'
+                fi
+
+                pid=$(ps alx | grep ska-talondx-temperature-monitor-ds | grep -v grep | awk '{print $3}')
+                if [ $pid -gt 0 ]
+                then echo "Stopping SKA Mid Talon-DX FPGA Temperature Monitor Device Server pid=$pid ..."
+                    kill -9 $pid
+                else echo 'Unable to find SKA Mid Talon-DX FPGA Temperature Monitor Device Server process, skipping ...'
+                fi
+
+                pid=$(ps alx | grep ska-talondx-bsp-ds | grep -v grep | awk '{print $3}')
+                if [ $pid -gt 0 ]
+                then echo "Stopping SKA Mid Talon-DX Board Support Package Device Server pid=$pid ..."
+                    kill -9 $pid
+                else echo 'Unable to find SKA Mid Talon-DX Board Support Package Device Server process, skipping ...'
+                fi
+                """
+
+                ssh_chan.exec_command(script)
+                time.sleep(const.DEFAULT_TIMEOUT)
+
+        except NoValidConnectionsError as e:
+            self.logger.error(f"{e}")
+            self.logger.error(
+                f"NoValidConnectionsError while initially connecting to {target}"
+            )
+            ret = ResultCode.FAILED
+        except SSHException as e:
+            self.logger.error(f"{e}")
+            self.logger.error(f"SSHException while talking to {target}")
+            ret = ResultCode.FAILED
+
+        return ret
