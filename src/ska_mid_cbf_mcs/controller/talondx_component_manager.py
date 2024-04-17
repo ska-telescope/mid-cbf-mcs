@@ -616,9 +616,13 @@ class TalonDxComponentManager:
         :return: ResultCode.OK if reboot command was sent successfully,
                  otherwise ResultCode.FAILED
         """
-        self._create_hps_master_device_proxies(talon_cfg)
+        if not self.proxies:
+            if self._create_hps_master_device_proxies(talon_cfg) == ResultCode.FAILED:
+                return ResultCode.FAILED, "_create_hps_master_device_proxies FAILED"
+            
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
+        self.logger.info(f"Sending reboot command to {hps_master_fqdn}, {hps_master}")
         try:
             hps_master.shutdown(2)
         except tango.DevFailed as df:
