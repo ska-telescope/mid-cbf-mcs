@@ -3,7 +3,7 @@
   "start_validity_sec": 11000000.0,
   "cadence_sec": 400.0,
   "validity_period_sec": 30,
-  "config_id": "delaymodel-20240417-00001",
+  "config_id": "delaymodel-001",
   "subarray": 1,
   "receptor_delays": [
     {
@@ -32,6 +32,9 @@
   "interface": "https://schema.skao.int/ska-csp-delaymodel/3.0",
   "start_validity_sec": 11000000.0,
   "cadence_sec": 400.0,
+  "validity_period_sec": 30,
+  "config_id": "delaymodel-002",
+  "subarray": 1,
   "receptor_delays": [
     {
       "receptor": "SKA001",
@@ -59,6 +62,9 @@
   "interface": "https://schema.skao.int/ska-csp-delaymodel/3.0",
   "start_validity_sec": 11000000.0,
   "cadence_sec": 400.0,
+  "validity_period_sec": 30,
+  "config_id": "delaymodel-003",
+  "subarray": 1,
   "receptor_delays": [
     {
       "receptor": "SKA001",
