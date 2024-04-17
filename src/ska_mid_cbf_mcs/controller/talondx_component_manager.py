@@ -15,6 +15,7 @@ import concurrent.futures
 import json
 import logging
 import os
+import subprocess
 import time
 
 import backoff
@@ -84,6 +85,9 @@ class TalonDxComponentManager:
                 self.talondx_config = json.load(json_fd)
             with open(self._hw_config_path) as yaml_fd:
                 self._hw_config = yaml.safe_load(yaml_fd)
+
+            self.clear()
+            return ResultCode.OK
         except IOError as e:
             self.logger.error(e)
             return ResultCode.FAILED
@@ -581,11 +585,11 @@ class TalonDxComponentManager:
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
 
-    def reboot(
+    def clear(
         self: TalonDxComponentManager,
     ) -> ResultCode:
         """
-        Reboot Talon DX boards by sending a linux reboot command to the HPS master
+        Clear Talon DX boards of any previous state
 
         :return: ResultCode.OK if all configure commands were sent successfully,
                 otherwise ResultCode.FAILED
@@ -596,7 +600,7 @@ class TalonDxComponentManager:
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(self._reboot_talon, talon_cfg)
+                executor.submit(self._clear_talon, talon_cfg)
                 for talon_cfg in self.talondx_config["config_commands"]
             ]
             results = [f.result() for f in futures]
@@ -607,17 +611,22 @@ class TalonDxComponentManager:
 
         return ret
 
-    def _reboot_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+    def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
-        Reboot the Talon board by sending a reboot command to the HPS master
+        Clear the Talon board by sending a script to the Talon-DX HPS
+        that kills all SPFRx related device server processes
 
-        :return: ResultCode.OK if reboot command was sent successfully,
+        :return: ResultCode.OK if script was sent successfully,
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
+
+        script_path = "../scripts/kill_talon_process.sh"
+        with open(script_path, "r") as file:
+            script = file.read()
 
         try:
             with SSHClient() as ssh_client:
@@ -638,46 +647,37 @@ class TalonDxComponentManager:
                     """
                     ssh_client.connect(ip, username="root", password="")
 
-                self.logger.info(f"Rebooting Talon board {target}")
+                def ping_talon(ip: str) -> bool:
+                    """
+                    Ping the Talon board to check if it's up.
+
+                    :param ip: IP address of the Talon board
+                    :return: True if the board is up, False otherwise
+                    """
+                    try:
+                        output = subprocess.check_output(
+                            "ping -c 1 " + ip, shell=True
+                        )
+                        if (
+                            "1 packets transmitted, 1 received"
+                            in output.decode("utf-8")
+                        ):
+                            return True
+                        else:
+                            return False
+                    except Exception:
+                        return False
+
+                if not ping_talon(ip):
+                    self.logger.info(
+                        f"Talon board {target} is not up, do not need to clear"
+                    )
+
+                self.logger.info(f"Clearing Talon board {target}")
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
 
                 ssh_chan = ssh_client.get_transport().open_session()
-
-                script = """
-                #!/bin/sh
-
-                # sh script for Talon-DX HPS that stops all SPFRx related device server processes
-
-                pid=$(ps alx | grep ska-mid-spfrx-controller-ds | grep -v grep | awk '{print $3}')
-                if [ $pid -gt 0 ]
-                then echo "Stopping SKA Mid SPFRx Controller Device Server pid=$pid ..."
-                    kill -9 $pid
-                else echo 'Unable to find SKA Mid SPFRx Controller Device Server process, skipping ...'
-                fi
-
-                pid=$(ps alx | grep ska-mid-spfrx-system | grep -v grep | awk '{print $3}')
-                if [ $pid -gt 0 ]
-                then echo "Stopping SKA Mid SPFRx Low Level Device Server pid=$pid ..."
-                    kill -9 $pid
-                else echo 'Unable to find SKA Mid SPFRx Low Level Device Server process, skipping ...'
-                fi
-
-                pid=$(ps alx | grep ska-talondx-temperature-monitor-ds | grep -v grep | awk '{print $3}')
-                if [ $pid -gt 0 ]
-                then echo "Stopping SKA Mid Talon-DX FPGA Temperature Monitor Device Server pid=$pid ..."
-                    kill -9 $pid
-                else echo 'Unable to find SKA Mid Talon-DX FPGA Temperature Monitor Device Server process, skipping ...'
-                fi
-
-                pid=$(ps alx | grep ska-talondx-bsp-ds | grep -v grep | awk '{print $3}')
-                if [ $pid -gt 0 ]
-                then echo "Stopping SKA Mid Talon-DX Board Support Package Device Server pid=$pid ..."
-                    kill -9 $pid
-                else echo 'Unable to find SKA Mid Talon-DX Board Support Package Device Server process, skipping ...'
-                fi
-                """
-
                 ssh_chan.exec_command(script)
                 time.sleep(const.DEFAULT_TIMEOUT)
 
