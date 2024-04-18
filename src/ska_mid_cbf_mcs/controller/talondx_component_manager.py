@@ -67,25 +67,6 @@ class TalonDxComponentManager:
         self.talondx_config = {}
         self.proxies = {}
 
-    def _read_config(self: TalonDxComponentManager) -> ResultCode:
-        """
-        Read in the configuration files for the Talon boards and the hardware
-
-        :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
-        """
-        try:
-            talondx_config_path = (
-                f"{self.talondx_config_path}/talondx-config.json"
-            )
-            with open(talondx_config_path) as json_fd:
-                self.talondx_config = json.load(json_fd)
-            with open(self._hw_config_path) as yaml_fd:
-                self._hw_config = yaml.safe_load(yaml_fd)
-            return ResultCode.OK
-        except IOError as e:
-            self.logger.error(e)
-            return ResultCode.FAILED
-
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
         Performs all actions to configure the Talon boards after power on and
@@ -118,6 +99,25 @@ class TalonDxComponentManager:
             return ResultCode.FAILED
 
         return ResultCode.OK
+
+    def _read_config(self: TalonDxComponentManager) -> ResultCode:
+        """
+        Read in the configuration files for the Talon boards and the hardware
+
+        :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
+        """
+        try:
+            talondx_config_path = (
+                f"{self.talondx_config_path}/talondx-config.json"
+            )
+            with open(talondx_config_path) as json_fd:
+                self.talondx_config = json.load(json_fd)
+            with open(self._hw_config_path) as yaml_fd:
+                self._hw_config = yaml.safe_load(yaml_fd)
+            return ResultCode.OK
+        except IOError as e:
+            self.logger.error(e)
+            return ResultCode.FAILED
 
     def _configure_talon_thread(
         self: TalonDxComponentManager, talon_cfg
@@ -526,7 +526,7 @@ class TalonDxComponentManager:
 
     def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
-        Clear the Talon board by sending a script to the Talon-DX HPS
+        Clear the Talon board by sending a script to the Talon
         that kills all device processes
 
         :return: ResultCode.OK if script was sent successfully,
@@ -536,7 +536,7 @@ class TalonDxComponentManager:
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
-        talon_devices = talon_cfg["devices"] + ["dshpsmaster"]
+        kill_script = self._generate_kill_script(talon_cfg)
 
         try:
             with SSHClient() as ssh_client:
@@ -560,24 +560,9 @@ class TalonDxComponentManager:
                 self.logger.info(f"Clearing Talon board {target}")
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                 make_first_connect(ip, ssh_client)
+
                 ssh_chan = ssh_client.get_transport().open_session()
-
-                kill_script = "#!/bin/sh\n"
-
-                for talon_device in talon_devices:
-                    self.logger.info(
-                        f"Preparing to kill {talon_device} on {target}"
-                    )
-                    kill_script += f"""
-                    pid=$(ps alx | grep {talon_device} | grep -v grep | awk '{{print $3}}')
-                    if [ $pid -gt 0 ]
-                    then kill -9 $pid
-                    fi
-                    """
-
-                self.logger.info("Executing kill script on target")
                 ssh_chan.exec_command(kill_script)
-
                 time.sleep(const.DEFAULT_TIMEOUT)
 
         except NoValidConnectionsError as e:
@@ -592,6 +577,25 @@ class TalonDxComponentManager:
             ret = ResultCode.FAILED
 
         return ret
+
+    def _generate_kill_script(self: TalonDxComponentManager, talon_cfg) -> str:
+        """
+        Generate a script to kill all device processes on the Talon board
+
+        :return: the script to kill all device processes
+        """
+        talon_devices = talon_cfg["devices"] + ["dshpsmaster"]
+        kill_script = "#!/bin/sh\n"
+
+        for talon_device in talon_devices:
+            kill_script += f"""
+            pid=$(ps alx | grep {talon_device} | grep -v grep | awk '{{print $3}}')
+            if [ $pid -gt 0 ]
+            then kill -9 $pid
+            fi
+            """
+
+        return kill_script
 
     def shutdown(
         self: TalonDxComponentManager,
