@@ -103,9 +103,6 @@ class TalonDxComponentManager:
         if self._read_config() == ResultCode.FAILED:
             return ResultCode.FAILED
 
-        if self._clear_talons() == ResultCode.FAILED:
-            return ResultCode.FAILED
-
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
@@ -125,6 +122,9 @@ class TalonDxComponentManager:
     def _configure_talon_thread(
         self: TalonDxComponentManager, talon_cfg
     ) -> tuple(ResultCode, str):
+        if self._clear_talon(talon_cfg) == ResultCode.FAILED:
+            return (ResultCode.FAILED, "_clear_talon FAILED")
+
         if self._configure_talon_networking(talon_cfg) == ResultCode.FAILED:
             return (ResultCode.FAILED, "_configure_talon_networking FAILED")
 
@@ -524,6 +524,71 @@ class TalonDxComponentManager:
 
         return ret
 
+    def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+        """
+        Clear the Talon board by sending a script to the Talon-DX HPS
+        that kills all device processes
+
+        :return: ResultCode.OK if script was sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        target = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][target]
+        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
+        talon_devices = talon_cfg["devices"]
+
+        try:
+            with SSHClient() as ssh_client:
+
+                @backoff.on_exception(
+                    backoff.expo,
+                    (NoValidConnectionsError, SSHException),
+                    max_value=3,
+                    max_time=talon_first_connect_timeout,
+                )
+                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                    """
+                    Attempts to connect to the Talon board for the first time
+                    after power-on or reboot.
+
+                    :param ip: IP address of the board
+                    :param ssh_client: SSH client to use for connection
+                    """
+                    ssh_client.connect(ip, username="root", password="")
+
+                self.logger.info(f"Clearing Talon board {target}")
+                ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                make_first_connect(ip, ssh_client)
+                ssh_chan = ssh_client.get_transport().open_session()
+
+                for talon_device in talon_devices:
+                    self.logger.info(f"Killing {talon_device} on {target}")
+                    script = f"""
+                    #!/bin/sh
+
+                    pid=$(ps alx | grep {talon_device} | grep -v grep | awk '{{print $3}}')
+                    if [ $pid -gt 0 ]
+                    then kill -9 $pid
+                    fi
+                    """
+                    ssh_chan.exec_command(script)
+
+                time.sleep(const.DEFAULT_TIMEOUT)
+
+        except NoValidConnectionsError as e:
+            self.logger.error(f"{e}")
+            self.logger.error(
+                f"NoValidConnectionsError while initially connecting to {target}"
+            )
+            ret = ResultCode.FAILED
+        except SSHException as e:
+            self.logger.error(f"{e}")
+            self.logger.error(f"SSHException while talking to {target}")
+            ret = ResultCode.FAILED
+
+        return ret
+
     def shutdown(
         self: TalonDxComponentManager,
     ) -> ResultCode:
@@ -580,116 +645,3 @@ class TalonDxComponentManager:
             ResultCode.OK,
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
-
-    def _clear_talons(
-        self: TalonDxComponentManager,
-    ) -> ResultCode:
-        """
-        Clear all used Talon DX boards of any previous state
-
-        :return: ResultCode.OK if all configure commands were sent successfully,
-                otherwise ResultCode.FAILED
-        """
-        ret = ResultCode.OK
-        if self.simulation_mode == SimulationMode.TRUE:
-            return ret
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(self._clear_talon, talon_cfg)
-                for talon_cfg in self.talondx_config["config_commands"]
-            ]
-            results = [f.result() for f in futures]
-
-            if any(r == ResultCode.FAILED for r in results):
-                self.logger.error(f"Talon reboot results: {results}")
-                ret = ResultCode.FAILED
-
-        return ret
-
-    def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
-        """
-        Clear the Talon board by sending a script to the Talon-DX HPS
-        that kills all SPFRx related device server processes
-
-        :return: ResultCode.OK if script was sent successfully,
-                 otherwise ResultCode.FAILED
-        """
-        ret = ResultCode.OK
-        target = talon_cfg["target"]
-        ip = self._hw_config["talon_board"][target]
-        talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
-
-        script_path = os.path.normpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../commons/kill_talondx_processes.sh",
-            )
-        )
-        with open(script_path, "r") as file:
-            script = file.read()
-        self.logger.info(script)
-
-        script = """
-        #!/bin/sh
-
-        pid=$(ps alx | grep ska-mid-spfrx-controller-ds | grep -v grep | awk '{print $3}')
-        if [ $pid -gt 0 ]
-        then kill -9 $pid
-        fi
-
-        pid=$(ps alx | grep ska-mid-spfrx-system | grep -v grep | awk '{print $3}')
-        if [ $pid -gt 0 ]
-        then kill -9 $pid
-        fi
-
-        pid=$(ps alx | grep ska-talondx-temperature-monitor-ds | grep -v grep | awk '{print $3}')
-        if [ $pid -gt 0 ]
-        then kill -9 $pid
-        fi
-
-        pid=$(ps alx | grep ska-talondx-bsp-ds | grep -v grep | awk '{print $3}')
-        if [ $pid -gt 0 ]
-        then kill -9 $pid
-        fi
-        """
-
-        try:
-            with SSHClient() as ssh_client:
-
-                @backoff.on_exception(
-                    backoff.expo,
-                    (NoValidConnectionsError, SSHException),
-                    max_value=3,
-                    max_time=talon_first_connect_timeout,
-                )
-                def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
-                    """
-                    Attempts to connect to the Talon board for the first time
-                    after power-on or reboot.
-
-                    :param ip: IP address of the board
-                    :param ssh_client: SSH client to use for connection
-                    """
-                    ssh_client.connect(ip, username="root", password="")
-
-                self.logger.info(f"Clearing Talon board {target}")
-                ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                make_first_connect(ip, ssh_client)
-
-                ssh_chan = ssh_client.get_transport().open_session()
-                ssh_chan.exec_command(script)
-                time.sleep(const.DEFAULT_TIMEOUT)
-
-        except NoValidConnectionsError as e:
-            self.logger.error(f"{e}")
-            self.logger.error(
-                f"NoValidConnectionsError while initially connecting to {target}"
-            )
-            ret = ResultCode.FAILED
-        except SSHException as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"SSHException while talking to {target}")
-            ret = ResultCode.FAILED
-
-        return ret
