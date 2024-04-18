@@ -562,17 +562,21 @@ class TalonDxComponentManager:
                 make_first_connect(ip, ssh_client)
                 ssh_chan = ssh_client.get_transport().open_session()
 
-                for talon_device in talon_devices:
-                    self.logger.info(f"Killing {talon_device} on {target}")
-                    script = f"""
-                    #!/bin/sh
+                kill_script = "#!/bin/sh\n"
 
+                for talon_device in talon_devices:
+                    self.logger.info(
+                        f"Preparing to kill {talon_device} on {target}"
+                    )
+                    kill_script += f"""
                     pid=$(ps alx | grep {talon_device} | grep -v grep | awk '{{print $3}}')
                     if [ $pid -gt 0 ]
                     then kill -9 $pid
                     fi
                     """
-                    ssh_chan.exec_command(script)
+
+                self.logger.info("Executing kill script on target")
+                ssh_chan.exec_command(kill_script)
 
                 time.sleep(const.DEFAULT_TIMEOUT)
 
