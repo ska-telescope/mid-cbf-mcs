@@ -623,7 +623,6 @@ class TalonDxComponentManager:
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
 
-    
         script_path = os.path.normpath(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -668,7 +667,6 @@ class TalonDxComponentManager:
         else echo 'Unable to find SKA Mid Talon-DX Board Support Package Device Server process, skipping ...'
         fi
         """
-
 
         try:
             with SSHClient() as ssh_client:
