@@ -67,15 +67,12 @@ class TalonDxComponentManager:
         self.talondx_config = {}
         self.proxies = {}
 
-    def read_config(self: TalonDxComponentManager) -> ResultCode:
+    def _read_config(self: TalonDxComponentManager) -> ResultCode:
         """
         Read in the configuration files for the Talon boards and the hardware
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-        if self.simulation_mode == SimulationMode.TRUE:
-            return ResultCode.OK
-
         try:
             talondx_config_path = (
                 f"{self.talondx_config_path}/talondx-config.json"
@@ -84,8 +81,6 @@ class TalonDxComponentManager:
                 self.talondx_config = json.load(json_fd)
             with open(self._hw_config_path) as yaml_fd:
                 self._hw_config = yaml.safe_load(yaml_fd)
-
-            self.clear()
             return ResultCode.OK
         except IOError as e:
             self.logger.error(e)
@@ -105,9 +100,11 @@ class TalonDxComponentManager:
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 
-        if self.talondx_config == {} or self._hw_config == {}:
-            if self.read_config() == ResultCode.FAILED:
-                return ResultCode.FAILED
+        if self._read_config() == ResultCode.FAILED:
+            return ResultCode.FAILED
+
+        if self._clear_talons() == ResultCode.FAILED:
+            return ResultCode.FAILED
 
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
@@ -584,11 +581,11 @@ class TalonDxComponentManager:
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
 
-    def clear(
+    def _clear_talons(
         self: TalonDxComponentManager,
     ) -> ResultCode:
         """
-        Clear Talon DX boards of any previous state
+        Clear all used Talon DX boards of any previous state
 
         :return: ResultCode.OK if all configure commands were sent successfully,
                 otherwise ResultCode.FAILED
@@ -631,40 +628,29 @@ class TalonDxComponentManager:
         )
         with open(script_path, "r") as file:
             script = file.read()
-
         self.logger.info(script)
 
         script = """
         #!/bin/sh
 
-        # sh script for Talon-DX HPS that stops all SPFRx related device server processes
-
         pid=$(ps alx | grep ska-mid-spfrx-controller-ds | grep -v grep | awk '{print $3}')
         if [ $pid -gt 0 ]
-        then echo "Stopping SKA Mid SPFRx Controller Device Server pid=$pid ..."
-            kill -9 $pid
-        else echo 'Unable to find SKA Mid SPFRx Controller Device Server process, skipping ...'
+        then kill -9 $pid
         fi
 
         pid=$(ps alx | grep ska-mid-spfrx-system | grep -v grep | awk '{print $3}')
         if [ $pid -gt 0 ]
-        then echo "Stopping SKA Mid SPFRx Low Level Device Server pid=$pid ..."
-            kill -9 $pid
-        else echo 'Unable to find SKA Mid SPFRx Low Level Device Server process, skipping ...'
+        then kill -9 $pid
         fi
 
         pid=$(ps alx | grep ska-talondx-temperature-monitor-ds | grep -v grep | awk '{print $3}')
         if [ $pid -gt 0 ]
-        then echo "Stopping SKA Mid Talon-DX FPGA Temperature Monitor Device Server pid=$pid ..."
-            kill -9 $pid
-        else echo 'Unable to find SKA Mid Talon-DX FPGA Temperature Monitor Device Server process, skipping ...'
+        then kill -9 $pid
         fi
 
         pid=$(ps alx | grep ska-talondx-bsp-ds | grep -v grep | awk '{print $3}')
         if [ $pid -gt 0 ]
-        then echo "Stopping SKA Mid Talon-DX Board Support Package Device Server pid=$pid ..."
-            kill -9 $pid
-        else echo 'Unable to find SKA Mid Talon-DX Board Support Package Device Server process, skipping ...'
+        then kill -9 $pid
         fi
         """
 
