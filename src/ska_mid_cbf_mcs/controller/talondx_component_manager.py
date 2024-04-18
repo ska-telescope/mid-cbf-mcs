@@ -536,7 +536,7 @@ class TalonDxComponentManager:
         target = talon_cfg["target"]
         ip = self._hw_config["talon_board"][target]
         talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
-        talon_devices = talon_cfg["devices"]
+        talon_devices = talon_cfg["devices"] + ["dshpsmaster"]
 
         try:
             with SSHClient() as ssh_client:
