@@ -408,18 +408,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_power_mode(PowerMode.ON)
             return (ResultCode.OK, "Both outlets successfully turned on")
 
-    def _power_on_pdu(self, pdu_power_mode, proxy_power_switch, pdu_outlet):
-        if pdu_power_mode == PowerMode.ON:
-            self._logger.info("PDU is already on.")
-            return ResultCode.OK
-        elif proxy_power_switch is not None:
-            result = proxy_power_switch.TurnOnOutlet(pdu_outlet)[0][0]
-            if result == ResultCode.OK:
-                pdu_power_mode = PowerMode.ON
-                self._logger.info("PDU successfully turned on.")
-            return result
-        return ResultCode.FAILED
-
     def off(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
