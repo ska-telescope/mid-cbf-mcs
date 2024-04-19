@@ -261,7 +261,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         ):
             if power_mode != expected_power_mode:
                 self._logger.error(
-                    f"PDU outlet {i} expected power mode: ({expected_power_mode}),"
+                    f"Power connection {i} expected power mode: ({expected_power_mode}),"
                     f" actual power mode: ({power_mode})"
                 )
 
@@ -360,23 +360,22 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         result2 = ResultCode.FAILED
 
-        if self.pdu2_power_mode == PowerMode.ON:
+        if (
+            self._pdus[1] == self._pdus[0]
+            and self._pdu_outlets[1] == self._pdu_outlets[0]
+        ):
+            self._logger.info("PDU 2 is not used.")
+            result2 = result1
+        elif self.pdu2_power_mode == PowerMode.ON:
             self._logger.info("PDU 2 is already on.")
             result2 = ResultCode.OK
         elif self._proxy_power_switch2 is not None:
-            if (
-                self._pdus[1] == self._pdus[0]
-                and self._pdu_outlets[1] == self._pdu_outlets[0]
-            ):
-                self._logger.info("PDU 2 is not used.")
-                result2 = result1
-            else:
-                result2 = self._proxy_power_switch2.TurnOnOutlet(
-                    self._pdu_outlets[1]
-                )[0][0]
-                if result2 == ResultCode.OK:
-                    self.pdu2_power_mode = PowerMode.ON
-                    self._logger.info("PDU 2 successfully turned on.")
+            result2 = self._proxy_power_switch2.TurnOnOutlet(
+                self._pdu_outlets[1]
+            )[0][0]
+            if result2 == ResultCode.OK:
+                self.pdu2_power_mode = PowerMode.ON
+                self._logger.info("PDU 2 successfully turned on.")
 
         # Start monitoring talon board telemetries and fault status
         # This can fail if HPS devices are not deployed to the
@@ -408,6 +407,18 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             self.update_component_power_mode(PowerMode.ON)
             return (ResultCode.OK, "Both outlets successfully turned on")
+
+    def _power_on_pdu(self, pdu_power_mode, proxy_power_switch, pdu_outlet):
+        if pdu_power_mode == PowerMode.ON:
+            self._logger.info("PDU is already on.")
+            return ResultCode.OK
+        elif proxy_power_switch is not None:
+            result = proxy_power_switch.TurnOnOutlet(pdu_outlet)[0][0]
+            if result == ResultCode.OK:
+                pdu_power_mode = PowerMode.ON
+                self._logger.info("PDU successfully turned on.")
+            return result
+        return ResultCode.FAILED
 
     def off(
         self: TalonLRUComponentManager,
