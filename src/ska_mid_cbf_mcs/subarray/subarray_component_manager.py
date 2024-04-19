@@ -480,7 +480,7 @@ class CbfSubarrayComponentManager(
                 delay_model_json = json.loads(value)
 
                 # Validate delay_model_json against the telescope model
-                self.logger.info(
+                self._logger.info(
                     f"Attempting to validate the following json against the telescope model: {delay_model_json}"
                 )
                 try:
