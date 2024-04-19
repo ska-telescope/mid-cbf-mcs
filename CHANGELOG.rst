@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.13.3
+******
+* CIP-1983 Added talon reboot to ON sequence to stop power cycling
+
 0.13.2
 ******
 * REL-1345: STFC cluster domain name change
