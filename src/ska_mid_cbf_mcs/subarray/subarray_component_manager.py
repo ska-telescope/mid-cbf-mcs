@@ -480,6 +480,7 @@ class CbfSubarrayComponentManager(
                 delay_model_json = json.loads(value)
 
                 # Validate delay_model_json against the telescope model
+                print(f"CIP-2257 test output - attempting to validate the following json against the telescope model: {delay_model_json}")
                 try:
                     telmodel_validate(
                         version=delay_model_json["interface"],
