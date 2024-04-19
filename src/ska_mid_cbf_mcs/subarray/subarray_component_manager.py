@@ -484,7 +484,7 @@ class CbfSubarrayComponentManager(
                     telmodel_validate(
                         version=delay_model_json["interface"],
                         config=delay_model_json,
-                        strictness=2,
+                        strictness=1,
                     )
                     self._logger.info("Delay model is valid!")
                 except ValueError as e:
@@ -2087,7 +2087,7 @@ class CbfSubarrayComponentManager(
         # Validate scan_json against the telescope model
         try:
             telmodel_validate(
-                version=argin["interface"], config=argin, strictness=2
+                version=argin["interface"], config=argin, strictness=1
             )
             self._logger.info("Scan is valid!")
         except ValueError as e:
