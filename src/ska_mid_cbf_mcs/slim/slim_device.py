@@ -14,22 +14,17 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import (
     HealthState,
     PowerState,
     SimulationMode,
 )
-from tango import AttrWriteType, DebugIt
+from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -235,8 +230,7 @@ class Slim(CbfDevice):
 
     @command(
         dtype_out="DevVarLongStringArray",
-        doc_out="""Tuple of a string containing a return code and message indicating 
-        the status of the command, as well as the SubmittedSlowCommand's command ID.""",
+        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
     )
     @DebugIt()
     def Off(self: Slim) -> None:
