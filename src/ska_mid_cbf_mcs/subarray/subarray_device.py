@@ -388,9 +388,6 @@ class CbfSubarray(CspSubElementSubarray):
         self.component_manager._simulation_mode = value
 
     def read_simulationMode(self: CbfSubarray) -> SimulationMode:
-        self.logger.info(
-            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
-        )
         return self.component_manager._simulation_mode
 
     def read_frequencyBand(self: CbfSubarray) -> int:
