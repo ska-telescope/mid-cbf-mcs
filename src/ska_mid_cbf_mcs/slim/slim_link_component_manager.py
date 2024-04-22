@@ -26,7 +26,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_tango_testing import context
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
 
 BER_PASS_THRESHOLD = 8.000e-11
@@ -137,7 +137,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 "Tx Rx are not yet connected",
                 "tx_idle_ctrl_word()",
             )
-
+            
         return self._tx_device_proxy.idle_ctrl_word
 
     @property
@@ -255,7 +255,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         **kwargs,
     ) -> None:
         """
-        Link the HPS tx and rx devices by synchronizing their idle control words
+        Link the HPS Tx and Rx devices by synchronizing their idle control words
         and disabling serial loopback. Begin monitoring the Tx and Rx.
 
         :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
@@ -266,10 +266,20 @@ class SlimLinkComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        self.logger.info(
+        self.logger.debug(
             f"Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  {self._tx_device_name}->{self._rx_device_name}"
         )
         task_callback(status=TaskStatus.IN_PROGRESS)
+        
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    f"Connect Tx Rx aborted for {self._tx_device_name}->{self._rx_device_name}",
+                ),
+            )
+            return
 
         if self.simulation_mode == SimulationMode.TRUE:
             self.slim_link_simulator.connect_slim_tx_rx()
@@ -296,11 +306,11 @@ class SlimLinkComponentManager(CbfComponentManager):
                         ),
                     )
                     return
-                self._tx_device_proxy = CbfDeviceProxy(
-                    fqdn=self._tx_device_name, logger=self.logger
+                self._tx_device_proxy = context.DeviceProxy(
+                    device_name=self._tx_device_name
                 )
-                self._rx_device_proxy = CbfDeviceProxy(
-                    fqdn=self._rx_device_name, logger=self.logger
+                self._rx_device_proxy = context.DeviceProxy(
+                    device_name=self._rx_device_name
                 )
                 task_callback(progress=20)
 
@@ -352,6 +362,26 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._rx_device_proxy.initialize_connection(False)
                 self.clear_counters()
                 task_callback(progress=80)
+                self._link_enabled = True
+                self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
+                task_callback(
+                    progress=100,
+                    status=TaskStatus.COMPLETED,
+                    result=(
+                        ResultCode.OK,
+                        f"Connected Tx Rx successfully: {self._link_name}",
+                    ),
+                )
+            except AttributeError as ae:
+                self._update_component_state(fault=True)
+                task_callback(
+                    exception=ae,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"AttributeError: Failed to connect {self._tx_device_name}->{self._rx_device_name} - {ae}",
+                    ),
+                )
             except tango.DevFailed as df:
                 self._update_component_state(fault=True)
                 task_callback(
@@ -359,19 +389,13 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        f"Failed to connect Tx Rx for {self._tx_device_name}->{self._rx_device_name}: {df.args[0].desc}",
+                        f"DevFailed: Failed to connect {self._tx_device_name}->{self._rx_device_name} - {df.args[0].desc}",
                     ),
                 )
-        self._link_enabled = True
-        self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        task_callback(
-            progress=100,
-            status=TaskStatus.COMPLETED,
-            result=(
-                ResultCode.OK,
-                f"Connected Tx Rx successfully: {self._link_name}",
-            ),
-        )
+            except Exception as e:
+                # This is used as misc catch TODO: consider rethrow?
+                self.logger.error(f"Exception encountered {e}")
+                raise
 
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -511,8 +535,8 @@ class SlimLinkComponentManager(CbfComponentManager):
                         )
                         return
 
-                    self._tx_device_proxy = CbfDeviceProxy(
-                        fqdn=self._tx_device_name, logger=self.logger
+                    self._tx_device_proxy = context.DeviceProxy(
+                        device_name=self._tx_device_name
                     )
                     task_callback(progress=40)
                     # Sync the idle ctrl word between Tx and Rx

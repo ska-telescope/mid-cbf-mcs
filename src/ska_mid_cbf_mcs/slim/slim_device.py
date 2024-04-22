@@ -64,9 +64,7 @@ class Slim(CbfDevice):
 
         :return: the Mesh configuration in a YAML string.
         """
-        res = self.component_manager.get_configuration_string()
-        return res
-
+        return self.component_manager.get_configuration_string()
     @attribute(
         dtype=(str,),
         max_dim_x=MAX_NUM_LINKS,
@@ -79,8 +77,7 @@ class Slim(CbfDevice):
 
         :return: a list of FQDNs.
         """
-        res = self.component_manager.get_link_fqdns()
-        return res
+        return self.component_manager.get_link_fqdns()
 
     @attribute(
         dtype=(str,),
@@ -94,8 +91,7 @@ class Slim(CbfDevice):
 
         :return: a list of link names.
         """
-        res = self.component_manager.get_link_names()
-        return res
+        return self.component_manager.get_link_names()
 
     @attribute(
         dtype=(HealthState,),
@@ -109,8 +105,7 @@ class Slim(CbfDevice):
 
         :return: a list of health states.
         """
-        res = self.component_manager.get_health_summary()
-        return res
+        return self.component_manager.get_health_summary()
 
     @attribute(
         dtype=(float,),
@@ -124,8 +119,7 @@ class Slim(CbfDevice):
 
         :return: the bit-error rate as a list of floats.
         """
-        res = self.component_manager.get_bit_error_rate()
-        return res
+        return self.component_manager.get_bit_error_rate()
 
     # ---------------
     # General methods

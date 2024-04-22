@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from typing import Optional, Tuple
+import tango
 
 # tango imports
 from ska_tango_base import SKABaseDevice
@@ -186,77 +187,81 @@ class SlimLink(CbfDevice):
     # -----------------
     # Attribute Methods
     # -----------------
-
-    def read_txDeviceName(self: SlimLink) -> str:
+        
+    @attribute(dtype=str)
+    def txDeviceName(self: SlimLink) -> str:
         """
-        Read the txDeviceName attribute.
+        Read the txDeviceName of the device.
 
-        :return: the txDeviceName FQDN.
-        :rtype: str
+        :return: txDeviceName of the device.
         """
         return self.component_manager.tx_device_name
 
-    def write_txDeviceName(self: SlimLink, value: str) -> None:
+    @txDeviceName.write
+    def txDeviceName(self: SlimLink, value: str) -> None:
         """
-        Write the txDeviceName attribute.
+        Set the txDeviceName of the device.
 
-        :param value: the txDeviceName FQDN.
+        :param value: str
         """
         self.component_manager.tx_device_name = value
 
-    def read_rxDeviceName(self: SlimLink) -> str:
+    @attribute(dtype=str)
+    def rxDeviceName(self: SlimLink) -> str:
         """
-        Read the rxDeviceName attribute.
+        Read the rxDeviceName of the device.
 
-        :return: the rxDeviceName FQDN.
-        :rtype: str
+        :return: rxDeviceName of the device.
         """
         return self.component_manager.rx_device_name
 
-    def write_rxDeviceName(self: SlimLink, value: str) -> None:
+    @rxDeviceName.write
+    def rxDeviceName(self: SlimLink, value: str) -> None:
         """
-        Write the rxDeviceName attribute.
+        Set the rxDeviceName of the device.
 
-        :param value: the rxDeviceName FQDN.
+        :param value: str
         """
         self.component_manager.rx_device_name = value
 
-    def read_linkName(self: SlimLink) -> str:
+    @attribute(dtype=str)
+    def linkName(self: SlimLink) -> str:
         """
-        Read the linkName attribute.
+        Read the linkName of the device.
 
-        :return: the link name. Empty if not active.
-        :rtype: str
+        :return: linkName of the device.
         """
         return self.component_manager.link_name
 
-    def read_txIdleCtrlWord(self: SlimLink) -> int:
+    @attribute(dtype=int)
+    def txIdleCtrlWord(self: SlimLink) -> int:
         """
-        Read the txIdleCtrlWord attribute.
+        Read the txIdleCtrlWord of the device.
 
-        :return: the HPS tx device's idle ctrl word.
-        :rtype: int
+        :return: txIdleCtrlWord of the device.
         """
         return self.component_manager.tx_idle_ctrl_word
 
-    def read_rxIdleCtrlWord(self: SlimLink) -> int:
+    @attribute(dtype=int)
+    def rxIdleCtrlWord(self: SlimLink) -> int:
         """
-        Read the rxIdleCtrlWord attribute.
+        Read the rxIdleCtrlWord of the device.
 
-        :return: the HPS rx device's idle ctrl word.
-        :rtype: int
+        :return: rxIdleCtrlWord of the device.
         """
         return self.component_manager.rx_idle_ctrl_word
 
-    def read_bitErrorRate(self: SlimLink) -> float:
+    @attribute(dtype=float)
+    def bitErrorRate(self: SlimLink) -> float:
         """
-        Read the bitErrorRate attribute.
+        Read the bitErrorRate of the device.
 
-        :return: the bitErrorRate value.
-        :rtype: float
+        :return: bitErrorRate of the device.
         """
         return self.component_manager.bit_error_rate
 
+    # TODO: Figure out proper type
+    @attribute(dtype=tango.DevULong)
     def read_counters(self: SlimLink) -> list[int]:
         """
         Read the counters attribute.
@@ -266,7 +271,8 @@ class SlimLink(CbfDevice):
         """
         return self.component_manager.read_counters()
 
-    def read_healthState(self: SlimLink):
+    @attribute(dtype=HealthState)
+    def read_healthState(self: SlimLink) -> HealthState:
         """
         Read the Health State of the device. This overrides the ska-tango-base
         implementation.
@@ -292,7 +298,7 @@ class SlimLink(CbfDevice):
 
         :param value: SimulationMode
         """
-        self.logger.info(f"Writing simulationMode to {value}")
+        self.logger.debug(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
