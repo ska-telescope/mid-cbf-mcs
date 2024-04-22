@@ -379,8 +379,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Start monitoring talon board telemetries and fault status
         # This can fail if HPS devices are not deployed to the
         # board, but it's okay to continue.
-        self.turn_on_talon_board(self._proxy_talondx_board1, self._talons[0])
-        self.turn_on_talon_board(self._proxy_talondx_board2, self._talons[1])
+        self._turn_on_talon_board(self._proxy_talondx_board1, self._talons[0])
+        self._turn_on_talon_board(self._proxy_talondx_board2, self._talons[1])
 
         # Determine what result code to return
         return self._determine_result_code(result1, result2, "on")
