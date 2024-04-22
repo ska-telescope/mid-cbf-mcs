@@ -5,7 +5,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
-0.14.0
+0.14.1 (0.14.0: DO NOT USE)
 ******
 * CIP-2257 Update to delay model json schema version 3.0
 
