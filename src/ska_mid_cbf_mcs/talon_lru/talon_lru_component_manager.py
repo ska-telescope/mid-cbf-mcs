@@ -93,6 +93,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
+    # ------------
+    # Comunication
+    # ------------
+
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
 
@@ -240,6 +244,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return None
 
+    # ---------------
+    # General methods
+    # ---------------
+
     def check_power_mode(
         self: TalonLRUComponentManager, state: DevState
     ) -> None:
@@ -320,9 +328,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             # mode should be. Don't check it.
             return None
 
-    # ------------------
-    #  Command methods
-    # ------------------
+    # ---------------
+    # Command methods
+    # ---------------
 
     def on(
         self: TalonLRUComponentManager,
