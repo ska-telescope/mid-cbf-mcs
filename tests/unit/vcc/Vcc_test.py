@@ -41,6 +41,12 @@ class TestVcc:
     Test class for Vcc tests.
     """
 
+    # TODO: check configured parameters in READY and IDLE?
+    # TODO: test invalid frequency band
+    # TODO: subarrayMembership?
+    # TODO: simulator vs mock HPS?
+    # TODO: validate ConfigureScan at VCC level?
+
     @pytest.fixture(name="test_context")
     def vcc_test_context(
         self: TestVcc, initial_mocks: dict[str, Mock]

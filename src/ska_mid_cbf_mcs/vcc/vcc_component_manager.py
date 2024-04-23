@@ -74,70 +74,6 @@ class VccComponentManager(CbfObsComponentManager):
         """
         return self._frequency_band
 
-    @property
-    def stream_tuning(self: VccComponentManager) -> list[float]:
-        """
-        Band 5 Stream Tuning
-
-        :return: the band 5 stream tuning
-        """
-        return self._stream_tuning
-
-    @property
-    def frequency_band_offset_stream1(self: VccComponentManager) -> int:
-        """
-        Frequency Band Offset Stream 1
-
-        :return: the frequency band offset for stream 1
-        """
-        return self._frequency_band_offset_stream1
-
-    @property
-    def frequency_band_offset_stream2(self: VccComponentManager) -> int:
-        """
-        Frequency Band Offset Stream 2
-
-        :return: the frequency band offset for stream 2, this
-                is only use when band 5 is active
-        """
-        return self._frequency_band_offset_stream2
-
-    @property
-    def rfi_flagging_mask(self: VccComponentManager) -> str:
-        """
-        RFI Flagging Mask
-
-        :return: the RFI flagging mask
-        """
-        return self._rfi_flagging_mask
-
-    @property
-    def jones_matrix(self: VccComponentManager) -> str:
-        """
-        Jones Matrix
-
-        :return: the last received Jones matrix
-        """
-        return self._jones_matrix
-
-    @property
-    def delay_model(self: VccComponentManager) -> str:
-        """
-        Delay Model
-
-        :return: the last received delay model
-        """
-        return self._delay_model
-
-    @property
-    def doppler_phase_correction(self: VccComponentManager) -> list[float]:
-        """
-        Doppler Phase Correction
-
-        :return: the last received Doppler phase correction array
-        """
-        return self._doppler_phase_correction
-
     def __init__(
         self: VccComponentManager,
         *args: Any,
@@ -178,14 +114,6 @@ class VccComponentManager(CbfObsComponentManager):
 
         self._frequency_band = 0
         self._freq_band_name = ""
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream1 = 0
-        self._frequency_band_offset_stream2 = 0
-        self._rfi_flagging_mask = ""
-
-        self._jones_matrix = ""
-        self._delay_model = ""
-        self._doppler_phase_correction = [0 for _ in range(4)]
 
         # Initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
@@ -194,7 +122,6 @@ class VccComponentManager(CbfObsComponentManager):
             zip(freq_band_dict().keys(), [0, 0, 1, 2, 3, 3])
         )
 
-        self._sw_proxies = []
         self._talon_lru_proxy = None
         self._vcc_controller_proxy = None
 
@@ -319,13 +246,6 @@ class VccComponentManager(CbfObsComponentManager):
 
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
-        self._doppler_phase_correction = [0 for _ in range(4)]
-        self._jones_matrix = ""
-        self._delay_model = ""
-        self._rfi_flagging_mask = ""
-        self._frequency_band_offset_stream2 = 0
-        self._frequency_band_offset_stream1 = 0
-        self._stream_tuning = (0, 0)
         self._frequency_band = 0
         self._device_attr_change_callback(
             "frequencyBand", self._frequency_band
@@ -556,19 +476,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        if self._frequency_band in [4, 5]:
-            self._stream_tuning = configuration["band_5_tuning"]
-
-        self._frequency_band_offset_stream1 = int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        self._frequency_band_offset_stream2 = int(
-            configuration["frequency_band_offset_stream2"]
-        )
-
-        if "rfi_flagging_mask" in configuration:
-            self._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
-        else:
+        if "rfi_flagging_mask" not in configuration:
             self.logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
         # TODO CIP-2380
@@ -894,263 +802,3 @@ class VccComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
-    # TODO: where to put deprecated code?
-    # def configure_search_window(
-    #     self: VccComponentManager, argin: str
-    # ) -> tuple[ResultCode, str]:
-    #     """
-    #     Configure a search window by sending parameters from the input(JSON) to
-    #     SearchWindow self. This function is called by the subarray after the
-    #     configuration has already been validated, so the checks here have been
-    #     removed to reduce overhead.
-
-    #     :param argin: JSON string with the search window parameters
-
-    #     :return: A tuple containing a return code and a string
-    #         message indicating status. The message is for
-    #         information purpose only.
-    #     :rtype: (ResultCode, str)
-    #     """
-    #     result_code = ResultCode.OK
-    #     message = "ConfigureSearchWindow completed OK"
-
-    #     argin = json.loads(argin)
-    #     self.logger.debug(f"vcc argin: {json.dumps(argin)}")
-
-    #     # variable to use as SW proxy
-    #     proxy_sw = None
-    #     # Configure searchWindowID.
-    #     if int(argin["search_window_id"]) == 1:
-    #         proxy_sw = self._sw_proxies[0]
-    #     elif int(argin["search_window_id"]) == 2:
-    #         proxy_sw = self._sw_proxies[1]
-
-    #     self.logger.debug(f"search_window_id == {argin['search_window_id']}")
-
-    #     try:
-    #         # Configure searchWindowTuning.
-    #         if self._frequency_band in list(
-    #             range(4)
-    #         ):  # frequency band is not band 5
-    #             proxy_sw.searchWindowTuning = argin["search_window_tuning"]
-
-    #             start_freq_Hz, stop_freq_Hz = [
-    #                 const.FREQUENCY_BAND_1_RANGE_HZ,
-    #                 const.FREQUENCY_BAND_2_RANGE_HZ,
-    #                 const.FREQUENCY_BAND_3_RANGE_HZ,
-    #                 const.FREQUENCY_BAND_4_RANGE_HZ,
-    #             ][self._frequency_band]
-
-    #             if (
-    #                 start_freq_Hz
-    #                 + self._frequency_band_offset_stream1
-    #                 + const.SEARCH_WINDOW_BW_HZ / 2
-    #                 <= int(argin["search_window_tuning"])
-    #                 <= stop_freq_Hz
-    #                 + self._frequency_band_offset_stream1
-    #                 - const.SEARCH_WINDOW_BW_HZ / 2
-    #             ):
-    #                 # this is the acceptable range
-    #                 pass
-    #             else:
-    #                 # log a warning message
-    #                 log_message = (
-    #                     "'searchWindowTuning' partially out of observed band. "
-    #                     "Proceeding."
-    #                 )
-    #                 self.logger.warning(log_message)
-    #         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-    #             proxy_sw.searchWindowTuning = argin["search_window_tuning"]
-
-    #             frequency_band_range_1 = (
-    #                 self._stream_tuning[0] * 10**9
-    #                 + self._frequency_band_offset_stream1
-    #                 - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-    #                 self._stream_tuning[0] * 10**9
-    #                 + self._frequency_band_offset_stream1
-    #                 + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-    #             )
-
-    #             frequency_band_range_2 = (
-    #                 self._stream_tuning[1] * 10**9
-    #                 + self._frequency_band_offset_stream2
-    #                 - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-    #                 self._stream_tuning[1] * 10**9
-    #                 + self._frequency_band_offset_stream2
-    #                 + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-    #             )
-
-    #             if (
-    #                 frequency_band_range_1[0]
-    #                 + const.SEARCH_WINDOW_BW * 10**6 / 2
-    #                 <= int(argin["search_window_tuning"])
-    #                 <= frequency_band_range_1[1]
-    #                 - const.SEARCH_WINDOW_BW * 10**6 / 2
-    #             ) or (
-    #                 frequency_band_range_2[0]
-    #                 + const.SEARCH_WINDOW_BW * 10**6 / 2
-    #                 <= int(argin["search_window_tuning"])
-    #                 <= frequency_band_range_2[1]
-    #                 - const.SEARCH_WINDOW_BW * 10**6 / 2
-    #             ):
-    #                 # this is the acceptable range
-    #                 pass
-    #             else:
-    #                 # log a warning message
-    #                 log_message = (
-    #                     "'searchWindowTuning' partially out of observed band. "
-    #                     "Proceeding."
-    #                 )
-    #                 self.logger.warning(log_message)
-
-    #             # Configure tdcEnable.
-    #             proxy_sw.tdcEnable = argin["tdc_enable"]
-    #             # if argin["tdc_enable"]:
-    #             #     proxy_sw.On()
-    #             # else:
-    #             #     proxy_sw.Off()
-
-    #             # Configure tdcNumBits.
-    #             if argin["tdc_enable"]:
-    #                 proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
-
-    #             # Configure tdcPeriodBeforeEpoch.
-    #             if "tdc_period_before_epoch" in argin:
-    #                 proxy_sw.tdcPeriodBeforeEpoch = int(
-    #                     argin["tdc_period_before_epoch"]
-    #                 )
-    #             else:
-    #                 proxy_sw.tdcPeriodBeforeEpoch = 2
-    #                 log_message = (
-    #                     "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
-    #                     "Defaulting to 2."
-    #                 )
-    #                 self.logger.warning(log_message)
-
-    #             # Configure tdcPeriodAfterEpoch.
-    #             if "tdc_period_after_epoch" in argin:
-    #                 proxy_sw.tdcPeriodAfterEpoch = int(
-    #                     argin["tdc_period_after_epoch"]
-    #                 )
-    #             else:
-    #                 proxy_sw.tdcPeriodAfterEpoch = 22
-    #                 log_message = (
-    #                     "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
-    #                     "Defaulting to 22."
-    #                 )
-    #                 self.logger.warning(log_message)
-
-    #             # Configure tdcDestinationAddress.
-    #             # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-    #             if argin["tdc_enable"]:
-    #                 for tdc_dest in argin["tdc_destination_address"]:
-    #                     if tdc_dest["receptor_id"] == self._vcc_id:
-    #                         # TODO: validate input
-    #                         proxy_sw.tdcDestinationAddress = tdc_dest[
-    #                             "tdc_destination_address"
-    #                         ]
-    #                         break
-
-    #     except tango.DevFailed as df:
-    #         self.logger.error(str(df.args[0].desc))
-    #         self._component_obs_fault_callback(True)
-    #         (result_code, message) = (
-    #             ResultCode.FAILED,
-    #             "Error configuring search window.",
-    #         )
-
-    #     return (result_code, message)
-
-    # def update_doppler_phase_correction(
-    #     self: VccComponentManager, argin: str
-    # ) -> None:
-    #     """
-    #     Update Vcc's doppler phase correction
-
-    #     :param argin: the doppler phase correction JSON string
-    #     """
-    #     argin = json.loads(argin)
-
-    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-    #     for dopplerDetails in argin:
-    #         if dopplerDetails["receptor"] == self._vcc_id:
-    #             coeff = dopplerDetails["dopplerCoeff"]
-    #             if len(coeff) == 4:
-    #                 self._doppler_phase_correction = coeff.copy()
-    #             else:
-    #                 log_message = "Invalid length for 'dopplerCoeff' "
-    #                 self.logger.error(log_message)
-
-    # def update_delay_model(self: VccComponentManager, argin: str) -> None:
-    #     """
-    #     Update Vcc's delay model
-
-    #     :param argin: the delay model JSON string
-    #     """
-    #     delay_model_obj = json.loads(argin)
-
-    #     # Find the delay model that applies to this VCC's DISH ID and store it
-    #     dm_found = False
-
-    #     # The delay model schema allows for a set of dishes to be included.
-    #     # Even though there will only be one entryfor a VCC, there should still
-    #     # be a list with a single entry so that the schema is followed.
-    #     # Set up the delay model to be a list.
-
-    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-    #     list_of_entries = []
-    #     for entry in delay_model_obj["delay_details"]:
-    #         self.logger.debug(
-    #             f"Received delay model for VCC {entry['receptor']}"
-    #         )
-    #         if entry["receptor"] == self._vcc_id:
-    #             self.logger.debug("Updating delay model for this VCC")
-    #             list_of_entries.append(copy.deepcopy(entry))
-    #             self._delay_model = json.dumps(
-    #                 {"delay_details": list_of_entries}
-    #             )
-    #             dm_found = True
-    #             break
-    #     if not dm_found:
-    #         log_message = (
-    #             f"Delay Model for VCC (DISH: {self._dish_id}) not found"
-    #         )
-    #         self.logger.error(log_message)
-
-    # def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
-    #     """
-    #     Update Vcc's jones matrix
-
-    #     :param argin: the jones matrix JSON string
-    #     """
-    #     matrix = json.loads(argin)
-
-    #     # Find the Jones matrix that applies to this VCC's DISH ID and store it
-    #     jm_found = False
-
-    #     # The Jones matrix schema allows for a set of receptors/dishes to be included.
-    #     # Even though there will only be one entry for a VCC, there should still
-    #     # be a list with a single entry so that the schema is followed.
-    #     # Set up the Jones matrix to be a list.
-
-    #     # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-    #     list_of_entries = []
-    #     for entry in matrix["jones_matrix"]:
-    #         self.logger.debug(
-    #             f"Received Jones matrix for VCC {entry['receptor']}"
-    #         )
-    #         if entry["receptor"] == self._vcc_id:
-    #             self.logger.debug("Updating Jones Matrix for this VCC")
-    #             list_of_entries.append(copy.deepcopy(entry))
-    #             self._jones_matrix = json.dumps(
-    #                 {"jones_matrix": list_of_entries}
-    #             )
-    #             jm_found = True
-    #             break
-
-    #     if not jm_found:
-    #         log_message = (
-    #             f"Jones matrix for VCC (DISH: {self._dish_id}) not found"
-    #         )
-    #         self.logger.error(log_message)

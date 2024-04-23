@@ -621,6 +621,8 @@ class CbfObsDevice(SKAObsDevice):
         """
         command_handler = self.get_command_object("ConfigureScan")
         result_code_message, command_id = command_handler(argin)
+        # store configuration in Tango layer
+        self._last_scan_configuration = argin
         return [[result_code_message], [command_id]]
 
     @command(
@@ -686,8 +688,8 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
+        # reset configuration in Tango layer
         self._last_scan_configuration = ""
-
         command_handler = self.get_command_object("GoToIdle")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
