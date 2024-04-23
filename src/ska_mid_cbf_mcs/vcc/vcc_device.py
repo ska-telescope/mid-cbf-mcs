@@ -344,6 +344,7 @@ class Vcc(CbfObsDevice):
             attr_archive_callback=self.push_archive_event,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
+            obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
         )
 

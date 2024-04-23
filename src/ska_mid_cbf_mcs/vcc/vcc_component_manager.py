@@ -473,7 +473,6 @@ class VccComponentManager(CbfObsComponentManager):
         )
 
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "ConfigureBand completed OK."),
             status=TaskStatus.COMPLETED,
         )
@@ -605,8 +604,11 @@ class VccComponentManager(CbfObsComponentManager):
         # Update obsState callback
         self._update_component_state(configured=True)
 
+        self.logger.info(
+            "HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        )
+
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "ConfigureScan completed OK."),
             status=TaskStatus.COMPLETED,
         )
@@ -665,7 +667,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(scanning=True)
 
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "Scan completed OK."),
             status=TaskStatus.COMPLETED,
         )
@@ -720,7 +721,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(scanning=False)
 
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "EndScan completed OK."),
             status=TaskStatus.COMPLETED,
         )
@@ -775,7 +775,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(configured=False)
 
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "GoToIdle completed OK."),
             status=TaskStatus.COMPLETED,
         )
@@ -836,8 +835,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
 
         task_callback(
-            progress=100,
-            result=(ResultCode.OK, "Abort completed OK."),
+            result=(ResultCode.OK, "AbortScan completed OK."),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -892,7 +890,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
 
         task_callback(
-            progress=100,
             result=(ResultCode.OK, "ObsReset completed OK."),
             status=TaskStatus.COMPLETED,
         )
