@@ -98,7 +98,9 @@ class TalonLRUComponentManager(CbfComponentManager):
     # ------------
 
     def start_communicating(self: TalonLRUComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
 
         if self.connected:
             self._logger.info("Already communicating.")
