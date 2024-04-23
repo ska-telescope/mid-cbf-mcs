@@ -93,9 +93,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-    # ------------
-    # Comunication
-    # ------------
+    # -------------
+    # Communication
+    # -------------
 
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """
