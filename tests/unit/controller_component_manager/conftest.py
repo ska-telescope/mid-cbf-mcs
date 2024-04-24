@@ -75,12 +75,18 @@ def controller_component_manager(
             self.simulation_mode = SimulationMode.TRUE
             pass
 
+        def read_config(self: MockTalonDxComponentManager) -> ResultCode:
+            return ResultCode.OK
+
         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
             return ResultCode.OK
 
         def shutdown(
             self: MockTalonDxComponentManager,
         ) -> ResultCode:
+            return ResultCode.OK
+
+        def reboot(self: MockTalonDxComponentManager) -> ResultCode:
             return ResultCode.OK
 
     f = open(file_path + "/../../data/test_fqdns.json")

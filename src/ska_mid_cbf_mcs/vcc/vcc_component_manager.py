@@ -170,26 +170,12 @@ class VccComponentManager(CbfObsComponentManager):
         :return: VCC power mode
         """
         try:
-            pdu1_power_mode = self._talon_lru_proxy.PDU1PowerState
-            pdu2_power_mode = self._talon_lru_proxy.PDU2PowerState
+            return self._talon_lru_proxy.LRUPowerState
         except tango.DevFailed:
             self.logger.error("Could not connect to Talon LRU device")
-            self._update_component_state(fault=True)
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            return PowerState.UNKNOWN
-        if (
-            pdu1_power_mode == PowerState.ON
-            or pdu2_power_mode == PowerState.ON
-        ):
-            return PowerState.ON
-        elif (
-            pdu1_power_mode == PowerState.OFF
-            and pdu2_power_mode == PowerState.OFF
-        ):
-            return PowerState.OFF
-        else:
             return PowerState.UNKNOWN
 
     def on(self: VccComponentManager) -> tuple[ResultCode, str]:

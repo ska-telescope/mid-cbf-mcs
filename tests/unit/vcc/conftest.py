@@ -60,8 +60,7 @@ def vcc_change_event_callbacks(
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_attribute("PDU1PowerState", PowerState.OFF)
-    builder.add_attribute("PDU2PowerState", PowerState.OFF)
+    builder.add_attribute("LRUPowerState", PowerState.OFF)
     return builder()
 
 

@@ -93,24 +93,6 @@ class CbfObsComponentManager(CbfComponentManager):
     # Command methods
     # ---------------
 
-    # def obs_command_invoked(
-    #     *args,
-    #     hook: str,
-    #     method: Callable[..., None],
-    #     obs_callback: Callable[..., None],
-    #     **kwargs
-    # ) -> None:
-    #     """
-    #     Wrapper to issue obs state invoked/completed callback.
-    #     """
-    #     @functools.wraps(method)
-    #     def invoked(obs_callback: Callable[[Any], None]):
-    #         obs_callback(hook=hook, running=True)
-    #         return method(*args, **kwargs)
-
-    #     invoked(obs_callback=obs_callback)
-    #     return obs_callback(hook=hook, running=False)
-
     def is_configure_scan_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if self.obs_state not in [
