@@ -315,7 +315,6 @@ class TalonLRU(CbfDevice):
         with self._power_switch_lock:
             self.component_manager.check_power_mode(self.get_state())
 
-
 # ----------
 # Run server
 # ----------
