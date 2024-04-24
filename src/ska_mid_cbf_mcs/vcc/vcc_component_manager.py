@@ -344,21 +344,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :return: VCC power mode
         """
         try:
-            pdu1_power_mode = self._talon_lru_proxy.PDU1PowerMode
-            pdu2_power_mode = self._talon_lru_proxy.PDU2PowerMode
-
-            if (
-                pdu1_power_mode == PowerMode.ON
-                or pdu2_power_mode == PowerMode.ON
-            ):
-                return PowerMode.ON
-            elif (
-                pdu1_power_mode == PowerMode.OFF
-                and pdu2_power_mode == PowerMode.OFF
-            ):
-                return PowerMode.OFF
-            else:
-                return PowerMode.UNKNOWN
+            return self._talon_lru_proxy.LRUPowerMode
         except tango.DevFailed:
             self._logger.error("Could not connect to Talon LRU device")
             self.update_component_fault(True)
@@ -928,7 +914,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
-        for entry in delay_model_obj["delay_details"]:
+        for entry in delay_model_obj["receptor_delays"]:
             self._logger.debug(
                 f"Received delay model for VCC {entry['receptor']}"
             )
@@ -936,7 +922,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._delay_model = json.dumps(
-                    {"delay_details": list_of_entries}
+                    {"receptor_delays": list_of_entries}
                 )
                 dm_found = True
                 break

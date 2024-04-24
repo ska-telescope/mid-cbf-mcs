@@ -790,9 +790,10 @@ class ControllerComponentManager(CbfComponentManager):
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
-            proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            proxy.write_attribute("simulationMode", sim_mode)
-            proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            proxy.adminMode = AdminMode.OFFLINE
+            proxy.simulationMode = sim_mode
+            proxy.adminMode = AdminMode.ONLINE
+
             proxy.On()
         except tango.DevFailed as e:
             self._logger.error(e)
