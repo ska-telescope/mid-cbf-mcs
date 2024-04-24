@@ -480,11 +480,14 @@ class CbfSubarrayComponentManager(
                 delay_model_json = json.loads(value)
 
                 # Validate delay_model_json against the telescope model
+                self._logger.info(
+                    f"Attempting to validate the following json against the telescope model: {delay_model_json}"
+                )
                 try:
                     telmodel_validate(
                         version=delay_model_json["interface"],
                         config=delay_model_json,
-                        strictness=2,
+                        strictness=1,
                     )
                     self._logger.info("Delay model is valid!")
                 except ValueError as e:
@@ -492,7 +495,7 @@ class CbfSubarrayComponentManager(
                     self.raise_update_delay_model_fatal_error(msg)
 
                 # pass DISH ID as VCC ID integer to FSPs and VCCs
-                for delay_detail in delay_model_json["delay_details"]:
+                for delay_detail in delay_model_json["receptor_delays"]:
                     dish_id = delay_detail["receptor"]
                     delay_detail[
                         "receptor"
@@ -2087,7 +2090,7 @@ class CbfSubarrayComponentManager(
         # Validate scan_json against the telescope model
         try:
             telmodel_validate(
-                version=argin["interface"], config=argin, strictness=2
+                version=argin["interface"], config=argin, strictness=1
             )
             self._logger.info("Scan is valid!")
         except ValueError as e:

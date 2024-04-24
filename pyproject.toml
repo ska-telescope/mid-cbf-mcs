@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-cbf-mcs"
-version = "0.13.3"
+version = "0.14.2"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
@@ -41,7 +41,7 @@ ska-tango-base = "0.20.1"
 ska-tango-testing = "0.6.1"
 ska-ser-logging = "^0.4.1+0a677a67"
 ska-ser-log-transactions = "^0.2.2+ae0f5c92"
-ska-telmodel = "^1.14.1"
+ska-telmodel = "1.15.0"
 nbmake = "^1.4.3"
 nbqa = "^1.7.0"
 jupyterhub = "^4.0.2"
