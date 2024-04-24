@@ -150,7 +150,9 @@ class VccComponentManager(CbfObsComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            self.logger.error("Error in proxy connection")
+            self.logger.error(
+                f"Error in Talon LRU {self._talon_lru_fqdn} proxy connection"
+            )
             return
 
         super().start_communicating()
@@ -189,7 +191,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         :raise ConnectionError: if unable to connect to HPS VCC devices
         """
-        self.logger.info("Entering VccComponentManager.on")
+        self.logger.debug("Entering VccComponentManager.on")
         try:
             # Try to connect to HPS devices, which are deployed during the
             # CbfController OnCommand sequence
@@ -285,7 +287,7 @@ class VccComponentManager(CbfObsComponentManager):
         self.logger.info(f"Configuring VCC band {freq_band_name}")
         frequency_band = freq_band_dict()[freq_band_name]["band_index"]
 
-        self.logger.info(f"simulation mode: {self.simulation_mode}")
+        self.logger.debug(f"simulation mode: {self.simulation_mode}")
 
         if self.simulation_mode:
             self._vcc_controller_simulator.ConfigureBand(frequency_band)
@@ -342,7 +344,7 @@ class VccComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        self.logger.info(f"VCC internal parameters: {json_string}")
+        self.logger.debug(f"VCC internal parameters: {json_string}")
 
         args = json.loads(json_string)
         args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
@@ -479,7 +481,9 @@ class VccComponentManager(CbfObsComponentManager):
                 self._band_proxies[fb_index].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
-                self._update_component_state(fault=True)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
