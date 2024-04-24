@@ -142,7 +142,6 @@ class VccComponentManager(CbfObsComponentManager):
 
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-        # TODO: uncomment
         try:
             self._talon_lru_proxy = context.DeviceProxy(
                 device_name=self._talon_lru_fqdn
@@ -438,8 +437,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        # TODO: _deconfigure?
-
         configuration = json.loads(argin)
         self._config_id = configuration["config_id"]
 
@@ -497,10 +494,6 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Update obsState callback
         self._update_component_state(configured=True)
-
-        self.logger.info(
-            "HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        )
 
         task_callback(
             result=(ResultCode.OK, "ConfigureScan completed OK."),
@@ -664,6 +657,8 @@ class VccComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
+
+        self._deconfigure()
 
         # Update obsState callback
         self._update_component_state(configured=False)

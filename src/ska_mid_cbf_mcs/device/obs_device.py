@@ -412,8 +412,6 @@ class CbfObsDevice(SKAObsDevice):
         action = "invoked" if running else "completed"
         self.obs_state_model.perform_action(f"{hook}_{action}")
 
-    counter = 0
-
     def _update_obs_state(self: CbfObsDevice, obs_state: ObsState) -> None:
         """
         Perform Tango operations in response to a change in obsState.
