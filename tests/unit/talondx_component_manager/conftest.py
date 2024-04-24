@@ -89,6 +89,7 @@ def talon_dx_component_manager(
                 args[1]
                 == "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
             )
+            or (args[1].startswith("#!/bin/sh"))
         )
 
         if request.param["sim_connect_error"]:

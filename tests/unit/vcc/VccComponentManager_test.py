@@ -260,7 +260,7 @@ class TestVccComponentManager:
         # Set the receptor id arbitrarily to the first receptor
         # in the delay model
         input_delay_model_first_receptor = input_delay_model_obj[
-            "delay_details"
+            "receptor_delays"
         ][0]
         vcc_component_manager.dish_id = input_delay_model_first_receptor[
             "receptor"
@@ -276,14 +276,14 @@ class TestVccComponentManager:
         assert len(updated_delay_model_obj) != 0
 
         # check that the coeff values were copied
-        for entry in input_delay_model_obj["delay_details"]:
+        for entry in input_delay_model_obj["receptor_delays"]:
             if entry["receptor"] == vcc_component_manager._vcc_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
                 # item in the list of entries allowed by the schema
                 updated_delay_model_for_vcc = json.dumps(
-                    updated_delay_model_obj["delay_details"][0]
+                    updated_delay_model_obj["receptor_delays"][0]
                 )
                 # compare the delay models as strings
                 assert (
