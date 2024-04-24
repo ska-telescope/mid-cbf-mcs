@@ -469,7 +469,7 @@ class CbfSubarrayComponentManager(
                 self._logger.warning(log_msg)
                 return
             try:
-                self._logger.info("Received delay model update.")
+                self._logger.debug("Received delay model update.")
 
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
@@ -489,7 +489,7 @@ class CbfSubarrayComponentManager(
                         config=delay_model_json,
                         strictness=1,
                     )
-                    self._logger.info("Delay model is valid!")
+                    self._logger.debug("Delay model is valid!")
                 except ValueError as e:
                     msg = f"Delay model validation against the telescope model failed with the following exception:\n {str(e)}."
                     self.raise_update_delay_model_fatal_error(msg)
@@ -751,7 +751,6 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._component_obs_fault_callback(True)
         self._logger.error(msg)
         tango.Except.throw_exception(
             "Command failed",
@@ -808,6 +807,8 @@ class CbfSubarrayComponentManager(
         self._last_received_delay_model = "{}"
         self._last_received_jones_matrix = "{}"
         self._last_received_timing_beam_weights = "{}"
+
+        self.update_component_configuration(False)
 
     def go_to_idle(
         self: CbfSubarrayComponentManager,
