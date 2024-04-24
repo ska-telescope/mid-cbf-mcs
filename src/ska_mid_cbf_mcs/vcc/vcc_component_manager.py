@@ -349,7 +349,7 @@ class VccComponentManager(CbfObsComponentManager):
         args.update({"samples_per_frame": band_config["samples_per_frame"]})
         json_string = json.dumps(args)
 
-        idx = self._freq_band_index[freq_band_name]
+        fb_index = self._freq_band_index[freq_band_name]
 
         # TODO CIP-2380
         if task_abort_event and task_abort_event.is_set():
@@ -363,9 +363,9 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         if self.simulation_mode:
-            self._band_simulators[idx].SetInternalParameters(json_string)
+            self._band_simulators[fb_index].SetInternalParameters(json_string)
         else:
-            self._band_proxies[idx].SetInternalParameters(json_string)
+            self._band_proxies[fb_index].SetInternalParameters(json_string)
 
         self._freq_band_name = freq_band_name
 
@@ -459,9 +459,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        if "rfi_flagging_mask" not in configuration:
-            self.logger.warning("'rfiFlaggingMask' not given. Proceeding.")
-
         # TODO CIP-2380
         if task_abort_event and task_abort_event.is_set():
             task_callback(
@@ -474,12 +471,12 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         # Send the ConfigureScan command to the HPS
-        idx = self._freq_band_index[self._freq_band_name]
+        fb_index = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
-            self._band_simulators[idx].ConfigureScan(argin)
+            self._band_simulators[fb_index].ConfigureScan(argin)
         else:
             try:
-                self._band_proxies[idx].ConfigureScan(argin)
+                self._band_proxies[fb_index].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
                 self._update_component_state(fault=True)
@@ -532,12 +529,12 @@ class VccComponentManager(CbfObsComponentManager):
         self._scan_id = argin
 
         # Send the Scan command to the HPS
-        idx = self._freq_band_index[self._freq_band_name]
+        fb_index = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
-            self._band_simulators[idx].Scan(self._scan_id)
+            self._band_simulators[fb_index].Scan(self._scan_id)
         else:
             try:
-                self._band_proxies[idx].Scan(self._scan_id)
+                self._band_proxies[fb_index].Scan(self._scan_id)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
                 self._update_component_state(fault=True)
@@ -584,12 +581,12 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         # Send the EndScan command to the HPS
-        idx = self._freq_band_index[self._freq_band_name]
+        fb_index = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
-            self._band_simulators[idx].EndScan()
+            self._band_simulators[fb_index].EndScan()
         else:
             try:
-                self._band_proxies[idx].EndScan()
+                self._band_proxies[fb_index].EndScan()
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
                 self._update_communication_state(
@@ -694,15 +691,15 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         if self._freq_band_name != "":
-            idx = self._freq_band_index[self._freq_band_name]
+            fb_index = self._freq_band_index[self._freq_band_name]
             if self.simulation_mode:
-                self._band_simulators[idx].Abort()
+                self._band_simulators[fb_index].Abort()
             else:
                 try:
                     pass
                     # TODO CIP-1850
                     # self._vcc_controller_proxy.Unconfigure()
-                    # self._band_proxies[idx].Abort()
+                    # self._band_proxies[fb_index].Abort()
                 except tango.DevFailed as df:
                     self.logger.error(str(df.args[0].desc))
                     self._update_communication_state(
@@ -750,14 +747,14 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         if self._freq_band_name != "":
-            idx = self._freq_band_index[self._freq_band_name]
+            fb_index = self._freq_band_index[self._freq_band_name]
             if self.simulation_mode:
-                self._band_simulators[idx].ObsReset()
+                self._band_simulators[fb_index].ObsReset()
             else:
                 try:
                     pass
                     # TODO CIP-1850
-                    # self._band_proxies[idx].ObsReset()
+                    # self._band_proxies[fb_index].ObsReset()
                 except tango.DevFailed as df:
                     self.logger.error(str(df.args[0].desc))
                     self._update_communication_state(
