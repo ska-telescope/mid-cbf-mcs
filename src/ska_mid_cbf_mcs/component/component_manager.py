@@ -11,13 +11,15 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from threading import Lock
+from threading import Event, Lock
+from time import sleep
 from typing import Any, Callable, Optional, cast
 
-from ska_tango_base.control_model import (
+from ska_control_model import (
     CommunicationStatus,
     HealthState,
     PowerState,
+    TaskStatus,
 )
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
@@ -90,6 +92,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
+        # initialize lock and set of of blocking resources an LRC thread may be
+        # dependent on
+        self._results_lock = Lock()
+        self.blocking_devices: set["str"] = set(0)
+
     ###########
     # Callbacks
     ###########
@@ -126,6 +133,71 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
+
+    def results_callback(self: CbfComponentManager):
+        """
+        Locked callback to decrement number of blocking
+        """
+        with self._results_lock:
+            self._num_blocking_results -= 1
+
+    def _wait_for_blocking_results(
+        self: CbfComponentManager,
+        timeout: float,
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
+        """
+        Wait for the number of anticipated results to be pushed by subordinate devices.
+
+        Example for submitted command method
+        ------------------------------------
+        def _command_thread(
+            self: CbfComponentManager,
+            task_callback: Optional[Callable] = None,
+            task_abort_event: Optional[threading.Event] = None,
+            **kwargs,
+        ):
+            # thread begins
+            # ...
+            # call a bunch of commands, get back a list of command_ids
+            command_ids = []
+            # ...
+            # continue until it the results of those commands are needed
+            # ...
+            # when we can no longer progress without the command results
+            # first reset the number of blocking results
+            self._num_blocking_results = len(command_ids)
+
+            # subscribe to the LRC results of all blocking proxies, providing the
+            # locked decrement counter method as the callback
+            for proxy in proxies_to_wait_on:
+            proxy.subscribe_event(
+                attr_name="longRunningCommandResult",
+                event_type=EventType.CHANGE_EVENT,
+                callback=self.results_callback
+            )
+
+            # call wait method
+            self._wait_for_blocking(timeout=10.0, task_abort_event=task_abort_event)
+
+            # now we can continue
+
+        :param timeout: Time to wait, in seconds.
+        :param task_abort_event: Check for abort, defaults to None
+
+        :return: completed if status reached, FAILED if timed out, ABORTED if aborted
+        """
+
+        ticks = int(timeout / 0.01)  # 10 ms resolution
+        while self.num_blocking_events:
+            if task_abort_event and task_abort_event.is_set():
+                return TaskStatus.ABORTED
+            sleep(0.01)
+            ticks -= 1
+            if ticks == 0:
+                return TaskStatus.FAILED
+        self.logger.debug(f"Waited for {timeout - ticks * 0.01} seconds")
+        return TaskStatus.COMPLETED
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
