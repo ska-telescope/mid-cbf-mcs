@@ -60,36 +60,53 @@ def slim_link_change_event_callbacks(
     )
     return change_event_callbacks
 
+
 @pytest.fixture()
 def mock_slim_tx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute("idle_ctrl_word", 123456)
-    builder.add_attribute("read_counters", [0] * 9)
-    
+    builder.add_attribute("read_counters", [6, 7, 8])
+
     builder.add_command("ping", None)
     builder.add_command("clear_read_counters", None)
     return builder()
 
-@pytest.fixture()
-def mock_slim_tx_regenerate() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("idle_ctrl_word", None)
-    builder.add_attribute("read_counters", [0] * 9)
-    
-    builder.add_command("ping", None)
-    builder.add_command("clear_read_counters", None)
-    return builder()
 
 @pytest.fixture()
 def mock_slim_rx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute("idle_ctrl_word", 0)
-    builder.add_attribute("read_counters", [0] * 9)
+    builder.add_attribute("read_counters", [0, 1, 2, 3, 0, 0])
     builder.add_attribute("bit_error_rate", 8e-12)
-    
+
+    builder.add_command("ping", None)
+    builder.add_command("initialize_connection", None)
+    builder.add_command("clear_read_counters", None)
+    return builder()
+
+
+@pytest.fixture()
+def mock_slim_tx_regenerate() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("idle_ctrl_word", None)
+    builder.add_attribute("read_counters", [6, 7, 8])
+
+    builder.add_command("ping", None)
+    builder.add_command("clear_read_counters", None)
+    return builder()
+
+
+@pytest.fixture()
+def mock_slim_rx_unhealthy() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("idle_ctrl_word", 0)
+    builder.add_attribute("read_counters", [0, 1, 2, 3, 4, 5])
+    builder.add_attribute("bit_error_rate", 8e-8)
+
     builder.add_command("ping", None)
     builder.add_command("initialize_connection", None)
     builder.add_command("clear_read_counters", None)

@@ -143,7 +143,6 @@ class SlimLink(CbfDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.logger)
         self.register_command_object(
             "ConnectTxRx",
             SubmittedSlowCommand(
@@ -155,7 +154,12 @@ class SlimLink(CbfDevice):
             ),
         )
         self.register_command_object(
-            "VerifyConnection", self.VerifyConnectionCommand(*device_args)
+            "VerifyConnection",
+            self.VerifyConnectionCommand(
+                device=self,
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
         )
         self.register_command_object(
             "DisconnectTxRx",
@@ -168,7 +172,12 @@ class SlimLink(CbfDevice):
             ),
         )
         self.register_command_object(
-            "ClearCounters", self.ClearCountersCommand(*device_args)
+            "ClearCounters",
+            self.ClearCountersCommand(
+                device=self,
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
         )
 
     def always_executed_hook(self: SlimLink) -> None:
@@ -260,8 +269,7 @@ class SlimLink(CbfDevice):
         """
         return self.component_manager.bit_error_rate
 
-    # TODO: Figure out proper type
-    @attribute(dtype=tango.DevULong)
+    @attribute(dtype=[int], max_dim_x=9)
     def read_counters(self: SlimLink) -> list[int]:
         """
         Read the counters attribute.
@@ -272,7 +280,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.read_counters()
 
     @attribute(dtype=HealthState)
-    def read_healthState(self: SlimLink) -> HealthState:
+    def healthState(self: SlimLink) -> HealthState:
         """
         Read the Health State of the device. This overrides the ska-tango-base
         implementation.
@@ -342,6 +350,23 @@ class SlimLink(CbfDevice):
         Run several health checks on the SLIM Link.
         """
 
+        def __init__(
+            self: SlimLink.VerifyConnectionCommand,
+            *args: Any,
+            device: SlimLink,
+            component_manager: SlimLinkComponentManager,
+            **kwargs: Any,
+        ) -> None:
+            self.device = device
+            self.component_manager = component_manager
+            super().__init__(*args, **kwargs)
+
+        def is_allowed(self: SlimLink.VerifyConnectionCommand) -> bool:
+            if self.device._admin_mode == AdminMode.ONLINE:
+                return True
+            else:
+                return False
+
         def do(
             self: SlimLink.VerifyConnectionCommand,
         ) -> Tuple[ResultCode, str]:
@@ -351,9 +376,8 @@ class SlimLink(CbfDevice):
             :return: The HealthState enum describing the link's status.
             :rtype: (ResultCode, str)
             """
-            if self.target.read_adminMode() == AdminMode.ONLINE:
-                component_manager = self.target.component_manager
-                return component_manager.verify_connection()
+            if self.is_allowed():
+                return self.component_manager.verify_connection()
             else:
                 return (
                     ResultCode.FAILED,
@@ -387,6 +411,23 @@ class SlimLink(CbfDevice):
         Clear the read counters array on Tx and Rx sides of the SLIM Link.
         """
 
+        def __init__(
+            self: SlimLink.ClearCountersCommand,
+            *args: Any,
+            device: SlimLink,
+            component_manager: SlimLinkComponentManager,
+            **kwargs: Any,
+        ) -> None:
+            self.device = device
+            self.component_manager = component_manager
+            super().__init__(*args, **kwargs)
+
+        def is_allowed(self: SlimLink.ClearCountersCommand) -> bool:
+            if self.device._admin_mode == AdminMode.ONLINE:
+                return True
+            else:
+                return False
+
         def do(self: SlimLink.ClearCountersCommand) -> Tuple[ResultCode, str]:
             """
             Implement ClearCounters command functionality.
@@ -396,9 +437,8 @@ class SlimLink(CbfDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            if self.target.read_adminMode() == AdminMode.ONLINE:
-                component_manager = self.target.component_manager
-                return component_manager.clear_counters()
+            if self.is_allowed():
+                return self.component_manager.clear_counters()
             else:
                 return (
                     ResultCode.FAILED,
@@ -411,11 +451,9 @@ class SlimLink(CbfDevice):
     )
     @DebugIt()
     def ClearCounters(self: SlimLink) -> None:
-        # PROTECTED REGION ID(SlimLink.ClearCounters) ENABLED START #
         handler = self.get_command_object("ClearCounters")
         return_code, message = handler()
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  SlimLink.ClearCounters
 
 
 # ----------
@@ -424,9 +462,7 @@ class SlimLink(CbfDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(SlimLink.main) ENABLED START #
     return run((SlimLink,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  SlimLink.main
 
 
 if __name__ == "__main__":

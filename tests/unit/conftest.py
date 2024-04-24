@@ -25,7 +25,6 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 # SKA imports
 
 
-
 # def pytest_itemcollected(item: pytest.Item) -> None:
 #     """
 #     Modify a test after it has been collected by pytest.

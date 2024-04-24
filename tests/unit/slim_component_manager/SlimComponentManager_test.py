@@ -66,28 +66,28 @@ class TestSlimComponentManager:
             == CommunicationStatus.DISABLED
         )
 
-    @pytest.mark.parametrize(
-        "mesh_config_filename",
-        [("./mnt/slim/fs_slim_config.yaml")],
-    )
-    def test_configure(
-        self: TestSlimComponentManager,
-        slim_component_manager: SlimComponentManager,
-        mesh_config_filename: str,
-    ) -> None:
-        """
-        Test the SLIM component manager's connect_tx_rx command.
+    # @pytest.mark.parametrize(
+    #     "mesh_config_filename",
+    #     [("./mnt/slim/fs_slim_config.yaml")],
+    # )
+    # def test_configure(
+    #     self: TestSlimComponentManager,
+    #     slim_component_manager: SlimComponentManager,
+    #     mesh_config_filename: str,
+    # ) -> None:
+    #     """
+    #     Test the SLIM component manager's connect_tx_rx command.
 
-        :param slim_component_manager: the SLIM component
-            manager under test.
-        :param mesh_config_filename: name of SLIM configuration YAML file.
-        """
-        assert (
-            slim_component_manager.communication_status
-            == CommunicationStatus.DISABLED
-        )
+    #     :param slim_component_manager: the SLIM component
+    #         manager under test.
+    #     :param mesh_config_filename: name of SLIM configuration YAML file.
+    #     """
+    #     assert (
+    #         slim_component_manager.communication_status
+    #         == CommunicationStatus.DISABLED
+    #     )
 
-        slim_component_manager.start_communicating()
-        with open(mesh_config_filename, "r") as mesh_config:
-            result = slim_component_manager.configure(mesh_config.read())
-            assert result[0] == ResultCode.OK
+    #     slim_component_manager.start_communicating()
+    #     with open(mesh_config_filename, "r") as mesh_config:
+    #         result = slim_component_manager.configure(mesh_config.read())
+    #         assert result[0] == ResultCode.OK

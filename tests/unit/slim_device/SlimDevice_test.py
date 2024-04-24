@@ -199,7 +199,7 @@ class TestSlim:
             ("./tests/data/slim_test_config_inactive.yaml"),
         ],
     )
-    def test_ConfigurePass(
+    def test_Configure(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,

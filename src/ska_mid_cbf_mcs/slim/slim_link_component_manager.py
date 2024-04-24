@@ -21,12 +21,12 @@ from ska_tango_base.control_model import (
     PowerState,
     SimulationMode,
 )
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_tango_testing import context
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
 
 BER_PASS_THRESHOLD = 8.000e-11
@@ -353,7 +353,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
                 task_callback(progress=60)
 
-                self.logger.info(
+                self.logger.debug(
                     f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}\n"
                     + f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
                 )
@@ -363,7 +363,9 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self.clear_counters()
                 task_callback(progress=80)
                 self._link_enabled = True
-                self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
+                self._link_name = (
+                    f"{self._tx_device_name}->{self._rx_device_name}"
+                )
                 task_callback(
                     progress=100,
                     status=TaskStatus.COMPLETED,
@@ -501,11 +503,30 @@ class SlimLinkComponentManager(CbfComponentManager):
             + self._link_name
         )
         task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if task_abort_event and task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    f"Disconnect Tx Rx aborted for {self._tx_device_name}->{self._rx_device_name}",
+                ),
+            )
+            return
+
         if self.simulation_mode == SimulationMode.TRUE:
             self.slim_link_simulator.disconnect_slim_tx_rx()
         else:
             try:
-                if self._rx_device_proxy is not None:
+                if self._rx_device_proxy is None:
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=(
+                            ResultCode.FAILED,
+                            "Rx proxy is not set. SlimLink must be connected before it can be disconnected.",
+                        ),
+                    )
+                else:
                     # To put SLIM Rx back in serial loopback, we need to determine
                     # the Tx device name it should reference for ICW comparisons.
                     rx = self._rx_device_name
@@ -546,6 +567,16 @@ class SlimLinkComponentManager(CbfComponentManager):
 
                     self._rx_device_proxy.initialize_connection(True)
                     task_callback(progress=80)
+
+                    task_callback(
+                        progress=100,
+                        status=TaskStatus.COMPLETED,
+                        result=(
+                            ResultCode.OK,
+                            f"Disonnected Tx Rx. {self._rx_device_name} now in serial loopback.",
+                        ),
+                    )
+
             except tango.DevFailed as df:
                 task_callback(
                     exception=df,
@@ -560,14 +591,6 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._tx_device_proxy = None
                 self._link_name = ""
                 self._link_enabled = False
-        task_callback(
-            progress=100,
-            status=TaskStatus.COMPLETED,
-            result=(
-                ResultCode.OK,
-                f"Disonnected Tx Rx. {self._rx_device_name} now in serial loopback.",
-            ),
-        )
 
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
