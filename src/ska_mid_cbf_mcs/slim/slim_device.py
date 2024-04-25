@@ -65,7 +65,7 @@ class Slim(CbfDevice):
         :return: the Mesh configuration in a YAML string.
         """
         return self.component_manager.get_configuration_string()
-    
+
     @attribute(
         dtype=(str,),
         max_dim_x=MAX_NUM_LINKS,
@@ -174,7 +174,6 @@ class Slim(CbfDevice):
         :return: a component manager for this device.
         :rtype: SlimComponentManager
         """
-
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
@@ -204,7 +203,7 @@ class Slim(CbfDevice):
             :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
-            self._device.simulationMode = True
+            self._device.simulationMode = SimulationMode.TRUE
 
             return (result_code, message)
 

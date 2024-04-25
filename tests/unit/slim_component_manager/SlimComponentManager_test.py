@@ -13,9 +13,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
-from ska_tango_base.commands import ResultCode
-
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable

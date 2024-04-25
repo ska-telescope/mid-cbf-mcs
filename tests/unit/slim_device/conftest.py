@@ -98,8 +98,8 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_result_command(
-        "ConnectTxRx", ResultCode.OK, "ConnectTxRx Success: Mock"
+    builder.add_command(
+        "ConnectTxRx", [[ResultCode.OK], ["ConnectTxRx Success: Mock"]]
     )
     builder.add_result_command(
         "DisconnectTxRx",
@@ -116,8 +116,8 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_result_command(
-        "ConnectTxRx", ResultCode.FAILED, "ConnectTxRx Failed: Mock"
+    builder.add_command(
+        "ConnectTxRx", [[ResultCode.FAILED], ["ConnectTxRx Failed: Mock"]]
     )
     builder.add_result_command(
         "DisconnectTxRx",
@@ -125,3 +125,28 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
         "DisconnectTxRx Failed: Mock",
     )
     return builder()
+
+
+@pytest.fixture()
+def initial_mocks(
+    mock_slim_link: unittest.mock.Mock,
+    mock_fail_slim_link: unittest.mock.Mock,
+) -> dict[str, unittest.mock.Mock]:
+    """
+    Return a dictionary of device proxy mocks to pre-register.
+
+    :param mock_vcc_band: a mock VccBand device that is powered off.
+    :param mock_sw: a mock VccSearchWindow that is powered off.
+
+    :return: a dictionary of device proxy mocks to pre-register.
+    """
+    return {
+        "mid_csp_cbf/slim_link/001": mock_slim_link,
+        "mid_csp_cbf/slim_link/002": mock_slim_link,
+        "mid_csp_cbf/slim_link/003": mock_slim_link,
+        "mid_csp_cbf/slim_link/004": mock_slim_link,
+        "mid_csp_cbf/slim_link_fail/001": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/002": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/003": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/004": mock_fail_slim_link,
+    }

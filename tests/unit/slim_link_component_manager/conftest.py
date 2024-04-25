@@ -31,7 +31,6 @@ from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockChangeEventCallback,
 )
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -43,7 +42,6 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 def slim_link_component_manager(
     update_health_state: MockCallable,
     logger: logging.Logger,
-    tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,

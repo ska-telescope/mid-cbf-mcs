@@ -14,9 +14,8 @@ from __future__ import annotations
 # Standard imports
 import os
 import time
-import unittest
-import unittest.mock
 from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
 from ska_tango_base.commands import ResultCode
@@ -46,9 +45,7 @@ class TestSlim:
 
     @pytest.fixture(name="test_context")
     def slim_test_context(
-        self: TestSlim,
-        mock_slim_link: unittest.mock.Mock,
-        mock_fail_slim_link: unittest.mock.Mock,
+        self: TestSlim, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
         # This device is set up as expected
@@ -73,39 +70,9 @@ class TestSlim:
                 "mid_csp_cbf/slim_link_fail/004",
             ],
         )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link/001",
-            mock_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link/002",
-            mock_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link/003",
-            mock_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link/004",
-            mock_slim_link,
-        )
-        # SlimLink mocks designed to fail command calls.
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link_fail/001",
-            mock_fail_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link_fail/002",
-            mock_fail_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link_fail/003",
-            mock_fail_slim_link,
-        )
-        harness.add_mock_device(
-            "mid_csp_cbf/slim_link_fail/004",
-            mock_fail_slim_link,
-        )
+
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
@@ -222,15 +189,11 @@ class TestSlim:
             )
 
         assert result_code == [ResultCode.QUEUED]
-        for progress_point in ("25", "50", "100"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                '[0, "Configured SLIM successfully"]',
+                '[0, "Configure completed OK"]',
             )
         )
         # assert if any captured events have gone unaddressed
@@ -240,7 +203,7 @@ class TestSlim:
         "mesh_config_filename",
         [("./tests/data/slim_test_fail_config.yaml")],
     )
-    def test_ConfigureTooManyLinks(
+    def test_Configure_too_many_links(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -254,7 +217,6 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         self.test_adminModeOnline(device_under_test)
-        assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
         time.sleep(CONST_WAIT_TIME)
@@ -264,10 +226,6 @@ class TestSlim:
             )
 
         assert result_code == [ResultCode.QUEUED]
-        for progress_point in ("25", "50"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
@@ -282,7 +240,7 @@ class TestSlim:
         "mesh_config_filename",
         [("./tests/data/slim_test_config.yaml")],
     )
-    def test_ConfigureSlimLinkInitFails(
+    def test_Configure_slim_link_init_fails(
         self: TestSlim,
         device_under_test_fail: context.DeviceProxy,
         change_event_callbacks_fail: MockTangoEventCallbackGroup,
@@ -296,7 +254,6 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         self.test_adminModeOnline(device_under_test_fail)
-        assert device_under_test_fail.State() == DevState.OFF
 
         device_under_test_fail.On()
         time.sleep(CONST_WAIT_TIME)
@@ -306,10 +263,6 @@ class TestSlim:
             )
 
         assert result_code == [ResultCode.QUEUED]
-        for progress_point in ("25", "50"):
-            change_event_callbacks_fail[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
 
         change_event_callbacks_fail[
             "longRunningCommandResult"
@@ -343,22 +296,17 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
 
-        self.test_ConfigurePass(
+        self.test_Configure(
             device_under_test, change_event_callbacks, mesh_config_filename
         )
 
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
 
-        for progress_point in ("50", "100"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
-
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                '[0, "SLIM shutdown successfully"]',
+                '[0, "Off completed OK"]',
             )
         )
         # assert if any captured events have gone unaddressed

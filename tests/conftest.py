@@ -21,8 +21,7 @@ import logging
 # Path
 import os
 import time
-import unittest
-from typing import Any, Callable, Dict, Generator, List, Set, cast
+from typing import Any, Callable, Dict, List, Set, cast
 
 import pytest
 
@@ -37,7 +36,6 @@ from tango import DevState
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:

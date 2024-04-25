@@ -18,7 +18,6 @@ import unittest
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -111,3 +110,26 @@ def mock_slim_rx_unhealthy() -> unittest.mock.Mock:
     builder.add_command("initialize_connection", None)
     builder.add_command("clear_read_counters", None)
     return builder()
+
+
+@pytest.fixture()
+def initial_mocks(
+    mock_slim_tx: unittest.mock.Mock,
+    mock_slim_rx: unittest.mock.Mock,
+    mock_slim_tx_regenerate: unittest.mock.Mock,
+    mock_slim_rx_unhealthy: unittest.mock.Mock,
+) -> dict[str, unittest.mock.Mock]:
+    """
+    Return a dictionary of device proxy mocks to pre-register.
+
+    :param mock_vcc_band: a mock VccBand device that is powered off.
+    :param mock_sw: a mock VccSearchWindow that is powered off.
+
+    :return: a dictionary of device proxy mocks to pre-register.
+    """
+    return {
+        "talon-x/slim-tx-rx/fs-tx0": mock_slim_tx,
+        "talon-x/slim-tx-rx/fs-rx0": mock_slim_rx,
+        "talon-x/slim-tx-rx/fs-tx1": mock_slim_tx_regenerate,
+        "talon-x/slim-tx-rx/fs-rx1": mock_slim_rx_unhealthy,
+    }

@@ -13,10 +13,8 @@ from __future__ import annotations
 
 # Standard imports
 import os
-import time
-import unittest
-import unittest.mock
 from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
 from ska_control_model import HealthState, SimulationMode
@@ -25,11 +23,8 @@ from ska_tango_base.control_model import AdminMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
-from ska_mid_cbf_mcs.slim.slim_link_component_manager import BER_PASS_THRESHOLD
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
 from ska_mid_cbf_mcs.testing import context
-
-from ... import test_utils
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -48,34 +43,15 @@ class TestSlimLink:
 
     @pytest.fixture(name="test_context")
     def slim_link_test_context(
-        self: TestSlimLink,
-        mock_slim_tx: unittest.mock.Mock,
-        mock_slim_tx_regenerate: unittest.mock.Mock,
-        mock_slim_rx: unittest.mock.Mock,
-        mock_slim_rx_unhealthy: unittest.mock.Mock,
+        self: TestSlimLink, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
-        # This device is set up as expected
         harness.add_device(
             device_name="mid_csp_cbf/fs_links/001",
             device_class=SlimLink,
         )
-        harness.add_mock_device(
-            "talon-x/slim-tx-rx/fs-tx0",
-            mock_slim_tx,
-        )
-        harness.add_mock_device(
-            "talon-x/slim-tx-rx/fs-tx1",
-            mock_slim_tx_regenerate,
-        )
-        harness.add_mock_device(
-            "talon-x/slim-tx-rx/fs-rx0",
-            mock_slim_rx,
-        )
-        harness.add_mock_device(
-            "talon-x/slim-tx-rx/fs-rx1",
-            mock_slim_rx_unhealthy,
-        )
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
@@ -128,8 +104,9 @@ class TestSlimLink:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.ON
-        
+
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
         [
@@ -139,34 +116,43 @@ class TestSlimLink:
             ),
         ],
     )
-    def test_attrReadWrite(
+    def test_AttrReadWrite(
         self: TestSlimLink,
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
-        
+        """
+        Test all attributes in the tango interface for readability/writability.
+
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: fixture that provides a
+            :py:class:`context.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         device_under_test.txDeviceName = tx_device_name
         assert device_under_test.txDeviceName == tx_device_name
-        
+
         device_under_test.rxDeviceName = rx_device_name
         assert device_under_test.rxDeviceName == rx_device_name
-        
+
         self.test_ConnectTxRx(
             device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
             change_event_callbacks=change_event_callbacks,
         )
-        assert device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
+        assert (
+            device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
+        )
         assert device_under_test.txIdleCtrlWord == 123456
         assert device_under_test.rxIdleCtrlWord == 123456
         assert device_under_test.bitErrorRate == 8e-12
         counters = device_under_test.read_counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
-        
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -187,6 +173,8 @@ class TestSlimLink:
         """
         Test the ConnectTxRx() command
 
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
@@ -199,22 +187,23 @@ class TestSlimLink:
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        for progress_point in ("10", "20", "30", "60", "80", "100"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
-
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'[0, "Connected Tx Rx successfully: {device_under_test.linkName}"]',
+                '[0, "ConnectTxRx completed OK"]',
             )
+        )
+
+        assert device_under_test.txIdleCtrlWord == 123456
+        assert (
+            device_under_test.txIdleCtrlWord
+            == device_under_test.rxIdleCtrlWord
         )
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    def test_ConnectTxRxEmptyDeviceNames(
+    def test_ConnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -235,7 +224,7 @@ class TestSlimLink:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                '[3, "Tx or Rx device FQDN have not been set."]',
+                '[3, "DsSlimTxRx device names have not been set."]',
             )
         )
 
@@ -251,7 +240,7 @@ class TestSlimLink:
             ),
         ],
     )
-    def test_ConnectTxRxRegenerateICW(
+    def test_ConnectTxRx_regenerate_idle_ctrl_word(
         self: TestSlimLink,
         tx_device_name: str,
         rx_device_name: str,
@@ -262,6 +251,8 @@ class TestSlimLink:
         Test the ConnectTxRx() command using a Tx mock that has no idle_ctrl_word
         attr set in order to trigger ICW regeneration in the DUT
 
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
@@ -273,25 +264,20 @@ class TestSlimLink:
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
-        time.sleep(CONST_WAIT_TIME)
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '[0, "ConnectTxRx completed OK"]',
+            )
+        )
+
         assert device_under_test.txIdleCtrlWord == (
             hash(device_under_test.txDeviceName) & 0x00FFFFFFFFFFFFFF
         )
         assert (
             device_under_test.txIdleCtrlWord
             == device_under_test.rxIdleCtrlWord
-        )
-
-        for progress_point in ("10", "20", "30", "60", "80", "100"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f'[0, "Connected Tx Rx successfully: {device_under_test.linkName}"]',
-            )
         )
 
         # assert if any captured events have gone unaddressed
@@ -327,11 +313,13 @@ class TestSlimLink:
             change_event_callbacks=change_event_callbacks,
         )
         result, msg = device_under_test.VerifyConnection()
-        assert result == ResultCode.OK
+        assert [result, msg[0]] == [
+            ResultCode.OK,
+            "VerifyConnection completed OK",
+        ]
         assert device_under_test.healthState == HealthState.OK
-        assert msg[0] == f"Link health check OK: {device_under_test.linkName}"
 
-    def test_VerifyConnectionEmptyDeviceNames(
+    def test_VerifyConnection_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -343,15 +331,16 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_ConnectTxRxEmptyDeviceNames(
+        self.test_ConnectTxRx_empty_device_names(
             device_under_test, change_event_callbacks
         )
         result, msg = device_under_test.VerifyConnection()
-        assert result == ResultCode.OK
+        assert [result, msg[0]] == [
+            ResultCode.OK,
+            "VerifyConnection completed OK",
+        ]
         assert device_under_test.healthState == HealthState.UNKNOWN
-        assert msg[0] == "Tx and Rx devices have not been connected."
 
-    ## Test case: verify connection using rx1 mock. Will fail last 3 health checks
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
         [
@@ -361,7 +350,7 @@ class TestSlimLink:
             ),
         ],
     )
-    def test_VerifyConnectionUnhealthy(
+    def test_VerifyConnection_unhealthy_link(
         self: TestSlimLink,
         tx_device_name: str,
         rx_device_name: str,
@@ -382,15 +371,14 @@ class TestSlimLink:
             change_event_callbacks=change_event_callbacks,
         )
         result, msg = device_under_test.VerifyConnection()
-        assert result == ResultCode.OK
+        assert [result, msg[0]] == [
+            ResultCode.OK,
+            "VerifyConnection completed OK",
+        ]
         assert device_under_test.healthState == HealthState.FAILED
-        assert (
-            msg[0]
-            == f"block_lost_count not zero. cdr_lost_count not zero. bit-error-rate higher than {BER_PASS_THRESHOLD}. "
-        )
 
-    ## Test case: verify connection but unsync ICW before issuing command. will fail 1st health check
-    ## I think this would have to be an integration test since it requires writing to a SlimTxRx attr.
+    # Test case: verify connection but unsync ICW before issuing command. will fail 1st health check
+    # I think this would have to be an integration test since it requires writing to a SlimTxRx attr.
     # @pytest.mark.parametrize(
     #     "tx_device_name, rx_device_name",
     #     [
@@ -426,7 +414,7 @@ class TestSlimLink:
     #     assert device_under_test.healthState == HealthState.FAILED
     #     assert msg[0] == "Expected and received idle control word do not match. "
 
-    ## Integration test case: set TxRx proxy to None at some point in the try block to invoke a DevFailed exception.
+    # Integration test case: set TxRx proxy to None at some point in the try block to invoke a DevFailed exception.
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -461,15 +449,10 @@ class TestSlimLink:
         result_code, command_id = device_under_test.DisconnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        for progress_point in ("20", "40", "60", "80", "100"):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", progress_point))
-
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'[0, "Disonnected Tx Rx. {device_under_test.rxDeviceName} now in serial loopback."]',
+                '[0, "DisconnectTxRx completed OK"]',
             )
         )
         assert device_under_test.linkName == ""
@@ -477,7 +460,7 @@ class TestSlimLink:
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    def test_DisconnectTxRxEmptyDeviceNames(
+    def test_DisconnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -498,7 +481,7 @@ class TestSlimLink:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'[3, "Rx proxy is not set. SlimLink must be connected before it can be disconnected."]',
+                '[3, "Rx proxy is not set. SlimLink must be connected before it can be disconnected."]',
             )
         )
 
@@ -538,10 +521,12 @@ class TestSlimLink:
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
         result, msg = device_under_test.ClearCounters()
-        assert result == ResultCode.OK
-        assert msg[0] == f"Counters cleared: {device_under_test.linkName}"
+        assert [result, msg[0]] == [
+            ResultCode.OK,
+            "ClearCounters completed OK",
+        ]
 
-    def test_ClearCountersEmptyDeviceNames(
+    def test_ClearCounters_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
     ) -> None:
@@ -555,5 +540,7 @@ class TestSlimLink:
         self.test_adminModeOnline(device_under_test)
         device_under_test.simulationMode = SimulationMode.FALSE
         result, msg = device_under_test.ClearCounters()
-        assert result == ResultCode.OK
-        assert msg[0] == "Tx and Rx devices have not been connected."
+        assert [result, msg[0]] == [
+            ResultCode.OK,
+            "ClearCounters completed OK",
+        ]

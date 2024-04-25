@@ -11,8 +11,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-import tango
+from typing import Any, Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
@@ -29,7 +28,7 @@ from ska_tango_base.control_model import (
     PowerState,
     SimulationMode,
 )
-from tango import AttrWriteType, DebugIt
+from tango import DebugIt
 from tango.server import attribute, command, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -54,66 +53,66 @@ class SlimLink(CbfDevice):
     # Attributes
     # ----------
 
-    txDeviceName = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
-        label="Tx Device FQDN",
-        doc="FQDN of the link's Tx device",
-    )
+    # txDeviceName = attribute(
+    #     dtype="DevString",
+    #     access=AttrWriteType.READ_WRITE,
+    #     label="Tx Device FQDN",
+    #     doc="FQDN of the link's Tx device",
+    # )
 
-    rxDeviceName = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
-        label="Rx Device FQDN",
-        doc="FQDN of the link's Rx device",
-    )
+    # rxDeviceName = attribute(
+    #     dtype="DevString",
+    #     access=AttrWriteType.READ_WRITE,
+    #     label="Rx Device FQDN",
+    #     doc="FQDN of the link's Rx device",
+    # )
 
-    linkName = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ,
-        label="Link Name",
-        doc="Link name made up of the Tx and Rx FQDNs",
-    )
+    # linkName = attribute(
+    #     dtype="DevString",
+    #     access=AttrWriteType.READ,
+    #     label="Link Name",
+    #     doc="Link name made up of the Tx and Rx FQDNs",
+    # )
 
-    txIdleCtrlWord = attribute(
-        dtype="DevULong64",
-        access=AttrWriteType.READ,
-        label="Tx Idle control word",
-        doc="Idle control word read by the link's Tx device",
-    )
+    # txIdleCtrlWord = attribute(
+    #     dtype="DevULong64",
+    #     access=AttrWriteType.READ,
+    #     label="Tx Idle control word",
+    #     doc="Idle control word read by the link's Tx device",
+    # )
 
-    rxIdleCtrlWord = attribute(
-        dtype="DevULong64",
-        access=AttrWriteType.READ,
-        label="Rx Idle control word",
-        doc="Idle control word read by the link's Rx device",
-    )
+    # rxIdleCtrlWord = attribute(
+    #     dtype="DevULong64",
+    #     access=AttrWriteType.READ,
+    #     label="Rx Idle control word",
+    #     doc="Idle control word read by the link's Rx device",
+    # )
 
-    bitErrorRate = attribute(
-        dtype="DevFloat",
-        access=AttrWriteType.READ,
-        label="Bit Error Rate",
-        doc="Bit Error Rate (BER) calculated by the link's Rx device",
-    )
+    # bitErrorRate = attribute(
+    #     dtype="DevFloat",
+    #     access=AttrWriteType.READ,
+    #     label="Bit Error Rate",
+    #     doc="Bit Error Rate (BER) calculated by the link's Rx device",
+    # )
 
-    counters = attribute(
-        dtype=("DevULong64",),
-        max_dim_x=9,
-        access=AttrWriteType.READ,
-        label="TxRx Counters",
-        doc="""
-            An array holding the counter values from the tx and rx devices in the order:
-            [0] rx_word_count
-            [1] rx_packet_count
-            [2] rx_idle_word_count
-            [3] rx_idle_error_count
-            [4] rx_block_lost_count
-            [5] rx_cdr_lost_count
-            [6] tx_word_count
-            [7] tx_packet_count
-            [8] tx_idle_word_count
-        """,
-    )
+    # counters = attribute(
+    #     dtype=("DevULong64",),
+    #     max_dim_x=9,
+    #     access=AttrWriteType.READ,
+    #     label="TxRx Counters",
+    #     doc="""
+    #         An array holding the counter values from the tx and rx devices in the order:
+    #         [0] rx_word_count
+    #         [1] rx_packet_count
+    #         [2] rx_idle_word_count
+    #         [3] rx_idle_error_count
+    #         [4] rx_block_lost_count
+    #         [5] rx_cdr_lost_count
+    #         [6] tx_word_count
+    #         [7] tx_packet_count
+    #         [8] tx_idle_word_count
+    #     """,
+    # )
 
     # ---------------
     # General methods
@@ -196,7 +195,7 @@ class SlimLink(CbfDevice):
     # -----------------
     # Attribute Methods
     # -----------------
-        
+
     @attribute(dtype=str)
     def txDeviceName(self: SlimLink) -> str:
         """
@@ -213,6 +212,7 @@ class SlimLink(CbfDevice):
 
         :param value: str
         """
+        self.logger.debug(f"Writing txDeviceName to {value}")
         self.component_manager.tx_device_name = value
 
     @attribute(dtype=str)
@@ -231,6 +231,7 @@ class SlimLink(CbfDevice):
 
         :param value: str
         """
+        self.logger.debug(f"Writing txDeviceName to {value}")
         self.component_manager.rx_device_name = value
 
     @attribute(dtype=str)
@@ -329,7 +330,7 @@ class SlimLink(CbfDevice):
             :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
-            self._device._simulation_mode = True
+            self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, message)
 
@@ -364,8 +365,7 @@ class SlimLink(CbfDevice):
         def is_allowed(self: SlimLink.VerifyConnectionCommand) -> bool:
             if self.device._admin_mode == AdminMode.ONLINE:
                 return True
-            else:
-                return False
+            return False
 
         def do(
             self: SlimLink.VerifyConnectionCommand,
@@ -425,8 +425,7 @@ class SlimLink(CbfDevice):
         def is_allowed(self: SlimLink.ClearCountersCommand) -> bool:
             if self.device._admin_mode == AdminMode.ONLINE:
                 return True
-            else:
-                return False
+            return False
 
         def do(self: SlimLink.ClearCountersCommand) -> Tuple[ResultCode, str]:
             """
