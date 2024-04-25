@@ -203,6 +203,71 @@ class SlimLinkComponentManager(CbfComponentManager):
         return self._rx_device_proxy.bit_error_rate
 
     @property
+    def rx_debug_alignment_and_lock_status(
+        self: SlimLinkComponentManager,
+    ) -> list[bool]:
+        """
+        Returns the Debug Alignment and Lock Status flags of the rx HPS device
+
+        :return: Debug Alignment and Lock Status flags of the rx HPS Device
+        :raise Tango exception: if the rx device is not set.
+        :rtype: list[int]
+        """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.rx_debug_alignment_and_lock_status
+
+        if self._rx_device_proxy is None:
+            tango.Except.throw_exception(
+                "SlimLink_Bit_Error_Rate",
+                "Tx Rx are not yet connected",
+                "rx_debug_alignment_and_lock_status()",
+            )
+
+        return self._rx_device_proxy.debug_alignment_and_lock_status
+
+    @property
+    def rx_link_occupancy(self: SlimLinkComponentManager) -> float:
+        """
+        Retrieves and return the link occupancy of the rx device
+
+        :return: Link Occupancy of the rx Device
+        :raise Tango exception: if the rx device is not set.
+        :rtype: float
+        """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.rx_link_occupancy
+
+        if self._rx_device_proxy is None:
+            tango.Except.throw_exception(
+                "SlimLink_Bit_Error_Rate",
+                "Tx Rx are not yet connected",
+                "rx_link_occupancy()",
+            )
+
+        return self._rx_device_proxy.link_occupancy
+
+    @property
+    def tx_link_occupancy(self: SlimLinkComponentManager) -> float:
+        """
+        Retrieves and return the link occupancy of the tx device
+
+        :return: Link Occupancy of the tx Device
+        :raise Tango exception: if the tx device is not set.
+        :rtype: float
+        """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.tx_link_occupancy
+
+        if self._tx_device_proxy is None:
+            tango.Except.throw_exception(
+                "SlimLink_Bit_Error_Rate",
+                "Tx Rx are not yet connected",
+                "tx_link_occupancy()",
+            )
+
+        return self._tx_device_proxy.link_occupancy
+
+    @property
     def simulation_mode(self):
         """
         Get the simulation mode.

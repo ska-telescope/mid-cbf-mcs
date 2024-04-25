@@ -157,6 +157,11 @@ class Slim(SKABaseDevice):
             "Configure", self.ConfigureCommand(*device_args)
         )
 
+        self.register_command_object(
+            "SLIM Mest Test",
+            self.SlimMeshTestCommand(*device_args),
+        )
+
     # --------
     # Commands
     # --------
@@ -282,6 +287,196 @@ class Slim(SKABaseDevice):
                     "Device is off. Failed to issue Configure command.",
                 )
 
+    class SlimMeshTestCommand(ResponseCommand):
+        """
+        A command to test the mesh of SLIM Tx Rx Links
+        """
+
+        def _slim_mesh_links_ber_check_summary(
+            self: Slim.SlimMeshTestCommand,
+        ) -> str:
+            """
+            Returns a summary status of the SLIM Mesh Link heath for each device
+            on the Mesh
+
+            :return: A summary report on the status of the SLIM Mesh Links
+            :rtype: str
+            """
+            ber_pass_thres = 8.000e-11
+            gbps = 25.78125 * 64 / 66
+            # TODO: Change before testing on Talon Boards
+            link_names = self.target.component_manager.get_link_names()
+            counters = self.target.component_manager.get_device_counters()
+
+            status_dict = {}
+            res = ""
+            for idx, name in enumerate(link_names):
+                status_dict[name] = {}
+                counter = counters[idx]
+
+                rx_word_count = counter[0]
+                rx_idle_word_count = counter[2]
+                rx_idle_error_count = counter[3]
+                if not rx_idle_word_count:
+                    rx_wer = "NaN"
+                    rx_status = "Unknown"
+                elif not rx_idle_error_count:
+                    rx_wer = f"better than {1/rx_idle_word_count:.0e}"
+                    rx_status = "Passed"
+                else:
+                    rx_wr_float = rx_idle_error_count / rx_idle_word_count
+                    rx_wer = f"{rx_wr_float:.3e}"
+                    if rx_wr_float < ber_pass_thres:
+                        rx_status = "Passed"
+                    else:
+                        rx_status = "Failed"
+                rx_words = rx_word_count + rx_idle_word_count
+
+                # create SLIM Mesh Link health summary:
+                status_dict[name] = {}
+                status_dict[name]["rx_wer"] = rx_wer
+                status_dict[name]["rx_status"] = rx_status
+                status_dict[name]["rx_rate_gbps"] = (
+                    rx_idle_word_count / rx_words * gbps
+                )
+
+            for name in link_names:
+                self.logger.info(f"Link Name: {name}")
+                res += f"Link Name: {name}\n"
+                link_status = status_dict[name]["rx_status"]
+                self.logger.info(f"Slim Mesh Link status: {link_status}")
+                res += f"Slim Mesh Link status: {link_status}\n"
+                res += "\n"
+            res += "\n\n"
+            for name in link_names:
+                link_health_dict = status_dict[name]
+                self.logger.info(f"Link Name: {name}")
+                res += f"Link Name: {name}\n"
+                for key, value in link_health_dict.items():
+                    self.logger.info(f"{key}:{value}")
+                    res += f"{key}:{value}\n"
+                res += "\n"
+
+            return res
+
+        def _slim_table(self: Slim.SlimMeshTest) -> str:
+            """
+            Returns a summary for the rx and tx device on the Mesh
+
+            :return: A string that contains the summary report on the rx and tx devic eon the mesh
+            :return None
+            """
+            msg = ""
+            # TODO: Change before testing on Talon Boards
+            link_names = self.target.component_manager.get_link_names()
+            counters = self.target.component_manager.get_device_counters()
+            rx_debug_alignment_and_lock_statuses = (
+                self.target.component_manager.get_rx_devices_debug_alignment_and_lock_status()
+            )
+            rx_link_occupancies = (
+                self.target.component_manager.get_rx_link_occupancy()
+            )
+            tx_link_occupancies = (
+                self.target.component_manager.get_tx_link_occupancy()
+            )
+
+            for idx, name in enumerate(link_names):
+                gbps = 25.78125 * 64 / 66
+                counter = counters[idx]
+                rx_flags = rx_debug_alignment_and_lock_statuses[idx]
+                rx_link_occupancy = rx_link_occupancies[idx]
+                tx_link_occupancy = tx_link_occupancies[idx]
+
+                tx_word_count = counter[6]
+                rx_word_count = counter[0]
+                tx_idle_word_count = counter[8]
+                rx_idle_word_count = counter[2]
+                rx_idle_error_count = counter[3]
+                tx_words = tx_word_count + tx_idle_word_count
+                rx_words = rx_word_count + rx_idle_word_count
+
+                if not rx_idle_word_count:
+                    rx_wer = "NaN"
+                elif not rx_idle_error_count:
+                    rx_wer = f"better than {1/rx_idle_word_count:.0e}"
+                else:
+                    rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
+
+                msg += (
+                    "{"
+                    + f"{{Link Name: {name}}},"
+                    + f"{{CDR Locked:{rx_flags[3]}, Lost:{rx_flags[2]}}},"
+                    + f"{{Block Aligned:{rx_flags[1]}, Lost:{rx_flags[0]}}},"
+                    + f"{{Tx Data (Gbps / Words): {tx_link_occupancy * gbps:.2f} / {tx_word_count}}},"
+                    + f"{{Tx Idle (Gbps): {tx_idle_word_count/tx_words * gbps:.2f}}},"
+                    + f"{{Rx Data (Gbps / Word): {rx_link_occupancy * gbps:.2f} / {rx_word_count}}},"
+                    + f"{{Rx Idle (Gbps): {rx_idle_word_count/tx_words * gbps:.2f}}},"
+                    + f"{{Idle Error:{rx_idle_error_count}, Count:{rx_words}}},"
+                    + f"{{Word Error Rate: {rx_wer}}}"
+                    + "}"
+                    + "\n"
+                )
+            return msg
+
+        def do(
+            self: Slim.SlimMeshTestCommand, argin: str, test_length: int = 10
+        ) -> Tuple[ResultCode, str]:
+            """
+            SLIM Mesh Test Command.  Configures the SLIM as given in the
+            input string then check the BER of the mesh
+
+            :param argin: mesh configuration as a string in YAML format.
+            :param test_length: length of test in seconds, default 30s.
+            :return: A tuple containing a return code and a string
+                message contaiing a report on the health of the Mesh or error message
+                if exception is caught.
+            :rtype: (ResultCode, str)
+            """
+            # t_sleep = 2
+
+            if self.target.get_state() == tango.DevState.ON:
+                msg = "\n"
+
+                # # # TODO test if the countdown is correct and won't run an extra round
+                # for remain in range(test_length, 0, -(t_sleep)):
+                #     time.sleep(t_sleep)
+                #     self.logger.info(
+                #         f"Waiting: Currently {remain} seconds remaining"
+                #     )
+
+                # msg += f"SLIM Mesh Links BER Summary After ~{test_length} seconds:\n"
+
+                # Print health Summary of Mesh Links
+                try:
+                    msg += self._slim_mesh_links_ber_check_summary()
+                    msg += "\n"
+                except Exception as e:
+                    self.logger.info(f"{e}")
+                    return (
+                        ResultCode.FAILED,
+                        f"{e}",
+                    )
+
+                try:
+                    msg += self._slim_table()
+                    msg += "\n"
+                except Exception as e:
+                    self.logger.info(f"{e}")
+                    return (
+                        ResultCode.FAILED,
+                        f"{e}",
+                    )
+
+                return (ResultCode.OK, msg)
+            else:
+                self.logger.info(
+                    "Device is off. Failed to issue Configure command."
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Device is off. Failed to issue Configure command.",
+                )
+
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -295,6 +490,29 @@ class Slim(SKABaseDevice):
         return_code, message = handler(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  Slim.Configure
+
+    @command(
+        dtype_in="DevString",
+        doc_in="mesh configuration as a string in YAML format",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    def SlimMeshTest(self: Slim, argin: str) -> None:
+        self.logger.info("Running SLIM Mest Test")
+        # Configuring Mesh Links
+        handler = self.get_command_object("Configure")
+        return_code, message = handler(argin)
+
+        if return_code != ResultCode.OK:
+            self.logger.info(message)
+            return [[return_code], [message]]
+
+        self.logger.info("Mesh Configure completed successfully")
+        # Run Mest Test
+        handler = self.get_command_object("SLIM Mest Test")
+        return_code, message = handler(argin)
+        self.logger.info(message)
+        return [[return_code], ["SLIM Mesh Test Completed"]]
 
     # ---------
     # Callbacks

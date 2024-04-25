@@ -252,6 +252,68 @@ class SlimComponentManager(CbfComponentManager):
             bers.append(ber)
         return bers
 
+    def get_device_counters(self) -> List[List[int]]:
+        """
+        Returns a list containing the counters array for each link
+
+        :return: the counter array for each SLIM link in the mesh
+        :rtype: List[List[int]]
+        """
+
+        counters = []
+        for idx, txrx in enumerate(self._active_links):
+            counter = self._dp_links[idx].counters
+            counters.append(counter)
+
+        return counters
+
+    def get_rx_devices_debug_alignment_and_lock_status(
+        self,
+    ) -> List[List[bool]]:
+        """
+        Returns a list containing the Debug Alignment and Lock Status Flags
+        from the rx devices on the Mesh
+
+        :return: List of Debug Alignment and Lock Status Flags for each rx device
+        :rtype: List[List[bool]]
+        """
+        res = []
+        for idx, txrx in enumerate(self._active_links):
+            flags = self._dp_links[idx].rx_debug_alignment_and_lock_status
+            res.append(flags)
+
+        return res
+
+    def get_rx_link_occupancy(self) -> List[int]:
+        """
+        Returns a list of int containing the Link Occupancy Values for all the
+        rx devices on the Mesh
+
+        :return: List of Link Occupancy Values of the rx devices
+        :rtype: List[int]
+        """
+        res = []
+        for idx, txrx in enumerate(self._active_links):
+            val = self._dp_links[idx].rx_link_occupancy
+            res.append(val)
+
+        return res
+
+    def get_tx_link_occupancy(self) -> List[int]:
+        """
+        Returns a list of int containing the Link Occupancy Values for all the
+        tx devices on the Mesh
+
+        :return: List of Link Occupancy Values of the tx devices
+        :rtype: List[int]
+        """
+        res = []
+        for idx, txrx in enumerate(self._active_links):
+            val = self._dp_links[idx].tx_link_occupancy
+            res.append(val)
+
+        return res
+
     def _parse_link(self, link: str):
         """
         Each link is in the format of "tx_fqdn -> rx_fqdn". If the
