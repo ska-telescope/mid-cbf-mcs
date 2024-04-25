@@ -14,7 +14,7 @@ TANGO device class for controlling and monitoring a Talon LRU.
 from __future__ import annotations
 
 from threading import Lock
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
