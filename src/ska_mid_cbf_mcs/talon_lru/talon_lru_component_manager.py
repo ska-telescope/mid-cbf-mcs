@@ -80,7 +80,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.simulation_mode = SimulationMode.TRUE
         self._simulation_mode_events = [None, None]
 
-
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
