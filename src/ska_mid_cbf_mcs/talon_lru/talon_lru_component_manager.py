@@ -311,29 +311,30 @@ class TalonLRUComponentManager(CbfComponentManager):
     # Command methods
     # ---------------
 
-    def on(
+    def _handle_not_connected(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn on the TalonLRU and its subordinate devices
+        Handle the case where command called when the component manager is not connected.
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        log_msg = "Attempted LRU command without connected proxies"
+        self._logger.error(log_msg)
+        self.update_component_fault(True)
+        return (ResultCode.FAILED, log_msg)
+    
+    def _turn_on_pdus(self: TalonLRUComponentManager) -> Tuple[ResultCode, ResultCode]:
+        """
+        If not already on, turn on the two PDUs.
 
-        if not self.connected:
-            log_msg = "Attempted ON sequence without connected proxies"
-            self._logger.error(log_msg)
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, log_msg)
-
-        self._update_power_mode()
-
-        # Power on both outlets
+        :return: A tuple containing the 2 return codes of turning on the PDUs
+        """
+        # Turn on PDU 1
         result1 = ResultCode.FAILED
-
         if self.pdu1_power_mode == PowerMode.ON:
             self._logger.info("PDU 1 is already on.")
             result1 = ResultCode.OK
@@ -345,8 +346,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu1_power_mode = PowerMode.ON
                 self._logger.info("PDU 1 successfully turned on.")
 
+        # Turn on PDU 2
         result2 = ResultCode.FAILED
-
         if (
             self._pdus[1] == self._pdus[0]
             and self._pdu_outlets[1] == self._pdu_outlets[0]
@@ -363,10 +364,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             if result2 == ResultCode.OK:
                 self.pdu2_power_mode = PowerMode.ON
                 self._logger.info("PDU 2 successfully turned on.")
-
-        # Start monitoring talon board telemetries and fault status
-        # This can fail if HPS devices are not deployed to the
-        # board, but it's okay to continue.
+                
+        return result1, result2
+    
+    def _turn_on_talons(self: TalonLRUComponentManager) -> Tuple[ResultCode, ResultCode]:
+        """
+        Turn on the two Talon boards.
+        """
         try:
             self._proxy_talondx_board1.On()
         except tango.DevFailed as df:
@@ -381,7 +385,14 @@ class TalonLRUComponentManager(CbfComponentManager):
                 f"Talon board {self._talons[1]} ON command failed: {df}"
             )
 
-        # Determine what result code to return
+    def _determine_on_result_code(self: TalonLRUComponentManager, result1: ResultCode, result2: ResultCode) -> Tuple[ResultCode, str]:
+        """
+        Determine the return code to return from the on command, given turning on PDUs' result codes.
+
+        :param result1: the result code of turning on PDU 1
+        :param result2: the result code of turning on PDU 2
+        :return: A tuple containing a return code and a string
+        """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self.update_component_fault(True)
             return (ResultCode.FAILED, "Failed to turn on both outlets")
@@ -394,6 +405,34 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             self.update_component_power_mode(PowerMode.ON)
             return (ResultCode.OK, "Both outlets successfully turned on")
+
+    def on(
+        self: TalonLRUComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Turn on the TalonLRU and its subordinate devices
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if not self.connected:
+            return self._handle_not_connected()
+
+        self._update_power_mode()
+
+        # Power on both outlets
+        result1, result2 = self._turn_on_pdus()
+
+        # Start monitoring talon board telemetries and fault status
+        # This can fail if HPS devices are not deployed to the
+        # board, but it's okay to continue.
+        self._turn_on_talons()
+
+        # Determine what result code to return
+        return self._determine_on_result_code(result1, result2)
 
     def off(
         self: TalonLRUComponentManager,
@@ -408,10 +447,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
 
         if not self.connected:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, log_msg)
+            return self._handle_not_connected()
 
         # Power off both outlets
         result1 = ResultCode.FAILED
