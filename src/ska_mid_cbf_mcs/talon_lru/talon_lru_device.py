@@ -17,7 +17,6 @@ from threading import Lock
 from typing import Any, Optional, Tuple
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
