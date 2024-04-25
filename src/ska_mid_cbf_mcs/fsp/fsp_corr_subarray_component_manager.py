@@ -428,6 +428,8 @@ class FspCorrSubarrayComponentManager(
 
         self._deconfigure()
 
+        self._logger.info(f"ConfigureScan: {configuration}")
+
         configuration = json.loads(configuration)
 
         self._freq_band_name = configuration["frequency_band"]
