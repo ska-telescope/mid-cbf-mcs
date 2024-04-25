@@ -180,7 +180,6 @@ def talon_lru_component_manager(
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
     component_fault_callback: MockCallable,
-    check_power_mode_callback: MockCallable,
 ) -> TalonLRUComponentManager:
     return TalonLRUComponentManager(
         talons=["001", "002"],
@@ -192,7 +191,6 @@ def talon_lru_component_manager(
         communication_status_changed_callback=communication_status_changed_callback,
         component_power_mode_changed_callback=component_power_mode_changed_callback,
         component_fault_callback=component_fault_callback,
-        check_power_mode_callback=check_power_mode_callback,
     )
 
 
