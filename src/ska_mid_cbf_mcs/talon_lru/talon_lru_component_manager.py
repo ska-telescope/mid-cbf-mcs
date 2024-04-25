@@ -326,8 +326,10 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._logger.error(log_msg)
         self.update_component_fault(True)
         return (ResultCode.FAILED, log_msg)
-    
-    def _turn_on_pdus(self: TalonLRUComponentManager) -> Tuple[ResultCode, ResultCode]:
+
+    def _turn_on_pdus(
+        self: TalonLRUComponentManager,
+    ) -> Tuple[ResultCode, ResultCode]:
         """
         If not already on, turn on the two PDUs.
 
@@ -364,10 +366,12 @@ class TalonLRUComponentManager(CbfComponentManager):
             if result2 == ResultCode.OK:
                 self.pdu2_power_mode = PowerMode.ON
                 self._logger.info("PDU 2 successfully turned on.")
-                
+
         return result1, result2
-    
-    def _turn_on_talons(self: TalonLRUComponentManager) -> Tuple[ResultCode, ResultCode]:
+
+    def _turn_on_talons(
+        self: TalonLRUComponentManager,
+    ) -> Tuple[ResultCode, ResultCode]:
         """
         Turn on the two Talon boards.
         """
@@ -385,7 +389,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                 f"Talon board {self._talons[1]} ON command failed: {df}"
             )
 
-    def _determine_on_result_code(self: TalonLRUComponentManager, result1: ResultCode, result2: ResultCode) -> Tuple[ResultCode, str]:
+    def _determine_on_result_code(
+        self: TalonLRUComponentManager,
+        result1: ResultCode,
+        result2: ResultCode,
+    ) -> Tuple[ResultCode, str]:
         """
         Determine the return code to return from the on command, given turning on PDUs' result codes.
 
