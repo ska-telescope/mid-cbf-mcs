@@ -227,35 +227,6 @@ class TalonLRUComponentManager(CbfComponentManager):
     # General methods
     # ---------------
 
-    def check_power_mode(
-        self: TalonLRUComponentManager, state: DevState
-    ) -> None:
-        """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state.
-
-        :param state: device operational state
-        """
-        self._update_power_mode()
-
-        expected_power_mode = self._get_expected_power_mode(state)
-        if expected_power_mode is None:
-            return
-
-        # Check the power mode of each outlet matches expected
-        for i, power_mode in enumerate(
-            [self.pdu1_power_mode, self.pdu2_power_mode], start=1
-        ):
-            if power_mode != expected_power_mode:
-                self._logger.error(
-                    f"Power connection {i} expected power mode: ({expected_power_mode}),"
-                    f" actual power mode: ({power_mode})"
-                )
-
-        # Temporary fix to avoid redeploying MCS (CIP-1561)
-        # PDU outlet state mismatch is logged but fault is not triggered
-        # self.update_component_fault(True)
-
     def _update_power_mode(self: TalonLRUComponentManager) -> None:
         """
         Check and update current PowerMode states of both PDUs.
@@ -306,6 +277,55 @@ class TalonLRUComponentManager(CbfComponentManager):
             # In other device states, we don't know what the expected power
             # mode should be. Don't check it.
             return None
+
+    def check_power_mode(
+        self: TalonLRUComponentManager, state: DevState
+    ) -> None:
+        """
+        Get the power mode of both PDUs and check that it is consistent with the
+        current device state.
+
+        :param state: device operational state
+        """
+        self._update_power_mode()
+
+        expected_power_mode = self._get_expected_power_mode(state)
+        if expected_power_mode is None:
+            return
+
+        # Check the power mode of each outlet matches expected
+        for i, power_mode in enumerate(
+            [self.pdu1_power_mode, self.pdu2_power_mode], start=1
+        ):
+            if power_mode != expected_power_mode:
+                self._logger.error(
+                    f"Power connection {i} expected power mode: ({expected_power_mode}),"
+                    f" actual power mode: ({power_mode})"
+                )
+
+        # Temporary fix to avoid redeploying MCS (CIP-1561)
+        # PDU outlet state mismatch is logged but fault is not triggered
+        # self.update_component_fault(True)
+
+    def get_lru_power_mode(self: TalonLRUComponentManager) -> PowerMode:
+        """
+        Get the current power mode of the TalonLRU based on the power mode of the PDUs.
+
+        :return: the current power mode
+        """
+        self._update_power_mode()
+        if (
+            self.pdu1_power_mode == PowerMode.ON
+            or self.pdu2_power_mode == PowerMode.ON
+        ):
+            return PowerMode.ON
+        elif (
+            self.pdu1_power_mode == PowerMode.OFF
+            and self.pdu2_power_mode == PowerMode.OFF
+        ):
+            return PowerMode.OFF
+        else:
+            return PowerMode.UNKNOWN
 
     # ---------------
     # Command methods
@@ -396,6 +416,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> Tuple[ResultCode, str]:
         """
         Determine the return code to return from the on command, given turning on PDUs' result codes.
+        Also update the component power mode and fault status.
 
         :param result1: the result code of turning on PDU 1
         :param result2: the result code of turning on PDU 2
@@ -442,22 +463,15 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Determine what result code to return
         return self._determine_on_result_code(result1, result2)
 
-    def off(
+    def _turn_off_pdus(
         self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> Tuple[ResultCode, ResultCode]:
         """
-        Turn off the TalonLRU and its subordinate devices
+        Turn off the two PDUs.
 
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :return: A tuple containing the 2 return codes of turning off the PDUs
         """
-
-        if not self.connected:
-            return self._handle_not_connected()
-
-        # Power off both outlets
+        # Power off PDU 1
         result1 = ResultCode.FAILED
         if self._proxy_power_switch1 is not None:
             result1 = self._proxy_power_switch1.TurnOffOutlet(
@@ -467,6 +481,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu1_power_mode = PowerMode.OFF
                 self._logger.info("PDU 1 successfully turned off.")
 
+        # Power off PDU 2
         result2 = ResultCode.FAILED
         if self._proxy_power_switch2 is not None:
             if (
@@ -482,16 +497,43 @@ class TalonLRUComponentManager(CbfComponentManager):
                 if result2 == ResultCode.OK:
                     self.pdu2_power_mode = PowerMode.OFF
                     self._logger.info("PDU 2 successfully turned off.")
+        return result1, result2
 
-        # Stop monitoring talon board telemetries and fault status
+    def _turn_off_talon(
+        self: TalonLRUComponentManager, board_id, talondx_board_proxy
+    ):
+        """
+        Turn off the specified Talon board.
+        """
+        try:
+            talondx_board_proxy.Off()
+        except tango.DevFailed as df:
+            return (
+                ResultCode.FAILED,
+                f"_turn_off_boards FAILED on Talon board {board_id}: {df}",
+            )
+        return (
+            ResultCode.OK,
+            f"_turn_off_boards completed OK on Talon board {board_id}",
+        )
+
+    def _turn_off_talons(
+        self: TalonLRUComponentManager,
+    ) -> None | Tuple[ResultCode, str]:
+        """
+        Turn off the two Talon boards, threaded.
+
+        :return: ResultCode.FAILED if one of the boards failed to turn off, None otherwise
+        """
         talondx_board_proxies_by_id = {
             1: self._proxy_talondx_board1,
             2: self._proxy_talondx_board2,
         }
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(
-                    self._turn_off_boards, board_id, proxy_talondx_board
+                    self._turn_off_talon, board_id, proxy_talondx_board
                 )
                 for board_id, proxy_talondx_board in talondx_board_proxies_by_id.items()
             ]
@@ -510,8 +552,21 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._logger.warn(
                     f"Talon board turned off with unexpected result code {result_code}: {msg}"
                 )
+        return None
 
-        # Determine what result code to return
+    def _determine_off_result_code(
+        self: TalonLRUComponentManager,
+        result1: ResultCode,
+        result2: ResultCode,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Determine the return code to return from the off command, given turning on PDUs' result codes.
+        Also update the component fault status if necessary.
+
+        :param result1: the result code of turning off PDU 1
+        :param result2: the result code of turning off PDU 2
+        :return: A tuple containing a return code and a string
+        """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self.update_component_fault(True)
             return (ResultCode.FAILED, "Failed to turn off both outlets")
@@ -525,30 +580,28 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_power_mode(PowerMode.OFF)
             return (ResultCode.OK, "Both outlets successfully turned off")
 
-    def _turn_off_boards(
-        self: TalonLRUComponentManager, board_id, talondx_board_proxy
-    ):
-        try:
-            talondx_board_proxy.Off()
-        except tango.DevFailed as df:
-            return (
-                ResultCode.FAILED,
-                f"_turn_off_boards FAILED on Talon board {board_id}: {df}",
-            )
-        return (
-            ResultCode.OK,
-            f"_turn_off_boards completed OK on Talon board {board_id}",
-        )
-
-    def standby(
+    def off(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn the TalonLRU into low power standby mode
+        Turn off the TalonLRU and its subordinate devices
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        return (ResultCode.OK, "TalonLRU Standby command completed OK")
+
+        if not self.connected:
+            return self._handle_not_connected()
+
+        # Power off both outlets
+        result1, result2 = self._turn_off_pdus()
+
+        # Stop monitoring talon board telemetries and fault status
+        talon_off_result = self._turn_off_talons()
+        if talon_off_result:
+            return talon_off_result
+
+        # Determine what result code to return
+        return self._determine_off_result_code(result1, result2)

@@ -119,19 +119,7 @@ class TalonLRU(SKABaseDevice):
 
         :return: Power mode of the LRU.
         """
-        self.component_manager.check_power_mode(self.get_state())
-        if (
-            self.component_manager.pdu1_power_mode == PowerMode.ON
-            or self.component_manager.pdu2_power_mode == PowerMode.ON
-        ):
-            return PowerMode.ON
-        elif (
-            self.component_manager.pdu1_power_mode == PowerMode.OFF
-            and self.component_manager.pdu2_power_mode == PowerMode.OFF
-        ):
-            return PowerMode.OFF
-        else:
-            return PowerMode.UNKNOWN
+        self.component_manager.get_lru_power_mode()
 
     def write_simulationMode(self: TalonLRU, value: SimulationMode) -> None:
         """
