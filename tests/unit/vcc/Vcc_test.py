@@ -28,9 +28,7 @@ from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
-# TODO: needed?
-# import gc
-# gc.disable()
+from ...test_utils import device_online_and_on
 
 # Path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -100,7 +98,7 @@ class TestVcc:
         command: str,
     ) -> None:
         """
-        Test the On command
+        Test the On/Off/Standby commands
 
         :param device_under_test: fixture that provides a
             :py:class: proxy to the device under test, in a
@@ -130,7 +128,7 @@ class TestVcc:
     @pytest.mark.parametrize(
         "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
     )
-    def test_happy_path_Scan(
+    def test_Scan(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -146,11 +144,7 @@ class TestVcc:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.OFF
-        device_under_test.On()
-        assert device_under_test.state() == DevState.ON
+        assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -192,7 +186,7 @@ class TestVcc:
             ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK."]',
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
 
@@ -208,6 +202,9 @@ class TestVcc:
                 obs_state.value
             )
 
+        # assert frequencyBand attribute reset during GoToIdle
+        change_event_callbacks["frequencyBand"].assert_change_event(0)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -215,7 +212,7 @@ class TestVcc:
         "config_file_name, scan_id",
         [("Vcc_ConfigureScan_basic.json", 1)],
     )
-    def test_Reconfigure_Scan_EndScan_GoToIdle(
+    def test_Scan_reconfigure(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -232,11 +229,7 @@ class TestVcc:
         :param scan_id: the scan id
         """
         # prepare device for observation
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.OFF
-        device_under_test.On()
-        assert device_under_test.state() == DevState.ON
+        assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -277,7 +270,7 @@ class TestVcc:
             ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK."]',
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
 
@@ -301,7 +294,7 @@ class TestVcc:
             ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK."]',
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
 
@@ -321,6 +314,9 @@ class TestVcc:
                 obs_state.value
             )
 
+        # assert frequencyBand attribute reset during GoToIdle
+        change_event_callbacks["frequencyBand"].assert_change_event(0)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -328,7 +324,7 @@ class TestVcc:
         "config_file_name",
         [("Vcc_ConfigureScan_basic.json")],
     )
-    def test_AbortScan_READY(
+    def test_AbortScan_from_ready(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -343,11 +339,7 @@ class TestVcc:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.OFF
-        device_under_test.On()
-        assert device_under_test.state() == DevState.ON
+        assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -388,7 +380,7 @@ class TestVcc:
             ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK."]',
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
 
@@ -405,6 +397,9 @@ class TestVcc:
                 obs_state.value
             )
 
+        # assert frequencyBand attribute reset during ObsReset
+        change_event_callbacks["frequencyBand"].assert_change_event(0)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -412,7 +407,7 @@ class TestVcc:
         "config_file_name, scan_id",
         [("Vcc_ConfigureScan_basic.json", 1)],
     )
-    def test_AbortScan_ObsReset_SCANNING(
+    def test_AbortScan_from_scanning(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -428,11 +423,7 @@ class TestVcc:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.OFF
-        device_under_test.On()
-        assert device_under_test.state() == DevState.ON
+        assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -474,7 +465,7 @@ class TestVcc:
             ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK."]',
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
 
@@ -492,41 +483,8 @@ class TestVcc:
                 obs_state.value
             )
 
+        # assert frequencyBand attribute reset during ObsReset
+        change_event_callbacks["frequencyBand"].assert_change_event(0)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
-
-    # @pytest.mark.parametrize(
-    #     "sw_config_file_name, \
-    #     config_file_name",
-    #     [
-    #         (
-    #             "Vcc_ConfigureSearchWindow_basic.json",
-    #             "Vcc_ConfigureScan_basic.json",
-    #         )
-    #     ],
-    # )
-    # def test_ConfigureSearchWindow_basic(
-    #     self: TestVcc,
-    #     device_under_test: CbfDeviceProxy,
-    #     sw_config_file_name: str,
-    #     config_file_name: str,
-    # ):
-    #     """
-    #     Test a minimal successful search window configuration.
-    #     """
-    #     device_under_test.adminMode = AdminMode.ONLINE
-    #     device_under_test.loggingLevel = LoggingLevel.DEBUG
-    #     device_under_test.On()
-    #     device_under_test.loggingLevel = LoggingLevel.DEBUG
-    #     # set dishID to SKA001 to correctly test tdcDestinationAddress
-    #     device_under_test.dishID = "SKA001"
-    #     f = open(test_data_path + config_file_name)
-    #     json_string = f.read().replace("\n", "")
-    #     f.close()
-    #     device_under_test.ConfigureScan(json_string)
-    #     time.sleep(3)
-
-    #     # configure search window
-    #     f = open(test_data_path + sw_config_file_name)
-    #     device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
-    #     f.close()

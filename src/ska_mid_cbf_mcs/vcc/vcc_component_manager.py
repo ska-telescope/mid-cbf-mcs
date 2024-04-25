@@ -214,10 +214,10 @@ class VccComponentManager(CbfObsComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            return (ResultCode.FAILED, "Failed to connect to HPS VCC devices")
+            return (ResultCode.FAILED, "Failed to connect to HPS VCC devices.")
 
         self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On command completed OK")
+        return (ResultCode.OK, "On completed OK")
 
     def off(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
@@ -229,7 +229,7 @@ class VccComponentManager(CbfObsComponentManager):
         :rtype: (ResultCode, str)
         """
         self._update_component_state(power=PowerState.OFF)
-        return (ResultCode.OK, "Off command completed OK")
+        return (ResultCode.OK, "Off completed OK")
 
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
@@ -254,12 +254,59 @@ class VccComponentManager(CbfObsComponentManager):
             return False
         return True
 
+    def _load_internal_params(
+        self: VccComponentManager,
+        freq_band_name: str,
+        dish_sample_rate: int,
+        samples_per_frame: int,
+    ) -> str:
+        """
+        Helper for loading VCC internal parameter file
+
+        :param freq_band_name: the name of the configured frequency band
+        :param dish_sample rate: the configured DISH sample rate
+        :param samples_per_frame: the configured samples per frame
+        """
+        self.logger.info(
+            f"Configuring internal parameters for VCC band {freq_band_name}"
+        )
+
+        internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._dish_id}_band{freq_band_name}.json"
+        self.logger.debug(
+            f"Using parameters stored in {internal_params_file_name}"
+        )
+        try:
+            with open(internal_params_file_name, "r") as f:
+                json_string = f.read()
+        except FileNotFoundError:
+            self.logger.info(
+                f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
+            )
+            try:
+                with open(
+                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                ) as f:
+                    json_string = f.read()
+            except FileNotFoundError:
+                self.logger.error(
+                    "Could not find default internal parameters file."
+                )
+                return None
+
+        self.logger.debug(f"VCC internal parameters: {json_string}")
+
+        # add dish_sample_rate and samples_per_frame to internal params json
+        args = json.loads(json_string)
+        args.update({"dish_sample_rate": dish_sample_rate})
+        args.update({"samples_per_frame": samples_per_frame})
+        json_string = json.dumps(args)
+        return json_string
+
     def _configure_band(
         self: VccComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         Configure VCC band-specific devices
@@ -268,16 +315,11 @@ class VccComponentManager(CbfObsComponentManager):
 
         :return: None
         """
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-        # TODO CIP-2380
-        if task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc.ConfigureBand command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "ConfigureBand", task_callback, task_abort_event
+        ):
             return
 
         band_config = json.loads(argin)
@@ -310,60 +352,23 @@ class VccComponentManager(CbfObsComponentManager):
                 return
 
         # Set internal params for the configured band
-        self.logger.info(
-            f"Configuring internal parameters for VCC band {freq_band_name}"
+        json_string = self._load_internal_params(
+            freq_band_name=freq_band_name,
+            dish_sample_rate=band_config["dish_sample_rate"],
+            samples_per_frame=band_config["samples_per_frame"],
         )
-
-        internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._dish_id}_band{freq_band_name}.json"
-        self.logger.debug(
-            f"Using parameters stored in {internal_params_file_name}"
-        )
-        try:
-            with open(internal_params_file_name, "r") as f:
-                json_string = f.read()
-        except FileNotFoundError:
-            self.logger.info(
-                f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
-            )
-            try:
-                with open(
-                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
-                ) as f:
-                    json_string = f.read()
-            except FileNotFoundError:
-                self.logger.error(
-                    "Could not find default internal parameters file."
-                )
-                self._update_component_state(fault=True)
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "Missing default internal parameters file.",
-                    ),
-                )
-                return
-
-        self.logger.debug(f"VCC internal parameters: {json_string}")
-
-        args = json.loads(json_string)
-        args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
-        args.update({"samples_per_frame": band_config["samples_per_frame"]})
-        json_string = json.dumps(args)
-
-        fb_index = self._freq_band_index[freq_band_name]
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
+        if json_string is None:
+            self._update_component_state(fault=True)
             task_callback(
-                status=TaskStatus.ABORTED,
+                status=TaskStatus.FAILED,
                 result=(
-                    ResultCode.ABORTED,
-                    "Vcc ConfigureBand command aborted by task executor Abort Event.",
+                    ResultCode.FAILED,
+                    "Missing default internal parameters file.",
                 ),
             )
             return
 
+        fb_index = self._freq_band_index[freq_band_name]
         if self.simulation_mode:
             self._band_simulators[fb_index].SetInternalParameters(json_string)
         else:
@@ -380,7 +385,7 @@ class VccComponentManager(CbfObsComponentManager):
         )
 
         task_callback(
-            result=(ResultCode.OK, "ConfigureBand completed OK."),
+            result=(ResultCode.OK, "ConfigureBand completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -389,7 +394,6 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
@@ -416,7 +420,6 @@ class VccComponentManager(CbfObsComponentManager):
         argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         Execute configure scan operation.
@@ -425,18 +428,11 @@ class VccComponentManager(CbfObsComponentManager):
 
         :return: None
         """
-
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "ConfigureScan", task_callback, task_abort_event
+        ):
             return
 
         configuration = json.loads(argin)
@@ -497,7 +493,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(configured=True)
 
         task_callback(
-            result=(ResultCode.OK, "ConfigureScan completed OK."),
+            result=(ResultCode.OK, "ConfigureScan completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -507,7 +503,6 @@ class VccComponentManager(CbfObsComponentManager):
         argin: int,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         Begin scan operation.
@@ -516,18 +511,11 @@ class VccComponentManager(CbfObsComponentManager):
 
         :return: None
         """
-
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc Scan command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "Scan", task_callback, task_abort_event
+        ):
             return
 
         self._scan_id = argin
@@ -541,7 +529,9 @@ class VccComponentManager(CbfObsComponentManager):
                 self._band_proxies[fb_index].Scan(self._scan_id)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
-                self._update_component_state(fault=True)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -555,7 +545,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(scanning=True)
 
         task_callback(
-            result=(ResultCode.OK, "Scan completed OK."),
+            result=(ResultCode.OK, "Scan completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -564,24 +554,17 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         End scan operation.
 
         :return: None
         """
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc EndScan command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "EndScan", task_callback, task_abort_event
+        ):
             return
 
         # Send the EndScan command to the HPS
@@ -609,7 +592,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(scanning=False)
 
         task_callback(
-            result=(ResultCode.OK, "EndScan completed OK."),
+            result=(ResultCode.OK, "EndScan completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -618,24 +601,17 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         Execute observing state transition from READY to IDLE.
 
         :return: None
         """
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc GoToIdle command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "GoToIdle", task_callback, task_abort_event
+        ):
             return
 
         if self.simulation_mode:
@@ -659,13 +635,14 @@ class VccComponentManager(CbfObsComponentManager):
                 )
                 return
 
+        # reset configured attributes
         self._deconfigure()
 
         # Update obsState callback
         self._update_component_state(configured=False)
 
         task_callback(
-            result=(ResultCode.OK, "GoToIdle completed OK."),
+            result=(ResultCode.OK, "GoToIdle completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -674,24 +651,17 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
         """
         Abort the current scan operation.
 
         :return: None
         """
+        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc AbortScan command aborted by task executor Abort Event.",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "AbortScan", task_callback, task_abort_event
+        ):
             return
 
         if self._freq_band_name != "":
@@ -725,7 +695,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
 
         task_callback(
-            result=(ResultCode.OK, "AbortScan completed OK."),
+            result=(ResultCode.OK, "AbortScan completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
@@ -734,20 +704,17 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
     ) -> None:
-        """Reset the configuration."""
-        task_callback(status=TaskStatus.IN_PROGRESS)
+        """
+        Reset the configuration from ABORTED or FAULT.
 
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc AbortScan command aborted by task executor Abort Event.",
-                ),
-            )
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "ObsReset", task_callback, task_abort_event
+        ):
             return
 
         if self._freq_band_name != "":
@@ -779,8 +746,11 @@ class VccComponentManager(CbfObsComponentManager):
                 "Aborted from IDLE; not issuing ObsReset command to VCC band devices"
             )
 
+        # reset configured attributes
+        self._deconfigure()
+
         task_callback(
-            result=(ResultCode.OK, "ObsReset completed OK."),
+            result=(ResultCode.OK, "ObsReset completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
