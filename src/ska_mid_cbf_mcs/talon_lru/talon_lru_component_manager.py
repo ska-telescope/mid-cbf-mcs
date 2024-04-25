@@ -92,117 +92,6 @@ class TalonLRUComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: TalonLRUComponentManager) -> None:
-        """
-        Establish communication with the component, then start monitoring.
-        """
-
-        if self.connected:
-            self._logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
-
-        if len(self._talons) < 2:
-            self._logger.error("Expect two Talon board FQDNs")
-            tango.Except.throw_exception(
-                "TalonLRU_TalonBoardFailed",
-                "Two FQDNs for Talon Boards are needed for the LRU",
-                "start_communicating()",
-            )
-
-        self._proxy_talondx_board1 = self.get_device_proxy(
-            "mid_csp_cbf/talon_board/" + self._talons[0]
-        )
-        self._proxy_talondx_board2 = self.get_device_proxy(
-            "mid_csp_cbf/talon_board/" + self._talons[1]
-        )
-
-        # Needs Admin mode == ONLINE to run ON command
-        self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
-        self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
-
-        self._proxy_power_switch1 = self.get_device_proxy(
-            "mid_csp_cbf/power_switch/" + self._pdus[0]
-        )
-        if self._pdus[1] == self._pdus[0]:
-            self._proxy_power_switch2 = self._proxy_power_switch1
-        else:
-            self._proxy_power_switch2 = self.get_device_proxy(
-                "mid_csp_cbf/power_switch/" + self._pdus[1]
-            )
-
-        if (self._proxy_power_switch1 is None) and (
-            self._proxy_power_switch2 is None
-        ):
-            self.update_communication_status(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.update_component_fault(True)
-            self._logger.error("Both power switches failed to connect.")
-            return
-        # Subscribe to simulationMode change event and increase the access
-        # timeout of the power switch proxies, since the HTTP connection
-        # timeout must be >3s.
-        if self._proxy_power_switch1 is not None:
-            # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
-            # to handle the observed slowness in the PSI PDU
-            self._proxy_power_switch1.set_timeout_millis(
-                self._pdu_cmd_timeout * 1000
-            )
-            self.pdu1_power_mode = (
-                self._proxy_power_switch1.GetOutletPowerMode(
-                    self._pdu_outlets[0]
-                )
-            )
-            if self._proxy_power_switch1.numOutlets == 0:
-                self.pdu1_power_mode = PowerMode.UNKNOWN
-
-            # Set the power switch 1's simulation mode
-            self._proxy_power_switch1.adminMode = AdminMode.OFFLINE
-            self._proxy_power_switch1.simulationMode = self.simulation_mode
-            self._proxy_power_switch1.adminMode = AdminMode.ONLINE
-
-        if self._proxy_power_switch2 is not None:
-            if self._pdus[1] != self._pdus[0]:
-                # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
-                # to handle the observed slowness in the PSI PDU
-                self._proxy_power_switch2.set_timeout_millis(
-                    self._pdu_cmd_timeout * 1000
-                )
-                self.pdu2_power_mode = (
-                    self._proxy_power_switch2.GetOutletPowerMode(
-                        self._pdu_outlets[1]
-                    )
-                )
-                if self._proxy_power_switch2.numOutlets == 0:
-                    self.pdu2_power_mode = PowerMode.UNKNOWN
-
-                # Set the power switch 2's simulation mode
-                self._proxy_power_switch2.adminMode = AdminMode.OFFLINE
-                self._proxy_power_switch2.simulationMode = self.simulation_mode
-                self._proxy_power_switch2.adminMode = AdminMode.ONLINE
-
-        self.connected = True
-
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.OFF)
-
-    def stop_communicating(self: TalonLRUComponentManager) -> None:
-        """Stop communication with the component."""
-        super().stop_communicating()
-        if self._simulation_mode_events[0]:
-            self._proxy_power_switch1.remove_event(
-                "simulationMode", self._simulation_mode_events[0]
-            )
-            self._simulation_mode_events[0] = None
-        if self._simulation_mode_events[1]:
-            self._proxy_power_switch2.remove_event(
-                "simulationMode", self._simulation_mode_events[1]
-            )
-            self._simulation_mode_events[1] = None
-        self.connected = False
-
     def get_device_proxy(
         self: TalonLRUComponentManager, fqdn: str
     ) -> CbfDeviceProxy | None:
@@ -226,6 +115,113 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
             self.update_component_fault(True)
             return None
+
+    def _init_talon_proxies(self: TalonLRUComponentManager) -> None:
+        """
+        Get and initialize the 2 Talon Board proxies
+        """
+        if len(self._talons) < 2:
+            self._logger.error("Expected two Talon board FQDNs")
+            tango.Except.throw_exception(
+                "TalonLRU_TalonBoardFailed",
+                "Two FQDNs for Talon Boards are needed for the LRU",
+                "start_communicating()",
+            )
+
+        self._proxy_talondx_board1 = self.get_device_proxy(
+            "mid_csp_cbf/talon_board/" + self._talons[0]
+        )
+
+        self._proxy_talondx_board2 = self.get_device_proxy(
+            "mid_csp_cbf/talon_board/" + self._talons[1]
+        )
+
+        # Needs Admin mode == ONLINE to run ON command
+        self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
+        self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+
+    def _init_power_switch(self, pdu, pdu_outlet) -> None:
+        """
+        Initialize power switch and get the power mode of the specified outlet.
+
+        :param pdu: FQDN of the power switch device
+        :param pdu_outlet: ID of the PDU outlet
+        :return: the power switch proxy and the power mode of the outlet
+        """
+        proxy = self.get_device_proxy("mid_csp_cbf/power_switch/" + pdu)
+        if proxy is not None:
+            proxy.set_timeout_millis(self._pdu_cmd_timeout * 1000)
+            power_mode = proxy.GetOutletPowerMode(pdu_outlet)
+            if proxy.numOutlets == 0:
+                power_mode = PowerMode.UNKNOWN
+
+            # Set the power switch's simulation mode
+            proxy.adminMode = AdminMode.OFFLINE
+            proxy.simulationMode = self.simulation_mode
+            proxy.adminMode = AdminMode.ONLINE
+        return proxy, power_mode
+
+    def _init_power_switch_proxies(self: TalonLRUComponentManager) -> None:
+        """
+        Get and initialize the 2 Power Switch proxies
+        """
+        (
+            self._proxy_power_switch1,
+            self.pdu1_power_mode,
+        ) = self._init_power_switch(self._pdus[0], self._pdu_outlets[0])
+        if self._pdus[1] == self._pdus[0]:
+            self._proxy_power_switch2 = self._proxy_power_switch1
+            self.pdu2_power_mode = self.pdu1_power_mode
+        else:
+            (
+                self._proxy_power_switch2,
+                self.pdu2_power_mode,
+            ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
+
+        if (self._proxy_power_switch1 is None) and (
+            self._proxy_power_switch2 is None
+        ):
+            self.update_communication_status(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.update_component_fault(True)
+            self._logger.error("Both power switches failed to connect.")
+
+    def start_communicating(self: TalonLRUComponentManager) -> None:
+        """
+        Establish communication with the component, then start monitoring.
+        """
+        if self.connected:
+            self._logger.info("Already communicating.")
+            return
+
+        super().start_communicating()
+
+        # Get and initialize the device proxies of all the devices we care about
+        self._init_talon_proxies()
+        self._init_power_switch_proxies()
+
+        # Update status
+        self.connected = True
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(PowerMode.OFF)
+
+    def stop_communicating(self: TalonLRUComponentManager) -> None:
+        """
+        Stop communication with the component.
+        """
+        super().stop_communicating()
+        if self._simulation_mode_events[0]:
+            self._proxy_power_switch1.remove_event(
+                "simulationMode", self._simulation_mode_events[0]
+            )
+            self._simulation_mode_events[0] = None
+        if self._simulation_mode_events[1]:
+            self._proxy_power_switch2.remove_event(
+                "simulationMode", self._simulation_mode_events[1]
+            )
+            self._simulation_mode_events[1] = None
+        self.connected = False
 
     # ---------------
     # General methods
