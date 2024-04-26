@@ -184,7 +184,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     # General methods
     # ---------------
 
-    def _get_power_state(
+    def _get_outlet_power_state(
         self: TalonLRUComponentManager, proxy_power_switch, outlet
     ) -> PowerState:
         """
@@ -201,11 +201,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             return PowerState.UNKNOWN
 
-    def _update_power_state(self: TalonLRUComponentManager) -> None:
+    def _update_pdu_power_states(self: TalonLRUComponentManager) -> None:
         """
         Check and update current PowerState states of both PDUs.
         """
-        self.pdu1_power_state = self._get_power_state(
+        self.pdu1_power_state = self._get_outlet_power_state(
             self._proxy_power_switch1, self._pdu_outlets[0]
         )
 
@@ -214,30 +214,12 @@ class TalonLRUComponentManager(CbfComponentManager):
         ):
             self.pdu2_power_state = self.pdu1_power_state
         else:
-            self.pdu2_power_state = self._get_power_state(
+            self.pdu2_power_state = self._get_outlet_power_state(
                 self._proxy_power_switch2, self._pdu_outlets[1]
             )
 
-    def _get_expected_power_state(
-        self: TalonLRUComponentManager, state: DevState
-    ):
-        """
-        Get the expected power mode based on given device state.
-
-        :param state: device operational state
-        :return: the expected PowerState
-        """
-        if state in [DevState.INIT, DevState.OFF]:
-            return PowerState.OFF
-        elif state == DevState.ON:
-            return PowerState.ON
-        else:
-            # In other device states, we don't know what the expected power
-            # mode should be. Don't check it.
-            return None
-
     def check_power_state(
-        self: TalonLRUComponentManager, state: DevState
+        self: TalonLRUComponentManager
     ) -> None:
         """
         Get the power mode of both PDUs and check that it is consistent with the
@@ -245,9 +227,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         :param state: device operational state
         """
-        self._update_power_state()
+        self._update_pdu_power_states()
 
-        expected_power_state = self._get_expected_power_state(state)
+        expected_power_state = self.power_state
         if expected_power_state is None:
             return
 
@@ -268,22 +250,24 @@ class TalonLRUComponentManager(CbfComponentManager):
     def get_lru_power_state(self: TalonLRUComponentManager) -> PowerState:
         """
         Get the current PowerState of the TalonLRU based on the power mode of the PDUs.
+        Also update the current LRU PowerState state to match.
 
         :return: the current TalonLRU PowerState
         """
-        self._update_power_state()
+        self._update_pdu_power_states()
+        lru_power_state = PowerState.UNKNOWN
         if (
             self.pdu1_power_state == PowerState.ON
             or self.pdu2_power_state == PowerState.ON
         ):
-            return PowerState.ON
+            lru_power_state = PowerState.ON
         elif (
             self.pdu1_power_state == PowerState.OFF
             and self.pdu2_power_state == PowerState.OFF
         ):
-            return PowerState.OFF
-        else:
-            return PowerState.UNKNOWN
+            lru_power_state = PowerState.OFF
+        self._update_component_state(power=lru_power_state)
+        return lru_power_state
 
     # ---------------
     # Command methods
@@ -302,7 +286,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         log_msg = "Attempted LRU command without connected proxies"
         self.logger.error(log_msg)
-        self.update_component_fault(True)
+        self._update_component_state(fault=True)
         return (ResultCode.FAILED, log_msg)
     
     def _turn_on_pdus(
@@ -397,7 +381,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Turn on the TalonLRU and its subordinate devices
 
@@ -417,7 +401,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self._communication_state == CommunicationStatus.NOT_ESTABLISHED:
             return self._handle_not_connected()
 
-        self._update_power_state()
+        self._update_pdu_power_states()
 
         # Power on both outlets
         result1, result2 = self._turn_on_pdus()
@@ -428,8 +412,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._turn_on_talons()
 
         # Determine what result code to return
-        return self._determine_on_result_code(result1, result2)
-
+        task_callback(
+            result=self._determine_on_result_code(result1, result2),
+            status=TaskStatus.COMPLETED,
+        )
+        return
  
     def is_on_allowed(self: TalonLRUComponentManager) -> bool:
         return True
