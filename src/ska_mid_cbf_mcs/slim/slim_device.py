@@ -309,7 +309,7 @@ class Slim(SKABaseDevice):
             counters = self.target.component_manager.get_device_counters()
 
             # status_dict = {}
-            res = ""
+            res = "\n SLIM Mesh Bere Check Summary:\n\n"
             for idx, name in enumerate(link_names):
                 # status_dict[name] = {}
                 counter = counters[idx]
@@ -363,9 +363,8 @@ class Slim(SKABaseDevice):
             #         self.logger.info(f"{key}:{value}")
             #         res += f"{key}:{value}\n"
             #     res += "\n"
-
-            res += "\n\n"
-
+            self.logger.info(res)
+            # res += "\n\n"
             return res
 
         def _slim_table(self: Slim.SlimMeshTest) -> str:
@@ -409,7 +408,7 @@ class Slim(SKABaseDevice):
                     rx_wer = f"better than {1/rx_idle_word_count:.0e}"
                 else:
                     rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
-                msg += "Summary Table:\n\n"
+                msg += "\nSummary Table:\n\n"
                 msg += (
                     "{"
                     + f"{{Link Name: {name}}},"
@@ -424,6 +423,7 @@ class Slim(SKABaseDevice):
                     + "}"
                     + "\n"
                 )
+            self.logger.info(msg)
             return msg
 
         def do(
@@ -443,7 +443,7 @@ class Slim(SKABaseDevice):
             # t_sleep = 2
 
             if self.target.get_state() == tango.DevState.ON:
-                msg = "\n"
+                msg = ""
 
                 # # # TODO test if the countdown is correct and won't run an extra round
                 # for remain in range(test_length, 0, -(t_sleep)):
@@ -456,8 +456,7 @@ class Slim(SKABaseDevice):
 
                 # Print health Summary of Mesh Links
                 try:
-                    msg += self._slim_mesh_links_ber_check_summary()
-                    msg += "\n"
+                    self._slim_mesh_links_ber_check_summary()
                 except Exception as e:
                     self.logger.info(f"{e}")
                     return (
@@ -466,8 +465,7 @@ class Slim(SKABaseDevice):
                     )
 
                 try:
-                    msg += self._slim_table()
-                    msg += "\n"
+                    self._slim_table()
                 except Exception as e:
                     self.logger.info(f"{e}")
                     return (
@@ -519,7 +517,7 @@ class Slim(SKABaseDevice):
         # Run Mest Test
         handler = self.get_command_object("SLIM Mest Test")
         return_code, message = handler(argin)
-        self.logger.info(message)
+        # self.logger.info(message)
         return [[return_code], ["SLIM Mesh Test Completed"]]
 
     # ---------
