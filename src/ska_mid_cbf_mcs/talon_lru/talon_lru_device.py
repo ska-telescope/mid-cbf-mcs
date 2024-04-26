@@ -168,10 +168,6 @@ class TalonLRU(CbfDevice):
 
             # Setting initial simulation mode to True
             self._device.simulation_mode(SimulationMode.TRUE)
-
-            # Check power mode in case of fault during communication establishment
-            # device.component_manager.check_power_mode(device.get_state())
-
             return (result_code, msg)
 
     # On Command
