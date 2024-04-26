@@ -100,23 +100,11 @@ class TalonLRU(CbfDevice):
 
     def read_LRUPowerState(self: TalonLRU) -> PowerState:
         """
-        Read the power mode of the LRU by checking the power mode of the PDUs.
+        Read the LRU's PowerState.
 
-        :return: Power mode of the LRU.
+        :return: PowerState of the LRU.
         """
-        self.component_manager.check_power_mode(self.get_state())
-        if (
-            self.component_manager.pdu1_power_mode == PowerState.ON
-            or self.component_manager.pdu2_power_mode == PowerState.ON
-        ):
-            return PowerState.ON
-        elif (
-            self.component_manager.pdu1_power_mode == PowerState.OFF
-            and self.component_manager.pdu2_power_mode == PowerState.OFF
-        ):
-            return PowerState.OFF
-        else:
-            return PowerState.UNKNOWN
+        return self.component_manager.get_lru_power_state()
 
     # ---------------
     # General methods
@@ -150,7 +138,6 @@ class TalonLRU(CbfDevice):
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
-            check_power_mode_callback=self._check_power_mode,
         )
 
     # --------
@@ -299,21 +286,6 @@ class TalonLRU(CbfDevice):
             self.set_status(
                 "The device is in FAULT state - one or both PDU outlets have incorrect power state."
             )
-
-    def _check_power_mode(
-        self: TalonLRUComponentManager,
-        fqdn: str = "",
-        name: str = "",
-        value: Any = None,
-        quality: tango.AttrQuality = None,
-    ) -> None:
-        """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state. This is a callback that gets called whenever simulationMode
-        changes in the power switch devices.
-        """
-        with self._power_switch_lock:
-            self.component_manager.check_power_mode(self.get_state())
 
 # ----------
 # Run server
