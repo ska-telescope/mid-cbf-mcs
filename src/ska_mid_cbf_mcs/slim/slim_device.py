@@ -304,14 +304,14 @@ class Slim(SKABaseDevice):
             """
             ber_pass_thres = 8.000e-11
             gbps = 25.78125 * 64 / 66
-            # TODO: Change before testing on Talon Boards
+
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
 
-            status_dict = {}
+            # status_dict = {}
             res = ""
             for idx, name in enumerate(link_names):
-                status_dict[name] = {}
+                # status_dict[name] = {}
                 counter = counters[idx]
 
                 rx_word_count = counter[0]
@@ -332,30 +332,39 @@ class Slim(SKABaseDevice):
                         rx_status = "Failed"
                 rx_words = rx_word_count + rx_idle_word_count
 
-                # create SLIM Mesh Link health summary:
-                status_dict[name] = {}
-                status_dict[name]["rx_wer"] = rx_wer
-                status_dict[name]["rx_status"] = rx_status
-                status_dict[name]["rx_rate_gbps"] = (
-                    rx_idle_word_count / rx_words * gbps
-                )
+                # # create SLIM Mesh Link health summary:
+                # status_dict[name] = {}
+                # status_dict[name]["rx_wer"] = rx_wer
+                # status_dict[name]["rx_status"] = rx_status
+                # status_dict[name]["rx_rate_gbps"] = (
+                #     rx_idle_word_count / rx_words * gbps
+                # )
 
-            for name in link_names:
-                self.logger.info(f"Link Name: {name}")
+                # self.logger.info(f"Link Name: {name}")
                 res += f"Link Name: {name}\n"
-                link_status = status_dict[name]["rx_status"]
-                self.logger.info(f"Slim Mesh Link status: {link_status}")
-                res += f"Slim Mesh Link status: {link_status}\n"
+                # self.logger.info(f"Slim Mesh Link status: {rx_status}")
+                res += f"Slim Mesh Link status (rx_status): {rx_status}\n"
                 res += "\n"
+                # self.logger.info(f"rx_wer:{rx_wer}")
+                res += f"rx_wer:{rx_wer}\n"
+                # self.logger.info(f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}")
+                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}\n"
+                res += "\n"
+
+            # for name in link_names:
+            #     self.logger.info(f"Link Name: {name}")
+            #     res += f"Link Name: {name}\n"
+            #     link_health_dict = status_dict[name]
+            #     link_status = link_health_dict["rx_status"]
+            #     self.logger.info(f"Slim Mesh Link status: {link_status}")
+            #     res += f"Slim Mesh Link status: {link_status}\n"
+            #     res += "\n"
+            #     for key, value in link_health_dict.items():
+            #         self.logger.info(f"{key}:{value}")
+            #         res += f"{key}:{value}\n"
+            #     res += "\n"
+
             res += "\n\n"
-            for name in link_names:
-                link_health_dict = status_dict[name]
-                self.logger.info(f"Link Name: {name}")
-                res += f"Link Name: {name}\n"
-                for key, value in link_health_dict.items():
-                    self.logger.info(f"{key}:{value}")
-                    res += f"{key}:{value}\n"
-                res += "\n"
 
             return res
 
@@ -367,7 +376,6 @@ class Slim(SKABaseDevice):
             :return None
             """
             msg = ""
-            # TODO: Change before testing on Talon Boards
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
             rx_debug_alignment_and_lock_statuses = (
@@ -387,11 +395,11 @@ class Slim(SKABaseDevice):
                 rx_link_occupancy = rx_link_occupancies[idx]
                 tx_link_occupancy = tx_link_occupancies[idx]
 
-                tx_word_count = counter[6]
                 rx_word_count = counter[0]
-                tx_idle_word_count = counter[8]
                 rx_idle_word_count = counter[2]
                 rx_idle_error_count = counter[3]
+                tx_word_count = counter[6]
+                tx_idle_word_count = counter[8]
                 tx_words = tx_word_count + tx_idle_word_count
                 rx_words = rx_word_count + rx_idle_word_count
 
@@ -401,7 +409,7 @@ class Slim(SKABaseDevice):
                     rx_wer = f"better than {1/rx_idle_word_count:.0e}"
                 else:
                     rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
-
+                msg += "Summary Table:\n\n"
                 msg += (
                     "{"
                     + f"{{Link Name: {name}}},"
