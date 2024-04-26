@@ -23,7 +23,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.testing import context
 
 
 class TalonLRUComponentManager(CbfComponentManager):
@@ -71,19 +71,18 @@ class TalonLRUComponentManager(CbfComponentManager):
     
     def get_device_proxy(
         self: TalonLRUComponentManager, fqdn: str
-    ) -> CbfDeviceProxy | None:
+    ) -> context.DeviceProxy | None:
         """
         Attempt to get a device proxy of the specified device.
 
         :param fqdn: FQDN of the device to connect to
-        :return: CbfDeviceProxy to the device or None if no connection was made
+        :return: context.DeviceProxy to the device or None if no connection was made
         """
         try:
             self.logger.info(f"Attempting connection to {fqdn} device")
-            device_proxy = CbfDeviceProxy(
-                fqdn=fqdn, logger=self.logger, connect=False
+            device_proxy = context.DeviceProxy(
+                fqdn=fqdn
             )
-            device_proxy.connect(max_time=0)  # Make one attempt at connecting
             return device_proxy
         except tango.DevFailed as df:
             for item in df.args:
@@ -170,8 +169,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._init_talon_proxies()
         self._init_power_switch_proxies()
 
-        super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
+        if self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
+            super().start_communicating()
+            self._update_component_state(power=self.get_lru_power_state())
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """
@@ -217,35 +217,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.pdu2_power_state = self._get_outlet_power_state(
                 self._proxy_power_switch2, self._pdu_outlets[1]
             )
-
-    def check_power_state(
-        self: TalonLRUComponentManager
-    ) -> None:
-        """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state.
-
-        :param state: device operational state
-        """
-        self._update_pdu_power_states()
-
-        expected_power_state = self.power_state
-        if expected_power_state is None:
-            return
-
-        # Check the power mode of each outlet matches expected
-        for i, power_state in enumerate(
-            [self.pdu1_power_state, self.pdu2_power_state], start=1
-        ):
-            if power_state != expected_power_state:
-                self.logger.error(
-                    f"Power connection {i} expected power mode: ({expected_power_state}),"
-                    f" actual power mode: ({power_state})"
-                )
-
-        # Temporary fix to avoid redeploying MCS (CIP-1561)
-        # PDU outlet state mismatch is logged but fault is not triggered
-        # self.update_component_fault(True)
 
     def get_lru_power_state(self: TalonLRUComponentManager) -> PowerState:
         """
@@ -368,7 +339,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, "Failed to turn on both outlets")
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self.update_component_power_state(PowerState.ON)
+            self._update_component_state(PowerState.ON)
             return (
                 ResultCode.OK,
                 "Only one outlet successfully turned on",
@@ -411,7 +382,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # board, but it's okay to continue.
         self._turn_on_talons()
 
-        # Determine what result code to return
+        # _determine_on_result_code will update the component power state
         task_callback(
             result=self._determine_on_result_code(result1, result2),
             status=TaskStatus.COMPLETED,
