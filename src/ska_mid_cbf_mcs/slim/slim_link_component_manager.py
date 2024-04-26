@@ -512,7 +512,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 rx_arr = rx.split("/")
                 tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
                 self._tx_device_name = tx
-                
+
                 try:
                     self._tx_device_proxy = context.DeviceProxy(
                         device_name=self._tx_device_name
