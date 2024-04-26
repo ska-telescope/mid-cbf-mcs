@@ -81,7 +81,6 @@ class VccComponentManager(CbfObsComponentManager):
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
-        search_window: list[str],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
@@ -92,7 +91,6 @@ class VccComponentManager(CbfObsComponentManager):
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
-        :param search_window: FQDNs of VCC search windows
         :param simulation_mode: simulation mode identifies if the real VCC HPS
             applications or the simulator should be connected
         """
@@ -104,7 +102,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
-        self._search_window_fqdn = search_window
 
         # Initialize attribute values
         self._dish_id = ""
@@ -140,8 +137,27 @@ class VccComponentManager(CbfObsComponentManager):
             self._band_simulators[3],
         )
 
+    def _get_power_state(self: VccComponentManager) -> PowerState:
+        """
+        Get the power state of this VCC based on the current power
+        mode of the LRU this VCC belongs to.
+
+        :return: VCC power mode
+        """
+        try:
+            return self._talon_lru_proxy.LRUPowerState
+        except tango.DevFailed:
+            self.logger.error("Could not connect to Talon LRU device")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return PowerState.UNKNOWN
+
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
+        if self._communication_state == CommunicationStatus.ESTABLISHED:
+            self.logger.info("Already communicating.")
+            return
         try:
             self._talon_lru_proxy = context.DeviceProxy(
                 device_name=self._talon_lru_fqdn
@@ -156,28 +172,12 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         super().start_communicating()
-        self._update_component_state(power=self._get_power_mode())
+        self._update_component_state(power=self._get_power_state())
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
         self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
-
-    def _get_power_mode(self: VccComponentManager) -> PowerState:
-        """
-        Get the power mode of this VCC based on the current power
-        mode of the LRU this VCC belongs to.
-
-        :return: VCC power mode
-        """
-        try:
-            return self._talon_lru_proxy.LRUPowerState
-        except tango.DevFailed:
-            self.logger.error("Could not connect to Talon LRU device")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return PowerState.UNKNOWN
 
     def on(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
@@ -214,7 +214,10 @@ class VccComponentManager(CbfObsComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            return (ResultCode.FAILED, "Failed to connect to HPS VCC devices.")
+            return (
+                ResultCode.FAILED,
+                "Failed to establish proxies to HPS VCC devices.",
+            )
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
@@ -346,7 +349,7 @@ class VccComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to connect to HPS VCC devices.",
+                        "Failed to issue ConfigureBand command to HPS VCC controller.",
                     ),
                 )
                 return
@@ -451,19 +454,8 @@ class VccComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} "
+                    f"Error in ConfigureScan; scan configuration frequency band {freq_band} "
                     + f"not the same as enabled band device {self._frequency_band}",
-                ),
-            )
-            return
-
-        # TODO CIP-2380
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Vcc.ConfigureScan command aborted by task executor Abort Event.",
                 ),
             )
             return
@@ -484,7 +476,7 @@ class VccComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to connect to HPS VCC devices.",
+                        f"Failed to issue ConfigureScan command to HPS VCC band {fb_index} device.",
                     ),
                 )
                 return
@@ -536,7 +528,7 @@ class VccComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to connect to HPS VCC devices.",
+                        f"Failed to issue Scan command to HPS VCC band {fb_index} device.",
                     ),
                 )
                 return
@@ -583,7 +575,7 @@ class VccComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to connect to HPS VCC band devices.",
+                        f"Failed to issue EndScan command to HPS VCC band {fb_index} device.",
                     ),
                 )
                 return
@@ -630,7 +622,7 @@ class VccComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to connect to HPS VCC band devices.",
+                        "Failed to issue Unconfigure command to HPS VCC controller device.",
                     ),
                 )
                 return
@@ -672,7 +664,6 @@ class VccComponentManager(CbfObsComponentManager):
                 try:
                     pass
                     # TODO CIP-1850
-                    # self._vcc_controller_proxy.Unconfigure()
                     # self._band_proxies[fb_index].Abort()
                 except tango.DevFailed as df:
                     self.logger.error(str(df.args[0].desc))
@@ -683,7 +674,7 @@ class VccComponentManager(CbfObsComponentManager):
                         status=TaskStatus.FAILED,
                         result=(
                             ResultCode.FAILED,
-                            "Failed to connect to HPS VCC band devices.",
+                            f"Failed to issue Abort command to HPS VCC band {fb_index} device.",
                         ),
                     )
                     return
@@ -735,7 +726,7 @@ class VccComponentManager(CbfObsComponentManager):
                         status=TaskStatus.FAILED,
                         result=(
                             ResultCode.FAILED,
-                            "Failed to connect to HPS VCC band devices.",
+                            f"Failed to issue ObsReset to HPS VCC band {fb_index} device.",
                         ),
                     )
                     return

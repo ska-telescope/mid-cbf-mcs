@@ -13,7 +13,6 @@ import unittest
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
@@ -88,21 +87,6 @@ def mock_vcc_band() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_sw() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("searchWindowTuning", 0)
-    builder.add_attribute("tdcEnable", False)
-    builder.add_attribute("tdcNumBits", 0)
-    builder.add_attribute("tdcPeriodBeforeEpoch", 0)
-    builder.add_attribute("tdcPeriodAfterEpoch", 0)
-    builder.add_attribute("tdcDestinationAddress", ["", "", ""])
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-
-@pytest.fixture()
 def initial_mocks(
     mock_talon_lru: unittest.mock.Mock,
     mock_vcc_controller: unittest.mock.Mock,
@@ -124,6 +108,4 @@ def initial_mocks(
         "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
-        "mid_csp_cbf/vcc_sw1/001": mock_sw,
-        "mid_csp_cbf/vcc_sw2/001": mock_sw,
     }

@@ -54,10 +54,6 @@ class Vcc(CbfObsDevice):
 
     Band5Address = device_property(dtype="str")
 
-    SW1Address = device_property(dtype="str")
-
-    SW2Address = device_property(dtype="str")
-
     # ----------
     # Attributes
     # ----------
@@ -84,6 +80,7 @@ class Vcc(CbfObsDevice):
 
         :param value: the dishID value.
         """
+        self.logger.debug(f"Writing dishID to {value}")
         self.component_manager.dish_id = value
 
     @attribute(
@@ -108,15 +105,11 @@ class Vcc(CbfObsDevice):
 
         :param value: the subarray membership value (0 = no affiliation).
         """
-        self.logger.debug(
-            f"Entering write_subarrayMembership(), value = {value}"
-        )
+        self.logger.debug(f"Writing subarrayMembership to {value}")
         if self._subarray_membership != value:
             self._subarray_membership = value
             self.push_change_event("subarrayMembership", value)
             self.push_archive_event("subarrayMembership", value)
-            # TODO: determine when to deconfigure vcc, is this needed?
-            # self.component_manager.deconfigure()
 
     @attribute(
         dtype=tango.DevEnum,
@@ -188,7 +181,6 @@ class Vcc(CbfObsDevice):
                 self.Band4Address,
                 self.Band5Address,
             ],
-            search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,

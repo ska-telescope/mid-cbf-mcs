@@ -1,5 +1,5 @@
-from ska_control_model import AdminMode
 import tango
+from ska_control_model import AdminMode
 from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -21,8 +21,11 @@ def change_event_subscriber(
         change_event_callbacks.assert_change_event(event_type, Anything)
     return attr_event_ids
 
+
 def device_online_and_on(dut: tango.DeviceProxy) -> bool:
     # set a given device to AdminMode.ONLINE and DevState.ON
     dut.adminMode = AdminMode.ONLINE
     dut.On()
-    return (dut.adminMode == AdminMode.ONLINE) and (dut.state() == tango.DevState.ON)
+    return (dut.adminMode == AdminMode.ONLINE) and (
+        dut.state() == tango.DevState.ON
+    )
