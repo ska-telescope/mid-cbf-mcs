@@ -287,14 +287,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         )
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "ConnectTxRx ABORTED",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "ConnectTxRx", task_callback, task_abort_event
+        ):
             return
 
         if self.simulation_mode == SimulationMode.TRUE:
@@ -492,14 +487,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         )
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "DisconnectTxRx ABORTED",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "DisconnectTxRx", task_callback, task_abort_event
+        ):
             return
 
         if self.simulation_mode == SimulationMode.TRUE:
@@ -521,18 +511,8 @@ class SlimLinkComponentManager(CbfComponentManager):
                 mesh = rx.split("/")[2].split("-")[0]
                 rx_arr = rx.split("/")
                 tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
-
                 self._tx_device_name = tx
-
-                if task_abort_event and task_abort_event.is_set():
-                    task_callback(
-                        status=TaskStatus.ABORTED,
-                        result=(
-                            ResultCode.ABORTED,
-                            "DisconnectTxRx ABORTED",
-                        ),
-                    )
-                    return
+                
                 try:
                     self._tx_device_proxy = context.DeviceProxy(
                         device_name=self._tx_device_name

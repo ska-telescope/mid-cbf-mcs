@@ -171,14 +171,9 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.debug("Entering SlimComponentManager.off")
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Off ABORTED",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "Off", task_callback, task_abort_event
+        ):
             return
 
         self._update_component_state(power=PowerState.OFF)
@@ -243,14 +238,9 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.debug("Entering SlimComponentManager.configure()")
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if task_abort_event and task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "Configure ABORTED",
-                ),
-            )
+        if self.task_abort_event_is_set(
+            "Configure", task_callback, task_abort_event
+        ):
             return
         # Each element in the config is [tx_fqdn, rx_fqdn]
         self._config_str = config_str
@@ -265,16 +255,6 @@ class SlimComponentManager(CbfComponentManager):
                 dp.adminMode = AdminMode.OFFLINE
                 dp.simulationMode = self.simulation_mode
                 dp.adminMode = AdminMode.ONLINE
-
-            if task_abort_event and task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result=(
-                        ResultCode.ABORTED,
-                        "Configure ABORTED",
-                    ),
-                )
-                return
 
             if self._mesh_configured:
                 self.logger.debug(

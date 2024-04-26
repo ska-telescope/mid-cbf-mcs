@@ -377,45 +377,6 @@ class TestSlimLink:
         ]
         assert device_under_test.healthState == HealthState.FAILED
 
-    # Test case: verify connection but unsync ICW before issuing command. will fail 1st health check
-    # I think this would have to be an integration test since it requires writing to a SlimTxRx attr.
-    # @pytest.mark.parametrize(
-    #     "tx_device_name, rx_device_name",
-    #     [
-    #         (
-    #             "talon-x/slim-tx-rx/fs-tx0",
-    #             "talon-x/slim-tx-rx/fs-rx0",
-    #         ),
-    #     ],
-    # )
-    # def test_VerifyConnectionUnhealthyICW(
-    #     self: TestSlimLink,
-    #     tx_device_name: str,
-    #     rx_device_name: str,
-    #     device_under_test: context.DeviceProxy,
-    #     change_event_callbacks: MockTangoEventCallbackGroup,
-    # ) -> None:
-    #     """
-    #     Test the VerifyConnection() command
-
-    #     :param device_under_test: fixture that provides a
-    #         :py:class:`tango.DeviceProxy` to the device under test, in a
-    #         :py:class:`tango.test_context.DeviceTestContext`.
-    #     """
-    #     self.test_ConnectTxRx(
-    #         device_under_test=device_under_test,
-    #         tx_device_name=tx_device_name,
-    #         rx_device_name=rx_device_name,
-    #         change_event_callbacks=change_event_callbacks,
-    #     )
-    #     device_under_test._rx_device_proxy.idle_ctrl_word = 987654
-    #     result, msg = device_under_test.VerifyConnection()
-    #     assert result == ResultCode.OK
-    #     assert device_under_test.healthState == HealthState.FAILED
-    #     assert msg[0] == "Expected and received idle control word do not match. "
-
-    # Integration test case: set TxRx proxy to None at some point in the try block to invoke a DevFailed exception.
-
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
         [
