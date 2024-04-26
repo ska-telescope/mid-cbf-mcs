@@ -22,8 +22,6 @@ class _GroupFactory:  # pylint: disable=too-few-public-methods
     def __call__(self, name: str, *args: Any, **kwargs: Any) -> tango.Group:
         return self.factory(name, *args, **kwargs)
 
-    # TODO: add/remove?
-
 
 DeviceProxy = context._DeviceProxyFactory()
 Group = _GroupFactory()
