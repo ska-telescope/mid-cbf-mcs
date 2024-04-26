@@ -432,15 +432,6 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-            # Read the Talon board configuration
-            if (
-                self._talondx_component_manager.read_config()
-                == ResultCode.FAILED
-            ):
-                log_msg = "Failed to read Talon board configuration"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
             # Turn on all the LRUs with the boards we need
             lru_on_status, log_msg = self._turn_on_lrus()
             if not lru_on_status:
@@ -750,7 +741,7 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._fqdn_vcc:
             try:
                 proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     proxy.dishID = dish_id
@@ -802,15 +793,6 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.adminMode = AdminMode.OFFLINE
             proxy.simulationMode = sim_mode
             proxy.adminMode = AdminMode.ONLINE
-
-            if proxy.LRUPowerMode == PowerMode.ON:
-                self._logger.info(
-                    f"LRU {lru_fqdn} already ON, rebooting Talon DX Board first to clear state"
-                )
-                result = self._talondx_component_manager.reboot()
-                if result == ResultCode.FAILED:
-                    self._logger.error("Failed to reboot Talon DX Board")
-                    return (False, lru_fqdn)
 
             proxy.On()
         except tango.DevFailed as e:
