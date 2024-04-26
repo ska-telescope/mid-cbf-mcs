@@ -77,7 +77,7 @@ FSP Function Mode Subarray devices:
 * Pulsar Timing Beamforming (PST-BF): ``FspPstSubarray``
 * VLBI Beamforming (VLBI): ``FspVlbiSubarray``
 
-Mid.Cbf VCC Device Server (VccMulti)
+Mid.Cbf VCC Device Server (Vcc)
 ===========================================
 
 VCC Device

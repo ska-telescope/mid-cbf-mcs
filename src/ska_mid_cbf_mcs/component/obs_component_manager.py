@@ -11,6 +11,8 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
+import functools
+from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ObsState, TaskStatus
@@ -28,12 +30,17 @@ class CbfObsComponentManager(CbfComponentManager):
     def __init__(
         self: CbfObsComponentManager,
         *args: Any,
+        obs_command_running_callback: Callable[[str, bool], None],
         **kwargs: Any,
     ) -> None:
         """
         Initialise a new CbfObsComponentManager instance.
         """
         super().__init__(*args, **kwargs)
+
+        # callback to perform observing state model invoked/completed actions
+        self._obs_command_running_callback = obs_command_running_callback
+
         # Here we have statically defined the observing state keywords useful in Mid.CBF
         # component management, allowing the use of the _update_component_state
         # method in the BaseComponentManager to issue the component state change
@@ -82,11 +89,14 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self._scan_id = scan_id
 
+    # ---------------
+    # Command methods
+    # ---------------
+
     def is_configure_scan_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if self.obs_state not in [
             ObsState.IDLE,
-            ObsState.CONFIGURING,
             ObsState.READY,
         ]:
             self.logger.warning(
@@ -96,13 +106,30 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _configure_scan(self: CbfObsComponentManager, argin: str) -> None:
+    def _configure_scan(
+        self: CbfComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Execute configure scan operation.
 
         :raises NotImplementedError: Not implemented in abstract class
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
+
+    def _configure_scan_with_callback(
+        self: CbfComponentManager,
+        *args,
+        hook: str,
+        obs_callback: Callable[[str, bool], None],
+        **kwargs,
+    ):
+        obs_callback(hook=hook, running=True)
+        self._configure_scan(*args, **kwargs)
+        return obs_callback(hook=hook, running=False)
 
     def configure_scan(
         self: CbfObsComponentManager,
@@ -122,7 +149,11 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            self._configure_scan,
+            func=functools.partial(
+                self._configure_scan_with_callback,
+                hook="configure",
+                obs_callback=self._obs_command_running_callback,
+            ),
             args=[argin],
             is_cmd_allowed=self.is_configure_scan_allowed,
             task_callback=task_callback,
@@ -138,7 +169,13 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _scan(self: CbfObsComponentManager, argin: int) -> None:
+    def _scan(
+        self: CbfComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Begin scan operation.
 
@@ -180,7 +217,12 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _end_scan(self: CbfObsComponentManager) -> None:
+    def _end_scan(
+        self: CbfComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         End scan operation.
 
@@ -218,7 +260,12 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _go_to_idle(self: CbfObsComponentManager) -> None:
+    def _go_to_idle(
+        self: CbfComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Execute observing state transition from READY to IDLE.
 
@@ -253,6 +300,7 @@ class CbfObsComponentManager(CbfComponentManager):
             ObsState.CONFIGURING,
             ObsState.READY,
             ObsState.SCANNING,
+            ObsState.ABORTING,
             ObsState.RESETTING,
         ]:
             self.logger.warning(
@@ -262,13 +310,29 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _abort_scan(self: CbfObsComponentManager) -> None:
+    def _abort_scan(
+        self: CbfComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Abort the current scan operation.
 
         :raises NotImplementedError: Not implemented in abstract class
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
+
+    def _abort_scan_with_callback(
+        self: CbfComponentManager,
+        *args,
+        hook: str,
+        obs_callback: Callable[[str, bool], None],
+        **kwargs,
+    ):
+        obs_callback(hook=hook, running=True)
+        self._abort_scan(*args, **kwargs)
+        return obs_callback(hook=hook, running=False)
 
     def abort_scan(
         self: CbfObsComponentManager,
@@ -285,7 +349,11 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            self._abort_scan,
+            func=functools.partial(
+                self._abort_scan_with_callback,
+                hook="abort",
+                obs_callback=self._obs_command_running_callback,
+            ),
             is_cmd_allowed=self.is_abort_scan_allowed,
             task_callback=task_callback,
         )
@@ -300,13 +368,29 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _obs_reset(self: CbfObsComponentManager) -> None:
+    def _obs_reset(
+        self: CbfComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
         """
         Reset observing state from ABORTED or FAULT to IDLE.
 
         :raises NotImplementedError: Not implemented in abstract class
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
+
+    def _obs_reset_with_callback(
+        self: CbfComponentManager,
+        *args,
+        hook: str,
+        obs_callback: Callable[[str, bool], None],
+        **kwargs,
+    ):
+        obs_callback(hook=hook, running=True)
+        self._obs_reset(*args, **kwargs)
+        return obs_callback(hook=hook, running=False)
 
     def obs_reset(
         self: CbfObsComponentManager,
@@ -323,7 +407,11 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            self._obs_reset,
+            func=functools.partial(
+                self._obs_reset_with_callback,
+                hook="obsreset",
+                obs_callback=self._obs_command_running_callback,
+            ),
             is_cmd_allowed=self.is_obs_reset_allowed,
             task_callback=task_callback,
         )
