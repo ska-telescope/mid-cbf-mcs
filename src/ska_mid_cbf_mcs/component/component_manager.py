@@ -11,13 +11,15 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from threading import Lock
+from threading import Event, Lock
 from typing import Any, Callable, Optional, cast
 
-from ska_tango_base.control_model import (
+from ska_control_model import (
     CommunicationStatus,
     HealthState,
     PowerState,
+    ResultCode,
+    TaskStatus,
 )
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
@@ -89,6 +91,32 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
+
+    def task_abort_event_is_set(
+        self: CbfComponentManager,
+        command_name: str,
+        task_callback: Callable,
+        task_abort_event: Event,
+    ) -> bool:
+        """
+        Helper method for checking task abort event during command thread.
+
+        :param command_name: name of command for result message
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
+
+        :return: True if abort event is set, otherwise False
+        """
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    f"{command_name} command aborted by task executor abort event.",
+                ),
+            )
+            return True
+        return False
 
     ###########
     # Callbacks

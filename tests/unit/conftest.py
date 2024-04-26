@@ -11,7 +11,7 @@
 """This module contains pytest-specific test harness for MCS unit tests."""
 
 import unittest
-from typing import Callable, Optional
+from typing import Callable
 
 import pytest
 import tango
@@ -21,12 +21,6 @@ from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockChangeEventCallback,
 )
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-# SKA imports
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DevicesToLoadType,
-    DeviceToLoadType,
-)
 
 
 def pytest_itemcollected(item: pytest.Item) -> None:
@@ -41,45 +35,6 @@ def pytest_itemcollected(item: pytest.Item) -> None:
     """
     if "tango_harness" in item.fixturenames:  # type: ignore[attr-defined]
         item.add_marker("forked")
-
-
-@pytest.fixture()
-def devices_to_load(
-    device_to_load: Optional[DeviceToLoadType],
-) -> Optional[DevicesToLoadType]:
-    """
-    Fixture that provides specifications of devices to load.
-
-    In this case, it maps the simpler single-device spec returned by the
-    "device_to_load" fixture used in unit testing, onto the more
-    general multi-device spec.
-
-    :param device_to_load: fixture that provides a specification of a
-        single device to load; used only in unit testing where tests
-        will only ever stand up one device at a time.
-
-    :return: specification of the devices (in this case, just one
-        device) to load
-    """
-    if device_to_load is None:
-        return None
-
-    device_spec: DevicesToLoadType = {
-        "path": device_to_load["path"],
-        "package": device_to_load["package"],
-        "devices": [
-            {
-                "name": device_to_load["device"],
-                "device_class": device_to_load["device_class"],
-                "proxy": device_to_load["proxy"],
-            }
-        ],
-    }
-    if "patch" in device_to_load:
-        assert device_spec["devices"] is not None  # for the type checker
-        device_spec["devices"][0]["patch"] = device_to_load["patch"]
-
-    return device_spec
 
 
 @pytest.fixture()
@@ -199,20 +154,6 @@ def device_health_state_changed_callback(
         test.)
     """
     return mock_change_event_callback_factory("healthState")
-
-
-@pytest.fixture()
-def device_to_load() -> Optional[DeviceToLoadType]:
-    """
-    Fixture that specifies the device to be loaded for testing.
-
-    This default implementation specified no devices to be loaded,
-    allowing the fixture to be left unspecified if no devices are
-    needed.
-
-    :return: specification of the device to be loaded
-    """
-    return None
 
 
 @pytest.fixture()

@@ -741,7 +741,7 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._fqdn_vcc:
             try:
                 proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     proxy.dishID = dish_id

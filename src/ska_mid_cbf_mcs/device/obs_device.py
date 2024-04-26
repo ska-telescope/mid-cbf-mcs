@@ -17,7 +17,6 @@ Generic observing device for Mid.CBF
 
 from __future__ import annotations
 
-from functools import partial
 from typing import Any, Callable, Optional, cast
 
 from ska_control_model import ObsState, ObsStateModel, PowerState, ResultCode
@@ -39,7 +38,7 @@ class CbfSubElementObsStateMachine(Machine):
     The observation state machine used by a generic Mid.CBF sub-element ObsDevice.
 
     NOTE: entirely cribbed from ska-csp-lmc-base CspSubElementObsStateMachine,
-    to decouple ska-tango-base version dependency
+    to decouple MCS from their ska-tango-base version dependency
 
     Compared to the SKA Observation State Machine, it implements a
     smaller number of states, number that can be further decreased
@@ -400,6 +399,19 @@ class CbfObsDevice(SKAObsDevice):
                 self.obs_state_model.perform_action("component_obsfault")
             # NOTE: to recover from obsfault, ObsReset or Restart must be invoked
 
+    def _obs_command_running(
+        self: CbfObsDevice, hook: str, running: bool
+    ) -> None:
+        """
+        Callback provided to component manager to drive the obs state model into
+        transitioning states during the relevant command's submitted thread.
+
+        :param hook: the observing command-specific hook
+        :param running: True when thread begins, False when thread completes
+        """
+        action = "invoked" if running else "completed"
+        self.obs_state_model.perform_action(f"{hook}_{action}")
+
     def _update_obs_state(self: CbfObsDevice, obs_state: ObsState) -> None:
         """
         Perform Tango operations in response to a change in obsState.
@@ -407,6 +419,8 @@ class CbfObsDevice(SKAObsDevice):
         This helper method is passed to the observation state model as a
         callback, so that the model can trigger actions in the Tango
         device.
+
+        Overridden here to supply new ObsState value to component manager property
 
         :param obs_state: the new obs_state value
         """
@@ -447,23 +461,14 @@ class CbfObsDevice(SKAObsDevice):
             ),
         )
 
-        def _callback(hook: str, running: bool) -> None:
-            action = "invoked" if running else "completed"
-            self.obs_state_model.perform_action(f"{hook}_{action}")
-
-        for command_name, method_name, state_model_hook in [
-            ("ConfigureScan", "configure_scan", "configure"),
-            ("Scan", "scan", None),
-            ("EndScan", "end_scan", None),
-            ("GoToIdle", "go_to_idle", None),
-            ("AbortScan", "abort_scan", "abort"),
-            ("ObsReset", "obs_reset", "obsreset"),
+        for command_name, method_name in [
+            ("ConfigureScan", "configure_scan"),
+            ("Scan", "scan"),
+            ("EndScan", "end_scan"),
+            ("GoToIdle", "go_to_idle"),
+            ("AbortScan", "abort_scan"),
+            ("ObsReset", "obs_reset"),
         ]:
-            callback = (
-                None
-                if state_model_hook is None
-                else partial(_callback, state_model_hook)
-            )
             self.register_command_object(
                 command_name,
                 SubmittedSlowCommand(
@@ -471,7 +476,6 @@ class CbfObsDevice(SKAObsDevice):
                     command_tracker=self._command_tracker,
                     component_manager=self.component_manager,
                     method_name=method_name,
-                    callback=callback,
                     logger=self.logger,
                 ),
             )
@@ -611,6 +615,8 @@ class CbfObsDevice(SKAObsDevice):
         """
         command_handler = self.get_command_object("ConfigureScan")
         result_code_message, command_id = command_handler(argin)
+        # store configuration in Tango layer
+        self._last_scan_configuration = argin
         return [[result_code_message], [command_id]]
 
     @command(
@@ -676,8 +682,8 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
+        # reset configuration in Tango layer
         self._last_scan_configuration = ""
-
         command_handler = self.get_command_object("GoToIdle")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
