@@ -306,7 +306,7 @@ class Slim(SKABaseDevice):
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
 
-            res = "\n SLIM Mesh Ber Check Summary:\n\n"
+            res = "\nSLIM Mesh Ber Check Summary:\n\n"
             for idx, name in enumerate(link_names):
                 counter = counters[idx]
                 rx_word_count = counter[0]
@@ -356,31 +356,31 @@ class Slim(SKABaseDevice):
             header_one = (
                 f"{'Link Name':<68}"
                 + f"{'CDR Lock/Loss':<15}"
-                + f"{'Block Aligned/Loss':<20}"
+                + f"{'Block Aligned/Loss':<20}\n"
             )
 
             header_two = (
                 f"{'Link Name':<68}"
                 + f"{'Tx Data (Gbps / Words)':<24}"
-                + f"{'Tx Idle (Gbps)':<18}"
+                + f"{'Tx Idle (Gbps)':<18}\n"
             )
 
             header_three = (
                 f"{'Link Name':<68}"
                 + f"{'Rx Data (Gbps / Words)':<24}"
-                + f"{'Rx Idle (Gbps)':<18}"
+                + f"{'Rx Idle (Gbps)':<18}\n"
             )
 
             header_four = (
                 f"{'Link Name':<68}"
                 + f"{'Idle Error/Count':<25}"
-                + "Word Error Rate"
+                + "Word Error Rate\n"
             )
             line_one = ""
             line_two = ""
             line_three = ""
             line_four = ""
-            msg += "SLIM Mesh Health Summary Tables:\n\n"
+            msg += "\nSLIM Mesh Health Summary Tables:\n\n"
             for idx, name in enumerate(link_names):
                 gbps = 25.78125 * 64 / 66
                 counter = counters[idx]
