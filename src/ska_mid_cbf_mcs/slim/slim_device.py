@@ -374,7 +374,7 @@ class Slim(SKABaseDevice):
             header_four = (
                 f"{'Link Name':<68}"
                 + f"{'Idle Error/Count':<25}"
-                + f"Word Error Rate"
+                + "Word Error Rate"
             )
             line_one = ""
             line_two = ""
