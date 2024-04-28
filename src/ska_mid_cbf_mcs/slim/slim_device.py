@@ -294,13 +294,11 @@ class Slim(SKABaseDevice):
 
         def _slim_mesh_links_ber_check_summary(
             self: Slim.SlimMeshTestCommand,
-        ) -> str:
+        ) -> None:
             """
-            Returns a summary status of the SLIM Mesh Link heath for each device
-            on the Mesh
+            Logs a summary status of the SLIM Mesh Link heath for each device on the Mesh
 
-            :return: A summary report on the status of the SLIM Mesh Links
-            :rtype: str
+            :return: None
             """
             ber_pass_thres = 8.000e-11
             gbps = 25.78125 * 64 / 66
@@ -308,12 +306,9 @@ class Slim(SKABaseDevice):
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
 
-            # status_dict = {}
-            res = "\n SLIM Mesh Bere Check Summary:\n\n"
+            res = "\n SLIM Mesh Ber Check Summary:\n\n"
             for idx, name in enumerate(link_names):
-                # status_dict[name] = {}
                 counter = counters[idx]
-
                 rx_word_count = counter[0]
                 rx_idle_word_count = counter[2]
                 rx_idle_error_count = counter[3]
@@ -332,47 +327,19 @@ class Slim(SKABaseDevice):
                         rx_status = "Failed"
                 rx_words = rx_word_count + rx_idle_word_count
 
-                # # create SLIM Mesh Link health summary:
-                # status_dict[name] = {}
-                # status_dict[name]["rx_wer"] = rx_wer
-                # status_dict[name]["rx_status"] = rx_status
-                # status_dict[name]["rx_rate_gbps"] = (
-                #     rx_idle_word_count / rx_words * gbps
-                # )
-
-                # self.logger.info(f"Link Name: {name}")
                 res += f"Link Name: {name}\n"
-                # self.logger.info(f"Slim Mesh Link status: {rx_status}")
                 res += f"Slim Mesh Link status (rx_status): {rx_status}\n"
-                res += "\n"
-                # self.logger.info(f"rx_wer:{rx_wer}")
                 res += f"rx_wer:{rx_wer}\n"
-                # self.logger.info(f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}")
                 res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}\n"
                 res += "\n"
 
-            # for name in link_names:
-            #     self.logger.info(f"Link Name: {name}")
-            #     res += f"Link Name: {name}\n"
-            #     link_health_dict = status_dict[name]
-            #     link_status = link_health_dict["rx_status"]
-            #     self.logger.info(f"Slim Mesh Link status: {link_status}")
-            #     res += f"Slim Mesh Link status: {link_status}\n"
-            #     res += "\n"
-            #     for key, value in link_health_dict.items():
-            #         self.logger.info(f"{key}:{value}")
-            #         res += f"{key}:{value}\n"
-            #     res += "\n"
             self.logger.info(res)
-            # res += "\n\n"
-            return res
 
-        def _slim_table(self: Slim.SlimMeshTest) -> str:
+        def _slim_table(self: Slim.SlimMeshTest) -> None:
             """
-            Returns a summary for the rx and tx device on the Mesh
+            Logs a summary for the rx and tx device on the Mesh
 
-            :return: A string that contains the summary report on the rx and tx devic eon the mesh
-            :return None
+            :return: None
             """
             msg = ""
             link_names = self.target.component_manager.get_link_names()
@@ -386,7 +353,34 @@ class Slim(SKABaseDevice):
             tx_link_occupancies = (
                 self.target.component_manager.get_tx_link_occupancy()
             )
+            header_one = (
+                f"{'Link Name':<68}"
+                + f"{'CDR Lock/Loss':<15}"
+                + f"{'Block Aligned/Loss':<20}"
+            )
 
+            header_two = (
+                f"{'Link Name':<68}"
+                + f"{'Tx Data (Gbps / Words)':<24}"
+                + f"{'Tx Idle (Gbps)':<18}"
+            )
+
+            header_three = (
+                f"{'Link Name':<68}"
+                + f"{'Rx Data (Gbps / Words)':<24}"
+                + f"{'Rx Idle (Gbps)':<18}"
+            )
+
+            header_four = (
+                f"{'Link Name':<68}"
+                + f"{'Idle Error/Count':<25}"
+                + f"Word Error Rate"
+            )
+            line_one = ""
+            line_two = ""
+            line_three = ""
+            line_four = ""
+            msg += "SLIM Mesh Health Summary Tables:\n\n"
             for idx, name in enumerate(link_names):
                 gbps = 25.78125 * 64 / 66
                 counter = counters[idx]
@@ -401,6 +395,10 @@ class Slim(SKABaseDevice):
                 tx_idle_word_count = counter[8]
                 tx_words = tx_word_count + tx_idle_word_count
                 rx_words = rx_word_count + rx_idle_word_count
+                tx_data_gbps = f"{tx_link_occupancy * gbps:.2f}"
+                rx_data_gbps = f"{rx_link_occupancy * gbps:.2f}"
+                tx_idle = f"{tx_idle_word_count/tx_words * gbps:.2f}"
+                rx_idle = f"{rx_idle_word_count/rx_words * gbps:.2f}"
 
                 if not rx_idle_word_count:
                     rx_wer = "NaN"
@@ -408,21 +406,39 @@ class Slim(SKABaseDevice):
                     rx_wer = f"better than {1/rx_idle_word_count:.0e}"
                 else:
                     rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
-                msg += "\nSummary Table:\n\n"
-                msg += (
-                    "{"
-                    + f"{{Link Name: {name}}},"
-                    + f"{{CDR Locked:{rx_flags[3]}, Lost:{rx_flags[2]}}},"
-                    + f"{{Block Aligned:{rx_flags[1]}, Lost:{rx_flags[0]}}},"
-                    + f"{{Tx Data (Gbps / Words): {tx_link_occupancy * gbps:.2f} / {tx_word_count}}},"
-                    + f"{{Tx Idle (Gbps): {tx_idle_word_count/tx_words * gbps:.2f}}},"
-                    + f"{{Rx Data (Gbps / Word): {rx_link_occupancy * gbps:.2f} / {rx_word_count}}},"
-                    + f"{{Rx Idle (Gbps): {rx_idle_word_count/tx_words * gbps:.2f}}},"
-                    + f"{{Idle Error:{rx_idle_error_count}, Count:{rx_words}}},"
-                    + f"{{Word Error Rate: {rx_wer}}}"
-                    + "}"
+
+                line_one += (
+                    f"{name:<68}"
+                    + f"{str(rx_flags[3]) + '/' +str(rx_flags[2]):<15}"
+                    + f"{str(rx_flags[1]) + '/' +str(rx_flags[0]):<20}"
                     + "\n"
                 )
+
+                line_two += (
+                    f"{name:<68}"
+                    + f"{tx_data_gbps + '/' + str(tx_word_count):<24}"
+                    + f"{tx_idle:<18}"
+                    + "\n"
+                )
+
+                line_three += (
+                    f"{name:<68}"
+                    + f"{rx_data_gbps + '/' + str(rx_word_count):<24}"
+                    + f"{rx_idle:<18}"
+                    + "\n"
+                )
+
+                line_four += (
+                    f"{name:<68}"
+                    + f"{str(rx_idle_error_count) + '/' + str(rx_words):<25}"
+                    + f"{rx_wer}"
+                    + "\n"
+                )
+
+            msg += header_one + line_one + "\n"
+            msg += header_two + line_two + "\n"
+            msg += header_three + line_three + "\n"
+            msg += header_four + line_four + "\n"
             self.logger.info(msg)
             return msg
 
@@ -443,17 +459,6 @@ class Slim(SKABaseDevice):
             # t_sleep = 2
 
             if self.target.get_state() == tango.DevState.ON:
-                msg = ""
-
-                # # # TODO test if the countdown is correct and won't run an extra round
-                # for remain in range(test_length, 0, -(t_sleep)):
-                #     time.sleep(t_sleep)
-                #     self.logger.info(
-                #         f"Waiting: Currently {remain} seconds remaining"
-                #     )
-
-                # msg += f"SLIM Mesh Links BER Summary After ~{test_length} seconds:\n"
-
                 # Print health Summary of Mesh Links
                 try:
                     self._slim_mesh_links_ber_check_summary()
@@ -473,7 +478,7 @@ class Slim(SKABaseDevice):
                         f"{e}",
                     )
 
-                return (ResultCode.OK, msg)
+                return (ResultCode.OK, "SLIM Mesh Test Completed")
             else:
                 self.logger.info(
                     "Device is off. Failed to issue Configure command."
@@ -508,17 +513,14 @@ class Slim(SKABaseDevice):
         # Configuring Mesh Links
         handler = self.get_command_object("Configure")
         return_code, message = handler(argin)
-
         if return_code != ResultCode.OK:
             self.logger.info(message)
             return [[return_code], [message]]
-
         self.logger.info("Mesh Configure completed successfully")
         # Run Mest Test
         handler = self.get_command_object("SLIM Mest Test")
         return_code, message = handler(argin)
-        # self.logger.info(message)
-        return [[return_code], ["SLIM Mesh Test Completed"]]
+        return [[return_code], [message]]
 
     # ---------
     # Callbacks
