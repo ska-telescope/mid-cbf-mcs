@@ -16,25 +16,22 @@ from __future__ import annotations
 from threading import Lock
 from typing import Any, Optional, Tuple
 
-# tango imports
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
 import tango
-from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import (
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
+# tango imports
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
+
 # Additional import
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
     TalonLRUComponentManager,
 )
-
 
 __all__ = ["TalonLRU", "main"]
 
@@ -116,7 +113,6 @@ class TalonLRU(CbfDevice):
         """
         super(CbfDevice, self).init_command_objects()
 
-
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
         Create and return a component manager for this device.
@@ -171,8 +167,8 @@ class TalonLRU(CbfDevice):
             return (result_code, msg)
 
     # On Command
-    def is_On_allowed (
-            self: TalonLRU,
+    def is_On_allowed(
+        self: TalonLRU,
     ) -> bool:
         """
         Overwrite baseclass's is_On_allowed method.
@@ -189,7 +185,7 @@ class TalonLRU(CbfDevice):
         """
         Turn on the Talon LRU.
 
-        :return: A tuple containing a return code and a string message indicating status. 
+        :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.
         :rtype: DevVarLongStringArrayType
         """
@@ -198,14 +194,14 @@ class TalonLRU(CbfDevice):
         return [[result_code_message], [command_id]]
 
     # Off Command
-    def is_Off_allowed (
-            self: TalonLRU,
+    def is_Off_allowed(
+        self: TalonLRU,
     ) -> bool:
         """
         Overwrite baseclass's is_Off_allowed method.
         """
         return True
-    
+
     @command(
         dtype_out="DevVarLongStringArrayType",
     )
@@ -216,7 +212,7 @@ class TalonLRU(CbfDevice):
         """
         Turn off the Talon LRU.
 
-        :return: A tuple containing a return code and a string message indicating status. 
+        :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.
         :rtype: DevVarLongStringArrayType
         """
@@ -283,12 +279,15 @@ class TalonLRU(CbfDevice):
                 "The device is in FAULT state - one or both PDU outlets have incorrect power state."
             )
 
+
 # ----------
 # Run server
 # ----------
 
+
 def main(args=None, **kwargs):
     return TalonLRU.run_server(args=args or None, **kwargs)
+
 
 if __name__ == "__main__":
     main()

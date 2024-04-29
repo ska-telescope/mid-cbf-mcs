@@ -13,8 +13,8 @@ import concurrent.futures
 import threading
 from typing import Any, Callable, List, Optional, Tuple
 
-from ska_control_model import TaskStatus
 import tango
+from ska_control_model import TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 from tango import DevState
@@ -68,7 +68,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
-    
+
     def get_device_proxy(
         self: TalonLRUComponentManager, fqdn: str
     ) -> context.DeviceProxy | None:
@@ -80,16 +80,16 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(f"Attempting connection to {fqdn} device")
-            device_proxy = context.DeviceProxy(
-                fqdn=fqdn
-            )
+            device_proxy = context.DeviceProxy(fqdn=fqdn)
             return device_proxy
         except tango.DevFailed as df:
             for item in df.args:
                 self.logger.error(
                     f"Failed connection to {fqdn} device: {item.reason}"
                 )
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             return None
 
     def _init_talon_proxies(self: TalonLRUComponentManager) -> None:
@@ -157,14 +157,15 @@ class TalonLRUComponentManager(CbfComponentManager):
         if (self._proxy_power_switch1 is None) and (
             self._proxy_power_switch2 is None
         ):
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.logger.error("Both power switches failed to connect.")
 
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
-
         # Get and initialize the device proxies of all the devices we care about
         self._init_talon_proxies()
         self._init_power_switch_proxies()
@@ -240,9 +241,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._update_component_state(power=lru_power_state)
         return lru_power_state
 
-    # ---------------
-    # Command methods
-    # ---------------
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def _handle_not_connected(
         self: TalonLRUComponentManager,
@@ -257,9 +258,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         log_msg = "Attempted LRU command without connected proxies"
         self.logger.error(log_msg)
-        self._update_component_state(fault=True)
         return (ResultCode.FAILED, log_msg)
-    
+
     def _turn_on_pdus(
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, ResultCode]:
@@ -347,7 +347,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             self.update_component_power_state(PowerState.ON)
             return (ResultCode.OK, "Both outlets successfully turned on")
-  
+
     def _on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -363,18 +363,18 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
 
         task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "On", task_callback, task_abort_event
-        ):
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-
         if self._communication_state == CommunicationStatus.NOT_ESTABLISHED:
-            return self._handle_not_connected()
+            task_callback(
+                result=self._handle_not_connected(),
+                status=TaskStatus.COMPLETED,
+            )
+            return
 
         self._update_pdu_power_states()
 
-        # Power on both outlets
         result1, result2 = self._turn_on_pdus()
 
         # Start monitoring talon board telemetries and fault status
@@ -388,13 +388,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
- 
+
     def is_on_allowed(self: TalonLRUComponentManager) -> bool:
         return True
 
     def on(
         self: TalonLRUComponentManager,
-        task_callback: Optional[Callable] = None
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[ResultCode, str]:
         """
         Submit on operation method to task executor queue.
@@ -492,9 +492,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Failed to turn off Talon board: {msg}",
                 )
             elif result_code == ResultCode.OK:
-                self.logger.info(
-                    f"Talon board successfully turned off: {msg}"
-                )
+                self.logger.info(f"Talon board successfully turned off: {msg}")
             else:
                 self.logger.warn(
                     f"Talon board turned off with unexpected result code {result_code}: {msg}"
@@ -531,7 +529,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Turn off the TalonLRU and its subordinate devices
 
@@ -543,13 +541,16 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
-            "On", task_callback, task_abort_event
+            "Off", task_callback, task_abort_event
         ):
             return
 
-
         if self._communication_state == CommunicationStatus.NOT_ESTABLISHED:
-            return self._handle_not_connected()
+            task_callback(
+                result=self._handle_not_connected(),
+                status=TaskStatus.COMPLETED,
+            )
+            return
 
         # Power off both outlets
         result1, result2 = self._turn_off_pdus()
@@ -559,15 +560,18 @@ class TalonLRUComponentManager(CbfComponentManager):
         if talon_off_result:
             return talon_off_result
 
-        # Determine what result code to return
-        return self._determine_off_result_code(result1, result2)
+        # _determine_off_result_code will update the component power state
+        task_callback(
+            result=self._determine_off_result_code(result1, result2),
+            status=TaskStatus.COMPLETED,
+        )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
         return True
 
     def off(
         self: TalonLRUComponentManager,
-        task_callback: Optional[Callable] = None
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[ResultCode, str]:
         """
         Submit off operation method to task executor queue.
@@ -582,4 +586,3 @@ class TalonLRUComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )
-
