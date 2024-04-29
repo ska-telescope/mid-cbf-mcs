@@ -306,7 +306,7 @@ class Slim(SKABaseDevice):
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
 
-            res = "\nSLIM Mesh Ber Check Summary:\n\n"
+            res = "\nSLIM Mesh BER Check:\n\n"
             for idx, name in enumerate(link_names):
                 counter = counters[idx]
                 rx_word_count = counter[0]
@@ -353,34 +353,34 @@ class Slim(SKABaseDevice):
             tx_link_occupancies = (
                 self.target.component_manager.get_tx_link_occupancy()
             )
+
             header_one = (
                 f"{'Link Name':<68}"
                 + f"{'CDR Lock/Loss':<15}"
                 + f"{'Block Aligned/Loss':<20}\n"
             )
-
             header_two = (
                 f"{'Link Name':<68}"
                 + f"{'Tx Data (Gbps / Words)':<24}"
                 + f"{'Tx Idle (Gbps)':<18}\n"
             )
-
             header_three = (
                 f"{'Link Name':<68}"
                 + f"{'Rx Data (Gbps / Words)':<24}"
                 + f"{'Rx Idle (Gbps)':<18}\n"
             )
-
             header_four = (
                 f"{'Link Name':<68}"
                 + f"{'Idle Error/Count':<25}"
                 + "Word Error Rate\n"
             )
+
             line_one = ""
             line_two = ""
             line_three = ""
             line_four = ""
             msg += "\nSLIM Mesh Health Summary Tables:\n\n"
+
             for idx, name in enumerate(link_names):
                 gbps = 25.78125 * 64 / 66
                 counter = counters[idx]
@@ -413,21 +413,18 @@ class Slim(SKABaseDevice):
                     + f"{str(rx_flags[1]) + '/' +str(rx_flags[0]):<20}"
                     + "\n"
                 )
-
                 line_two += (
                     f"{name:<68}"
                     + f"{tx_data_gbps + '/' + str(tx_word_count):<24}"
                     + f"{tx_idle:<18}"
                     + "\n"
                 )
-
                 line_three += (
                     f"{name:<68}"
                     + f"{rx_data_gbps + '/' + str(rx_word_count):<24}"
                     + f"{rx_idle:<18}"
                     + "\n"
                 )
-
                 line_four += (
                     f"{name:<68}"
                     + f"{str(rx_idle_error_count) + '/' + str(rx_words):<25}"
@@ -440,17 +437,15 @@ class Slim(SKABaseDevice):
             msg += header_three + line_three + "\n"
             msg += header_four + line_four + "\n"
             self.logger.info(msg)
-            return msg
 
         def do(
-            self: Slim.SlimMeshTestCommand, argin: str, test_length: int = 10
+            self: Slim.SlimMeshTestCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Configures the SLIM as given in the
             input string then check the BER of the mesh
 
             :param argin: mesh configuration as a string in YAML format.
-            :param test_length: length of test in seconds, default 30s.
             :return: A tuple containing a return code and a string
                 message contaiing a report on the health of the Mesh or error message
                 if exception is caught.

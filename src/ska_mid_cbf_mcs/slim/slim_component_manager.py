@@ -284,13 +284,13 @@ class SlimComponentManager(CbfComponentManager):
 
         return res
 
-    def get_rx_link_occupancy(self) -> List[int]:
+    def get_rx_link_occupancy(self) -> List[float]:
         """
         Returns a list of int containing the Link Occupancy Values for all the
         rx devices on the Mesh
 
         :return: List of Link Occupancy Values of the rx devices
-        :rtype: List[int]
+        :rtype: List[float]
         """
         res = []
         for idx, txrx in enumerate(self._active_links):
@@ -299,13 +299,13 @@ class SlimComponentManager(CbfComponentManager):
 
         return res
 
-    def get_tx_link_occupancy(self) -> List[int]:
+    def get_tx_link_occupancy(self) -> List[float]:
         """
         Returns a list of int containing the Link Occupancy Values for all the
         tx devices on the Mesh
 
         :return: List of Link Occupancy Values of the tx devices
-        :rtype: List[int]
+        :rtype: List[float]
         """
         res = []
         for idx, txrx in enumerate(self._active_links):

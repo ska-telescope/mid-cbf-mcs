@@ -406,7 +406,7 @@ class SlimLink(SKABaseDevice):
         Read the Debug Alignment and Lock Status Flag of the rx Device
 
         :return Debug Alignment and Lock Status Flag of the rx Device
-        :rtype list[int]
+        :rtype list[bool]
         """
         return self.component_manager.rx_debug_alignment_and_lock_status
 
@@ -417,7 +417,7 @@ class SlimLink(SKABaseDevice):
         Set the Debug Alignment and Lock Status Flags
         Only idx [0] and [2] are writtable
 
-        :param: 4-value array of a Debug Alignment and Lock Status Flags to be set
+        :param: 4-value array of a Debug Alignment and Lock Status Flags to be set, including non-writtable registers
         """
         self.component_manager.rx_debug_alignment_and_lock_status[0] = value[0]
         self.component_manager.rx_debug_alignment_and_lock_status[2] = value[2]
