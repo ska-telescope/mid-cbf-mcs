@@ -62,9 +62,8 @@ def mock_power_switch() -> unittest.mock.Mock:
     return builder()
 
 @pytest.fixture()
-def mock_talon_lru() -> unittest.mock.Mock:
+def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.INIT)
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
@@ -72,8 +71,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
 @pytest.fixture()
 def initial_mocks(
     mock_power_switch: unittest.mock.Mock,
-    mock_talon_lru: unittest.mock.Mock,
-    mock_sw: unittest.mock.Mock
+    mock_talon_board: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
    """
     Return a dictionary of device proxy mocks to pre-register.
@@ -84,10 +82,36 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
    return {
-       "mid_csp_cbf/talon_lru/001": mock_talon_lru,
-       "mid_csp_cbf/power_switch/001": mock_power_switch,
-       "mid_csp_cbf/power_switch/002": mock_power_switch,
+        "mid_csp_cbf/talon_board/talon-001": mock_talon_board,
+        "mid_csp_cbf/talon_board/talon-002": mock_talon_board,
+        "mid_csp_cbf/power_switch/001": mock_power_switch,
+        "mid_csp_cbf/power_switch/002": mock_power_switch,
    }
-   
+
+@pytest.fixture(name="mock_power_switch1")
+def power_switch1_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
+    """
+    Fixture that returns the power switch 1 device.
+
+    :param test_context: the context in which the tests run
+
+    :return: the power switch 1 device
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/001")
+
+@pytest.fixture(name="mock_power_switch2")
+def power_switch1_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
+    """
+    Fixture that returns the power switch 2 device.
+
+    :param test_context: the context in which the tests run
+
+    :return: the power switch 2 device
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
