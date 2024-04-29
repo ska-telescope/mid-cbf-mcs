@@ -50,14 +50,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
   - name: "talonlru-002"
     classes:
     - name: "TalonLRU"
@@ -85,14 +77,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
   - name: "talonlru-003"
     classes:
     - name: "TalonLRU"
@@ -120,14 +104,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
   - name: "talonlru-004"
     classes:
     - name: "TalonLRU"
@@ -155,14 +131,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

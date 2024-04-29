@@ -17,7 +17,6 @@ import tango
 from ska_control_model import TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
-from tango import DevState
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,

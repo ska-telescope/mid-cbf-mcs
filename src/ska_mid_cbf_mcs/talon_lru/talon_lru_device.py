@@ -83,19 +83,12 @@ class TalonLRU(CbfDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # TODO: Re-look into this, attribute is not changed; just used so read_LRUPowerState can be called
-    LRUPowerState = attribute(
+    @attribute(
         dtype="uint16",
-        access=tango.AttrWriteType.READ_WRITE,
         label="PowerState of the Talon LRU",
         doc="PowerState of the Talon LRU",
     )
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    def read_LRUPowerState(self: TalonLRU) -> PowerState:
+    def LRUPowerState(self: TalonLRU) -> PowerState:
         """
         Read the LRU's PowerState.
 
@@ -220,70 +213,15 @@ class TalonLRU(CbfDevice):
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
-    # ----------
-    # Callbacks
-    # ----------
+# ----------
+# Callbacks
+# ----------
 
-    def _communication_status_changed(
-        self: TalonLRU, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-
-    def _component_power_mode_changed(
-        self: TalonLRU, power_mode: PowerState
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: TalonLRU, faulty: bool) -> None:
-        """
-        Handle component fault
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status(
-                "The device is in FAULT state - one or both PDU outlets have incorrect power state."
-            )
-
+# No callbacks in this device
 
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     return TalonLRU.run_server(args=args or None, **kwargs)
