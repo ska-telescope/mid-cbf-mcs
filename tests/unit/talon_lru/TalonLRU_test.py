@@ -8,7 +8,7 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 
-"""Contain the tests for the TalonLRU device."""
+"""Contain the tests for the TalonLRU."""
 
 from __future__ import annotations
 
@@ -29,7 +29,9 @@ from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 
 class TestTalonLRU:
-    """Test class for the TalonLRU device"""
+    """
+    Test class for the TalonLRU
+    """
 
     def test_State(
         self: TestTalonLRU, device_under_test: CbfDeviceProxy
