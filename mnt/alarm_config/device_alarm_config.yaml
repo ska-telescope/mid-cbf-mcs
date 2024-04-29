@@ -1,0 +1,294 @@
+# tag: <string> the name for the alarm:
+#    - attribute: <string> name of attribute on TalonBoard
+#    - type: <Tango ATTR_QUALITY enum> (ATTR_ALARM,ATTR_WARNING)
+#    - value: <int | float | bool)> might need to figure out if three types are valid for this
+#    - value_greater: <bool>
+#    - value_equal: <bool>
+#    - message: <string> string with quotes "example"
+#    - callback: <optional | function> name of callback function
+
+# waiting for MCS implementation: 
+# Humiditiy Sensor Humidity, 
+# AC Power Supply Temp
+# FPGA Power 1-7
+# AC Power Supply VOUT Overvoltage
+# All of Current
+
+#TEMPERATURE
+fpga_die_temperture_warning_max:
+   - attribute: FpgaDieTemperature
+   - type: ATTR_WARNING
+   - value: 90
+   - value_greater: True
+   - value_equal: True
+   - message: "WARNING: FPGA Die Temperature is ouside of upper range (90)"
+
+fpga_die_temperture_alarm_max:
+   - attribute: FpgaDieTemperature
+   - type: ATTR_ALARM
+   - value: 100
+   - value_greater: True
+   - value_equal: True
+   - message: "ALARM: FPGA Die Temperature is ouside of upper range (100)"
+   - callback: off
+
+humidity_sensor_temperature_warning_max:
+   - attribute: HumiditySensorTemperature
+   - type: ATTR_WARNING
+   - value: 30
+   - value_greater: True
+   - value_equal: False
+   - "WARNING: Humidity Sensor Temperature is outside of upper range (30)"
+
+humidity_sensor_temperature_warning_min:
+   - attribute: HumiditySensorTemperature
+   - type: ATTR_WARNING
+   - value: 15
+   - value_greater: False
+   - value_equal: False
+   - "WARNING: Humidity Sensor Temperature is outside of lower range (15)"
+
+dimm_temperature_warning_max:
+   - attribute: DIMMTemperatures
+   - type: ATTR_WARNING
+   - value: 80
+   - value_greater: True
+   - value_equal: True
+   - message: "WARNING: DIMM Temperature is outside of normal range (80)"
+
+dimm_temperature_alarm_max:
+   - attribute: DIMMTemperatures
+   - type: ATTR_ALARM
+   - value: 85
+   - value_greater: True
+   - value_equal: True
+   - message: "ALARM: DIMM Temperature is outside of normal range (85)"
+   - callback: off
+
+mbotx_temperature_warning_max:
+   - attribute: MboTxTemperatures
+   - type: ATTR_WARNING
+   - value: 65
+   - value_greater: True
+   - value_equal: True
+   - message: "WARNING: MboTx Temperature is outside of normal range (65)"
+
+mbotx_temperature_alarm_max:
+   - attribute: MboTxTemperatures
+   - type: ATTR_ALARM
+   - value: 70
+   - value_greater: True
+   - value_equal: True
+   - message: "ALARM: MboTx Temperature is outside of normal range (70)"
+   - callback: off
+
+ltm_temperature1_warning_max:
+   - attribute: LtmTemperature1
+   - type: ATTR_WARNING
+   - value: 80
+   - value_greater: True
+   - value_equal: True
+   - message: "WARNING: LTM Temperature 1 is outside of normal range (45)"
+
+ltm_temperature1_alarm_max:
+   - attribute: LtmTemperature1
+   - type: ATTR_ALARM
+   - value: 85
+   - value_greater: True
+   - value_equal: True
+   - message: "ALARM: LTM Temperature 1 is outside of normal range (85)"
+   - callback: off
+
+ltm_temperature2_warning_max:
+   - attribute: LtmTemperature2
+   - type: ATTR_WARNING
+   - value: 80
+   - value_greater: True
+   - value_equal: True
+   - message: "WARNING: LTM Temperature 2 is outside of normal range (45)"
+
+ltm_temperature2_alarm_max:
+   - attribute: LtmTemperature2
+   - type: ATTR_ALARM
+   - value: 85
+   - value_greater: True
+   - value_equal: True
+   - message: "ALARM: LTM Temperature 2 is outside of normal range (85)"
+   - callback: off
+
+# VOLTAGE
+
+mbo_tx_vcc_voltage_alarm_max:
+   - attribute: MboTxVccVoltages
+   - type: ATTR_ALARM
+   - value: 3.4
+   - value_greater: True
+   - value_equal: False
+   - message: "ALARM: There is a MboTxVccVoltage reading that is outside of upper range (> 3.3 + 0.1)"
+
+mbo_tx_vcc_voltage_alarm_min:
+   - attribute: MboTxVccVoltages
+   - type: ATTR_ALARM
+   - value: 3.2
+   - value_greater: False
+   - value_equal: False
+   - message: "ALARM: There is a MboTxVccVoltage that is outside of lower range (< 3.3 - 0.1 V)"
+
+mbo_rx_vcc_voltage_alarm_max:
+   - attribute: MboRxVccVoltages
+   - type: ATTR_ALARM
+   - value: 3.4
+   - value_greater: True
+   - value_equal: False
+   - message: "ALARM: There is a MboRxVccVoltage reading that ise outside of upper range (> 3.3 + 0.1 V)"
+
+mbo_rx_vcc_voltage_alarm_min:
+   - attribute: MboRxVccVoltages
+   - type: ATTR_ALARM
+   - value: 3.2
+   - value_greater: False
+   - value_equal: False
+   - message: "ALARM: There is a MboRxVccVoltage reading that is outside of lower range (< 3.3 - 0.1 V)"
+
+ltm_input_voltage_alarm_min:
+   - attribute: LtmInputVoltage
+   - type: ATTR_ALARM
+   - value: 0.5
+   - value_greater: True
+   - value_equal: False
+   - message: "ALARM: There is a LtmInputVoltage reading that is outside of lower range (<= 0.5 V)"
+
+# Current
+
+#PLL
+iopll_locked_fault_alarm:
+   - attribute: iopll_locked_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The iopll_locked_fault flag is True"
+
+fs_iopll_locked_fault_alarm:
+   - attribute: fs_iopll_locked_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The fs_iopll_locked_fault flag is True"
+
+comms_iopll_locked_fault_alarm:
+   - attribute: comms_iopll_locked_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The comms_iopll_locked_fault flag is True"
+
+system_clk_fault_alarm:
+   - attribute: system_clk_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The system_clk_fault flag is True"
+
+e100g_0_pll_fault_alarm:
+   - attribute: e100g_0_pll_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The e100g_0_pll_fault flag is True"
+
+e100g_1_pll_fault:
+   - attribute: e100g_1_pll_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The e100g_1_pll_fault flag is True"
+
+slim_pll_fault:
+   - attribute: slim_pll_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The slim_pll_fault flag is True"
+
+# EMIF
+emif_bl_fault_alarm:
+   - attribute: emif_bl_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The emif_bl_fault flag is True"
+
+emif_br_fault_alarm:
+   - attribute: emif_br_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The emif_br_fault flag is True"
+
+emif_tr_fault_alarm:
+   - attribute: emif_tr_fault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: The emif_tr_fault flag is True"
+
+
+# MBO
+mbo_tx_loss_of_signal_alarm:
+   - attribute: MboTxLOSStatus
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the MboTxLOSStatus flag is True"
+
+mbo_rx_loss_of_signal_alarm:
+   - attribute: MboRxLOSStatus
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the MboRxLOSStatus flag is True"
+
+mbo_tx_loss_of_lock_alarm:
+   - attribute: MboTxLOLStatus
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the MboTxLOLStatus flag is True"
+
+mbo_rx_loss_of_lock_alarm:
+   - attribute: MboRxLOLStatus
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the MboRxLOLStatus flag is True"
+
+mbo_tx_fault_alarm:
+   - attribute: MboTxFaultStatus
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the MboTxFaultStatus flag is True"
+
+# Fan Status
+fan_fault_alarm:
+   - attribute: FansFault
+   - type: ATTR_ALARM
+   - value: True
+   - value_greater: False
+   - value_equal: True
+   - message: "ALARM: one or more of the FansFault flag is True"
