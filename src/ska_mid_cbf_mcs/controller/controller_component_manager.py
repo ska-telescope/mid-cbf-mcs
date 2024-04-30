@@ -402,9 +402,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-                deployerProxy = CbfDeviceProxy("mid_csp_cbf/ec/deployer", self._logger)
+                deployer_proxy = CbfDeviceProxy(
+                    "mid_csp_cbf/ec/deployer", self._logger
+                )
                 talondx_config_json = json.loads(
-                    deployerProxy.read_configCommands
+                    deployer_proxy.read_configCommands
                 )
                 # 1. get from device
                 # 2. set to the value being read instead
