@@ -337,7 +337,10 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self._update_component_state(fault=True)
-            return (ResultCode.FAILED, "LRU failed to turned on: both oulets failed to turn on")
+            return (
+                ResultCode.FAILED,
+                "LRU failed to turned on: both oulets failed to turn on",
+            )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
             self._update_component_state(power=PowerState.ON)
             return (
@@ -346,7 +349,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
         else:
             self._update_component_state(power=PowerState.ON)
-            return (ResultCode.OK, "LRU successfully turn on: both outlets successfully turned on")
+            return (
+                ResultCode.OK,
+                "LRU successfully turn on: both outlets successfully turned on",
+            )
 
     def _on(
         self: TalonLRUComponentManager,
@@ -511,7 +517,10 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self._update_component_state(fault=True)
-            return (ResultCode.FAILED, "LRU failed to turned off: failed to turn off both outlets")
+            return (
+                ResultCode.FAILED,
+                "LRU failed to turned off: failed to turn off both outlets",
+            )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
             self._update_component_state(fault=True)
             return (
@@ -520,7 +529,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
         else:
             self._update_component_state(power=PowerState.OFF)
-            return (ResultCode.OK, "LRU successfully turned off: both outlets turned off")
+            return (
+                ResultCode.OK,
+                "LRU successfully turned off: both outlets turned off",
+            )
 
     def _off(
         self: TalonLRUComponentManager,

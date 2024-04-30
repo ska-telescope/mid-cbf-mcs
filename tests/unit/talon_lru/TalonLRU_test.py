@@ -16,17 +16,17 @@ import time
 from typing import Iterator
 from unittest.mock import Mock
 
-
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
+from ska_mid_cbf_mcs.testing import context
 
 CONST_WAIT_TIME = 2
+
 
 class TestTalonLRU:
     """
@@ -34,7 +34,9 @@ class TestTalonLRU:
     """
 
     @pytest.fixture(name="test_context")
-    def talon_lru_test_context(self: TestTalonLRU, initial_mocks: dict[str, Mock]) -> Iterator[context.TTCMExt.TCExt]:
+    def talon_lru_test_context(
+        self: TestTalonLRU, initial_mocks: dict[str, Mock]
+    ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
         harness.add_device(
             device_class=TalonLRU,
@@ -91,10 +93,10 @@ class TestTalonLRU:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_startup_state(
-        self: TestTalonLRU, 
-        device_under_test: context.DeviceProxy, 
-        power_switch_1: context.DeviceProxy, 
-        power_switch_2: context.DeviceProxy 
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        power_switch_1: context.DeviceProxy,
+        power_switch_2: context.DeviceProxy,
     ) -> None:
         """
         Tests that the state of the TalonLRU device when it starts up is correct.
@@ -116,11 +118,11 @@ class TestTalonLRU:
             assert device_under_test.State() == DevState.OFF
 
     def test_On(
-        self: TestTalonLRU, 
-        device_under_test: context.DeviceProxy, 
-        change_event_callbacks: MockTangoEventCallbackGroup, 
-        power_switch_1: context.DeviceProxy, 
-        power_switch_2: context.DeviceProxy 
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch_1: context.DeviceProxy,
+        power_switch_2: context.DeviceProxy,
     ) -> None:
         """
         Tests that the On command behaves appropriately.
@@ -148,7 +150,9 @@ class TestTalonLRU:
             power_switch_1.stimulusMode == "conn_success"
             and power_switch_2.stimulusMode == "conn_success"
         ):
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK}, "LRU successfully turn on: both outlets successfully turned on"]',
@@ -156,10 +160,12 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.ON
         elif (
-            power_switch_1.stimulusMode == "command_fail" 
+            power_switch_1.stimulusMode == "command_fail"
             and power_switch_2.stimulusMode == "command_fail"
         ):
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.FAILED}, "LRU failed to turned on: both oulets failed to turn on]',
@@ -167,7 +173,9 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.FAULT
         else:
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK}, "LRU successfully turn on: one outlet successfully turned on"]',
@@ -175,8 +183,15 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.ON
 
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
     def test_Off(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy, change_event_callbacks: MockTangoEventCallbackGroup, power_switch_1: context.DeviceProxy, power_switch_2: context.DeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch_1: context.DeviceProxy,
+        power_switch_2: context.DeviceProxy,
     ) -> None:
         """
         Tests that the On command behaves appropriately.
@@ -213,7 +228,9 @@ class TestTalonLRU:
             power_switch_1.stimulusMode == "conn_success"
             and power_switch_2.stimulusMode == "conn_success"
         ):
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK}, "LRU successfully turned off: both outlets turned off"]',
@@ -221,10 +238,12 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.ON
         elif (
-            power_switch_1.stimulusMode == "command_fail" 
+            power_switch_1.stimulusMode == "command_fail"
             and power_switch_2.stimulusMode == "command_fail"
         ):
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.FAILED}, "LRU failed to turned off: failed to turn off both outlets"]',
@@ -232,7 +251,9 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.FAULT
         else:
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.FAILED}, "LRU failed to turned off: only one outlet turned off"]',
@@ -240,9 +261,15 @@ class TestTalonLRU:
             )
             assert device_under_test.State() == DevState.FAULT
 
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     def test_OnOff(
-          self: TestTalonLRU, device_under_test: context.DeviceProxy, change_event_callbacks: MockTangoEventCallbackGroup, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mock_power_switch1: context.DeviceProxy,
+        mock_power_switch2: context.DeviceProxy,
     ) -> None:
         """
         Tests that the On command followed by the Off command works appropriately.
@@ -257,5 +284,15 @@ class TestTalonLRU:
                 "Test sequence is not valid for this configuration of stimulus"
             )
 
-        self.test_On(device_under_test, change_event_callbacks, mock_power_switch1, mock_power_switch2)
-        self.test_Off(device_under_test, change_event_callbacks, mock_power_switch1, mock_power_switch2)
+        self.test_On(
+            device_under_test,
+            change_event_callbacks,
+            mock_power_switch1,
+            mock_power_switch2,
+        )
+        self.test_Off(
+            device_under_test,
+            change_event_callbacks,
+            mock_power_switch1,
+            mock_power_switch2,
+        )

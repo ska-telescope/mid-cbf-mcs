@@ -137,6 +137,7 @@ class TalonLRU(CbfDevice):
         """
         A class for the TalonLRU's init_device() "command".
         """
+
         def do(
             self: TalonLRU.InitCommand,
             *args: Any,
@@ -210,6 +211,7 @@ class TalonLRU(CbfDevice):
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
+
 # ----------
 # Callbacks
 # ----------
@@ -219,6 +221,7 @@ class TalonLRU(CbfDevice):
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     return TalonLRU.run_server(args=args or None, **kwargs)
