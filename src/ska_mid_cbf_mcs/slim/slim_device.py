@@ -14,11 +14,11 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from beautifultable import BeautifulTable
 from typing import List, Optional, Tuple
 
 # tango imports
 import tango
+from beautifultable import BeautifulTable
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
