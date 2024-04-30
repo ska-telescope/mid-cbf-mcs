@@ -67,8 +67,6 @@ def fsp_component_manager(
     fsp_corr_subarray_fqdns_all = configuration[
         "fqdn_fsp_corr_subarray_device"
     ]
-    fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray_device"]
-    fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray_device"]
 
     # HPS Fsp Controller fqdn not used in this testing
     # since test only executed for simulationMode = true
@@ -82,8 +80,6 @@ def fsp_component_manager(
         logger,
         fsp_id,
         fsp_corr_subarray_fqdns_all,
-        fsp_pss_subarray_fqdns_all,
-        fsp_pst_subarray_fqdns_all,
         hps_fsp_controller_fqdn,
         fsp_corr_controller_fqdn,
         push_change_event_callback,
@@ -197,47 +193,9 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_pss_subarray_device() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    # add vccIDs to the mock pss subarray
-    # (this is required for test_UpdateJonesMatrix)
-    builder.add_attribute("vccIDs", [1, 2, 3, 4])
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    # add vccIDs to the mock pst subarray
-    # (this is required for test_UpdateBeamWeights)
-    builder.add_attribute("vccIDs", [1, 2, 3, 4])
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_pst_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
 def initial_mocks(
     mock_fsp_corr_subarray_device: unittest.mock.Mock,
     mock_fsp_corr_subarray_group: unittest.mock.Mock,
-    mock_fsp_pss_subarray_device: unittest.mock.Mock,
-    mock_fsp_pss_subarray_group: unittest.mock.Mock,
     mock_fsp_pst_subarray_device: unittest.mock.Mock,
     mock_fsp_pst_subarray_group: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
@@ -246,10 +204,6 @@ def initial_mocks(
 
     :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
     :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
-    :param mock_fsp_pss_subarray_device: a mock FspPssSubarray.
-    :param mock_fsp_pss_subarray_group: a mock FspPssSubarray group.
-    :param mock_fsp_pst_subarray_device: a mock FspPstSubarray.
-    :param mock_fsp_pst_subarray_group: a mock FspPstSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
@@ -257,9 +211,5 @@ def initial_mocks(
         "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray_device,
         "mid_csp_cbf/fspCorrSubarray/01_02": mock_fsp_corr_subarray_device,
         "mid_csp_cbf/fspCorrSubarray/01_03": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspPssSubarray/01_01": mock_fsp_pss_subarray_device,
-        "mid_csp_cbf/fspPstSubarray/01_01": mock_fsp_pst_subarray_device,
         "FSP Subarray Corr": mock_fsp_corr_subarray_group,
-        "FSP Subarray Pss": mock_fsp_pss_subarray_group,
-        "FSP Subarray Pst": mock_fsp_pst_subarray_group,
     }

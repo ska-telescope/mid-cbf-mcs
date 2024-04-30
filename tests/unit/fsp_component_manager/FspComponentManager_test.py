@@ -261,105 +261,6 @@ class TestFspComponentManager:
         assert fsp_component_manager.subarray_membership == []
 
     @pytest.mark.parametrize(
-        "jones_matrix_file_name, \
-        sub_id",
-        [("/../../data/jonesmatrix_unit_test.json", 1)],
-    )
-    def test_UpdateJonesMatrix(
-        self: TestFspComponentManager,
-        fsp_component_manager: FspComponentManager,
-        jones_matrix_file_name: str,
-        sub_id: int,
-    ) -> None:
-        """
-        Test Fsp's UpdateJonesMatrix command
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param jones_matrix_file_name: JSON file for the jones matrix
-        :param sub_id: the subarray id
-        """
-
-        fsp_component_manager.start_communicating()
-        assert (
-            fsp_component_manager.communication_status
-            == CommunicationStatus.ESTABLISHED
-        )
-        assert fsp_component_manager._connected is True
-
-        # on invoked to get capability proxy
-        (result_code, msg) = fsp_component_manager.on()
-        assert (result_code, msg) == (
-            ResultCode.OK,
-            "Fsp On command completed OK",
-        )
-
-        fsp_component_manager.set_function_mode("PSS-BF")
-
-        fsp_component_manager.add_subarray_membership(sub_id)
-        assert list(fsp_component_manager.subarray_membership) == [sub_id]
-
-        # jones matrix values should be set to "" after init
-        assert fsp_component_manager.jones_matrix == ""
-
-        # read the json file
-        f = open(file_path + jones_matrix_file_name)
-        jones_matrix = f.read().replace("\n", "")
-        f.close()
-
-        valid_function_modes = ["PSS-BF", "PST-BF", "VLBI"]
-        for mode in valid_function_modes:
-            fsp_component_manager.remove_subarray_membership(sub_id)
-            fsp_component_manager.set_function_mode(mode)
-            fsp_component_manager.add_subarray_membership(sub_id)
-            if mode == "PSS-BF":
-                assert (
-                    fsp_component_manager.function_mode
-                    == FspModes.PSS_BF.value
-                )
-            elif mode == "PST-BF":
-                assert (
-                    fsp_component_manager.function_mode
-                    == FspModes.PST_BF.value
-                )
-            elif mode == "VLBI":
-                assert (
-                    fsp_component_manager.function_mode == FspModes.VLBI.value
-                )
-
-            (rcode, _) = fsp_component_manager.update_jones_matrix(
-                jones_matrix
-            )
-            assert rcode == ResultCode.OK
-
-            # verify the Jones Matrix was updated successfully
-            assert jones_matrix == fsp_component_manager.jones_matrix
-
-    def test_UpdateJonesMatrixError(
-        self: TestFspComponentManager,
-        fsp_component_manager: FspComponentManager,
-    ) -> None:
-        """
-        Test Fsp's UpdateJonesMatrix command error
-
-        :param fsp_component_manager: the fsp component manager under test.
-        """
-        fsp_component_manager.update_communication_status(
-            CommunicationStatus.ESTABLISHED
-        )
-        fsp_component_manager._connected = False
-        (rcode, _) = fsp_component_manager.update_jones_matrix("some-input")
-        assert rcode == ResultCode.FAILED
-
-        fsp_component_manager.start_communicating()
-        fsp_component_manager.on()
-        fsp_component_manager.set_function_mode("CORR")
-        fsp_component_manager.add_subarray_membership(1)
-        (rcode, _) = fsp_component_manager.update_jones_matrix("some-input")
-        assert rcode == ResultCode.FAILED
-
-    @pytest.mark.parametrize(
         "delay_model_file_name, \
         sub_id",
         [("/../../data/delaymodel_unit_test.json", 1)],
@@ -407,22 +308,13 @@ class TestFspComponentManager:
         delay_model = f.read().replace("\n", "")
         f.close()
 
-        valid_function_modes = ["PSS-BF", "PST-BF", "CORR"]
+        # TODO AA0.5+: PSS, PST, VLBI
+        valid_function_modes = ["CORR"]
         for mode in valid_function_modes:
             fsp_component_manager.remove_subarray_membership(sub_id)
             fsp_component_manager.set_function_mode(mode)
             fsp_component_manager.add_subarray_membership(sub_id)
-            if mode == "PSS-BF":
-                assert (
-                    fsp_component_manager.function_mode
-                    == FspModes.PSS_BF.value
-                )
-            elif mode == "PST-BF":
-                assert (
-                    fsp_component_manager.function_mode
-                    == FspModes.PST_BF.value
-                )
-            elif mode == "CORR":
+            if mode == "CORR":
                 assert (
                     fsp_component_manager.function_mode == FspModes.CORR.value
                 )
@@ -454,91 +346,6 @@ class TestFspComponentManager:
         fsp_component_manager.set_function_mode("VLBI")
         fsp_component_manager.add_subarray_membership(1)
         (rcode, _) = fsp_component_manager.update_delay_model("input")
-        assert rcode == ResultCode.FAILED
-
-    @pytest.mark.parametrize(
-        "timing_beam_weights_file_name, \
-         sub_id",
-        [("/../../data/timingbeamweights_fsp_unit_test.json", 1)],
-    )
-    def test_UpdateBeamWeights(
-        self: TestFspComponentManager,
-        fsp_component_manager: FspComponentManager,
-        timing_beam_weights_file_name: str,
-        sub_id: int,
-    ) -> None:
-        """
-        Test Fsp's UpdateBeamWeights command
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param timing_beam_weights_file_name: JSON file for the timing beam weights
-        :param sub_id: the subarray id
-        """
-
-        fsp_component_manager.start_communicating()
-        assert (
-            fsp_component_manager.communication_status
-            == CommunicationStatus.ESTABLISHED
-        )
-        assert fsp_component_manager._connected is True
-
-        # on invoked to get capability proxy
-        (result_code, msg) = fsp_component_manager.on()
-        assert (result_code, msg) == (
-            ResultCode.OK,
-            "Fsp On command completed OK",
-        )
-
-        fsp_component_manager.set_function_mode("PST-BF")
-
-        fsp_component_manager.add_subarray_membership(sub_id)
-        assert list(fsp_component_manager.subarray_membership) == [sub_id]
-
-        # timing beam weights should be set to "" after init
-        assert fsp_component_manager.timing_beam_weights == ""
-
-        # update only valid for function mode PST-BF
-        fsp_component_manager.set_function_mode("PST-BF")
-        assert fsp_component_manager.function_mode == FspModes.PST_BF.value
-
-        # read the json file
-        f = open(file_path + timing_beam_weights_file_name)
-        timing_beam_weights = f.read().replace("\n", "")
-        f.close()
-
-        # update the weights
-        (rcode, _) = fsp_component_manager.update_timing_beam_weights(
-            timing_beam_weights
-        )
-        assert rcode == ResultCode.OK
-
-        # verify the timing beam weights were updated successfully
-        assert timing_beam_weights == fsp_component_manager.timing_beam_weights
-
-    def test_UpdateTimingBeamWeightsError(
-        self: TestFspComponentManager,
-        fsp_component_manager: FspComponentManager,
-    ) -> None:
-        """
-        Test Fsp's UpdateBeamWeights command with errors
-
-        :param fsp_component_manager: the fsp component manager under test.
-        """
-        # for these two lines, have a function that sets up the bad state + reuse
-        fsp_component_manager.update_communication_status(
-            CommunicationStatus.ESTABLISHED
-        )
-        fsp_component_manager._connected = False
-        (rcode, _) = fsp_component_manager.update_timing_beam_weights("input")
-        assert rcode == ResultCode.FAILED
-
-        fsp_component_manager.start_communicating()
-        fsp_component_manager.on()
-        fsp_component_manager.set_function_mode("CORR")
-        fsp_component_manager.add_subarray_membership(1)
-        (rcode, _) = fsp_component_manager.update_timing_beam_weights("input")
         assert rcode == ResultCode.FAILED
 
     def test_GetFspCorrConfgiId(

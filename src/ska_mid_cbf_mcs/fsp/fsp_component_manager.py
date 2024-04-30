@@ -16,6 +16,7 @@ import logging
 from typing import Callable, List, Optional, Tuple
 
 import tango
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
@@ -24,7 +25,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
     HpsFspControllerSimulator,
@@ -43,8 +43,6 @@ class FspComponentManager(CbfComponentManager):
         logger: logging.Logger,
         fsp_id: int,
         fsp_corr_subarray_fqdns_all: List[str],
-        fsp_pss_subarray_fqdns_all: List[str],
-        fsp_pst_subarray_fqdns_all: List[str],
         hps_fsp_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         hps_fsp_corr_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         push_change_event_callback: Optional[Callable],
@@ -62,10 +60,6 @@ class FspComponentManager(CbfComponentManager):
         :param fsp_id: the fsp id
         :param fsp_corr_subarray_fqdns_all: list of all
             fsp corr subarray fqdns
-        :param fsp_pss_subarray_fqdns_all: list of all
-            fsp pss subarray fqdns
-        :param fsp_pst_subarray_fqdns_all: list of all
-            fsp pst subarray fqdns
         # TODO: for Mid.CBF, param hps_fsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_controller_fqdn: FQDN of the HPS FSP controller device
         # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
@@ -87,20 +81,16 @@ class FspComponentManager(CbfComponentManager):
         self._fsp_id = fsp_id
 
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
-        self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
-        self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
 
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
 
         self._group_fsp_corr_subarray = None
-        self._group_fsp_pss_subarray = None
-        self._group_fsp_pst_subarray = None
         self._proxy_hps_fsp_controller = None
         self._proxy_hps_fsp_corr_controller = None
 
         self._subarray_membership = []
-        self._function_mode = FspModes.IDLE.value  # IDLE
+        self.function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = ""
         self._delay_model = ""
         self._timing_beam_weights = ""
@@ -126,26 +116,6 @@ class FspComponentManager(CbfComponentManager):
         return self._subarray_membership
 
     @property
-    def function_mode(self: FspComponentManager) -> tango.DevEnum:
-        """
-        Function Mode
-
-        :return: the Fsp function mode
-        :rtype: tango.DevEnum
-        """
-        return self._function_mode
-
-    @property
-    def jones_matrix(self: FspComponentManager) -> str:
-        """
-        Jones Matrix
-
-        :return: the jones matrix
-        :rtype: str
-        """
-        return self._jones_matrix
-
-    @property
     def delay_model(self: FspComponentManager) -> str:
         """
         Delay Model
@@ -154,16 +124,6 @@ class FspComponentManager(CbfComponentManager):
         :rtype: str
         """
         return self._delay_model
-
-    @property
-    def timing_beam_weights(self: FspComponentManager) -> str:
-        """
-        Timing Beam Weights
-
-        :return: the timing beam weights
-        :rtype: str
-        """
-        return self._timing_beam_weights
 
     @property
     def simulation_mode(self: FspComponentManager) -> SimulationMode:
@@ -221,14 +181,14 @@ class FspComponentManager(CbfComponentManager):
         :return: CbfDeviceProxy or CbfGroupProxy or None if no connection was made
         """
         try:
-            self._logger.info(f"Attempting connection to {fqdn_or_name} ")
+            self.logger.info(f"Attempting connection to {fqdn_or_name} ")
             if is_group:
                 device_proxy = CbfGroupProxy(
-                    name=fqdn_or_name, logger=self._logger
+                    name=fqdn_or_name, logger=self.logger
                 )
             else:
                 device_proxy = CbfDeviceProxy(
-                    fqdn=fqdn_or_name, logger=self._logger, connect=False
+                    fqdn=fqdn_or_name, logger=self.logger, connect=False
                 )
                 device_proxy.connect(
                     max_time=0
@@ -236,7 +196,7 @@ class FspComponentManager(CbfComponentManager):
             return device_proxy
         except tango.DevFailed as df:
             for item in df.args:
-                self._logger.error(
+                self.logger.error(
                     f"Failed connection to {fqdn_or_name} : {item.reason}"
                 )
             self.update_component_fault(True)
@@ -249,7 +209,7 @@ class FspComponentManager(CbfComponentManager):
         # for now, assume that given addresses are valid
 
         if not self._simulation_mode:
-            self._logger.info("Trying to connected to REAL HPS devices")
+            self.logger.info("Trying to connected to REAL HPS devices")
             if self._proxy_hps_fsp_controller is None:
                 self._proxy_hps_fsp_controller = self._get_proxy(
                     self._hps_fsp_controller_fqdn, is_group=False
@@ -260,7 +220,7 @@ class FspComponentManager(CbfComponentManager):
                     self._hps_fsp_corr_controller_fqdn, is_group=False
                 )
         else:
-            self._logger.info("Trying to connected to Simulated HPS devices")
+            self.logger.info("Trying to connected to Simulated HPS devices")
             self._proxy_hps_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
@@ -279,22 +239,15 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_corr_subarray = self._get_proxy(
                 "FSP Subarray Corr", is_group=True
             )
-        if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = self._get_proxy(
-                "FSP Subarray Pss", is_group=True
-            )
-        if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = self._get_proxy(
-                "FSP Subarray Pst", is_group=True
-            )
+        # TODO AA0.5+: PSS, PST, VLBI
 
     def _remove_subarray_from_group_proxy(
         self: FspComponentManager, subarray_id: int
     ) -> None:
         """Remove FSP function mode subarray device from group proxy for specified subarray."""
-        match self._function_mode:
+        match self.function_mode:
             case FspModes.IDLE.value:
-                self._logger.error(
+                self.logger.error(
                     f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
                 )
             case FspModes.CORR.value:
@@ -304,37 +257,29 @@ class FspComponentManager(CbfComponentManager):
                         self._group_fsp_corr_subarray.remove(fqdn)
                         break
                 else:
-                    self._logger.error(
+                    self.logger.error(
                         f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
                     )
             case FspModes.PSS_BF.value:
-                for fqdn in self._fsp_pss_subarray_fqdns_all:
-                    # remove PSS subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_pss_subarray.remove(fqdn)
-                        break
-                else:
-                    self._logger.error(
-                        f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
-                    )
+                self.logger.error(
+                    f"Error in removing subarray {subarray_id}; PSS-BF not implemented in AA0.5"
+                )
             case FspModes.PST_BF.value:
-                for fqdn in self._fsp_pst_subarray_fqdns_all:
-                    # remove PST subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_pst_subarray.remove(fqdn)
-                        break
-                else:
-                    self._logger.error(
-                        f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
-                    )
+                self.logger.error(
+                    f"Error in removing subarray {subarray_id}; PST-BF not implemented in AA0.5"
+                )
+            case FspModes.VLBI.value:
+                self.logger.error(
+                    f"Error in removing subarray {subarray_id}; VLBI not implemented in AA0.5"
+                )
 
     def _add_subarray_to_group_proxy(
         self: FspComponentManager, subarray_id: int
     ) -> None:
         """Add FSP function mode subarray device to group proxy for specified subarray."""
-        match self._function_mode:
+        match self.function_mode:
             case FspModes.IDLE.value:
-                self._logger.error(
+                self.logger.error(
                     f"FSP {self._fsp_id} function mode is IDLE; error adding subarray {subarray_id} function mode device to group proxy."
                 )
             case FspModes.CORR.value:
@@ -344,29 +289,21 @@ class FspComponentManager(CbfComponentManager):
                         self._group_fsp_corr_subarray.add(fqdn)
                         break
                 else:
-                    self._logger.error(
+                    self.logger.error(
                         f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
                     )
             case FspModes.PSS_BF.value:
-                for fqdn in self._fsp_pss_subarray_fqdns_all:
-                    # add PSS subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_pss_subarray.add(fqdn)
-                        break
-                else:
-                    self._logger.error(
-                        f"FSP {self._fsp_id} PSS subarray {subarray_id} FQDN not found in properties."
-                    )
+                self.logger.error(
+                    f"Error in adding subarray {subarray_id}; PSS-BF not implemented in AA0.5"
+                )
             case FspModes.PST_BF.value:
-                for fqdn in self._fsp_pst_subarray_fqdns_all:
-                    # add PST subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_pst_subarray.add(fqdn)
-                        break
-                else:
-                    self._logger.error(
-                        f"FSP {self._fsp_id} PST subarray {subarray_id} FQDN not found in properties."
-                    )
+                self.logger.error(
+                    f"Error in adding subarray {subarray_id}; PST-BF not implemented in AA0.5"
+                )
+            case FspModes.VLBI.value:
+                self.logger.error(
+                    f"Error in adding subarray {subarray_id}; VLBI not implemented in AA0.5"
+                )
 
     @check_communicating
     def remove_subarray_membership(
@@ -392,14 +329,22 @@ class FspComponentManager(CbfComponentManager):
             )
             # change function mode to IDLE if no subarrays are using it.
             if len(self._subarray_membership) == 0:
-                # TODO implement VLBI
-                match self._function_mode:
+                # TODO AA0.5+: PSS, PST, VLBI
+                match self.function_mode:
                     case FspModes.CORR.value:
                         self._group_fsp_corr_subarray.command_inout("GoToIdle")
                     case FspModes.PSS_BF.value:
-                        self._group_fsp_pss_subarray.command_inout("GoToIdle")
+                        self.logger.error(
+                            "Error in GoToIdle; PSS-BF not implemented in AA0.5"
+                        )
                     case FspModes.PST_BF.value:
-                        self._group_fsp_pst_subarray.command_inout("GoToIdle")
+                        self.logger.error(
+                            "Error in GoToIdle; PST-BF not implemented in AA0.5"
+                        )
+                    case FspModes.VLBI.value:
+                        self.logger.error(
+                            "Error in GoToIdle; VLBI not implemented in AA0.5"
+                        )
                 self._remove_subarray_from_group_proxy(subarray_id)
                 self.set_function_mode("IDLE")
         else:
@@ -445,25 +390,14 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager, command: str
     ):
         """Issue command to all function mode subarray devices, independent of subarray membership."""
+        # TODO AA0.5+: PSS, PST, VLBI
         group_fsp_corr_subarray = self._get_proxy(
             "FSP Subarray Corr", is_group=True
         )
         for fqdn in self._fsp_corr_subarray_fqdns_all:
             group_fsp_corr_subarray.add(fqdn)
-        group_fsp_pss_subarray = self._get_proxy(
-            "FSP Subarray Pss", is_group=True
-        )
-        for fqdn in self._fsp_pss_subarray_fqdns_all:
-            group_fsp_pss_subarray.add(fqdn)
-        group_fsp_pst_subarray = self._get_proxy(
-            "FSP Subarray Pst", is_group=True
-        )
-        for fqdn in self._fsp_pst_subarray_fqdns_all:
-            group_fsp_pst_subarray.add(fqdn)
 
         group_fsp_corr_subarray.command_inout(command)
-        group_fsp_pss_subarray.command_inout(command)
-        group_fsp_pst_subarray.command_inout(command)
 
     @check_communicating
     def on(
@@ -479,7 +413,7 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            self._logger.info(f"Value of _connected: {self._connected}")
+            self.logger.info(f"Value of _connected: {self._connected}")
 
             self._get_capability_proxies()
 
@@ -493,7 +427,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "Fsp On command failed: \
                     proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
@@ -523,7 +457,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "Fsp Off command failed: \
                     proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
@@ -559,7 +493,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
             if len(self._subarray_membership) > 0:
-                self._logger.error(
+                self.logger.error(
                     f"FSP {self._fsp_id} currently belongs to \
                                    subarray(s) {self._subarray_membership}, \
                                    cannot change function mode at this time."
@@ -570,32 +504,42 @@ class FspComponentManager(CbfComponentManager):
                 )
             match function_mode:
                 case "IDLE":
-                    self._function_mode = FspModes.IDLE.value
+                    self.function_mode = FspModes.IDLE.value
                 case "CORR":
-                    self._function_mode = FspModes.CORR.value
+                    self.function_mode = FspModes.CORR.value
+                # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
                 case "PSS-BF":
-                    self._function_mode = FspModes.PSS_BF.value
+                    self.logger.error(
+                        "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
+                    )
+                    return (ResultCode.FAILED, "PSS-BF not implemented")
                 case "PST-BF":
-                    self._function_mode = FspModes.PST_BF.value
+                    self.logger.error(
+                        "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
+                    )
+                    return (ResultCode.FAILED, "PST-BF not implemented")
                 case "VLBI":
-                    self._function_mode = FspModes.VLBI.value
+                    self.logger.error(
+                        "Error in SetFunctionMode; VLBI not implemented in AA0.5"
+                    )
+                    return (ResultCode.FAILED, "VLBI not implemented")
                 case _:
-                    # shouldn't happen
-                    self._logger.warning("functionMode not valid. Ignoring.")
-                    message = "Fsp SetFunctionMode command failed: \
-                        functionMode not valid"
+                    message = f"{function_mode} not a valid FSP function mode."
                     return (ResultCode.FAILED, message)
 
             try:
                 self._proxy_hps_fsp_controller.SetFunctionMode(
-                    self._function_mode
+                    self.function_mode
                 )
-            except Exception as e:
-                self._logger.error(str(e))
+            except tango.DevFailed as df:
+                return (
+                    ResultCode.FAILED,
+                    f"Failed to issue SetFunctionMode command to HPS FSP controller; {df.args[0].desc}",
+                )
 
-            self._push_change_event("functionMode", self._function_mode)
-            self._logger.info(
-                f"FSP set to function mode {FspModes(self._function_mode).name}"
+            self._push_change_event("functionMode", self.function_mode)
+            self.logger.info(
+                f"FSP set to function mode {FspModes(self.function_mode).name}"
             )
 
             return (ResultCode.OK, "Fsp SetFunctionMode command completed OK")
@@ -603,49 +547,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "Fsp SetFunctionMode command failed: \
                     proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
-
-    @check_communicating
-    def update_jones_matrix(
-        self: FspComponentManager, argin: str
-    ) -> Tuple[ResultCode, str]:
-        """
-        Update the FSP's jones matrix (serialized JSON object)
-
-        :param argin: the jones matrix data
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._logger.debug("Entering update_jones_matrix")
-
-        if self._connected:
-            # update if current function mode is either PSS-BF, PST-BF or VLBI
-            if self._function_mode in [
-                FspModes.PSS_BF.value,
-                FspModes.PST_BF.value,
-                FspModes.VLBI.value,
-            ]:
-                # the whole jones matrix object must be stored
-                self._jones_matrix = copy.deepcopy(argin)
-                # TODO HPS jones matrix handling currently unimplemented
-
-            else:
-                log_msg = (
-                    "Fsp UpdateJonesMatrix command failed: "
-                    f"matrix not used in function mode {self._function_mode}"
-                )
-                self._logger.warning(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "Fsp UpdateJonesMatrix command completed OK"
-            return (ResultCode.OK, message)
-        else:
-            log_msg = "Fsp UpdateJonesMatrix command failed: \
-                    proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
@@ -661,11 +563,11 @@ class FspComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("Entering update_delay_model")
+        self.logger.debug("Entering update_delay_model")
 
         if self._connected:
             # update if current function mode is either PSS-BF, PST-BF or CORR
-            if self._function_mode in [
+            if self.function_mode in [
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
                 FspModes.CORR.value,
@@ -681,9 +583,9 @@ class FspComponentManager(CbfComponentManager):
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
-                    f"model not used in function mode {self._function_mode}"
+                    f"model not used in function mode {self.function_mode}"
                 )
-                self._logger.warning(log_msg)
+                self.logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
             message = "Fsp UpdateDelayModel command completed OK"
@@ -691,48 +593,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "Fsp UpdateDelayModel command failed: \
                     proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
-
-    @check_communicating
-    def update_timing_beam_weights(
-        self: FspComponentManager, argin: str
-    ) -> Tuple[ResultCode, str]:
-        """
-        Update the FSP's timing beam weights (serialized JSON object)
-
-        :param argin: the timing beam weight data
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._logger.debug("Entering update_timing_beam_weights")
-
-        if self._connected:
-            # update if current function mode is PST-BF
-            if self._function_mode == FspModes.PST_BF.value:
-                # the whole timing beam weights object must be stored
-                self._timing_beam_weights = copy.deepcopy(argin)
-                # TODO PST controller currently unimplemented
-                # self._proxy_hps_fsp_pst_controller.UpdateTimingBeamWeights(
-                #     json.dumps(timing_beam_weights)
-                # )
-
-            else:
-                log_msg = (
-                    "Fsp UpdateTimingBeamWeights command failed: "
-                    f"weights not used in function mode {self._function_mode}"
-                )
-                self._logger.warning(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "Fsp UpdateTimingBeamWeights command completed OK"
-            return (ResultCode.OK, message)
-        else:
-            log_msg = "Fsp UpdateTimingBeamWeights command failed: \
-                    proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
@@ -755,5 +616,5 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "Fsp getConfigID command failed: \
                     proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return ""

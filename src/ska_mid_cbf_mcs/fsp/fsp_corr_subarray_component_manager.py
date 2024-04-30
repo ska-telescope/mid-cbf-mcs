@@ -15,14 +15,13 @@ import logging
 from typing import Callable, List, Optional, Tuple
 
 import tango
+from ska_control_model import CommunicationStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
+from ska_mid_cbf_mcs.component.obs_component_manager import (
+    CbfObsComponentManager,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
@@ -33,9 +32,7 @@ from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/"
 
 
-class FspCorrSubarrayComponentManager(
-    CbfComponentManager, CspObsComponentManager
-):
+class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     """A component manager for the FspCorrSubarray device."""
 
     def __init__(
