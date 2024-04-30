@@ -14,23 +14,27 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 # tango imports
-import tango
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
-from tango import AttrWriteType, DebugIt
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.control_model import (
+    HealthState,
+    PowerState,
+    SimulationMode,
+)
+from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
 __all__ = ["Slim", "main"]
 
 
-class Slim(SKABaseDevice):
+class Slim(CbfDevice):
     """
     TANGO device class for controlling and monitoring the SLIM
     """
@@ -60,8 +64,7 @@ class Slim(SKABaseDevice):
 
         :return: the Mesh configuration in a YAML string.
         """
-        res = self.component_manager.get_configuration_string()
-        return res
+        return self.component_manager.get_configuration_string()
 
     @attribute(
         dtype=(str,),
@@ -75,8 +78,7 @@ class Slim(SKABaseDevice):
 
         :return: a list of FQDNs.
         """
-        res = self.component_manager.get_link_fqdns()
-        return res
+        return self.component_manager.get_link_fqdns()
 
     @attribute(
         dtype=(str,),
@@ -90,8 +92,7 @@ class Slim(SKABaseDevice):
 
         :return: a list of link names.
         """
-        res = self.component_manager.get_link_names()
-        return res
+        return self.component_manager.get_link_names()
 
     @attribute(
         dtype=(HealthState,),
@@ -105,8 +106,7 @@ class Slim(SKABaseDevice):
 
         :return: a list of health states.
         """
-        res = self.component_manager.get_health_summary()
-        return res
+        return self.component_manager.get_health_summary()
 
     @attribute(
         dtype=(float,),
@@ -120,17 +120,7 @@ class Slim(SKABaseDevice):
 
         :return: the bit-error rate as a list of floats.
         """
-        res = self.component_manager.get_bit_error_rate()
-        return res
-
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
-    )
+        return self.component_manager.get_bit_error_rate()
 
     # ---------------
     # General methods
@@ -151,10 +141,26 @@ class Slim(SKABaseDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.logger)
+        self.register_command_object(
+            "Configure",
+            SubmittedSlowCommand(
+                command_name="Configure",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="configure",
+                logger=self.logger,
+            ),
+        )
 
         self.register_command_object(
-            "Configure", self.ConfigureCommand(*device_args)
+            "Off",
+            SubmittedSlowCommand(
+                command_name="Off",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="off",
+                logger=self.logger,
+            ),
         )
 
     # --------
@@ -168,20 +174,18 @@ class Slim(SKABaseDevice):
         :return: a component manager for this device.
         :rtype: SlimComponentManager
         """
-
         self.logger.debug("Entering create_component_manager()")
 
         self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
+        self._component_power_mode: Optional[PowerState] = None
 
         # Simulation mode default true
         return SlimComponentManager(
             link_fqdns=self.Links,
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     class InitCommand(SKABaseDevice.InitCommand):
@@ -199,88 +203,9 @@ class Slim(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             (result_code, message) = super().do()
-
-            device = self.target
-            device.write_simulationMode(True)
+            self._device.simulationMode = SimulationMode.TRUE
 
             return (result_code, message)
-
-    class OnCommand(SKABaseDevice.OnCommand):
-        """
-        The command class for the On command.
-        """
-
-        def do(self: Slim.OnCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement On command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.on()
-
-    class OffCommand(SKABaseDevice.OffCommand):
-        """
-        The command class for the Off command.
-        """
-
-        def do(self: Slim.OffCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement Off command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.off()
-
-    class ConfigureCommand(ResponseCommand):
-        """
-        The command class for the Configure command.
-        """
-
-        def is_allowed(self: Slim.ConfigureCommand) -> bool:
-            """
-            Determine if Configure is allowed
-            (allowed when Devstate is ON).
-
-            :return: if Configure is allowed
-            :rtype: bool
-            """
-            if self.target.get_state() == tango.DevState.ON:
-                return True
-            return False
-
-        def do(
-            self: Slim.ConfigureCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Configure command. Configures the SLIM as provided in the input string.
-
-            :param argin: mesh configuration as a string in YAML format.
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if self.is_allowed():
-                component_manager = self.target.component_manager
-                (result_code, message) = component_manager.configure(argin)
-                if result_code == ResultCode.OK:
-                    self.logger.info("Mesh Configure completed successfully")
-                elif result_code == ResultCode.FAILED:
-                    self.logger.error(message)
-                return (result_code, message)
-            else:
-                return (
-                    ResultCode.FAILED,
-                    "Device is off. Failed to issue Configure command.",
-                )
 
     @command(
         dtype_in="DevString",
@@ -289,99 +214,54 @@ class Slim(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def Configure(self: Slim, argin: str) -> tango.DevVarLongStringArray:
-        # PROTECTED REGION ID(Slim.Configure) ENABLED START #
-        handler = self.get_command_object("Configure")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  Slim.Configure
+    def Configure(self: Slim, argin: str) -> None:
+        command_handler = self.get_command_object("Configure")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
+
+    def is_Off_allowed(self: Slim) -> bool:
+        return True
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
+    )
+    @DebugIt()
+    def Off(self: Slim) -> None:
+        command_handler = self.get_command_object("Off")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
     # ---------
     # Callbacks
     # ---------
 
-    def _communication_status_changed(
-        self: Slim, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-        elif (
-            communication_status == CommunicationStatus.ESTABLISHED
-            and self._component_power_mode is not None
-        ):
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
-
-    def _component_power_mode_changed(
-        self: Slim, power_mode: PowerMode
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: Slim, faulty: bool) -> None:
-        """
-        Handle component fault
-
-        :param faulty: True if component is faulty.
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
     # ------------------
     # Attributes methods
     # ------------------
 
-    def write_simulationMode(self: Slim, value: SimulationMode) -> None:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: Slim) -> SimulationMode:
         """
-        Overrides the base class implementation. Additionally set the
-        simulation mode of link devices to the same value.
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: Slim, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
 
         :param value: SimulationMode
         """
         self.logger.info(f"Writing simulationMode to {value}")
-        super().write_simulationMode(value)
-        self.component_manager._simulation_mode = value
-
-    def read_simulationMode(self: Slim) -> SimulationMode:
-        """
-        Reads simulation mode. Overrides the base class implementation.
-        """
-        return self.component_manager._simulation_mode
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
 
 
 # ----------
@@ -391,7 +271,7 @@ class Slim(SKABaseDevice):
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(Slim.main) ENABLED START #
-    return run((Slim,), args=args, **kwargs)
+    return Slim.run_server(args=args or None, **kwargs)
     # PROTECTED REGION END #    //  Slim.main
 
 
