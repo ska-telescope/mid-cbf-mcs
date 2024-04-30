@@ -382,6 +382,18 @@ class Slim(SKABaseDevice):
                 tx_words = tx_word_count + tx_idle_word_count
                 rx_words = rx_word_count + rx_idle_word_count
 
+                tx_name = (name.split("->"))[0]
+                rx_name = (name.split("->"))[1]
+                short_name_one = (
+                    (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
+                )
+                short_name_two = (
+                    "->"
+                    + (rx_name.split("/"))[0]
+                    + "/"
+                    + (rx_name.split("/"))[-1]
+                )
+
                 if not rx_idle_word_count:
                     rx_wer = "NaN"
                 elif not rx_idle_error_count:
@@ -390,9 +402,9 @@ class Slim(SKABaseDevice):
                     rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
 
                 data_row = (
-                    name,
-                    f"{rx_flags[3]} ({rx_flags[2]})",
-                    f"{rx_flags[1]} ({rx_flags[0]})",
+                    f"{short_name_one}\n{short_name_two}",
+                    f"{rx_flags[3]}\n({rx_flags[2]})",
+                    f"{rx_flags[1]}\n({rx_flags[0]})",
                     f"{tx_link_occupancy * gbps:.2f}\n({tx_word_count})",
                     f"{tx_idle_word_count/tx_words * gbps:.2f}",
                     f"{rx_link_occupancy * gbps:.2f}\n({rx_word_count})",
