@@ -92,6 +92,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the tx device name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._tx_device_name
         return self._tx_device_name
 
     @tx_device_name.setter
@@ -103,7 +105,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :param tx_device_name: The tx device name.
         """
-        if self._simulation_mode:
+        if self._simulation_mode == SimulationMode.TRUE:
             self.slim_link_simulator.tx_device_name = tx_device_name
         self._tx_device_name = tx_device_name
 
@@ -115,6 +117,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the rx device name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._rx_device_name
         return self._rx_device_name
 
     @rx_device_name.setter
@@ -126,7 +130,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :param rx_device_name: The rx device name.
         """
-        if self._simulation_mode:
+        if self._simulation_mode == SimulationMode.TRUE:
             self.slim_link_simulator.rx_device_name = rx_device_name
         self._rx_device_name = rx_device_name
 
@@ -138,6 +142,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the link name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._link_name
         return self._link_name
 
     @property
