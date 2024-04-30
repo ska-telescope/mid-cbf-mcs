@@ -80,7 +80,7 @@ class TestTalonLRU:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.state() == DevState.DISABLE
+        assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
         self: TestTalonLRU, device_under_test: context.DeviceProxy
