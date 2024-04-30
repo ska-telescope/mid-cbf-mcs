@@ -405,9 +405,7 @@ class ControllerComponentManager(CbfComponentManager):
                 deployer_proxy = CbfDeviceProxy(
                     "mid_csp_cbf/ec/deployer", self._logger
                 )
-                talondx_config_json = json.loads(
-                    deployer_proxy.configCommands
-                )
+                talondx_config_json = json.loads(deployer_proxy.configCommands)
                 # 1. get from device
                 # 2. set to the value being read instead
                 # read in list of LRUs from configuration JSON
