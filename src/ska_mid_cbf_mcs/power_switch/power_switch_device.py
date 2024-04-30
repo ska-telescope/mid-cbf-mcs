@@ -53,24 +53,6 @@ class PowerSwitch(CbfDevice):
     PowerSwitchLogin = device_property(dtype="str")
     PowerSwitchPassword = device_property(dtype="str")
 
-    # ----------
-    # Attributes
-    # ----------
-
-    isCommunicating = attribute(
-        dtype="DevBoolean",
-        access=AttrWriteType.READ,
-        label="is communicating",
-        doc="Whether or not the power switch can be communicated with",
-    )
-
-    numOutlets = attribute(
-        dtype="DevULong",
-        access=AttrWriteType.READ,
-        label="num outlets",
-        doc="Number of outlets in this power switch",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -167,7 +149,8 @@ class PowerSwitch(CbfDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    def read_numOutlets(self: PowerSwitch) -> int:
+    @attribute(dtype=int)
+    def numOutlets(self: PowerSwitch) -> int:
         """
         Get the number of outlets.
 
@@ -175,7 +158,8 @@ class PowerSwitch(CbfDevice):
         """
         return self.component_manager.num_outlets
 
-    def read_isCommunicating(self: PowerSwitch) -> bool:
+    @attribute(dtype=int)
+    def isCommunicating(self: PowerSwitch) -> bool:
         """
         Get whether or not the power switch is communicating.
 
@@ -202,33 +186,9 @@ class PowerSwitch(CbfDevice):
             """
 
             (result_code, message) = super().do()
-            self._device._simulation_mode = True
+            self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, message)
-
-    @command(
-        dtype_in="DevString",
-        doc_in="Outlet ID to turn on.",
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
-    )
-    @DebugIt()
-    def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
-        command_handler = self.get_command_object(command_name="TurnOnOutlet")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
-
-    @command(
-        dtype_in="DevString",
-        doc_in="Outlet ID to turn off.",
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
-    )
-    @DebugIt()
-    def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
-        command_handler = self.get_command_object(command_name="TurnOffOutlet")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
 
     class GetOutletPowerStateCommand(FastCommand):
         """
@@ -270,10 +230,36 @@ class PowerSwitch(CbfDevice):
     )
     @DebugIt()
     def GetOutletPowerState(self: PowerSwitch, argin: str) -> int:
-        # PROTECTED REGION ID(PowerSwitch.GetOutletPowerState) ENABLED START #
         handler = self.get_command_object("GetOutletPowerState")
         return int(handler(argin))
-        # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerState
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    @command(
+        dtype_in="DevString",
+        doc_in="Outlet ID to turn on.",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
+        command_handler = self.get_command_object(command_name="TurnOnOutlet")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
+
+    @command(
+        dtype_in="DevString",
+        doc_in="Outlet ID to turn off.",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
+        command_handler = self.get_command_object(command_name="TurnOffOutlet")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
 
 # ----------

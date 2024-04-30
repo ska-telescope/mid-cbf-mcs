@@ -12,38 +12,50 @@
 
 from typing import List
 
+import pytest
 import tango
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
-
-# Local imports
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
+from ska_tango_testing.harness import TangoTestHarness
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
+from ska_mid_cbf_mcs.testing import context
+from tango import DevState
 
 from ... import test_utils
 
+# Local imports
+
+@pytest.fixture(name="device_under_test")
+def power_switch_test_context() -> tango.DeviceProxy:
+    harness = TangoTestHarness()
+    harness.add_device(
+        "mid_csp_cbf/power_switch/001",
+        PowerSwitch,
+        PowerSwitchIp="192.168.0.100",
+        PowerSwitchLogin="admin",
+        PowerSwitchModel="DLI LPC9",
+        PowerSwitchPassword="1234",
+    )
+
+    with harness as context:
+        yield context.get_device("mid_csp_cbf/power_switch/001")
+
 
 def test_TurnOnOutlet_TurnOffOutlet(
-    device_under_test: tango.DeviceProxy,
+    device_under_test: context.DeviceProxy,
     change_event_callbacks: MockTangoEventCallbackGroup,
 ) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
-    # Put the device in simulation mode
-    device_under_test.simulationMode = SimulationMode.TRUE
+    device_under_test.simulationMode = SimulationMode.FALSE
     device_under_test.adminMode = AdminMode.ONLINE
-
-    change_event_attr_list = [
-        "longRunningCommandResult",
-        "longRunningCommandProgress",
-    ]
-    attr_event_ids = test_utils.change_event_subscriber(
-        device_under_test, change_event_callbacks, change_event_attr_list
-    )
+    assert device_under_test.State() == DevState.ON
 
     num_outlets = device_under_test.numOutlets
     assert num_outlets == 8
@@ -52,42 +64,34 @@ def test_TurnOnOutlet_TurnOffOutlet(
     outlets: List[PowerState] = []
     for i in range(0, num_outlets):
         outlets.append(device_under_test.GetOutletPowerState(str(i)))
+        # assert device_under_test.GetOutletPowerState(str(j)) == PowerState.UNKNOWN
 
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
         result_code, command_id = device_under_test.TurnOffOutlet(str(i))
         assert result_code == [ResultCode.QUEUED]
         outlets[i] = PowerState.OFF
-        for progress_point in (10, 20, 100):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[0, "Outlet {i} power off"]')
+            (f"{command_id[0]}", f'[0, "TurnOffOutlet completed OK"]')
         )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
-
+            
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
         result_code, command_id = device_under_test.TurnOnOutlet(str(i))
         assert result_code == [ResultCode.QUEUED]
         outlets[i] = PowerState.ON
-        for progress_point in (10, 20, 100):
-            change_event_callbacks[
-                "longRunningCommandProgress"
-            ].assert_change_event((f"{command_id[0]}", f"{progress_point}"))
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[0, "Outlet {i} power on"]')
+            (f"{command_id[0]}", f'[0, "TurnOnOutlet completed OK"]')
         )
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerState(str(j)) == outlets[j]
-
+    
     # assert if any captured events have gone unaddressed
     change_event_callbacks.assert_not_called()
-    test_utils.change_event_unsubscriber(device_under_test, attr_event_ids)
 
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
