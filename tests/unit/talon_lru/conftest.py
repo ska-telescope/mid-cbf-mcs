@@ -79,10 +79,9 @@ def lru_change_event_callbacks(
 @pytest.fixture()
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
+    builder.add_command("On", ResultCode.OK)
+    builder.add_command("Off", ResultCode.OK)
     return builder()
-
 
 @pytest.fixture(params=["conn_success", "conn_fail", "command_fail"])
 def mock_power_switch(request: pytest.FixtureRequest) -> unittest.mock.Mock:
