@@ -14,6 +14,7 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
+from beautifultable import BeautifulTable
 from typing import List, Optional, Tuple
 
 # tango imports
@@ -341,7 +342,6 @@ class Slim(SKABaseDevice):
 
             :return: None
             """
-            msg = ""
             link_names = self.target.component_manager.get_link_names()
             counters = self.target.component_manager.get_device_counters()
             rx_debug_alignment_and_lock_statuses = (
@@ -354,31 +354,18 @@ class Slim(SKABaseDevice):
                 self.target.component_manager.get_tx_link_occupancy()
             )
 
-            header_one = (
-                f"{'Link Name':<68}"
-                + f"{'CDR Lock/Loss':<15}"
-                + f"{'Block Aligned/Loss':<20}\n"
-            )
-            header_two = (
-                f"{'Link Name':<68}"
-                + f"{'Tx Data (Gbps / Words)':<24}"
-                + f"{'Tx Idle (Gbps)':<18}\n"
-            )
-            header_three = (
-                f"{'Link Name':<68}"
-                + f"{'Rx Data (Gbps / Words)':<24}"
-                + f"{'Rx Idle (Gbps)':<18}\n"
-            )
-            header_four = (
-                f"{'Link Name':<68}"
-                + f"{'Idle Error/Count':<25}"
-                + "Word Error Rate\n"
-            )
-
-            line_one = ""
-            line_two = ""
-            line_three = ""
-            line_four = ""
+            table = BeautifulTable(maxwidth=180)
+            table.columns.header = [
+                "Link",
+                "CDR locked\n(lost)",
+                "Block Aligned\n(lost)",
+                "Tx Data (Gbps)\n(words)",
+                "Tx Idle (Gbps)",
+                "Rx Data\n(Gbps)\n(words)",
+                "Rx Idle\n(Gbps)",
+                "Idle Error\nCount",
+                "Word\nError Rate",
+            ]
             msg += "\nSLIM Mesh Health Summary Tables:\n\n"
 
             for idx, name in enumerate(link_names):
@@ -395,10 +382,6 @@ class Slim(SKABaseDevice):
                 tx_idle_word_count = counter[8]
                 tx_words = tx_word_count + tx_idle_word_count
                 rx_words = rx_word_count + rx_idle_word_count
-                tx_data_gbps = f"{tx_link_occupancy * gbps:.2f}"
-                rx_data_gbps = f"{rx_link_occupancy * gbps:.2f}"
-                tx_idle = f"{tx_idle_word_count/tx_words * gbps:.2f}"
-                rx_idle = f"{rx_idle_word_count/rx_words * gbps:.2f}"
 
                 if not rx_idle_word_count:
                     rx_wer = "NaN"
@@ -407,36 +390,20 @@ class Slim(SKABaseDevice):
                 else:
                     rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
 
-                line_one += (
-                    f"{name:<68}"
-                    + f"{str(rx_flags[3]) + '/' +str(rx_flags[2]):<15}"
-                    + f"{str(rx_flags[1]) + '/' +str(rx_flags[0]):<20}"
-                    + "\n"
+                data_row = (
+                    name,
+                    f"{rx_flags[3]} ({rx_flags[2]})",
+                    f"{rx_flags[1]} ({rx_flags[0]})",
+                    f"{tx_link_occupancy * gbps:.2f}\n({tx_word_count})",
+                    f"{tx_idle_word_count/tx_words * gbps:.2f}",
+                    f"{rx_link_occupancy * gbps:.2f}\n({rx_word_count})",
+                    f"{rx_idle_word_count/rx_words * gbps:.2f}",
+                    f"{rx_idle_error_count} /\n{rx_words:.2e}",
+                    rx_wer,
                 )
-                line_two += (
-                    f"{name:<68}"
-                    + f"{tx_data_gbps + '/' + str(tx_word_count):<24}"
-                    + f"{tx_idle:<18}"
-                    + "\n"
-                )
-                line_three += (
-                    f"{name:<68}"
-                    + f"{rx_data_gbps + '/' + str(rx_word_count):<24}"
-                    + f"{rx_idle:<18}"
-                    + "\n"
-                )
-                line_four += (
-                    f"{name:<68}"
-                    + f"{str(rx_idle_error_count) + '/' + str(rx_words):<25}"
-                    + f"{rx_wer}"
-                    + "\n"
-                )
+                table.rows.append(data_row)
 
-            msg += header_one + line_one + "\n"
-            msg += header_two + line_two + "\n"
-            msg += header_three + line_three + "\n"
-            msg += header_four + line_four + "\n"
-            self.logger.info(msg)
+            self.logger.info(table)
 
         def do(
             self: Slim.SlimMeshTestCommand, argin: str
