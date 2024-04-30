@@ -168,7 +168,7 @@ class TalonLRU(CbfDevice):
         return True
 
     @command(
-        dtype_out="DevVarLongStringArrayType",
+        dtype_out="DevVarLongStringArray",
     )
     @tango.DebugIt()
     def On(
@@ -194,7 +194,7 @@ class TalonLRU(CbfDevice):
         return True
 
     @command(
-        dtype_out="DevVarLongStringArrayType",
+        dtype_out="DevVarLongStringArray",
     )
     @tango.DebugIt()
     def Off(

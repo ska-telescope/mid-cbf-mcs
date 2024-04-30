@@ -50,25 +50,10 @@ class TestTalonLRU:
             PDUCommandTimeout="20",
         )
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
-
-    def set_change_event_callbacks(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy
-    ) -> MockTangoEventCallbackGroup:
-        change_event_attr_list = [
-            "longRunningCommandResult",
-            "longRunningCommandProgress",
-        ]
-        change_event_callbacks = MockTangoEventCallbackGroup(
-            *change_event_attr_list
-        )
-        context.change_event_subscriber(
-            device_under_test, change_event_attr_list, change_event_callbacks
-        )
-        return change_event_callbacks
 
     def test_State(
         self: TestTalonLRU, device_under_test: context.DeviceProxy

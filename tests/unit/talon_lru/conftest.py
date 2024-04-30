@@ -37,7 +37,7 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_lru/001")
 
 
-@pytest.fixture(name="power_switch_1_mock")
+@pytest.fixture(name="power_switch_1")
 def power_switch_1_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -48,7 +48,7 @@ def power_switch_1_fixture(
     return test_context.get_device("mid_csp_cbf/power_switch/001")
 
 
-@pytest.fixture(name="power_switch_2_mock")
+@pytest.fixture(name="power_switch_2")
 def power_switch_2_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -82,6 +82,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     builder.add_command("On", ResultCode.OK)
     builder.add_command("Off", ResultCode.OK)
     return builder()
+
 
 @pytest.fixture(params=["conn_success", "conn_fail", "command_fail"])
 def mock_power_switch(request: pytest.FixtureRequest) -> unittest.mock.Mock:
