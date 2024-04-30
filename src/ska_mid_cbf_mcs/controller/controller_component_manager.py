@@ -402,15 +402,21 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
+                deployerProxy = CbfDeviceProxy("mid_csp_cbf/ec/deployer")
+                talondx_config_json = json.loads(
+                    deployerProxy.read_configCommands
+                )
+                # 1. get from device
+                # 2. set to the value being read instead
                 # read in list of LRUs from configuration JSON
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
-                ) as f:
-                    talondx_config_json = json.load(f)
+                # with open(
+                #     os.path.join(
+                #         os.getcwd(),
+                #         self._talondx_config_path,
+                #         "talondx-config.json",
+                #     )
+                # ) as f:
+                #     talondx_config_json = json.load(f)
 
                 self._fqdn_talon_lru = []
                 for config_command in talondx_config_json["config_commands"]:
