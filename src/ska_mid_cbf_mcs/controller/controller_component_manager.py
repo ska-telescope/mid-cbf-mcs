@@ -406,7 +406,7 @@ class ControllerComponentManager(CbfComponentManager):
                     "mid_csp_cbf/ec/deployer", self._logger
                 )
                 talondx_config_json = json.loads(
-                    deployer_proxy.read_configCommands
+                    deployer_proxy.configCommands
                 )
                 # 1. get from device
                 # 2. set to the value being read instead
