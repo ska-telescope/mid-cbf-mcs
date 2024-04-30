@@ -402,7 +402,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-                deployerProxy = CbfDeviceProxy("mid_csp_cbf/ec/deployer")
+                deployerProxy = CbfDeviceProxy("mid_csp_cbf/ec/deployer", self._logger)
                 talondx_config_json = json.loads(
                     deployerProxy.read_configCommands
                 )
