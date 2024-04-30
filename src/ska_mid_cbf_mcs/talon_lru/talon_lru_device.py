@@ -137,7 +137,6 @@ class TalonLRU(CbfDevice):
         """
         A class for the TalonLRU's init_device() "command".
         """
-
         def do(
             self: TalonLRU.InitCommand,
             *args: Any,
@@ -159,7 +158,6 @@ class TalonLRU(CbfDevice):
             self._device.simulation_mode(SimulationMode.TRUE)
             return (result_code, msg)
 
-    # On Command
     def is_On_allowed(
         self: TalonLRU,
     ) -> bool:
@@ -186,7 +184,6 @@ class TalonLRU(CbfDevice):
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
-    # Off Command
     def is_Off_allowed(
         self: TalonLRU,
     ) -> bool:

@@ -12,6 +12,7 @@ from __future__ import annotations
 import unittest
 
 import pytest
+from ska_control_model import ResultCode
 import tango
 from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
@@ -26,15 +27,33 @@ from ... import test_utils
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
-
     """
     Fixture that returns the device under test.
 
     :param test_context: the context in which the tests run
-
     :return: the device under test
     """
     return test_context.get_device("mid_csp_cbf/talon_lru/001")
+
+@pytest.fixture(name="power_switch_1_mock")
+def power_switch_1_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
+    """
+    :param test_context: the context in which the tests run
+    :return: the mock power switch 1 device
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/001")
+
+@pytest.fixture(name="power_switch_2_mock")
+def power_switch_2_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
+    """
+    :param test_context: the context in which the tests run
+    :return: the mock power switch 2 device
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/001")
 
 @pytest.fixture(name="change_event_callbacks")
 def lru_change_event_callbacks(
@@ -52,20 +71,66 @@ def lru_change_event_callbacks(
     )
     return change_event_callbacks
 
-
-@pytest.fixture()
-def mock_power_switch() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_command("TurnOnOutlet", None)
-    builder.add_command("TurnOffOutlet", None)
-    builder.add_command("GetOutletState", PowerState.ON)
-    return builder()
-
 @pytest.fixture()
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
+    return builder()
+
+@pytest.fixture(
+    params=["conn_success", "conn_fail", "command_fail"]
+)
+def mock_power_switch(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+    """
+    Get a mock power switch device. This fixture is parameterized to
+    mock different pass / failure scenarios.
+
+    :param request: the pytest request fixture which holds information about the
+                    parameterization of this fixture
+    :return: a mock PowerSwitch device
+    """
+    return get_mock_power_switch(request.param)
+
+def get_mock_power_switch(param: str) -> unittest.mock.Mock:
+    """
+    Get a mock power switch device with the specified parameterization.
+
+    :param param: parameterization string that impacts the mocked behaviour
+    """
+    builder = MockDeviceBuilder()
+    builder.add_attribute(
+        "stimulusMode", param
+    )
+    if param == "conn_success":
+        # Connection to power switch is working as expected.
+        builder.add_attribute("numOutlets", 8)
+        builder.add_command("GetOutletPowerMode", PowerState.OFF)
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.OK, "Success message"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.OK, "Success message"
+        )
+    elif param == "conn_fail":
+        # Connection to power switch cannot be made.
+        builder.add_attribute("numOutlets", 0)
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.FAILED, "Failed message"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.FAILED, "Failed message"
+        )
+    elif param == "command_fail":
+        # Can communicate with the power switch, but the turn on/off outlet commands fail.
+        builder.add_attribute("numOutlets", 8)
+        builder.add_command("GetOutletPowerMode", PowerState.OFF)
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.FAILED, "Failed message"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.FAILED, "Failed message"
+        )
     return builder()
 
 @pytest.fixture()
@@ -87,31 +152,3 @@ def initial_mocks(
         "mid_csp_cbf/power_switch/001": mock_power_switch,
         "mid_csp_cbf/power_switch/002": mock_power_switch,
    }
-
-@pytest.fixture(name="mock_power_switch1")
-def power_switch1_fixture(
-    test_context: TangoTestHarnessContext,
-) -> context.DeviceProxy:
-    """
-    Fixture that returns the power switch 1 device.
-
-    :param test_context: the context in which the tests run
-
-    :return: the power switch 1 device
-    """
-    return test_context.get_device("mid_csp_cbf/power_switch/001")
-
-@pytest.fixture(name="mock_power_switch2")
-def power_switch1_fixture(
-    test_context: TangoTestHarnessContext,
-) -> context.DeviceProxy:
-    """
-    Fixture that returns the power switch 2 device.
-
-    :param test_context: the context in which the tests run
-
-    :return: the power switch 2 device
-    """
-    return test_context.get_device("mid_csp_cbf/power_switch/002")
-
-

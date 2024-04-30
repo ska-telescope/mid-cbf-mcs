@@ -26,6 +26,7 @@ from tango import DevState
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
 
+CONST_WAIT_TIME = 2
 
 class TestTalonLRU:
     """
@@ -52,6 +53,21 @@ class TestTalonLRU:
         with harness as test_context:
             yield test_context
 
+    def set_change_event_callbacks(
+        self: TestTalonLRU, device_under_test: context.DeviceProxy
+    ) -> MockTangoEventCallbackGroup:
+        change_event_attr_list = [
+            "longRunningCommandResult",
+            "longRunningCommandProgress",
+        ]
+        change_event_callbacks = MockTangoEventCallbackGroup(
+            *change_event_attr_list
+        )
+        context.change_event_subscriber(
+            device_under_test, change_event_attr_list, change_event_callbacks
+        )
+        return change_event_callbacks
+
     def test_State(
         self: TestTalonLRU, device_under_test: context.DeviceProxy
     ) -> None:
@@ -75,7 +91,10 @@ class TestTalonLRU:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_startup_state(
-        self, device_under_test: context.DeviceProxy, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
+        self: TestTalonLRU, 
+        device_under_test: context.DeviceProxy, 
+        power_switch_1: context.DeviceProxy, 
+        power_switch_2: context.DeviceProxy 
     ) -> None:
         """
         Tests that the state of the TalonLRU device when it starts up is correct.
@@ -84,102 +103,146 @@ class TestTalonLRU:
 
         # Trigger the mock start_communicating
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-
         # Check the device state based on the mock power switch behaviour
-        # TODO: Break out as parameterized test
         if (
-            mock_power_switch1.stimulusMode == "conn_success"
-            or mock_power_switch2.stimulusMode == "conn_success"
-            or mock_power_switch1.stimulusMode == "command_fail"
-            or mock_power_switch2.stimulusMode == "command_fail"
+            power_switch_1.stimulusMode == "conn_fail"
+            or power_switch_2.stimulusMode == "conn_fail"
         ):
-            assert device_under_test.State() == DevState.OFF
-        else:
             assert device_under_test.State() == DevState.UNKNOWN
-
-
-
-
-
+        else:
+            assert device_under_test.State() == DevState.OFF
 
     def test_On(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
+        self: TestTalonLRU, 
+        device_under_test: context.DeviceProxy, 
+        change_event_callbacks: MockTangoEventCallbackGroup, 
+        power_switch_1: context.DeviceProxy, 
+        power_switch_2: context.DeviceProxy 
     ) -> None:
         """
         Tests that the On command behaves appropriately.
         """
-        # Skip this test for certain configurations
+        # Skip this test for stimulus modes that are not valid
         if (
-            mock_power_switch1.stimulusMode == "conn_fail"
-            or mock_power_switch1.stimulusMode == "invalid_start_state"
-            or mock_power_switch2.stimulusMode == "conn_fail"
-            or mock_power_switch2.stimulusMode == "invalid_start_state"
+            power_switch_1.stimulusMode == "conn_fail"
+            or power_switch_2.stimulusMode == "conn_fail"
         ):
             pytest.skip(
                 "TalonLRU device is not in a valid startup state for this test"
             )
 
-        # trigger the mock start_communicating
+        # Trigger the mock start_communicating
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        # Send the On command
-        result = device_under_test.On()
+        # Send the long running command 'On'
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
 
-        # Check that the state updates correctly when the device callbacks are called
+        # Assert the expected result, given the stimulus mode of the power switches.
         if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
+            power_switch_1.stimulusMode == "conn_success"
+            and power_switch_2.stimulusMode == "conn_success"
         ):
-            assert result[0][0] == ResultCode.FAILED
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK}, "LRU successfully turn on: both outlets successfully turned on"]',
+                )
+            )
+            assert device_under_test.State() == DevState.ON
+        elif (
+            power_switch_1.stimulusMode == "command_fail" 
+            and power_switch_2.stimulusMode == "command_fail"
+        ):
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.FAILED}, "LRU failed to turned on: both oulets failed to turn on]',
+                )
+            )
             assert device_under_test.State() == DevState.FAULT
         else:
-            assert result[0][0] == ResultCode.OK
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK}, "LRU successfully turn on: one outlet successfully turned on"]',
+                )
+            )
             assert device_under_test.State() == DevState.ON
 
     def test_Off(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
+        self: TestTalonLRU, device_under_test: context.DeviceProxy, change_event_callbacks: MockTangoEventCallbackGroup, power_switch_1: context.DeviceProxy, power_switch_2: context.DeviceProxy
     ) -> None:
         """
         Tests that the On command behaves appropriately.
         """
 
-        # Skip this test for certain configurations
+        # Skip this test for stimulus modes that are not valid
         if (
-            mock_power_switch1.stimulusMode == "conn_fail"
-            or mock_power_switch1.stimulusMode == "invalid_start_state"
-            or mock_power_switch2.stimulusMode == "conn_fail"
-            or mock_power_switch2.stimulusMode == "invalid_start_state"
+            power_switch_1.stimulusMode == "conn_fail"
+            or power_switch_2.stimulusMode == "conn_fail"
         ):
             pytest.skip(
                 "TalonLRU device is not in a valid startup state for this test"
             )
 
-        # trigger the mock start_communicating
+        # Trigger the mock start_communicating
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        # Send the On command
-        result = device_under_test.Off()
+        # Send the Off command
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
 
         # Check that the state updates correctly when the device callbacks are called
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK}, "Configure completed OK"]',
+            )
+        )
+
+        # Assert the expected result, given the stimulus mode of the power switches.
         if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
+            power_switch_1.stimulusMode == "conn_success"
+            and power_switch_2.stimulusMode == "conn_success"
         ):
-            assert result[0][0] == ResultCode.FAILED
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK}, "LRU successfully turned off: both outlets turned off"]',
+                )
+            )
+            assert device_under_test.State() == DevState.ON
+        elif (
+            power_switch_1.stimulusMode == "command_fail" 
+            and power_switch_2.stimulusMode == "command_fail"
+        ):
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.FAILED}, "LRU failed to turned off: failed to turn off both outlets"]',
+                )
+            )
             assert device_under_test.State() == DevState.FAULT
         else:
-            assert result[0][0] == ResultCode.OK
-            assert device_under_test.State() == DevState.OFF
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.FAILED}, "LRU failed to turned off: only one outlet turned off"]',
+                )
+            )
+            assert device_under_test.State() == DevState.FAULT
+
 
     def test_OnOff(
-          self: TestTalonLRU, device_under_test: context.DeviceProxy, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
+          self: TestTalonLRU, device_under_test: context.DeviceProxy, change_event_callbacks: MockTangoEventCallbackGroup, mock_power_switch1: context.DeviceProxy, mock_power_switch2: context.DeviceProxy
     ) -> None:
         """
         Tests that the On command followed by the Off command works appropriately.
@@ -194,5 +257,5 @@ class TestTalonLRU:
                 "Test sequence is not valid for this configuration of stimulus"
             )
 
-        self.test_On(device_under_test, mock_power_switch1, mock_power_switch2)
-        self.test_Off(device_under_test, mock_power_switch1, mock_power_switch2)
+        self.test_On(device_under_test, change_event_callbacks, mock_power_switch1, mock_power_switch2)
+        self.test_Off(device_under_test, change_event_callbacks, mock_power_switch1, mock_power_switch2)

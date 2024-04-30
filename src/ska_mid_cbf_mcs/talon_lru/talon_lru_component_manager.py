@@ -336,17 +336,17 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, "Failed to turn on both outlets")
+            self._update_component_state(fault=True)
+            return (ResultCode.FAILED, "LRU failed to turned on: both oulets failed to turn on")
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self._update_component_state(PowerState.ON)
+            self._update_component_state(power=PowerState.ON)
             return (
                 ResultCode.OK,
-                "Only one outlet successfully turned on",
+                "LRU successfully turn on: one outlet successfully turned on",
             )
         else:
-            self.update_component_power_state(PowerState.ON)
-            return (ResultCode.OK, "Both outlets successfully turned on")
+            self._update_component_state(power=PowerState.ON)
+            return (ResultCode.OK, "LRU successfully turn on: both outlets successfully turned on")
 
     def _on(
         self: TalonLRUComponentManager,
@@ -510,17 +510,17 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, "Failed to turn off both outlets")
+            self._update_component_state(fault=True)
+            return (ResultCode.FAILED, "LRU failed to turned off: failed to turn off both outlets")
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self.update_component_fault(True)
+            self._update_component_state(fault=True)
             return (
                 ResultCode.FAILED,
-                "Only one outlet successfully turned off",
+                "LRU failed to turned off: only one outlet turned off",
             )
         else:
-            self.update_component_power_state(PowerState.OFF)
-            return (ResultCode.OK, "Both outlets successfully turned off")
+            self._update_component_state(power=PowerState.OFF)
+            return (ResultCode.OK, "LRU successfully turned off: both outlets turned off")
 
     def _off(
         self: TalonLRUComponentManager,
@@ -549,7 +549,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Stop monitoring talon board telemetries and fault status
         talon_off_result = self._turn_off_talons()
         if talon_off_result:
-            return talon_off_result
+            task_callback(
+                result=talon_off_result,
+                status=TaskStatus.COMPLETED,
+            )
+            return
 
         # _determine_off_result_code will update the component power state
         task_callback(
