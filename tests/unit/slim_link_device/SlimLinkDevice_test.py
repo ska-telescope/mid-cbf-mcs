@@ -116,53 +116,6 @@ class TestSlimLink:
             ),
         ],
     )
-    def test_AttrReadWrite(
-        self: TestSlimLink,
-        tx_device_name: str,
-        rx_device_name: str,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test all attributes in the tango interface for readability/writability.
-
-        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
-        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        """
-        device_under_test.txDeviceName = tx_device_name
-        assert device_under_test.txDeviceName == tx_device_name
-
-        device_under_test.rxDeviceName = rx_device_name
-        assert device_under_test.rxDeviceName == rx_device_name
-
-        self.test_ConnectTxRx(
-            device_under_test=device_under_test,
-            tx_device_name=tx_device_name,
-            rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
-        )
-        assert (
-            device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
-        )
-        assert device_under_test.txIdleCtrlWord == 123456
-        assert device_under_test.rxIdleCtrlWord == 123456
-        assert device_under_test.bitErrorRate == 8e-12
-        counters = device_under_test.read_counters
-        for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
-            assert counters[ind] == val
-
-    @pytest.mark.parametrize(
-        "tx_device_name, rx_device_name",
-        [
-            (
-                "talon-x/slim-tx-rx/fs-tx0",
-                "talon-x/slim-tx-rx/fs-rx0",
-            ),
-        ],
-    )
     def test_ConnectTxRx(
         self: TestSlimLink,
         tx_device_name: str,
@@ -194,6 +147,7 @@ class TestSlimLink:
             )
         )
 
+        # DUT attr values set in mocks in conftest.py
         assert device_under_test.txIdleCtrlWord == 123456
         assert (
             device_under_test.txIdleCtrlWord
@@ -282,6 +236,54 @@ class TestSlimLink:
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
+        
+    @pytest.mark.parametrize(
+        "tx_device_name, rx_device_name",
+        [
+            (
+                "talon-x/slim-tx-rx/fs-tx0",
+                "talon-x/slim-tx-rx/fs-rx0",
+            ),
+        ],
+    )
+    def test_AttrReadWrite(
+        self: TestSlimLink,
+        tx_device_name: str,
+        rx_device_name: str,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test all attributes in the tango interface for readability/writability.
+
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: fixture that provides a
+            :py:class:`context.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        device_under_test.txDeviceName = tx_device_name
+        assert device_under_test.txDeviceName == tx_device_name
+
+        device_under_test.rxDeviceName = rx_device_name
+        assert device_under_test.rxDeviceName == rx_device_name
+
+        self.test_ConnectTxRx(
+            device_under_test=device_under_test,
+            tx_device_name=tx_device_name,
+            rx_device_name=rx_device_name,
+            change_event_callbacks=change_event_callbacks,
+        )
+        assert (
+            device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
+        )
+        # DUT attr values set in mocks in conftest.py
+        assert device_under_test.txIdleCtrlWord == 123456
+        assert device_under_test.rxIdleCtrlWord == 123456
+        assert device_under_test.bitErrorRate == 8e-12
+        counters = device_under_test.read_counters
+        for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
+            assert counters[ind] == val
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",

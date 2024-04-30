@@ -49,70 +49,7 @@ class SlimLink(CbfDevice):
     # Device Properties
     # -----------------
 
-    # ----------
-    # Attributes
-    # ----------
-
-    # txDeviceName = attribute(
-    #     dtype="DevString",
-    #     access=AttrWriteType.READ_WRITE,
-    #     label="Tx Device FQDN",
-    #     doc="FQDN of the link's Tx device",
-    # )
-
-    # rxDeviceName = attribute(
-    #     dtype="DevString",
-    #     access=AttrWriteType.READ_WRITE,
-    #     label="Rx Device FQDN",
-    #     doc="FQDN of the link's Rx device",
-    # )
-
-    # linkName = attribute(
-    #     dtype="DevString",
-    #     access=AttrWriteType.READ,
-    #     label="Link Name",
-    #     doc="Link name made up of the Tx and Rx FQDNs",
-    # )
-
-    # txIdleCtrlWord = attribute(
-    #     dtype="DevULong64",
-    #     access=AttrWriteType.READ,
-    #     label="Tx Idle control word",
-    #     doc="Idle control word read by the link's Tx device",
-    # )
-
-    # rxIdleCtrlWord = attribute(
-    #     dtype="DevULong64",
-    #     access=AttrWriteType.READ,
-    #     label="Rx Idle control word",
-    #     doc="Idle control word read by the link's Rx device",
-    # )
-
-    # bitErrorRate = attribute(
-    #     dtype="DevFloat",
-    #     access=AttrWriteType.READ,
-    #     label="Bit Error Rate",
-    #     doc="Bit Error Rate (BER) calculated by the link's Rx device",
-    # )
-
-    # counters = attribute(
-    #     dtype=("DevULong64",),
-    #     max_dim_x=9,
-    #     access=AttrWriteType.READ,
-    #     label="TxRx Counters",
-    #     doc="""
-    #         An array holding the counter values from the tx and rx devices in the order:
-    #         [0] rx_word_count
-    #         [1] rx_packet_count
-    #         [2] rx_idle_word_count
-    #         [3] rx_idle_error_count
-    #         [4] rx_block_lost_count
-    #         [5] rx_cdr_lost_count
-    #         [6] tx_word_count
-    #         [7] tx_packet_count
-    #         [8] tx_idle_word_count
-    #     """,
-    # )
+    # None at this time...
 
     # ---------------
     # General methods
@@ -334,16 +271,6 @@ class SlimLink(CbfDevice):
 
             return (result_code, message)
 
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
-    )
-    @DebugIt()
-    def ConnectTxRx(self: SlimLink) -> None:
-        command_handler = self.get_command_object("ConnectTxRx")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
-
     class VerifyConnectionCommand(FastCommand):
         """
         The command class for the VerifyConnection command.
@@ -380,30 +307,20 @@ class SlimLink(CbfDevice):
                 return self.component_manager.verify_connection()
             else:
                 return (
-                    ResultCode.FAILED,
+                    ResultCode.REJECTED,
                     "Device is offline. Failed to issue VerifyConnection command.",
                 )
-
+                
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def VerifyConnection(self: SlimLink) -> None:
-        handler = self.get_command_object("VerifyConnection")
-        return_code, message = handler()
+        command_handler = self.get_command_object("VerifyConnection")
+        return_code, message = command_handler()
         return [[return_code], [message]]
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
-    )
-    @DebugIt()
-    def DisconnectTxRx(self: SlimLink) -> None:
-        command_handler = self.get_command_object("DisconnectTxRx")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
-
+    
     class ClearCountersCommand(FastCommand):
         """
         The command class for the ClearCounters command.
@@ -440,29 +357,50 @@ class SlimLink(CbfDevice):
                 return self.component_manager.clear_counters()
             else:
                 return (
-                    ResultCode.FAILED,
+                    ResultCode.REJECTED,
                     "Device is offline. Failed to issue ClearCounters command.",
                 )
-
+    
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def ClearCounters(self: SlimLink) -> None:
-        handler = self.get_command_object("ClearCounters")
-        return_code, message = handler()
+        command_handler = self.get_command_object("ClearCounters")
+        return_code, message = command_handler()
         return [[return_code], [message]]
+    
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+    
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def ConnectTxRx(self: SlimLink) -> None:
+        command_handler = self.get_command_object("ConnectTxRx")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def DisconnectTxRx(self: SlimLink) -> None:
+        command_handler = self.get_command_object("DisconnectTxRx")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
 # ----------
 # Run server
 # ----------
 
-
 def main(args=None, **kwargs):
-    return run((SlimLink,), args=args, **kwargs)
-
+    return SlimLink.run_server(args=args or None, **kwargs)
 
 if __name__ == "__main__":
     main()

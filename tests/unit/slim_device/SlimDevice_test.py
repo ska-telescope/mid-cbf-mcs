@@ -77,21 +77,6 @@ class TestSlim:
         with harness as test_context:
             yield test_context
 
-    def set_change_event_callbacks(
-        self: TestSlim, device_under_test: context.DeviceProxy
-    ) -> MockTangoEventCallbackGroup:
-        change_event_attr_list = [
-            "longRunningCommandResult",
-            "longRunningCommandProgress",
-        ]
-        change_event_callbacks = MockTangoEventCallbackGroup(
-            *change_event_attr_list
-        )
-        test_utils.change_event_subscriber(
-            device_under_test, change_event_attr_list, change_event_callbacks
-        )
-        return change_event_callbacks
-
     def test_State(
         self: TestSlim, device_under_test: context.DeviceProxy
     ) -> None:
@@ -154,10 +139,8 @@ class TestSlim:
             :py:class:`context.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
-        device_under_test.On()
-
-        assert device_under_test.State() == DevState.ON
+        # prepare device
+        assert test_utils.device_online_and_on(device_under_test)
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
@@ -179,10 +162,9 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
-
-        device_under_test.On()
+        assert test_utils.device_online_and_on(device_under_test)
         time.sleep(CONST_WAIT_TIME)
+        
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
@@ -216,10 +198,9 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
-
-        device_under_test.On()
+        assert test_utils.device_online_and_on(device_under_test)
         time.sleep(CONST_WAIT_TIME)
+        
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
@@ -253,9 +234,8 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test_fail)
-
-        device_under_test_fail.On()
+        assert test_utils.device_online_and_on(device_under_test_fail)
+        
         time.sleep(CONST_WAIT_TIME)
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test_fail.Configure(

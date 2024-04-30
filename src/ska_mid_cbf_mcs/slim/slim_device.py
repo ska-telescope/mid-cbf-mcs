@@ -271,7 +271,7 @@ class Slim(CbfDevice):
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(Slim.main) ENABLED START #
-    return run((Slim,), args=args, **kwargs)
+    return Slim.run_server(args=args or None, **kwargs)
     # PROTECTED REGION END #    //  Slim.main
 
 
