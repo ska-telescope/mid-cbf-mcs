@@ -85,6 +85,8 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
+ska-mid-cbf-engineering-console:
+  enabled: true
 
 nodeSelector: {}
 
