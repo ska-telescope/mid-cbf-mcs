@@ -25,7 +25,7 @@ from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
 from ska_tango_base.obs.obs_device import SKAObsDevice
 from tango import DebugIt
-from tango.server import attribute, command, device_property
+from tango.server import attribute, command
 from transitions.extensions import LockedMachine as Machine
 
 from .base_device import MAX_QUEUED_COMMANDS, MAX_REPORTED_COMMANDS
@@ -268,12 +268,6 @@ class CbfObsDevice(SKAObsDevice):
     A generic base observing device for Mid.CBF.
     Extends SKAObsDevice to override certain key values.
     """
-
-    # -----------------
-    # Device Properties
-    # -----------------
-
-    DeviceID = device_property(dtype="uint16", default_value=1)
 
     # ----------
     # Attributes

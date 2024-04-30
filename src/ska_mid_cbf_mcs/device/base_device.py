@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from ska_control_model import ResultCode
+from ska_control_model import ResultCode, SimulationMode
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
@@ -27,7 +27,7 @@ from ska_tango_base.base.base_device import (
 from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand
 from tango import DebugIt
-from tango.server import attribute, command
+from tango.server import attribute, command, device_property
 
 __all__ = ["CbfDevice", "main"]
 
@@ -42,6 +42,16 @@ class CbfDevice(SKABaseDevice):
     A generic base device for Mid.CBF.
     Extends SKABaseDevice to override certain key values.
     """
+
+    # -----------------
+    # Device Properties
+    # -----------------
+
+    DeviceID = device_property(dtype="uint16", default_value=1)
+
+    # ----------
+    # Attributes
+    # ----------
 
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
         dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
@@ -87,6 +97,26 @@ class CbfDevice(SKABaseDevice):
         :return: ID, status pairs of the currently executing commands
         """
         return self._command_statuses
+    
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: CbfDevice) -> SimulationMode:
+        """
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: CbfDevice, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.debug(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
 
     # ---------------
     # General methods
@@ -149,7 +179,7 @@ class CbfDevice(SKABaseDevice):
 
         def do(
             self: CbfDevice.OnCommand,
-        ) -> tuple[ResultCode, str]:
+        ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
 
@@ -176,7 +206,7 @@ class CbfDevice(SKABaseDevice):
 
         def do(
             self: CbfDevice.OffCommand,
-        ) -> tuple[ResultCode, str]:
+        ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
 

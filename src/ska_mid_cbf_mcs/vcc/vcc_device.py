@@ -126,26 +126,6 @@ class Vcc(CbfObsDevice):
         """
         return self.component_manager.frequency_band
 
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: Vcc) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: Vcc, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.debug(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
-
     # ---------------
     # General methods
     # ---------------
@@ -209,7 +189,7 @@ class Vcc(CbfObsDevice):
             self: Vcc.InitCommand,
             *args: Any,
             **kwargs: Any,
-        ) -> tuple[ResultCode, str]:
+        ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
 

@@ -16,7 +16,7 @@ Sub-element VCC component manager for Mid.CBF
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-import threading
+from threading import Event
 from typing import Any, Callable, Optional
 
 # tango imports
@@ -25,7 +25,6 @@ from ska_control_model import (
     CommunicationStatus,
     ObsState,
     PowerState,
-    SimulationMode,
     TaskStatus,
 )
 from ska_tango_base.commands import ResultCode
@@ -81,7 +80,6 @@ class VccComponentManager(CbfObsComponentManager):
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
         """
@@ -91,12 +89,8 @@ class VccComponentManager(CbfObsComponentManager):
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
-        :param simulation_mode: simulation mode identifies if the real VCC HPS
-            applications or the simulator should be connected
         """
         super().__init__(*args, **kwargs)
-
-        self.simulation_mode = simulation_mode
 
         self._vcc_id = vcc_id
         self._talon_lru_fqdn = talon_lru
@@ -173,11 +167,6 @@ class VccComponentManager(CbfObsComponentManager):
 
         super().start_communicating()
         self._update_component_state(power=self._get_power_state())
-
-    def stop_communicating(self: VccComponentManager) -> None:
-        """Stop communication with the component."""
-        self._update_component_state(power=PowerState.UNKNOWN)
-        super().stop_communicating()
 
     def on(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
@@ -309,7 +298,7 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Configure VCC band-specific devices
@@ -422,7 +411,7 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Execute configure scan operation.
@@ -494,7 +483,7 @@ class VccComponentManager(CbfObsComponentManager):
         self: VccComponentManager,
         argin: int,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Begin scan operation.
@@ -545,7 +534,7 @@ class VccComponentManager(CbfObsComponentManager):
     def _end_scan(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         End scan operation.
@@ -592,7 +581,7 @@ class VccComponentManager(CbfObsComponentManager):
     def _go_to_idle(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Execute observing state transition from READY to IDLE.
@@ -642,7 +631,7 @@ class VccComponentManager(CbfObsComponentManager):
     def _abort_scan(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Abort the current scan operation.
@@ -694,7 +683,7 @@ class VccComponentManager(CbfObsComponentManager):
     def _obs_reset(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Reset the configuration from ABORTED or FAULT.

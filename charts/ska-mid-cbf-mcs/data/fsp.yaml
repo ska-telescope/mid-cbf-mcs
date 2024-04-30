@@ -40,7 +40,7 @@ server:
             - "-1"
             - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "1"
           - name: "FspCorrSubarray"
@@ -65,7 +65,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "1"
           - name: "SubID"
@@ -93,7 +93,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "1"
           - name: "SubID"
@@ -121,7 +121,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "1"
           - name: "SubID"
@@ -154,7 +154,7 @@ server:
             - "-1"
             - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "2"
           - name: "FspCorrSubarray"
@@ -179,7 +179,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "2"
           - name: "SubID"
@@ -207,7 +207,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "2"
           - name: "SubID"
@@ -235,7 +235,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "2"
           - name: "SubID"
@@ -268,7 +268,7 @@ server:
             - "-1"
             - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "3"
           - name: "FspCorrSubarray"
@@ -293,7 +293,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "3"
           - name: "SubID"
@@ -321,7 +321,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "3"
           - name: "SubID"
@@ -349,7 +349,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "3"
           - name: "SubID"
@@ -382,7 +382,7 @@ server:
             - "-1"
             - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "4"
           - name: "FspCorrSubarray"
@@ -407,7 +407,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "4"
           - name: "SubID"
@@ -435,7 +435,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "4"
           - name: "SubID"
@@ -463,7 +463,7 @@ server:
           - name: "CbfSubarrayAddress"
             values:
             - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "4"
           - name: "SubID"
