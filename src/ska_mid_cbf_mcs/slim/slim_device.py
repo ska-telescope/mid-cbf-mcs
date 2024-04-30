@@ -366,7 +366,6 @@ class Slim(SKABaseDevice):
                 "Idle Error\nCount",
                 "Word\nError Rate",
             ]
-            msg += "\nSLIM Mesh Health Summary Tables:\n\n"
 
             for idx, name in enumerate(link_names):
                 gbps = 25.78125 * 64 / 66
