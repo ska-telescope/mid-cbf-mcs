@@ -14,13 +14,14 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
+import time
 from typing import List, Optional, Tuple
 
 # tango imports
 import tango
 from beautifultable import BeautifulTable
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode, SlowCommand
+from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
@@ -288,7 +289,7 @@ class Slim(SKABaseDevice):
                     "Device is off. Failed to issue Configure command.",
                 )
 
-    class SlimMeshTestCommand(SlowCommand):
+    class SlimMeshTestCommand(ResponseCommand):
         """
         A command to test the mesh of SLIM Tx Rx Links
         """
@@ -429,9 +430,16 @@ class Slim(SKABaseDevice):
                 if exception is caught.
             :rtype: (ResultCode, str)
             """
-            # t_sleep = 2
+            t_sleep = 2
+            test_length = 8
 
             if self.target.get_state() == tango.DevState.ON:
+                self.logger.info(f"Sleeping for {test_length}s")
+                for slept_time in range(0, test_length, t_sleep):
+                    time.sleep(t_sleep)
+                    self.logger.info(
+                        f"Sleep Time Remaining: {test_length - slept_time}"
+                    )
                 # Print health Summary of Mesh Links
                 try:
                     self._slim_mesh_links_ber_check_summary()
