@@ -431,7 +431,7 @@ class Slim(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             t_sleep = 2
-            test_length = 8
+            test_length = 2
 
             if self.target.get_state() == tango.DevState.ON:
                 self.logger.info(f"Sleeping for {test_length}s")
