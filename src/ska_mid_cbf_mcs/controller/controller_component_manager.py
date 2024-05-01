@@ -405,21 +405,10 @@ class ControllerComponentManager(CbfComponentManager):
                 deployer_proxy = CbfDeviceProxy(
                     "mid_csp_cbf/ec/deployer", self._logger
                 )
-                talondx_config_json = json.loads(deployer_proxy.configCommands)
-                # 1. get from device
-                # 2. set to the value being read instead
-                # read in list of LRUs from configuration JSON
-                # with open(
-                #     os.path.join(
-                #         os.getcwd(),
-                #         self._talondx_config_path,
-                #         "talondx-config.json",
-                #     )
-                # ) as f:
-                #     talondx_config_json = json.load(f)
+                config_commands = json.loads(deployer_proxy.configCommands)
 
                 self._fqdn_talon_lru = []
-                for config_command in talondx_config_json["config_commands"]:
+                for config_command in config_commands["config_commands"]:
                     target = config_command["target"]
                     for lru_id, lru_config in self._hw_config[
                         "talon_lru"
@@ -847,16 +836,12 @@ class ControllerComponentManager(CbfComponentManager):
             == SimulationMode.FALSE
         ):
             if len(self._fqdn_talon_lru) == 0:
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
-                ) as f:
-                    talondx_config_json = json.load(f)
+                deployer_proxy = CbfDeviceProxy(
+                    "mid_csp_cbf/ec/deployer", self.logger
+                )
+                config_commands = json.loads(deployer_proxy.configCommands)
 
-                for config_command in talondx_config_json["config_commands"]:
+                for config_command in config_commands["config_commands"]:
                     target = config_command["target"]
                     for lru_id, lru_config in self._hw_config[
                         "talon_lru"
