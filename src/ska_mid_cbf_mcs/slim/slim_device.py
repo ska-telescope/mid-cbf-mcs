@@ -415,7 +415,7 @@ class Slim(SKABaseDevice):
                 )
                 table.rows.append(data_row)
 
-            self.logger.info(table)
+            self.logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
 
         def do(
             self: Slim.SlimMeshTestCommand, argin: str
@@ -431,6 +431,8 @@ class Slim(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             t_sleep = 2
+            # TODO Change test_length to something longer when BaseClass Updates are completed
+            # Currently there is no way to prevent the 3sec default timeout for commands
             test_length = 2
 
             if self.target.get_state() == tango.DevState.ON:
