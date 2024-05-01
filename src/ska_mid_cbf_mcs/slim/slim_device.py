@@ -20,7 +20,7 @@ from typing import List, Optional, Tuple
 import tango
 from beautifultable import BeautifulTable
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.commands import ResponseCommand, ResultCode, SlowCommand
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
@@ -288,7 +288,7 @@ class Slim(SKABaseDevice):
                     "Device is off. Failed to issue Configure command.",
                 )
 
-    class SlimMeshTestCommand(ResponseCommand):
+    class SlimMeshTestCommand(SlowCommand):
         """
         A command to test the mesh of SLIM Tx Rx Links
         """
