@@ -107,11 +107,15 @@ class TalonDxComponentManager:
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
         try:
-            talondx_config_path = (
-                f"{self.talondx_config_path}/talondx-config.json"
+            deployer_proxy = CbfDeviceProxy(
+                "mid_csp_cbf/ec/deployer", self.logger
             )
-            with open(talondx_config_path) as json_fd:
-                self.talondx_config = json.load(json_fd)
+            self.talondx_config = json.loads(deployer_proxy.configCommands)
+            # talondx_config_path = (
+            #     f"{self.talondx_config_path}/talondx-config.json"
+            # )
+            # with open(talondx_config_path) as json_fd:
+            #     self.talondx_config = json.load(json_fd)
             with open(self._hw_config_path) as yaml_fd:
                 self._hw_config = yaml.safe_load(yaml_fd)
             return ResultCode.OK
