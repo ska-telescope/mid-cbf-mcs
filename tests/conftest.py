@@ -34,7 +34,7 @@ import yaml
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
@@ -353,7 +353,7 @@ def init_proxies_fixture():
 
             # Load in system params
             sys_param = load_data("sys_param_4_boards")
-            self.receptor_utils = ReceptorUtils(sys_param)
+            self.dish_utils = DISHUtils(sys_param)
 
             # TmCspSubarrayLeafNodeTest
             self.tm = CbfDeviceProxy(
@@ -703,12 +703,12 @@ def init_delay_model_test_fixture():
                     # among receptors_under_test:
                     for i_rec in receptors_to_remove:
                         for jj, entry in enumerate(
-                            delay_model_all_obj[i_dm]["delay_details"]
+                            delay_model_all_obj[i_dm]["receptor_delays"]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["delay_details"].pop(
-                                    jj
-                                )
+                                delay_model_all_obj[i_dm][
+                                    "receptor_delays"
+                                ].pop(jj)
 
             return delay_model_all_obj
 

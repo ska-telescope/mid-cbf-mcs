@@ -318,30 +318,30 @@ class CbfController(SKAController):
         return self.component_manager._source_init_sys_param
         # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
 
-    def read_receptorToVcc(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
-        """Return 'receptorID:vccID'"""
-        if self.component_manager._receptor_utils is None:
+    def read_dishToVcc(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.dishToVcc_read) ENABLED START #
+        """Return 'dishID:vccID'"""
+        if self.component_manager.dish_utils is None:
             return []
         out_str = [
             f"{r}:{v}"
-            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
         ]
 
         return out_str
-        # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
+        # PROTECTED REGION END #    //  CbfController.dishToVcc_read
 
-    def read_vccToReceptor(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
-        """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        if self.component_manager._receptor_utils is None:
+    def read_vccToDish(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.vccToDish_read) ENABLED START #
+        """Return dishToVcc attribute: 'vccID:dishID'"""
+        if self.component_manager.dish_utils is None:
             return []
         out_str = [
             f"{v}:{r}"
-            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
         ]
         return out_str
-        # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
+        # PROTECTED REGION END #    //  CbfController.vccToDish_read
 
     def write_simulationMode(
         self: CbfController, value: SimulationMode
@@ -362,6 +362,20 @@ class CbfController(SKAController):
         """
         A class for the CbfController's On() command.
         """
+
+        def is_allowed(
+            self: CbfController.OnCommand, raise_if_disallowed=False
+        ) -> bool:
+            """
+            Determine if OnCommand is allowed.
+
+            :return: if OnCommand is allowed
+            :rtype: bool
+            """
+            result = super().is_allowed(raise_if_disallowed)
+            if self.target.get_state() == tango.DevState.ON:
+                result = False
+            return result
 
         def do(
             self: CbfController.OnCommand,
@@ -392,6 +406,20 @@ class CbfController(SKAController):
         A class for the CbfController's Off() command.
         """
 
+        def is_allowed(
+            self: CbfController.OffCommand, raise_if_disallowed=False
+        ) -> bool:
+            """
+            Determine if OffCommand is allowed.
+
+            :return: if OffCommand is allowed
+            :rtype: bool
+            """
+            result = super().is_allowed(raise_if_disallowed)
+            if self.target.get_state() == tango.DevState.OFF:
+                result = False
+            return result
+
         def do(
             self: CbfController.OffCommand,
         ) -> Tuple[ResultCode, str]:
@@ -403,8 +431,11 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            (result_code, message) = self.target.component_manager.off()
+            if self.is_allowed():
+                (result_code, message) = self.target.component_manager.off()
+            else:
+                result_code = ResultCode.FAILED
+                message = f"Off command is not allowed when op state is {self.target.op_state_model.op_state}"
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.OFF)

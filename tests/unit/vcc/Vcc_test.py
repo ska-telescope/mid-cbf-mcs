@@ -366,8 +366,8 @@ class TestVcc:
         device_under_test.loggingLevel = LoggingLevel.DEBUG
         device_under_test.On()
         device_under_test.loggingLevel = LoggingLevel.DEBUG
-        # set receptorID to 1 to correctly test tdcDestinationAddress
-        device_under_test.receptorID = 1
+        # set dishID to SKA001 to correctly test tdcDestinationAddress
+        device_under_test.dishID = "SKA001"
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()

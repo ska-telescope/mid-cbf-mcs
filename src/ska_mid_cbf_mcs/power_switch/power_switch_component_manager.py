@@ -196,6 +196,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+
         if self.simulation_mode:
             return self.power_switch_simulator.get_outlet_power_mode(outlet)
         else:

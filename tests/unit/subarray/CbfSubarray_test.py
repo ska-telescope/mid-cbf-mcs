@@ -30,7 +30,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-CONST_WAIT_TIME = 4
+CONST_WAIT_TIME = 2
 
 
 class TestCbfSubarray:
@@ -388,7 +388,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
@@ -418,6 +418,11 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.IDLE
 
+        # configure_scan command is only allowed in op state ON
+        device_under_test.On()
+        sleep(CONST_WAIT_TIME)
+        assert device_under_test.State() == DevState.ON
+
         # configure scan
         f = open(data_file_path + config_file_name)
         device_under_test.ConfigureScan(f.read().replace("\n", ""))
@@ -432,14 +437,14 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -475,14 +480,14 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -511,14 +516,14 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -547,14 +552,14 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -583,14 +588,14 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA100", "SKA001", "SKA036"],
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
             ),
         ],
     )
@@ -618,13 +623,16 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
-            ("Configure_TM-CSP_v2.json", ["SKA100", "SKA001", "SKA036"]),
+            (
+                "ConfigureScan_CORR_PSS_PST.json",
+                ["SKA100", "SKA001", "SKA036", "SKA063"],
+            ),
         ],
     )
-    def test_End(
+    def test_GoToIdle(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
@@ -639,6 +647,6 @@ class TestCbfSubarray:
         device_under_test.On()
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.End()
+        device_under_test.GoToIdle()
 
         assert device_under_test.obsState == ObsState.IDLE

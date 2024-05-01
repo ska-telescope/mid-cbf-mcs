@@ -178,12 +178,12 @@ class TestVccComponentManager:
         input_jones_matrix_first_receptor = input_jones_matrix_obj[
             "jones_matrix"
         ][0]
-        vcc_component_manager.receptor_id = input_jones_matrix_first_receptor[
+        vcc_component_manager.dish_id = input_jones_matrix_first_receptor[
             "receptor"
-        ][1]
+        ]
         assert (
-            vcc_component_manager.receptor_id
-            == input_jones_matrix_first_receptor["receptor"][1]
+            vcc_component_manager._vcc_id
+            == input_jones_matrix_first_receptor["receptor"]
         )
         vcc_component_manager.update_jones_matrix(input_jones_matrix)
 
@@ -195,7 +195,7 @@ class TestVccComponentManager:
 
         # check that the matrix values were copied
         for entry in input_jones_matrix_obj["jones_matrix"]:
-            if entry["receptor"][1] == vcc_component_manager.receptor_id:
+            if entry["receptor"] == vcc_component_manager._vcc_id:
                 input_jones_matrix_for_receptor = json.dumps(entry)
                 # the updated Jones matrix for vcc is a single entry
                 # for the given receptor and should be the first (only)
@@ -260,14 +260,14 @@ class TestVccComponentManager:
         # Set the receptor id arbitrarily to the first receptor
         # in the delay model
         input_delay_model_first_receptor = input_delay_model_obj[
-            "delay_details"
+            "receptor_delays"
         ][0]
-        vcc_component_manager.receptor_id = input_delay_model_first_receptor[
+        vcc_component_manager.dish_id = input_delay_model_first_receptor[
             "receptor"
-        ][1]
+        ]
         assert (
-            vcc_component_manager.receptor_id
-            == input_delay_model_first_receptor["receptor"][1]
+            vcc_component_manager._vcc_id
+            == input_delay_model_first_receptor["receptor"]
         )
         vcc_component_manager.update_delay_model(input_delay_model)
 
@@ -276,14 +276,14 @@ class TestVccComponentManager:
         assert len(updated_delay_model_obj) != 0
 
         # check that the coeff values were copied
-        for entry in input_delay_model_obj["delay_details"]:
-            if entry["receptor"][1] == vcc_component_manager.receptor_id:
+        for entry in input_delay_model_obj["receptor_delays"]:
+            if entry["receptor"] == vcc_component_manager._vcc_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
                 # item in the list of entries allowed by the schema
                 updated_delay_model_for_vcc = json.dumps(
-                    updated_delay_model_obj["delay_details"][0]
+                    updated_delay_model_obj["receptor_delays"][0]
                 )
                 # compare the delay models as strings
                 assert (
@@ -506,7 +506,7 @@ class TestVccComponentManager:
         vcc_component_manager.on()
 
         # set receptorID to 1 to correctly test tdcDestinationAddress
-        vcc_component_manager.receptor_id = 1
+        vcc_component_manager.dish_id = 1
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()

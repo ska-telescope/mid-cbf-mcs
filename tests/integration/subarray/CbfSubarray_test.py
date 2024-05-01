@@ -13,8 +13,6 @@ import json
 import logging
 import os
 import random
-
-# Standard imports
 import time
 from typing import List
 
@@ -22,16 +20,11 @@ import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevFailed, DevState
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-
-# Tango imports
-
-# SKA specific imports
 
 
 class TestCbfSubarray:
@@ -83,7 +76,7 @@ class TestCbfSubarray:
         device_under_test.sysParam = sp
 
         sys_param = json.loads(sp)
-        test_proxies.receptor_utils = ReceptorUtils(sys_param)
+        test_proxies.dish_utils = DISHUtils(sys_param)
 
         device_under_test.On()
 
@@ -161,15 +154,14 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
 
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors[:-1]))
-            ] == receptors[:-1]
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors[:-1])
 
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
                     for r in receptors[:-1]
@@ -181,15 +173,13 @@ class TestCbfSubarray:
             # add the last receptor
             test_proxies.subarray[sub_id].AddReceptors([receptors[-1]])
             time.sleep(1)
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
+
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                        receptors[-1]
-                    ]
+                    test_proxies.dish_utils.dish_id_to_vcc_id[receptors[-1]]
                 ].subarrayMembership
                 == sub_id
             )
@@ -204,16 +194,14 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor
-                        ]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor]
                     ].subarrayMembership
                     == sub_id
                 )
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
                     for r in receptors_to_remove
@@ -234,9 +222,7 @@ class TestCbfSubarray:
             for receptor in receptors_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor
-                        ]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor]
                     ].subarrayMembership
                     == 0
                 )
@@ -305,14 +291,13 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -331,14 +316,13 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -411,14 +395,13 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 1
                     for r in receptors
@@ -431,10 +414,9 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].RemoveReceptors(
                 invalid_receptors_to_remove
             )
-            assert [
-                test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptors))
-            ] == receptors
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -513,16 +495,13 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == sub_id
                     for r in receptors
@@ -542,7 +521,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
+                        test_proxies.dish_utils.dish_id_to_vcc_id[r]
                     ].subarrayMembership
                     == 0
                     for r in receptors
@@ -566,10 +545,15 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            ),
+            (
+                "ConfigureScan_CORR_PSS_PST.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
@@ -590,7 +574,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's ConfigureScan command
@@ -598,7 +582,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -627,12 +611,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -667,34 +648,36 @@ class TestCbfSubarray:
             )
 
             # check the rest of the configured attributes of VCCs
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].frequencyBand == band_index
-                assert test_proxies.vcc[r].subarrayMembership == sub_id
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].frequencyBand == band_index
+                assert test_proxies.vcc[vcc_id].subarrayMembership == sub_id
                 assert (
-                    test_proxies.vcc[r].configID
+                    test_proxies.vcc[vcc_id].configID
                     == configuration["common"]["config_id"]
                 )
                 if "band_5_tuning" in configuration["common"]:
                     for idx, band in enumerate(
                         configuration["common"]["band_5_tuning"]
                     ):
-                        assert test_proxies.vcc[r].band5Tuning[idx] == band
+                        assert (
+                            test_proxies.vcc[vcc_id].band5Tuning[idx] == band
+                        )
                 if "frequency_band_offset_stream1" in configuration["cbf"]:
                     assert (
-                        test_proxies.vcc[r].frequencyBandOffsetStream1
+                        test_proxies.vcc[vcc_id].frequencyBandOffsetStream1
                         == configuration["cbf"][
                             "frequency_band_offset_stream1"
                         ]
                     )
                 if "frequency_band_offset_stream2" in configuration["cbf"]:
                     assert (
-                        test_proxies.vcc[r].frequencyBandOffsetStream2
+                        test_proxies.vcc[vcc_id].frequencyBandOffsetStream2
                         == configuration["cbf"][
                             "frequency_band_offset_stream2"
                         ]
                     )
                 if "rfi_flagging_mask" in configuration["cbf"]:
-                    assert test_proxies.vcc[r].rfiFlaggingMask == str(
+                    assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(
                         configuration["cbf"]["rfi_flagging_mask"]
                     )
 
@@ -704,58 +687,64 @@ class TestCbfSubarray:
                 for idx, search_window in enumerate(
                     configuration["cbf"]["search_window"]
                 ):
-                    for r in vcc_receptors:
+                    for vcc_id in vcc_ids:
                         assert (
-                            test_proxies.vccSw[r][idx + 1].tdcEnable
+                            test_proxies.vccSw[vcc_id][idx + 1].tdcEnable
                             == search_window["tdc_enable"]
                         )
                         # TODO implement VCC SW functionality and
                         # correct power states
                         if search_window["tdc_enable"]:
                             assert (
-                                test_proxies.vccSw[r][idx + 1].State()
+                                test_proxies.vccSw[vcc_id][idx + 1].State()
                                 == DevState.DISABLE
                             )
                         else:
                             assert (
-                                test_proxies.vccSw[r][idx + 1].State()
+                                test_proxies.vccSw[vcc_id][idx + 1].State()
                                 == DevState.DISABLE
                             )
                         assert (
-                            test_proxies.vccSw[r][idx + 1].searchWindowTuning
+                            test_proxies.vccSw[vcc_id][
+                                idx + 1
+                            ].searchWindowTuning
                             == search_window["search_window_tuning"]
                         )
                         if "tdc_num_bits" in search_window:
                             assert (
-                                test_proxies.vccSw[r][idx + 1].tdcNumBits
+                                test_proxies.vccSw[vcc_id][idx + 1].tdcNumBits
                                 == search_window["tdc_num_bits"]
                             )
                         if "tdc_period_before_epoch" in search_window:
                             assert (
-                                test_proxies.vccSw[r][
+                                test_proxies.vccSw[vcc_id][
                                     idx + 1
                                 ].tdcPeriodBeforeEpoch
                                 == search_window["tdc_period_before_epoch"]
                             )
                         if "tdc_period_after_epoch" in search_window:
                             assert (
-                                test_proxies.vccSw[r][
+                                test_proxies.vccSw[vcc_id][
                                     idx + 1
                                 ].tdcPeriodAfterEpoch
                                 == search_window["tdc_period_after_epoch"]
                             )
                         if "tdc_destination_address" in search_window:
-                            for t in search_window["tdc_destination_address"]:
+                            for dest in search_window[
+                                "tdc_destination_address"
+                            ]:
                                 if (
-                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                        t["receptor_id"]
+                                    test_proxies.dish_utils.dish_id_to_vcc_id[
+                                        dest["receptor_id"]
                                     ]
-                                    == r
+                                    == vcc_id
                                 ):
-                                    tdcDestAddr = t["tdc_destination_address"]
+                                    tdcDestAddr = dest[
+                                        "tdc_destination_address"
+                                    ]
                                     assert (
                                         list(
-                                            test_proxies.vccSw[r][
+                                            test_proxies.vccSw[vcc_id][
                                                 idx + 1
                                             ].tdcDestinationAddress
                                         )
@@ -790,40 +779,23 @@ class TestCbfSubarray:
                         if fsp["receptors"] != []:
                             receptorsSpecified = True
 
-                    fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
-                        sub_id
-                    ][fsp_id].receptors
+                    fsp_corr_assigned_vcc = list(
+                        test_proxies.fspSubarray["CORR"][sub_id][fsp_id].vccIDs
+                    )
 
                     if receptorsSpecified:
-                        config_fsp_receptors_sorted = fsp["receptors"]
-                        fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                r
-                            ]
-                            for r in config_fsp_receptors_sorted
+                        config_fsp_corr_vcc = [
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
+                            for r in fsp["receptors"]
                         ]
-                        assert all(
-                            [
-                                fsp_corr_receptors[i] == fsp_receptors_num[i]
-                                for i in range(len(fsp_corr_receptors))
-                            ]
-                        )
-
                     else:
-                        receptors_sorted = receptors
-                        receptors_sorted.sort()
-                        fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                r
-                            ]
-                            for r in receptors_sorted
+                        config_fsp_corr_vcc = [
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
+                            for r in receptors
                         ]
-                        assert all(
-                            [
-                                fsp_corr_receptors[i] == fsp_receptors_num[i]
-                                for i in range(len(fsp_corr_receptors))
-                            ]
-                        )
+                    assert sorted(fsp_corr_assigned_vcc) == sorted(
+                        config_fsp_corr_vcc
+                    )
 
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -891,14 +863,17 @@ class TestCbfSubarray:
                         == fsp["channel_offset"]
                     )
 
-                    for i in range(len(fsp["channel_averaging_map"])):
-                        for j in range(len(fsp["channel_averaging_map"][i])):
-                            assert (
-                                test_proxies.fspSubarray["CORR"][sub_id][
-                                    fsp_id
-                                ].channelAveragingMap[i][j]
-                                == fsp["channel_averaging_map"][i][j]
-                            )
+                    if "channel_averaging_map" in fsp:
+                        for i in range(len(fsp["channel_averaging_map"])):
+                            for j in range(
+                                len(fsp["channel_averaging_map"][i])
+                            ):
+                                assert (
+                                    test_proxies.fspSubarray["CORR"][sub_id][
+                                        fsp_id
+                                    ].channelAveragingMap[i][j]
+                                    == fsp["channel_averaging_map"][i][j]
+                                )
 
                     for i in range(len(fsp["output_link_map"])):
                         for j in range(len(fsp["output_link_map"][i])):
@@ -910,23 +885,17 @@ class TestCbfSubarray:
                             )
 
                     if "output_host" and "output_port" in fsp:
-                        assert str(
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].visDestinationAddress
-                        ).replace('"', "'") == str(
+                        assert test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].visDestinationAddress == json.dumps(
                             {
                                 "outputHost": [
-                                    fsp["output_host"][0],
-                                    fsp["output_host"][1],
+                                    host for host in fsp["output_host"]
                                 ],
                                 "outputPort": [
-                                    fsp["output_port"][0],
-                                    fsp["output_port"][1],
+                                    port for port in fsp["output_port"]
                                 ],
                             }
-                        ).replace(
-                            '"', "'"
                         )
 
                 elif fsp["function_mode"] == "PSS-BF":
@@ -959,8 +928,8 @@ class TestCbfSubarray:
                         )
                         # TODO currently only one receptor supported
                         assert (
-                            searchBeam["receptor_ids"][0][1]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            searchBeam["receptor_ids"][0]
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
                         )
@@ -997,8 +966,8 @@ class TestCbfSubarray:
                         assert (
                             test_proxies.fspSubarray["PST-BF"][sub_id][
                                 fsp_id
-                            ].receptors[0]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            ].vccIDs[0]
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 beam["receptor_ids"][0]
                             ]
                         )
@@ -1061,10 +1030,10 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
@@ -1075,7 +1044,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's GoToIdle command
@@ -1083,7 +1052,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -1109,12 +1078,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1128,8 +1094,8 @@ class TestCbfSubarray:
 
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.READY
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1163,8 +1129,8 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert len(test_proxies.fsp[fsp_id].subarrayMembership) == 0
@@ -1229,7 +1195,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "jonesmatrix.json",
                 "delaymodel.json",
                 "timingbeamweights.json",
@@ -1284,12 +1250,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1417,15 +1380,12 @@ class TestCbfSubarray:
 
                 time.sleep(2)
 
-                # convert receptor IDs to pair of str and int for FSPs
-                for delay_detail in input_delay_model_obj["delay_details"]:
-                    receptor_id = delay_detail["receptor"]
-                    delay_detail["receptor"] = [
-                        receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor_id
-                        ],
-                    ]
+                # convert DISH IDs to VCC ID integer for FSPs
+                for receptor_delay in input_delay_model_obj["receptor_delays"]:
+                    receptor_id = receptor_delay["receptor"]
+                    receptor_delay[
+                        "receptor"
+                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # check the delay model was correctly updated for fsp
@@ -1468,7 +1428,7 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights:
                 for receptor in weights["timing_beam_weights"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    rec_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
@@ -1530,7 +1490,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
@@ -1569,9 +1529,7 @@ class TestCbfSubarray:
 
             vcc_ids = [None for _ in range(num_receptors)]
             for receptor_id, ii in zip(receptors, range(num_receptors)):
-                vcc_ids[
-                    ii
-                ] = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                vcc_ids[ii] = test_proxies.dish_utils.dish_id_to_vcc_id[
                     receptor_id
                 ]
 
@@ -1582,12 +1540,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(num_receptors), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # Check fsp obsState BEFORE scan configuration:
@@ -1785,10 +1740,10 @@ class TestCbfSubarray:
         delay_model_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "delaymodel.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -1804,7 +1759,7 @@ class TestCbfSubarray:
         delay_model_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[str],
+        vcc_ids: List[str],
     ) -> None:
         """
         Test CbfSubarrays's delay model update via the
@@ -1815,7 +1770,7 @@ class TestCbfSubarray:
         :param delay_model_file_name: JSON file for the delay model
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         # Test Description:
         # -----------------
@@ -1845,7 +1800,7 @@ class TestCbfSubarray:
 
         # Get the DM Python object input to the DM test
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
-            delay_model_all_obj, vcc_receptors
+            delay_model_all_obj, vcc_ids
         )
 
         # to speed up the testing we use 4s between
@@ -1879,12 +1834,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -1915,25 +1867,22 @@ class TestCbfSubarray:
                 time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
-                for jj, rec in enumerate(vcc_receptors):
+                for jj, rec in enumerate(vcc_ids):
                     # get the vcc device proxy (dp) corresponding to i_rec
-                    this_vcc = (
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[rec]
-                    )
+                    this_vcc = test_proxies.dish_utils.dish_id_to_vcc_id[rec]
                     vcc_dp = test_proxies.vcc[this_vcc]
 
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_details"]:
+                    for entry in input_delay_model_obj["receptor_delays"]:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
-                            # receptor as pair of str and int for comparison
-                            this_input_delay_model_obj["receptor"] = [
-                                entry["receptor"],
-                                test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                    entry["receptor"]
-                                ],
+                            # convert receptor to int for comparison
+                            this_input_delay_model_obj[
+                                "receptor"
+                            ] = test_proxies.dish_utils.dish_id_to_vcc_id[
+                                entry["receptor"]
                             ]
                             break
 
@@ -1945,12 +1894,12 @@ class TestCbfSubarray:
 
                     # the one delay model should have only 1 entry
                     # for the given receptor
-                    # remove the "delay_details" key and get the first item
+                    # remove the "receptor_delays" key and get the first item
                     # in the list so we can compare
                     # just the list of dictionaries that includes the
                     # receptor, epoch, etc
                     vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
-                        "delay_details"
+                        "receptor_delays"
                     ][0]
 
                     # want to compare strings
@@ -1981,15 +1930,12 @@ class TestCbfSubarray:
                     )
 
                 # check the delay model was correctly updated for FSP
-                # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_details"]:
+                # convert DISH IDs to VCC ID integer for FSPs
+                for model in input_delay_model_obj["receptor_delays"]:
                     receptor_id = model["receptor"]
-                    model["receptor"] = [
-                        receptor_id,
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                            receptor_id
-                        ],
-                    ]
+                    model[
+                        "receptor"
+                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
                     test_proxies.fsp[i]
@@ -2058,7 +2004,7 @@ class TestCbfSubarray:
         receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 "jonesmatrix.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -2107,12 +2053,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -2160,14 +2103,14 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["jones_matrix"]:
-                    rec_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                    rec_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                         receptor["receptor"]
                     ]
                     for frequency_slice in receptor["jones_matrix_details"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
-                            vcc_id = test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            vcc_id = test_proxies.dish_utils.dish_id_to_vcc_id[
                                 receptor["receptor"]
                             ]
                             fs_id = frequency_slice["fsid"]
@@ -2318,10 +2261,10 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -2334,7 +2277,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command
@@ -2343,7 +2286,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2369,12 +2312,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
 
             # configure scan
             wait_time_configure = 5
@@ -2388,8 +2328,8 @@ class TestCbfSubarray:
 
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.READY
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -2451,13 +2391,13 @@ class TestCbfSubarray:
                         ].scanID
                         == scan_id
                     )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].scanID == scan_id
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -2529,10 +2469,10 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -2545,7 +2485,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on the same scan configuration.
@@ -2554,7 +2494,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2650,12 +2590,12 @@ class TestCbfSubarray:
                         ].scanID
                         == scan_id
                     )
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].obsState == ObsState.SCANNING
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -2728,11 +2668,11 @@ class TestCbfSubarray:
         config_2_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_basic_CORR.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -2746,7 +2686,7 @@ class TestCbfSubarray:
         config_2_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Scan command running twice on different scan configurations.
@@ -2756,7 +2696,7 @@ class TestCbfSubarray:
         :param config_2_file_name: JSON file for the second configuration
         :param scan_file_name: JSON file for both scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -2855,7 +2795,7 @@ class TestCbfSubarray:
             )
 
             # check the rest of the configured attributes of VCCs
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].frequencyBand == band_index
                 assert test_proxies.vcc[r].subarrayMembership == sub_id
                 assert (
@@ -2892,7 +2832,7 @@ class TestCbfSubarray:
                 for idx, search_window in enumerate(
                     configuration_2["cbf"]["search_window"]
                 ):
-                    for r in vcc_receptors:
+                    for r in vcc_ids:
                         assert (
                             test_proxies.vccSw[r][idx + 1].tdcEnable
                             == search_window["tdc_enable"]
@@ -2935,7 +2875,7 @@ class TestCbfSubarray:
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                    test_proxies.dish_utils.dish_id_to_vcc_id[
                                         t["receptor_id"]
                                     ]
                                     == r
@@ -2978,40 +2918,24 @@ class TestCbfSubarray:
                         if fsp["receptors"] != []:
                             receptorsSpecified = True
 
-                    fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
-                        sub_id
-                    ][fsp_id].receptors
+                    fsp_corr_assigned_vcc = list(
+                        test_proxies.fspSubarray["CORR"][sub_id][fsp_id].vccIDs
+                    )
 
                     if receptorsSpecified:
-                        config_fsp_receptors_sorted = fsp["receptors"]
-                        fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                r
-                            ]
-                            for r in config_fsp_receptors_sorted
+                        config_fsp_corr_vcc = [
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
+                            for r in fsp["receptors"]
                         ]
-                        assert all(
-                            [
-                                fsp_corr_receptors[i] == fsp_receptors_num[i]
-                                for i in range(len(fsp_corr_receptors))
-                            ]
-                        )
-
                     else:
-                        receptors_sorted = receptors
-                        receptors_sorted.sort()
-                        fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
-                                r
-                            ]
-                            for r in receptors_sorted
+                        config_fsp_corr_vcc = [
+                            test_proxies.dish_utils.dish_id_to_vcc_id[r]
+                            for r in receptors
                         ]
-                        assert all(
-                            [
-                                fsp_corr_receptors[i] == fsp_receptors_num[i]
-                                for i in range(len(fsp_corr_receptors))
-                            ]
-                        )
+
+                    assert sorted(fsp_corr_assigned_vcc) == sorted(
+                        config_fsp_corr_vcc
+                    )
 
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -3137,8 +3061,8 @@ class TestCbfSubarray:
                         )
                         # TODO currently only one receptor supported
                         assert (
-                            searchBeam["receptor_ids"][0][1]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            searchBeam["receptor_ids"][0]
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
                         )
@@ -3175,8 +3099,8 @@ class TestCbfSubarray:
                         assert (
                             test_proxies.fspSubarray["PST-BF"][sub_id][
                                 fsp_id
-                            ].receptors[0]
-                            == test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                            ].vccIDs[0]
+                            == test_proxies.dish_utils.dish_id_to_vcc_id[
                                 beam["receptor_ids"][0]
                             ]
                         )
@@ -3237,12 +3161,12 @@ class TestCbfSubarray:
                         ].scanID
                         == scan_id
                     )
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].scanID == scan_id
 
             # check states
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            for r in vcc_receptors:
+            for r in vcc_ids:
                 assert test_proxies.vcc[r].obsState == ObsState.SCANNING
             for fsp in configuration_2["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -3313,18 +3237,18 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3335,7 +3259,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Abort and ObsReset commands
@@ -3344,7 +3268,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -3373,12 +3297,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             # configure scan
             wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
@@ -3397,8 +3318,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.READY
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.READY
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3418,8 +3339,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
 
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
@@ -3430,12 +3351,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(3), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
@@ -3444,8 +3362,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             # ------------------- #
             # abort from SCANNING #
@@ -3458,12 +3376,9 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptors)), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             # configure scan
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
             test_proxies.wait_timeout_obs(
@@ -3497,8 +3412,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.SCANNING
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3518,8 +3433,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
 
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
@@ -3539,8 +3454,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             # Clean up
             wait_time_s = 3
@@ -3572,18 +3487,18 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
+                "ConfigureScan_CORR_PSS_PST.json",
                 "Scan2_basic.json",
-                ["SKA063", "SKA001", "SKA100"],
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3594,7 +3509,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Abort and Restart commands
@@ -3603,7 +3518,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 1
@@ -3646,8 +3561,8 @@ class TestCbfSubarray:
             # At this point in the test, we only need to assert that the VCCs
             # are aborted and not the FSPs, as the FSPs are not added to
             # their respective group_proxy until ConfigureScan is executed.
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
 
             # Restart: receptors should be empty
             test_proxies.subarray[sub_id].Restart()
@@ -3668,8 +3583,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             # ---------------- #
             # abort from READY #
@@ -3700,8 +3615,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.READY
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.READY
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3721,8 +3636,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
 
             # Restart
             test_proxies.subarray[sub_id].Restart()
@@ -3743,8 +3658,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             # ------------------- #
             # abort from SCANNING #
@@ -3791,8 +3706,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.SCANNING
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.SCANNING
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
 
             # abort
             test_proxies.subarray[sub_id].Abort()
@@ -3812,8 +3727,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.ABORTED
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
 
             # Restart
             wait_time_s = 3
@@ -3835,8 +3750,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             test_proxies.off()
 
@@ -3879,16 +3794,16 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
-                ["SKA063", "SKA001", "SKA100"],
+                "ConfigureScan_CORR_PSS_PST.json",
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -3898,7 +3813,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Restart from ObsState.FAULT
@@ -3906,7 +3821,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 3
@@ -3965,8 +3880,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             test_proxies.off()
 
@@ -3984,16 +3899,16 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptors, \
-        vcc_receptors",
+        vcc_ids",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
-                "Configure_TM-CSP_v2.json",
-                ["SKA063", "SKA001", "SKA100"],
+                "ConfigureScan_CORR_PSS_PST.json",
+                ["SKA036", "SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -4003,7 +3918,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         receptors: List[str],
-        vcc_receptors: List[int],
+        vcc_ids: List[int],
     ) -> None:
         """
         Test CbfSubarrays's Obsreset from ObsState.FAULT
@@ -4011,7 +3926,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param receptors: list of receptor ids
-        :param vcc_receptors: list of vcc receptor ids
+        :param vcc_ids: list of vcc receptor ids
         """
         try:
             wait_time_s = 3
@@ -4060,12 +3975,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-            assert all(
-                [
-                    test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(3), receptors)
-                ]
-            )
+            assert sorted(
+                list(test_proxies.subarray[sub_id].receptors)
+            ) == sorted(receptors)
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
@@ -4074,8 +3986,8 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.IDLE
                 )
-            for r in vcc_receptors:
-                assert test_proxies.vcc[r].obsState == ObsState.IDLE
+            for vcc_id in vcc_ids:
+                assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
 
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.off()
@@ -4099,7 +4011,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -4270,7 +4182,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -4438,7 +4350,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -4603,7 +4515,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -4769,14 +4681,13 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             )
         ],
     )
-    @pytest.mark.skip(reason="Currently fails, CIP-2306")
     def test_configure_scan_in_the_middle_of_scanning(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
@@ -4882,7 +4793,8 @@ class TestCbfSubarray:
             # attemp to configure scan
 
             with pytest.raises(
-                DevFailed, match="Command not permitted by state model."
+                DevFailed,
+                match="Action configure_invoked is not allowed in obs state SCANNING.",
             ):
                 test_proxies.subarray[sub_id].ConfigureScan(json_string)
 
@@ -4936,7 +4848,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
@@ -5102,7 +5014,7 @@ class TestCbfSubarray:
         vcc_receptors",
         [
             (
-                "ConfigureScan_basic.json",
+                "ConfigureScan_basic_CORR.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 ["SKA001", "SKA036", "SKA063", "SKA100"],

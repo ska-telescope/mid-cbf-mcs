@@ -5,6 +5,43 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.14.2
+******
+* CIP-2418 Fix On command timeout by clearing talons with a script
+* CIP-2416 Decoupled LRU ON and clearing talon 
+
+0.14.1 (0.14.0: DO NOT USE)
+******
+* CIP-2257 Update to delay model json schema version 3.0
+
+0.13.3
+******
+* CIP-1983 Added talon reboot to ON sequence to stop power cycling
+
+0.13.2
+******
+* REL-1345: STFC cluster domain name change
+* Updated ska-telmodel version to allow for duplicate k values
+
+0.13.1
+******
+* CIP-2238/REL-1337: bumped engineering console version
+
+0.13.0
+******
+* CIP-2238: Internally, MCS no longer refers to dishes/DISH IDs as receptors/receptor IDs, 
+  and the distinction has been made when those integer indices actually refer to VCC IDs
+
+0.12.28
+*******
+* CIP-2306: Implemented is_ConfigureScan_allowed() to enforce state model for ConfigureScan.
+* STS-548: Updated k8s.mk to collect k8s-test logs in logs/ artifact folder after pipeline runs.
+
+0.12.27
+*******
+* CIP-2279: Overrode is_allowed for CbfController On/Off so these commands can't be called when already in execution.
+* CIP-2227: Refactored flow of CbfController start_communicating in setting sub-element adminMode to ONLINE
+
 0.12.26
 *******
 * CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.

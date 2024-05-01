@@ -94,7 +94,7 @@ class TestFspCorrSubarrayComponentManager:
 
         fsp_corr_subarray_component_manager.start_communicating()
 
-        assert fsp_corr_subarray_component_manager.receptors == []
+        assert fsp_corr_subarray_component_manager.vcc_ids == []
         assert fsp_corr_subarray_component_manager.frequency_band == 0
         assert [
             fsp_corr_subarray_component_manager.stream_tuning[0],
@@ -145,10 +145,10 @@ class TestFspCorrSubarrayComponentManager:
         f.close()
 
         # verify correct attribute values are received
-        for idx, receptorID in enumerate(
-            fsp_corr_subarray_component_manager.receptors
-        ):
-            assert receptorID == configuration["corr_receptor_ids"][idx][1]
+        assert (
+            fsp_corr_subarray_component_manager.vcc_ids
+            == configuration["corr_vcc_ids"]
+        )
         assert (
             fsp_corr_subarray_component_manager.frequency_band
             == freq_band_dict()[configuration["frequency_band"]]["band_index"]
@@ -168,10 +168,11 @@ class TestFspCorrSubarrayComponentManager:
         else:
             logging.info("Attribute band5Tuning not in configuration")
 
-        assert (
-            fsp_corr_subarray_component_manager.zoom_window_tuning
-            == configuration["zoom_window_tuning"]
-        )
+        if "zoom_window_tuning" in configuration:
+            assert (
+                fsp_corr_subarray_component_manager.zoom_window_tuning
+                == configuration["zoom_window_tuning"]
+            )
         assert (
             fsp_corr_subarray_component_manager.integration_factor
             == configuration["integration_factor"]

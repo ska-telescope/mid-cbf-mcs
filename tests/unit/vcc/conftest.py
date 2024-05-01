@@ -216,8 +216,7 @@ def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_attribute("PDU1PowerMode", PowerMode.OFF)
-    builder.add_attribute("PDU2PowerMode", PowerMode.OFF)
+    builder.add_attribute("LRUPowerMode", PowerMode.OFF)
     return builder()
 
 
@@ -298,6 +297,7 @@ def vcc_component_manager(
 ) -> VccComponentManager:
     """Return a VCC component manager."""
     return VccComponentManager(
+        vcc_id=1,
         talon_lru="mid_csp_cbf/talon_lru/001",
         vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[

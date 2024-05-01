@@ -154,7 +154,7 @@ def mock_component_manager(
         pass
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda simulation_mode: _on(mock)
+    mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
     mock.check_power_mode.side_effect = lambda mock_state: _check_power_mode(
         mock, mock_state
