@@ -294,86 +294,6 @@ class Slim(SKABaseDevice):
         A command to test the mesh of SLIM Tx Rx Links
         """
 
-        def _slim_table(self: Slim.SlimMeshTest) -> None:
-            """
-            Logs a summary for the rx and tx device on the Mesh
-
-            :return: None
-            """
-            link_names = self.target.component_manager.get_link_names()
-            counters = self.target.component_manager.get_device_counters()
-            rx_debug_alignment_and_lock_statuses = (
-                self.target.component_manager.get_rx_devices_debug_alignment_and_lock_status()
-            )
-            rx_link_occupancies = (
-                self.target.component_manager.get_rx_link_occupancy()
-            )
-            tx_link_occupancies = (
-                self.target.component_manager.get_tx_link_occupancy()
-            )
-
-            table = BeautifulTable(maxwidth=180)
-            table.columns.header = [
-                "Link",
-                "CDR locked\n(lost)",
-                "Block Aligned\n(lost)",
-                "Tx Data (Gbps)\n(words)",
-                "Tx Idle (Gbps)",
-                "Rx Data\n(Gbps)\n(words)",
-                "Rx Idle\n(Gbps)",
-                "Idle Error\nCount",
-                "Word\nError Rate",
-            ]
-
-            for idx, name in enumerate(link_names):
-                gbps = 25.78125 * 64 / 66
-                counter = counters[idx]
-                rx_flags = rx_debug_alignment_and_lock_statuses[idx]
-                rx_link_occupancy = rx_link_occupancies[idx]
-                tx_link_occupancy = tx_link_occupancies[idx]
-
-                rx_word_count = counter[0]
-                rx_idle_word_count = counter[2]
-                rx_idle_error_count = counter[3]
-                tx_word_count = counter[6]
-                tx_idle_word_count = counter[8]
-                tx_words = tx_word_count + tx_idle_word_count
-                rx_words = rx_word_count + rx_idle_word_count
-
-                tx_name = (name.split("->"))[0]
-                rx_name = (name.split("->"))[1]
-                short_name_one = (
-                    (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
-                )
-                short_name_two = (
-                    "->"
-                    + (rx_name.split("/"))[0]
-                    + "/"
-                    + (rx_name.split("/"))[-1]
-                )
-
-                if not rx_idle_word_count:
-                    rx_wer = "NaN"
-                elif not rx_idle_error_count:
-                    rx_wer = f"better than {1/rx_idle_word_count:.0e}"
-                else:
-                    rx_wer = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
-
-                data_row = (
-                    f"{short_name_one}\n{short_name_two}",
-                    f"{rx_flags[3]}\n({rx_flags[2]})",
-                    f"{rx_flags[1]}\n({rx_flags[0]})",
-                    f"{tx_link_occupancy * gbps:.2f}\n({tx_word_count})",
-                    f"{tx_idle_word_count/tx_words * gbps:.2f}",
-                    f"{rx_link_occupancy * gbps:.2f}\n({rx_word_count})",
-                    f"{rx_idle_word_count/rx_words * gbps:.2f}",
-                    f"{rx_idle_error_count} /\n{rx_words:.2e}",
-                    rx_wer,
-                )
-                table.rows.append(data_row)
-
-            self.logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
-
         def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
@@ -407,7 +327,7 @@ class Slim(SKABaseDevice):
                     )
                 # Print Health Summary of Mesh Links
                 try:
-                    self._slim_table()
+                    self.component_manager.slim_table()
                 except Exception as e:
                     self.logger.info(f"{e}")
                     return (

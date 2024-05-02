@@ -266,53 +266,6 @@ class SlimComponentManager(CbfComponentManager):
             counters.append(counter)
 
         return counters
-
-    def get_rx_devices_debug_alignment_and_lock_status(
-        self,
-    ) -> List[List[bool]]:
-        """
-        Returns a list containing the Debug Alignment and Lock Status Flags
-        from the rx devices on the Mesh
-
-        :return: List of Debug Alignment and Lock Status Flags for each rx device
-        :rtype: List[List[bool]]
-        """
-        res = []
-        for idx, txrx in enumerate(self._active_links):
-            flags = self._dp_links[idx].rx_debug_alignment_and_lock_status
-            res.append(flags)
-
-        return res
-
-    def get_rx_link_occupancy(self) -> List[float]:
-        """
-        Returns a list of int containing the Link Occupancy Values for all the
-        rx devices on the Mesh
-
-        :return: List of Link Occupancy Values of the rx devices
-        :rtype: List[float]
-        """
-        res = []
-        for idx, txrx in enumerate(self._active_links):
-            val = self._dp_links[idx].rx_link_occupancy
-            res.append(val)
-
-        return res
-
-    def get_tx_link_occupancy(self) -> List[float]:
-        """
-        Returns a list of int containing the Link Occupancy Values for all the
-        tx devices on the Mesh
-
-        :return: List of Link Occupancy Values of the tx devices
-        :rtype: List[float]
-        """
-        res = []
-        for idx, txrx in enumerate(self._active_links):
-            val = self._dp_links[idx].tx_link_occupancy
-            res.append(val)
-
-        return res
     
     def slim_mesh_links_ber_check_summary(
             self: Slim.SlimMeshTestCommand
@@ -355,6 +308,78 @@ class SlimComponentManager(CbfComponentManager):
                 res += "\n"
 
             self._logger.info(res)
+
+    def slim_table(self: Slim.SlimMeshTest) -> None:
+            """
+            Logs a summary for the rx and tx device on the Mesh
+
+            :return: None
+            """
+            table = BeautifulTable(maxwidth=180)
+            table.columns.header = [
+                "Link",
+                "CDR locked\n(lost)",
+                "Block Aligned\n(lost)",
+                "Tx Data (Gbps)\n(words)",
+                "Tx Idle (Gbps)",
+                "Rx Data\n(Gbps)\n(words)",
+                "Rx Idle\n(Gbps)",
+                "Idle Error\nCount",
+                "Word\nError Rate",
+            ]
+
+            for dp_link in self._dp_links:
+
+                link_name = dp_link.linkName
+                counters = dp_link.counters
+                rx_debug_alignment_and_lock_statuses = dp_link.rx_debug_alignment_and_lock_status
+                rx_link_occupancies = dp_link.rx_link_occupancy
+                tx_link_occupancies = dp_link.tx_link_occupancy
+                
+                gbps = 25.78125 * 64 / 66
+                rx_flags = rx_debug_alignment_and_lock_statuses[idx]
+                rx_link_occupancy = rx_link_occupancies[idx]
+                tx_link_occupancy = tx_link_occupancies[idx]
+
+                rx_word_count = counters[0]
+                rx_idle_word_count = counters[2]
+                rx_idle_error_count = counters[3]
+                tx_word_count = counters[6]
+                tx_idle_word_count = counters[8]
+                tx_words = tx_word_count + tx_idle_word_count
+                rx_words = rx_word_count + rx_idle_word_count
+
+                tx_name = dp_link.txDeviceName
+                rx_name = dp_link.rxDeviceName
+                short_name_one = (
+                    (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
+                )
+                short_name_two = (
+                    (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
+                )
+
+                rx_word_error_rate = ""
+                if not rx_idle_word_count:
+                    rx_word_error_rate = "NaN"
+                elif not rx_idle_error_count:
+                    rx_word_error_rate = f"better than {1/rx_idle_word_count:.0e}"
+                else:
+                    rx_word_error_rate = f"{rx_idle_error_count/rx_idle_word_count:.3e}"
+
+                data_row = (
+                    f"{short_name_one}\n->{short_name_two}",
+                    f"{rx_flags[3]}\n({rx_flags[2]})",
+                    f"{rx_flags[1]}\n({rx_flags[0]})",
+                    f"{tx_link_occupancy * gbps:.2f}\n({tx_word_count})",
+                    f"{tx_idle_word_count/tx_words * gbps:.2f}",
+                    f"{rx_link_occupancy * gbps:.2f}\n({rx_word_count})",
+                    f"{rx_idle_word_count/rx_words * gbps:.2f}",
+                    f"{rx_idle_error_count} /\n{rx_words:.2e}",
+                    rx_word_error_rate,
+                )
+                table.rows.append(data_row)
+
+            self._logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
 
     def _parse_link(self, link: str):
         """
