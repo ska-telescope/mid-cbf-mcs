@@ -12,7 +12,8 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 0.14.1 (0.14.0: DO NOT USE)
 ******
-* CIP-2257 Update to delay model json schema version 3.0
+* CIP-2257 Update to validate TMC-published delay model JSON data against
+  schema version 3.0 (https://schema.skao.int/ska-mid-csp-delaymodel/3.0)
 
 0.13.3
 ******
