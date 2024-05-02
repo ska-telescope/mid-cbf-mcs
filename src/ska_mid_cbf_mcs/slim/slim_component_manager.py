@@ -281,7 +281,8 @@ class SlimComponentManager(CbfComponentManager):
 
         try:
             res = "\nSLIM Mesh BER Check:\n\n"
-            for dp_link in self._dp_links:
+            for idx, txrx in enumerate(self._active_links):
+                dp_link = self._dp_links[idx]
                 counters = dp_link.counters
                 name = dp_link.linkName
                 rx_word_count = counters[0]
@@ -340,7 +341,8 @@ class SlimComponentManager(CbfComponentManager):
                 "Word\nError Rate",
             ]
 
-            for dp_link in self._dp_links:
+            for idx, txrx in enumerate(self._active_links):
+                dp_link = self._dp_links[idx]
                 counters = dp_link.counters
                 rx_debug_alignment_and_lock_statuses = (
                     dp_link.rx_debug_alignment_and_lock_status
