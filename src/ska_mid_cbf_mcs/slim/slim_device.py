@@ -160,7 +160,7 @@ class Slim(SKABaseDevice):
         )
 
         self.register_command_object(
-            "SLIM Mest Test",
+            "SlimMestTest",
             self.SlimMeshTestCommand(*device_args),
         )
 
@@ -417,14 +417,10 @@ class Slim(SKABaseDevice):
 
             self.logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
 
-        def do(
-            self: Slim.SlimMeshTestCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
-            SLIM Mesh Test Command.  Configures the SLIM as given in the
-            input string then check the BER of the mesh
+            SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
 
-            :param argin: mesh configuration as a string in YAML format.
             :return: A tuple containing a return code and a string
                 message contaiing a report on the health of the Mesh or error message
                 if exception is caught.
@@ -435,6 +431,7 @@ class Slim(SKABaseDevice):
             # Currently there is no way to prevent the 3sec default timeout for commands
             test_length = 2
 
+            # Letting the configuration sleep for a bit will help with lowering the configuration.
             if self.target.get_state() == tango.DevState.ON:
                 self.logger.info(f"Sleeping for {test_length}s")
                 for slept_time in range(0, test_length, t_sleep):
@@ -442,7 +439,7 @@ class Slim(SKABaseDevice):
                     self.logger.info(
                         f"Sleep Time Remaining: {test_length - slept_time}"
                     )
-                # Print health Summary of Mesh Links
+                # Prints the connection status and Bit Error Rate of the devices on the mesh
                 try:
                     self._slim_mesh_links_ber_check_summary()
                 except Exception as e:
@@ -451,7 +448,7 @@ class Slim(SKABaseDevice):
                         ResultCode.FAILED,
                         f"{e}",
                     )
-
+                # Print Health Summary of Mesh Links
                 try:
                     self._slim_table()
                 except Exception as e:
@@ -486,22 +483,13 @@ class Slim(SKABaseDevice):
         # PROTECTED REGION END #    //  Slim.Configure
 
     @command(
-        dtype_in="DevString",
-        doc_in="mesh configuration as a string in YAML format",
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
-    def SlimMeshTest(self: Slim, argin: str) -> None:
-        self.logger.info("Running SLIM Mest Test")
-        # Configuring Mesh Links
-        handler = self.get_command_object("Configure")
-        return_code, message = handler(argin)
-        if return_code != ResultCode.OK:
-            self.logger.info(message)
-            return [[return_code], [message]]
-        self.logger.info("Mesh Configure completed successfully")
-        # Run Mest Test
-        handler = self.get_command_object("SLIM Mest Test")
+    def SlimMeshTest(self: Slim) -> None:
+        if self.component_manager.is_communicating != True:
+            return [[ResultCode.FAILED], ["The Mesh is currently not communicating and/or configured"]]
+        handler = self.get_command_object("SlimMestTest")
         return_code, message = handler(argin)
         return [[return_code], [message]]
 
