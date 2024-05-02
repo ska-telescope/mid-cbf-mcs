@@ -17,20 +17,20 @@ import tango
 from ska_control_model import TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.testing import context
 
 
 class TalonLRUComponentManager(CbfComponentManager):
     """A component manager for the TalonLRU device."""
 
     def __init__(
-        *args: Any,
         self: TalonLRUComponentManager,
+        *args: Any,
         talons: List[str],
         pdus: List[str],
         pdu_outlets: List[str],
@@ -79,16 +79,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(f"Attempting connection to {fqdn} device")
-            device_proxy = context.DeviceProxy(fqdn=fqdn)
+            device_proxy = context.DeviceProxy(device_name=fqdn)
             return device_proxy
         except tango.DevFailed as df:
             for item in df.args:
                 self.logger.error(
                     f"Failed connection to {fqdn} device: {item.reason}"
                 )
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
             return None
 
     def _init_talon_proxies(self: TalonLRUComponentManager) -> None:
@@ -112,8 +109,10 @@ class TalonLRUComponentManager(CbfComponentManager):
         )
 
         # Needs Admin mode == ONLINE to run ON command
-        self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
-        self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+        if self._proxy_talondx_board1:
+            self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
+        if self._proxy_talondx_board2:
+            self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
 
     def _init_power_switch(self, pdu, pdu_outlet) -> None:
         """
@@ -153,14 +152,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu2_power_state,
             ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
 
-        if (self._proxy_power_switch1 is None) and (
-            self._proxy_power_switch2 is None
-        ):
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error("Both power switches failed to connect.")
-
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """
         Establish communication with the component, then start monitoring.
@@ -177,9 +168,18 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._init_talon_proxies()
         self._init_power_switch_proxies()
 
-        if self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
+        if None in [
+            self._proxy_power_switch1,
+            self._proxy_power_switch2,
+            self._proxy_talondx_board1,
+            self._proxy_talondx_board2,
+        ]:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+        else:
             super().start_communicating()
-            self._update_component_state(power=self.get_lru_power_state())
+            self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """

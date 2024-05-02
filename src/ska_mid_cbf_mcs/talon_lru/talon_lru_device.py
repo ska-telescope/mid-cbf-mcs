@@ -104,7 +104,28 @@ class TalonLRU(CbfDevice):
         """
         Sets up the command objects.
         """
-        super(CbfDevice, self).init_command_objects()
+        super().init_command_objects()
+
+        self.register_command_object(
+            "On",
+            SubmittedSlowCommand(
+                command_name="On",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="on",
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "Off",
+            SubmittedSlowCommand(
+                command_name="Off",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="off",
+                logger=self.logger,
+            ),
+        )
 
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
@@ -112,21 +133,15 @@ class TalonLRU(CbfDevice):
 
         :return: a component manager for this device.
         """
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        # TODO: Come back and update when component manager is updated
         return TalonLRUComponentManager(
             talons=[self.TalonDxBoard1, self.TalonDxBoard2],
             pdus=[self.PDU1, self.PDU2],
             pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
             pdu_cmd_timeout=int(self.PDUCommandTimeout),
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     # --------
@@ -156,7 +171,7 @@ class TalonLRU(CbfDevice):
             self._device._power_switch_lock = Lock()
 
             # Setting initial simulation mode to True
-            self._device.simulation_mode(SimulationMode.TRUE)
+            self._device._simulation_mode = SimulationMode.TRUE
             return (result_code, msg)
 
     def is_On_allowed(

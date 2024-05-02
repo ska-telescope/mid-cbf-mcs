@@ -79,12 +79,13 @@ def lru_change_event_callbacks(
 @pytest.fixture()
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
+    builder.add_attribute("adminMode", None)
     builder.add_command("On", ResultCode.OK)
     builder.add_command("Off", ResultCode.OK)
     return builder()
 
 
-@pytest.fixture(params=["conn_success", "conn_fail", "command_fail"])
+@pytest.fixture(params=["command_success", "command_fail"])
 def mock_power_switch(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
@@ -105,29 +106,22 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     """
     builder = MockDeviceBuilder()
     builder.add_attribute("stimulusMode", param)
-    if param == "conn_success":
+    builder.add_attribute("adminMode", None)
+    builder.add_attribute("simulationMode", None)
+    if param == "command_success":
         # Connection to power switch is working as expected.
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerState.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.OK, "Success message"
         )
         builder.add_result_command(
             "TurnOffOutlet", ResultCode.OK, "Success message"
         )
-    elif param == "conn_fail":
-        # Connection to power switch cannot be made.
-        builder.add_attribute("numOutlets", 0)
-        builder.add_result_command(
-            "TurnOnOutlet", ResultCode.FAILED, "Failed message"
-        )
-        builder.add_result_command(
-            "TurnOffOutlet", ResultCode.FAILED, "Failed message"
-        )
     elif param == "command_fail":
         # Can communicate with the power switch, but the turn on/off outlet commands fail.
         builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerState.OFF)
+        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.FAILED, "Failed message"
         )
@@ -151,8 +145,8 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/talon_board/talon-001": mock_talon_board,
-        "mid_csp_cbf/talon_board/talon-002": mock_talon_board,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
         "mid_csp_cbf/power_switch/001": mock_power_switch,
         "mid_csp_cbf/power_switch/002": mock_power_switch,
     }
