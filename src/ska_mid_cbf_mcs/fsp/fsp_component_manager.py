@@ -10,17 +10,15 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
-import copy
 import json
-import logging
-from typing import Any, Callable, Optional, Tuple
 from threading import Event
+from typing import Any, Callable, Optional
 
 import tango
+from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
-from ska_control_model import PowerState, TaskStatus
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -249,17 +247,11 @@ class FspComponentManager(CbfComponentManager):
         self.logger.info(
             f"FSP set to function mode {FspModes(self.function_mode).name}"
         )
-        self._device_attr_change_callback(
-            "functionMode", self.function_mode
-        )
-        self._device_attr_archive_callback(
-            "functionMode", self.function_mode
-        )
+        self._device_attr_change_callback("functionMode", self.function_mode)
+        self._device_attr_archive_callback("functionMode", self.function_mode)
 
         try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(
-                self.function_mode
-            )
+            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
         except tango.DevFailed as df:
             self.logger.error(f"{df.args[0].desc}")
             self._update_communication_state(
@@ -279,7 +271,7 @@ class FspComponentManager(CbfComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-    
+
     def set_function_mode(
         self: FspComponentManager,
         argin: str,
@@ -339,7 +331,7 @@ class FspComponentManager(CbfComponentManager):
     @check_communicating
     def remove_subarray_membership(
         self: FspComponentManager, subarray_id: int
-    ) -> tuple[ResultCode, str]:
+    ) -> DevVarLongStringArrayType:
         """
         Remove subarray from the subarrayMembership list.
         If subarrayMembership is empty after removing
@@ -352,10 +344,14 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        result_code = ResultCode.OK
-        message = "RemoveSubarrayMembership completed OK"
+        result_code, message = (
+            ResultCode.OK,
+            "RemoveSubarrayMembership completed OK",
+        )
         if subarray_id in self.subarray_membership:
-            self.logger.info(f"Removing subarray {subarray_id} from subarray membership.")
+            self.logger.info(
+                f"Removing subarray {subarray_id} from subarray membership."
+            )
 
             self._remove_subarray_from_group_proxy(subarray_id)
 
@@ -367,12 +363,14 @@ class FspComponentManager(CbfComponentManager):
                 "subarrayMembership", self.subarray_membership
             )
         else:
-            result_code = ResultCode.FAILED
-            message = f"FSP does not belong to subarray {subarray_id}."
+            result_code, message = (
+                ResultCode.FAILED,
+                f"FSP does not belong to subarray {subarray_id}.",
+            )
 
         return (result_code, message)
 
-# TODO: subarray handle FSP GoToIdle and resetting function mode to IDLE
+    # TODO: subarray handle FSP GoToIdle and resetting function mode to IDLE
 
     def _add_subarray_to_group_proxy(
         self: FspComponentManager, subarray_id: int
@@ -409,7 +407,7 @@ class FspComponentManager(CbfComponentManager):
     @check_communicating
     def add_subarray_membership(
         self: FspComponentManager, subarray_id: int
-    ) -> tuple[ResultCode, str]:
+    ) -> DevVarLongStringArrayType:
         """
         Add a subarray to the subarrayMembership list.
 
@@ -420,16 +418,19 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        result_code = ResultCode.OK
-        message = "AddSubarrayMembership completed OK"
+        result_code, message = (
+            ResultCode.OK,
+            "AddSubarrayMembership completed OK",
+        )
         if len(self.subarray_membership) == const.MAX_SUBARRAY:
-            result_code = ResultCode.FAILED
-            message = (
-                "Fsp already assigned to the maximum number of subarrays "
-                f"({const.MAX_SUBARRAY})"
+            result_code, message = (
+                ResultCode.FAILED,
+                f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})",
             )
         elif subarray_id not in self.subarray_membership:
-            self.logger.info(f"Adding subarray {subarray_id} to subarray membership.")
+            self.logger.info(
+                f"Adding subarray {subarray_id} to subarray membership."
+            )
 
             self._add_subarray_to_group_proxy(subarray_id)
 
@@ -441,8 +442,10 @@ class FspComponentManager(CbfComponentManager):
                 "subarrayMembership", self.subarray_membership
             )
         else:
-            result_code = ResultCode.FAILED
-            message = f"FSP already belongs to subarray {subarray_id}."
+            result_code, message = (
+                ResultCode.FAILED,
+                f"FSP already belongs to subarray {subarray_id}.",
+            )
 
         return (result_code, message)
 
@@ -450,7 +453,7 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager, command_name: str
     ):
         """
-        Issue command to all function mode subarray devices, independent of 
+        Issue command to all function mode subarray devices, independent of
         subarray membership.
         """
         # TODO AA0.5+: PSS, PST, VLBI
@@ -464,8 +467,13 @@ class FspComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP On is allowed.")
-        if self._component_state["power"] not in [PowerState.OFF, PowerState.UNKNOWN]:
-            self.logger.warning(f"On not allowed; PowerState is {self._component_state["power"]}")
+        if self._component_state["power"] not in [
+            PowerState.OFF,
+            PowerState.UNKNOWN,
+        ]:
+            self.logger.warning(
+                f"On not allowed; PowerState is {self._component_state['power']}"
+            )
             return False
         return True
 
@@ -485,9 +493,7 @@ class FspComponentManager(CbfComponentManager):
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "On", task_callback, task_abort_event
-        ):
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
         self._get_capability_proxies()
@@ -526,8 +532,13 @@ class FspComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP Off is allowed.")
-        if self._component_state["power"] not in [PowerState.ON, PowerState.UNKNOWN]:
-            self.logger.warning(f"Off not allowed; PowerState is {self._component_state["power"]}")
+        if self._component_state["power"] not in [
+            PowerState.ON,
+            PowerState.UNKNOWN,
+        ]:
+            self.logger.warning(
+                f"Off not allowed; PowerState is {self._component_state['power']}"
+            )
             return False
         return True
 
@@ -590,7 +601,7 @@ class FspComponentManager(CbfComponentManager):
     @check_communicating
     def update_delay_model(
         self: FspComponentManager, argin: str
-    ) -> Tuple[ResultCode, str]:
+    ) -> DevVarLongStringArrayType:
         """
         Update the FSP's delay model (serialized JSON object)
 
@@ -601,37 +612,39 @@ class FspComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self.logger.debug("Entering update_delay_model")
+        result_code, message = ResultCode.OK, "UpdateDelayModels completed OK"
+        # update if current function mode is either PSS-BF, PST-BF or CORR
+        if self.function_mode in [
+            FspModes.PSS_BF.value,
+            FspModes.PST_BF.value,
+            FspModes.CORR.value,
+        ]:
+            # the whole delay model must be stored
+            self.delay_model = argin
+            delay_model = json.loads(argin)
 
-        if self._connected:
-            # update if current function mode is either PSS-BF, PST-BF or CORR
-            if self.function_mode in [
-                FspModes.PSS_BF.value,
-                FspModes.PST_BF.value,
-                FspModes.CORR.value,
-            ]:
-                # the whole delay model must be stored
-                self.delay_model = copy.deepcopy(argin)
-                delay_model = json.loads(argin)
-                # TODO handle delay models in function modes other than CORR
+            # TODO handle delay models in function modes other than CORR
+            try:
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)
                 )
-
-            else:
-                log_msg = (
-                    "Fsp UpdateDelayModel command failed: "
-                    f"model not used in function mode {self.function_mode}"
+            except tango.DevFailed as df:
+                self.logger.error(f"{df.args[0].desc}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
-                self.logger.warning(log_msg)
-                return (ResultCode.FAILED, log_msg)
+                result_code, message = (
+                    ResultCode.FAILED,
+                    "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+                )
 
-            message = "Fsp UpdateDelayModel command completed OK"
-            return (ResultCode.OK, message)
         else:
-            log_msg = "Fsp UpdateDelayModel command failed: \
-                    proxies not connected"
-            self.logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            result_code, message = (
+                ResultCode.FAILED,
+                f"Delay models not used in function mode {self.function_mode}",
+            )
+
+        return (result_code, message)
 
     @check_communicating
     def get_fsp_corr_config_id(

@@ -97,7 +97,7 @@ class CbfDevice(SKABaseDevice):
         :return: ID, status pairs of the currently executing commands
         """
         return self._command_statuses
-    
+
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: CbfDevice) -> SimulationMode:
         """

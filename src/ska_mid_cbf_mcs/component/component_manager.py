@@ -76,7 +76,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param health_state_callback: callback to be called when the
             HealthState of the component changes
         :param simulation_mode: simulation mode identifies if the real component
-            or a simulator should be monitored and controlled; defaults to 
+            or a simulator should be monitored and controlled; defaults to
             SimulationMode.TRUE
         """
 

@@ -17,19 +17,16 @@
 # Fsp TANGO device class for the prototype
 from __future__ import annotations  # allow forward references in type hints
 
-import os
-from typing import Any, Optional
+from typing import Any
 
 import tango
+from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
-from ska_control_model import SimulationMode
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
-
 
 __all__ = ["Fsp", "main"]
 
@@ -81,7 +78,6 @@ class Fsp(CbfDevice):
         """
         return self.component_manager.subarray_membership
 
-
     @attribute(
         dtype="str",
         doc="Differential off-boresight beam delay model",
@@ -119,21 +115,22 @@ class Fsp(CbfDevice):
         self.register_command_object(
             "AddSubarrayMembership",
             self.AddSubarrayMembershipCommand(
-                component_manager=self.component_manager,
-                logger=self.logger
+                component_manager=self.component_manager, logger=self.logger
             ),
         )
 
         self.register_command_object(
             "RemoveSubarrayMembership",
             self.RemoveSubarrayMembershipCommand(
-                component_manager=self.component_manager,
-                logger=self.logger
+                component_manager=self.component_manager, logger=self.logger
             ),
         )
 
         self.register_command_object(
-            "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
+            "UpdateDelayModel",
+            self.UpdateDelayModelCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
         )
 
     def create_component_manager(self: Fsp) -> FspComponentManager:
@@ -203,7 +200,7 @@ class Fsp(CbfDevice):
         relying on the component manager equivalent method instead.
         """
         return True
-    
+
     def is_Off_allowed(self: Fsp) -> bool:
         """
         Overriding the base class is_Off_allowed so that the command may be queued,
@@ -225,10 +222,12 @@ class Fsp(CbfDevice):
 
     @command(
         dtype_in="str",
-        dtype_out= "DevVarLongStringArrayType",
-        doc_in="FSP function mode"
+        dtype_out="DevVarLongStringArrayType",
+        doc_in="FSP function mode",
     )
-    def SetFunctionMode(self: Fsp, function_mode: str) -> DevVarLongStringArrayType:
+    def SetFunctionMode(
+        self: Fsp, function_mode: str
+    ) -> DevVarLongStringArrayType:
         """
         Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
         If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
@@ -242,10 +241,11 @@ class Fsp(CbfDevice):
         :rtype: DevVarLongStringArrayType
 
         """
-        command_handler = self.get_command_object(command_name="SetFunctionMode")
+        command_handler = self.get_command_object(
+            command_name="SetFunctionMode"
+        )
         result_code_message, command_id = command_handler(function_mode)
         return [[result_code_message], [command_id]]
-
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -289,17 +289,21 @@ class Fsp(CbfDevice):
             return self.component_manager.add_subarray_membership(sub_id)
 
     @command(
-        dtype_in="uint16", 
-        dtype_out= "DevVarLongStringArrayType",
+        dtype_in="uint16",
+        dtype_out="DevVarLongStringArrayType",
         doc_in="Subarray ID",
     )
-    def AddSubarrayMembership(self: Fsp, sub_id: int) -> DevVarLongStringArrayType:
+    def AddSubarrayMembership(
+        self: Fsp, sub_id: int
+    ) -> DevVarLongStringArrayType:
         """
         Add a subarray to the subarrayMembership list.
 
         :param argin: an integer representing the subarray affiliation
         """
-        command_handler = self.get_command_object(command_name="AddSubarrayMembership")
+        command_handler = self.get_command_object(
+            command_name="AddSubarrayMembership"
+        )
         result_code_message, command_id = command_handler(sub_id)
         return [[result_code_message], [command_id]]
 
@@ -345,11 +349,13 @@ class Fsp(CbfDevice):
             return self.component_manager.remove_subarray_membership(sub_id)
 
     @command(
-        dtype_in="uint16", 
-        dtype_out= "DevVarLongStringArrayType",
+        dtype_in="uint16",
+        dtype_out="DevVarLongStringArrayType",
         doc_in="Subarray ID",
     )
-    def AddSubarrayMembership(self: Fsp, sub_id: int) -> DevVarLongStringArrayType:
+    def RemoveSubarrayMembership(
+        self: Fsp, sub_id: int
+    ) -> DevVarLongStringArrayType:
         """
         Remove subarray from the subarrayMembership list.
         If subarrayMembership is empty after removing
@@ -357,7 +363,9 @@ class Fsp(CbfDevice):
 
         :param argin: an integer representing the subarray affiliation
         """
-        command_handler = self.get_command_object(command_name="RemoveSubarrayMembership")
+        command_handler = self.get_command_object(
+            command_name="RemoveSubarrayMembership"
+        )
         result_code_message, command_id = command_handler(sub_id)
         return [[result_code_message], [command_id]]
 
@@ -376,10 +384,19 @@ class Fsp(CbfDevice):
         """
         return self.component_manager.get_fsp_corr_config_id()
 
-    class UpdateDelayModelCommand(ResponseCommand):
+    class UpdateDelayModelCommand(FastCommand):
         """
         A class for the Fsp's UpdateDelayModel() command.
         """
+
+        def __init__(
+            self: Fsp.UpdateDelayModelCommand,
+            *args,
+            component_manager: FspComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
 
         def do(
             self: Fsp.UpdateDelayModelCommand, argin: str
@@ -393,12 +410,7 @@ class Fsp(CbfDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            (
-                result_code,
-                message,
-            ) = self.target.component_manager.update_delay_model(argin)
-            return (result_code, message)
+            return self.target.component_manager.update_delay_model(argin)
 
     @command(
         dtype_in="str",

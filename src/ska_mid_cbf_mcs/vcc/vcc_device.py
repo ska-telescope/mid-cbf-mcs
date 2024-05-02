@@ -22,7 +22,7 @@ from typing import Any  # allow forward references in type hints
 # Tango imports
 import tango
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import SimulationMode
 from tango.server import attribute, command, device_property
 
