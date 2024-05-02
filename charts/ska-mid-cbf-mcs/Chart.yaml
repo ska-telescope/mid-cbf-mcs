@@ -13,6 +13,6 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled,global.sub-system.ska-tango-base.enabled
 - name: ska-mid-cbf-engineering-console
-  version: 0.10.6-dev.cccc43d28
+  version: 0.10.6-dev.c585f1010
   repository: https://gitlab.com/api/v4/projects/29657133/packages/helm/dev
   condition: ska-mid-cbf-engineering-console.enabled
