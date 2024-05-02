@@ -160,7 +160,7 @@ class Slim(SKABaseDevice):
         )
 
         self.register_command_object(
-            "SlimMestTest",
+            "SlimMeshTest",
             self.SlimMeshTestCommand(*device_args),
         )
 
@@ -308,7 +308,6 @@ class Slim(SKABaseDevice):
             # Currently there is no way to prevent the 3sec default timeout for commands
             test_length = 2
 
-            # Letting the configuration sleep for a bit will help with lowering the configuration.
             if self.target.get_state() == tango.DevState.ON:
                 self.logger.info(f"Sleeping for {test_length}s")
                 for slept_time in range(0, test_length, t_sleep):
@@ -316,26 +315,18 @@ class Slim(SKABaseDevice):
                     self.logger.info(
                         f"Sleep Time Remaining: {test_length - slept_time}"
                     )
-                # Prints the connection status and Bit Error Rate of the devices on the mesh
-                try:
-                    self.component_manager.slim_mesh_links_ber_check_summary()
-                except Exception as e:
-                    self.logger.info(f"{e}")
-                    return (
-                        ResultCode.FAILED,
-                        f"{e}",
-                    )
-                # Print Health Summary of Mesh Links
-                try:
-                    self.component_manager.slim_table()
-                except Exception as e:
-                    self.logger.info(f"{e}")
-                    return (
-                        ResultCode.FAILED,
-                        f"{e}",
-                    )
 
+                # Prints the connection status and Bit Error Rate of the devices on the mesh
+                (result_code, message) = self.component_manager.slim_mesh_links_ber_check_summary()
+                if result_code != ResultCode.OK:
+                    return (result_code, message)
+
+                # Logs Health Summary of Mesh Links
+                (result_code, message) = self.component_manager.slim_table()
+                if result_code != ResultCode.OK:
+                    return (result_code, message)
                 return (ResultCode.OK, "SLIM Mesh Test Completed")
+            
             else:
                 self.logger.info(
                     "Device is off. Failed to issue Configure command."
@@ -366,7 +357,7 @@ class Slim(SKABaseDevice):
     def SlimMeshTest(self: Slim) -> None:
         if self.component_manager.is_communicating != True:
             return [[ResultCode.FAILED], ["The Mesh is currently not communicating and/or configured"]]
-        handler = self.get_command_object("SlimMestTest")
+        handler = self.get_command_object("SlimMeshTest")
         return_code, message = handler(argin)
         return [[return_code], [message]]
 
