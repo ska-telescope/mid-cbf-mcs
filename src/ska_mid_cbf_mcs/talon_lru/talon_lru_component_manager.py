@@ -15,6 +15,7 @@ from typing import Any, Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import TaskStatus
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 from ska_tango_testing import context
@@ -97,7 +98,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "TalonLRU_TalonBoardFailed",
                 "Two FQDNs for Talon Boards are needed for the LRU",
-                "start_communicating()",
+                "_init_talon_proxies()",
             )
 
         self._proxy_talondx_board1 = self._get_device_proxy(
@@ -179,7 +180,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
         else:
             super().start_communicating()
-            self._update_component_state(power=PowerState.OFF)
+            self._update_component_state(power=self.get_lru_power_state())
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """
@@ -393,8 +394,12 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: TalonLRUComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
-        return self._communication_state == CommunicationStatus.ESTABLISHED
+        if self._component_state["power"] == PowerState.OFF:
+            return True
+        self.logger.warning("LRU is already on, do not need to turn on.")
+        return False
 
+    @check_communicating
     def on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -452,7 +457,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         return result1, result2
 
     def _turn_off_talon(
-        self: TalonLRUComponentManager, board_id, talondx_board_proxy
+        self: TalonLRUComponentManager,
+        board_id: int,
+        talondx_board_proxy: context.DeviceProxy,
     ):
         """
         Turn off the specified Talon board.
@@ -581,8 +588,12 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
-        return self._communication_state == CommunicationStatus.ESTABLISHED
+        if self._component_state["power"] == PowerState.ON:
+            return True
+        self.logger.info("LRU is already off, do not need to turn off.")
+        return False
 
+    @check_communicating
     def off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,

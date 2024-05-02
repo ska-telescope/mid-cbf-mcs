@@ -12,7 +12,6 @@ from __future__ import annotations
 import unittest
 
 import pytest
-import tango
 from ska_control_model import ResultCode
 from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
@@ -37,24 +36,14 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_lru/001")
 
 
-@pytest.fixture(name="power_switch_1")
-def power_switch_1_fixture(
+@pytest.fixture(name="power_switch")
+def power_switch_fixture(
     test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
     """
     Fixture that returns the power switch 1 mock
     """
     return test_context.get_device("mid_csp_cbf/power_switch/001")
-
-
-@pytest.fixture(name="power_switch_2")
-def power_switch_2_fixture(
-    test_context: TangoTestHarnessContext,
-) -> unittest.mock.Mock:
-    """
-    Fixture that returns the power switch 2 mock
-    """
-    return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
 @pytest.fixture(name="change_event_callbacks")

@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-import time
+import gc
 import unittest
 from typing import Iterator
 from unittest.mock import Mock
@@ -28,13 +28,16 @@ from ska_mid_cbf_mcs.testing import context
 
 CONST_WAIT_TIME = 2
 
+# To prevent tests hanging during gc.
+gc.disable()
+
 
 class TestTalonLRU:
     """
     Test class for the TalonLRU
     """
 
-    @pytest.fixture(name="test_context")
+    @pytest.fixture(name="test_context", scope="function")
     def talon_lru_test_context(
         self: TestTalonLRU, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.TTCMExt.TCExt]:
@@ -94,8 +97,7 @@ class TestTalonLRU:
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        power_switch_1: unittest.mock.Mock,
-        power_switch_2: unittest.mock.Mock,
+        power_switch: unittest.mock.Mock,
     ) -> None:
         """
         Tests that the On command behaves appropriately.
@@ -111,30 +113,20 @@ class TestTalonLRU:
 
         # Assert the expected result, given the stimulus mode of the power switches.
         expected_result_map = {
-            ("command_success", "command_success"): (
+            "command_success": (
                 ResultCode.OK,
                 "LRU successfully turn on: both outlets successfully turned on",
                 DevState.ON,
             ),
-            ("command_fail", "command_fail"): (
+            "command_fail": (
                 ResultCode.FAILED,
                 "LRU failed to turned on: both outlets failed to turn on",
                 None,
             ),
-            ("command_success", "command_fail"): (
-                ResultCode.OK,
-                "LRU successfully turn on: one outlet successfully turned on",
-                DevState.ON,
-            ),
-            ("command_fail", "command_success"): (
-                ResultCode.OK,
-                "LRU successfully turn on: one outlet successfully turned on",
-                DevState.ON,
-            ),
         }
 
         result_code, message, state = expected_result_map.get(
-            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
+            power_switch.stimulusMode
         )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
@@ -146,15 +138,13 @@ class TestTalonLRU:
         # Assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    def test_Off(
+    def test_Off_from_off(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        power_switch_1: unittest.mock.Mock,
-        power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Tests that the On command behaves appropriately.
+        Tests that the Off command from an off state behaves appropriately.
         """
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
@@ -165,33 +155,53 @@ class TestTalonLRU:
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
 
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'"Command not allowed"',
+            )
+        )
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    def test_On_Off(
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch: unittest.mock.Mock,
+    ) -> None:
+        """
+        Tests that the On command followed by the Off command works appropriately.
+        """
+        if power_switch.stimulusMode == "command_fail":
+            pytest.skip(
+                "Test sequence is not valid for this configuration of stimulus"
+            )
+
+        self.test_On(
+            device_under_test,
+            change_event_callbacks,
+            power_switch,
+        )
+
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
+
         # Assert the expected result, given the stimulus mode of the power switches.
         result_map = {
-            ("command_success", "command_success"): (
+            "command_success": (
                 ResultCode.OK,
                 "LRU successfully turned off: both outlets turned off",
                 DevState.OFF,
             ),
-            ("command_fail", "command_fail"): (
+            "command_fail": (
                 ResultCode.FAILED,
                 "LRU failed to turned off: failed to turn off both outlets",
                 None,
             ),
-            ("command_success", "command_fail"): (
-                ResultCode.FAILED,
-                "LRU failed to turned off: only one outlet turned off",
-                None,
-            ),
-            ("command_fail", "command_success"): (
-                ResultCode.FAILED,
-                "LRU failed to turned off: only one outlet turned off",
-                None,
-            ),
         }
 
-        result_code, message, state = result_map.get(
-            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
-        )
+        result_code, message, state = result_map.get(power_switch.stimulusMode)
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
@@ -202,36 +212,3 @@ class TestTalonLRU:
 
         # Assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
-
-    def test_OnOff(
-        self: TestTalonLRU,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-        power_switch_1: unittest.mock.Mock,
-        power_switch_2: unittest.mock.Mock,
-    ) -> None:
-        """
-        Tests that the On command followed by the Off command works appropriately.
-        """
-
-        # Skip this test for certain configurations
-        if (
-            power_switch_1.stimulusMode == "command_fail"
-            and power_switch_2.stimulusMode == "command_fail"
-        ):
-            pytest.skip(
-                "Test sequence is not valid for this configuration of stimulus"
-            )
-
-        self.test_On(
-            device_under_test,
-            change_event_callbacks,
-            power_switch_1,
-            power_switch_2,
-        )
-        self.test_Off(
-            device_under_test,
-            change_event_callbacks,
-            power_switch_1,
-            power_switch_2,
-        )
