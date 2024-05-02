@@ -26,7 +26,6 @@ from tango import DevState
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
 from ska_mid_cbf_mcs.testing import context
 
-
 CONST_WAIT_TIME = 2
 
 
@@ -107,18 +106,36 @@ class TestTalonLRU:
         assert device_under_test.State() == DevState.OFF
 
         # Send the long running command 'On'
-        result_code, command_id  = device_under_test.On()
+        result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
 
         # Assert the expected result, given the stimulus mode of the power switches.
         expected_result_map = {
-            ("command_success", "command_success"): (ResultCode.OK, "LRU successfully turn on: both outlets successfully turned on", DevState.ON),
-            ("command_fail", "command_fail"): (ResultCode.FAILED, "LRU failed to turned on: both outlets failed to turn on", None),
-            ("command_success", "command_fail"): (ResultCode.OK, "LRU successfully turn on: one outlet successfully turned on", DevState.ON),
-            ("command_fail", "command_success"): (ResultCode.OK, "LRU successfully turn on: one outlet successfully turned on", DevState.ON)
+            ("command_success", "command_success"): (
+                ResultCode.OK,
+                "LRU successfully turn on: both outlets successfully turned on",
+                DevState.ON,
+            ),
+            ("command_fail", "command_fail"): (
+                ResultCode.FAILED,
+                "LRU failed to turned on: both outlets failed to turn on",
+                None,
+            ),
+            ("command_success", "command_fail"): (
+                ResultCode.OK,
+                "LRU successfully turn on: one outlet successfully turned on",
+                DevState.ON,
+            ),
+            ("command_fail", "command_success"): (
+                ResultCode.OK,
+                "LRU successfully turn on: one outlet successfully turned on",
+                DevState.ON,
+            ),
         }
 
-        result_code, message, state = expected_result_map.get((power_switch_1.stimulusMode, power_switch_2.stimulusMode))
+        result_code, message, state = expected_result_map.get(
+            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
+        )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
@@ -150,13 +167,31 @@ class TestTalonLRU:
 
         # Assert the expected result, given the stimulus mode of the power switches.
         result_map = {
-            ("command_success", "command_success"): (ResultCode.OK, "LRU successfully turned off: both outlets turned off", DevState.OFF),
-            ("command_fail", "command_fail"): (ResultCode.FAILED, "LRU failed to turned off: failed to turn off both outlets", None),
-            ("command_success", "command_fail"): (ResultCode.FAILED, "LRU failed to turned off: only one outlet turned off", None),
-            ("command_fail", "command_success"): (ResultCode.FAILED, "LRU failed to turned off: only one outlet turned off", None)
+            ("command_success", "command_success"): (
+                ResultCode.OK,
+                "LRU successfully turned off: both outlets turned off",
+                DevState.OFF,
+            ),
+            ("command_fail", "command_fail"): (
+                ResultCode.FAILED,
+                "LRU failed to turned off: failed to turn off both outlets",
+                None,
+            ),
+            ("command_success", "command_fail"): (
+                ResultCode.FAILED,
+                "LRU failed to turned off: only one outlet turned off",
+                None,
+            ),
+            ("command_fail", "command_success"): (
+                ResultCode.FAILED,
+                "LRU failed to turned off: only one outlet turned off",
+                None,
+            ),
         }
 
-        result_code, message, state = result_map.get((power_switch_1.stimulusMode, power_switch_2.stimulusMode))
+        result_code, message, state = result_map.get(
+            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
+        )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')

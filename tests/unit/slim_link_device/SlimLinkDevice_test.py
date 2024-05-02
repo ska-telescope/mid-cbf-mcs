@@ -236,7 +236,7 @@ class TestSlimLink:
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
-        
+
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
         [

@@ -54,7 +54,7 @@ def power_switch_2_fixture(
     """
     Fixture that returns the power switch 2 mock
     """
-    return test_context.get_device("mid_csp_cbf/power_switch/001")
+    return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
 @pytest.fixture(name="change_event_callbacks")

@@ -336,7 +336,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.logger.error("Unable to turn on LRU as both power switch outlets failed to power on")
+            self.logger.error(
+                "Unable to turn on LRU as both power switch outlets failed to power on"
+            )
             return (
                 ResultCode.FAILED,
                 "LRU failed to turned on: both outlets failed to turn on",
@@ -516,13 +518,17 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.logger.error("Unable to turn off LRU as both power switch outlets failed to power off")
+            self.logger.error(
+                "Unable to turn off LRU as both power switch outlets failed to power off"
+            )
             return (
                 ResultCode.FAILED,
                 "LRU failed to turned off: failed to turn off both outlets",
             )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self.logger.error("Unable to turn off LRU as a power switch outlet failed to power off")
+            self.logger.error(
+                "Unable to turn off LRU as a power switch outlet failed to power off"
+            )
             return (
                 ResultCode.FAILED,
                 "LRU failed to turned off: only one outlet turned off",
