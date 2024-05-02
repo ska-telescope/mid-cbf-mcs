@@ -313,6 +313,48 @@ class SlimComponentManager(CbfComponentManager):
             res.append(val)
 
         return res
+    
+    def slim_mesh_links_ber_check_summary(
+            self: Slim.SlimMeshTestCommand
+        ) -> None:
+            """
+            Logs a summary status of the SLIM Mesh Link heath for each device on the Mesh
+
+            :return: None
+            """
+            ber_pass_thres = 8.000e-11
+            gbps = 25.78125 * 64 / 66
+
+            res = "\nSLIM Mesh BER Check:\n\n"
+            for dp_link in self._dp_links:
+                counters = dp_link.counters
+                name = dp_link.linkName
+                rx_word_count = counters[0]
+                rx_idle_word_count = counters[2]
+                rx_idle_error_count = counters[3]
+
+                if not rx_idle_word_count:
+                    rx_word_error_rate = "NaN"
+                    rx_status = "Unknown"
+                elif not rx_idle_error_count:
+                    rx_word_error_rate = f"better than {1/rx_idle_word_count:.0e}"
+                    rx_status = "Passed"
+                else:
+                    rx_word_rate_float = rx_idle_error_count / rx_idle_word_count
+                    rx_word_error_rate = f"{rx_word_rate_float:.3e}"
+                    if rx_word_rate_float < ber_pass_thres:
+                        rx_status = "Passed"
+                    else:
+                        rx_status = "Failed"
+                rx_words = rx_word_count + rx_idle_word_count
+
+                res += f"Link Name: {name}\n"
+                res += f"Slim Mesh Link status (rx_status): {rx_status}\n"
+                res += f"rx_wer:{rx_word_error_rate}\n"
+                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}\n"
+                res += "\n"
+
+            self._logger.info(res)
 
     def _parse_link(self, link: str):
         """

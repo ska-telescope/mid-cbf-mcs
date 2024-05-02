@@ -294,49 +294,6 @@ class Slim(SKABaseDevice):
         A command to test the mesh of SLIM Tx Rx Links
         """
 
-        def _slim_mesh_links_ber_check_summary(
-            self: Slim.SlimMeshTestCommand,
-        ) -> None:
-            """
-            Logs a summary status of the SLIM Mesh Link heath for each device on the Mesh
-
-            :return: None
-            """
-            ber_pass_thres = 8.000e-11
-            gbps = 25.78125 * 64 / 66
-
-            link_names = self.target.component_manager.get_link_names()
-            counters = self.target.component_manager.get_device_counters()
-
-            res = "\nSLIM Mesh BER Check:\n\n"
-            for idx, name in enumerate(link_names):
-                counter = counters[idx]
-                rx_word_count = counter[0]
-                rx_idle_word_count = counter[2]
-                rx_idle_error_count = counter[3]
-                if not rx_idle_word_count:
-                    rx_wer = "NaN"
-                    rx_status = "Unknown"
-                elif not rx_idle_error_count:
-                    rx_wer = f"better than {1/rx_idle_word_count:.0e}"
-                    rx_status = "Passed"
-                else:
-                    rx_wr_float = rx_idle_error_count / rx_idle_word_count
-                    rx_wer = f"{rx_wr_float:.3e}"
-                    if rx_wr_float < ber_pass_thres:
-                        rx_status = "Passed"
-                    else:
-                        rx_status = "Failed"
-                rx_words = rx_word_count + rx_idle_word_count
-
-                res += f"Link Name: {name}\n"
-                res += f"Slim Mesh Link status (rx_status): {rx_status}\n"
-                res += f"rx_wer:{rx_wer}\n"
-                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * gbps}\n"
-                res += "\n"
-
-            self.logger.info(res)
-
         def _slim_table(self: Slim.SlimMeshTest) -> None:
             """
             Logs a summary for the rx and tx device on the Mesh
@@ -441,7 +398,7 @@ class Slim(SKABaseDevice):
                     )
                 # Prints the connection status and Bit Error Rate of the devices on the mesh
                 try:
-                    self._slim_mesh_links_ber_check_summary()
+                    self.component_manager.slim_mesh_links_ber_check_summary()
                 except Exception as e:
                     self.logger.info(f"{e}")
                     return (
