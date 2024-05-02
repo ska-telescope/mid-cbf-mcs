@@ -329,17 +329,17 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> Tuple[ResultCode, str]:
         """
         Determine the return code to return from the on command, given turning on PDUs' result codes.
-        Also update the component power mode and fault status.
+        Also update the component power mode if successful.
 
         :param result1: the result code of turning on PDU 1
         :param result2: the result code of turning on PDU 2
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self._update_component_state(fault=True)
+            self.logger.error("Unable to turn on LRU as both power switch outlets failed to power on")
             return (
                 ResultCode.FAILED,
-                "LRU failed to turned on: both oulets failed to turn on",
+                "LRU failed to turned on: both outlets failed to turn on",
             )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
             self._update_component_state(power=PowerState.ON)
@@ -391,7 +391,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: TalonLRUComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
-        return self._communication_state == CommunicationStatus.NOT_ESTABLISHED
+        return self._communication_state == CommunicationStatus.ESTABLISHED
 
     def on(
         self: TalonLRUComponentManager,
@@ -509,20 +509,20 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> Tuple[ResultCode, str]:
         """
         Determine the return code to return from the off command, given turning on PDUs' result codes.
-        Also update the component fault status if necessary.
+        Also update the component power mode if successful.
 
         :param result1: the result code of turning off PDU 1
         :param result2: the result code of turning off PDU 2
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self._update_component_state(fault=True)
+            self.logger.error("Unable to turn off LRU as both power switch outlets failed to power off")
             return (
                 ResultCode.FAILED,
                 "LRU failed to turned off: failed to turn off both outlets",
             )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self._update_component_state(fault=True)
+            self.logger.error("Unable to turn off LRU as a power switch outlet failed to power off")
             return (
                 ResultCode.FAILED,
                 "LRU failed to turned off: only one outlet turned off",
@@ -575,7 +575,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
-        return self._communication_state == CommunicationStatus.NOT_ESTABLISHED
+        return self._communication_state == CommunicationStatus.ESTABLISHED
 
     def off(
         self: TalonLRUComponentManager,

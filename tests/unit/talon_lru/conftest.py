@@ -40,10 +40,9 @@ def device_under_test_fixture(
 @pytest.fixture(name="power_switch_1")
 def power_switch_1_fixture(
     test_context: TangoTestHarnessContext,
-) -> context.DeviceProxy:
+) -> unittest.mock.Mock:
     """
-    :param test_context: the context in which the tests run
-    :return: the mock power switch 1 device
+    Fixture that returns the power switch 1 mock
     """
     return test_context.get_device("mid_csp_cbf/power_switch/001")
 
@@ -51,10 +50,9 @@ def power_switch_1_fixture(
 @pytest.fixture(name="power_switch_2")
 def power_switch_2_fixture(
     test_context: TangoTestHarnessContext,
-) -> context.DeviceProxy:
+) -> unittest.mock.Mock:
     """
-    :param test_context: the context in which the tests run
-    :return: the mock power switch 2 device
+    Fixture that returns the power switch 2 mock
     """
     return test_context.get_device("mid_csp_cbf/power_switch/001")
 
