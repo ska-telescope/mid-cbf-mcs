@@ -26,7 +26,6 @@ from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
 
-
 # To prevent tests hanging during gc.
 gc.disable()
 
@@ -208,7 +207,7 @@ class TestPowerSwitch:
 
         # Check that numOutlets is 0 since we cannot talk to the power switch
         assert device_under_test.numOutlets == 0
-        
+
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -246,7 +245,7 @@ class TestPowerSwitch:
             ].assert_change_event(
                 (f"{command_id[0]}", '[3, "TurnOffOutlet FAILED"]')
             )
-        
+
         # Attempt to turn outlets on
         for i in range(0, num_outlets):
             result_code, command_id = device_under_test.TurnOnOutlet(str(i))
@@ -534,7 +533,7 @@ class TestPowerSwitch:
             ].assert_change_event(
                 (f"{command_id[0]}", '[3, "TurnOnOutlet FAILED"]')
             )
-            
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 

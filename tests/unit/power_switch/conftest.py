@@ -9,26 +9,14 @@
 
 from __future__ import annotations
 
-# Standard imports
-import unittest
-from typing import Callable
-
 import pytest
-import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
 # Tango imports
 from ska_mid_cbf_mcs.testing import context
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 from ... import test_utils
-
-# Local imports
 
 
 @pytest.fixture(name="change_event_callbacks")

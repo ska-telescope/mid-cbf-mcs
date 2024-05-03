@@ -29,7 +29,7 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from tango import DebugIt
-from tango.server import attribute, command, run
+from tango.server import attribute, command
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
