@@ -91,7 +91,6 @@ def initial_mocks(
     mock_talon_lru: unittest.mock.Mock,
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
-    mock_sw: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
