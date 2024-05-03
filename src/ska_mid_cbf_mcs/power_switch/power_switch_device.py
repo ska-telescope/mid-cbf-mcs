@@ -15,7 +15,7 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 # tango imports
 from ska_tango_base.commands import (
@@ -26,10 +26,9 @@ from ska_tango_base.commands import (
 
 # Additional import
 from ska_tango_base.control_model import PowerState, SimulationMode
-from tango import AttrWriteType, DebugIt
+from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
@@ -158,7 +157,7 @@ class PowerSwitch(CbfDevice):
         """
         return self.component_manager.num_outlets
 
-    @attribute(dtype=int)
+    @attribute(dtype=bool)
     def isCommunicating(self: PowerSwitch) -> bool:
         """
         Get whether or not the power switch is communicating.

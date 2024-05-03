@@ -138,7 +138,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         if not self.simulation_mode:
             self.power_switch_driver.stop()
 
-        self._update_component_state(PowerState.UNKNOWN)
+        self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
 
@@ -202,7 +202,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
     ) -> bool:
         power_mode = self.get_outlet_power_mode(outlet)
         self.logger.debug(f"Outlet {outlet} = {power_mode}")
-
         if mode == "on":
             if power_mode == PowerState.ON:
                 return True
@@ -244,9 +243,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # ---------------------
 
     def is_turn_outlet_on_allowed(self) -> bool:
-        self.logger.info(f"Checking if TurnOnOutlet is allowed.")
-        #TODO: I think this is_commmunicating check makes sense, but it fails the unit test.
-        return (self.communication_state == CommunicationStatus.ESTABLISHED) #and self.is_communicating
+        self.logger.debug("Checking if TurnOnOutlet is allowed.")
+        return (
+            self.communication_state == CommunicationStatus.ESTABLISHED
+        ) and self.is_communicating
 
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
@@ -297,7 +297,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 if not powered_on:
                     task_callback(
                         status=TaskStatus.FAILED,
-                        result=(result_code, "TurnOnOutlet FAILED"),
+                        result=(ResultCode.FAILED, "TurnOnOutlet FAILED"),
                     )
                     return
             except AssertionError as e:
@@ -310,6 +310,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         "TurnOnOutlet FAILED",
                     ),
                 )
+                return
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(result_code, "TurnOnOutlet completed OK"),
@@ -339,8 +340,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def is_turn_outlet_off_allowed(self) -> bool:
         self.logger.debug("Checking if TurnOffOutlet is allowed.")
-        #TODO: I think this is_commmunicating check makes sense, but it fails the unit test.
-        return (self.communication_state == CommunicationStatus.ESTABLISHED) #and self.is_communicating
+        return (
+            self.communication_state == CommunicationStatus.ESTABLISHED
+        ) and self.is_communicating
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -371,10 +373,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return
 
         if self.simulation_mode:
-            self.power_switch_simulator.turn_on_outlet(outlet)
+            self.power_switch_simulator.turn_off_outlet(outlet)
         else:
             try:
-                (result_code, message) = self.power_switch_driver.turn_off_outlet(outlet)
+                (
+                    result_code,
+                    message,
+                ) = self.power_switch_driver.turn_off_outlet(outlet)
                 if result_code != ResultCode.OK:
                     self.logger.error(message)
                     task_callback(
@@ -382,14 +387,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         result=(result_code, "TurnOffOutlet FAILED"),
                     )
                     return
-
                 powered_off = self.check_power_mode(
                     "off", outlet, task_callback, task_abort_event
                 )
                 if not powered_off:
                     task_callback(
                         status=TaskStatus.FAILED,
-                        result=(result_code, "TurnOffOutlet FAILED"),
+                        result=(ResultCode.FAILED, "TurnOffOutlet FAILED"),
                     )
                     return
             except AssertionError as e:
@@ -402,6 +406,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         "TurnOffOutlet FAILED",
                     ),
                 )
+                return
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(result_code, "TurnOffOutlet completed OK"),

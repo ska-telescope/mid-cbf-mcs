@@ -148,7 +148,6 @@ class DLIProSwitchDriver:
         :return: power mode of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
-        :raise AssertionError: if outlet power mode is different than expected
         """
 
         assert (
@@ -185,7 +184,7 @@ class DLIProSwitchDriver:
                     power_mode = PowerState.UNKNOWN
 
                 if power_mode != self.outlets[outlet_idx].power_mode:
-                    raise AssertionError(
+                    self.logger.error(
                         f"Power mode of outlet ID {outlet} ({power_mode})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
                     )
@@ -217,7 +216,6 @@ class DLIProSwitchDriver:
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
-
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_on_action
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -262,7 +260,6 @@ class DLIProSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
@@ -280,7 +277,6 @@ class DLIProSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,

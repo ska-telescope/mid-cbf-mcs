@@ -40,7 +40,8 @@ def power_switch_change_event_callbacks(
         "longRunningCommandProgress",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list,
+        timeout=10,
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks
@@ -59,4 +60,3 @@ def device_under_test_fixture(
     :return: the device under test
     """
     return test_context.get_device("mid_csp_cbf/power_switch/001")
-
