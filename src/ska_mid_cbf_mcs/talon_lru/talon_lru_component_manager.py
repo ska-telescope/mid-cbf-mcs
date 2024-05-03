@@ -357,6 +357,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 "LRU successfully turn on: both outlets successfully turned on",
             )
 
+    def is_on_allowed(self: TalonLRUComponentManager) -> bool:
+        self.logger.debug("Checking if on is allowed")
+        if self._component_state["power"] == PowerState.OFF:
+            return True
+        self.logger.warning("LRU is already on, do not need to turn on.")
+        return False
+
     def _on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -391,13 +398,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
-    def is_on_allowed(self: TalonLRUComponentManager) -> bool:
-        self.logger.debug("Checking if on is allowed")
-        if self._component_state["power"] == PowerState.OFF:
-            return True
-        self.logger.warning("LRU is already on, do not need to turn on.")
-        return False
 
     @check_communicating
     def on(
@@ -530,7 +530,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             return (
                 ResultCode.FAILED,
-                "LRU failed to turned off: failed to turn off both outlets",
+                "LRU failed to turn off: failed to turn off both outlets",
             )
         elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
             self.logger.error(
@@ -538,7 +538,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             return (
                 ResultCode.FAILED,
-                "LRU failed to turned off: only one outlet turned off",
+                "LRU failed to turn off: only one outlet turned off",
             )
         else:
             self._update_component_state(power=PowerState.OFF)
@@ -546,6 +546,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 ResultCode.OK,
                 "LRU successfully turned off: both outlets turned off",
             )
+
+    def is_off_allowed(self: TalonLRUComponentManager) -> bool:
+        self.logger.debug("Checking if off is allowed")
+        if self._component_state["power"] == PowerState.ON:
+            return True
+        self.logger.info("LRU is already off, do not need to turn off.")
+        return False
 
     def _off(
         self: TalonLRUComponentManager,
@@ -585,13 +592,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             result=self._determine_off_result_code(result1, result2),
             status=TaskStatus.COMPLETED,
         )
-
-    def is_off_allowed(self: TalonLRUComponentManager) -> bool:
-        self.logger.debug("Checking if off is allowed")
-        if self._component_state["power"] == PowerState.ON:
-            return True
-        self.logger.info("LRU is already off, do not need to turn off.")
-        return False
 
     @check_communicating
     def off(

@@ -14,7 +14,7 @@ TANGO device class for controlling and monitoring a Talon LRU.
 from __future__ import annotations
 
 from threading import Lock
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 import tango
 from ska_tango_base import SKABaseDevice
@@ -22,8 +22,6 @@ from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango.server import attribute, command, device_property
-
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # tango imports
 from ska_mid_cbf_mcs.device.base_device import CbfDevice

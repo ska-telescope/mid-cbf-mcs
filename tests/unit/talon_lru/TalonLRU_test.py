@@ -158,7 +158,7 @@ class TestTalonLRU:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'"Command not allowed"',
+                '"Command not allowed"',
             )
         )
         # Assert if any captured events have gone unaddressed
@@ -196,7 +196,7 @@ class TestTalonLRU:
             ),
             "command_fail": (
                 ResultCode.FAILED,
-                "LRU failed to turned off: failed to turn off both outlets",
+                "LRU failed to turn off: failed to turn off both outlets",
                 None,
             ),
         }
