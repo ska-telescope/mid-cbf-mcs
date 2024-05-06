@@ -14,7 +14,7 @@ TANGO device class for controlling and monitoring a Talon LRU.
 from __future__ import annotations
 
 from threading import Lock
-from typing import Any, Tuple
+from typing import Any
 
 import tango
 from ska_tango_base import SKABaseDevice
@@ -155,7 +155,7 @@ class TalonLRU(CbfDevice):
             self: TalonLRU.InitCommand,
             *args: Any,
             **kwargs: Any,
-        ) -> Tuple[ResultCode, str]:
+        ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation. Creates the device proxies
             to the power switch devices.

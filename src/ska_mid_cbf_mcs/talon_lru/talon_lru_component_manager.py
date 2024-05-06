@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import threading
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import TaskStatus
@@ -32,9 +32,9 @@ class TalonLRUComponentManager(CbfComponentManager):
     def __init__(
         self: TalonLRUComponentManager,
         *args: Any,
-        talons: List[str],
-        pdus: List[str],
-        pdu_outlets: List[str],
+        talons: list[str],
+        pdus: list[str],
+        pdu_outlets: list[str],
         pdu_cmd_timeout: int,
         **kwargs: Any,
     ) -> None:
@@ -262,7 +262,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _turn_on_pdus(
         self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, ResultCode]:
+    ) -> tuple[ResultCode, ResultCode]:
         """
         If not already on, turn on the two PDUs.
 
@@ -305,29 +305,28 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _turn_on_talons(
         self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, ResultCode]:
+    ) -> tuple[ResultCode, ResultCode]:
         """
         Turn on the two Talon boards.
         """
-        try:
-            self._proxy_talondx_board1.On()
-        except tango.DevFailed as df:
-            self.logger.warn(
-                f"Talon board {self._talons[0]} ON command failed: {df}"
-            )
-
-        try:
-            self._proxy_talondx_board2.On()
-        except tango.DevFailed as df:
-            self.logger.warn(
-                f"Talon board {self._talons[1]} ON command failed: {df}"
-            )
+        for i, board in enumerate(
+            [self._proxy_talondx_board1, self._proxy_talondx_board2]
+        ):
+            try:
+                board.On()
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Talon board {self._talons[i]} ON command failed: {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
 
     def _determine_on_result_code(
         self: TalonLRUComponentManager,
         result1: ResultCode,
         result2: ResultCode,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Determine the return code to return from the on command, given turning on PDUs' result codes.
         Also update the component power mode if successful.
@@ -403,7 +402,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     def on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Submit on operation method to task executor queue.
 
@@ -421,7 +420,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _turn_off_pdus(
         self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, ResultCode]:
+    ) -> tuple[ResultCode, ResultCode]:
         """
         Turn off the two PDUs.
 
@@ -467,6 +466,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         try:
             talondx_board_proxy.Off()
         except tango.DevFailed as df:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             return (
                 ResultCode.FAILED,
                 f"_turn_off_boards FAILED on Talon board {board_id}: {df}",
@@ -478,7 +480,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _turn_off_talons(
         self: TalonLRUComponentManager,
-    ) -> None | Tuple[ResultCode, str]:
+    ) -> None | tuple[ResultCode, str]:
         """
         Turn off the two Talon boards, threaded.
 
@@ -515,7 +517,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
         result1: ResultCode,
         result2: ResultCode,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Determine the return code to return from the off command, given turning on PDUs' result codes.
         Also update the component power mode if successful.
@@ -597,7 +599,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     def off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Submit off operation method to task executor queue.
 
