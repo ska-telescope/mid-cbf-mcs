@@ -84,6 +84,7 @@ class TestTalonLRU:
     def test_startup_state(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Tests that the state of the TalonLRU device when it starts up is correct.
@@ -91,7 +92,7 @@ class TestTalonLRU:
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
     def test_On(
         self: TestTalonLRU,
@@ -105,7 +106,7 @@ class TestTalonLRU:
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
         # Send the long running command 'On'
         result_code, command_id = device_under_test.On()
@@ -132,8 +133,9 @@ class TestTalonLRU:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
         )
+
         if state is not None:
-            assert device_under_test.State() == state
+            change_event_callbacks["state"].assert_change_event(state)
 
         # Assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -149,7 +151,7 @@ class TestTalonLRU:
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
         # Send the Off command
         result_code, command_id = device_under_test.Off()
@@ -208,7 +210,7 @@ class TestTalonLRU:
         )
 
         if state is not None:
-            assert device_under_test.State() == state
+            change_event_callbacks["state"].assert_change_event(state)
 
         # Assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
