@@ -19,7 +19,7 @@ from typing import Any
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango.server import attribute, command, device_property
 
@@ -102,28 +102,7 @@ class TalonLRU(CbfDevice):
         """
         Sets up the command objects.
         """
-        super().init_command_objects()
-
-        self.register_command_object(
-            "On",
-            SubmittedSlowCommand(
-                command_name="On",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="on",
-                logger=self.logger,
-            ),
-        )
-        self.register_command_object(
-            "Off",
-            SubmittedSlowCommand(
-                command_name="Off",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="off",
-                logger=self.logger,
-            ),
-        )
+        super(CbfDevice, self).init_command_objects()
 
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """

@@ -109,11 +109,19 @@ class TalonLRUComponentManager(CbfComponentManager):
             "mid_csp_cbf/talon_board/" + self._talons[1]
         )
 
-        # Needs Admin mode == ONLINE to run ON command
-        if self._proxy_talondx_board1:
-            self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
-        if self._proxy_talondx_board2:
-            self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+        try:
+            # Needs Admin mode == ONLINE to run ON command
+            if self._proxy_talondx_board1:
+                self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
+            if self._proxy_talondx_board2:
+                self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Failed to set AdminMode to ONLINE on Talon boards: {df}"
+            )
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
 
     def _init_power_switch(self, pdu, pdu_outlet) -> None:
         """
@@ -123,18 +131,29 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param pdu_outlet: ID of the PDU outlet
         :return: the power switch proxy and the power mode of the outlet
         """
-        proxy = self._get_device_proxy("mid_csp_cbf/power_switch/" + pdu)
-        if proxy is not None:
-            proxy.set_timeout_millis(self._pdu_cmd_timeout * 1000)
-            power_state = proxy.GetOutletPowerState(pdu_outlet)
-            if proxy.numOutlets == 0:
+        power_switch_proxy = self._get_device_proxy(
+            "mid_csp_cbf/power_switch/" + pdu
+        )
+        if power_switch_proxy is not None:
+            power_switch_proxy.set_timeout_millis(self._pdu_cmd_timeout * 1000)
+            power_state = power_switch_proxy.GetOutletPowerState(pdu_outlet)
+            if power_switch_proxy.numOutlets == 0:
                 power_state = PowerState.UNKNOWN
 
-            # Set the power switch's simulation mode
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.simulationMode = self.simulation_mode
-            proxy.adminMode = AdminMode.ONLINE
-        return proxy, power_state
+        # TODO: Refactor proxy simulation mode setting in controller instead.
+        try:
+            # Set the power switch's simulation mode and set admin mode to ONLINE
+            power_switch_proxy.adminMode = AdminMode.OFFLINE
+            power_switch_proxy.simulationMode = self.simulation_mode
+            power_switch_proxy.adminMode = AdminMode.ONLINE
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Failed to set AdminMode to ONLINE on Talon boards: {df}"
+            )
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+        return power_switch_proxy, power_state
 
     def _init_power_switch_proxies(self: TalonLRUComponentManager) -> None:
         """
@@ -178,7 +197,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-        else:
+        elif self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
             super().start_communicating()
             self._update_component_state(power=self.get_lru_power_state())
 
@@ -280,7 +299,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             )[0][0]
             if result1 == ResultCode.OK:
                 self.pdu1_power_state = PowerState.ON
-                self.logger.info("PDU 1 successfully turned on.")
+                self.logger.info(
+                    f"PDU 1 ({self._pdu_outlets[0]}) successfully turned on."
+                )
 
         # Turn on PDU 2
         result2 = ResultCode.FAILED
@@ -299,13 +320,15 @@ class TalonLRUComponentManager(CbfComponentManager):
             )[0][0]
             if result2 == ResultCode.OK:
                 self.pdu2_power_state = PowerState.ON
-                self.logger.info("PDU 2 successfully turned on.")
+                self.logger.info(
+                    f"PDU 2 (outlet {self._pdu_outlets[1]}) successfully turned on."
+                )
 
         return result1, result2
 
     def _turn_on_talons(
         self: TalonLRUComponentManager,
-    ) -> tuple[ResultCode, ResultCode]:
+    ) -> None | tuple[ResultCode, str]:
         """
         Turn on the two Talon boards.
         """
@@ -316,11 +339,16 @@ class TalonLRUComponentManager(CbfComponentManager):
                 board.On()
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Talon board {self._talons[i]} ON command failed: {df}"
+                    f"On command to talon board {self._talons[i]} failed: {df}"
                 )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
+                return (
+                    ResultCode.FAILED,
+                    f"On command to talon board {self._talons[i]} failed.",
+                )
+        return None
 
     def _determine_on_result_code(
         self: TalonLRUComponentManager,
@@ -343,18 +371,21 @@ class TalonLRUComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 "LRU failed to turned on: both outlets failed to turn on",
             )
-        elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-            self._update_component_state(power=PowerState.ON)
-            return (
-                ResultCode.OK,
-                "LRU successfully turn on: one outlet successfully turned on",
-            )
-        else:
-            self._update_component_state(power=PowerState.ON)
-            return (
-                ResultCode.OK,
+
+        if result1 == ResultCode.OK and result2 == ResultCode.OK:
+            self.logger.info(
                 "LRU successfully turn on: both outlets successfully turned on",
             )
+        else:
+            self.logger.info(
+                "LRU successfully turn on: only one outlet turned on",
+            )
+
+        self._update_component_state(power=PowerState.ON)
+        return (
+            ResultCode.OK,
+            "On completed OK",
+        )
 
     def is_on_allowed(self: TalonLRUComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
@@ -389,7 +420,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Start monitoring talon board telemetries and fault status
         # This can fail if HPS devices are not deployed to the
         # board, but it's okay to continue.
-        self._turn_on_talons()
+        talon_on_result = self._turn_on_talons()
+        if talon_on_result:
+            task_callback(
+                result=talon_on_result,
+                status=TaskStatus.FAILED,
+            )
+            return
 
         # _determine_on_result_code will update the component power state
         task_callback(
@@ -435,7 +472,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             )[0][0]
             if result1 == ResultCode.OK:
                 self.pdu1_power_state = PowerState.OFF
-                self.logger.info("PDU 1 successfully turned off.")
+                self.logger.info(
+                    f"PDU 1 (outlet {self._pdu_outlets[0]}) successfully turned off."
+                )
 
         # Power off PDU 2
         result2 = ResultCode.FAILED
@@ -452,7 +491,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )[0][0]
                 if result2 == ResultCode.OK:
                     self.pdu2_power_state = PowerState.OFF
-                    self.logger.info("PDU 2 successfully turned off.")
+                    self.logger.info(
+                        f"PDU 2 (outlet {self._pdu_outlets[1]}) successfully turned off."
+                    )
         return result1, result2
 
     def _turn_off_talon(
@@ -478,6 +519,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             f"_turn_off_boards completed OK on Talon board {board_id}",
         )
 
+    # TODO: Use TANGO Groups rather then threading
     def _turn_off_talons(
         self: TalonLRUComponentManager,
     ) -> None | tuple[ResultCode, str]:
@@ -526,6 +568,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param result2: the result code of turning off PDU 2
         :return: A tuple containing a return code and a string
         """
+        if result1 == ResultCode.OK and result2 == ResultCode.OK:
+            self._update_component_state(power=PowerState.OFF)
+            return (
+                ResultCode.OK,
+                "Off completed OK",
+            )
+
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self.logger.error(
                 "Unable to turn off LRU as both power switch outlets failed to power off"
@@ -534,19 +583,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 "LRU failed to turn off: failed to turn off both outlets",
             )
-        elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
+        else:
             self.logger.error(
                 "Unable to turn off LRU as a power switch outlet failed to power off"
             )
             return (
                 ResultCode.FAILED,
                 "LRU failed to turn off: only one outlet turned off",
-            )
-        else:
-            self._update_component_state(power=PowerState.OFF)
-            return (
-                ResultCode.OK,
-                "LRU successfully turned off: both outlets turned off",
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
@@ -585,7 +628,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         if talon_off_result:
             task_callback(
                 result=talon_off_result,
-                status=TaskStatus.COMPLETED,
+                status=TaskStatus.FAILED,
             )
             return
 

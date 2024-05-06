@@ -115,7 +115,7 @@ class TestTalonLRU:
         expected_result_map = {
             "command_success": (
                 ResultCode.OK,
-                "LRU successfully turn on: both outlets successfully turned on",
+                "On completed OK",
                 DevState.ON,
             ),
             "command_fail": (
@@ -191,7 +191,7 @@ class TestTalonLRU:
         result_map = {
             "command_success": (
                 ResultCode.OK,
-                "LRU successfully turned off: both outlets turned off",
+                "Off completed OK",
                 DevState.OFF,
             ),
             "command_fail": (
