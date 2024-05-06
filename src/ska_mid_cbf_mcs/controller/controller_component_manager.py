@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -401,13 +402,18 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-                deployer_proxy = CbfDeviceProxy(
-                    "mid_csp_cbf/ec/deployer", self._logger
-                )
-                config_commands = json.loads(deployer_proxy.configCommands)
+                # read in list of LRUs from configuration JSON
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
 
                 self._fqdn_talon_lru = []
-                for config_command in config_commands["config_commands"]:
+                for config_command in talondx_config_json["config_commands"]:
                     target = config_command["target"]
                     for lru_id, lru_config in self._hw_config[
                         "talon_lru"
@@ -835,12 +841,16 @@ class ControllerComponentManager(CbfComponentManager):
             == SimulationMode.FALSE
         ):
             if len(self._fqdn_talon_lru) == 0:
-                deployer_proxy = CbfDeviceProxy(
-                    "mid_csp_cbf/ec/deployer", self.logger
-                )
-                config_commands = json.loads(deployer_proxy.configCommands)
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
 
-                for config_command in config_commands["config_commands"]:
+                for config_command in talondx_config_json["config_commands"]:
                     target = config_command["target"]
                     for lru_id, lru_config in self._hw_config[
                         "talon_lru"

@@ -64,7 +64,7 @@ class TalonDxComponentManager:
         self.logger = logger
 
         self._hw_config = {}
-        self.config_commands = {}
+        self.talondx_config = {}
         self.proxies = {}
 
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
@@ -90,7 +90,7 @@ class TalonDxComponentManager:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
-                for talon_cfg in self.config_commands["config_commands"]
+                for talon_cfg in self.talondx_config["config_commands"]
             ]
             results = [f.result() for f in futures]
 
@@ -106,9 +106,12 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-        deployer_proxy = CbfDeviceProxy("mid_csp_cbf/ec/deployer", self.logger)
-        self.config_commands = json.loads(deployer_proxy.configCommands)
         try:
+            talondx_config_path = (
+                f"{self.talondx_config_path}/talondx-config.json"
+            )
+            with open(talondx_config_path) as json_fd:
+                self.talondx_config = json.load(json_fd)
             with open(self._hw_config_path) as yaml_fd:
                 self._hw_config = yaml.safe_load(yaml_fd)
             return ResultCode.OK
@@ -614,7 +617,7 @@ class TalonDxComponentManager:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self._shutdown_talon_thread, talon_cfg)
-                for talon_cfg in self.config_commands["config_commands"]
+                for talon_cfg in self.talondx_config["config_commands"]
             ]
             results = [f.result() for f in futures]
 
