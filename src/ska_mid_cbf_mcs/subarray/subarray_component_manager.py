@@ -961,8 +961,16 @@ class CbfSubarrayComponentManager(
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
-                fsp_id = int(fsp["fsp_id"])
-                fsp_proxy = self._proxies_fsp[fsp_id - 1]
+                # Validate fsp_id.
+                if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
+                    fsp_id = int(fsp["fsp_id"])
+                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
+                else:
+                    msg = (
+                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
+                        " Aborting configuration."
+                    )
+                    return (False, msg)
 
                 # Validate functionMode.
                 valid_function_modes = [
