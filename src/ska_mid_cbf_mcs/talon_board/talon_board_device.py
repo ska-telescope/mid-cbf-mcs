@@ -13,44 +13,33 @@ TANGO device class for monitoring a Talon board.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 # tango imports
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
-from tango import AttrWriteType
-from tango.server import attribute, device_property, run
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from tango import AttrWriteType, DebugIt
+from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
     TalonBoardComponentManager,
 )
 
 # Additional import
-# PROTECTED REGION ID(TalonBoard.additionnal_import) ENABLED START #
-
-
-# PROTECTED REGION END #    //  TalonBoard.additionnal_import
 
 __all__ = ["TalonBoard", "main"]
 
 
-class TalonBoard(SKABaseDevice):
+class TalonBoard(CbfDevice):
     """
     TANGO device class for consuming logs from the Tango devices run on the Talon boards,
     converting them to the SKA format, and outputting them via the logging framework.
     """
-
-    # PROTECTED REGION ID(TalonBoard.class_variable) ENABLED START #
 
     # Some of these IDs are typically integers. But it is easier to use
     # empty string to show the board is not assigned.
     subarrayID_ = ""
     dishID_ = ""
     vccID_ = ""
-
-    # PROTECTED REGION END #    //  TalonBoard.class_variable
 
     # -----------------
     # Device Properties
@@ -615,7 +604,6 @@ class TalonBoard(SKABaseDevice):
     # -----------------
 
     def read_subarrayID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_subarrayID) ENABLED START #
         """
         Read the subarrayID attribute.
 
@@ -623,20 +611,16 @@ class TalonBoard(SKABaseDevice):
         :rtype: str
         """
         return self.subarrayID_
-        # PROTECTED REGION END #    //  TalonBoard.subarrayID_read
 
     def write_subarrayID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.subarrayID_write) ENABLED START #
         """
         Write the subarrayID attribute.
 
         :param value: the vcc ID
         """
         self.subarrayID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.subarrayID_write
 
     def read_dishID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_dishID) ENABLED START #
         """
         Read the dishID attribute.
 
@@ -644,20 +628,16 @@ class TalonBoard(SKABaseDevice):
         :rtype: str
         """
         return self.dishID_
-        # PROTECTED REGION END #    //  TalonBoard.dishID_read
 
     def write_dishID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.dishID_write) ENABLED START #
         """
         Write the dishID attribute.
 
         :param value: the DISH ID
         """
         self.dishID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.dishID_write
 
     def read_vccID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_vccID) ENABLED START #
         """
         Read the vccID attribute.
 
@@ -665,30 +645,23 @@ class TalonBoard(SKABaseDevice):
         :rtype: str
         """
         return self.vccID_
-        # PROTECTED REGION END #    //  TalonBoard.vccID_read
 
     def write_vccID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.vccID_write) ENABLED START #
         """
         Write the vccID attribute.
 
         :param value: the vcc ID
         """
         self.vccID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.vccID_write
 
     # ---------------
     # General methods
     # ---------------
     def always_executed_hook(self: TalonBoard) -> None:
-        # PROTECTED REGION ID(TalonBoard.always_executed_hook) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  TalonBoard.always_executed_hook
 
     def delete_device(self: TalonBoard) -> None:
-        # PROTECTED REGION ID(TalonBoard.delete_device) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  TalonBoard.delete_device
 
     def init_command_objects(self: TalonBoard) -> None:
         """
@@ -696,68 +669,23 @@ class TalonBoard(SKABaseDevice):
         """
         super().init_command_objects()
 
-        # device_args = (self, self.op_state_model, self.logger)
-
-        # self.register_command_object("On", self.OnCommand(*device_args))
-
-        # self.register_command_object("Off", self.OffCommand(*device_args))
+        self.register_command_object(
+            "On",
+            SubmittedSlowCommand(
+                command_name="On",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="on",
+                logger=self.logger,
+            ),
+        )
 
     # ----------
     # Callbacks
     # ----------
 
-    def _communication_status_changed(
-        self: TalonBoard, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-
-    def _component_power_mode_changed(
-        self: TalonBoard, power_mode: PowerMode
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: TalonBoard, faulty: bool) -> None:
-        """
-        Handle component fault
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
     # --------
     # Commands
@@ -774,9 +702,6 @@ class TalonBoard(SKABaseDevice):
 
         self.logger.debug("Entering create_component_manager()")
 
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
-
         return TalonBoardComponentManager(
             hostname=self.TalonDxBoardAddress,
             influx_port=self.InfluxDbPort,
@@ -789,10 +714,10 @@ class TalonBoard(SKABaseDevice):
             talon_status_server=self.TalonStatusServer,
             hps_master_server=self.HpsMasterServer,
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            # TODO: Why was this defined? Not used in component manager..
+            # push_change_event_callback=self.push_change_event,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     class InitCommand(SKABaseDevice.InitCommand):
@@ -810,42 +735,25 @@ class TalonBoard(SKABaseDevice):
             """
             return super().do()
 
-    class OnCommand(SKABaseDevice.OnCommand):
-        """
-        The command class for the On command.
 
-        Initializes HPS device proxies and starts listening to
-        attribute change events
-        """
+# ---------------------
+# Long Running Commands
+# ---------------------
 
-        def do(self: TalonBoard.OnCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement On command functionality.
 
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-            return component_manager.on()
+def is_On_allowed(self: TalonBoard) -> bool:
+    return True
 
-    class OffCommand(SKABaseDevice.OffCommand):
-        """
-        The command class for the Off command.
 
-        Stops listening to attribute change events
-        """
-
-        def do(self: TalonBoard.OffCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement Off command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-            return component_manager.off()
+@command(
+    dtype_out="DevVarLongStringArray",
+    doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
+)
+@DebugIt()
+def On(self: TalonBoard) -> None:
+    command_handler = self.get_command_object("On")
+    result_code_message, command_id = command_handler()
+    return [[result_code_message], [command_id]]
 
 
 # ----------
@@ -854,9 +762,7 @@ class TalonBoard(SKABaseDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(TalonBoard.main) ENABLED START #
-    return run((TalonBoard,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  TalonBoard.main
+    return TalonBoard.run_server(args=args or None, **kwargs)
 
 
 if __name__ == "__main__":

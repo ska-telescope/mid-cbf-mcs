@@ -10,20 +10,21 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional, Tuple
 
 import tango
+from ska_control_model import TaskStatus
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
+from ska_tango_testing import context
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
@@ -31,18 +32,12 @@ from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
 
 class TalonBoardComponentManager(CbfComponentManager):
     """
-    A component manager for a Talon board. Calls either the power
-    switch driver or the power switch simulator based on the value of simulation
-    mode.
-
-    :param simulation_mode: simulation mode identifies if the real power switch
-                          driver or the simulator should be used
-    :param ip: IP address of the power switch
-    :param logger: a logger for this object to use
+    A component manager for a Talon board.
     """
 
     def __init__(
         self: TalonBoardComponentManager,
+        *args: Any,
         hostname: str,
         influx_port: int,
         influx_org: str,
@@ -53,13 +48,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         eth_100g_server: str,
         talon_status_server: str,
         hps_master_server: str,
-        logger: logging.Logger,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
-        component_fault_callback: Callable[[bool], None],
+        **kwargs: Any,
     ) -> None:
         """
         Initialise a new instance.
@@ -74,18 +63,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param eth_100g_server: 100g ethernet 0 device server name
         :param talon_status_server: Talon Status device server name
         :param hps_master_server: HPS Master device server name
-        :param logger: a logger for this object to use
-        :param push_change_event_callback: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
-            component fault
         """
-        self.connected = False
+
+        super().__init__(*args, **kwargs)
 
         # influxdb
         self._db_client = InfluxdbQueryClient(
@@ -94,7 +74,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             influx_org=influx_org,
             influx_bucket=influx_bucket,
             influx_auth_token=influx_auth_token,
-            logger=logger,
+            logger=self.logger,
         )
 
         # Device Server names
@@ -120,39 +100,31 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
         self._talon_status_events = []
 
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
-        )
-
     def start_communicating(self) -> None:
         """Establish communication with the component, then start monitoring."""
-        self._logger.info(
+        self.logger.debug(
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if self.connected:
-            self._logger.info("Already communicating.")
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
+            self.logger.info("Already communicating.")
             return
 
         super().start_communicating()
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.OFF)
-        self.connected = True
+
+        self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        # This moves the op state model.
+        self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self) -> None:
         """Stop communication with the component."""
-        self._logger.info(
+        self.logger.debug(
             "Entering TalonBoardComponentManager.stop_communicating"
         )
+
+        self._update_component_state(power=PowerState.UNKNOWN)
+        # This moves the op state model.
         super().stop_communicating()
-        # update component power mode to unknown when monitoring communications
-        # to the component (talon board here) are halted
-        self.update_component_power_mode(PowerMode.UNKNOWN)
-        self.connected = False
 
     def _get_devices_in_server(self, server: str):
         db = tango.Database()
@@ -178,55 +150,6 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         dev_list = self._get_devices_in_server(self._hps_master_server)
         self._hps_master_fqdn = dev_list[0] if len(dev_list) >= 1 else None
-
-    def on(self) -> Tuple[ResultCode, str]:
-        """
-        Turn on Talon Board component. This attempts to establish communication
-        with the devices on the HPS, and subscribe to attribute changes.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-
-        :raise ConnectionError: if unable to connect to HPS VCC devices
-        """
-        self._logger.debug("Entering TalonBoardComponentManager.on")
-        try:
-            self._get_hps_devices_in_db()
-
-            for fqdn in [
-                self._talon_sysid_fqdn,
-                self._eth_100g_0_fqdn,
-                self._eth_100g_1_fqdn,
-                self._talon_status_fqdn,
-                self._hps_master_fqdn,
-            ]:
-                if fqdn is not None:
-                    self._proxies[fqdn] = CbfDeviceProxy(
-                        fqdn=fqdn, logger=self._logger
-                    )
-                    self._logger.info(f"Created device proxy for {fqdn}")
-        except tango.DevFailed as df:
-            self._logger.error(str(df.args[0].desc))
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, "Failed to connect to HPS devices")
-
-        self._subscribe_change_events()
-
-        # TODO: The InfluxDB takes some time to come up and this ping
-        #       fails at the moment. We should make the on command
-        #       an asynchronous long running command, and wait for
-        #       ping to succeed before flipping device state to ON.
-        # ping_res = asyncio.run(self._db_client.ping())
-        # if not ping_res:
-        #     self._logger.error(f'Cannot ping InfluxDB: {ping_res}')
-        # self.update_component_fault(True)
-        # return (ResultCode.FAILED, "Failed to connect to InfluxDB")
-
-        self._logger.info("Completed TalonBoardComponentManager.on")
-        self.update_component_power_mode(PowerMode.ON)
-        return (ResultCode.OK, "On command completed OK")
 
     def _subscribe_change_events(self):
         """
@@ -374,14 +297,14 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         for ev in self._talon_sysid_events:
             for name, id in ev.items():
-                self._logger.info(
+                self.logger.info(
                     f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
                 )
                 self._proxies[self._talon_sysid_fqdn].remove_event(name, id)
 
         for ev in self._talon_status_events:
             for name, id in ev.items():
-                self._logger.info(
+                self.logger.info(
                     f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
                 )
                 self._proxies[self._talon_status_fqdn].remove_event(name, id)
@@ -389,23 +312,23 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_attrs = {}
         self._talon_status_attrs = {}
 
-        self.update_component_power_mode(PowerMode.OFF)
-        return (ResultCode.OK, "Off command completed OK")
+        self._update_component_state(power=PowerState.OFF)
+        return (ResultCode.OK, "Off completed OK")
 
     def _attr_change_callback(
         self, fqdn: str, name: str, value: Any, quality: AttrQuality
     ):
         if value is None:
-            self._logger.warning(
+            self.logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
-        self._logger.debug(f"Attr Change callback: {name} -> {value}")
+        self.logger.debug(f"Attr Change callback: {name} -> {value}")
         if fqdn == self._talon_sysid_fqdn:
             self._talon_sysid_attrs[name] = value
         elif fqdn == self._talon_status_fqdn:
             self._talon_status_attrs[name] = value
         else:
-            self._logger.warning(
+            self.logger.warning(
                 f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
             )
 
@@ -770,7 +693,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(int(val))
             else:
                 msg = f"{field} cannot be read."
-                self._logger.warn(msg)
+                self.logger.warn(msg)
                 res.append(-1)
         return res
 
@@ -786,7 +709,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(int(val))
             else:
                 msg = f"{field} cannot be read."
-                self._logger.warn(msg)
+                self.logger.warn(msg)
                 res.append(-1)
         return res
 
@@ -802,7 +725,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(bool(val))
             else:
                 msg = f"{field} cannot be read."
-                self._logger.error(msg)
+                self.logger.error(msg)
                 res.append(-1)
         return res
 
@@ -1016,7 +939,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def _throw_if_device_off(self):
-        if self.power_mode != PowerMode.ON:
+        if self.power_mode != PowerState.ON:
             tango.Except.throw_exception(
                 "Talon_Board_Off",
                 "Talon Board is OFF",
@@ -1035,7 +958,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._telemetry[r[0]] = (r[1], r[2])
             except Exception as e:
                 msg = f"Failed to query Influxdb of {self._hostname}: {e}"
-                self._logger.error(msg)
+                self.logger.error(msg)
                 tango.Except.throw_exception(
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
@@ -1050,7 +973,102 @@ class TalonBoardComponentManager(CbfComponentManager):
         td = datetime.now(timezone.utc) - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self._logger.error(msg)
+            self.logger.error(msg)
             tango.Except.throw_exception(
                 "No new record available", msg, "validate_time()"
             )
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    def is_on_allowed(self: TalonBoardComponentManager) -> bool:
+        self.logger.debug("Checking if On is allowed.")
+        return self.power_state == PowerState.OFF
+
+    def _on(
+        self: TalonBoardComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Turn on Talon Board component. This attempts to establish communication
+        with the devices on the HPS, and subscribe to attribute changes.
+
+        :raise ConnectionError: if unable to connect to HPS VCC devices
+        """
+        self.logger.debug("Entering TalonBoardComponentManager.on")
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
+            return
+
+        try:
+            self._get_hps_devices_in_db()
+
+            for fqdn in [
+                self._talon_sysid_fqdn,
+                self._eth_100g_0_fqdn,
+                self._eth_100g_1_fqdn,
+                self._talon_status_fqdn,
+                self._hps_master_fqdn,
+            ]:
+                if fqdn is not None:
+                    self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
+                    self.logger.debug(f"Created device proxy for {fqdn}")
+                else:
+                    self._update_communication_state(
+                        CommunicationStatus.NOT_ESTABLISHED
+                    )
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=(
+                            ResultCode.FAILED,
+                            "Failed to establish proxies defined in device properties. Check charts.",
+                        ),
+                    )
+                    return
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            task_callback(
+                exception=df,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, df.args[0].desc),
+            )
+            return
+
+        self._subscribe_change_events()
+
+        ping_res = asyncio.run(self._db_client.ping())
+        if not ping_res:
+            self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
+            self._update_component_state(fault=True)
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, "Failed to connect to InfluxDB"),
+            )
+            return
+
+        self._update_component_state(power=PowerState.ON)
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "On completed OK",
+            ),
+        )
+
+    def on(
+        self: TalonBoardComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Tuple[ResultCode, str]:
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._on,
+            is_cmd_allowed=self.is_on_allowed,
+            task_callback=task_callback,
+        )
