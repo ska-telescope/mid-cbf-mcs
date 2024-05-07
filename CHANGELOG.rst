@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+Unreleased
+******
+* CIP-2249 Remove redunant telescope model validation
+
 0.14.2
 ******
 * CIP-2418 Fix On command timeout by clearing talons with a script
