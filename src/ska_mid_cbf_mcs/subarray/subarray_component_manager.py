@@ -1182,7 +1182,6 @@ class CbfSubarrayComponentManager(
                             self._logger.error(msg)
                             return (False, msg)
 
-
                     # Validate fspChannelOffset
                     try:
                         if "channel_offset" in fsp:
