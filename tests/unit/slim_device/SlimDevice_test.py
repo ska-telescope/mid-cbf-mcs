@@ -164,7 +164,7 @@ class TestSlim:
         """
         assert test_utils.device_online_and_on(device_under_test)
         time.sleep(CONST_WAIT_TIME)
-        
+
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
@@ -200,7 +200,7 @@ class TestSlim:
         """
         assert test_utils.device_online_and_on(device_under_test)
         time.sleep(CONST_WAIT_TIME)
-        
+
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
@@ -235,7 +235,7 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert test_utils.device_online_and_on(device_under_test_fail)
-        
+
         time.sleep(CONST_WAIT_TIME)
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test_fail.Configure(
