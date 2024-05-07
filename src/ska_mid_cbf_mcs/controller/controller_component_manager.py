@@ -23,7 +23,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
-    PowerMode,
+    PowerState,
     SimulationMode,
 )
 from ska_telmodel.data import TMData
@@ -67,7 +67,7 @@ class ControllerComponentManager(CbfComponentManager):
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_power_mode_changed_callback: Callable[[PowerState], None],
         component_fault_callback: Callable,
     ) -> None:
         """
@@ -362,7 +362,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerState.OFF)
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
@@ -741,7 +741,7 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._fqdn_vcc:
             try:
                 proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
+                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     proxy.dishID = dish_id
@@ -790,10 +790,9 @@ class ControllerComponentManager(CbfComponentManager):
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.simulationMode = sim_mode
-            proxy.adminMode = AdminMode.ONLINE
-
+            proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            proxy.write_attribute("simulationMode", sim_mode)
+            proxy.write_attribute("adminMode", AdminMode.ONLINE)
             proxy.On()
         except tango.DevFailed as e:
             self._logger.error(e)
