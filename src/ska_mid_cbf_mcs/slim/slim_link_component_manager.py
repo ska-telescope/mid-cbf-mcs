@@ -17,15 +17,13 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
-
-BER_PASS_THRESHOLD = 8.000e-11
-
 
 class SlimLinkComponentManager(CbfComponentManager):
     """
@@ -505,10 +503,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             if counters[5] != 0:
                 error_flag = True
                 error_msg += "cdr_lost_count not zero. "
-            if self.bit_error_rate > BER_PASS_THRESHOLD:
+            if self.bit_error_rate > const.BER_PASS_THRESHOLD:
                 error_flag = True
                 error_msg += (
-                    f"bit-error-rate higher than {BER_PASS_THRESHOLD}. "
+                    f"bit-error-rate higher than {const.BER_PASS_THRESHOLD}. "
                 )
         except tango.DevFailed as df:
             error_msg = f"verify_connection() failed for {self._link_name}: {df.args[0].desc}"

@@ -274,6 +274,8 @@ class SlimComponentManager(CbfComponentManager):
     ) -> Tuple[ResultCode, str]:
         """
         Logs a summary status of the SLIM Mesh Link health for each device on the Mesh
+        Specifically, this will calcualte the bit-error rate for a rx device in the mesh
+        and compared to a threshold set in global_enum.py
 
         :return: A tuple containing a return code and a message string
         :rtype: (ResultCode, str)
@@ -289,6 +291,8 @@ class SlimComponentManager(CbfComponentManager):
                 rx_idle_word_count = counters[2]
                 rx_idle_error_count = counters[3]
 
+                # word error rate: a ratio of rx idle error count compared to the 
+                # count of rx idle word transmitted
                 if not rx_idle_word_count:
                     rx_word_error_rate = "NaN"
                     rx_status = "Unknown"

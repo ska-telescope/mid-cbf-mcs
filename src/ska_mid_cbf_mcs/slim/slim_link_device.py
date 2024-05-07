@@ -127,7 +127,7 @@ class SlimLink(SKABaseDevice):
 
     rx_debug_alignment_and_lock_status = attribute(
         dtype=("DevBoolean",),
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         max_dim_x=4,
         label="Rx Debug Alignment and Lock Status",
         doc="""
@@ -409,18 +409,6 @@ class SlimLink(SKABaseDevice):
         :rtype list[bool]
         """
         return self.component_manager.rx_debug_alignment_and_lock_status
-
-    def write_rx_debug_alignment_and_lock_status(
-        self: SlimLink, value: list[bool]
-    ) -> None:
-        """
-        Set the Debug Alignment and Lock Status Flags
-        Only idx [0] and [2] are writtable
-
-        :param: 4-value array of a Debug Alignment and Lock Status Flags to be set, including non-writtable registers
-        """
-        self.component_manager.rx_debug_alignment_and_lock_status[0] = value[0]
-        self.component_manager.rx_debug_alignment_and_lock_status[2] = value[2]
 
     def read_rx_link_occupancy(self: SlimLink) -> float:
         """
