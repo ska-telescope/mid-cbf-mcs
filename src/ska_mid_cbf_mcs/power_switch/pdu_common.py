@@ -2,13 +2,6 @@ from __future__ import annotations
 
 from ska_tango_base.control_model import PowerState
 
-PowerStateStrDict = {
-    PowerState.UNKNOWN: "UNKNOWN",
-    PowerState.OFF: "OFF",
-    PowerState.STANDBY: "STANDBY",
-    PowerState.ON: "ON",
-}
-
 
 class Outlet:
     """Represents a single outlet in the power switch."""

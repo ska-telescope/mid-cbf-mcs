@@ -119,12 +119,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         Perform any setup needed for communicating with the power switch.
         """
-        if not self.simulation_mode:
+        if self.simulation_mode:
+            outlets = self.power_switch_simulator.outlets
+        else:
             self.power_switch_driver.initialize()
+            outlets = self.power_switch_driver.outlets
 
         # We only want CommunicationStatus.Established if
         # the PDU responded with a valid list of outlets.
-        if self.power_switch_driver.outlets:
+        if outlets:
             super().start_communicating()
             # This moves the op state model.
             self._update_component_state(power=PowerState.ON)
@@ -197,52 +200,50 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self: PowerSwitchComponentManager,
         mode: str,
         outlet: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        result_code: ResultCode,
+        message: str,
     ) -> bool:
+        if result_code != ResultCode.OK:
+            return False, message
+
         power_mode = self.get_outlet_power_mode(outlet)
         self.logger.debug(f"Outlet {outlet} = {power_mode}")
         if mode == "on":
             if power_mode == PowerState.ON:
-                return True
+                return True, "TurnOnOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
-                self.logger.info(
+                self.logger.warn(
                     "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
                 )
-                if self.task_abort_event_is_set(
-                    "TurnOnOutlet", task_callback, task_abort_event
-                ):
-                    return
                 sleep(5)
                 power_mode = self.get_outlet_power_mode(outlet)
                 if power_mode != PowerState.ON:
-                    self.logger.error(
-                        f"Outlet {outlet} failed to power on after sleep."
+                    return (
+                        False,
+                        f"Outlet {outlet} failed to power on after sleep.",
                     )
-                    return False
         elif mode == "off":
             if power_mode == PowerState.OFF:
-                return True
+                return True, "TurnOffOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                self.logger.info(
+                self.logger.warn(
                     "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
                 )
-                if self.task_abort_event_is_set(
-                    "TurnOffOutlet", task_callback, task_abort_event
-                ):
-                    return
                 sleep(5)
                 power_mode = self.get_outlet_power_mode(outlet)
                 if power_mode != PowerState.OFF:
-                    return False
+                    return (
+                        False,
+                        f"Outlet {outlet} failed to power off after sleep.",
+                    )
 
     # ---------------------
     # Long Running Commands
     # ---------------------
 
-    def is_turn_outlet_on_allowed(self) -> bool:
+    def is_turn_on_outlet_allowed(self) -> bool:
         self.logger.debug("Checking if TurnOnOutlet is allowed.")
         return (
             self.communication_state == CommunicationStatus.ESTABLISHED
@@ -283,21 +284,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 result_code, message = self.power_switch_driver.turn_on_outlet(
                     outlet
                 )
-                if result_code != ResultCode.OK:
-                    self.logger.error(message)
-                    task_callback(
-                        status=TaskStatus.FAILED,
-                        result=(result_code, "TurnOnOutlet FAILED"),
-                    )
-                    return
-
-                powered_on = self.check_power_mode(
-                    "on", outlet, task_callback, task_abort_event
+                powered_on, message = self.check_power_mode(
+                    "on", outlet, result_code, message
                 )
                 if not powered_on:
                     task_callback(
                         status=TaskStatus.FAILED,
-                        result=(ResultCode.FAILED, "TurnOnOutlet FAILED"),
+                        result=(ResultCode.FAILED, message),
                     )
                     return
             except AssertionError as e:
@@ -323,8 +316,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
-        Turn the device on.
+        Turn on the PDU outlet specified by argin.
 
+        :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of
             the command changes
 
@@ -334,11 +328,11 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_on_outlet,
             args=[argin],
-            is_cmd_allowed=self.is_turn_outlet_on_allowed,
+            is_cmd_allowed=self.is_turn_on_outlet_allowed,
             task_callback=task_callback,
         )
 
-    def is_turn_outlet_off_allowed(self) -> bool:
+    def is_turn_off_outlet_allowed(self) -> bool:
         self.logger.debug("Checking if TurnOffOutlet is allowed.")
         return (
             self.communication_state == CommunicationStatus.ESTABLISHED
@@ -380,20 +374,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     result_code,
                     message,
                 ) = self.power_switch_driver.turn_off_outlet(outlet)
-                if result_code != ResultCode.OK:
-                    self.logger.error(message)
-                    task_callback(
-                        status=TaskStatus.FAILED,
-                        result=(result_code, "TurnOffOutlet FAILED"),
-                    )
-                    return
-                powered_off = self.check_power_mode(
-                    "off", outlet, task_callback, task_abort_event
+                powered_off, message = self.check_power_mode(
+                    "off", outlet, result_code, message
                 )
                 if not powered_off:
                     task_callback(
                         status=TaskStatus.FAILED,
-                        result=(ResultCode.FAILED, "TurnOffOutlet FAILED"),
+                        result=(ResultCode.FAILED, message),
                     )
                     return
             except AssertionError as e:
@@ -419,8 +406,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
-        Turn the device off.
+        Turn off the PDU outlet specified by argin.
 
+        :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of
             the command changes
 
@@ -430,6 +418,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_off_outlet,
             args=[argin],
-            is_cmd_allowed=self.is_turn_outlet_off_allowed,
+            is_cmd_allowed=self.is_turn_off_outlet_allowed,
             task_callback=task_callback,
         )

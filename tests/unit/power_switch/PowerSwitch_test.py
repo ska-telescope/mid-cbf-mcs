@@ -15,10 +15,10 @@ import gc
 from typing import Any, Iterator
 
 import pytest
+from ska_control_model import AdminMode, SimulationMode
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, SimulationMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
@@ -243,7 +243,7 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "TurnOffOutlet FAILED"]')
+                (f"{command_id[0]}", '[3, "HTTP response error"]')
             )
 
         # Attempt to turn outlets on
@@ -254,7 +254,7 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "TurnOnOutlet FAILED"]')
+                (f"{command_id[0]}", '[3, "HTTP response error"]')
             )
 
         # assert if any captured events have gone unaddressed
@@ -370,7 +370,7 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "TurnOffOutlet FAILED"]')
+                (f"{command_id[0]}", f'[3, "Outlet {str(i)} failed to power off after sleep."]')
             )
 
         # assert if any captured events have gone unaddressed
@@ -531,7 +531,7 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "TurnOnOutlet FAILED"]')
+                (f"{command_id[0]}", f'[3, "Outlet {str(i)} failed to power on after sleep."]')
             )
 
         # assert if any captured events have gone unaddressed
