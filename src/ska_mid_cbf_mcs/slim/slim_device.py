@@ -293,6 +293,16 @@ class Slim(SKABaseDevice):
         A command to test the mesh of SLIM Tx Rx Links
         """
 
+        def is_allowed(self: SlimMeshTestCommand) -> bool:
+            """
+            Determined if SlimMeshTest is allowed
+            (allowed when the Mesh is configured and communicating)
+
+            :return: if SlimMeshTest is allowed
+            :rtype: bool
+            """
+            return self.target.component_manager.is_communicating
+
         def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
@@ -303,8 +313,9 @@ class Slim(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
 
-            if self.target.get_state() == tango.DevState.ON:
-                component_manager = self.target.component_manager
+            if self.is_allowed():
+                # shorten to cm to help fit the below two function call in one line
+                cm = self.target.component_manager
                 t_sleep = 2
                 # TODO Change test_length to something longer when BaseClass Updates are completed
                 # Currently there is no way to prevent the 3sec default timeout for commands
@@ -317,26 +328,19 @@ class Slim(SKABaseDevice):
                     )
 
                 # Prints the connection status and Bit Error Rate of the devices on the mesh
-                (
-                    result_code,
-                    message,
-                ) = component_manager.slim_mesh_links_ber_check_summary()
+                (result_code, message) = cm.slim_mesh_links_ber_check_summary()
                 if result_code != ResultCode.OK:
                     return (result_code, message)
 
                 # Logs Health Summary of Mesh Links
-                (result_code, message) = component_manager.slim_table()
+                (result_code, message) = cm.slim_table()
                 if result_code != ResultCode.OK:
                     return (result_code, message)
                 return (ResultCode.OK, "SLIM Mesh Test Completed")
-
             else:
-                self.logger.info(
-                    "Device is off. Failed to issue Configure command."
-                )
                 return (
                     ResultCode.FAILED,
-                    "Device is off. Failed to issue Configure command.",
+                    "The Mesh is not configure and/or it is not communicating",
                 )
 
     @command(
@@ -358,11 +362,6 @@ class Slim(SKABaseDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     def SlimMeshTest(self: Slim) -> None:
-        if self.component_manager.is_communicating is not True:
-            return [
-                [ResultCode.FAILED],
-                ["The Mesh is currently not communicating and/or configured"],
-            ]
         handler = self.get_command_object("SlimMeshTest")
         return_code, message = handler()
         return [[return_code], [message]]
