@@ -41,9 +41,9 @@ def power_switch_fixture(
     test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
     """
-    Fixture that returns the power switch 1 mock
+    Fixture that returns the power switch mock
     """
-    return test_context.get_device("mid_csp_cbf/power_switch/001")
+    return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
 @pytest.fixture(name="change_event_callbacks")
@@ -125,7 +125,11 @@ def initial_mocks(
     mock_talon_board: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
-    Return a dictionary of device proxy mocks to pre-register.
+    Return a dictionary of device proxy mocks to pre-register. 
+    Althought these mocks are not explicitly used in TalonLRU_test.py, 
+    they are required to be pre-registered in the test harness. 
+    TalonLRU device only uses the mock's 3 digit device name 
+    to create the device proxy rather then full FQDN.
 
     :param mock_vcc_band: a mock VccBand device that is powered off.
     :param mock_sw: a mock VccSearchWindow that is powered off.
@@ -135,6 +139,7 @@ def initial_mocks(
     return {
         "mid_csp_cbf/talon_board/001": mock_talon_board,
         "mid_csp_cbf/talon_board/002": mock_talon_board,
-        "mid_csp_cbf/power_switch/001": mock_power_switch,
+        # TODO: power_switch/001 is currently unused in testing, should be used in future to cover missing unit test cases
+        # "mid_csp_cbf/power_switch/001": mock_power_switch,
         "mid_csp_cbf/power_switch/002": mock_power_switch,
     }
