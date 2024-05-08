@@ -269,7 +269,7 @@ class SlimComponentManager(CbfComponentManager):
 
         return counters
 
-    def _calculate_rx_word_rate_float(
+    def _calculate_rx_idle_word_rate_float(
         self, rx_idle_word_count: int, rx_idle_error_count: int
     ) -> float:
         """
@@ -309,16 +309,18 @@ class SlimComponentManager(CbfComponentManager):
                 # word error rate: a ratio of rx idle error count compared to the
                 # count of rx idle word transmitted
 
-                rx_word_rate_float = self._calculate_rx_word_rate_float(
-                    rx_idle_word_count, rx_idle_error_count
+                rx_idle_word_rate_float = (
+                    self._calculate_rx_idle_word_rate_float(
+                        rx_idle_word_count, rx_idle_error_count
+                    )
                 )
 
-                if rx_word_rate_float == -1.0:
-                    rx_word_error_rate = "NaN"
+                if rx_idle_word_rate_float == -1.0:
+                    rx_idle_word_error_rate = "NaN"
                     rx_status = "Unknown"
                 else:
-                    rx_word_error_rate = f"{rx_word_rate_float:.3e}"
-                    if rx_word_rate_float < const.BER_PASS_THRESHOLD:
+                    rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
+                    if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD:
                         rx_status = "Passed"
                     else:
                         rx_status = "Failed"
@@ -327,7 +329,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 res += f"Link Name: {name}\n"
                 res += f"Slim Link status (rx_status): {rx_status}\n"
-                res += f"rx_wer:{rx_word_error_rate}\n"
+                res += f"rx_wer:{rx_idle_word_error_rate}\n"
                 res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
                 res += "\n"
             self._logger.info(res)
@@ -386,26 +388,30 @@ class SlimComponentManager(CbfComponentManager):
                 rx_word_error_rate = ""
 
                 # first check if to prevent a divide by zero error as rx_idle_word_count defaults to 0
-                rx_word_rate_float = self._calculate_rx_word_rate_float(
-                    rx_idle_word_count, rx_idle_error_count
-                )
-                if rx_word_rate_float == -1.0:
-                    rx_word_error_rate = "NaN"
-                else:
-                    rx_word_error_rate = (
-                        f"{rx_idle_error_count/rx_idle_word_count:.3e}"
+                rx_idle_word_rate_float = (
+                    self._calculate_rx_idle_word_rate_float(
+                        rx_idle_word_count, rx_idle_error_count
                     )
+                )
+                if rx_idle_word_rate_float == -1.0:
+                    rx_idle_word_error_rate = "NaN"
+                else:
+                    rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
 
                 data_row = (
                     f"{short_name_one}\n->{short_name_two}",
                     f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
                     f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
                     f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
-                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f if tx_words != 0 else 'NaN'}",
+                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
+                    if tx_words != 0
+                    else "NaN",
                     f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
-                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f if rx_words != 0 else 'NaN'}",
+                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
+                    if rx_words != 0
+                    else "NaN",
                     f"{rx_idle_error_count} /\n{rx_words:.2e}",
-                    rx_word_error_rate,
+                    rx_idle_word_error_rate,
                 )
                 table.rows.append(data_row)
             self._logger.info(f"\nSLIM Health Summary Table\n{table}")
