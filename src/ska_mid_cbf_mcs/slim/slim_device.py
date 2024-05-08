@@ -293,21 +293,6 @@ class Slim(SKABaseDevice):
         """
         A command to test the mesh of SLIM Tx Rx Links
         """
-
-        def is_allowed(self: Slim.SlimMeshTestCommand) -> bool:
-            """
-            Determined if SlimMeshTest is allowed
-            (allowed when the Mesh is configured and communicating)
-
-            :return: if SlimMeshTest is allowed
-            :rtype: bool
-            """
-            # If the Mesh is not communicating or configured
-            if not self.target.component_manager.is_communicating():
-                self.logger.info("The Mesh is not configure and/or it is not communicating")
-                return False
-            return True
-
         def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
@@ -361,6 +346,7 @@ class Slim(SKABaseDevice):
         Determined if SlimMeshTest is allowed
         (allowed when the Mesh is configured)
 
+        Raises CommandError if DevState is not on and/or the Mesh has not been configured
         :return: if SlimMeshTest is allowed
         :rtype: bool
         """
@@ -369,7 +355,7 @@ class Slim(SKABaseDevice):
                 return True
             else:
                 raise CommandError(
-                    "The SLIM Mesh must be Configured before SlimMeshTest can be called"
+                    "The SLIM Mesh must be configured before SlimMeshTest can be called"
                 )
         return False
 
