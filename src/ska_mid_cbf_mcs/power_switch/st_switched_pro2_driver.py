@@ -139,17 +139,17 @@ class STSwitchedPRO2Driver:
             self.logger.error("Failed to connect to power switch")
             return False
 
-    def get_outlet_power_mode(
+    def get_outlet_power_state(
         self: STSwitchedPRO2Driver, outlet: str
     ) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
-        :raise AssertionError: if outlet power mode is different than expected
+        :raise AssertionError: if outlet power state is different than expected
         """
 
         assert (
@@ -176,21 +176,21 @@ class STSwitchedPRO2Driver:
                     state = str(resp["state"])
 
                     if state == self.state_on:
-                        power_mode = PowerState.ON
+                        power_state = PowerState.ON
                     elif state == self.state_off:
-                        power_mode = PowerState.OFF
+                        power_state = PowerState.OFF
                     else:
-                        power_mode = PowerState.UNKNOWN
+                        power_state = PowerState.UNKNOWN
 
                 except IndexError:
-                    power_mode = PowerState.UNKNOWN
+                    power_state = PowerState.UNKNOWN
 
-                if power_mode != self.outlets[outlet_idx].power_mode:
+                if power_state != self.outlets[outlet_idx].power_state:
                     raise AssertionError(
-                        f"Power mode of outlet ID {outlet} ({power_mode})"
-                        f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
+                        f"Power state of outlet ID {outlet} ({power_state})"
+                        f" is different than the expected mode {self.outlets[outlet_idx].power_state}"
                     )
-                return power_mode
+                return power_state
             else:
                 self.logger.error(
                     f"HTTP response error: {response.status_code}"
@@ -237,7 +237,7 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.ON
+                self.outlets[outlet_idx].power_state = PowerState.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -286,7 +286,7 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerState.OFF
+                self.outlets[outlet_idx].power_state = PowerState.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
                 self.logger.error(
@@ -330,20 +330,20 @@ class STSwitchedPRO2Driver:
                         state = str(resp_dict["state"])
 
                         if state == self.state_on:
-                            power_mode = PowerState.ON
+                            power_state = PowerState.ON
                         elif state == self.state_off:
-                            power_mode = PowerState.OFF
+                            power_state = PowerState.OFF
                         else:
-                            power_mode = PowerState.UNKNOWN
+                            power_state = PowerState.UNKNOWN
 
                     except IndexError:
-                        power_mode = PowerState.UNKNOWN
+                        power_state = PowerState.UNKNOWN
 
                     outlets.append(
                         Outlet(
                             outlet_ID=str(idx),
                             outlet_name=resp_dict["name"],
-                            power_mode=power_mode,
+                            power_state=power_state,
                         )
                     )
                 return outlets

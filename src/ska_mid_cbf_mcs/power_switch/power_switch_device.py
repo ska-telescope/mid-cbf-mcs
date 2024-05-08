@@ -193,7 +193,7 @@ class PowerSwitch(CbfDevice):
         """
         The command class for the GetOutletPowerState command.
 
-        Get the power mode of an individual outlet, specified by the outlet ID.
+        Get the power state of an individual outlet, specified by the outlet ID.
         """
 
         def __init__(
@@ -213,19 +213,19 @@ class PowerSwitch(CbfDevice):
 
             :param argin: the outlet ID to get the state of
 
-            :return: power mode of the outlet
+            :return: power state of the outlet
             """
             try:
-                return self.component_manager.get_outlet_power_mode(argin)
+                return self.component_manager.get_outlet_power_state(argin)
             except AssertionError as e:
                 self.logger.error(e)
                 return PowerState.UNKNOWN
 
     @command(
         dtype_in="DevString",
-        doc_in="Outlet ID to get the power mode of.",
+        doc_in="Outlet ID to get the power state of.",
         dtype_out="DevULong",
-        doc_out="Power mode of the outlet.",
+        doc_out="power state of the outlet.",
     )
     @DebugIt()
     def GetOutletPowerState(self: PowerSwitch, argin: str) -> int:

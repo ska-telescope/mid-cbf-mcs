@@ -370,7 +370,10 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", f'[3, "Outlet {str(i)} failed to power off after sleep."]')
+                (
+                    f"{command_id[0]}",
+                    f'[3, "Outlet {str(i)} failed to power off after sleep."]',
+                )
             )
 
         # assert if any captured events have gone unaddressed
@@ -531,7 +534,10 @@ class TestPowerSwitch:
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", f'[3, "Outlet {str(i)} failed to power on after sleep."]')
+                (
+                    f"{command_id[0]}",
+                    f'[3, "Outlet {str(i)} failed to power on after sleep."]',
+                )
             )
 
         # assert if any captured events have gone unaddressed

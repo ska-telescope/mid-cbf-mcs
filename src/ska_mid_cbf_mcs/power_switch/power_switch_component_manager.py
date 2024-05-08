@@ -145,22 +145,22 @@ class PowerSwitchComponentManager(CbfComponentManager):
         # This moves the op state model.
         super().stop_communicating()
 
-    def get_outlet_power_mode(
+    def get_outlet_power_state(
         self: PowerSwitchComponentManager, outlet: str
     ) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
         """
 
         if self.simulation_mode:
-            return self.power_switch_simulator.get_outlet_power_mode(outlet)
+            return self.power_switch_simulator.get_outlet_power_state(outlet)
         else:
-            return self.power_switch_driver.get_outlet_power_mode(outlet)
+            return self.power_switch_driver.get_outlet_power_state(outlet)
 
     def get_power_switch_driver(
         self: PowerSwitchComponentManager,
@@ -196,7 +196,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 "get_power_switch_driver()",
             )
 
-    def check_power_mode(
+    def check_power_state(
         self: PowerSwitchComponentManager,
         mode: str,
         outlet: str,
@@ -206,34 +206,34 @@ class PowerSwitchComponentManager(CbfComponentManager):
         if result_code != ResultCode.OK:
             return False, message
 
-        power_mode = self.get_outlet_power_mode(outlet)
-        self.logger.debug(f"Outlet {outlet} = {power_mode}")
+        power_state = self.get_outlet_power_state(outlet)
+        self.logger.debug(f"Outlet {outlet} = {power_state}")
         if mode == "on":
-            if power_mode == PowerState.ON:
+            if power_state == PowerState.ON:
                 return True, "TurnOnOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
                 self.logger.warn(
-                    "The outlet's power mode is not 'on' as expected. Waiting for 5 seconds before rechecking the power mode..."
+                    "The outlet's power state is not 'on' as expected. Waiting for 5 seconds before rechecking the power state..."
                 )
                 sleep(5)
-                power_mode = self.get_outlet_power_mode(outlet)
-                if power_mode != PowerState.ON:
+                power_state = self.get_outlet_power_state(outlet)
+                if power_state != PowerState.ON:
                     return (
                         False,
                         f"Outlet {outlet} failed to power on after sleep.",
                     )
         elif mode == "off":
-            if power_mode == PowerState.OFF:
+            if power_state == PowerState.OFF:
                 return True, "TurnOffOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
                 self.logger.warn(
-                    "The outlet's power mode is not 'off' as expected. Waiting for 5 seconds before rechecking the power mode..."
+                    "The outlet's power state is not 'off' as expected. Waiting for 5 seconds before rechecking the power state..."
                 )
                 sleep(5)
-                power_mode = self.get_outlet_power_mode(outlet)
-                if power_mode != PowerState.OFF:
+                power_state = self.get_outlet_power_state(outlet)
+                if power_state != PowerState.OFF:
                     return (
                         False,
                         f"Outlet {outlet} failed to power off after sleep.",
@@ -284,7 +284,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 result_code, message = self.power_switch_driver.turn_on_outlet(
                     outlet
                 )
-                powered_on, message = self.check_power_mode(
+                powered_on, message = self.check_power_state(
                     "on", outlet, result_code, message
                 )
                 if not powered_on:
@@ -374,7 +374,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     result_code,
                     message,
                 ) = self.power_switch_driver.turn_off_outlet(outlet)
-                powered_off, message = self.check_power_mode(
+                powered_off, message = self.check_power_state(
                     "off", outlet, result_code, message
                 )
                 if not powered_off:

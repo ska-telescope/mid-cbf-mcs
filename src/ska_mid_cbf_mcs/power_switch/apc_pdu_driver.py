@@ -60,7 +60,7 @@ class ApcPduDriver:
         # init outlet states to unknown first. The outlets can be polled
         # before initialize is called.
         self.outlets = [
-            Outlet(outlet_ID=id, outlet_name="", power_mode=PowerState.UNKNOWN)
+            Outlet(outlet_ID=id, outlet_name="", power_state=PowerState.UNKNOWN)
             for id in self.outlet_id_list
         ]
 
@@ -152,21 +152,21 @@ class ApcPduDriver:
             out_list.append(Outlet(o[0], o[1], status))
         return out_list
 
-    def get_outlet_power_mode(self: ApcPduDriver, outlet: str) -> PowerState:
+    def get_outlet_power_state(self: ApcPduDriver, outlet: str) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID ("all" is not supported)
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
-        :raise AssertionError: if outlet power mode is different than expected
+        :raise AssertionError: if outlet power state is different than expected
         """
         assert outlet in self.outlet_id_list, "Valid outlet IDs are 1 to 24"
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            power_mode = self.outlets[outlet_idx].power_mode
-        return power_mode
+            power_state = self.outlets[outlet_idx].power_state
+        return power_state
 
     def turn_on_outlet(
         self: ApcPduDriver, outlet: str
@@ -189,7 +189,7 @@ class ApcPduDriver:
             return (ResultCode.FAILED, err)
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            self.outlets[outlet_idx].power_mode = PowerState.ON
+            self.outlets[outlet_idx].power_state = PowerState.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -213,7 +213,7 @@ class ApcPduDriver:
             return (ResultCode.FAILED, err)
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            self.outlets[outlet_idx].power_mode = PowerState.OFF
+            self.outlets[outlet_idx].power_state = PowerState.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def _outlet_on(self: ApcPduDriver, outlet: str):

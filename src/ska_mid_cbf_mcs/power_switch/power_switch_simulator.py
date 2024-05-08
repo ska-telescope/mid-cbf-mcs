@@ -70,14 +70,14 @@ class PowerSwitchSimulator:
         """
         return True
 
-    def get_outlet_power_mode(
+    def get_outlet_power_state(
         self: PowerSwitchSimulator, outlet: str
     ) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
         """
@@ -88,7 +88,7 @@ class PowerSwitchSimulator:
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
-        return self.outlets[outlet_idx].power_mode
+        return self.outlets[outlet_idx].power_state
 
     def turn_on_outlet(
         self: PowerSwitchSimulator, outlet: str
@@ -107,7 +107,7 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerState.ON
+        self.outlets[outlet_idx].power_state = PowerState.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -127,7 +127,7 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerState.OFF
+        self.outlets[outlet_idx].power_state = PowerState.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def get_outlet_list(self: PowerSwitchSimulator) -> List(Outlet):
@@ -143,7 +143,7 @@ class PowerSwitchSimulator:
                 Outlet(
                     outlet_ID=self.outlet_id_list[i],
                     outlet_name=f"Outlet {i}",
-                    power_mode=PowerState.OFF,
+                    power_state=PowerState.OFF,
                 )
             )
 
