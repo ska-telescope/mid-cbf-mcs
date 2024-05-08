@@ -293,7 +293,9 @@ class SlimComponentManager(CbfComponentManager):
 
                 # word error rate: a ratio of rx idle error count compared to the
                 # count of rx idle word transmitted
-                if not rx_idle_word_count:
+
+                # check to prevent divide by zero error
+                if rx_idle_word_count == 0:
                     rx_word_error_rate = "NaN"
                     rx_status = "Unknown"
                 elif not rx_idle_error_count:
@@ -371,7 +373,9 @@ class SlimComponentManager(CbfComponentManager):
                 )
 
                 rx_word_error_rate = ""
-                if not rx_idle_word_count:
+
+                # first check if to prevent a divide by zero error as rx_idle_word_count defaults to 0
+                if rx_idle_word_count == 0:
                     rx_word_error_rate = "NaN"
                 elif not rx_idle_error_count:
                     rx_word_error_rate = (
@@ -387,14 +391,15 @@ class SlimComponentManager(CbfComponentManager):
                     f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
                     f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
                     f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
-                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f}",
+                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f if tx_words != 0 else 'NaN'}",
                     f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
-                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f}",
+                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f if rx_words != 0 else 'NaN'}",
                     f"{rx_idle_error_count} /\n{rx_words:.2e}",
                     rx_word_error_rate,
                 )
                 table.rows.append(data_row)
             self._logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
+        
         except Exception as e:
             self._logger.info(f"{e}")
             return (ResultCode.FAILED, f"{e}")
