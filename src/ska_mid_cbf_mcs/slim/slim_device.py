@@ -15,7 +15,7 @@ Serial Lightweight Interconnect Mesh (SLIM)
 from __future__ import annotations
 
 import time
-from typing import List, Optional, Tuple
+from typing import Optional
 
 # tango imports
 import tango
@@ -71,7 +71,7 @@ class Slim(SKABaseDevice):
         label="Link FQDNs",
         doc="the Tango device FQDN of the active links.",
     )
-    def linkFQDNs(self: Slim) -> List[str]:
+    def linkFQDNs(self: Slim) -> list[str]:
         """
         Returns the Tango device FQDN of the active links.
 
@@ -86,7 +86,7 @@ class Slim(SKABaseDevice):
         label="Link Names",
         doc="Returns the names of the active links.",
     )
-    def linkNames(self: Slim) -> List[str]:
+    def linkNames(self: Slim) -> list[str]:
         """
         Returns the names of the active links.
 
@@ -101,7 +101,7 @@ class Slim(SKABaseDevice):
         label="Mesh health summary",
         doc="Returns a list with the health state of each link. True if OK. False if the link is in a bad state.",
     )
-    def healthSummary(self: Slim) -> List[HealthState]:
+    def healthSummary(self: Slim) -> list[HealthState]:
         """
         Returns a list with the health state of each link.
 
@@ -116,7 +116,7 @@ class Slim(SKABaseDevice):
         label="Bit error rate",
         doc="Returns the bit-error rate of each link in a list",
     )
-    def bitErrorRate(self: Slim) -> List[float]:
+    def bitErrorRate(self: Slim) -> list[float]:
         """
         Returns the bit-error rate of each link in a list.
 
@@ -217,7 +217,7 @@ class Slim(SKABaseDevice):
         The command class for the On command.
         """
 
-        def do(self: Slim.OnCommand) -> Tuple[ResultCode, str]:
+        def do(self: Slim.OnCommand) -> tuple[ResultCode, str]:
             """
             Implement On command functionality.
 
@@ -234,7 +234,7 @@ class Slim(SKABaseDevice):
         The command class for the Off command.
         """
 
-        def do(self: Slim.OffCommand) -> Tuple[ResultCode, str]:
+        def do(self: Slim.OffCommand) -> tuple[ResultCode, str]:
             """
             Implement Off command functionality.
 
@@ -265,7 +265,7 @@ class Slim(SKABaseDevice):
 
         def do(
             self: Slim.ConfigureCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
+        ) -> tuple[ResultCode, str]:
             """
             Configure command. Configures the SLIM as provided in the input string.
 
@@ -294,7 +294,7 @@ class Slim(SKABaseDevice):
         A command to test the mesh of SLIM Tx Rx Links
         """
 
-        def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
+        def do(self: Slim.SlimMeshTestCommand) -> tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
 

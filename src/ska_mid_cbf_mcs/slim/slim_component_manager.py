@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional
 
 import tango
 import yaml
@@ -46,7 +46,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimComponentManager,
-        link_fqdns: List[str],
+        link_fqdns: list[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -129,7 +129,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         return self.connected and self.mesh_configured
 
-    def on(self) -> Tuple[ResultCode, str]:
+    def on(self) -> tuple[ResultCode, str]:
         """
         On command. Currently just returns OK. The device
         does nothing until mesh configuration is provided via
@@ -144,7 +144,7 @@ class SlimComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
-    def off(self) -> Tuple[ResultCode, str]:
+    def off(self) -> tuple[ResultCode, str]:
         """
         Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
 
@@ -159,7 +159,7 @@ class SlimComponentManager(CbfComponentManager):
             self._disconnect_links()
         return (ResultCode.OK, "Off command completed OK")
 
-    def configure(self, config_str) -> Tuple[ResultCode, str]:
+    def configure(self, config_str) -> tuple[ResultCode, str]:
         """
         Configure command. Parses the mesh configuration.
 
@@ -202,12 +202,12 @@ class SlimComponentManager(CbfComponentManager):
         """
         return self._config_str
 
-    def get_link_fqdns(self) -> List[str]:
+    def get_link_fqdns(self) -> list[str]:
         """
         Returns a list of SLIM Link FQDNs.
 
         :return: the SLIM links assosiated with the mesh.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         fqdns = []
         for idx, txrx in enumerate(self._active_links):
@@ -215,12 +215,12 @@ class SlimComponentManager(CbfComponentManager):
             fqdns.append(fqdn)
         return fqdns
 
-    def get_link_names(self) -> List[str]:
+    def get_link_names(self) -> list[str]:
         """
         Returns a list of SLIM Link names, formatted 'tx_device_name->rx_device_name'.
 
         :return: the names of SLIM links assosiated with the mesh.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         names = []
         for idx, txrx in enumerate(self._active_links):
@@ -228,12 +228,12 @@ class SlimComponentManager(CbfComponentManager):
             names.append(name)
         return names
 
-    def get_health_summary(self) -> List[HealthState]:
+    def get_health_summary(self) -> list[HealthState]:
         """
         Returns a list of HealthState enums describing the status of each link.
 
         :return: the health state of each SLIM link in the mesh.
-        :rtype: List[HealthState]
+        :rtype: list[HealthState]
         """
         summary = []
         for idx, txrx in enumerate(self._active_links):
@@ -241,12 +241,12 @@ class SlimComponentManager(CbfComponentManager):
             summary.append(link_health)
         return summary
 
-    def get_bit_error_rate(self) -> List[float]:
+    def get_bit_error_rate(self) -> list[float]:
         """
         Returns a list containing the bit-error rates for each link.
 
         :return: the bit-error rate (BER) of each SLIM link in the mesh.
-        :rtype: List[float]
+        :rtype: list[float]
         """
         bers = []
         for idx, txrx in enumerate(self._active_links):
@@ -254,7 +254,7 @@ class SlimComponentManager(CbfComponentManager):
             bers.append(ber)
         return bers
 
-    def get_device_counters(self) -> List[List[int]]:
+    def get_device_counters(self) -> list[list[int]]:
         """
         Returns a list containing the counters array for each link
 
@@ -271,7 +271,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def slim_mesh_links_ber_check_summary(
         self: SlimComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Logs a summary status of the SLIM Mesh Link health for each device on the Mesh
         Specifically, this will calcualte the bit-error rate for a rx device in the mesh
@@ -324,7 +324,7 @@ class SlimComponentManager(CbfComponentManager):
 
         return (ResultCode.OK, "SLIM Mesh Links BER check completed")
 
-    def slim_table(self: SlimComponentManager) -> Tuple[ResultCode, str]:
+    def slim_table(self: SlimComponentManager) -> tuple[ResultCode, str]:
         """
         Logs a summary for the rx and tx device on the Mesh
 
@@ -409,7 +409,7 @@ class SlimComponentManager(CbfComponentManager):
         :param link: a string describing a singular SLIM link.
 
         :return: the pair of HPS tx and rx device FQDNs that make up a link.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         tmp = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
 
@@ -469,7 +469,7 @@ class SlimComponentManager(CbfComponentManager):
         )  # throws exception if validation fails
         return links
 
-    def _initialize_links(self) -> Tuple[ResultCode, str]:
+    def _initialize_links(self) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to connect and starts polling each link's health state.
 
@@ -506,7 +506,7 @@ class SlimComponentManager(CbfComponentManager):
         self.mesh_configured = True
         return (ResultCode.OK, msg)
 
-    def _disconnect_links(self) -> Tuple[ResultCode, str]:
+    def _disconnect_links(self) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to disconnect and cease polling health states.
 
