@@ -85,16 +85,6 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
-ska-mid-cbf-engineering-console:
-  enabled: true
-  # Uncomment the section below to use custom Engineering Console image
-  # engineeringconsole:
-  #   image:
-  #     registry: registry.gitlab.com/ska-telescope/ska-mid-cbf-engineering-console
-  #     image: ska-mid-cbf-engineering-console
-  #     tag: 0.10.6-dev.c585f1010
-  #     pullPolicy: IfNotPresent
-
 nodeSelector: {}
 
 affinity: {}
