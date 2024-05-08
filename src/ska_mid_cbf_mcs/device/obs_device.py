@@ -19,13 +19,19 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, cast
 
-from ska_control_model import ObsState, ObsStateModel, PowerState, ResultCode
+from ska_control_model import (
+    ObsState,
+    ObsStateModel,
+    PowerState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
 from ska_tango_base.obs.obs_device import SKAObsDevice
 from tango import DebugIt
-from tango.server import attribute, command
+from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
 
 from .base_device import MAX_QUEUED_COMMANDS, MAX_REPORTED_COMMANDS
@@ -269,6 +275,12 @@ class CbfObsDevice(SKAObsDevice):
     Extends SKAObsDevice to override certain key values.
     """
 
+    # -----------------
+    # Device Properties
+    # -----------------
+
+    DeviceID = device_property(dtype="uint16", default_value=1)
+
     # ----------
     # Attributes
     # ----------
@@ -363,6 +375,26 @@ class CbfObsDevice(SKAObsDevice):
         :return: ID, status pairs of the currently executing commands
         """
         return self._command_statuses
+
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: CbfObsDevice) -> SimulationMode:
+        """
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: CbfObsDevice, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.debug(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
 
     # ----------
     # Callbacks

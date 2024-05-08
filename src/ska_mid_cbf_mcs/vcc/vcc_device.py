@@ -21,9 +21,9 @@ from typing import Any  # allow forward references in type hints
 
 # Tango imports
 import tango
+from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
-from ska_tango_base.control_model import SimulationMode
 from tango.server import attribute, command, device_property
 
 # SKA imports
@@ -84,6 +84,7 @@ class Vcc(CbfObsDevice):
         self.component_manager.dish_id = value
 
     @attribute(
+        abs_change=1,
         dtype="uint16",
         memorized=True,
         hw_memorized=True,
@@ -112,6 +113,7 @@ class Vcc(CbfObsDevice):
             self.push_archive_event("subarrayMembership", value)
 
     @attribute(
+        abs_change=1,
         dtype=tango.DevEnum,
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
         doc="Frequency band; an int in the range [0, 5]",

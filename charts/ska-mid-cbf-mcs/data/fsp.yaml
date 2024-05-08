@@ -32,13 +32,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/01"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "DeviceID"
             values:
@@ -146,13 +139,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/02"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "DeviceID"
             values:
@@ -260,13 +246,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/03"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "DeviceID"
             values:
@@ -374,13 +353,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/04"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "DeviceID"
             values:

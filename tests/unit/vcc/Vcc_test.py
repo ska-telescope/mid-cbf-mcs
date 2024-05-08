@@ -11,20 +11,18 @@
 
 from __future__ import annotations
 
+import gc
 import json
 import os
 from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState
+from ska_control_model import AdminMode, ObsState, ResultCode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-
-# from ska_tango_testing import context
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
@@ -32,6 +30,9 @@ from ...test_utils import device_online_and_on
 
 # Path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+
+# Disable garbage collection to prevent tests hanging
+gc.disable()
 
 
 class TestVcc:
@@ -75,9 +76,8 @@ class TestVcc:
         """
         Test State
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
         """
         assert device_under_test.state() == DevState.DISABLE
 
@@ -94,15 +94,19 @@ class TestVcc:
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
         self: TestVcc,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
         Test the On/Off/Standby commands
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param command: the command to test (one of On/Off/Standby)
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
@@ -138,9 +142,11 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
@@ -222,9 +228,11 @@ class TestVcc:
         """
         Test Vcc's ability to reconfigure and run multiple scans.
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
@@ -333,9 +341,11 @@ class TestVcc:
         """
         Test a AbortScan from ObsState.READY.
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
@@ -417,9 +427,11 @@ class TestVcc:
         """
         Test a AbortScan from ObsState.SCANNING.
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation

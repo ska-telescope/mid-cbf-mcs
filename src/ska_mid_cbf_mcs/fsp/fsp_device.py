@@ -51,6 +51,7 @@ class Fsp(CbfDevice):
     # ----------
 
     @attribute(
+        abs_change=1,
         dtype="DevEnum",
         doc="Function mode; an int in the range [0, 4]",
         enum_labels=["IDLE", "CORRELATION", "PSS", "PST", "VLBI"],
@@ -65,6 +66,7 @@ class Fsp(CbfDevice):
         return self.component_manager.function_mode
 
     @attribute(
+        abs_change=1,
         dtype=("uint16",),
         max_dim_x=16,
         doc="Subarray membership",
@@ -155,7 +157,6 @@ class Fsp(CbfDevice):
             attr_archive_callback=self.push_archive_event,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
-            obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
         )
 
@@ -222,7 +223,7 @@ class Fsp(CbfDevice):
 
     @command(
         dtype_in="str",
-        dtype_out="DevVarLongStringArrayType",
+        dtype_out="DevVarLongStringArray",
         doc_in="FSP function mode",
     )
     def SetFunctionMode(
@@ -290,7 +291,7 @@ class Fsp(CbfDevice):
 
     @command(
         dtype_in="uint16",
-        dtype_out="DevVarLongStringArrayType",
+        dtype_out="DevVarLongStringArray",
         doc_in="Subarray ID",
     )
     def AddSubarrayMembership(
@@ -304,8 +305,8 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="AddSubarrayMembership"
         )
-        result_code_message, command_id = command_handler(sub_id)
-        return [[result_code_message], [command_id]]
+        result_code, message = command_handler(sub_id)
+        return [[result_code], [message]]
 
     def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -350,7 +351,7 @@ class Fsp(CbfDevice):
 
     @command(
         dtype_in="uint16",
-        dtype_out="DevVarLongStringArrayType",
+        dtype_out="DevVarLongStringArray",
         doc_in="Subarray ID",
     )
     def RemoveSubarrayMembership(
@@ -366,8 +367,8 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="RemoveSubarrayMembership"
         )
-        result_code_message, command_id = command_handler(sub_id)
-        return [[result_code_message], [command_id]]
+        result_code, message = command_handler(sub_id)
+        return [[result_code], [message]]
 
     # TODO: is this command needed?
     # If not also remove the get_fsp_corr_config_id method
@@ -410,7 +411,7 @@ class Fsp(CbfDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.target.component_manager.update_delay_model(argin)
+            return self.component_manager.update_delay_model(argin)
 
     @command(
         dtype_in="str",
@@ -422,8 +423,9 @@ class Fsp(CbfDevice):
 
         :param argin: the delay model data
         """
-        handler = self.get_command_object("UpdateDelayModel")
-        return handler(argin)
+        command_handler = self.get_command_object("UpdateDelayModel")
+        result_code, message = command_handler(argin)
+        return [[result_code], [message]]
 
     def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
         """

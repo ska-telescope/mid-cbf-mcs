@@ -25,14 +25,13 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
     HpsFspControllerSimulator,
 )
 from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.testing import context
 
 
 class FspComponentManager(CbfComponentManager):
@@ -91,36 +90,32 @@ class FspComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
 
     def _get_proxy(
-        self: FspComponentManager, fqdn_or_name: str, is_group: bool
-    ) -> CbfDeviceProxy | CbfGroupProxy | None:
+        self: FspComponentManager, name: str, is_group: bool
+    ) -> context.DeviceProxy | context.Group | None:
         """
         Attempt to get a device proxy of the specified device.
 
-        :param fqdn_or_name: FQDN of the device to connect to
-            or the name of the group proxy to connect to
+        :param name: FQDN of the device name or the name of the group proxy
         :param is_group: True if the proxy to connect to is a group proxy
-        :return: CbfDeviceProxy or CbfGroupProxy or None if no connection was made
+        :return: context.DeviceProxy, context.Group or None if no connection
+            was made
         """
         try:
-            self.logger.info(f"Attempting connection to {fqdn_or_name} ")
             if is_group:
-                device_proxy = CbfGroupProxy(
-                    name=fqdn_or_name, logger=self.logger
-                )
+                self.logger.info(f"Creating group proxy connection {name}")
+                proxy = context.Group(name=name)
             else:
-                device_proxy = CbfDeviceProxy(
-                    fqdn=fqdn_or_name, logger=self.logger, connect=False
-                )
-                device_proxy.connect(
-                    max_time=0
-                )  # Make one attempt at connecting
-            return device_proxy
+                self.logger.info(f"Creating device proxy connection to {name}")
+                proxy = context.DeviceProxy(device_name=name)
+            return proxy
         except tango.DevFailed as df:
             for item in df.args:
                 self.logger.error(
-                    f"Failed connection to {fqdn_or_name} : {item.reason}"
+                    f"Failed connection to {name} : {item.reason}"
                 )
-            self.update_component_fault(True)
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             return None
 
     def _get_capability_proxies(
@@ -129,8 +124,8 @@ class FspComponentManager(CbfComponentManager):
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
-        if not self._simulation_mode:
-            self.logger.info("Trying to connected to REAL HPS devices")
+        if not self.simulation_mode:
+            self.logger.info("Trying to connect to real HPS devices")
             if self._proxy_hps_fsp_controller is None:
                 self._proxy_hps_fsp_controller = self._get_proxy(
                     self._hps_fsp_controller_fqdn, is_group=False
@@ -141,7 +136,7 @@ class FspComponentManager(CbfComponentManager):
                     self._hps_fsp_corr_controller_fqdn, is_group=False
                 )
         else:
-            self.logger.info("Trying to connected to Simulated HPS devices")
+            self.logger.info("Trying to connect to Simulated HPS devices")
             self._proxy_hps_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
@@ -164,6 +159,12 @@ class FspComponentManager(CbfComponentManager):
 
     def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
+        if self._component_state["power"] != PowerState.ON:
+            self.logger.warning(
+                f"FSP SetFunctionMode not allowed in current state:\
+                    {self._component_state['power']}"
+            )
+            return False
         if len(self.subarray_membership) > 0:
             self.logger.warning(
                 f"FSP {self._fsp_id} currently belongs to \
@@ -365,7 +366,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             result_code, message = (
                 ResultCode.FAILED,
-                f"FSP does not belong to subarray {subarray_id}.",
+                f"FSP does not belong to subarray {subarray_id}",
             )
 
         return (result_code, message)
@@ -411,7 +412,8 @@ class FspComponentManager(CbfComponentManager):
         """
         Add a subarray to the subarrayMembership list.
 
-        :param subarray_id: an integer representing the subarray affiliation
+        :param subarray_id: an integer representing the subarray affiliation,
+            value in [1, 16]
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -427,9 +429,14 @@ class FspComponentManager(CbfComponentManager):
                 ResultCode.FAILED,
                 f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})",
             )
+        elif subarray_id - 1 not in range(const.MAX_SUBARRAY):
+            result_code, message = (
+                ResultCode.FAILED,
+                f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]",
+            )
         elif subarray_id not in self.subarray_membership:
             self.logger.info(
-                f"Adding subarray {subarray_id} to subarray membership."
+                f"Adding subarray {subarray_id} to subarray membership"
             )
 
             self._add_subarray_to_group_proxy(subarray_id)
@@ -444,7 +451,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             result_code, message = (
                 ResultCode.FAILED,
-                f"FSP already belongs to subarray {subarray_id}.",
+                f"FSP already belongs to subarray {subarray_id}",
             )
 
         return (result_code, message)
