@@ -221,8 +221,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             return self.slim_link_simulator.rx_debug_alignment_and_lock_status
 
         if self._rx_device_proxy is None:
-            tango.Except.throw_exception(
-                "SlimLink_Bit_Error_Rate",
+            tango.DevFailed.throw_exception(
+                "SlimLink_Rx_Debug_Alignment_and_Lock_Status",
                 "Tx Rx are not yet connected",
                 "rx_debug_alignment_and_lock_status()",
             )
@@ -242,8 +242,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             return self.slim_link_simulator.rx_link_occupancy
 
         if self._rx_device_proxy is None:
-            tango.Except.throw_exception(
-                "SlimLink_Bit_Error_Rate",
+            tango.DevFailed.throw_exception(
+                "SlimLink_Rx_Link_Occupancy",
                 "Tx Rx are not yet connected",
                 "rx_link_occupancy()",
             )
@@ -263,8 +263,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             return self.slim_link_simulator.tx_link_occupancy
 
         if self._tx_device_proxy is None:
-            tango.Except.throw_exception(
-                "SlimLink_Bit_Error_Rate",
+            tango.DevFailed.throw_exception(
+                "SlimLink_Tx_Link_Occupancy",
                 "Tx Rx are not yet connected",
                 "tx_link_occupancy()",
             )
