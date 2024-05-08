@@ -291,7 +291,7 @@ class SlimComponentManager(CbfComponentManager):
                 rx_idle_word_count = counters[2]
                 rx_idle_error_count = counters[3]
 
-                # word error rate: a ratio of rx idle error count compared to the 
+                # word error rate: a ratio of rx idle error count compared to the
                 # count of rx idle word transmitted
                 if not rx_idle_word_count:
                     rx_word_error_rate = "NaN"

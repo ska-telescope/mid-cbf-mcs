@@ -293,6 +293,7 @@ class Slim(SKABaseDevice):
         """
         A command to test the mesh of SLIM Tx Rx Links
         """
+
         def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
             SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
@@ -325,7 +326,6 @@ class Slim(SKABaseDevice):
             if result_code != ResultCode.OK:
                 return (result_code, message)
             return (ResultCode.OK, "SLIM Mesh Test Completed")
-
 
     @command(
         dtype_in="DevString",

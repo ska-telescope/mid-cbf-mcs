@@ -25,6 +25,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
 
+
 class SlimLinkComponentManager(CbfComponentManager):
     """
     A component manager for a SLIM link, which is made up of a Tx and Rx device
