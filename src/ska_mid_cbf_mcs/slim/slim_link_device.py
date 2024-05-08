@@ -310,7 +310,7 @@ class SlimLink(CbfDevice):
                     ResultCode.REJECTED,
                     "Device is offline. Failed to issue VerifyConnection command.",
                 )
-                
+
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
@@ -320,7 +320,7 @@ class SlimLink(CbfDevice):
         command_handler = self.get_command_object("VerifyConnection")
         return_code, message = command_handler()
         return [[return_code], [message]]
-    
+
     class ClearCountersCommand(FastCommand):
         """
         The command class for the ClearCounters command.
@@ -360,7 +360,7 @@ class SlimLink(CbfDevice):
                     ResultCode.REJECTED,
                     "Device is offline. Failed to issue ClearCounters command.",
                 )
-    
+
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
@@ -370,11 +370,11 @@ class SlimLink(CbfDevice):
         command_handler = self.get_command_object("ClearCounters")
         return_code, message = command_handler()
         return [[return_code], [message]]
-    
+
     # ---------------------
     # Long Running Commands
     # ---------------------
-    
+
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
@@ -395,12 +395,15 @@ class SlimLink(CbfDevice):
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
+
 # ----------
 # Run server
 # ----------
 
+
 def main(args=None, **kwargs):
     return SlimLink.run_server(args=args or None, **kwargs)
+
 
 if __name__ == "__main__":
     main()

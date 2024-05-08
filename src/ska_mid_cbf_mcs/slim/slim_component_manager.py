@@ -87,7 +87,7 @@ class SlimComponentManager(CbfComponentManager):
                 "'Links' device property is unpopulated. Check charts."
             )
             return
-        
+
         for fqdn in self._link_fqdns:
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
@@ -112,7 +112,7 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
         # This moves the op state model.
-        self._update_component_state(power=PowerState.OFF) 
+        self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self) -> None:
         """Stop communication with the component."""
@@ -150,7 +150,7 @@ class SlimComponentManager(CbfComponentManager):
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
-    
+
     def get_configuration_string(self) -> str:
         """
         Returns the configurations string used to configure the SLIM.
@@ -372,7 +372,7 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.info("Successfully disconnected SLIM links")
         self._mesh_configured = False
         return ResultCode.OK, "_disconnect_links completed OK"
-    
+
     # ---------------------
     # Long Running Commands
     # ---------------------
@@ -559,5 +559,3 @@ class SlimComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_configure_allowed,
             task_callback=task_callback,
         )
-
-    

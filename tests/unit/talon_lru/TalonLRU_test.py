@@ -8,31 +8,59 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 
-"""Contain the tests for the TalonLRU device."""
+"""Contain the tests for the TalonLRU."""
 
 from __future__ import annotations
 
-import time
+import gc
+import unittest
+from typing import Iterator
+from unittest.mock import Mock
 
-# Standard imports
 import pytest
-
-# Local imports
+from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode
-
-# Tango imports
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
+from ska_mid_cbf_mcs.testing import context
+
+CONST_WAIT_TIME = 2
+
+# To prevent tests hanging during gc.
+gc.disable()
 
 
 class TestTalonLRU:
-    """Test class for the TalonLRU device"""
+    """
+    Test class for the TalonLRU
+    """
+
+    @pytest.fixture(name="test_context", scope="function")
+    def talon_lru_test_context(
+        self: TestTalonLRU, initial_mocks: dict[str, Mock]
+    ) -> Iterator[context.TTCMExt.TCExt]:
+        harness = context.TTCMExt()
+        harness.add_device(
+            device_class=TalonLRU,
+            device_name="mid_csp_cbf/talon_lru/001",
+            TalonDxBoard1="001",
+            TalonDxBoard2="002",
+            PDU1="002",
+            PDU1PowerOutlet="AA41",
+            PDU2="002",
+            PDU2PowerOutlet="AA41",
+            PDUCommandTimeout="20",
+        )
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
+
+        with harness as test_context:
+            yield test_context
 
     def test_State(
-        self: TestTalonLRU, device_under_test: CbfDeviceProxy
+        self: TestTalonLRU, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test State
@@ -44,155 +72,145 @@ class TestTalonLRU:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestTalonLRU, device_under_test: CbfDeviceProxy
+        self: TestTalonLRU, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestTalonLRU, device_under_test: CbfDeviceProxy
+        self: TestTalonLRU, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_startup_state(
-        self, tango_harness: TangoHarness, device_under_test: CbfDeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Tests that the state of the TalonLRU device when it starts up is correct.
         """
-        assert device_under_test.State() == DevState.DISABLE
-
-        # trigger the mock start_communicating
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        # Trigger the mock start_communicating
+        device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-
-        mock_power_switch1 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/001"
-        )
-        mock_power_switch2 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/002"
-        )
-
-        # Check the device state based on the mock power switch behaviour
-        if (
-            mock_power_switch1.stimulusMode == "conn_success"
-            or mock_power_switch2.stimulusMode == "conn_success"
-            or mock_power_switch1.stimulusMode == "command_fail"
-            or mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            assert device_under_test.State() == DevState.OFF
-        else:
-            assert device_under_test.State() == DevState.FAULT
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
     def test_On(
-        self, tango_harness: TangoHarness, device_under_test: CbfDeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch: unittest.mock.Mock,
     ) -> None:
         """
         Tests that the On command behaves appropriately.
         """
-
-        mock_power_switch1 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/001"
-        )
-        mock_power_switch2 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/002"
-        )
-
-        # Skip this test for certain configurations
-        if (
-            mock_power_switch1.stimulusMode == "conn_fail"
-            or mock_power_switch1.stimulusMode == "invalid_start_state"
-            or mock_power_switch2.stimulusMode == "conn_fail"
-            or mock_power_switch2.stimulusMode == "invalid_start_state"
-        ):
-            pytest.skip(
-                "TalonLRU device is not in a valid startup state for this test"
-            )
-
-        # trigger the mock start_communicating
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        # Trigger the mock start_communicating
+        device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
-        # Send the On command
-        result = device_under_test.On()
+        # Send the long running command 'On'
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
 
-        # Check that the state updates correctly when the device callbacks are called
-        if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            assert result[0][0] == ResultCode.FAILED
-            assert device_under_test.State() == DevState.FAULT
-        else:
-            assert result[0][0] == ResultCode.OK
-            assert device_under_test.State() == DevState.ON
+        # Assert the expected result, given the stimulus mode of the power switches.
+        expected_result_map = {
+            "command_success": (
+                ResultCode.OK,
+                "On completed OK",
+                DevState.ON,
+            ),
+            "command_fail": (
+                ResultCode.FAILED,
+                "LRU failed to turned on: both outlets failed to turn on",
+                None,
+            ),
+        }
 
-    def test_Off(
-        self, tango_harness: TangoHarness, device_under_test: CbfDeviceProxy
+        result_code, message, state = expected_result_map.get(
+            power_switch.stimulusMode
+        )
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
+        )
+
+        if state is not None:
+            change_event_callbacks["state"].assert_change_event(state)
+
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    def test_Off_from_off(
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
-        Tests that the On command behaves appropriately.
+        Tests that the Off command from an off state behaves appropriately.
         """
-
-        mock_power_switch1 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/001"
-        )
-        mock_power_switch2 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/002"
-        )
-
-        # Skip this test for certain configurations
-        if (
-            mock_power_switch1.stimulusMode == "conn_fail"
-            or mock_power_switch1.stimulusMode == "invalid_start_state"
-            or mock_power_switch2.stimulusMode == "conn_fail"
-            or mock_power_switch2.stimulusMode == "invalid_start_state"
-        ):
-            pytest.skip(
-                "TalonLRU device is not in a valid startup state for this test"
-            )
-
-        # trigger the mock start_communicating
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(2)
+        # Trigger the mock start_communicating
+        device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
-        # Send the On command
-        result = device_under_test.Off()
+        # Send the Off command
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
 
-        # Check that the state updates correctly when the device callbacks are called
-        if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            assert result[0][0] == ResultCode.FAILED
-            assert device_under_test.State() == DevState.FAULT
-        else:
-            assert result[0][0] == ResultCode.OK
-            assert device_under_test.State() == DevState.OFF
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '"Command not allowed"',
+            )
+        )
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
-    def test_OnOff(
-        self, tango_harness: TangoHarness, device_under_test: CbfDeviceProxy
+    def test_On_Off(
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch: unittest.mock.Mock,
     ) -> None:
         """
         Tests that the On command followed by the Off command works appropriately.
         """
-        mock_power_switch1 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/001"
-        )
-        mock_power_switch2 = tango_harness.get_device(
-            "mid_csp_cbf/power_switch/002"
-        )
-
-        # Skip this test for certain configurations
-        if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
-        ):
+        if power_switch.stimulusMode == "command_fail":
             pytest.skip(
                 "Test sequence is not valid for this configuration of stimulus"
             )
 
-        self.test_On(tango_harness, device_under_test)
-        self.test_Off(tango_harness, device_under_test)
+        self.test_On(
+            device_under_test,
+            change_event_callbacks,
+            power_switch,
+        )
+
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        # Assert the expected result, given the stimulus mode of the power switches.
+        result_map = {
+            "command_success": (
+                ResultCode.OK,
+                "Off completed OK",
+                DevState.OFF,
+            ),
+            "command_fail": (
+                ResultCode.FAILED,
+                "LRU failed to turn off: failed to turn off both outlets",
+                None,
+            ),
+        }
+
+        result_code, message, state = result_map.get(power_switch.stimulusMode)
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
+        )
+
+        if state is not None:
+            change_event_callbacks["state"].assert_change_event(state)
+
+        # Assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()

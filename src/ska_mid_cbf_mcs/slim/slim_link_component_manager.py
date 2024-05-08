@@ -243,7 +243,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model
         super().stop_communicating()
-        
+
     @backoff.on_exception(
         backoff.constant,
         (Exception, tango.DevFailed),
@@ -259,21 +259,19 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._ping_count += 1
         self._tx_device_proxy.ping()
         self._rx_device_proxy.ping()
-        
+
     def sync_idle_ctrl_words(self: SlimLinkComponentManager) -> None:
         idle_ctrl_word = self.tx_idle_ctrl_word
 
         # If Tx's IdleCtrlWord reads as None, regenerate.
         if idle_ctrl_word is None:
-            idle_ctrl_word = (
-                hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
-            )
+            idle_ctrl_word = hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
             self.logger.warning(
                 f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
             )
             self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
         self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
-        
+
     def init_tx_for_loopback(self: SlimLinkComponentManager) -> None:
         # To put SLIM Rx back in serial loopback, we need to determine
         # the Tx device name it should reference for ICW comparisons.
@@ -283,7 +281,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         rx_arr = rx.split("/")
         tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
         self._tx_device_name = tx
-        
+
     # ---------------------
     # Long Running Commands
     # ---------------------
@@ -347,7 +345,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self.logger.debug(
                     f"DsSlimTxRx devices responded to pings after {self._ping_count} tries"
                 )
-                
+
                 self.sync_idle_ctrl_words()
                 self.logger.debug(
                     f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}\n"
@@ -518,7 +516,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     ),
                 )
                 return
-            
+
             try:
                 self.init_tx_for_loopback()
                 self._tx_device_proxy = context.DeviceProxy(
