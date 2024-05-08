@@ -223,17 +223,21 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if in simulation mode
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.rx_debug_alignment_and_lock_status
-        
+
         # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(f"error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected")
+            self._logger.error(
+                f"error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
+            )
             return res
 
         # catch errors when trying to read from the device proxy
         try:
             return self._rx_device_proxy.debug_alignment_and_lock_status
         except tango.DevFailed as df:
-            self._logger.error(f"error reading rx_debug_alignment_and_lock_status: {df}")
+            self._logger.error(
+                f"error reading rx_debug_alignment_and_lock_status: {df}"
+            )
             return res
 
     @property
@@ -250,10 +254,12 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if in simulation mode
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.rx_link_occupancy
-        
+
         # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(f"error reading rx_link_occupancy: Tx Rx are not yet connected")
+            self._logger.error(
+                f"error reading rx_link_occupancy: Tx Rx are not yet connected"
+            )
             return res
 
         # catch errors when trying to read from the device proxy
@@ -277,10 +283,12 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if in simulation mode
         if self._simulation_mode == SimulationMode.TRUE:
             return self.slim_link_simulator.tx_link_occupancy
-    
+
         # if the device proxy has not been set
         if self._tx_device_proxy is None:
-            self._logger.error(f"error reading tx_link_occupancy: Tx Rx are not yet connected")
+            self._logger.error(
+                f"error reading tx_link_occupancy: Tx Rx are not yet connected"
+            )
             return res
 
         # catch errors when trying to read from the device proxy

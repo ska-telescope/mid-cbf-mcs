@@ -269,11 +269,26 @@ class SlimComponentManager(CbfComponentManager):
 
         return counters
 
-    def slim_mesh_links_ber_check_summary(
+    def _calculate_rx_word_rate_float(
+        self, rx_idle_word_count: int, rx_idle_error_count: int
+    ) -> float:
+        """
+        Calculates and return the rate of Rx Idle Error Word Count over Rx Idle Word Count
+        Returns -1.0 if the Rx Idle Word Count is 0 to prevent divide by zero errors
+
+        :return: Rx Idle Error Word Count over Rx Idle Word Count or -1.0 if zero
+        :rtype: float
+        """
+        if rx_idle_word_count == 0:
+            return -1.0
+        else:
+            return rx_idle_error_count / rx_idle_word_count
+
+    def slim_links_ber_check_summary(
         self: SlimComponentManager,
     ) -> tuple[ResultCode, str]:
         """
-        Logs a summary status of the SLIM Mesh Link health for each device on the Mesh
+        Logs a summary status of the SLIM Link health for each device on the Mesh
         Specifically, this will calcualte the bit-error rate for a rx device in the mesh
         and compared to a threshold set in global_enum.py
 
@@ -282,7 +297,7 @@ class SlimComponentManager(CbfComponentManager):
         """
 
         try:
-            res = "\nSLIM Mesh BER Check:\n\n"
+            res = "\nSLIM BER Check:\n\n"
             for idx, txrx in enumerate(self._active_links):
                 dp_link = self._dp_links[idx]
                 counters = dp_link.counters
@@ -294,37 +309,33 @@ class SlimComponentManager(CbfComponentManager):
                 # word error rate: a ratio of rx idle error count compared to the
                 # count of rx idle word transmitted
 
-                # check to prevent divide by zero error
-                if rx_idle_word_count == 0:
+                rx_word_rate_float = self._calculate_rx_word_rate_float(
+                    rx_idle_word_count, rx_idle_error_count
+                )
+
+                if rx_word_rate_float == -1.0:
                     rx_word_error_rate = "NaN"
                     rx_status = "Unknown"
-                elif not rx_idle_error_count:
-                    rx_word_error_rate = (
-                        f"better than {1/rx_idle_word_count:.0e}"
-                    )
-                    rx_status = "Passed"
                 else:
-                    rx_word_rate_float = (
-                        rx_idle_error_count / rx_idle_word_count
-                    )
                     rx_word_error_rate = f"{rx_word_rate_float:.3e}"
                     if rx_word_rate_float < const.BER_PASS_THRESHOLD:
                         rx_status = "Passed"
                     else:
                         rx_status = "Failed"
+
                 rx_words = rx_word_count + rx_idle_word_count
 
                 res += f"Link Name: {name}\n"
-                res += f"Slim Mesh Link status (rx_status): {rx_status}\n"
+                res += f"Slim Link status (rx_status): {rx_status}\n"
                 res += f"rx_wer:{rx_word_error_rate}\n"
-                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS}\n"
+                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
                 res += "\n"
             self._logger.info(res)
         except Exception as e:
             self._logger.info(f"{e}")
             return (ResultCode.FAILED, f"{e}")
 
-        return (ResultCode.OK, "SLIM Mesh Links BER check completed")
+        return (ResultCode.OK, "SLIM Links BER check completed")
 
     def slim_table(self: SlimComponentManager) -> tuple[ResultCode, str]:
         """
@@ -375,12 +386,11 @@ class SlimComponentManager(CbfComponentManager):
                 rx_word_error_rate = ""
 
                 # first check if to prevent a divide by zero error as rx_idle_word_count defaults to 0
-                if rx_idle_word_count == 0:
+                rx_word_rate_float = self._calculate_rx_word_rate_float(
+                    rx_idle_word_count, rx_idle_error_count
+                )
+                if rx_word_rate_float == -1.0:
                     rx_word_error_rate = "NaN"
-                elif not rx_idle_error_count:
-                    rx_word_error_rate = (
-                        f"better than {1/rx_idle_word_count:.0e}"
-                    )
                 else:
                     rx_word_error_rate = (
                         f"{rx_idle_error_count/rx_idle_word_count:.3e}"
@@ -398,8 +408,8 @@ class SlimComponentManager(CbfComponentManager):
                     rx_word_error_rate,
                 )
                 table.rows.append(data_row)
-            self._logger.info(f"\nSLIM Mesh Health Summary Table\n{table}")
-        
+            self._logger.info(f"\nSLIM Health Summary Table\n{table}")
+
         except Exception as e:
             self._logger.info(f"{e}")
             return (ResultCode.FAILED, f"{e}")

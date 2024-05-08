@@ -160,8 +160,8 @@ class Slim(SKABaseDevice):
         )
 
         self.register_command_object(
-            "SlimMeshTest",
-            self.SlimMeshTestCommand(*device_args),
+            "SlimTest",
+            self.SlimTestCommand(*device_args),
         )
 
     # --------
@@ -289,14 +289,14 @@ class Slim(SKABaseDevice):
                     "Device is off. Failed to issue Configure command.",
                 )
 
-    class SlimMeshTestCommand(ResponseCommand):
+    class SlimTestCommand(ResponseCommand):
         """
         A command to test the mesh of SLIM Tx Rx Links
         """
 
-        def do(self: Slim.SlimMeshTestCommand) -> tuple[ResultCode, str]:
+        def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
-            SLIM Mesh Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
+            SLIM Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
 
             :return: A tuple containing a return code and a string
                 message contaiing a report on the health of the Mesh or error message
@@ -317,7 +317,7 @@ class Slim(SKABaseDevice):
                 )
 
             # Prints the connection status and Bit Error Rate of the devices on the mesh
-            (result_code, message) = cm.slim_mesh_links_ber_check_summary()
+            (result_code, message) = cm.slim_links_ber_check_summary()
             if result_code != ResultCode.OK:
                 return (result_code, message)
 
@@ -325,7 +325,7 @@ class Slim(SKABaseDevice):
             (result_code, message) = cm.slim_table()
             if result_code != ResultCode.OK:
                 return (result_code, message)
-            return (ResultCode.OK, "SLIM Mesh Test Completed")
+            return (ResultCode.OK, "SLIM Test Completed")
 
     @command(
         dtype_in="DevString",
@@ -341,13 +341,13 @@ class Slim(SKABaseDevice):
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  Slim.Configure
 
-    def is_SlimMeshTest_allowed(self: Slim) -> bool:
+    def is_SlimTest_allowed(self: Slim) -> bool:
         """
-        Determined if SlimMeshTest is allowed
+        Determined if SlimTest is allowed
         (allowed when the Mesh is configured)
 
         Raises CommandError if DevState is not on and/or the Mesh has not been configured
-        :return: if SlimMeshTest is allowed
+        :return: if SlimTest is allowed
         :rtype: bool
         """
         if self.get_state() == tango.DevState.ON:
@@ -355,7 +355,7 @@ class Slim(SKABaseDevice):
                 return True
             else:
                 raise CommandError(
-                    "The SLIM Mesh must be configured before SlimMeshTest can be called"
+                    "The SLIM must be configured before SlimTest can be called"
                 )
         return False
 
@@ -363,8 +363,8 @@ class Slim(SKABaseDevice):
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
-    def SlimMeshTest(self: Slim) -> None:
-        handler = self.get_command_object("SlimMeshTest")
+    def SlimTest(self: Slim) -> None:
+        handler = self.get_command_object("SlimTest")
         return_code, message = handler()
         return [[return_code], [message]]
 
