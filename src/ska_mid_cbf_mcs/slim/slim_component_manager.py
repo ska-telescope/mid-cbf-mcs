@@ -70,7 +70,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         self.connected = False
         self._simulation_mode = simulation_mode
-        self._mesh_configured = False
+        self.mesh_configured = False
         self._config_str = ""
 
         # a list of [tx_fqdn, rx_fqdn] for active links.
@@ -127,7 +127,7 @@ class SlimComponentManager(CbfComponentManager):
 
         :return: whether the SLIM is communicating
         """
-        return self.connected and self._mesh_configured
+        return self.connected and self.mesh_configured
 
     def on(self) -> Tuple[ResultCode, str]:
         """
@@ -155,7 +155,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         self._logger.debug("Entering SlimComponentManager.off")
         self.update_component_power_mode(PowerMode.OFF)
-        if self._mesh_configured:
+        if self.mesh_configured:
             self._disconnect_links()
         return (ResultCode.OK, "Off command completed OK")
 
@@ -182,7 +182,7 @@ class SlimComponentManager(CbfComponentManager):
             dp.write_attribute("simulationMode", self._simulation_mode)
             dp.write_attribute("adminMode", AdminMode.ONLINE)
 
-        if self._mesh_configured:
+        if self.mesh_configured:
             self._disconnect_links()
 
         rc, msg = self._initialize_links()
@@ -503,7 +503,7 @@ class SlimComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, msg)
         msg = "Successfully set up SLIM links"
         self._logger.info(msg)
-        self._mesh_configured = True
+        self.mesh_configured = True
         return (ResultCode.OK, msg)
 
     def _disconnect_links(self) -> Tuple[ResultCode, str]:
@@ -532,5 +532,5 @@ class SlimComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, msg)
         msg = "Disconnected SLIM links"
         self._logger.info(msg)
-        self._mesh_configured = False
+        self.mesh_configured = False
         return (ResultCode.OK, msg)

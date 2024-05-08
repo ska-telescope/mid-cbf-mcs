@@ -22,6 +22,7 @@ import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
+from ska_tango_base.faults import CommandError
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -293,7 +294,7 @@ class Slim(SKABaseDevice):
         A command to test the mesh of SLIM Tx Rx Links
         """
 
-        def is_allowed(self: SlimMeshTestCommand) -> bool:
+        def is_allowed(self: Slim.SlimMeshTestCommand) -> bool:
             """
             Determined if SlimMeshTest is allowed
             (allowed when the Mesh is configured and communicating)
@@ -301,7 +302,11 @@ class Slim(SKABaseDevice):
             :return: if SlimMeshTest is allowed
             :rtype: bool
             """
-            return self.target.component_manager.is_communicating
+            # If the Mesh is not communicating or configured
+            if not self.target.component_manager.is_communicating():
+                self.logger.info("The Mesh is not configure and/or it is not communicating")
+                return False
+            return True
 
         def do(self: Slim.SlimMeshTestCommand) -> Tuple[ResultCode, str]:
             """
@@ -312,36 +317,30 @@ class Slim(SKABaseDevice):
                 if exception is caught.
             :rtype: (ResultCode, str)
             """
-
-            if self.is_allowed():
-                # shorten to cm to help fit the below two function call in one line
-                cm = self.target.component_manager
-                t_sleep = 2
-                # TODO Change test_length to something longer when BaseClass Updates are completed
-                # Currently there is no way to prevent the 3sec default timeout for commands
-                test_length = 2
-                self.logger.info(f"Sleeping for {test_length}s")
-                for slept_time in range(0, test_length, t_sleep):
-                    time.sleep(t_sleep)
-                    self.logger.info(
-                        f"Sleep Time Remaining: {test_length - slept_time}"
-                    )
-
-                # Prints the connection status and Bit Error Rate of the devices on the mesh
-                (result_code, message) = cm.slim_mesh_links_ber_check_summary()
-                if result_code != ResultCode.OK:
-                    return (result_code, message)
-
-                # Logs Health Summary of Mesh Links
-                (result_code, message) = cm.slim_table()
-                if result_code != ResultCode.OK:
-                    return (result_code, message)
-                return (ResultCode.OK, "SLIM Mesh Test Completed")
-            else:
-                return (
-                    ResultCode.FAILED,
-                    "The Mesh is not configure and/or it is not communicating",
+            # shorten to cm to help fit the below two function call in one line
+            cm = self.target.component_manager
+            t_sleep = 2
+            # TODO Change test_length to something longer when BaseClass Updates are completed
+            # Currently there is no way to prevent the 3sec default timeout for commands
+            test_length = 2
+            self.logger.info(f"Sleeping for {test_length}s")
+            for slept_time in range(0, test_length, t_sleep):
+                time.sleep(t_sleep)
+                self.logger.info(
+                    f"Sleep Time Remaining: {test_length - slept_time}"
                 )
+
+            # Prints the connection status and Bit Error Rate of the devices on the mesh
+            (result_code, message) = cm.slim_mesh_links_ber_check_summary()
+            if result_code != ResultCode.OK:
+                return (result_code, message)
+
+            # Logs Health Summary of Mesh Links
+            (result_code, message) = cm.slim_table()
+            if result_code != ResultCode.OK:
+                return (result_code, message)
+            return (ResultCode.OK, "SLIM Mesh Test Completed")
+
 
     @command(
         dtype_in="DevString",
@@ -356,6 +355,23 @@ class Slim(SKABaseDevice):
         return_code, message = handler(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  Slim.Configure
+
+    def is_SlimMeshTest_allowed(self: Slim) -> bool:
+        """
+        Determined if SlimMeshTest is allowed
+        (allowed when the Mesh is configured)
+
+        :return: if SlimMeshTest is allowed
+        :rtype: bool
+        """
+        if self.get_state() == tango.DevState.ON:
+            if self.component_manager.mesh_configured:
+                return True
+            else:
+                raise CommandError(
+                    "The SLIM Mesh must be Configured before SlimMeshTest can be called"
+                )
+        return False
 
     @command(
         dtype_out="DevVarLongStringArray",
