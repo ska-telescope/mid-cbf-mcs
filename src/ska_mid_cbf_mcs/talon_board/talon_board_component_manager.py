@@ -44,10 +44,10 @@ class TalonBoardComponentManager(CbfComponentManager):
         influx_bucket: str,
         influx_auth_token: str,
         instance: str,
-        talon_sysid_server: str,
-        eth_100g_server: str,
-        talon_status_server: str,
-        hps_master_server: str,
+        talon_sysid_address: str,
+        eth_100g_address: str,
+        talon_status_address: str,
+        hps_master_address: str,
         **kwargs: Any,
     ) -> None:
         """
@@ -59,10 +59,10 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param influx_bucket: Influxdb bucket to query
         :param influx_auth_token: Influxdb authentication token
         :param instance: instance of device server
-        :param talon_sysid_server: Talon Sysid device server name
-        :param eth_100g_server: 100g ethernet 0 device server name
-        :param talon_status_server: Talon Status device server name
-        :param hps_master_server: HPS Master device server name
+        :param talon_sysid_address: Talon Sysid device server name
+        :param eth_100g_address: 100g ethernet device server name (missing index suffix)
+        :param talon_status_address: Talon Status device server name
+        :param hps_master_address: HPS Master device server name
         """
 
         super().__init__(*args, **kwargs)
@@ -77,18 +77,12 @@ class TalonBoardComponentManager(CbfComponentManager):
             logger=self.logger,
         )
 
-        # Device Server names
-        self._talon_sysid_server = f"{talon_sysid_server}/{instance}"
-        self._eth_100g_server = f"{eth_100g_server}/{instance}"
-        self._talon_status_server = f"{talon_status_server}/{instance}"
-        self._hps_master_server = f"{hps_master_server}/{instance}"
-
-        # HPS device proxies. Initialized during ON command.
-        self._talon_sysid_fqdn = None
-        self._eth_100g_0_fqdn = None
-        self._eth_100g_1_fqdn = None
-        self._talon_status_fqdn = None
-        self._hps_master_fqdn = None
+        # HPS device proxies.
+        self._talon_sysid_fqdn = talon_sysid_address
+        self._eth_100g_0_fqdn = f"{eth_100g_address}_0"
+        self._eth_100g_1_fqdn = f"{eth_100g_address}_1"
+        self._talon_status_fqdn = talon_status_address
+        self._hps_master_fqdn = hps_master_address
 
         # Subscribed device proxy attributes
         self._talon_sysid_attrs = {}
@@ -111,6 +105,30 @@ class TalonBoardComponentManager(CbfComponentManager):
             return
 
         super().start_communicating()
+        try:
+            for fqdn in [
+                self._talon_sysid_fqdn,
+                self._eth_100g_0_fqdn,
+                self._eth_100g_1_fqdn,
+                self._talon_status_fqdn,
+                self._hps_master_fqdn,
+            ]:
+                if fqdn is not None:
+                    self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
+                    self.logger.debug(f"Created device proxy for {fqdn}")
+                else:
+                    #TODO: test if this else is necessary; is DevFailed raised simply by instantiating DP without device_name?
+                    self._update_communication_state(
+                        CommunicationStatus.NOT_ESTABLISHED
+                    )
+                    self.logger.error("Failed to establish proxies to devices in properties. Check charts.")
+                    return
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error(df.args[0].desc)
+            return
 
         self._update_communication_state(CommunicationStatus.ESTABLISHED)
         # This moves the op state model.
@@ -125,31 +143,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
-
-    def _get_devices_in_server(self, server: str):
-        db = tango.Database()
-        res = db.get_device_class_list(server)
-        # get_device_class_list returns a list with the structure
-        # [device_name, class name] alternating.
-        dev_list = [
-            res[i] for i in range(0, len(res), 2) if res[i + 1] != "DServer"
-        ]
-        dev_list.sort()
-        return dev_list
-
-    def _get_hps_devices_in_db(self):
-        dev_list = self._get_devices_in_server(self._talon_sysid_server)
-        self._talon_sysid_fqdn = dev_list[0] if len(dev_list) >= 1 else None
-
-        dev_list = self._get_devices_in_server(self._talon_status_server)
-        self._talon_status_fqdn = dev_list[0] if len(dev_list) >= 1 else None
-
-        dev_list = self._get_devices_in_server(self._eth_100g_server)
-        self._eth_100g_0_fqdn = dev_list[0] if len(dev_list) >= 1 else None
-        self._eth_100g_1_fqdn = dev_list[1] if len(dev_list) >= 2 else None
-
-        dev_list = self._get_devices_in_server(self._hps_master_server)
-        self._hps_master_fqdn = dev_list[0] if len(dev_list) >= 1 else None
 
     def _subscribe_change_events(self):
         """
@@ -1002,42 +995,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
-            return
-
-        try:
-            self._get_hps_devices_in_db()
-
-            for fqdn in [
-                self._talon_sysid_fqdn,
-                self._eth_100g_0_fqdn,
-                self._eth_100g_1_fqdn,
-                self._talon_status_fqdn,
-                self._hps_master_fqdn,
-            ]:
-                if fqdn is not None:
-                    self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
-                    self.logger.debug(f"Created device proxy for {fqdn}")
-                else:
-                    self._update_communication_state(
-                        CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    task_callback(
-                        status=TaskStatus.FAILED,
-                        result=(
-                            ResultCode.FAILED,
-                            "Failed to establish proxies defined in device properties. Check charts.",
-                        ),
-                    )
-                    return
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                exception=df,
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, df.args[0].desc),
-            )
             return
 
         self._subscribe_change_events()

@@ -57,13 +57,13 @@ class TalonBoard(CbfDevice):
 
     Instance = device_property(dtype="str")
 
-    TalonDxSysIdServer = device_property(dtype="str")
+    TalonDxSysIdAddress = device_property(dtype="str")
 
-    TalonDx100GEthernetServer = device_property(dtype="str")
+    TalonDx100GEthernetAddress = device_property(dtype="str")
 
-    TalonStatusServer = device_property(dtype="str")
+    TalonStatusAddress = device_property(dtype="str")
 
-    HpsMasterServer = device_property(dtype="str")
+    HpsMasterAddress = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -709,10 +709,10 @@ class TalonBoard(CbfDevice):
             influx_bucket=self.InfluxDbBucket,
             influx_auth_token=self.InfluxDbAuthToken,
             instance=self.Instance,
-            talon_sysid_server=self.TalonDxSysIdServer,
-            eth_100g_server=self.TalonDx100GEthernetServer,
-            talon_status_server=self.TalonStatusServer,
-            hps_master_server=self.HpsMasterServer,
+            talon_sysid_address=self.TalonDxSysIdAddress,
+            eth_100g_address=self.TalonDx100GEthernetAddress,
+            talon_status_address=self.TalonStatusAddress,
+            hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
             # TODO: Why was this defined? Not used in component manager..
             # push_change_event_callback=self.push_change_event,

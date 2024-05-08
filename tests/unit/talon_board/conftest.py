@@ -62,38 +62,46 @@ def talon_board_change_event_callbacks(
 
 
 @pytest.fixture()
-def mock_slim_link() -> unittest.mock.Mock:
+def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_command("set_timeout_millis", None)
-    builder.add_command("poll_command", None)
-    builder.add_command("stop_poll_command", None)
-    builder.add_command(
-        "ConnectTxRx", [[ResultCode.OK], ["ConnectTxRx Success: Mock"]]
-    )
-    builder.add_result_command(
-        "DisconnectTxRx",
-        ResultCode.OK,
-        "DisconnectTxRx Success: Mock",
-    )
+    return builder()
+
+@pytest.fixture()
+def mock_ethernet_100g() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    return builder()
+
+@pytest.fixture()
+def mock_talon_status() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    return builder()
+
+@pytest.fixture()
+def mock_hps_master() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
-    mock_slim_link: unittest.mock.Mock,
+    mock_talon_sysid: unittest.mock.Mock,
+    mock_ethernet_100g: unittest.mock.Mock,
+    mock_talon_status: unittest.mock.Mock,
+    mock_hps_master: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc_band: a mock VccBand device that is powered off.
-    :param mock_sw: a mock VccSearchWindow that is powered off.
-
     :return: a dictionary of device proxy mocks to pre-register.
-    """
+    """                
     return {
-        "mid_csp_cbf/slim_link/001": mock_slim_link,
-        "mid_csp_cbf/slim_link/002": mock_slim_link,
-        "mid_csp_cbf/slim_link/003": mock_slim_link,
-        "mid_csp_cbf/slim_link/004": mock_slim_link,
+        "talondx-001/ska-talondx-sysid-ds/sysid": mock_talon_sysid,
+        "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_0": mock_ethernet_100g,
+        "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_1": mock_ethernet_100g,
+        "talondx-001/ska-talondx-status/status": mock_talon_status,
+        "talondx-001/hpsmaster/hps-1": mock_hps_master,
     }

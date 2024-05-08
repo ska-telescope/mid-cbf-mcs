@@ -57,11 +57,11 @@ class TestTalonBoard:
             InfluxDbOrg="ska",
             InfluxDbBucket="talon",
             InfluxDbAuthToken="ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog==",
-            Instance="talon1_test"   ,       
-            TalonDxSysIdServer="ska-talondx-sysid-ds",
-            TalonDx100GEthernetServer="ska-talondx-100-gigabit-ethernet-ds",      
-            TalonStatusServer="ska-talondx-status-ds",
-            HpsMasterServer="dshpsmaster",
+            Instance="talon1_test",       
+            TalonDxSysIdAddress="talondx-001/ska-talondx-sysid-ds/sysid",
+            TalonDx100GEthernetAddress="talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth",      
+            TalonStatusAddress="talondx-001/ska-talondx-status/status",
+            HpsMasterAddress="talondx-001/hpsmaster/hps-1",
         )
 
         for name, mock in initial_mocks.items():
