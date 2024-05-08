@@ -20,7 +20,8 @@ from typing import List, Optional, Tuple
 
 import tango
 from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
@@ -40,12 +41,10 @@ class CbfController(SKAController):
 
     """
     CbfController TANGO device class.
-    Primary point of contact for monitoring and control of Mid.CBF. Implements state and mode indicators, and a set of state transition commmands.
+
+    Primary point of contact for monitoring and control of Mid.CBF. 
+    Implements state and mode indicators, and a set of state transition commmands.
     """
-
-    # PROTECTED REGION ID(CbfController.class_variable) ENABLED START #
-
-    # PROTECTED REGION END #    //  CbfController.class_variable
 
     # -----------------
     # Device Properties
@@ -81,9 +80,8 @@ class CbfController(SKAController):
     # Attributes
     # ----------
 
-    commandProgress = attribute(
+    @attribute(
         dtype="uint16",
-        label="Command progress percentage",
         max_value=100,
         min_value=0,
         polling_period=3000,
@@ -91,29 +89,94 @@ class CbfController(SKAController):
         rel_change=2,
         doc="Percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
     )
+    def commandProgress(self: CbfController) -> int:
+        """
+        Read the commandProgress attribute: the percentage progress implemented for
+        commands that result in state/mode transitions for a large number of
+        components and/or are executed in stages (e.g power up, power down)
+        
+        :return: the commandProgress attribute
+        :rtype: int
+        """
+        return self._command_progress
 
-    sysParam = attribute(
+    @attribute(
         dtype="str",
-        access=AttrWriteType.READ,
         label="Dish ID to VCC and frequency offset k mapping",
         doc="Maps Dish ID to VCC and frequency offset k. The string is in JSON format.",
     )
+    def sysParam(self: CbfController) -> str:
+        """
+        :return: the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format.
+        :rtype: str
+        """
+        return self.component_manager._init_sys_param
 
-    sourceSysParam = attribute(
-        dtype="str",
-        access=AttrWriteType.READ,
+    @attribute(
+        type="str",
         label="The location of the file containing Dish ID to VCC and frequency offset k mapping.",
         doc="Source and file path to the file to be retrieved through the Telescope Model. The string is in JSON format.",
     )
+    def sourceSysParam(self: CbfController) -> str:
+        """
+        :return: the location of the json file that contains the mapping from Dish ID to VCC 
+                 and frequency offset k, to be retrieved using the Telescope Model.
+        :rtype: str
+        """
+        return self.component_manager._source_init_sys_param
 
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        memorized=True,
+
+    # TODO: handle dishToVcc and vccToDish attributes
+    def read_dishToVcc(self: CbfController) -> List[str]:
+        """
+        Return dishToVcc attribute: 'dishID:vccID'
+        """
+        if self.component_manager.dish_utils is None:
+            return []
+        out_str = [
+            f"{r}:{v}"
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
+        ]
+        return out_str
+
+    def read_vccToDish(self: CbfController) -> List[str]:
+        """
+        Return dishToVcc attribute: 'vccID:dishID'
+        """
+        if self.component_manager.dish_utils is None:
+            return []
+        out_str = [
+            f"{v}:{r}"
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
+        ]
+        return out_str
+
+    @attribute(
+        dtype=SimulationMode, 
+        memorized=True, 
+        hw_memorized=True,
         doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
+            "both modes, while others will have simulators that set simulationMode "
+            "to True while the real devices always set simulationMode to False.",
     )
+    def simulationMode(self: CbfController) -> SimulationMode:
+        """
+        :return: the current simulation mode
+        """
+        return self._talondx_component_manager.simulation_mode
+
+    @simulationMode.write
+    def simulationMode(
+        self: CbfController, value: SimulationMode
+    ) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self._talondx_component_manager.simulation_mode = value
 
     # ---------------
     # General methods
@@ -123,34 +186,69 @@ class CbfController(SKAController):
         """
         Sets up the command objects
         """
-        super().init_command_objects()
-
-        device_args = (self, self.op_state_model, self.logger)
-
-        self.register_command_object("On", self.OnCommand(*device_args))
-
-        self.register_command_object("Off", self.OffCommand(*device_args))
-
+        super(SKAController, self).init_command_objects()
         self.register_command_object(
-            "Standby", self.StandbyCommand(*device_args)
+            "InitSysParam", 
+            SubmittedSlowCommand(
+                command_name="InitSysParam",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="init_sys_param",
+                logger=self.logger,
+            )
         )
 
-        self.register_command_object(
-            "InitSysParam", self.InitSysParamCommand(*device_args)
-        )
 
-    def get_num_capabilities(
+    def create_component_manager(
         self: CbfController,
-    ) -> None:
-        # self._max_capabilities inherited from SKAController
-        # check first if property exists in DB
-        """Get number of capabilities for _init_Device.
-        If property not found in db, then assign a default amount(197,27,16)"""
+    ) -> ControllerComponentManager:
+        """
+        Create and return a component manager for this device.
 
-        if self._max_capabilities:
-            return self._max_capabilities
-        else:
-            self.logger.warning("MaxCapabilities device property not defined")
+        :return: a component manager for this device.
+        """
+
+        self.logger.debug("Entering create_component_manager()")
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerState] = None
+
+        # Create the Talon-DX component manager and initialize simulationMode to on
+        self._simulation_mode = SimulationMode.TRUE
+        self._talondx_component_manager = TalonDxComponentManager(
+            talondx_config_path=self.TalonDxConfigPath,
+            hw_config_path=self.HWConfigPath,
+            simulation_mode=self._simulation_mode,
+            logger=self.logger,
+        )
+
+        return ControllerComponentManager(
+            get_num_capabilities=self.get_num_capabilities,
+            vcc_fqdns_all=self.VCC,
+            fsp_fqdns_all=self.FSP,
+            subarray_fqdns_all=self.CbfSubarray,
+            talon_lru_fqdns_all=self.TalonLRU,
+            talon_board_fqdns_all=self.TalonBoard,
+            power_switch_fqdns_all=self.PowerSwitch,
+            fs_slim_fqdn=self.FsSLIM,
+            vis_slim_fqdn=self.VisSLIM,
+            lru_timeout=int(self.LruTimeout),
+            talondx_component_manager=self._talondx_component_manager,
+            talondx_config_path=self.TalonDxConfigPath,
+            hw_config_path=self.HWConfigPath,
+            fs_slim_config_path=self.FsSLIMConfigPath,
+            vis_slim_config_path=self.VisSLIMConfigPath,
+            logger=self.logger,
+            push_change_event=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault,
+        )
+
+
+    # --------
+    # Commands
+    # --------
 
     class InitCommand(SKAController.InitCommand):
         def _get_num_capabilities(
@@ -232,139 +330,6 @@ class CbfController(SKAController):
             message = "CbfController Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
-
-    def always_executed_hook(self: CbfController) -> None:
-        # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
-        """
-        Hook to be executed before any command.
-        """
-        # PROTECTED REGION END #    //  CbfController.always_executed_hook
-
-    def create_component_manager(
-        self: CbfController,
-    ) -> ControllerComponentManager:
-        """
-        Create and return a component manager for this device.
-
-        :return: a component manager for this device.
-        """
-
-        self.logger.debug("Entering create_component_manager()")
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        # Create the Talon-DX component manager and initialize simulation
-        # mode to on
-        self._simulation_mode = SimulationMode.TRUE
-        self._talondx_component_manager = TalonDxComponentManager(
-            talondx_config_path=self.TalonDxConfigPath,
-            hw_config_path=self.HWConfigPath,
-            simulation_mode=self._simulation_mode,
-            logger=self.logger,
-        )
-
-        return ControllerComponentManager(
-            get_num_capabilities=self.get_num_capabilities,
-            vcc_fqdns_all=self.VCC,
-            fsp_fqdns_all=self.FSP,
-            subarray_fqdns_all=self.CbfSubarray,
-            talon_lru_fqdns_all=self.TalonLRU,
-            talon_board_fqdns_all=self.TalonBoard,
-            power_switch_fqdns_all=self.PowerSwitch,
-            fs_slim_fqdn=self.FsSLIM,
-            vis_slim_fqdn=self.VisSLIM,
-            lru_timeout=int(self.LruTimeout),
-            talondx_component_manager=self._talondx_component_manager,
-            talondx_config_path=self.TalonDxConfigPath,
-            hw_config_path=self.HWConfigPath,
-            fs_slim_config_path=self.FsSLIMConfigPath,
-            vis_slim_config_path=self.VisSLIMConfigPath,
-            logger=self.logger,
-            push_change_event=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
-        )
-
-    def delete_device(self: CbfController) -> None:
-        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off"""
-        # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
-        # PROTECTED REGION END #    //  CbfController.delete_device
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    def read_commandProgress(self: CbfController) -> int:
-        # PROTECTED REGION ID(CbfController.commandProgress_read) ENABLED START #
-        """Return commandProgress attribute: percentage progress implemented for
-        commands that result in state/mode transitions for a large number of
-        components and/or are executed in stages (e.g power up, power down)"""
-        return self._command_progress
-        # PROTECTED REGION END #    //  CbfController.commandProgress_read
-
-    def read_sysParam(self: CbfController) -> str:
-        # PROTECTED REGION ID(CbfController.read_sysParam) ENABLED START #
-        """Return the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format."""
-        return self.component_manager._init_sys_param
-        # PROTECTED REGION END #    //  CbfController.sysParam_read
-
-    def read_sourceSysParam(self: CbfController) -> str:
-        # PROTECTED REGION ID(CbfController.read_sourceSysParam) ENABLED START #
-        """Return the location of the json file that contains the mapping from
-        Dish ID to VCC and frequency offset k, to be retrieved using the Telescope Model.
-        """
-        return self.component_manager._source_init_sys_param
-        # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
-
-    def read_dishToVcc(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.dishToVcc_read) ENABLED START #
-        """Return 'dishID:vccID'"""
-        if self.component_manager.dish_utils is None:
-            return []
-        out_str = [
-            f"{r}:{v}"
-            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
-        ]
-
-        return out_str
-        # PROTECTED REGION END #    //  CbfController.dishToVcc_read
-
-    def read_vccToDish(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.vccToDish_read) ENABLED START #
-        """Return dishToVcc attribute: 'vccID:dishID'"""
-        if self.component_manager.dish_utils is None:
-            return []
-        out_str = [
-            f"{v}:{r}"
-            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
-        ]
-        return out_str
-        # PROTECTED REGION END #    //  CbfController.vccToDish_read
-
-    def read_simulationMode(self: CbfController) -> SimulationMode:
-        """
-        Get the simulation mode.
-
-        :return: the current simulation mode
-        """
-        return self._talondx_component_manager.simulation_mode
-
-    def write_simulationMode(
-        self: CbfController, value: SimulationMode
-    ) -> None:
-        """
-        Set the Simulation Mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulation mode: {value}")
-        self._talondx_component_manager.simulation_mode = value
-
-    # --------
-    # Commands
-    # --------
 
     class OnCommand:
         """
@@ -453,32 +418,6 @@ class CbfController(SKAController):
 
             return (result_code, message)
 
-    class StandbyCommand:
-        """
-        A class for the CbfController's Standby() command.
-        """
-
-        def do(
-            self: CbfController.StandbyCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Standby() command functionality.
-            Turn off subarray, vcc, fsp, turn CbfController to standby
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-
-            (result_code, message) = self.target.component_manager.standby()
-
-            if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.STANDBY)
-
-            self.logger.info(message)
-            return (result_code, message)
-
     class InitSysParamCommand:
         """
         A class for the CbfController's InitSysParam() command.
@@ -540,66 +479,6 @@ class CbfController(SKAController):
         return_code, message = handler(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  CbfController.InitSysParam
-
-    # ----------
-    # Callbacks
-    # ----------
-    def _communication_status_changed(
-        self: CbfController, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-
-    def _component_power_mode_changed(
-        self: CbfController, power_mode: PowerState
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerState.OFF: "component_off",
-                PowerState.STANDBY: "component_standby",
-                PowerState.ON: "component_on",
-                PowerState.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: CbfController, faulty: bool) -> None:
-        """
-        Handle component fault
-
-        :param faulty: whether the component has faulted.
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
-        else:
-            self.set_status("The device has recovered from FAULT state.")
 
 
 # ----------
