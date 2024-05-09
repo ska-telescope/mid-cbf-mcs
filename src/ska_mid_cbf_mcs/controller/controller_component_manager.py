@@ -262,10 +262,16 @@ class ControllerComponentManager(CbfComponentManager):
                 device_type = "talon_lru"
             elif fqdn in self._fqdn_talon_board:
                 device_type = "talon_board"
-                device_config = {"TalonDxBoardAddress": self._hw_config[device_type][device_id]}
+                device_config = {
+                    "TalonDxBoardAddress": self._hw_config[device_type][
+                        device_id
+                    ]
+                }
 
             if device_type:
-                self._logger.debug(f"Writing hardware configuration properties to {fqdn}")
+                self._logger.debug(
+                    f"Writing hardware configuration properties to {fqdn}"
+                )
                 if not device_config:
                     device_config = self._hw_config[device_type][device_id]
                 device_config = tango.utils.obj_2_property(device_config)
@@ -277,7 +283,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         except tango.DevFailed as df:
             for item in df.args:
-                self._logger.error(f"Failed to write {fqdn} HW config properties: {item.reason}")
+                self._logger.error(
+                    f"Failed to write {fqdn} HW config properties: {item.reason}"
+                )
             return False
         return True
 
@@ -293,7 +301,7 @@ class ControllerComponentManager(CbfComponentManager):
                 )
             return False
         return True
-    
+
     def _init_device_proxy(self, fqdn):
         if fqdn not in self._proxies:
             try:
@@ -312,10 +320,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         if not self._write_hw_config(fqdn, proxy):
             return False
-        
+
         if not self._set_proxy_online(fqdn):
             return False
-        
+
         return True
 
     def _innit_proxies(self: ControllerComponentManager) -> bool:
