@@ -234,32 +234,108 @@ class ControllerComponentManager(CbfComponentManager):
         for name, value in fqdn_variables.items():
             self._logger.debug(f"fqdn {name}: {value}")
 
-    def _innit_proxies(self: ControllerComponentManager) -> bool:
-        """
-        Innit all proxies, return True if all proxies are connected.
-        """
-
-        def create_group_proxy(group_name, fqdn):
-            try:
-                group_proxy = CbfGroupProxy(group_name, logger=self._logger)
-                group_proxy.add(fqdn)
-                return group_proxy
-            except tango.DevFailed:
-                self._logger.error(f"Failure in connection to {fqdn}")
-                return False
-
-        # Set up group proxies
+    def _create_group_proxies(self):
         group_proxies = [
             ("VCC", self._fqdn_vcc),
             ("FSP", self._fqdn_fsp),
             ("CBF Subarray", self._fqdn_subarray),
         ]
         for group_name, fqdn in group_proxies:
-            group_proxy = create_group_proxy(group_name, fqdn)
-            if not group_proxy:
+            try:
+                group_proxy = CbfGroupProxy(group_name, logger=self._logger)
+                group_proxy.add(fqdn)
+                setattr(self, f"_group_{group_name.lower()}", group_proxy)
+            except tango.DevFailed:
+                self._logger.error(f"Failure in connection to {fqdn}")
                 return False
-            setattr(self, f"_group_{group_name.lower()}", group_proxy)
+        return True
 
+    def _write_hw_config(self, fqdn, proxy):
+        try:
+            device_id = fqdn.split("/")[-1]
+            device_type = None
+            device_config = None
+
+            if fqdn in self._fqdn_power_switch:
+                device_type = "power_switch"
+            elif fqdn in self._fqdn_talon_lru:
+                device_type = "talon_lru"
+            elif fqdn in self._fqdn_talon_board:
+                device_type = "talon_board"
+                device_config = {"TalonDxBoardAddress": self._hw_config[device_type][device_id]}
+
+            if device_type:
+                self._logger.debug(f"Writing hardware configuration properties to {fqdn}")
+                if not device_config:
+                    device_config = self._hw_config[device_type][device_id]
+                device_config = tango.utils.obj_2_property(device_config)
+                proxy.put_property(device_config)
+                proxy.Init()
+
+                if device_type == "talon_lru":
+                    proxy.set_timeout_millis(self._lru_timeout * 1000)
+
+        except tango.DevFailed as df:
+            for item in df.args:
+                self._logger.error(f"Failed to write {fqdn} HW config properties: {item.reason}")
+            return False
+        return True
+
+    def _set_proxy_online(self, fqdn) -> bool:
+        try:
+            # establish proxy connection to component
+            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+            self._proxies[fqdn].adminMode = AdminMode.ONLINE
+        except tango.DevFailed as df:
+            for item in df.args:
+                self._logger.error(
+                    f"Failed to set AdminMode of {fqdn} to ONLINE: {item.reason}"
+                )
+            return False
+        return True
+    
+    def _init_device_proxy(self, fqdn):
+        if fqdn not in self._proxies:
+            try:
+                self._logger.debug(f"Trying connection to {fqdn}")
+                proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self._logger.error(
+                        f"Failure in connection to {fqdn}: {item.reason}"
+                    )
+                return False
+            # add proxy to proxies list
+            self._proxies[fqdn] = proxy
+        else:
+            proxy = self._proxies[fqdn]
+
+        if not self._write_hw_config(fqdn, proxy):
+            return False
+        
+        if not self._set_proxy_online(fqdn):
+            return False
+        
+        return True
+
+    def _innit_proxies(self: ControllerComponentManager) -> bool:
+        """
+        Innit all proxies, return True if all proxies are connected.
+        """
+        if not self._create_group_proxies():
+            return False
+
+        for fqdn in (
+            self._fqdn_power_switch
+            + self._fqdn_talon_lru
+            + self._fqdn_talon_board
+            + self._fqdn_subarray
+            + self._fqdn_fsp
+            + self._fqdn_vcc
+            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        ):
+            if not self._init_device_proxy(fqdn):
+                return False
         return True
 
     def start_communicating(
@@ -284,99 +360,6 @@ class ControllerComponentManager(CbfComponentManager):
             )
             self._connected = False
             return
-
-        # NOTE: order matters here
-        # - must set PDU online before LRU to establish outlet power states
-        # - must set VCC online after LRU to establish LRU power state
-        # TODO: evaluate ordering and add further comments
-        for fqdn in (
-            self._fqdn_power_switch
-            + self._fqdn_talon_lru
-            + self._fqdn_talon_board
-            + self._fqdn_subarray
-            + self._fqdn_fsp
-            + self._fqdn_vcc
-            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-        ):
-            if fqdn not in self._proxies:
-                try:
-                    self._logger.debug(f"Trying connection to {fqdn}")
-                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                except tango.DevFailed as df:
-                    self._connected = False
-                    for item in df.args:
-                        self._logger.error(
-                            f"Failure in connection to {fqdn}: {item.reason}"
-                        )
-                    return
-
-                # add proxy to proxies list
-                self._proxies[fqdn] = proxy
-
-            else:
-                proxy = self._proxies[fqdn]
-
-            try:
-                # write hardware configuration properties to PDU devices
-                if fqdn in self._fqdn_power_switch:
-                    self._logger.debug(
-                        f"Writing hardware configuration properties to {fqdn}"
-                    )
-                    switch_id = fqdn.split("/")[-1]
-                    switch_config = tango.utils.obj_2_property(
-                        self._hw_config["power_switch"][switch_id]
-                    )
-                    proxy.put_property(switch_config)
-                    proxy.Init()
-
-                # write hardware configuration properties to Talon LRU devices
-                elif fqdn in self._fqdn_talon_lru:
-                    self._logger.debug(
-                        f"Writing hardware configuration properties to {fqdn}"
-                    )
-                    lru_id = fqdn.split("/")[-1]
-                    lru_config = tango.utils.obj_2_property(
-                        self._hw_config["talon_lru"][lru_id]
-                    )
-                    proxy.put_property(lru_config)
-                    proxy.Init()
-                    proxy.set_timeout_millis(self._lru_timeout * 1000)
-
-                # write hardware configuration properties to Talon board devices
-                elif fqdn in self._fqdn_talon_board:
-                    self._logger.debug(
-                        f"Writing hardware configuration properties to {fqdn}"
-                    )
-                    board_id = fqdn.split("/")[-1]
-                    board_config = tango.utils.obj_2_property(
-                        {
-                            "TalonDxBoardAddress": self._hw_config[
-                                "talon_board"
-                            ][board_id]
-                        }
-                    )
-                    proxy.put_property(board_config)
-                    proxy.Init()
-
-            except tango.DevFailed as df:
-                self._connected = False
-                for item in df.args:
-                    self._logger.error(
-                        f"Failed to write {fqdn} HW config properties: {item.reason}"
-                    )
-                return
-
-            try:
-                # establish proxy connection to component
-                self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-                self._proxies[fqdn].adminMode = AdminMode.ONLINE
-            except tango.DevFailed as df:
-                self._connected = False
-                for item in df.args:
-                    self._logger.error(
-                        f"Failed to set AdminMode of {fqdn} to ONLINE: {item.reason}"
-                    )
-                return
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
