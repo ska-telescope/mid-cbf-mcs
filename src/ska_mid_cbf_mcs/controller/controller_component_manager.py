@@ -148,7 +148,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fs_slim_config_path = fs_slim_config_path
         self._vis_slim_config_path = vis_slim_config_path
 
-        self._max_capabilities = ""
+        self._max_capabilities = {}
 
         self._proxies = {}
 
