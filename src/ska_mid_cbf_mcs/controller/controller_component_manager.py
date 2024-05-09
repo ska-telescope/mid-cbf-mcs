@@ -197,7 +197,7 @@ class ControllerComponentManager(CbfComponentManager):
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         """
 
-        def _filter_fqdn(self, all_domains, config_key):
+        def _filter_fqdn(all_domains, config_key):
             return [
                 domain
                 for domain in all_domains
