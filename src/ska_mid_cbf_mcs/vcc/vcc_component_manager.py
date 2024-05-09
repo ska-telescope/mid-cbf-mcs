@@ -45,34 +45,6 @@ VCC_PARAM_PATH = "mnt/vcc_param/"
 class VccComponentManager(CbfObsComponentManager):
     """Component manager for Vcc class."""
 
-    @property
-    def dish_id(self: VccComponentManager) -> str:
-        """
-        DISH ID
-
-        :return: the DISH ID
-        """
-        return self._dish_id
-
-    @dish_id.setter
-    def dish_id(self: VccComponentManager, dish_id: str) -> None:
-        """
-        Set the DISH ID.
-
-        :param dish_id: DISH ID
-        """
-        self._dish_id = dish_id
-
-    @property
-    def frequency_band(self: VccComponentManager) -> int:
-        """
-        Frequency Band
-
-        :return: the frequency band as the integer index in an array
-                of frequency band labels: ["1", "2", "3", "4", "5a", "5b"]
-        """
-        return self._frequency_band
-
     def __init__(
         self: VccComponentManager,
         *args: Any,
@@ -98,12 +70,12 @@ class VccComponentManager(CbfObsComponentManager):
         self._vcc_band_fqdn = vcc_band
 
         # Initialize attribute values
-        self._dish_id = ""
+        self.dish_id = ""
 
-        self._scan_id = 0
-        self._config_id = ""
+        self.scan_id = 0
+        self.config_id = ""
 
-        self._frequency_band = 0
+        self.frequency_band = 0
         self._freq_band_name = ""
 
         # Initialize list of band proxies and band -> index translation;
@@ -130,6 +102,10 @@ class VccComponentManager(CbfObsComponentManager):
             self._band_simulators[2],
             self._band_simulators[3],
         )
+
+    # ---------------
+    # General methods
+    # ---------------
 
     def _get_power_state(self: VccComponentManager) -> PowerState:
         """
@@ -167,6 +143,69 @@ class VccComponentManager(CbfObsComponentManager):
 
         super().start_communicating()
         self._update_component_state(power=self._get_power_state())
+
+    def _deconfigure(self: VccComponentManager) -> None:
+        """Deconfigure scan configuration parameters."""
+        self.frequency_band = 0
+        self._device_attr_change_callback("frequencyBand", self.frequency_band)
+        self._device_attr_archive_callback(
+            "frequencyBand", self.frequency_band
+        )
+        self._freq_band_name = ""
+        self.config_id = ""
+        self.scan_id = 0
+
+    def _load_internal_params(
+        self: VccComponentManager,
+        freq_band_name: str,
+        dish_sample_rate: int,
+        samples_per_frame: int,
+    ) -> str:
+        """
+        Helper for loading VCC internal parameter file
+
+        :param freq_band_name: the name of the configured frequency band
+        :param dish_sample rate: the configured DISH sample rate
+        :param samples_per_frame: the configured samples per frame
+        """
+        self.logger.info(
+            f"Configuring internal parameters for VCC band {freq_band_name}"
+        )
+
+        internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self.dish_id}_band{freq_band_name}.json"
+        self.logger.debug(
+            f"Using parameters stored in {internal_params_file_name}"
+        )
+        try:
+            with open(internal_params_file_name, "r") as f:
+                json_string = f.read()
+        except FileNotFoundError:
+            self.logger.info(
+                f"Could not find internal parameters file for receptor {self.dish_id}, band {freq_band_name}; using default."
+            )
+            try:
+                with open(
+                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                ) as f:
+                    json_string = f.read()
+            except FileNotFoundError:
+                self.logger.error(
+                    "Could not find default internal parameters file."
+                )
+                return None
+
+        self.logger.debug(f"VCC internal parameters: {json_string}")
+
+        # add dish_sample_rate and samples_per_frame to internal params json
+        args = json.loads(json_string)
+        args.update({"dish_sample_rate": dish_sample_rate})
+        args.update({"samples_per_frame": samples_per_frame})
+        json_string = json.dumps(args)
+        return json_string
+
+    # ---------------
+    # Command methods
+    # ---------------
 
     def on(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
@@ -223,19 +262,6 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
-    def _deconfigure(self: VccComponentManager) -> None:
-        """Deconfigure scan configuration parameters."""
-        self._frequency_band = 0
-        self._device_attr_change_callback(
-            "frequencyBand", self._frequency_band
-        )
-        self._device_attr_archive_callback(
-            "frequencyBand", self._frequency_band
-        )
-        self._freq_band_name = ""
-        self._config_id = ""
-        self._scan_id = 0
-
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
@@ -245,54 +271,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return False
         return True
-
-    def _load_internal_params(
-        self: VccComponentManager,
-        freq_band_name: str,
-        dish_sample_rate: int,
-        samples_per_frame: int,
-    ) -> str:
-        """
-        Helper for loading VCC internal parameter file
-
-        :param freq_band_name: the name of the configured frequency band
-        :param dish_sample rate: the configured DISH sample rate
-        :param samples_per_frame: the configured samples per frame
-        """
-        self.logger.info(
-            f"Configuring internal parameters for VCC band {freq_band_name}"
-        )
-
-        internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._dish_id}_band{freq_band_name}.json"
-        self.logger.debug(
-            f"Using parameters stored in {internal_params_file_name}"
-        )
-        try:
-            with open(internal_params_file_name, "r") as f:
-                json_string = f.read()
-        except FileNotFoundError:
-            self.logger.info(
-                f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
-            )
-            try:
-                with open(
-                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
-                ) as f:
-                    json_string = f.read()
-            except FileNotFoundError:
-                self.logger.error(
-                    "Could not find default internal parameters file."
-                )
-                return None
-
-        self.logger.debug(f"VCC internal parameters: {json_string}")
-
-        # add dish_sample_rate and samples_per_frame to internal params json
-        args = json.loads(json_string)
-        args.update({"dish_sample_rate": dish_sample_rate})
-        args.update({"samples_per_frame": samples_per_frame})
-        json_string = json.dumps(args)
-        return json_string
 
     def _configure_band(
         self: VccComponentManager,
@@ -368,12 +346,10 @@ class VccComponentManager(CbfObsComponentManager):
 
         self._freq_band_name = freq_band_name
 
-        self._frequency_band = frequency_band
-        self._device_attr_change_callback(
-            "frequencyBand", self._frequency_band
-        )
+        self.frequency_band = frequency_band
+        self._device_attr_change_callback("frequencyBand", self.frequency_band)
         self._device_attr_archive_callback(
-            "frequencyBand", self._frequency_band
+            "frequencyBand", self.frequency_band
         )
 
         task_callback(
@@ -428,7 +404,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         configuration = json.loads(argin)
-        self._config_id = configuration["config_id"]
+        self.config_id = configuration["config_id"]
 
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used
@@ -438,13 +414,13 @@ class VccComponentManager(CbfObsComponentManager):
         freq_band = freq_band_dict()[configuration["frequency_band"]][
             "band_index"
         ]
-        if self._frequency_band != freq_band:
+        if self.frequency_band != freq_band:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     f"Error in ConfigureScan; scan configuration frequency band {freq_band} "
-                    + f"not the same as enabled band device {self._frequency_band}",
+                    + f"not the same as enabled band device {self.frequency_band}",
                 ),
             )
             return
@@ -499,15 +475,15 @@ class VccComponentManager(CbfObsComponentManager):
         ):
             return
 
-        self._scan_id = argin
+        self.scan_id = argin
 
         # Send the Scan command to the HPS
         fb_index = self._freq_band_index[self._freq_band_name]
         if self.simulation_mode:
-            self._band_simulators[fb_index].Scan(self._scan_id)
+            self._band_simulators[fb_index].Scan(self.scan_id)
         else:
             try:
-                self._band_proxies[fb_index].Scan(self._scan_id)
+                self._band_proxies[fb_index].Scan(self.scan_id)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
                 self._update_communication_state(
@@ -686,7 +662,7 @@ class VccComponentManager(CbfObsComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Reset the configuration from ABORTED or FAULT.
+        Reset the scan operation from ABORTED or FAULT.
 
         :return: None
         """

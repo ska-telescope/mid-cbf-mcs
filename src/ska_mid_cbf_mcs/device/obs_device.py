@@ -531,13 +531,15 @@ class CbfObsDevice(SKAObsDevice):
             """
             (result_code, msg) = super().do(*args, **kwargs)
 
+            # Set initial simulation mode to True
+            self._device.write_simulationMode(SimulationMode.TRUE)
+
             self._device._obs_state = ObsState.IDLE
             self._device._commanded_obs_state = ObsState.IDLE
 
             # JSON string, deliberately left in Tango layer
             self._device._last_scan_configuration = ""
 
-            self._completed()
             return (result_code, msg)
 
     @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"

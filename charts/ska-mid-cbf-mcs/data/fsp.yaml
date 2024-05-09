@@ -52,84 +52,18 @@ server:
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/01_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "DeviceID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "DeviceID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "DeviceID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
@@ -159,84 +93,18 @@ server:
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/02_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "DeviceID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "DeviceID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "DeviceID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
@@ -266,84 +134,18 @@ server:
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/03_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "DeviceID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "DeviceID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "DeviceID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
@@ -373,84 +175,18 @@ server:
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/04_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "DeviceID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "DeviceID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "DeviceID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"

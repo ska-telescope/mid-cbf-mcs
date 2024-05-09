@@ -97,6 +97,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
+        # NOTE: using component manager default of SimulationMode.TRUE,
+        # as self._simulation_mode at this point during init_device()
+        # SimulationMode.FALSE
         self.simulation_mode = simulation_mode
 
     def task_abort_event_is_set(
