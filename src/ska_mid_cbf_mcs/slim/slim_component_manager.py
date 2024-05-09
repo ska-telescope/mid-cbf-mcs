@@ -309,6 +309,7 @@ class SlimComponentManager(CbfComponentManager):
                 # word error rate: a ratio of rx idle error count compared to the
                 # count of rx idle word transmitted
 
+                # to prevent a divide by zero error as rx_idle_word_count defaults to 0
                 rx_idle_word_rate_float = (
                     self._calculate_rx_idle_word_rate_float(
                         rx_idle_word_count, rx_idle_error_count
@@ -385,9 +386,9 @@ class SlimComponentManager(CbfComponentManager):
                     (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
                 )
 
-                rx_word_error_rate = ""
+                rx_idle_word_error_rate = ""
 
-                # first check if to prevent a divide by zero error as rx_idle_word_count defaults to 0
+                # to prevent a divide by zero error as rx_idle_word_count defaults to 0
                 rx_idle_word_rate_float = (
                     self._calculate_rx_idle_word_rate_float(
                         rx_idle_word_count, rx_idle_error_count
