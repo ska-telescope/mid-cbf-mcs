@@ -168,6 +168,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Set the max capabilities of the controller device
         """
+        self._max_capabilities = self._get_max_capabilities()
         if self._max_capabilities:
             for key, default in [
                 ("VCC", const.DEFAULT_COUNT_VCC),
@@ -255,8 +256,12 @@ class ControllerComponentManager(CbfComponentManager):
             )
             self._group_subarray.add(self._fqdn_subarray)
         except tango.DevFailed:
-            self._logger.error(f"Failure in connection to {self._fqdn_subarray}")
+            self._logger.error(
+                f"Failure in connection to {self._fqdn_subarray}"
+            )
             return False
+
+        return True
 
     def _write_hw_config(self, fqdn, proxy):
         try:
@@ -338,9 +343,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Innit all proxies, return True if all proxies are connected.
         """
-        if not self._create_group_proxies():
-            return False
-
         for fqdn in (
             self._fqdn_power_switch
             + self._fqdn_talon_lru
@@ -364,16 +366,22 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         super().start_communicating()
+
         with open(self._hw_config_path) as yaml_fd:
             self._hw_config = yaml.safe_load(yaml_fd)
 
         self._set_max_capabilities()
         self._set_fqdns()
 
+        if not self._create_group_proxies():
+            self._connected = False
+            return
+
+        # NOTE: order matters here
+        # - must set PDU online before LRU to establish outlet power states
+        # - must set VCC online after LRU to establish LRU power state
+        # TODO: evaluate ordering and add further comments
         if not self._innit_proxies():
-            self._logger(
-                "Failed to connect to one or more proxies in start_communicating"
-            )
             self._connected = False
             return
 
