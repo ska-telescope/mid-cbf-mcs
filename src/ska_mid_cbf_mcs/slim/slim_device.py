@@ -14,7 +14,6 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-import time
 from typing import Optional
 
 # tango imports
@@ -305,16 +304,6 @@ class Slim(SKABaseDevice):
             """
             # shorten to cm to help fit the below two function call in one line
             cm = self.target.component_manager
-            t_sleep = 2
-            # TODO Change test_length to something longer when BaseClass Updates are completed
-            # Currently there is no way to prevent the 3sec default timeout for commands
-            test_length = 2
-            self.logger.info(f"Sleeping for {test_length}s")
-            for slept_time in range(0, test_length, t_sleep):
-                time.sleep(t_sleep)
-                self.logger.info(
-                    f"Sleep Time Remaining: {test_length - slept_time}"
-                )
 
             # Kicks off SLIM Test
             result_code, message = cm.slim_test()
