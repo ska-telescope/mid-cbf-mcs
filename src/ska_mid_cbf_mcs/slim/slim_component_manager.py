@@ -19,7 +19,6 @@ from typing import Callable, Optional
 import tango
 import yaml
 from beautifultable import BeautifulTable
-from pluggy import Result
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -342,7 +341,7 @@ class SlimComponentManager(CbfComponentManager):
                 "Exception occur when running slim_test_slim_table. See log for detail",
             )
 
-        return (ResultCode.OK, f"SLIM Test Completed")
+        return (ResultCode.OK, "SLIM Test Completed")
 
     def _slim_links_ber_check_summary(
         self: SlimComponentManager,

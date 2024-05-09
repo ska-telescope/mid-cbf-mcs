@@ -227,7 +227,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if the device proxy has not been set
         if self._rx_device_proxy is None:
             self._logger.error(
-                f"error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
+                "error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
             )
             return res
 
@@ -258,7 +258,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if the device proxy has not been set
         if self._rx_device_proxy is None:
             self._logger.error(
-                f"error reading rx_link_occupancy: Tx Rx are not yet connected"
+                "error reading rx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
@@ -287,7 +287,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         # if the device proxy has not been set
         if self._tx_device_proxy is None:
             self._logger.error(
-                f"error reading tx_link_occupancy: Tx Rx are not yet connected"
+                "error reading tx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
