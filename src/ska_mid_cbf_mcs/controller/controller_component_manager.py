@@ -235,20 +235,28 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.debug(f"fqdn {name}: {value}")
 
     def _create_group_proxies(self):
-        group_proxies = [
-            ("VCC", self._fqdn_vcc),
-            ("FSP", self._fqdn_fsp),
-            ("CBF Subarray", self._fqdn_subarray),
-        ]
-        for group_name, fqdn in group_proxies:
-            try:
-                group_proxy = CbfGroupProxy(group_name, logger=self._logger)
-                group_proxy.add(fqdn)
-                setattr(self, f"_group_{group_name.lower()}", group_proxy)
-            except tango.DevFailed:
-                self._logger.error(f"Failure in connection to {fqdn}")
-                return False
-        return True
+        try:
+            self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
+            self._group_vcc.add(self._fqdn_vcc)
+        except tango.DevFailed:
+            self._logger.error(f"Failure in connection to {self._fqdn_vcc}")
+            return False
+
+        try:
+            self._group_fsp = CbfGroupProxy("FSP", logger=self._logger)
+            self._group_fsp.add(self._fqdn_fsp)
+        except tango.DevFailed:
+            self._logger.error(f"Failure in connection to {self._fqdn_fsp}")
+            return False
+
+        try:
+            self._group_subarray = CbfGroupProxy(
+                "CBF Subarray", logger=self._logger
+            )
+            self._group_subarray.add(self._fqdn_subarray)
+        except tango.DevFailed:
+            self._logger.error(f"Failure in connection to {self._fqdn_subarray}")
+            return False
 
     def _write_hw_config(self, fqdn, proxy):
         try:
