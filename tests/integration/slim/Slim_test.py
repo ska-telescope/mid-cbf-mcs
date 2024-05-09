@@ -82,6 +82,20 @@ class TestSlim:
             )
             assert mesh.State() == DevState.ON
 
+    def test_SlimTest_FAILED(
+        self: TestSlim, test_proxies: pytest.fixture
+    ) -> None:
+        """
+        Test the "SlimTest" command before the Mesh has been configured.
+        This should return a ResultCode.FAILED
+
+        :param test_proxies: the proxies test fixture
+        """
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            return_code, message = mesh.SlimTest()
+            assert return_code == ResultCode.FAILED
+
     def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "Configure" command
@@ -97,6 +111,18 @@ class TestSlim:
             assert rc == ResultCode.OK
             for link in mesh.healthSummary:
                 assert link == HealthState.OK
+
+    def test_SlimTest_OK(self: TestSlim, test_proxies: pytest.fixture) -> None:
+        """
+        Test the "SlimTest" command after the Mesh has been configured.
+        This should return a ResultCode.OK
+
+        :param test_proxies: the proxies test fixture
+        """
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            return_code, message = mesh.SlimTest()
+            assert return_code == ResultCode.OK
 
         # Turn off the LRUs and then the Slim devices
         for proxy in test_proxies.talon_lru:
