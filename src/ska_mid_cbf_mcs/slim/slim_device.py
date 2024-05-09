@@ -316,16 +316,10 @@ class Slim(SKABaseDevice):
                     f"Sleep Time Remaining: {test_length - slept_time}"
                 )
 
-            # Prints the connection status and Bit Error Rate of the devices on the mesh
-            (result_code, message) = cm.slim_links_ber_check_summary()
-            if result_code != ResultCode.OK:
-                return (result_code, message)
+            # Kicks off SLIM Test
+            result_code, message = cm.slim_test()
 
-            # Logs Health Summary of Mesh Links
-            (result_code, message) = cm.slim_table()
-            if result_code != ResultCode.OK:
-                return (result_code, message)
-            return (ResultCode.OK, "SLIM Test Completed")
+            return (result_code, message)
 
     @command(
         dtype_in="DevString",

@@ -19,6 +19,7 @@ from typing import Callable, Optional
 import tango
 import yaml
 from beautifultable import BeautifulTable
+from pluggy import Result
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -271,157 +272,193 @@ class SlimComponentManager(CbfComponentManager):
 
     def _calculate_rx_idle_word_rate_float(
         self, rx_idle_word_count: int, rx_idle_error_count: int
-    ) -> float:
+    ) -> tuple[str, str]:
         """
-        Calculates and return the rate of Rx Idle Error Word Count over Rx Idle Word Count
-        Returns -1.0 if the Rx Idle Word Count is 0 to prevent divide by zero errors
+        TODO
+        Calculates and return a string the rate of Rx Idle Error Word Count over Rx Idle Word Count
+        Along with a status that indicates if the Rate passes the Bit Error Rate Threshold
+        Returns a tuple of the rate and the pass/fail BER status
 
-        :return: Rx Idle Error Word Count over Rx Idle Word Count or -1.0 if zero
-        :rtype: float
+        :return: A tuple of (rx_idle_word_error_rate,rx_ber_pass_status)
+        :rtype: tuple[str,str]
         """
         if rx_idle_word_count == 0:
-            return -1.0
+            rx_idle_word_error_rate = "NaN"
+            rx_ber_pass_status = "Unknown"
         else:
-            return rx_idle_error_count / rx_idle_word_count
+            rx_idle_word_rate_float = rx_idle_error_count / rx_idle_word_count
+            rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
+            if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD:
+                rx_ber_pass_status = "Passed"
+            else:
+                rx_ber_pass_status = "Failed"
+        return (rx_idle_word_error_rate, rx_ber_pass_status)
 
-    def slim_links_ber_check_summary(
+    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
+        counters: list[int] = []
+        names: list[str] = []
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]] = []
+
+        # grab the common values we need for the individual tests
+        # to minimize device proxy access
+        for idx, txrx in enumerate(self._active_links):
+            dp_link = self._dp_links[idx]
+            counter = dp_link.counters
+            rx_idle_word_count = counter[2]
+            rx_idle_error_count = counter[3]
+            counters.append(counter)
+            names.append(dp_link.linkName)
+            rx_idle_word_error_rate_and_ber_pass_status.append(
+                self._calculate_rx_idle_word_rate_float(
+                    rx_idle_word_count, rx_idle_error_count
+                )
+            )
+
+        # Summary check for SLIM Link Status and Bit Error Rate
+        try:
+            self._slim_links_ber_check_summary(
+                counters, names, rx_idle_word_error_rate_and_ber_pass_status
+            )
+        except Exception as e:
+            self._logger.error(
+                f"Exception occur when running slim_test_slim_links_ber_check_summary: {e}"
+            )
+            return (
+                ResultCode.FAILED,
+                "Exception occur when running slim_test_slim_links_ber_check_summary. See log for detail",
+            )
+
+        # More detail table for the SLIM Link health
+        try:
+            self._slim_table(
+                counters, names, rx_idle_word_error_rate_and_ber_pass_status
+            )
+        except Exception as e:
+            self._logger.error(
+                f"Exception occur when running slim_test_slim_table: {e}"
+            )
+            return (
+                ResultCode.FAILED,
+                "Exception occur when running slim_test_slim_table. See log for detail",
+            )
+
+        return (ResultCode.OK, f"SLIM Test Completed")
+
+    def _slim_links_ber_check_summary(
         self: SlimComponentManager,
-    ) -> tuple[ResultCode, str]:
+        all_counters: list[int],
+        names: list[str],
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str]],
+    ):
         """
         Logs a summary status of the SLIM Link health for each device on the Mesh
         Specifically, this will calcualte the bit-error rate for a rx device in the mesh
         and compared to a threshold set in global_enum.py
-
-        :return: A tuple containing a return code and a message string
-        :rtype: (ResultCode, str)
         """
 
-        try:
-            res = "\nSLIM BER Check:\n\n"
-            for idx, txrx in enumerate(self._active_links):
-                dp_link = self._dp_links[idx]
-                counters = dp_link.counters
-                name = dp_link.linkName
-                rx_word_count = counters[0]
-                rx_idle_word_count = counters[2]
-                rx_idle_error_count = counters[3]
+        res = "\nSLIM BER Check:\n\n"
+        for idx in range(len(self._active_links)):
+            counters = all_counters[idx]
+            # tx rx fqdn link name
+            name = names[idx]
 
-                # word error rate: a ratio of rx idle error count compared to the
-                # count of rx idle word transmitted
+            rx_word_count = counters[0]
+            rx_idle_word_count = counters[2]
 
-                # to prevent a divide by zero error as rx_idle_word_count defaults to 0
-                rx_idle_word_rate_float = (
-                    self._calculate_rx_idle_word_rate_float(
-                        rx_idle_word_count, rx_idle_error_count
-                    )
-                )
+            # word error rate: a ratio of rx idle error count compared to the
+            # count of rx idle word transmitted
+            (
+                rx_idle_word_error_rate,
+                rx_ber_pass_status,
+            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
+            rx_words = rx_word_count + rx_idle_word_count
 
-                if rx_idle_word_rate_float == -1.0:
-                    rx_idle_word_error_rate = "NaN"
-                    rx_status = "Unknown"
-                else:
-                    rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
-                    if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD:
-                        rx_status = "Passed"
-                    else:
-                        rx_status = "Failed"
+            res += f"Link Name: {name}\n"
+            res += f"Slim Link status (rx_status): {rx_ber_pass_status}\n"
+            res += f"rx_wer:{rx_idle_word_error_rate}\n"
+            res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
+            res += "\n"
+        self._logger.info(res)
 
-                rx_words = rx_word_count + rx_idle_word_count
-
-                res += f"Link Name: {name}\n"
-                res += f"Slim Link status (rx_status): {rx_status}\n"
-                res += f"rx_wer:{rx_idle_word_error_rate}\n"
-                res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
-                res += "\n"
-            self._logger.info(res)
-        except Exception as e:
-            self._logger.info(f"{e}")
-            return (ResultCode.FAILED, f"{e}")
-
-        return (ResultCode.OK, "SLIM Links BER check completed")
-
-    def slim_table(self: SlimComponentManager) -> tuple[ResultCode, str]:
+    def _slim_table(
+        self: SlimComponentManager,
+        all_counters: list[int],
+        names: list[str],
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]],
+    ):
         """
         Logs a summary for the rx and tx device on the Mesh
-
-        :return: A tuple containing a return code and a message string
-        :rtype: (ResultCode, str)
         """
-        try:
-            table = BeautifulTable(maxwidth=180)
-            table.columns.header = [
-                "Link",
-                "CDR locked\n(lost)",
-                "Block Aligned\n(lost)",
-                "Tx Data (Gbps)\n(words)",
-                "Tx Idle (Gbps)",
-                "Rx Data\n(Gbps)\n(words)",
-                "Rx Idle\n(Gbps)",
-                "Idle Error\nCount",
-                "Word\nError Rate",
-            ]
 
-            for idx, txrx in enumerate(self._active_links):
-                dp_link = self._dp_links[idx]
-                counters = dp_link.counters
-                rx_debug_alignment_and_lock_statuses = (
-                    dp_link.rx_debug_alignment_and_lock_status
-                )
-                rx_link_occupancy = dp_link.rx_link_occupancy
-                tx_link_occupancy = dp_link.tx_link_occupancy
-                rx_word_count = counters[0]
-                rx_idle_word_count = counters[2]
-                rx_idle_error_count = counters[3]
-                tx_word_count = counters[6]
-                tx_idle_word_count = counters[8]
-                tx_words = tx_word_count + tx_idle_word_count
-                rx_words = rx_word_count + rx_idle_word_count
+        table = BeautifulTable(maxwidth=180)
+        table.columns.header = [
+            "Link",
+            "CDR locked\n(lost)",
+            "Block Aligned\n(lost)",
+            "Tx Data (Gbps)\n(words)",
+            "Tx Idle (Gbps)",
+            "Rx Data\n(Gbps)\n(words)",
+            "Rx Idle\n(Gbps)",
+            "Idle Error\nCount",
+            "Word\nError Rate",
+        ]
 
-                tx_name = dp_link.txDeviceName
-                rx_name = dp_link.rxDeviceName
-                short_name_one = (
-                    (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
-                )
-                short_name_two = (
-                    (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
-                )
+        for idx in range(len(self._active_links)):
+            dp_link = self._dp_links[idx]
+            counters = all_counters[idx]
+            # tx rx fqdn link name
+            name = names[idx]
+            (
+                rx_idle_word_error_rate,
+                _,
+            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
 
-                rx_idle_word_error_rate = ""
+            rx_debug_alignment_and_lock_statuses = (
+                dp_link.rx_debug_alignment_and_lock_status
+            )
+            rx_link_occupancy = dp_link.rx_link_occupancy
+            tx_link_occupancy = dp_link.tx_link_occupancy
 
-                # to prevent a divide by zero error as rx_idle_word_count defaults to 0
-                rx_idle_word_rate_float = (
-                    self._calculate_rx_idle_word_rate_float(
-                        rx_idle_word_count, rx_idle_error_count
-                    )
-                )
-                if rx_idle_word_rate_float == -1.0:
-                    rx_idle_word_error_rate = "NaN"
-                else:
-                    rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
+            rx_word_count = counters[0]
+            rx_idle_word_count = counters[2]
+            rx_idle_error_count = counters[3]
+            tx_word_count = counters[6]
+            tx_idle_word_count = counters[8]
+            tx_words = tx_word_count + tx_idle_word_count
+            rx_words = rx_word_count + rx_idle_word_count
 
-                data_row = (
-                    f"{short_name_one}\n->{short_name_two}",
-                    f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
-                    f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
-                    f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
-                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
-                    if tx_words != 0
-                    else "NaN",
-                    f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
-                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
-                    if rx_words != 0
-                    else "NaN",
-                    f"{rx_idle_error_count} /\n{rx_words:.2e}",
-                    rx_idle_word_error_rate,
-                )
-                table.rows.append(data_row)
-            self._logger.info(f"\nSLIM Health Summary Table\n{table}")
+            # spliting up the tx rx name from the tx rx fqdn link name
+            tx_name = (name.split("->"))[0]
+            rx_name = (name.split("->"))[1]
 
-        except Exception as e:
-            self._logger.info(f"{e}")
-            return (ResultCode.FAILED, f"{e}")
-        self._logger.info("SLIM Health Table Completed")
-        return (ResultCode.OK, "SLIM Health Table Completed")
+            # Making the tx rx name shorter by keeping only the board name and the tx/rx port
+            short_name_one = (
+                (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
+            )
+            short_name_two = (
+                (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
+            )
+
+            data_row = (
+                f"{short_name_one}\n->{short_name_two}",
+                f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
+                f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
+                f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
+                # Guard for divide by zero
+                f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
+                if tx_words != 0
+                else "NaN",
+                f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
+                # Guard for divide by zero
+                f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
+                if rx_words != 0
+                else "NaN",
+                f"{rx_idle_error_count} /\n{rx_words:.2e}",
+                rx_idle_word_error_rate,
+            )
+            table.rows.append(data_row)
+
+        self._logger.info(f"\nSLIM Health Summary Table\n{table}")
 
     def _parse_link(self, link: str):
         """
