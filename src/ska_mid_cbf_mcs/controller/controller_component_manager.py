@@ -160,110 +160,129 @@ class ControllerComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-    def start_communicating(
-        self: ControllerComponentManager,
-    ) -> None:
-        """Establish communication with the component, then start monitoring."""
+    # -------------
+    # Communication
+    # -------------
 
-        if self._connected:
-            return
-
-        super().start_communicating()
-
-        with open(self._hw_config_path) as yaml_fd:
-            self._hw_config = yaml.safe_load(yaml_fd)
-
-        self._max_capabilities = self._get_max_capabilities()
+    def _set_max_capabilities(self: ControllerComponentManager) -> None:
+        """
+        Set the max capabilities of the controller device
+        """
         if self._max_capabilities:
-            try:
-                self._count_vcc = self._max_capabilities["VCC"]
-            except KeyError:  # not found in DB
-                self._logger.warning(
-                    f"MaxCapabilities VCC count KeyError - \
-                    using default value of {const.DEFAULT_COUNT_VCC}"
-                )
-
-            try:
-                self._count_fsp = self._max_capabilities["FSP"]
-            except KeyError:  # not found in DB
-                self._logger.warning(
-                    f"MaxCapabilities FSP count KeyError - \
-                    using default value of {const.DEFAULT_COUNT_FSP}"
-                )
-
-            try:
-                self._count_subarray = self._max_capabilities["Subarray"]
-            except KeyError:  # not found in DB
-                self._logger.warning(
-                    f"MaxCapabilities subarray count KeyError - \
-                    using default value of {const.DEFAULT_COUNT_SUBARRAY}"
-                )
+            for key, default in [
+                ("VCC", const.DEFAULT_COUNT_VCC),
+                ("FSP", const.DEFAULT_COUNT_FSP),
+                ("Subarray", const.DEFAULT_COUNT_SUBARRAY),
+            ]:
+                try:
+                    setattr(
+                        self,
+                        f"_count_{key.lower()}",
+                        self._max_capabilities[key],
+                    )
+                except KeyError:
+                    self._logger.warning(
+                        f"MaxCapabilities {key} count KeyError - \
+                        using default value of {default}"
+                    )
+                    setattr(self, f"_count_{key.lower()}", default)
         else:
             self._logger.warning(
                 "MaxCapabilities device property not defined - \
                 using default values"
             )
 
-        # limit list of sub-element FQDNs to max capabilities count
+    def _set_fqdns(self: ControllerComponentManager) -> None:
+        """
+        Set the list of sub-element FQDNs to be used, limited by max capabilities count
+        """
+
+        def _filter_fqdn(self, all_domains, config_key):
+            return [
+                domain
+                for domain in all_domains
+                if domain.split("/")[-1]
+                in list(self._hw_config[config_key].keys())
+            ]
+
         self._fqdn_vcc = list(self._vcc_fqdns_all)[: self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[: self._count_fsp]
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = [
-            fqdn
-            for fqdn in self._talon_lru_fqdns_all
-            if fqdn.split("/")[-1] in list(self._hw_config["talon_lru"].keys())
-        ]
-        self._fqdn_talon_board = [
-            fqdn
-            for fqdn in self._talon_board_fqdns_all
-            if fqdn.split("/")[-1]
-            in list(self._hw_config["talon_board"].keys())
-        ]
-        self._fqdn_power_switch = [
-            fqdn
-            for fqdn in self._power_switch_fqdns_all
-            if fqdn.split("/")[-1]
-            in list(self._hw_config["power_switch"].keys())
-        ]
+        self._fqdn_talon_lru = _filter_fqdn(
+            self._talon_lru_fqdns_all, "talon_lru"
+        )
+        self._fqdn_talon_board = _filter_fqdn(
+            self._talon_board_fqdns_all, "talon_board"
+        )
+        self._fqdn_power_switch = _filter_fqdn(
+            self._power_switch_fqdns_all, "power_switch"
+        )
 
-        self._logger.debug(f"fqdn VCC: {self._fqdn_vcc}")
-        self._logger.debug(f"fqdn FSP: {self._fqdn_fsp}")
-        self._logger.debug(f"fqdn subarray: {self._fqdn_subarray}")
-        self._logger.debug(f"fqdn Talon board: {self._fqdn_talon_board}")
-        self._logger.debug(f"fqdn Talon LRU: {self._fqdn_talon_lru}")
-        self._logger.debug(f"fqdn power switch: {self._fqdn_power_switch}")
-        self._logger.debug(f"fqdn FS SLIM mesh: {self._fs_slim_fqdn}")
-        self._logger.debug(f"fqdn VIS SLIM mesh: {self._vis_slim_fqdn}")
+        fqdn_variables = {
+            "VCC": self._fqdn_vcc,
+            "FSP": self._fqdn_fsp,
+            "Subarray": self._fqdn_subarray,
+            "Talon board": self._fqdn_talon_board,
+            "Talon LRU": self._fqdn_talon_lru,
+            "Power switch": self._fqdn_power_switch,
+            "FS SLIM mesh": self._fs_slim_fqdn,
+            "VIS SLIM mesh": self._vis_slim_fqdn,
+        }
 
-        try:
-            self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
-            self._group_vcc.add(self._fqdn_vcc)
-        except tango.DevFailed:
-            self._connected = False
-            log_msg = f"Failure in connection to {self._fqdn_vcc}"
-            self._logger.error(log_msg)
+        for name, value in fqdn_variables.items():
+            self._logger.debug(f"fqdn {name}: {value}")
+
+    def _innit_proxies(self: ControllerComponentManager) -> bool:
+        """
+        Innit all proxies, return True if all proxies are connected.
+        """
+
+        def create_group_proxy(group_name, fqdn):
+            try:
+                group_proxy = CbfGroupProxy(group_name, logger=self._logger)
+                group_proxy.add(fqdn)
+                return group_proxy
+            except tango.DevFailed:
+                self._logger.error(f"Failure in connection to {fqdn}")
+                return False
+
+        # Set up group proxies
+        group_proxies = [
+            ("VCC", self._fqdn_vcc),
+            ("FSP", self._fqdn_fsp),
+            ("CBF Subarray", self._fqdn_subarray),
+        ]
+        for group_name, fqdn in group_proxies:
+            group_proxy = create_group_proxy(group_name, fqdn)
+            if not group_proxy:
+                return False
+            setattr(self, f"_group_{group_name.lower()}", group_proxy)
+
+        return True
+
+    def start_communicating(
+        self: ControllerComponentManager,
+    ) -> None:
+        """
+        Establish communication with the component, then start monitoring.
+        """
+        if self._connected:
             return
 
-        try:
-            self._group_fsp = CbfGroupProxy("FSP", logger=self._logger)
-            self._group_fsp.add(self._fqdn_fsp)
-        except tango.DevFailed:
-            self._connected = False
-            log_msg = f"Failure in connection to {self._fqdn_fsp}"
-            self._logger.error(log_msg)
-            return
+        super().start_communicating()
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
 
-        try:
-            self._group_subarray = CbfGroupProxy(
-                "CBF Subarray", logger=self._logger
+        self._set_max_capabilities()
+        self._set_fqdns()
+
+        if not self._innit_proxies():
+            self._logger(
+                "Failed to connect to one or more proxies in start_communicating"
             )
-            self._group_subarray.add(self._fqdn_subarray)
-        except tango.DevFailed:
             self._connected = False
-            log_msg = f"Failure in connection to {self._fqdn_subarray}"
-            self._logger.error(log_msg)
             return
 
         # NOTE: order matters here
@@ -365,7 +384,9 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
 
     def stop_communicating(self: ControllerComponentManager) -> None:
-        """Stop communication with the component"""
+        """
+        Stop communication with the component
+        """
         self._logger.info(
             "Entering ControllerComponentManager.stop_communicating"
         )
@@ -373,6 +394,10 @@ class ControllerComponentManager(CbfComponentManager):
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
         self._connected = False
+
+    # ---------------
+    # Command methods
+    # ---------------
 
     def on(
         self: ControllerComponentManager,
