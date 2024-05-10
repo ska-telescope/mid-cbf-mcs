@@ -15,7 +15,7 @@ import os
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
-from tango import DevState
+from tango import DevFailed, DevState
 
 # Standard imports
 
@@ -82,19 +82,22 @@ class TestSlim:
             )
             assert mesh.State() == DevState.ON
 
-    def test_SlimTest_FAILED(
+    def test_SlimTest_Before_Configure(
         self: TestSlim, test_proxies: pytest.fixture
     ) -> None:
         """
         Test the "SlimTest" command before the Mesh has been configured.
-        This should return a ResultCode.FAILED
+        Expects that a tango.DevFailed be caught
 
         :param test_proxies: the proxies test fixture
         """
         device_under_test = test_proxies.slim
         for mesh in device_under_test:
-            return_code, message = mesh.SlimTest()
-            assert return_code == ResultCode.FAILED
+            with pytest.raises(
+                DevFailed,
+                match="The SLIM must be configured before SlimTest can be called",
+            ):
+                mesh.SlimTest()
 
     def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
@@ -112,7 +115,9 @@ class TestSlim:
             for link in mesh.healthSummary:
                 assert link == HealthState.OK
 
-    def test_SlimTest_OK(self: TestSlim, test_proxies: pytest.fixture) -> None:
+    def test_SlimTest_After_Configure(
+        self: TestSlim, test_proxies: pytest.fixture
+    ) -> None:
         """
         Test the "SlimTest" command after the Mesh has been configured.
         This should return a ResultCode.OK
