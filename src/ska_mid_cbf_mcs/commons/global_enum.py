@@ -24,12 +24,12 @@ class Const:
         self.DELTA_F = 1800  # Hz
 
         # TODO - remove the consts in MHZ/GHz eventually
-        self.FREQUENCY_SLICE_BW_HZ = 200 * 10**6
-        self.SEARCH_WINDOW_BW_HZ = 300 * 10**6
-        self.FREQUENCY_BAND_1_RANGE_HZ = (0.35 * 10**9, 1.05 * 10**9)
-        self.FREQUENCY_BAND_2_RANGE_HZ = (0.95 * 10**9, 1.76 * 10**9)
-        self.FREQUENCY_BAND_3_RANGE_HZ = (1.65 * 10**9, 3.05 * 10**9)
-        self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10**9, 5.18 * 10**9)
+        self.FREQUENCY_SLICE_BW_HZ = 200 * 10 ** 6
+        self.SEARCH_WINDOW_BW_HZ = 300 * 10 ** 6
+        self.FREQUENCY_BAND_1_RANGE_HZ = (0.35 * 10 ** 9, 1.05 * 10 ** 9)
+        self.FREQUENCY_BAND_2_RANGE_HZ = (0.95 * 10 ** 9, 1.76 * 10 ** 9)
+        self.FREQUENCY_BAND_3_RANGE_HZ = (1.65 * 10 ** 9, 3.05 * 10 ** 9)
+        self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10 ** 9, 5.18 * 10 ** 9)
 
         self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
         self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
@@ -47,6 +47,7 @@ class Const:
         self.FINE_CHANNELS = 16384
         self.FINE_SAMPLE_RATE = 13440
         self.INPUT_FRAME_SIZE = 18
+
 
 const = Const()
 

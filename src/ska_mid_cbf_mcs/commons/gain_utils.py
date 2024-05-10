@@ -50,9 +50,7 @@ class GAINUtils:
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
 
-        frequency_slice_sample_rate = (
-            const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
-        )
+        frequency_slice_sample_rate = const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
 
         # The Normalized Center Frequencies of the Secondry Channelizer
         fc0 = numpy.linspace(-1, 1 - 2 / const.FINE_CHANNELS, num=const.FINE_CHANNELS)
@@ -66,11 +64,15 @@ class GAINUtils:
         actual_center_frequency = fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
         # Converting again to Normalized Frequencies
         normalized_frequency = (
-            actual_center_frequency / frequency_slice_sample_rate / const.INPUT_FRAME_SIZE
+            actual_center_frequency
+            / frequency_slice_sample_rate
+            / const.INPUT_FRAME_SIZE
         )
 
         # Evaluating the Gain of the Frequency response of the VCC Channelizer
-        _, h = scipy.signal.freqz(fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency)
+        _, h = scipy.signal.freqz(
+            fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency
+        )
 
         # The Gain Correction Factors
         gc_vec = numpy.clip(
