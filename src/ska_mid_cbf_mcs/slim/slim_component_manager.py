@@ -554,7 +554,8 @@ class SlimComponentManager(CbfComponentManager):
 
                 self._dp_links[idx].set_timeout_millis(3000)
                 # poll link health every 20 seconds
-                self._dp_links[idx].poll_command("VerifyConnection", 20000)
+                if self._simulation_mode == False:
+                    self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
             self._logger.error(msg)
@@ -582,7 +583,9 @@ class SlimComponentManager(CbfComponentManager):
             return (ResultCode.OK, msg)
         try:
             for idx, txrx in enumerate(self._active_links):
-                self._dp_links[idx].stop_poll_command("VerifyConnection")
+                # To guard against stop_poll_command from calling when in simulation mode
+                if self._simulation_mode == False:
+                    self._dp_links[idx].stop_poll_command("VerifyConnection")
                 rc, msg = self._dp_links[idx].command_inout("DisconnectTxRx")
         except tango.DevFailed as df:
             msg = f"Failed to disconnect SLIM links: {df.args[0].desc}"

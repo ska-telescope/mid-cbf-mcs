@@ -566,7 +566,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             + self._link_name
         )
         if self._simulation_mode == SimulationMode.TRUE:
-            return (self.slim_link_simulator.disconnect_slim_tx_rx(),)
+            return self.slim_link_simulator.disconnect_slim_tx_rx()
 
         try:
             if self._rx_device_proxy is not None:

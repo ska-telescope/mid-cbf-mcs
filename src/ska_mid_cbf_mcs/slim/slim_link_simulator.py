@@ -131,7 +131,7 @@ class SlimLinkSimulator:
         :return: Debug Alignment and Lock Status flags of the rx HPS Device
         :rtype: list[int]
         """
-        return [1, 1, 1, 1]
+        return [0, 1, 0, 1]
 
     @property
     def rx_link_occupancy(self: SlimLinkSimulator) -> float:
