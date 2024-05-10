@@ -138,7 +138,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 is only use when band 5 is active
         """
         return self._frequency_band_offset_stream2
-    
+
     @property
     def channel_offset(self: VccComponentManager) -> int:
         """
@@ -478,17 +478,18 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
             args = json.loads(json_string)
 
-            
-            gain_corrections = GAINUtils.get_vcc_ripple_correction();
+
+            gain_corrections = GAINUtils.get_vcc_ripple_correction()
             # Apply Gain Correction to parameters
             gain_index = 0
             channel_index = self.channel_offset
             for gain in args["vcc_gain"]:
-                gain = gain * gain_corrections[channel_index + gain_index]                
+                gain = gain * gain_corrections[channel_index + gain_index]
                 args["vcc_gain"][gain_index] = gain
                 gain_index = gain_index + 1
 
-            self._logger.info(f"VCC gain values: {args["vcc_gain"]}")
+            log_string = str(args["vcc_gain"])
+            self._logger.info(f"VCC gain values: {log_string}")
 
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             args.update(
