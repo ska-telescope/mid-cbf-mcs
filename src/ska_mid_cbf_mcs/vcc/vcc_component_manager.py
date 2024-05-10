@@ -27,6 +27,7 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -137,6 +138,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 is only use when band 5 is active
         """
         return self._frequency_band_offset_stream2
+    
+    @property
+    def channel_offset(self: VccComponentManager) -> int:
+        """
+        Channel offset
+
+        :return: the channel offset
+        """
+        return self._channel_offset
 
     @property
     def rfi_flagging_mask(self: VccComponentManager) -> str:
@@ -242,6 +252,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream1 = 0
         self._frequency_band_offset_stream2 = 0
+        self._channel_offset = 0
         self._rfi_flagging_mask = ""
 
         self._jones_matrix = ""
@@ -466,6 +477,19 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.info(f"VCC internal parameters: {json_string}")
 
             args = json.loads(json_string)
+
+            
+            gain_corrections = GAINUtils.get_vcc_ripple_correction();
+            # Apply Gain Correction to parameters
+            gain_index = 0
+            channel_index = self.channel_offset
+            for gain in args["vcc_gain"]:
+                gain = gain * gain_corrections[channel_index + gain_index]                
+                args["vcc_gain"][gain_index] = gain
+                gain_index = gain_index + 1
+
+            self._logger.info(f"VCC gain values: {args["vcc_gain"]}")
+
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             args.update(
                 {"samples_per_frame": band_config["samples_per_frame"]}
@@ -507,6 +531,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream2 = 0
         self._frequency_band_offset_stream1 = 0
+        self._channel_offset = 0
         self._stream_tuning = (0, 0)
         self._frequency_band = 0
         self._push_change_event("frequencyBand", self._frequency_band)
@@ -566,6 +591,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         )
         self._frequency_band_offset_stream2 = int(
             configuration["frequency_band_offset_stream2"]
+        )
+        self._channel_offset = int(
+            configuration["channel_offset"]
         )
 
         if "rfi_flagging_mask" in configuration:
