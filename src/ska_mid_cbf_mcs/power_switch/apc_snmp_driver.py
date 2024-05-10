@@ -30,7 +30,7 @@ from pysnmp.hlapi import (  # noqa: F401
 )
 from pysnmp.proto import rfc1902
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -140,15 +140,15 @@ class ApcSnmpDriver:
             self.logger.error(f"Failed to connect to power switch: {e}")
             return False
 
-    def get_outlet_power_mode(self: ApcSnmpDriver, outlet: str) -> PowerMode:
+    def get_outlet_power_state(self: ApcSnmpDriver, outlet: str) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
-        :raise AssertionError: if outlet power mode is different than expected
+        :raise AssertionError: if outlet power state is different than expected
         """
 
         assert (
@@ -167,28 +167,28 @@ class ApcSnmpDriver:
             )
             if errorIndication:
                 self.logger.error(
-                    f"Outlet {outlet} get power mode error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
+                    f"Outlet {outlet} get power state error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
 
             for oid, val in varBinds:
                 state = val
             if state == self.state_on:
-                power_mode = PowerMode.ON
+                power_state = PowerState.ON
             elif state == self.state_off:
-                power_mode = PowerMode.OFF
+                power_state = PowerState.OFF
             else:
-                power_mode = PowerMode.UNKNOWN
+                power_state = PowerState.UNKNOWN
 
-            if power_mode != self.outlets[int(outlet) - 1].power_mode:
+            if power_state != self.outlets[int(outlet) - 1].power_state:
                 self.logger.warning(
-                    f"Power mode of outlet ID {outlet} is {power_mode} ({PowerMode(power_mode).name}), "
-                    f"which is different than the expected mode {self.outlets[int(outlet) - 1].power_mode} "
-                    f"({PowerMode(self.outlets[int(outlet) - 1].power_mode).name})"
+                    f"power state of outlet ID {outlet} is {power_state} ({PowerState(power_state).name}), "
+                    f"which is different than the expected mode {self.outlets[int(outlet) - 1].power_state} "
+                    f"({PowerState(self.outlets[int(outlet) - 1].power_state).name})"
                 )
-            return power_mode
+            return power_state
         except snmp_error.PySnmpError as e:
             self.logger.error(f"Failed to connect to power switch: {e}")
-            return PowerMode.UNKNOWN
+            return PowerState.UNKNOWN
 
     def turn_on_outlet(
         self: ApcSnmpDriver, outlet: str
@@ -219,7 +219,7 @@ class ApcSnmpDriver:
                 self.logger.error(
                     f"Outlet {outlet} powering on error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
-            self.outlets[int(outlet) - 1].power_mode = PowerMode.ON
+            self.outlets[int(outlet) - 1].power_state = PowerState.ON
             return ResultCode.OK, f"Outlet {outlet} power on"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
@@ -255,7 +255,7 @@ class ApcSnmpDriver:
                 self.logger.error(
                     f"Outlet {outlet} powering off error: {errorIndication}, status: {errorStatus}, index: {errorIndex}"
                 )
-            self.outlets[int(outlet) - 1].power_mode = PowerMode.OFF
+            self.outlets[int(outlet) - 1].power_state = PowerState.OFF
             return ResultCode.OK, f"Outlet {outlet} power off"
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
@@ -292,16 +292,16 @@ class ApcSnmpDriver:
                 for oid, val in varBinds:
                     state = val
                 if state == self.state_on:
-                    power_mode = PowerMode.ON
+                    power_state = PowerState.ON
                 elif state == self.state_off:
-                    power_mode = PowerMode.OFF
+                    power_state = PowerState.OFF
                 else:
-                    power_mode = PowerMode.UNKNOWN
+                    power_state = PowerState.UNKNOWN
                 outlets.append(
                     Outlet(
                         outlet_ID=str(idx),
                         outlet_name=f"outlet_{idx}",
-                        power_mode=power_mode,
+                        power_state=power_state,
                     )
                 )
             except snmp_error.PySnmpError as e:
