@@ -11,8 +11,8 @@ from __future__ import annotations  # allow forward references in type hints
 
 import numpy
 import scipy
-import yaml
 from ska_mid_cbf_mcs.commons.global_enum import const
+import yaml
 
 class GAINUtils:
     """
