@@ -92,7 +92,7 @@ class TestSlimLink:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def test_adminModeOnline(
+    def test_StartupState(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
     ) -> None:
@@ -132,7 +132,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        self.test_StartupState(device_under_test)
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -169,7 +169,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        self.test_StartupState(device_under_test)
         device_under_test.simulationMode = SimulationMode.FALSE
 
         result_code, command_id = device_under_test.ConnectTxRx()
@@ -211,7 +211,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        self.test_StartupState(device_under_test)
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -435,7 +435,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        self.test_StartupState(device_under_test)
         device_under_test.simulationMode = SimulationMode.FALSE
 
         result_code, command_id = device_under_test.DisconnectTxRx()
@@ -500,7 +500,7 @@ class TestSlimLink:
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        self.test_adminModeOnline(device_under_test)
+        self.test_StartupState(device_under_test)
         device_under_test.simulationMode = SimulationMode.FALSE
         result, msg = device_under_test.ClearCounters()
         assert [result, msg[0]] == [
