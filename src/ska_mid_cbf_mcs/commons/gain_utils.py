@@ -6,11 +6,12 @@
 # See LICENSE for more info.
 
 """This module implements utilities for modifying gain"""
+
+from __future__ import annotations  # allow forward references in type hints
+
 import numpy
 import scipy
 import yaml
-
-from __future__ import annotations  # allow forward references in type hints
 from ska_mid_cbf_mcs.commons.global_enum import const
 
 class GAINUtils:
