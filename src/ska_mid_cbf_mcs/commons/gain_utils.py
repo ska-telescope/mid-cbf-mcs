@@ -11,8 +11,10 @@ from __future__ import annotations  # allow forward references in type hints
 
 import numpy
 import scipy
-from ska_mid_cbf_mcs.commons.global_enum import const
 import yaml
+
+from ska_mid_cbf_mcs.commons.global_enum import const
+
 
 class GAINUtils:
     """
@@ -81,4 +83,3 @@ class GAINUtils:
         vcc_gain_corrections = dict(zip(channels, gc_vec))
 
         return vcc_gain_corrections
-    
