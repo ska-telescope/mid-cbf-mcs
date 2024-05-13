@@ -476,7 +476,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
             self._logger.info(f"VCC internal parameters: {json_string}")
 
-            args = json.loads("{" + json_string + "}")
+            args = json.loads(json_string)
 
             gain_corrections = GAINUtils.get_vcc_ripple_correction()
             self._logger.info(
