@@ -476,10 +476,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
             self._logger.info(f"VCC internal parameters: {json_string}")
 
-            args = json.loads("{"+json_string+"}")            
+            args = json.loads("{" + json_string + "}")
 
             gain_corrections = GAINUtils.get_vcc_ripple_correction()
-            self._logger.info(f"VCC Gain Corrections: {json.dumps(gain_corrections)}")
+            self._logger.info(
+                f"VCC Gain Corrections: {json.dumps(gain_corrections)}"
+            )
             # Apply Gain Correction to parameters
             gain_index = 0
             channel_index = self.channel_offset
