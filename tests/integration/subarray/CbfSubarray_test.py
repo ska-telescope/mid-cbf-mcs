@@ -1383,9 +1383,9 @@ class TestCbfSubarray:
                 # convert DISH IDs to VCC ID integer for FSPs
                 for delay_detail in input_delay_model_obj["delay_details"]:
                     receptor_id = delay_detail["receptor"]
-                    delay_detail[
-                        "receptor"
-                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
+                    delay_detail["receptor"] = (
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
+                    )
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # check the delay model was correctly updated for fsp
@@ -1879,11 +1879,11 @@ class TestCbfSubarray:
                         if entry["receptor"] == rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             # convert receptor to int for comparison
-                            this_input_delay_model_obj[
-                                "receptor"
-                            ] = test_proxies.dish_utils.dish_id_to_vcc_id[
-                                entry["receptor"]
-                            ]
+                            this_input_delay_model_obj["receptor"] = (
+                                test_proxies.dish_utils.dish_id_to_vcc_id[
+                                    entry["receptor"]
+                                ]
+                            )
                             break
 
                     print(f"vcc delay model {this_vcc}: {vcc_dp.delayModel}")
@@ -1933,9 +1933,9 @@ class TestCbfSubarray:
                 # convert DISH IDs to VCC ID integer for FSPs
                 for model in input_delay_model_obj["delay_details"]:
                     receptor_id = model["receptor"]
-                    model[
-                        "receptor"
-                    ] = test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
+                    model["receptor"] = (
+                        test_proxies.dish_utils.dish_id_to_vcc_id[receptor_id]
+                    )
                 input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
                     test_proxies.fsp[i]

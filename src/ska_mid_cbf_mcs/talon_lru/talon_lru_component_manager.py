@@ -149,12 +149,12 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_power_switch1.set_timeout_millis(
                 self._pdu_cmd_timeout * 1000
             )
-            self._simulation_mode_events[
-                0
-            ] = self._proxy_power_switch1.add_change_event_callback(
-                "simulationMode",
-                self._check_power_mode_callback,
-                stateless=True,
+            self._simulation_mode_events[0] = (
+                self._proxy_power_switch1.add_change_event_callback(
+                    "simulationMode",
+                    self._check_power_mode_callback,
+                    stateless=True,
+                )
             )
             self.pdu1_power_mode = (
                 self._proxy_power_switch1.GetOutletPowerMode(
@@ -176,12 +176,12 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_power_switch2.set_timeout_millis(
                     self._pdu_cmd_timeout * 1000
                 )
-                self._simulation_mode_events[
-                    1
-                ] = self._proxy_power_switch2.add_change_event_callback(
-                    "simulationMode",
-                    self._check_power_mode_callback,
-                    stateless=True,
+                self._simulation_mode_events[1] = (
+                    self._proxy_power_switch2.add_change_event_callback(
+                        "simulationMode",
+                        self._check_power_mode_callback,
+                        stateless=True,
+                    )
                 )
                 self.pdu2_power_mode = (
                     self._proxy_power_switch2.GetOutletPowerMode(

@@ -289,10 +289,10 @@ class CbfDeviceProxy:
         attribute_key = attribute_name.lower()
         if attribute_key not in self._change_event_subscription_ids:
             self._change_event_callbacks[attribute_key] = [callback]
-            self._change_event_subscription_ids[
-                attribute_key
-            ] = self._subscribe_change_event(
-                attribute_name, stateless=stateless
+            self._change_event_subscription_ids[attribute_key] = (
+                self._subscribe_change_event(
+                    attribute_name, stateless=stateless
+                )
             )
         else:
             self._change_event_callbacks[attribute_key].append(callback)

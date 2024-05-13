@@ -37,7 +37,6 @@ __all__ = ["CbfController", "main"]
 
 
 class CbfController(SKAController):
-
     """
     CbfController TANGO device class.
     Primary point of contact for monitoring and control of Mid.CBF. Implements state and mode indicators, and a set of state transition commmands.

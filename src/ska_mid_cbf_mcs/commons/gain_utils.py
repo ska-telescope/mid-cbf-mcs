@@ -50,10 +50,14 @@ class GAINUtils:
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
 
-        frequency_slice_sample_rate = const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
+        frequency_slice_sample_rate = (
+            const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
+        )
 
         # The Normalized Center Frequencies of the Secondry Channelizer
-        fc0 = numpy.linspace(-1, 1 - 2 / const.FINE_CHANNELS, num=const.FINE_CHANNELS)
+        fc0 = numpy.linspace(
+            -1, 1 - 2 / const.FINE_CHANNELS, num=const.FINE_CHANNELS
+        )
 
         # Assuming Frequency Shifting is Applied in the ReSampler
         scf0_fsft = (vcc_frequency_slice + 1) * (
@@ -61,7 +65,9 @@ class GAINUtils:
         )
 
         # The Actual Center Frequencies of the Secondry Channelizer
-        actual_center_frequency = fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
+        actual_center_frequency = (
+            fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
+        )
         # Converting again to Normalized Frequencies
         normalized_frequency = (
             actual_center_frequency

@@ -193,7 +193,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         search_window: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        communication_status_changed_callback: Callable[
+            [CommunicationStatus], None
+        ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable,
         component_obs_fault_callback: Callable,
@@ -260,7 +262,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
         self._band_proxies = []
-        self._freq_band_index = dict(zip(freq_band_dict().keys(), [0, 0, 1, 2, 3, 3]))
+        self._freq_band_index = dict(
+            zip(freq_band_dict().keys(), [0, 0, 1, 2, 3, 3])
+        )
 
         self._sw_proxies = []
         self._talon_lru_proxy = None
@@ -300,7 +304,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._simulation_mode
 
     @simulation_mode.setter
-    def simulation_mode(self: VccComponentManager, value: SimulationMode) -> None:
+    def simulation_mode(
+        self: VccComponentManager, value: SimulationMode
+    ) -> None:
         """
         Set the simulation mode of the component manager.
 
@@ -371,7 +377,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         try:
             # Try to connect to HPS devices, they should be running at this point
             if not self._simulation_mode:
-                self._logger.info("Connecting to HPS VCC controller and band devices")
+                self._logger.info(
+                    "Connecting to HPS VCC controller and band devices"
+                )
 
                 self._vcc_controller_proxy = CbfDeviceProxy(
                     fqdn=self._vcc_controller_fqdn, logger=self._logger
@@ -415,7 +423,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.update_component_power_mode(PowerMode.STANDBY)
         return (ResultCode.OK, "Standby command completed OK")
 
-    def configure_band(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
+    def configure_band(
+        self: VccComponentManager, argin: str
+    ) -> Tuple[ResultCode, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
         FPGA to the correct bitstream and enables the respective band device. All
@@ -459,7 +469,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._logger.info(
                     f"Could not find internal parameters file for receptor {self._dish_id}, band {freq_band_name}; using default."
                 )
-                with open(f"{VCC_PARAM_PATH}internal_params_default.json", "r") as f:
+                with open(
+                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                ) as f:
                     json_string = f.read()
 
             self._logger.info(f"VCC internal parameters: {json_string}")
@@ -479,7 +491,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.info(f"VCC gain values: {log_string}")
 
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
-            args.update({"samples_per_frame": band_config["samples_per_frame"]})
+            args.update(
+                {"samples_per_frame": band_config["samples_per_frame"]}
+            )
             json_string = json.dumps(args)
 
             idx = self._freq_band_index[self._freq_band_name]
@@ -499,7 +513,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 "Failed to connect to HPS VCC devices.",
             )
         except FileNotFoundError:
-            self._logger.error("Could not find default internal parameters file.")
+            self._logger.error(
+                "Could not find default internal parameters file."
+            )
             (result_code, msg) = (
                 ResultCode.FAILED,
                 "Missing default internal parameters file.",
@@ -536,7 +552,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     self._component_obs_fault_callback(True)
             self._ready = False
 
-    def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
+    def configure_scan(
+        self: VccComponentManager, argin: str
+    ) -> Tuple[ResultCode, str]:
         """
         Execute configure scan operation.
 
@@ -555,7 +573,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency
         # band value needs to be stored, and if the frequency band is not
         # set in the config it should be replaced with the previous value.
-        freq_band = freq_band_dict()[configuration["frequency_band"]]["band_index"]
+        freq_band = freq_band_dict()[configuration["frequency_band"]][
+            "band_index"
+        ]
         if self._frequency_band != freq_band:
             return (
                 ResultCode.FAILED,
@@ -589,12 +609,17 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 self._component_obs_fault_callback(True)
-                return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                return (
+                    ResultCode.FAILED,
+                    "Failed to connect to VCC band device",
+                )
 
         self._ready = True
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
 
-    def scan(self: VccComponentManager, scan_id: int) -> Tuple[ResultCode, str]:
+    def scan(
+        self: VccComponentManager, scan_id: int
+    ) -> Tuple[ResultCode, str]:
         """
         Begin scan operation.
 
@@ -618,7 +643,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 self._component_obs_fault_callback(True)
-                return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                return (
+                    ResultCode.FAILED,
+                    "Failed to connect to VCC band device",
+                )
 
         return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
 
@@ -643,7 +671,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 self._component_obs_fault_callback(True)
-                return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                return (
+                    ResultCode.FAILED,
+                    "Failed to connect to VCC band device",
+                )
 
         return (ResultCode.OK, "Vcc EndScanCommand completed OK")
 
@@ -662,7 +693,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self._component_obs_fault_callback(True)
-                    return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                    return (
+                        ResultCode.FAILED,
+                        "Failed to connect to VCC band device",
+                    )
                 # If the VCC has been aborted from READY, update accordingly.
                 if self._ready:
                     self._ready = False
@@ -689,7 +723,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self._component_obs_fault_callback(True)
-                    return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                    return (
+                        ResultCode.FAILED,
+                        "Failed to connect to VCC band device",
+                    )
         else:
             # if no value for _freq_band_name, assume in IDLE state,
             # either from initialization or after deconfigure has been called
@@ -733,7 +770,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         try:
             # Configure searchWindowTuning.
-            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            if self._frequency_band in list(
+                range(4)
+            ):  # frequency band is not band 5
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 start_freq_Hz, stop_freq_Hz = [
@@ -765,31 +804,35 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10 ** 9
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[0] * 10 ** 9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 
                 frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10 ** 9
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[1] * 10 ** 9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 
                 if (
-                    frequency_band_range_1[0] + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    frequency_band_range_1[0]
+                    + const.SEARCH_WINDOW_BW * 10**6 / 2
                     <= int(argin["search_window_tuning"])
-                    <= frequency_band_range_1[1] - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    <= frequency_band_range_1[1]
+                    - const.SEARCH_WINDOW_BW * 10**6 / 2
                 ) or (
-                    frequency_band_range_2[0] + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    frequency_band_range_2[0]
+                    + const.SEARCH_WINDOW_BW * 10**6 / 2
                     <= int(argin["search_window_tuning"])
-                    <= frequency_band_range_2[1] - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    <= frequency_band_range_2[1]
+                    - const.SEARCH_WINDOW_BW * 10**6 / 2
                 ):
                     # this is the acceptable range
                     pass
@@ -827,7 +870,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcPeriodAfterEpoch.
                 if "tdc_period_after_epoch" in argin:
-                    proxy_sw.tdcPeriodAfterEpoch = int(argin["tdc_period_after_epoch"])
+                    proxy_sw.tdcPeriodAfterEpoch = int(
+                        argin["tdc_period_after_epoch"]
+                    )
                 else:
                     proxy_sw.tdcPeriodAfterEpoch = 22
                     log_msg = (
@@ -850,11 +895,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self._component_obs_fault_callback(True)
-            (result_code, msg) = (ResultCode.FAILED, "Error configuring search window.")
+            (result_code, msg) = (
+                ResultCode.FAILED,
+                "Error configuring search window.",
+            )
 
         return (result_code, msg)
 
-    def update_doppler_phase_correction(self: VccComponentManager, argin: str) -> None:
+    def update_doppler_phase_correction(
+        self: VccComponentManager, argin: str
+    ) -> None:
         """
         Update Vcc's doppler phase correction
 
@@ -891,11 +941,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in delay_model_obj["delay_details"]:
-            self._logger.debug(f"Received delay model for VCC {entry['receptor']}")
+            self._logger.debug(
+                f"Received delay model for VCC {entry['receptor']}"
+            )
             if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
-                self._delay_model = json.dumps({"delay_details": list_of_entries})
+                self._delay_model = json.dumps(
+                    {"delay_details": list_of_entries}
+                )
                 dm_found = True
                 break
         if not dm_found:
@@ -921,11 +975,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
         list_of_entries = []
         for entry in matrix["jones_matrix"]:
-            self._logger.debug(f"Received Jones matrix for VCC {entry['receptor']}")
+            self._logger.debug(
+                f"Received Jones matrix for VCC {entry['receptor']}"
+            )
             if entry["receptor"] == self._vcc_id:
                 self._logger.debug("Updating Jones Matrix for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
-                self._jones_matrix = json.dumps({"jones_matrix": list_of_entries})
+                self._jones_matrix = json.dumps(
+                    {"jones_matrix": list_of_entries}
+                )
                 jm_found = True
                 break
 
