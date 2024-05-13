@@ -98,7 +98,7 @@ class InfluxdbQueryClient:
         query_api = client.query_api()
         self.logger.info(f"1. QUERY={query}")
         result = await query_api.query(org=self._influx_org, query=query)
-        self.logger.info(f"2. RES={res}")
+        self.logger.info(f"2. RES={result}")
         results = []
         for table in result:
             for r in table.records:
