@@ -532,7 +532,7 @@ class CbfObsDevice(SKAObsDevice):
             (result_code, msg) = super().do(*args, **kwargs)
 
             # Set initial simulation mode to True
-            self._device.write_simulationMode(SimulationMode.TRUE)
+            self._device._simulation_mode = SimulationMode.TRUE
 
             self._device._obs_state = ObsState.IDLE
             self._device._commanded_obs_state = ObsState.IDLE

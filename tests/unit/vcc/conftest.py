@@ -43,7 +43,6 @@ def vcc_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
         "frequencyBand",
         "obsState",
     ]

@@ -29,7 +29,9 @@ from ska_mid_cbf_mcs.testing import context
 
 # Data file path
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
-HPS_FSP_CORR_TIMEOUT = 12000  # timeout in ms
+
+# HPS device timeout in ms
+HPS_FSP_CORR_TIMEOUT = 12000
 
 
 class FspCorrSubarrayComponentManager(CbfObsComponentManager):
@@ -85,6 +87,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already communicating.")
             return
         super().start_communicating()
+        if self._component_state["power"] is None:
+            self._update_component_state(power=PowerState.OFF)
 
     def _assign_vcc(
         self: FspCorrSubarrayComponentManager, argin: list[int]
@@ -273,7 +277,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         :raise ConnectionError: if unable to connect to HPS FSP Corr controller
         """
-        self.logger.debug("Entering FspCorrSubarrayComponentManager.on")
+        self.logger.info("Entering FspCorrSubarrayComponentManager.on")
 
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
