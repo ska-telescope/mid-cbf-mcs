@@ -65,6 +65,8 @@ def talon_board_change_event_callbacks(
 def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("version", "0.2.6")
+    builder.add_attribute("bitstream", 0xBEEFBABE)
     return builder()
 
 @pytest.fixture()
@@ -77,6 +79,16 @@ def mock_ethernet_100g() -> unittest.mock.Mock:
 def mock_talon_status() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("iopll_locked_fault", False)
+    builder.add_attribute("fs_iopll_locked_fault", False)
+    builder.add_attribute("comms_iopll_locked_fault", False)
+    builder.add_attribute("system_clk_fault", False)
+    builder.add_attribute("emif_bl_fault", False)
+    builder.add_attribute("emif_br_fault", False)
+    builder.add_attribute("emif_tr_fault", False)
+    builder.add_attribute("e100g_0_pll_fault", False)
+    builder.add_attribute("e100g_1_pll_fault", False)
+    builder.add_attribute("slim_pll_fault", False)
     return builder()
 
 @pytest.fixture()

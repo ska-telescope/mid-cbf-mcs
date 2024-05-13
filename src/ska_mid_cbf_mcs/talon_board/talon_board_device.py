@@ -37,9 +37,9 @@ class TalonBoard(CbfDevice):
 
     # Some of these IDs are typically integers. But it is easier to use
     # empty string to show the board is not assigned.
-    subarrayID_ = ""
-    dishID_ = ""
-    vccID_ = ""
+    _subarrayID = ""
+    _dishID = ""
+    _vccID = ""
 
     # -----------------
     # Device Properties
@@ -68,43 +68,92 @@ class TalonBoard(CbfDevice):
     # ----------
     # Attributes
     # ----------
-
-    subarrayID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
+    
+    @attribute(
+        dtype=str,
         label="Subarray ID",
         doc="The Subarray ID assigned to the board. This attribute is only used for labelling.",
     )
+    def subarrayID(self: TalonBoard) -> str:
+        """
+        Read the subarrayID attribute.
 
-    dishID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
+        :return: the vcc ID
+        :rtype: str
+        """
+        return self._subarrayID
+
+    @subarrayID.write
+    def subarrayID(self: TalonBoard, value: str) -> None:
+        """
+        Write the subarrayID attribute.
+
+        :param value: the vcc ID
+        """
+        self._subarrayID = value
+
+    @attribute(
+        dtype=str,
         label="DISH ID",
         doc="The DISH ID assigned to the board. This attribute is only used for labelling.",
     )
+    def dishID(self: TalonBoard) -> str:
+        """
+        Read the dishID attribute.
 
-    vccID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
+        :return: the DISH ID
+        :rtype: str
+        """
+        return self._dishID
+
+    @dishID.write
+    def dishID(self: TalonBoard, value: str) -> None:
+        """
+        Write the dishID attribute.
+
+        :param value: the DISH ID
+        """
+        self._dishID = value
+
+    @attribute(
+        dtype=str,
         label="VCC ID",
         doc="The VCC ID assigned to the board. This attribute is only used for labelling.",
     )
+    def vccID(self: TalonBoard) -> str:
+        """
+        Read the vccID attribute.
+
+        :return: the vcc ID
+        :rtype: str
+        """
+        return self._vccID
+
+    @vccID.write
+    def vccID(self: TalonBoard, value: str) -> None:
+        """
+        Write the vccID attribute.
+
+        :param value: the vcc ID
+        """
+        self._vccID = value
 
     @attribute(dtype=str, label="IP", doc="IP Address")
-    def IpAddr(self: TalonBoard) -> str:
+    def ipAddr(self: TalonBoard) -> str:
         """
         The IP Address assigned to this talon board. This is a device
         property. This attribute is a workaround to expose it
-        to Taranta.
+        to Taranta dashboards.
 
         :return: the IP address
         """
         return self.TalonDxBoardAddress
 
+    # TalonSysID Attr
     @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
     )
-    def BitstreamVersion(self: TalonBoard) -> str:
+    def bitstreamVersion(self: TalonBoard) -> str:
         """
         Read the FPGA bitstream version of the Talon-DX board.
 
@@ -118,7 +167,7 @@ class TalonBoard(CbfDevice):
         label="FPGA bitstream checksum",
         doc="FPGA bitstream checksum",
     )
-    def BitstreamChecksum(self: TalonBoard) -> str:
+    def bitstreamChecksum(self: TalonBoard) -> int:
         """
         Read the least 32 bits of md5 checksum of the bitstream name
 
@@ -127,10 +176,11 @@ class TalonBoard(CbfDevice):
         res = self.component_manager.talon_sysid_bitstream()
         return res
 
+    # TalonStatus Attr
     @attribute(
         dtype=bool, label="iopll_locked_fault", doc="iopll_locked_fault"
     )
-    def iopll_locked_fault(self: TalonBoard) -> str:
+    def iopllLockedFault(self: TalonBoard) -> bool:
         """
         Read the iopll_locked_fault status
 
@@ -140,97 +190,97 @@ class TalonBoard(CbfDevice):
         return res
 
     @attribute(
-        dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault"
+        dtype=bool, label="fsIopllLockedFault", doc="fsIopllLockedFault"
     )
-    def fs_iopll_locked_fault(self: TalonBoard) -> str:
+    def fsIopllLockedFault(self: TalonBoard) -> bool:
         """
-        Read the fs_iopll_locked_fault status
+        Read the fsIopllLockedFault status
 
-        :return: the fs_iopll_locked_fault status
+        :return: the fsIopllLockedFault status
         """
         res = self.component_manager.talon_status_fs_iopll_locked_fault()
         return res
 
     @attribute(
         dtype=bool,
-        label="comms_iopll_locked_fault",
-        doc="comms_iopll_locked_fault",
+        label="commsIopllLockedFault",
+        doc="commsIopllLockedFault",
     )
-    def comms_iopll_locked_fault(self: TalonBoard) -> str:
+    def commsIopllLockedFault(self: TalonBoard) -> bool:
         """
-        Read the comms_iopll_locked_fault status
+        Read the commsIopllLockedFault status
 
-        :return: the comms_iopll_locked_fault status
+        :return: the commsIopllLockedFault status
         """
         res = self.component_manager.talon_status_comms_iopll_locked_fault()
         return res
 
-    @attribute(dtype=bool, label="system_clk_fault", doc="system_clk_fault")
-    def system_clk_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="systemClkFault", doc="systemClkFault")
+    def systemClkFault(self: TalonBoard) -> bool:
         """
-        Read the system_clk_fault status
+        Read the systemClkFault status
 
-        :return: the system_clk_fault status
+        :return: the systemClkFault status
         """
         res = self.component_manager.talon_status_system_clk_fault()
         return res
 
-    @attribute(dtype=bool, label="emif_bl_fault", doc="emif_bl_fault")
-    def emif_bl_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="emifBlFault", doc="emifBlFault")
+    def emifBlFault(self: TalonBoard) -> bool:
         """
-        Read the emif_bl_fault status
+        Read the emifBlFault status
 
-        :return: the emif_bl_fault status
+        :return: the emifBlFault status
         """
         res = self.component_manager.talon_status_emif_bl_fault()
         return res
 
-    @attribute(dtype=bool, label="emif_br_fault", doc="emif_br_fault")
-    def emif_br_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="emifBrFault", doc="emifBrFault")
+    def emifBrFault(self: TalonBoard) -> bool:
         """
-        Read the emif_br_fault status
+        Read the emifBrFault status
 
-        :return: the emif_br_fault status
+        :return: the emifBrFault status
         """
         res = self.component_manager.talon_status_emif_br_fault()
         return res
 
-    @attribute(dtype=bool, label="emif_tr_fault", doc="emif_tr_fault")
-    def emif_tr_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="emifTrFault", doc="emifTrFault")
+    def emifTrFault(self: TalonBoard) -> bool:
         """
-        Read the emif_tr_fault status
+        Read the emifTrFault status
 
-        :return: the emif_tr_fault status
+        :return: the emifTrFault status
         """
         res = self.component_manager.talon_status_emif_tr_fault()
         return res
 
-    @attribute(dtype=bool, label="e100g_0_pll_fault", doc="e100g_0_pll_fault")
-    def e100g_0_pll_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="ethernet0PllFault", doc="ethernet0PllFault")
+    def ethernet0PllFault(self: TalonBoard) -> bool:
         """
-        Read the e100g_0_pll_fault status
+        Read the ethernet0PllFault status
 
-        :return: the e100g_0_pll_fault status
+        :return: the ethernet0PllFault status
         """
         res = self.component_manager.talon_status_e100g_0_pll_fault()
         return res
 
-    @attribute(dtype=bool, label="e100g_1_pll_fault", doc="e100g_1_pll_fault")
-    def e100g_1_pll_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="ethernet1PllFault", doc="ethernet1PllFault")
+    def ethernet1PllFault(self: TalonBoard) -> bool:
         """
-        Read the e100g_1_pll_fault status
+        Read the ethernet1PllFault status
 
-        :return: the e100g_1_pll_fault status
+        :return: the ethernet1PllFault status
         """
         res = self.component_manager.talon_status_e100g_1_pll_fault()
         return res
 
-    @attribute(dtype=bool, label="slim_pll_fault", doc="slim_pll_fault")
-    def slim_pll_fault(self: TalonBoard) -> str:
+    @attribute(dtype=bool, label="SLIM PLL Fault", doc="SLIM PLL Fault")
+    def slimPllFault(self: TalonBoard) -> bool:
         """
-        Read the slim_pll_fault status
+        Read the SLIM PLL Fault status
 
-        :return: the slim_pll_fault status
+        :return: the SLIM PLL Fault status
         """
         res = self.component_manager.talon_status_slim_pll_fault()
         return res
@@ -238,7 +288,7 @@ class TalonBoard(CbfDevice):
     @attribute(
         dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature"
     )
-    def FpgaDieTemperature(self: TalonBoard) -> float:
+    def fpgaDieTemperature(self: TalonBoard) -> float:
         """
         Read the FPGA die temperature of the Talon-DX board.
 
@@ -252,7 +302,7 @@ class TalonBoard(CbfDevice):
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
     )
-    def HumiditySensorTemperature(self: TalonBoard) -> float:
+    def humiditySensorTemperature(self: TalonBoard) -> float:
         """
         Read the humidity sensor temperature of the Talon-DX board.
 
@@ -261,12 +311,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.humidity_sensor_temperature()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
     )
-    def DIMMTemperatures(self: TalonBoard):
+    def dimmTemperatures(self: TalonBoard) -> float:
         """
         Read the DIMM temperatures of the Talon-DX board.
 
@@ -275,12 +325,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.dimm_temperatures()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=5,
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
     )
-    def MboTxTemperatures(self: TalonBoard):
+    def mboTxTemperatures(self: TalonBoard) -> float:
         """
         Read the MBO Tx temperatures of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -291,12 +341,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_temperatures()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=5,
         label="MBO Tx VCC 3.3 Voltages",
         doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
     )
-    def MboTxVccVoltages(self: TalonBoard):
+    def mboTxVccVoltages(self: TalonBoard) -> float:
         """
         Read the MBO Tx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -307,12 +357,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_vcc_voltages()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=5,
         label="MBO Tx Fault Status",
         doc="MBO Tx Fault Status. True = status set.",
     )
-    def MboTxFaultStatus(self: TalonBoard):
+    def mboTxFaultStatus(self: TalonBoard) -> bool:
         """
         Read the MBO Tx fault status register of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case false will be
@@ -323,12 +373,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_fault_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=5,
         label="MBO Tx Loss of Lock Status",
         doc="MBO Tx Loss of Lock Status. True = status set.",
     )
-    def MboTxLOLStatus(self: TalonBoard):
+    def mboTxLolStatus(self: TalonBoard) -> bool:
         """
         Read the MBO Tx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -339,12 +389,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_lol_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=5,
         label="MBO Tx Loss of Signal Status",
         doc="MBO Tx Loss of Signal Status. True = status set.",
     )
-    def MboTxLOSStatus(self: TalonBoard):
+    def mboTxLosStatus(self: TalonBoard) -> bool:
         """
         Read the MBO Tx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -355,12 +405,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_los_status()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=5,
         label="MBO Rx VCC 3.3 Voltages",
         doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
     )
-    def MboRxVccVoltages(self: TalonBoard):
+    def mboRxVccVoltages(self: TalonBoard) -> float:
         """
         Read the MBO Rx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -371,12 +421,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_vcc_voltages()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=5,
         label="MBO Rx Loss of Lock Status",
         doc="MBO Rx Loss of Lock Status. True = status set.",
     )
-    def MboRxLOLStatus(self: TalonBoard):
+    def mboRxLolStatus(self: TalonBoard) -> bool:
         """
         Read the MBO Rx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -387,12 +437,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_lol_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=5,
         label="MBO Rx Loss of Signal Status",
         doc="MBO Rx Loss of Signal Status. True = status set.",
     )
-    def MboRxLOSStatus(self: TalonBoard):
+    def mboRxLosStatus(self: TalonBoard) -> bool:
         """
         Read the MBO Rx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -403,12 +453,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_los_status()
 
     @attribute(
-        dtype=(int,),
+        dtype=int,
         max_dim_x=4,
         label="Fan PWM values",
         doc="Fan PWM values.",
     )
-    def FansPwm(self: TalonBoard):
+    def fansPwm(self: TalonBoard) -> int:
         """
         Read the PWM value of the fans. Valid values are
         0 to 255.
@@ -418,12 +468,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_pwm()
 
     @attribute(
-        dtype=(int,),
+        dtype=int,
         max_dim_x=4,
         label="Fan PWM enable values",
         doc="Fan PWM enable values.",
     )
-    def FansPwmEnable(self: TalonBoard):
+    def fansPwmEnable(self: TalonBoard) -> int:
         """
         Read the PWM value of the fans. Valid values are 0 to 2.
 
@@ -432,12 +482,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_pwm_enable()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=4,
         label="Fan Fault status",
         doc="Fan Fault status.",
     )
-    def FansFault(self: TalonBoard):
+    def fansFault(self: TalonBoard) -> bool:
         """
         Read the fault status of the fans.
 
@@ -446,12 +496,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_fault()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
     )
-    def LtmInputVoltage(self: TalonBoard):
+    def ltmInputVoltage(self: TalonBoard) -> float:
         """
         Read the input voltage to LTMs
 
@@ -460,12 +510,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_input_voltage()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
     )
-    def LtmOutputVoltage1(self: TalonBoard):
+    def ltmOutputVoltage1(self: TalonBoard) -> float:
         """
         Read the output voltage 1 to LTMs
 
@@ -474,12 +524,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_voltage_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
     )
-    def LtmOutputVoltage2(self: TalonBoard):
+    def ltmOutputVoltage2(self: TalonBoard) -> float:
         """
         Read the output voltage 2 to LTMs
 
@@ -488,12 +538,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_voltage_2()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
     )
-    def LtmInputCurrent(self: TalonBoard):
+    def ltmInputCurrent(self: TalonBoard) -> float:
         """
         Read the input current to LTMs
 
@@ -502,12 +552,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_input_current()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
     )
-    def LtmOutputCurrent1(self: TalonBoard):
+    def ltmOutputCurrent1(self: TalonBoard) -> float:
         """
         Read the output current 1 to LTMs
 
@@ -516,12 +566,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_current_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
     )
-    def LtmOutputCurrent2(self: TalonBoard):
+    def ltmOutputCurrent2(self: TalonBoard) -> float:
         """
         Read the output current 2 to LTMs
 
@@ -530,12 +580,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_current_2()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
     )
-    def LtmTemperature1(self: TalonBoard):
+    def ltmTemperature1(self: TalonBoard) -> float:
         """
         Read the temperature 1 of LTMs
 
@@ -544,12 +594,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_temperature_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=float,
         max_dim_x=4,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
     )
-    def LtmTemperature2(self: TalonBoard):
+    def ltmTemperature2(self: TalonBoard) -> float:
         """
         Read the temperature 2 of LTMs
 
@@ -558,12 +608,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_temperature_2()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=4,
         label="LTM Voltage Warning",
         doc="True if any input or output voltage warnings is set. One entry per LTM",
     )
-    def LtmVoltageWarning(self: TalonBoard):
+    def ltmVoltageWarning(self: TalonBoard) -> bool:
         """
         Returns True if any input or output voltage warning is set. One entry per LTM
 
@@ -572,12 +622,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_voltage_warning()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=4,
         label="LTM Current Warning",
         doc="True if any input or output current warnings is set. One entry per LTM",
     )
-    def LtmCurrentWarning(self: TalonBoard):
+    def ltmCurrentWarning(self: TalonBoard) -> bool:
         """
         Returns True if any input or output current warning is set. One entry per LTM
 
@@ -586,73 +636,18 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_current_warning()
 
     @attribute(
-        dtype=(bool,),
+        dtype=bool,
         max_dim_x=4,
         label="LTM Temperature Warning",
         doc="True if any temperature warnings is set. One entry per LTM",
     )
-    def LtmTemperatureWarning(self: TalonBoard):
+    def ltmTemperatureWarning(self: TalonBoard) -> bool:
         """
         Returns True if any temperature warning is set. One entry per LTM
 
         :return: True if any temperature warning is set
         """
         return self.component_manager.ltm_temperature_warning()
-
-    # -----------------
-    # Attribute Methods
-    # -----------------
-
-    def read_subarrayID(self: TalonBoard) -> str:
-        """
-        Read the subarrayID attribute.
-
-        :return: the vcc ID
-        :rtype: str
-        """
-        return self.subarrayID_
-
-    def write_subarrayID(self: TalonBoard, value: str) -> None:
-        """
-        Write the subarrayID attribute.
-
-        :param value: the vcc ID
-        """
-        self.subarrayID_ = value
-
-    def read_dishID(self: TalonBoard) -> str:
-        """
-        Read the dishID attribute.
-
-        :return: the DISH ID
-        :rtype: str
-        """
-        return self.dishID_
-
-    def write_dishID(self: TalonBoard, value: str) -> None:
-        """
-        Write the dishID attribute.
-
-        :param value: the DISH ID
-        """
-        self.dishID_ = value
-
-    def read_vccID(self: TalonBoard) -> str:
-        """
-        Read the vccID attribute.
-
-        :return: the vcc ID
-        :rtype: str
-        """
-        return self.vccID_
-
-    def write_vccID(self: TalonBoard, value: str) -> None:
-        """
-        Write the vccID attribute.
-
-        :param value: the vcc ID
-        """
-        self.vccID_ = value
 
     # ---------------
     # General methods

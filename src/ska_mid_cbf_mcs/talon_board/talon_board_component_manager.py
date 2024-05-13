@@ -945,6 +945,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         if td.total_seconds() > 10:
             try:
                 res = asyncio.run(self._db_client.do_queries())
+                self._last_check = datetime.now()
                 for result in res:
                     for r in result:
                         # each result is a tuple of (field, time, value)

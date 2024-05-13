@@ -24,7 +24,7 @@ from tango import DevState
 
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
-from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
+from ska_mid_cbf_mcs.testing.mock.mock_dependancy import MockDependancy
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -44,7 +44,7 @@ class TestPowerSwitch:
     ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
 
-        def mock_patch(url: str, **kwargs: Any) -> MockResponse:
+        def mock_patch(url: str, **kwargs: Any) -> MockDependancy.Response:
             """
             Replace requests.request method with a mock method.
 
@@ -53,7 +53,7 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockResponse(
+            return MockDependancy.Response(
                 url,
                 request.param["sim_patch_error"],
                 request.param["sim_state"],
@@ -61,7 +61,7 @@ class TestPowerSwitch:
 
         def mock_get(
             url: str, params: Any = None, **kwargs: Any
-        ) -> MockResponse:
+        ) -> MockDependancy.Response:
             """
             Replace requests.get with mock method.
 
@@ -71,7 +71,7 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockResponse(
+            return MockDependancy.Response(
                 url, request.param["sim_get_error"], request.param["sim_state"]
             )
 
