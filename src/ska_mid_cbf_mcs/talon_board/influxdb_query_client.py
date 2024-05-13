@@ -91,11 +91,14 @@ class InfluxdbQueryClient:
                 self._query_ltm_currents(client),
                 self._query_ltm_temperatures(client),
             )
+            self.logger.info(f"3. RES={res}")
         return res
 
     async def _query_common(self, client, query: str):
         query_api = client.query_api()
+        self.logger.info(f"1. QUERY={query}")
         result = await query_api.query(org=self._influx_org, query=query)
+        self.logger.info(f"2. RES={res}")
         results = []
         for table in result:
             for r in table.records:
