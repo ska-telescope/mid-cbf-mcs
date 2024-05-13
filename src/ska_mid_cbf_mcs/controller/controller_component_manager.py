@@ -406,6 +406,108 @@ class ControllerComponentManager(CbfComponentManager):
     # Command methods
     # ---------------
 
+    def _get_talon_lru_fqdns(self: ControllerComponentManager) -> List[str]:
+        # read in list of LRUs from configuration JSON
+        with open(
+            os.path.join(
+                os.getcwd(),
+                self._talondx_config_path,
+                "talondx-config.json",
+            )
+        ) as f:
+            talondx_config_json = json.load(f)
+
+        fqdn_talon_lru = []
+        for config_command in talondx_config_json["config_commands"]:
+            target = config_command["target"]
+            for lru_id, lru_config in self._hw_config["talon_lru"].items():
+                lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
+                talon1 = lru_config["TalonDxBoard1"]
+                talon2 = lru_config["TalonDxBoard2"]
+                if (
+                    target in [talon1, talon2]
+                    and lru_fqdn not in fqdn_talon_lru
+                ):
+                    fqdn_talon_lru.append(lru_fqdn)
+        return fqdn_talon_lru
+
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
+        try:
+            self._logger.info(f"Turning on LRU {lru_fqdn}")
+            proxy.adminMode = AdminMode.OFFLINE
+            proxy.simulationMode = sim_mode
+            proxy.adminMode = AdminMode.ONLINE
+
+            proxy.On()
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
+        return (True, None)
+
+    def _turn_on_lrus(
+        self: ControllerComponentManager,
+    ) -> Tuple[bool, str]:
+        results = [
+            self._lru_on(
+                self._proxies[fqdn],
+                self._talondx_component_manager.simulation_mode,
+                fqdn,
+            )
+            for fqdn in self._fqdn_talon_lru
+        ]
+
+        failed_lrus = []
+        out_status = True
+        for status, fqdn in results:
+            if not status:
+                failed_lrus.append(fqdn)
+                out_status = False
+        return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
+
+    def _send_configure_slim_device(
+        self: ControllerComponentManager, fqdn: str, config_path: str
+    ) -> None:
+        with open(config_path) as f:
+            slim_config = f.read()
+        self._proxies[fqdn].set_timeout_millis(10000)
+        self._proxies[fqdn].command_inout("Configure", slim_config)
+
+    def _configure_slim_mesh_devices(self: ControllerComponentManager) -> None:
+        try:
+            self._logger.info(
+                f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
+            )
+            for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
+                self._proxies[fqdn].write_attribute(
+                    "simulationMode",
+                    self._talondx_component_manager.simulation_mode,
+                )
+                self._proxies[fqdn].command_inout("On")
+
+            # Longer timeout may be needed because the links need to wait
+            # for Tx/Rx to be ready. From experience this can be as late
+            # as around 5s after HPS master completes configure.
+            self._send_configure_slim_device(
+                self._fs_slim_fqdn, self._fs_slim_config_path
+            )
+            self._send_configure_slim_device(
+                self._vis_slim_fqdn, self._vis_slim_config_path
+            )
+
+            # restore default timeout
+            self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
+            self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to configure SLIM (mesh): {item.reason}"
+                self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+        except OSError as e:
+            log_msg = f"Failed to read SLIM configuration file: {e}"
+            return (ResultCode.FAILED, log_msg)
+
     def on(
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -426,118 +528,56 @@ class ControllerComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
         # Check if connection to device proxies has been established
-        if self._connected:
-            # Power on all the Talon boards if not in SimulationMode
-            # TODO: There are two VCCs per LRU. Need to check the number of
-            #       VCCs turned on against the number of LRUs powered on
-            if (
-                self._talondx_component_manager.simulation_mode
-                == SimulationMode.FALSE
-            ):
-                # read in list of LRUs from configuration JSON
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
-                ) as f:
-                    talondx_config_json = json.load(f)
-
-                self._fqdn_talon_lru = []
-                for config_command in talondx_config_json["config_commands"]:
-                    target = config_command["target"]
-                    for lru_id, lru_config in self._hw_config[
-                        "talon_lru"
-                    ].items():
-                        lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
-                        talon1 = lru_config["TalonDxBoard1"]
-                        talon2 = lru_config["TalonDxBoard2"]
-                        if (
-                            target in [talon1, talon2]
-                            and lru_fqdn not in self._fqdn_talon_lru
-                        ):
-                            self._fqdn_talon_lru.append(lru_fqdn)
-
-                # TODO: handle subscribed events for missing LRUs
-            else:
-                # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
-
-            # Turn on all the LRUs with the boards we need
-            lru_on_status, log_msg = self._turn_on_lrus()
-            if not lru_on_status:
-                return (ResultCode.FAILED, log_msg)
-
-            # Configure all the Talon boards
-            if (
-                self._talondx_component_manager.configure_talons()
-                == ResultCode.FAILED
-            ):
-                log_msg = "Failed to configure Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            try:
-                # Set the Simulation mode of the Subarray to the simulation mode of the controller
-                self._group_subarray.write_attribute(
-                    "simulationMode",
-                    self._talondx_component_manager.simulation_mode,
-                )
-                self._group_subarray.command_inout("On")
-            except tango.DevFailed as df:
-                for item in df.args:
-                    log_msg = f"Failed to turn on group proxies; {item.reason}"
-                    self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            # Configure SLIM Mesh devices
-            try:
-                self._logger.info(
-                    f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
-                )
-                for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-                    self._proxies[fqdn].write_attribute(
-                        "simulationMode",
-                        self._talondx_component_manager.simulation_mode,
-                    )
-                    self._proxies[fqdn].command_inout("On")
-
-                # longer timeout may be needed because the links need to wait
-                # for Tx/Rx to be ready. From experience this can be as late
-                # as around 5s after HPS master completes configure.
-                with open(self._fs_slim_config_path) as f:
-                    fs_slim_config = f.read()
-                self._proxies[self._fs_slim_fqdn].set_timeout_millis(10000)
-                self._proxies[self._fs_slim_fqdn].command_inout(
-                    "Configure", fs_slim_config
-                )
-
-                with open(self._vis_slim_config_path) as f:
-                    vis_slim_config = f.read()
-                self._proxies[self._vis_slim_fqdn].set_timeout_millis(10000)
-                self._proxies[self._vis_slim_fqdn].command_inout(
-                    "Configure", vis_slim_config
-                )
-
-                # restore default timeout
-                self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
-                self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
-            except tango.DevFailed as df:
-                for item in df.args:
-                    log_msg = f"Failed to configure SLIM (mesh): {item.reason}"
-                    self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-            except OSError as e:
-                log_msg = f"Failed to read SLIM configuration file: {e}"
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
-        else:
+        if not self._connected:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
+
+        # Power on all the Talon boards if not in SimulationMode
+        # TODO: There are two VCCs per LRU. Need to check the number of
+        #       VCCs turned on against the number of LRUs powered on
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.FALSE
+        ):
+            self._fqdn_talon_lru = self._get_talon_lru_fqdns()
+            # TODO: handle subscribed events for missing LRUs
+        else:
+            # Use a hard-coded example fqdn talon lru for simulationMode
+            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+
+        # Turn on all the LRUs with the boards we need
+        lru_on_status, log_msg = self._turn_on_lrus()
+        if not lru_on_status:
+            return (ResultCode.FAILED, log_msg)
+
+        # Configure all the Talon boards
+        if (
+            self._talondx_component_manager.configure_talons()
+            == ResultCode.FAILED
+        ):
+            log_msg = "Failed to configure Talon boards"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
+        try:
+            # Set the Simulation mode of the Subarray to the simulation mode of the controller
+            self._group_subarray.write_attribute(
+                "simulationMode",
+                self._talondx_component_manager.simulation_mode,
+            )
+            self._group_subarray.command_inout("On")
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = f"Failed to turn on group proxies; {item.reason}"
+                self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
+        # Configure SLIM Mesh devices
+        self._configure_slim_mesh_devices()
+
+        message = "CbfController On command completed OK"
+        return (ResultCode.OK, message)
 
     def off(
         self: ControllerComponentManager,
@@ -818,41 +858,6 @@ class ControllerComponentManager(CbfComponentManager):
                         log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
-
-    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
-        try:
-            self._logger.info(f"Turning on LRU {lru_fqdn}")
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.simulationMode = sim_mode
-            proxy.adminMode = AdminMode.ONLINE
-
-            proxy.On()
-        except tango.DevFailed as e:
-            self._logger.error(e)
-            return (False, lru_fqdn)
-
-        self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
-        return (True, None)
-
-    def _turn_on_lrus(
-        self: ControllerComponentManager,
-    ) -> Tuple[bool, str]:
-        results = [
-            self._lru_on(
-                self._proxies[fqdn],
-                self._talondx_component_manager.simulation_mode,
-                fqdn,
-            )
-            for fqdn in self._fqdn_talon_lru
-        ]
-
-        failed_lrus = []
-        out_status = True
-        for status, fqdn in results:
-            if not status:
-                failed_lrus.append(fqdn)
-                out_status = False
-        return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
 
     def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
         try:
