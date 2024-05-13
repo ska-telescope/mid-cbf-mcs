@@ -569,18 +569,18 @@ class FspCorrSubarrayComponentManager(
                 "output_host"
             ]
         elif self._vis_destination_address["outputHost"] == []:
-            self._vis_destination_address["outputHost"] = (
-                const.DEFAULT_OUTPUT_HOST
-            )
+            self._vis_destination_address[
+                "outputHost"
+            ] = const.DEFAULT_OUTPUT_HOST
 
         if "output_port" in configuration:
             self._vis_destination_address["outputPort"] = configuration[
                 "output_port"
             ]
         elif self._vis_destination_address["outputPort"] == []:
-            self._vis_destination_address["outputPort"] = (
-                const.DEFAULT_OUTPUT_PORT
-            )
+            self._vis_destination_address[
+                "outputPort"
+            ] = const.DEFAULT_OUTPUT_PORT
 
         self._output_link_map = configuration["output_link_map"]
 

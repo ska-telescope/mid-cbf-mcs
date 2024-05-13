@@ -494,9 +494,9 @@ class CbfSubarrayComponentManager(
                 # pass DISH ID as VCC ID integer to FSPs and VCCs
                 for delay_detail in delay_model_json["delay_details"]:
                     dish_id = delay_detail["receptor"]
-                    delay_detail["receptor"] = (
-                        self._dish_utils.dish_id_to_vcc_id[dish_id]
-                    )
+                    delay_detail[
+                        "receptor"
+                    ] = self._dish_utils.dish_id_to_vcc_id[dish_id]
                 t = Thread(
                     target=self._update_delay_model,
                     args=(json.dumps(delay_model_json),),
@@ -570,9 +570,9 @@ class CbfSubarrayComponentManager(
                     # pass DISH ID as VCC ID integer to FSPs and VCCs
                     for matrix in jones_matrix["matrix_details"]:
                         dish_id = matrix["receptor"]
-                        matrix["receptor"] = (
-                            self._dish_utils.dish_id_to_vcc_id[dish_id]
-                        )
+                        matrix[
+                            "receptor"
+                        ] = self._dish_utils.dish_id_to_vcc_id[dish_id]
                     t = Thread(
                         target=self._update_jones_matrix,
                         args=(json.dumps(jones_matrix),),
@@ -1437,9 +1437,9 @@ class CbfSubarrayComponentManager(
                             # Validate dishes
                             # if not given, assign all DISH IDs belonging to subarray
                             if "receptor_ids" not in timingBeam:
-                                timingBeam["receptor_ids"] = (
-                                    self._dish_ids.copy()
-                                )
+                                timingBeam[
+                                    "receptor_ids"
+                                ] = self._dish_ids.copy()
 
                             for dish in timingBeam["receptor_ids"]:
                                 if dish not in self._dish_ids:
@@ -1667,12 +1667,12 @@ class CbfSubarrayComponentManager(
                 search_window["frequency_band"] = common_configuration[
                     "frequency_band"
                 ]
-                search_window["frequency_band_offset_stream1"] = (
-                    self._frequency_band_offset_stream1
-                )
-                search_window["frequency_band_offset_stream2"] = (
-                    self._frequency_band_offset_stream2
-                )
+                search_window[
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
+                search_window[
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
                 if search_window["frequency_band"] in ["5a", "5b"]:
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
@@ -1680,11 +1680,11 @@ class CbfSubarrayComponentManager(
                 # pass DISH ID as VCC ID integer to VCCs
                 if search_window["tdc_enable"]:
                     for tdc_dest in search_window["tdc_destination_address"]:
-                        tdc_dest["receptor_id"] = (
-                            self._dish_utils.dish_id_to_vcc_id[
-                                tdc_dest["receptor_id"]
-                            ]
-                        )
+                        tdc_dest[
+                            "receptor_id"
+                        ] = self._dish_utils.dish_id_to_vcc_id[
+                            tdc_dest["receptor_id"]
+                        ]
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
@@ -1744,13 +1744,13 @@ class CbfSubarrayComponentManager(
             if fsp["frequency_band"] in ["5a", "5b"]:
                 fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
             if "frequency_band_offset_stream1" in configuration:
-                fsp["frequency_band_offset_stream1"] = (
-                    self._frequency_band_offset_stream1
-                )
+                fsp[
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
             if "frequency_band_offset_stream2" in configuration:
-                fsp["frequency_band_offset_stream2"] = (
-                    self._frequency_band_offset_stream2
-                )
+                fsp[
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
 
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp:
