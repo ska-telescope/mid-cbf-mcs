@@ -129,10 +129,6 @@ class TestSlim:
             return_code, message = mesh.SlimTest()
             assert return_code == ResultCode.OK
 
-        # Turn off the LRUs and then the Slim devices
-        for proxy in test_proxies.talon_lru:
-            proxy.Off()
-
     def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "Off" command
@@ -163,7 +159,7 @@ class TestSlim:
 
         device_under_test = test_proxies.slim
         for mesh in device_under_test:
-            mesh.Off()
+            assert mesh.State() == DevState.OFF
 
             # trigger stop_communicating by setting the AdminMode to OFFLINE
             mesh.adminMode = AdminMode.OFFLINE
@@ -179,5 +175,6 @@ class TestSlim:
             proxy.adminMode = AdminMode.OFFLINE
 
         for proxy in test_proxies.talon_lru:
+            proxy.Off()
             proxy.adminMode = AdminMode.OFFLINE
             proxy.set_timeout_millis(10000)

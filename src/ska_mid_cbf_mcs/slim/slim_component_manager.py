@@ -127,7 +127,12 @@ class SlimComponentManager(CbfComponentManager):
 
         :return: whether the SLIM is communicating
         """
-        return self.connected and self.mesh_configured
+        if self.connected:
+            self._logger.info("The SLIM is not communicating")
+            return True
+        else:
+            self._logger.info("The SLIM is currently not communicating")
+            return False
 
     def on(self) -> tuple[ResultCode, str]:
         """
@@ -155,8 +160,12 @@ class SlimComponentManager(CbfComponentManager):
         """
         self._logger.debug("Entering SlimComponentManager.off")
         self.update_component_power_mode(PowerMode.OFF)
+
         if self.mesh_configured:
-            self._disconnect_links()
+            rc, msg = self._disconnect_links()
+            if rc is not ResultCode.OK:
+                return (rc, msg)
+
         return (ResultCode.OK, "Off command completed OK")
 
     def configure(self, config_str) -> tuple[ResultCode, str]:
@@ -554,7 +563,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 self._dp_links[idx].set_timeout_millis(3000)
                 # poll link health every 20 seconds
-                if self._simulation_mode == False:
+                if self._simulation_mode is False:
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
@@ -584,7 +593,7 @@ class SlimComponentManager(CbfComponentManager):
         try:
             for idx, txrx in enumerate(self._active_links):
                 # To guard against stop_poll_command from calling when in simulation mode
-                if self._simulation_mode == False:
+                if self._simulation_mode is False:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
                 rc, msg = self._dp_links[idx].command_inout("DisconnectTxRx")
         except tango.DevFailed as df:
