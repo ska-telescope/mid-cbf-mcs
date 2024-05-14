@@ -560,8 +560,8 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
+        # Set the Simulation mode of the Subarray to the simulation mode of the controller
         try:
-            # Set the Simulation mode of the Subarray to the simulation mode of the controller
             self._group_subarray.write_attribute(
                 "simulationMode",
                 self._talondx_component_manager.simulation_mode,
@@ -578,348 +578,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         message = "CbfController On command completed OK"
         return (ResultCode.OK, message)
-
-    def off(
-        self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Turn off the controller and its subordinate devices
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-
-        # Check if connection to device proxies has been established
-        if self._connected:
-            (result_code, message) = (ResultCode.OK, [])
-
-            # reset subarray observing state to EMPTY
-            for subarray in [
-                self._proxies[fqdn] for fqdn in self._fqdn_subarray
-            ]:
-                (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
-                if not subarray_empty:
-                    self._logger.error(log_msg)
-                    message.append(log_msg)
-                    result_code = ResultCode.FAILED
-
-            # turn off subelements
-            (subelement_off, log_msg) = self._turn_off_subelements()
-            message.extend(log_msg)
-            if not subelement_off:
-                result_code = ResultCode.FAILED
-
-            # HPS master shutdown
-            result = self._talondx_component_manager.shutdown()
-            if result == ResultCode.FAILED:
-                # if HPS master shutdown failed, continue with attempting to
-                # shut off power outlets via LRU device
-                log_msg = "HPS Master shutdown failed."
-                self._logger.warning(log_msg)
-                message.append(log_msg)
-
-            # Turn off all the LRUs currently in use
-            (lru_off, log_msg) = self._turn_off_lrus()
-            if not lru_off:
-                message.append(log_msg)
-                result_code = ResultCode.FAILED
-
-            # check final device states
-            (
-                op_state_error_list,
-                obs_state_error_list,
-            ) = self._check_subelements_off()
-
-            if len(op_state_error_list) > 0:
-                for fqdn, state in op_state_error_list:
-                    log_msg = (
-                        f"{fqdn} failed to turn OFF, current state: {state}"
-                    )
-                    self._logger.error(log_msg)
-                    message.append(log_msg)
-                result_code = ResultCode.FAILED
-
-            if len(obs_state_error_list) > 0:
-                for fqdn, obs_state in obs_state_error_list:
-                    log_msg = f"{fqdn} failed to restart, current obsState: {obs_state}"
-                    self._logger.error(log_msg)
-                    message.append(log_msg)
-                result_code = ResultCode.FAILED
-
-            if result_code == ResultCode.OK:
-                message.append("CbfController Off command completed OK")
-            return (result_code, "; ".join(message))
-        else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
-
-    def standby(
-        self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Turn the controller into low power standby mode
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-
-        if self._connected:
-            try:
-                self._group_vcc.command_inout("Standby")
-                self._group_fsp.command_inout("Standby")
-            except tango.DevFailed:
-                log_msg = "Failed to turn group proxies to standby"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController Standby command completed OK"
-            return (ResultCode.OK, message)
-
-        else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
-
-    def init_sys_param(
-        self: ControllerComponentManager,
-        params: str,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Validate and save the Dish ID - VCC ID mapping and k values.
-
-        :param argin: the Dish ID - VCC ID mapping and k values in a
-                        json string.
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._logger.debug(f"Received sys params {params}")
-
-        def raise_on_duplicate_keys(pairs):
-            d = {}
-            for k, v in pairs:
-                if k in d:
-                    raise ValueError(f"duplicated key: {k}")
-                else:
-                    d[k] = v
-            return d
-
-        try:
-            init_sys_param_json = json.loads(
-                params, object_pairs_hook=raise_on_duplicate_keys
-            )
-        except ValueError as e:
-            self._logger.error(e)
-            return (
-                ResultCode.FAILED,
-                "Duplicated Dish ID in the init_sys_param json",
-            )
-
-        passed, msg = self._validate_init_sys_param(init_sys_param_json)
-        if not passed:
-            return (
-                ResultCode.FAILED,
-                msg,
-            )
-        # If tm_data_filepath is provided, then we need to retrieve the
-        # init sys param file from CAR via the telescope model
-        if "tm_data_filepath" in init_sys_param_json:
-            passed, msg, init_sys_param_json = self._retrieve_sys_param_file(
-                init_sys_param_json
-            )
-            if not passed:
-                return (ResultCode.FAILED, msg)
-            passed, msg = self._validate_init_sys_param(init_sys_param_json)
-            if not passed:
-                return (
-                    ResultCode.FAILED,
-                    msg,
-                )
-            self._source_init_sys_param = params
-            self._init_sys_param = json.dumps(init_sys_param_json)
-        else:
-            self._source_init_sys_param = ""
-            self._init_sys_param = params
-
-        # store the attribute
-        self.dish_utils = DISHUtils(init_sys_param_json)
-
-        # send init_sys_param to the subarrays
-        try:
-            self._update_init_sys_param(self._init_sys_param)
-        except tango.DevFailed as e:
-            self._logger.error(e)
-            return (
-                ResultCode.FAILED,
-                "Failed to update subarrays with init_sys_param",
-            )
-
-        self._logger.info("Updated subarrays with init_sys_param")
-
-        return (
-            ResultCode.OK,
-            "CbfController InitSysParam command completed OK",
-        )
-
-    def _retrieve_sys_param_file(self, init_sys_param_json) -> Tuple:
-        # The uri was provided in the input string, therefore the mapping from Dish ID to
-        # VCC and frequency offset k needs to be retrieved using the Telescope Model
-        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
-        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
-        try:
-            mid_cbf_param_dict = TMData([tm_data_sources])[
-                tm_data_filepath
-            ].get_dict()
-            msg = f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
-            self._logger.info(msg)
-        except (ValueError, KeyError) as e:
-            msg = f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
-            self._logger.error(msg)
-            return (False, msg, None)
-        return (True, msg, mid_cbf_param_dict)
-
-    def _validate_init_sys_param(
-        self: ControllerComponentManager,
-        params: dict,
-    ) -> Tuple:
-        # Validate init_sys_param against the telescope model
-        try:
-            telmodel_validate(
-                version=params["interface"], config=params, strictness=2
-            )
-            msg = "init_sys_param validation against ska-telmodel schema was successful!"
-            self._logger.info(msg)
-        except ValueError as e:
-            msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            self._logger.error(msg)
-            return (False, msg)
-        return (True, msg)
-
-    def _update_init_sys_param(
-        self: ControllerComponentManager,
-        params: str,
-    ) -> None:
-        # write the init_sys_param to each of the subarrays
-        for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_attribute("sysParam", params)
-
-        # set VCC values
-        for fqdn in self._fqdn_vcc:
-            try:
-                proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    proxy.dishID = dish_id
-                    self._logger.info(
-                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
-                    )
-                else:
-                    log_msg = (
-                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                    )
-                    self._logger.warning(log_msg)
-            except tango.DevFailed as df:
-                for item in df.args:
-                    log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                    self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
-
-        # update talon boards. The VCC ID to IP address mapping comes
-        # from hw_config. Then map VCC ID to DISH ID.
-        for vcc_id_str, ip in self._hw_config["talon_board"].items():
-            for fqdn in self._fqdn_talon_board:
-                try:
-                    proxy = self._proxies[fqdn]
-                    board_ip = proxy.get_property("TalonDxBoardAddress")[
-                        "TalonDxBoardAddress"
-                    ][0]
-                    if board_ip == ip:
-                        vcc_id = int(vcc_id_str)
-                        proxy.write_attribute("vccID", str(vcc_id))
-                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                            proxy.write_attribute("dishID", dish_id)
-                        else:
-                            log_msg = (
-                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                            )
-                            self._logger.warning(log_msg)
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
-                        self._logger.error(log_msg)
-                        return (ResultCode.FAILED, log_msg)
-
-    def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
-        try:
-            self._logger.info(f"Turning off LRU {lru_fqdn}")
-            proxy.Off()
-        except tango.DevFailed as e:
-            self._logger.error(e)
-            return (False, lru_fqdn)
-
-        self._logger.info(f"LRU successfully turned off: {lru_fqdn}")
-        return (True, None)
-
-    def _turn_off_lrus(
-        self: ControllerComponentManager,
-    ) -> Tuple[bool, str]:
-        if (
-            self._talondx_component_manager.simulation_mode
-            == SimulationMode.FALSE
-        ):
-            if len(self._fqdn_talon_lru) == 0:
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
-                ) as f:
-                    talondx_config_json = json.load(f)
-
-                for config_command in talondx_config_json["config_commands"]:
-                    target = config_command["target"]
-                    for lru_id, lru_config in self._hw_config[
-                        "talon_lru"
-                    ].items():
-                        talon1 = lru_config["TalonDxBoard1"]
-                        talon2 = lru_config["TalonDxBoard2"]
-                        if target in [talon1, talon2]:
-                            self._fqdn_talon_lru.append(
-                                f"mid_csp_cbf/talon_lru/{lru_id}"
-                            )
-
-                # TODO: handle subscribed events for missing LRUs
-        else:
-            # use a hard-coded example fqdn talon lru for simulation mode
-            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
-
-        # turn off LRUs
-        results = [
-            self._lru_off(
-                self._proxies[fqdn],
-                fqdn,
-            )
-            for fqdn in self._fqdn_talon_lru
-        ]
-
-        failed_lrus = []
-        out_status = True
-        for status, fqdn in results:
-            if not status:
-                failed_lrus.append(fqdn)
-                out_status = False
-        return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
@@ -1138,3 +796,343 @@ class ControllerComponentManager(CbfComponentManager):
                     obs_state_error_list.append((fqdn, obs_state))
 
         return (op_state_error_list, obs_state_error_list)
+
+    def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
+        try:
+            self._logger.info(f"Turning off LRU {lru_fqdn}")
+            proxy.Off()
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned off: {lru_fqdn}")
+        return (True, None)
+
+    def _turn_off_lrus(
+        self: ControllerComponentManager,
+    ) -> Tuple[bool, str]:
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.FALSE
+        ):
+            if len(self._fqdn_talon_lru) == 0:
+                with open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                ) as f:
+                    talondx_config_json = json.load(f)
+
+                for config_command in talondx_config_json["config_commands"]:
+                    target = config_command["target"]
+                    for lru_id, lru_config in self._hw_config[
+                        "talon_lru"
+                    ].items():
+                        talon1 = lru_config["TalonDxBoard1"]
+                        talon2 = lru_config["TalonDxBoard2"]
+                        if target in [talon1, talon2]:
+                            self._fqdn_talon_lru.append(
+                                f"mid_csp_cbf/talon_lru/{lru_id}"
+                            )
+
+                # TODO: handle subscribed events for missing LRUs
+        else:
+            # use a hard-coded example fqdn talon lru for simulation mode
+            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+
+        # turn off LRUs
+        results = [
+            self._lru_off(
+                self._proxies[fqdn],
+                fqdn,
+            )
+            for fqdn in self._fqdn_talon_lru
+        ]
+
+        failed_lrus = []
+        out_status = True
+        for status, fqdn in results:
+            if not status:
+                failed_lrus.append(fqdn)
+                out_status = False
+        return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
+
+    def off(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Turn off the controller and its subordinate devices
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        # Check if connection to device proxies has been established
+        if not self._connected:
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
+        (result_code, message) = (ResultCode.OK, [])
+
+        # reset subarray observing state to EMPTY
+        for subarray in [self._proxies[fqdn] for fqdn in self._fqdn_subarray]:
+            (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
+            if not subarray_empty:
+                self._logger.error(log_msg)
+                message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+        # turn off subelements
+        (subelement_off, log_msg) = self._turn_off_subelements()
+        message.extend(log_msg)
+        if not subelement_off:
+            result_code = ResultCode.FAILED
+
+        # HPS master shutdown
+        result = self._talondx_component_manager.shutdown()
+        if result == ResultCode.FAILED:
+            # if HPS master shutdown failed, continue with attempting to
+            # shut off power outlets via LRU device
+            log_msg = "HPS Master shutdown failed."
+            self._logger.warning(log_msg)
+            message.append(log_msg)
+
+        # Turn off all the LRUs currently in use
+        (lru_off, log_msg) = self._turn_off_lrus()
+        if not lru_off:
+            message.append(log_msg)
+            result_code = ResultCode.FAILED
+
+        # check final device states
+        (
+            op_state_error_list,
+            obs_state_error_list,
+        ) = self._check_subelements_off()
+
+        if len(op_state_error_list) > 0:
+            for fqdn, state in op_state_error_list:
+                log_msg = f"{fqdn} failed to turn OFF, current state: {state}"
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result_code = ResultCode.FAILED
+
+        if len(obs_state_error_list) > 0:
+            for fqdn, obs_state in obs_state_error_list:
+                log_msg = (
+                    f"{fqdn} failed to restart, current obsState: {obs_state}"
+                )
+                self._logger.error(log_msg)
+                message.append(log_msg)
+            result_code = ResultCode.FAILED
+
+        if result_code == ResultCode.OK:
+            message.append("CbfController Off command completed OK")
+        return (result_code, "; ".join(message))
+
+    def standby(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Turn the controller into low power standby mode
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+            try:
+                self._group_vcc.command_inout("Standby")
+                self._group_fsp.command_inout("Standby")
+            except tango.DevFailed:
+                log_msg = "Failed to turn group proxies to standby"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "CbfController Standby command completed OK"
+            return (ResultCode.OK, message)
+
+        else:
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
+    def _validate_init_sys_param(
+        self: ControllerComponentManager,
+        params: dict,
+    ) -> Tuple:
+        # Validate init_sys_param against the telescope model
+        try:
+            telmodel_validate(
+                version=params["interface"], config=params, strictness=2
+            )
+            msg = "init_sys_param validation against ska-telmodel schema was successful!"
+            self._logger.info(msg)
+        except ValueError as e:
+            msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            self._logger.error(msg)
+            return (False, msg)
+        return (True, msg)
+
+    def _retrieve_sys_param_file(self, init_sys_param_json) -> Tuple:
+        # The uri was provided in the input string, therefore the mapping from Dish ID to
+        # VCC and frequency offset k needs to be retrieved using the Telescope Model
+        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
+        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
+        try:
+            mid_cbf_param_dict = TMData([tm_data_sources])[
+                tm_data_filepath
+            ].get_dict()
+            msg = f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+            self._logger.info(msg)
+        except (ValueError, KeyError) as e:
+            msg = f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
+            self._logger.error(msg)
+            return (False, msg, None)
+        return (True, msg, mid_cbf_param_dict)
+
+    def _update_init_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> None:
+        # write the init_sys_param to each of the subarrays
+        for fqdn in self._fqdn_subarray:
+            self._proxies[fqdn].write_attribute("sysParam", params)
+
+        # set VCC values
+        for fqdn in self._fqdn_vcc:
+            try:
+                proxy = self._proxies[fqdn]
+                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                    proxy.dishID = dish_id
+                    self._logger.info(
+                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                    )
+                else:
+                    log_msg = (
+                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                    )
+                    self._logger.warning(log_msg)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failure in connection to {fqdn}; {item.reason}"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+        # update talon boards. The VCC ID to IP address mapping comes
+        # from hw_config. Then map VCC ID to DISH ID.
+        for vcc_id_str, ip in self._hw_config["talon_board"].items():
+            for fqdn in self._fqdn_talon_board:
+                try:
+                    proxy = self._proxies[fqdn]
+                    board_ip = proxy.get_property("TalonDxBoardAddress")[
+                        "TalonDxBoardAddress"
+                    ][0]
+                    if board_ip == ip:
+                        vcc_id = int(vcc_id_str)
+                        proxy.write_attribute("vccID", str(vcc_id))
+                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                            proxy.write_attribute("dishID", dish_id)
+                        else:
+                            log_msg = (
+                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                            )
+                            self._logger.warning(log_msg)
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
+                        self._logger.error(log_msg)
+                        return (ResultCode.FAILED, log_msg)
+
+    def init_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Validate and save the Dish ID - VCC ID mapping and k values.
+
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self._logger.debug(f"Received sys params {params}")
+
+        def raise_on_duplicate_keys(pairs):
+            d = {}
+            for k, v in pairs:
+                if k in d:
+                    raise ValueError(f"duplicated key: {k}")
+                else:
+                    d[k] = v
+            return d
+
+        try:
+            init_sys_param_json = json.loads(
+                params, object_pairs_hook=raise_on_duplicate_keys
+            )
+        except ValueError as e:
+            self._logger.error(e)
+            return (
+                ResultCode.FAILED,
+                "Duplicated Dish ID in the init_sys_param json",
+            )
+
+        passed, msg = self._validate_init_sys_param(init_sys_param_json)
+        if not passed:
+            return (
+                ResultCode.FAILED,
+                msg,
+            )
+        # If tm_data_filepath is provided, then we need to retrieve the
+        # init sys param file from CAR via the telescope model
+        if "tm_data_filepath" in init_sys_param_json:
+            passed, msg, init_sys_param_json = self._retrieve_sys_param_file(
+                init_sys_param_json
+            )
+            if not passed:
+                return (ResultCode.FAILED, msg)
+            passed, msg = self._validate_init_sys_param(init_sys_param_json)
+            if not passed:
+                return (
+                    ResultCode.FAILED,
+                    msg,
+                )
+            self._source_init_sys_param = params
+            self._init_sys_param = json.dumps(init_sys_param_json)
+        else:
+            self._source_init_sys_param = ""
+            self._init_sys_param = params
+
+        # store the attribute
+        self.dish_utils = DISHUtils(init_sys_param_json)
+
+        # send init_sys_param to the subarrays
+        try:
+            self._update_init_sys_param(self._init_sys_param)
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (
+                ResultCode.FAILED,
+                "Failed to update subarrays with init_sys_param",
+            )
+
+        self._logger.info("Updated subarrays with init_sys_param")
+
+        return (
+            ResultCode.OK,
+            "CbfController InitSysParam command completed OK",
+        )
