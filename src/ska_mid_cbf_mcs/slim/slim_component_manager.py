@@ -309,6 +309,8 @@ class SlimComponentManager(CbfComponentManager):
 
         # grab the common values we need for the individual tests
         # to minimize device proxy access
+        # try block to catch exceptions from devicce proxy access
+ 
         for idx, txrx in enumerate(self._active_links):
             dp_link = self._dp_links[idx]
             counter = dp_link.counters
@@ -323,32 +325,15 @@ class SlimComponentManager(CbfComponentManager):
             )
 
         # Summary check for SLIM Link Status and Bit Error Rate
-        try:
-            self._slim_links_ber_check_summary(
-                counters, names, rx_idle_word_error_rate_and_ber_pass_status
-            )
-        except Exception as e:
-            self._logger.error(
-                f"Exception occur when running slim_test_slim_links_ber_check_summary: {e}"
-            )
-            return (
-                ResultCode.FAILED,
-                "Exception occur when running slim_test_slim_links_ber_check_summary. See log for detail",
-            )
+        self._slim_links_ber_check_summary(
+            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+        )
 
         # More detail table for the SLIM Link health
-        try:
-            self._slim_table(
-                counters, names, rx_idle_word_error_rate_and_ber_pass_status
-            )
-        except Exception as e:
-            self._logger.error(
-                f"Exception occur when running slim_test_slim_table: {e}"
-            )
-            return (
-                ResultCode.FAILED,
-                "Exception occur when running slim_test_slim_table. See log for detail",
-            )
+        self._slim_table(
+            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+        )
+
 
         return (ResultCode.OK, "SLIM Test Completed")
 
