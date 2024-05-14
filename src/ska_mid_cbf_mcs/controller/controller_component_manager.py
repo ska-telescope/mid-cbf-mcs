@@ -198,7 +198,7 @@ class ControllerComponentManager(CbfComponentManager):
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         """
 
-        def _filter_fqdn(all_domains, config_key):
+        def _filter_fqdn(all_domains: List[str], config_key: str) -> List[str]:
             return [
                 domain
                 for domain in all_domains
@@ -339,7 +339,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         return True
 
-    def _innit_proxies(self: ControllerComponentManager) -> bool:
+    def _init_proxies(self: ControllerComponentManager) -> bool:
         """
         Innit all proxies, return True if all proxies are connected.
         """
@@ -381,7 +381,7 @@ class ControllerComponentManager(CbfComponentManager):
         # - must set PDU online before LRU to establish outlet power states
         # - must set VCC online after LRU to establish LRU power state
         # TODO: evaluate ordering and add further comments
-        if not self._innit_proxies():
+        if not self._init_proxies():
             self._connected = False
             return
 
