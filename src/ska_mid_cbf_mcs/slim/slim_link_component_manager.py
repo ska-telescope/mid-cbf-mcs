@@ -213,7 +213,7 @@ class SlimLinkComponentManager(CbfComponentManager):
     ) -> list[bool]:
         """
         Returns the Debug Alignment and Lock Status flags of the rx HPS device
-        If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, return an empty list
+        If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, returns an empty list
 
         :return: Debug Alignment and Lock Status flags of the rx HPS Device
         :rtype: list[int]
@@ -245,11 +245,11 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         Retrieves and return the link occupancy of the rx device
 
-        :return: Link Occupancy of the rx Device
+        :return: Link Occupancy of the rx Device, defaults to -1.0 if not possible
         :raise Tango exception: if the rx device is not set.
         :rtype: float
         """
-        res = []
+        res = -1.0
 
         # if in simulation mode
         if self._simulation_mode == SimulationMode.TRUE:
@@ -274,11 +274,11 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         Retrieves and return the link occupancy of the tx device
 
-        :return: Link Occupancy of the tx Device
+        :return: Link Occupancy of the tx Device, defaults to -1.0 if not possible
         :raise Tango exception: if the tx device is not set.
         :rtype: float
         """
-        res = []
+        res = -1.0
 
         # if in simulation mode
         if self._simulation_mode == SimulationMode.TRUE:

@@ -21,7 +21,7 @@ import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
-from ska_tango_base.faults import CommandError
+from ska_tango_base.faults import StateModelError
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -337,7 +337,7 @@ class Slim(SKABaseDevice):
             if self.component_manager.mesh_configured:
                 return True
             else:
-                raise CommandError(
+                raise StateModelError(
                     "The SLIM must be configured before SlimTest can be called"
                 )
         return False

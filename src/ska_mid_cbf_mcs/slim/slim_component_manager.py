@@ -310,7 +310,7 @@ class SlimComponentManager(CbfComponentManager):
         # grab the common values we need for the individual tests
         # to minimize device proxy access
         # try block to catch exceptions from devicce proxy access
- 
+
         for idx, txrx in enumerate(self._active_links):
             dp_link = self._dp_links[idx]
             counter = dp_link.counters
@@ -333,7 +333,6 @@ class SlimComponentManager(CbfComponentManager):
         self._slim_table(
             counters, names, rx_idle_word_error_rate_and_ber_pass_status
         )
-
 
         return (ResultCode.OK, "SLIM Test Completed")
 
