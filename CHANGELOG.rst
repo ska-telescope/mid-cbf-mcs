@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.15.0
+******
+* CIP-2335 Migrated SlimTest From Engineering Console to MCS's Slim Device
+* CIP-2396 Fixed Read the Docs Build Issues on MCS
+
 0.14.2
 ******
 * CIP-2418 Fix On command timeout by clearing talons with a script
