@@ -43,6 +43,9 @@ class Const:
 
         self.DEFAULT_TIMEOUT = 4
 
+        self.BER_PASS_THRESHOLD = 8.000e-11
+        self.GBPS = 25.78125 * 64 / 66
+
 
 const = Const()
 
