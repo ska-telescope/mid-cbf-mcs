@@ -341,7 +341,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _init_proxies(self: ControllerComponentManager) -> bool:
         """
-        Innit all proxies, return True if all proxies are connected.
+        Init all proxies, return True if all proxies are connected.
         """
         for fqdn in (
             self._fqdn_power_switch
@@ -363,6 +363,7 @@ class ControllerComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         if self._connected:
+            self._logger.info("Already communicating")
             return
 
         super().start_communicating()
@@ -474,7 +475,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._proxies[fqdn].set_timeout_millis(10000)
         self._proxies[fqdn].command_inout("Configure", slim_config)
 
-    def _configure_slim_mesh_devices(self: ControllerComponentManager) -> None:
+    def _configure_slim_devices(self: ControllerComponentManager) -> None:
         try:
             self._logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
@@ -501,7 +502,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
         except tango.DevFailed as df:
             for item in df.args:
-                log_msg = f"Failed to configure SLIM (mesh): {item.reason}"
+                log_msg = f"Failed to configure SLIM: {item.reason}"
                 self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
         except OSError as e:
@@ -520,7 +521,7 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        self._logger.info("Trying to execute ON Command")
+        self._logger.info("Entering ControllerComponentManager.on")
 
         if self.dish_utils is None:
             log_msg = "Dish-VCC mapping has not been provided."
@@ -574,7 +575,7 @@ class ControllerComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
         # Configure SLIM Mesh devices
-        self._configure_slim_mesh_devices()
+        self._configure_slim_devices()
 
         message = "CbfController On command completed OK"
         return (ResultCode.OK, message)
@@ -870,6 +871,7 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.info("Entering ControllerComponentManager.off")
 
         # Check if connection to device proxies has been established
         if not self._connected:
