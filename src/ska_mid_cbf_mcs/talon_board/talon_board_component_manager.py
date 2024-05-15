@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any, Callable, Optional, Tuple
 
 import tango
@@ -117,11 +117,13 @@ class TalonBoardComponentManager(CbfComponentManager):
                     self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
                     self.logger.debug(f"Created device proxy for {fqdn}")
                 else:
-                    #TODO: test if this else is necessary; is DevFailed raised simply by instantiating DP without device_name?
+                    # TODO: test if this else is necessary; is DevFailed raised simply by instantiating DP without device_name?
                     self._update_communication_state(
                         CommunicationStatus.NOT_ESTABLISHED
                     )
-                    self.logger.error("Failed to establish proxies to devices in properties. Check charts.")
+                    self.logger.error(
+                        "Failed to establish proxies to devices in properties. Check charts."
+                    )
                     return
         except tango.DevFailed as df:
             self._update_communication_state(
@@ -919,7 +921,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             # Set to true for the LTM if any of the voltage alarm fields is set to 1
             fields = [
                 f"LTMs_{i}_LTM_temperature-max-alarm-1",
-                f"LTMs_{i}_LTM_temperature-max-alarm-1",
+                f"LTMs_{i}_LTM_temperature-max-alarm-2",
             ]
             for field in fields:
                 if field in self._telemetry:
@@ -932,7 +934,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def _throw_if_device_off(self):
-        if self.power_mode != PowerState.ON:
+        if self.power_state != PowerState.ON:
             tango.Except.throw_exception(
                 "Talon_Board_Off",
                 "Talon Board is OFF",
@@ -951,7 +953,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         # each result is a tuple of (field, time, value)
                         self._telemetry[r[0]] = (r[1], r[2])
             except Exception as e:
-                msg = f"Failed to query Influxdb of {self._hostname}: {e}"
+                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
                 self.logger.error(msg)
                 tango.Except.throw_exception(
                     "Query_Influxdb_Error", msg, "query_if_needed()"
@@ -964,7 +966,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :param record: a record from Influxdb query result
         """
-        td = datetime.now(timezone.utc) - t
+        td = datetime.now() - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
@@ -999,8 +1001,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             return
 
         self._subscribe_change_events()
-
+        self._update_component_state(power=PowerState.ON)
         ping_res = asyncio.run(self._db_client.ping())
+
         if not ping_res:
             self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
             self._update_component_state(fault=True)
@@ -1010,7 +1013,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
             return
 
-        self._update_component_state(power=PowerState.ON)
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(

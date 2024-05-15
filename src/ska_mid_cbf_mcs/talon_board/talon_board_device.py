@@ -16,7 +16,12 @@ from __future__ import annotations
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt
+from tango import (
+    DebugIt,
+    DevVarBooleanArray,
+    DevVarFloatArray,
+    DevVarShortArray,
+)
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
@@ -68,7 +73,7 @@ class TalonBoard(CbfDevice):
     # ----------
     # Attributes
     # ----------
-    
+
     @attribute(
         dtype=str,
         label="Subarray ID",
@@ -311,12 +316,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.humidity_sensor_temperature()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
     )
-    def dimmTemperatures(self: TalonBoard) -> float:
+    def dimmTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the DIMM temperatures of the Talon-DX board.
 
@@ -325,12 +330,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.dimm_temperatures()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=5,
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
     )
-    def mboTxTemperatures(self: TalonBoard) -> float:
+    def mboTxTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Tx temperatures of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -341,12 +346,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_temperatures()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=5,
         label="MBO Tx VCC 3.3 Voltages",
         doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
     )
-    def mboTxVccVoltages(self: TalonBoard) -> float:
+    def mboTxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Tx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -354,15 +359,15 @@ class TalonBoard(CbfDevice):
 
         :return: the MBO Tx VCC voltages.
         """
-        return self.component_manager.mbo_rx_vcc_voltages()
+        return self.component_manager.mbo_tx_vcc_voltages()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Fault Status",
         doc="MBO Tx Fault Status. True = status set.",
     )
-    def mboTxFaultStatus(self: TalonBoard) -> bool:
+    def mboTxFaultStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx fault status register of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case false will be
@@ -373,12 +378,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_fault_status()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Loss of Lock Status",
         doc="MBO Tx Loss of Lock Status. True = status set.",
     )
-    def mboTxLolStatus(self: TalonBoard) -> bool:
+    def mboTxLolStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -389,12 +394,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_lol_status()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Loss of Signal Status",
         doc="MBO Tx Loss of Signal Status. True = status set.",
     )
-    def mboTxLosStatus(self: TalonBoard) -> bool:
+    def mboTxLosStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -405,12 +410,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_tx_los_status()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=5,
         label="MBO Rx VCC 3.3 Voltages",
         doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
     )
-    def mboRxVccVoltages(self: TalonBoard) -> float:
+    def mboRxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Rx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -421,12 +426,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_vcc_voltages()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Rx Loss of Lock Status",
         doc="MBO Rx Loss of Lock Status. True = status set.",
     )
-    def mboRxLolStatus(self: TalonBoard) -> bool:
+    def mboRxLolStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Rx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -437,12 +442,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_lol_status()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Rx Loss of Signal Status",
         doc="MBO Rx Loss of Signal Status. True = status set.",
     )
-    def mboRxLosStatus(self: TalonBoard) -> bool:
+    def mboRxLosStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Rx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -453,12 +458,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_los_status()
 
     @attribute(
-        dtype=int,
+        dtype=[int],
         max_dim_x=4,
         label="Fan PWM values",
         doc="Fan PWM values.",
     )
-    def fansPwm(self: TalonBoard) -> int:
+    def fansPwm(self: TalonBoard) -> DevVarShortArray:
         """
         Read the PWM value of the fans. Valid values are
         0 to 255.
@@ -468,12 +473,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_pwm()
 
     @attribute(
-        dtype=int,
+        dtype=[int],
         max_dim_x=4,
         label="Fan PWM enable values",
         doc="Fan PWM enable values.",
     )
-    def fansPwmEnable(self: TalonBoard) -> int:
+    def fansPwmEnable(self: TalonBoard) -> DevVarShortArray:
         """
         Read the PWM value of the fans. Valid values are 0 to 2.
 
@@ -482,12 +487,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_pwm_enable()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=4,
         label="Fan Fault status",
         doc="Fan Fault status.",
     )
-    def fansFault(self: TalonBoard) -> bool:
+    def fansFault(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the fault status of the fans.
 
@@ -496,12 +501,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_fault()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
     )
-    def ltmInputVoltage(self: TalonBoard) -> float:
+    def ltmInputVoltage(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the input voltage to LTMs
 
@@ -510,12 +515,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_input_voltage()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
     )
-    def ltmOutputVoltage1(self: TalonBoard) -> float:
+    def ltmOutputVoltage1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output voltage 1 to LTMs
 
@@ -524,12 +529,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_voltage_1()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
     )
-    def ltmOutputVoltage2(self: TalonBoard) -> float:
+    def ltmOutputVoltage2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output voltage 2 to LTMs
 
@@ -538,12 +543,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_voltage_2()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
     )
-    def ltmInputCurrent(self: TalonBoard) -> float:
+    def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the input current to LTMs
 
@@ -552,12 +557,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_input_current()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
     )
-    def ltmOutputCurrent1(self: TalonBoard) -> float:
+    def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output current 1 to LTMs
 
@@ -566,12 +571,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_current_1()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
     )
-    def ltmOutputCurrent2(self: TalonBoard) -> float:
+    def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output current 2 to LTMs
 
@@ -580,12 +585,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_output_current_2()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
     )
-    def ltmTemperature1(self: TalonBoard) -> float:
+    def ltmTemperature1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the temperature 1 of LTMs
 
@@ -594,12 +599,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_temperature_1()
 
     @attribute(
-        dtype=float,
+        dtype=[float],
         max_dim_x=4,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
     )
-    def ltmTemperature2(self: TalonBoard) -> float:
+    def ltmTemperature2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the temperature 2 of LTMs
 
@@ -608,12 +613,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_temperature_2()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Voltage Warning",
         doc="True if any input or output voltage warnings is set. One entry per LTM",
     )
-    def ltmVoltageWarning(self: TalonBoard) -> bool:
+    def ltmVoltageWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any input or output voltage warning is set. One entry per LTM
 
@@ -622,12 +627,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_voltage_warning()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Current Warning",
         doc="True if any input or output current warnings is set. One entry per LTM",
     )
-    def ltmCurrentWarning(self: TalonBoard) -> bool:
+    def ltmCurrentWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any input or output current warning is set. One entry per LTM
 
@@ -636,12 +641,12 @@ class TalonBoard(CbfDevice):
         return self.component_manager.ltm_current_warning()
 
     @attribute(
-        dtype=bool,
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Temperature Warning",
         doc="True if any temperature warnings is set. One entry per LTM",
     )
-    def ltmTemperatureWarning(self: TalonBoard) -> bool:
+    def ltmTemperatureWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any temperature warning is set. One entry per LTM
 

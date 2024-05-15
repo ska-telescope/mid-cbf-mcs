@@ -18,7 +18,6 @@ import unittest
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -69,11 +68,13 @@ def mock_talon_sysid() -> unittest.mock.Mock:
     builder.add_attribute("bitstream", 0xBEEFBABE)
     return builder()
 
+
 @pytest.fixture()
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     return builder()
+
 
 @pytest.fixture()
 def mock_talon_status() -> unittest.mock.Mock:
@@ -90,6 +91,7 @@ def mock_talon_status() -> unittest.mock.Mock:
     builder.add_attribute("e100g_1_pll_fault", False)
     builder.add_attribute("slim_pll_fault", False)
     return builder()
+
 
 @pytest.fixture()
 def mock_hps_master() -> unittest.mock.Mock:
@@ -109,7 +111,7 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :return: a dictionary of device proxy mocks to pre-register.
-    """                
+    """
     return {
         "talondx-001/ska-talondx-sysid-ds/sysid": mock_talon_sysid,
         "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_0": mock_ethernet_100g,
