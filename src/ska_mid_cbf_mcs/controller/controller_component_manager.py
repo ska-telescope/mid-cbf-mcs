@@ -235,7 +235,12 @@ class ControllerComponentManager(CbfComponentManager):
         for name, value in fqdn_variables.items():
             self._logger.debug(f"fqdn {name}: {value}")
 
-    def _create_group_proxies(self):
+    def _create_group_proxies(self: ControllerComponentManager) -> bool:
+        """
+        Create group proxies for VCC, FSP, and Subarray
+
+        :return: True if the group proxies are successfully created, False otherwise.
+        """
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
             self._group_vcc.add(self._fqdn_vcc)
@@ -263,36 +268,41 @@ class ControllerComponentManager(CbfComponentManager):
 
         return True
 
-    def _write_hw_config(self, fqdn, proxy):
-        try:
-            device_id = fqdn.split("/")[-1]
-            device_type = None
-            device_config = None
+    def _write_hw_config(
+        self: ControllerComponentManager,
+        fqdn: str,
+        proxy: CbfDeviceProxy,
+        device_type: str,
+    ) -> bool:
+        """
+        Write hardware configuration properties to the device
 
-            if fqdn in self._fqdn_power_switch:
-                device_type = "power_switch"
-            elif fqdn in self._fqdn_talon_lru:
-                device_type = "talon_lru"
-            elif fqdn in self._fqdn_talon_board:
-                device_type = "talon_board"
+        :param fqdn: FQDN of the device
+        :param proxy: Proxy of the device
+        :param device_type: Type of the device. Can be one of "power_switch", "talon_lru", or "talon_board".
+        :return: True if the hardware configuration properties are successfully written to the device, False otherwise.
+        """
+        try:
+            self._logger.debug(
+                f"Writing hardware configuration properties to {fqdn}"
+            )
+
+            device_id = fqdn.split("/")[-1]
+            if device_type == "talon_board":
                 device_config = {
                     "TalonDxBoardAddress": self._hw_config[device_type][
                         device_id
                     ]
                 }
+            else:
+                device_config = self._hw_config[device_type][device_id]
 
-            if device_type:
-                self._logger.debug(
-                    f"Writing hardware configuration properties to {fqdn}"
-                )
-                if not device_config:
-                    device_config = self._hw_config[device_type][device_id]
-                device_config = tango.utils.obj_2_property(device_config)
-                proxy.put_property(device_config)
-                proxy.Init()
+            device_config = tango.utils.obj_2_property(device_config)
+            proxy.put_property(device_config)
+            proxy.Init()
 
-                if device_type == "talon_lru":
-                    proxy.set_timeout_millis(self._lru_timeout * 1000)
+            if device_type == "talon_lru":
+                proxy.set_timeout_millis(self._lru_timeout * 1000)
 
         except tango.DevFailed as df:
             for item in df.args:
@@ -302,7 +312,16 @@ class ControllerComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _set_proxy_online(self, fqdn) -> bool:
+    def _set_proxy_online(
+        self: ControllerComponentManager,
+        fqdn: str,
+    ) -> bool:
+        """
+        Set the AdminMode of the device to ONLINE, given the FQDN of the device
+
+        :param fqdn: FQDN of the device
+        :return: True if the AdminMode of the device is successfully set to ONLINE, False otherwise.
+        """
         try:
             # establish proxy connection to component
             self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
@@ -315,7 +334,10 @@ class ControllerComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _init_device_proxy(self, fqdn):
+    def _init_device_proxy(
+        self: ControllerComponentManager,
+        fqdn: str,
+    ) -> bool:
         if fqdn not in self._proxies:
             try:
                 self._logger.debug(f"Trying connection to {fqdn}")
@@ -331,8 +353,17 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             proxy = self._proxies[fqdn]
 
-        if not self._write_hw_config(fqdn, proxy):
-            return False
+        # If the fqdn is of a power switch, talon LRU, or talon board, write hw config
+        device_types = {
+            "power_switch": self._fqdn_power_switch,
+            "talon_lru": self._fqdn_talon_lru,
+            "talon_board": self._fqdn_talon_board,
+        }
+        for device_type, device_fqdns in device_types.items():
+            if fqdn in device_fqdns:
+                if not self._write_hw_config(fqdn, proxy, device_type):
+                    return False
+                break
 
         if not self._set_proxy_online(fqdn):
             return False
@@ -577,7 +608,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Configure SLIM Mesh devices
         self._configure_slim_devices()
 
-        message = "CbfController On command completed OK"
+        message = "On completed OK"
         return (ResultCode.OK, message)
 
     def _subarray_to_empty(
@@ -817,27 +848,7 @@ class ControllerComponentManager(CbfComponentManager):
             == SimulationMode.FALSE
         ):
             if len(self._fqdn_talon_lru) == 0:
-                with open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
-                ) as f:
-                    talondx_config_json = json.load(f)
-
-                for config_command in talondx_config_json["config_commands"]:
-                    target = config_command["target"]
-                    for lru_id, lru_config in self._hw_config[
-                        "talon_lru"
-                    ].items():
-                        talon1 = lru_config["TalonDxBoard1"]
-                        talon2 = lru_config["TalonDxBoard2"]
-                        if target in [talon1, talon2]:
-                            self._fqdn_talon_lru.append(
-                                f"mid_csp_cbf/talon_lru/{lru_id}"
-                            )
-
+                self._fqdn_talon_lru = self._get_talon_lru_fqdns()
                 # TODO: handle subscribed events for missing LRUs
         else:
             # use a hard-coded example fqdn talon lru for simulation mode
@@ -1045,6 +1056,9 @@ class ControllerComponentManager(CbfComponentManager):
                         if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                             dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                             proxy.write_attribute("dishID", dish_id)
+                            self._logger.info(
+                                f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                            )
                         else:
                             log_msg = (
                                 f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
