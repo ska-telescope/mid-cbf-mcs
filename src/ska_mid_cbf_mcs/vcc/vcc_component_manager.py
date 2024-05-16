@@ -478,6 +478,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
             args = json.loads(json_string)
 
+            log_string = str(args["vcc_gain"])
+            self._logger.info(f"Pre VCC gain values: {log_string}")
+
             gain_corrections = GAINUtils.get_vcc_ripple_correction()
             self._logger.info(
                 f"VCC Gain Corrections: {json.dumps(gain_corrections)}"
@@ -491,7 +494,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 gain_index = gain_index + 1
 
             log_string = str(args["vcc_gain"])
-            self._logger.info(f"VCC gain values: {log_string}")
+            self._logger.info(f"Post VCC gain values: {log_string}")
 
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             args.update(
