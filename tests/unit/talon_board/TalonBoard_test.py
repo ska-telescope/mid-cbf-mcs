@@ -97,7 +97,7 @@ class TestTalonBoard:
             InfluxDbBucket="talon",
             InfluxDbAuthToken="ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog==",
             Instance="talon1_test",
-            TalonDxSysIdAddress="talondx-001/ska-talondx-sysid-ds/sysid",
+            TalonDxSysIdAddress=request.param["sim_sysid_property"],
             TalonDx100GEthernetAddress="talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth",
             TalonStatusAddress="talondx-001/ska-talondx-status/status",
             HpsMasterAddress="talondx-001/hpsmaster/hps-1",
@@ -109,6 +109,15 @@ class TestTalonBoard:
         with harness as test_context:
             yield test_context
 
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
     def test_State(
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
@@ -121,6 +130,15 @@ class TestTalonBoard:
         """
         assert device_under_test.State() == DevState.DISABLE
 
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
     def test_Status(
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
@@ -132,7 +150,16 @@ class TestTalonBoard:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
-
+     
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
     def test_adminMode(
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
@@ -145,6 +172,15 @@ class TestTalonBoard:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
     def test_StartupState(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
@@ -159,12 +195,37 @@ class TestTalonBoard:
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_sysid_property": None,
+            },
+        ],
+        indirect=True,
+    )
+    def test_StartupState_missing_property(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+    ) -> None:
+        """
+        Test Admin Mode Online
+
+        :param device_under_test: fixture that provides a
+            :py:class:`context.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.State() == DevState.UNKNOWN
 
     @pytest.mark.parametrize(
         "test_context",
         [
             {
                 "sim_ping_fault": False,
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
             },
         ],
         indirect=True,
@@ -202,6 +263,7 @@ class TestTalonBoard:
         [
             {
                 "sim_ping_fault": True,
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
             },
         ],
         indirect=True,
@@ -241,6 +303,7 @@ class TestTalonBoard:
         [
             {
                 "sim_ping_fault": False,
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
             }
         ],
         indirect=True,

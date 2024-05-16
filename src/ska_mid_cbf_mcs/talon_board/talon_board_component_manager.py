@@ -117,7 +117,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                     self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
                     self.logger.debug(f"Created device proxy for {fqdn}")
                 else:
-                    # TODO: test if this else is necessary; is DevFailed raised simply by instantiating DP without device_name?
                     self._update_communication_state(
                         CommunicationStatus.NOT_ESTABLISHED
                     )

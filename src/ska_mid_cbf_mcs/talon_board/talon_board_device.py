@@ -99,14 +99,14 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=str,
-        label="DISH ID",
-        doc="The DISH ID assigned to the board. This attribute is only used for labelling.",
+        label="Dish ID",
+        doc="The Dish ID assigned to the board. This attribute is only used for labelling.",
     )
     def dishID(self: TalonBoard) -> str:
         """
         Read the dishID attribute.
 
-        :return: the DISH ID
+        :return: the Dish ID
         :rtype: str
         """
         return self._dishID
@@ -116,7 +116,7 @@ class TalonBoard(CbfDevice):
         """
         Write the dishID attribute.
 
-        :param value: the DISH ID
+        :param value: the Dish ID
         """
         self._dishID = value
 
@@ -129,7 +129,7 @@ class TalonBoard(CbfDevice):
         """
         Read the vccID attribute.
 
-        :return: the vcc ID
+        :return: the VCC ID
         :rtype: str
         """
         return self._vccID
@@ -139,7 +139,7 @@ class TalonBoard(CbfDevice):
         """
         Write the vccID attribute.
 
-        :param value: the vcc ID
+        :param value: the VCC ID
         """
         self._vccID = value
 
@@ -176,7 +176,7 @@ class TalonBoard(CbfDevice):
         """
         Read the least 32 bits of md5 checksum of the bitstream name
 
-        :return: the FPGA bitstream version
+        :return: a 32 bit unique identifier for the bitstream
         """
         res = self.component_manager.talon_sysid_bitstream()
         return res
@@ -195,97 +195,97 @@ class TalonBoard(CbfDevice):
         return res
 
     @attribute(
-        dtype=bool, label="fsIopllLockedFault", doc="fsIopllLockedFault"
+        dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault"
     )
     def fsIopllLockedFault(self: TalonBoard) -> bool:
         """
-        Read the fsIopllLockedFault status
+        Read the fs_iopll_locked_fault status
 
-        :return: the fsIopllLockedFault status
+        :return: the fs_iopll_locked_fault status
         """
         res = self.component_manager.talon_status_fs_iopll_locked_fault()
         return res
 
     @attribute(
         dtype=bool,
-        label="commsIopllLockedFault",
-        doc="commsIopllLockedFault",
+        label="comms_iopll_locked_fault",
+        doc="comms_iopll_locked_fault",
     )
     def commsIopllLockedFault(self: TalonBoard) -> bool:
         """
-        Read the commsIopllLockedFault status
+        Read the comms_iopll_locked_fault status
 
-        :return: the commsIopllLockedFault status
+        :return: the comms_iopll_locked_fault status
         """
         res = self.component_manager.talon_status_comms_iopll_locked_fault()
         return res
 
-    @attribute(dtype=bool, label="systemClkFault", doc="systemClkFault")
+    @attribute(dtype=bool, label="system_clk_fault", doc="system_clk_fault")
     def systemClkFault(self: TalonBoard) -> bool:
         """
-        Read the systemClkFault status
+        Read the system_clk_fault status
 
-        :return: the systemClkFault status
+        :return: the system_clk_fault status
         """
         res = self.component_manager.talon_status_system_clk_fault()
         return res
 
-    @attribute(dtype=bool, label="emifBlFault", doc="emifBlFault")
+    @attribute(dtype=bool, label="emif_bl_fault", doc="emif_bl_fault")
     def emifBlFault(self: TalonBoard) -> bool:
         """
-        Read the emifBlFault status
+        Read the emif_bl_fault status
 
-        :return: the emifBlFault status
+        :return: the emif_bl_fault status
         """
         res = self.component_manager.talon_status_emif_bl_fault()
         return res
 
-    @attribute(dtype=bool, label="emifBrFault", doc="emifBrFault")
+    @attribute(dtype=bool, label="emif_br_fault", doc="emif_br_fault")
     def emifBrFault(self: TalonBoard) -> bool:
         """
-        Read the emifBrFault status
+        Read the emif_br_fault status
 
-        :return: the emifBrFault status
+        :return: the emif_br_fault status
         """
         res = self.component_manager.talon_status_emif_br_fault()
         return res
 
-    @attribute(dtype=bool, label="emifTrFault", doc="emifTrFault")
+    @attribute(dtype=bool, label="emif_tr_fault", doc="emif_tr_fault")
     def emifTrFault(self: TalonBoard) -> bool:
         """
-        Read the emifTrFault status
+        Read the emif_tr_fault status
 
-        :return: the emifTrFault status
+        :return: the emif_tr_fault status
         """
         res = self.component_manager.talon_status_emif_tr_fault()
         return res
 
-    @attribute(dtype=bool, label="ethernet0PllFault", doc="ethernet0PllFault")
+    @attribute(dtype=bool, label="e100g_0_pll_fault", doc="e100g_0_pll_fault")
     def ethernet0PllFault(self: TalonBoard) -> bool:
         """
-        Read the ethernet0PllFault status
+        Read the e100g_0_pll_fault status
 
-        :return: the ethernet0PllFault status
+        :return: the e100g_0_pll_fault status
         """
         res = self.component_manager.talon_status_e100g_0_pll_fault()
         return res
 
-    @attribute(dtype=bool, label="ethernet1PllFault", doc="ethernet1PllFault")
+    @attribute(dtype=bool, label="e100g_1_pll_fault", doc="e100g_1_pll_fault")
     def ethernet1PllFault(self: TalonBoard) -> bool:
         """
-        Read the ethernet1PllFault status
+        Read the e100g_1_pll_fault status
 
-        :return: the ethernet1PllFault status
+        :return: the e100g_1_pll_fault status
         """
         res = self.component_manager.talon_status_e100g_1_pll_fault()
         return res
 
-    @attribute(dtype=bool, label="SLIM PLL Fault", doc="SLIM PLL Fault")
+    @attribute(dtype=bool, label="slim_pll_fault", doc="slim_pll_fault")
     def slimPllFault(self: TalonBoard) -> bool:
         """
-        Read the SLIM PLL Fault status
+        Read the slim_pll_fault status
 
-        :return: the SLIM PLL Fault status
+        :return: the slim_pll_fault status
         """
         res = self.component_manager.talon_status_slim_pll_fault()
         return res
@@ -714,8 +714,6 @@ class TalonBoard(CbfDevice):
             talon_status_address=self.TalonStatusAddress,
             hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
-            # TODO: Why was this defined? Not used in component manager..
-            # push_change_event_callback=self.push_change_event,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
