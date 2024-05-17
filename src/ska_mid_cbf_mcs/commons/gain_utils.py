@@ -93,13 +93,13 @@ class GAINUtils:
         )
         logger.info(f"normalized_frequency: {normalized_frequency}")
         # Evaluating the Gain of the Frequency response of the VCC Channelizer
-        _, h = scipy.signal.freqz(
+        _, H = scipy.signal.freqz(
             fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency
         )
-
+        logger.info(f"H: {H}")
         # The Gain Correction Factors
         gc_vec = numpy.clip(
-            0.99 / abs(h), 0, 1
+            0.99 / abs(H), 0, 1
         )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
         json_string = json.dumps(gc_vec)
         logger.info(f"gc_vec: {json_string}")
