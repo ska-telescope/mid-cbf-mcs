@@ -51,8 +51,7 @@ class GAINUtils:
             vcc_fir_prototype = yaml.safe_load(file)
 
         fir_proto = vcc_fir_prototype["h"]
-        json_string = json.dumps(fir_proto)
-        logger.info(f"file opened: {json_string}")
+
         # TODO how to get vcc frequency slice?
         vcc_frequency_slice = None
 
@@ -62,7 +61,10 @@ class GAINUtils:
         frequency_slice_sample_rate = (
             const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
         )
-
+        json_string = json.dumps(fir_proto)
+        logger.info(
+            f"frequency_slice_sample_rate: {frequency_slice_sample_rate}"
+        )
         # The Normalized Center Frequencies of the Secondry Channelizer
         fc0 = numpy.linspace(
             -1, 1 - 2 / const.FINE_CHANNELS, num=const.FINE_CHANNELS
@@ -72,18 +74,20 @@ class GAINUtils:
         scf0_fsft = (vcc_frequency_slice + 1) * (
             frequency_slice_sample_rate - const.COMMON_SAMPLE_RATE
         )
-
+        logger.info(f"scf0_fsft: {scf0_fsft}")
         # The Actual Center Frequencies of the Secondry Channelizer
         actual_center_frequency = (
             fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
         )
+        logger.info(f"actual_center_frequency: {actual_center_frequency}")
+
         # Converting again to Normalized Frequencies
         normalized_frequency = (
             actual_center_frequency
             / frequency_slice_sample_rate
             / const.INPUT_FRAME_SIZE
         )
-
+        logger.info(f"normalized_frequency: {normalized_frequency}")
         # Evaluating the Gain of the Frequency response of the VCC Channelizer
         _, h = scipy.signal.freqz(
             fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency
@@ -93,7 +97,8 @@ class GAINUtils:
         gc_vec = numpy.clip(
             0.99 / abs(h), 0, 1
         )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
-
+        json_string = json.dumps(gc_vec)
+        logger.info(f"gc_vec: {json_string}")
         # Initiating the Gain Correction Dictionary
         # chan = (np.arange(0,16383, dtype=int) + 8192) % 16384
         channels = numpy.arange(0, 16383, dtype=int)

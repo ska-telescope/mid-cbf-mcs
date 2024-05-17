@@ -492,7 +492,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             gain_index = 0
             channel_index = self.channel_offset
             for gain in args["vcc_gain"]:
+                self._logger.info(f"old gain: {gain}")
                 gain = gain * gain_corrections[channel_index + gain_index]
+                self._logger.info(
+                    f"gain correction: {gain_corrections[channel_index + gain_index]}"
+                )
+                self._logger.info(f"new gain: {gain}")
                 args["vcc_gain"][gain_index] = gain
                 gain_index = gain_index + 1
 
@@ -504,6 +509,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 {"samples_per_frame": band_config["samples_per_frame"]}
             )
             json_string = json.dumps(args)
+            self._logger.info(f"Final Internal Params: {json_string}")
 
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:
