@@ -11,6 +11,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 import json
 import logging
+
 import numpy
 import scipy
 import yaml
