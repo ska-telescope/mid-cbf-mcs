@@ -363,19 +363,41 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param result2: the result code of turning on PDU 2
         :return: A tuple containing a return code and a string
         """
+        is_same_pdu = False
+        if (
+            self._pdus[1] == self._pdus[0]
+            and self._pdu_outlets[1] == self._pdu_outlets[0]
+        ):
+            is_same_pdu = True
+
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.logger.error(
-                "Unable to turn on LRU as both power switch outlets failed to power on"
-            )
-            return (
-                ResultCode.FAILED,
-                "LRU failed to turned on: both outlets failed to turn on",
-            )
+            if is_same_pdu == False:
+                self.logger.error(
+                    "Unable to turn on LRU as both power switch outlets failed to power on"
+                )
+                return (
+                    ResultCode.FAILED,
+                    "LRU failed to turned on: both outlets failed to turn on",
+                )
+            else:
+                self.logger.error(
+                    "Singular PDU: Unable to turn on LRU as power switch outlet failed to power on"
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Singular PDU: LRU failed to turned on: outlet failed to turn on",
+                )
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            self.logger.info(
-                "LRU successfully turn on: both outlets successfully turned on",
-            )
+            if is_same_pdu == False:
+                self.logger.info(
+                    "LRU successfully turn on: both outlets successfully turned on",
+                )
+            else:
+                self.logger.info(
+                    "Singular PDU: LRU successfully turn on",
+                )
+
         else:
             self.logger.info(
                 "LRU successfully turn on: only one outlet turned on",
@@ -568,21 +590,44 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param result2: the result code of turning off PDU 2
         :return: A tuple containing a return code and a string
         """
+        is_same_pdu = False
+        if (
+            self._pdus[1] == self._pdus[0]
+            and self._pdu_outlets[1] == self._pdu_outlets[0]
+        ):
+            is_same_pdu = True
+
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            self._update_component_state(power=PowerState.OFF)
-            return (
-                ResultCode.OK,
-                "Off completed OK",
-            )
+            if is_same_pdu == False:
+                self._update_component_state(power=PowerState.OFF)
+                return (
+                    ResultCode.OK,
+                    "Off completed OK",
+                )
+            else:
+                self._update_component_state(power=PowerState.OFF)
+                return (
+                    ResultCode.OK,
+                    "Singular PDU: Off completed OK",
+                )
 
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            self.logger.error(
-                "Unable to turn off LRU as both power switch outlets failed to power off"
-            )
-            return (
-                ResultCode.FAILED,
-                "LRU failed to turn off: failed to turn off both outlets",
-            )
+            if is_same_pdu == False:
+                self.logger.error(
+                    "Unable to turn off LRU as both power switch outlets failed to power off"
+                )
+                return (
+                    ResultCode.FAILED,
+                    "LRU failed to turn off: failed to turn off both outlets",
+                )
+            else:
+                self.logger.error(
+                    "Unable to turn off LRU as both power switch outlets failed to power off"
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Singular PDU: LRU failed to turn off: failed to turn off outlet",
+                )
         else:
             self.logger.error(
                 "Unable to turn off LRU as a power switch outlet failed to power off"

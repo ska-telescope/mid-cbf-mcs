@@ -37,19 +37,26 @@ class TestTalonLRU:
     Test class for the TalonLRU
     """
 
+    # DP: Paramaterize PDU1 and PDU 2 so they loop through 001 and 002 but skip redundant test cases
     @pytest.fixture(name="test_context", scope="function")
     def talon_lru_test_context(
-        self: TestTalonLRU, initial_mocks: dict[str, Mock]
+        self: TestTalonLRU,
+        initial_mocks: dict[str, Mock],
+        pdu_id: str,
     ) -> Iterator[context.TTCMExt.TCExt]:
+        if pdu_id == "matched_pdu":
+            pdu2_id = "001"
+        elif pdu_id == "mismatched_pdu":
+            pdu2_id = "002"
         harness = context.TTCMExt()
         harness.add_device(
             device_class=TalonLRU,
             device_name="mid_csp_cbf/talon_lru/001",
             TalonDxBoard1="001",
             TalonDxBoard2="002",
-            PDU1="002",
+            PDU1="001",
             PDU1PowerOutlet="AA41",
-            PDU2="002",
+            PDU2=pdu2_id,
             PDU2PowerOutlet="AA41",
             PDUCommandTimeout="20",
         )
@@ -60,7 +67,11 @@ class TestTalonLRU:
             yield test_context
 
     def test_State(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
         """
         Test State
@@ -68,28 +79,107 @@ class TestTalonLRU:
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+
+        :Other parameters: Used to detect redundant test cases in this test
         """
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode == "command_success"
+            and power_switch_2.stimulusMode == "command_success"
+        ):
+            pass
+        else:
+            pytest.skip(
+                "Redundant test case: Parameters do not affect this test"
+            )
+
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
+        """
+        Test Status
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :power_switch_1, power_switch2, pdu_id: Used to detect redundant test cases in this test
+        """
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode == "command_success"
+            and power_switch_2.stimulusMode == "command_success"
+        ):
+            pass
+        else:
+            pytest.skip(
+                "Redundant test case: Parameters do not affect this test"
+            )
+
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestTalonLRU, device_under_test: context.DeviceProxy
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
+        """
+        Test Admin Mode
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :power_switch_1, power_switch2, pdu_id: Used to detect redundant test cases in this test
+        """
+
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode == "command_success"
+            and power_switch_2.stimulusMode == "command_success"
+        ):
+            pass
+        else:
+            pytest.skip(
+                "Redundant test case: Parameters do not affect this test"
+            )
+
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_startup_state(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
         """
         Tests that the state of the TalonLRU device when it starts up is correct.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :power_switch_1, power_switch2, pdu_id: Used to detect redundant test cases in this test
         """
         # Trigger the mock start_communicating
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode == "command_success"
+            and power_switch_2.stimulusMode == "command_success"
+        ):
+            pass
+        else:
+            pytest.skip(
+                "Redundant test case: Parameters do not affect this test"
+            )
+
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         change_event_callbacks["state"].assert_change_event(DevState.OFF)
@@ -98,11 +188,27 @@ class TestTalonLRU:
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        power_switch: unittest.mock.Mock,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
         """
         Tests that the On command behaves appropriately.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :power_switch_1, power_switch2, pdu_id: Used to detect
+            configurations yielding different expected results
         """
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode != power_switch_2.stimulusMode
+        ):
+            pytest.skip(
+                "Test sequence is not valid for this configuration of stimulus"
+            )
+
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
@@ -113,21 +219,45 @@ class TestTalonLRU:
         assert result_code == [ResultCode.QUEUED]
 
         # Assert the expected result, given the stimulus mode of the power switches.
-        expected_result_map = {
-            "command_success": (
-                ResultCode.OK,
-                "On completed OK",
-                DevState.ON,
-            ),
-            "command_fail": (
-                ResultCode.FAILED,
-                "LRU failed to turned on: both outlets failed to turn on",
-                None,
-            ),
-        }
+        if pdu_id == "matched_pdu":
+            expected_result_map = {
+                ("command_success", "command_success"): (
+                    ResultCode.OK,
+                    "On completed OK",
+                    DevState.ON,
+                ),
+                ("command_fail", "command_fail"): (
+                    ResultCode.FAILED,
+                    "Singular PDU: LRU failed to turned on: outlet failed to turn on",
+                    None,
+                ),
+            }
+        elif pdu_id == "mismatched_pdu":
+            expected_result_map = {
+                ("command_success", "command_success"): (
+                    ResultCode.OK,
+                    "On completed OK",
+                    DevState.ON,
+                ),
+                ("command_success", "command_fail"): (
+                    ResultCode.OK,
+                    "On completed OK",
+                    DevState.ON,
+                ),
+                ("command_fail", "command_success"): (
+                    ResultCode.OK,
+                    "On completed OK",
+                    DevState.ON,
+                ),
+                ("command_fail", "command_fail"): (
+                    ResultCode.FAILED,
+                    "LRU failed to turned on: both outlets failed to turn on",
+                    None,
+                ),
+            }
 
         result_code, message, state = expected_result_map.get(
-            power_switch.stimulusMode
+            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
         )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
@@ -144,10 +274,25 @@ class TestTalonLRU:
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
         """
         Tests that the Off command from an off state behaves appropriately.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
+
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode != power_switch_2.stimulusMode
+        ):
+            pytest.skip(
+                "Test sequence is not valid for this configuration of stimulus"
+            )
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
@@ -170,12 +315,30 @@ class TestTalonLRU:
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        power_switch: unittest.mock.Mock,
+        power_switch_1: unittest.mock.Mock,
+        power_switch_2: unittest.mock.Mock,
+        pdu_id: str,
     ) -> None:
         """
         Tests that the On command followed by the Off command works appropriately.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        power_switch_1, power_switch2, pdu_id: Used to detect
+            configurations yielding different expected results
         """
-        if power_switch.stimulusMode == "command_fail":
+        if (
+            power_switch_1.stimulusMode == "command_fail"
+            and power_switch_2.stimulusMode == "command_fail"
+        ):
+            pytest.skip(
+                "Test sequence is not valid for this configuration of stimulus"
+            )
+        if (
+            pdu_id == "matched_pdu"
+            and power_switch_1.stimulusMode != power_switch_2.stimulusMode
+        ):
             pytest.skip(
                 "Test sequence is not valid for this configuration of stimulus"
             )
@@ -183,27 +346,56 @@ class TestTalonLRU:
         self.test_On(
             device_under_test,
             change_event_callbacks,
-            power_switch,
+            power_switch_1,
+            power_switch_2,
+            pdu_id,
         )
 
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
 
         # Assert the expected result, given the stimulus mode of the power switches.
-        result_map = {
-            "command_success": (
-                ResultCode.OK,
-                "Off completed OK",
-                DevState.OFF,
-            ),
-            "command_fail": (
-                ResultCode.FAILED,
-                "LRU failed to turn off: failed to turn off both outlets",
-                None,
-            ),
-        }
+        if pdu_id == "matched_pdu":
+            # use diff result map
+            result_map = {
+                ("command_success", "command_success"): (
+                    ResultCode.OK,
+                    "Singular PDU: Off completed OK",
+                    DevState.OFF,
+                ),
+                ("command_fail", "command_fail"): (
+                    ResultCode.FAILED,
+                    "Singular PDU: LRU failed to turn off: failed to turn off outlet",
+                    None,
+                ),
+            }
+        else:
+            result_map = {
+                ("command_success", "command_success"): (
+                    ResultCode.OK,
+                    "Off completed OK",
+                    DevState.OFF,
+                ),
+                ("command_success", "command_fail"): (
+                    ResultCode.FAILED,
+                    "LRU failed to turn off: only one outlet turned off",
+                    None,
+                ),
+                ("command_fail", "command_success"): (
+                    ResultCode.FAILED,
+                    "LRU failed to turn off: only one outlet turned off",
+                    None,
+                ),
+                ("command_fail", "command_fail"): (
+                    ResultCode.FAILED,
+                    "LRU failed to turn off: failed to turn off both outlets",
+                    None,
+                ),
+            }
 
-        result_code, message, state = result_map.get(power_switch.stimulusMode)
+        result_code, message, state = result_map.get(
+            (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
+        )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
