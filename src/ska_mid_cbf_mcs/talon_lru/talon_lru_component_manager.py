@@ -371,7 +371,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             is_same_pdu = True
 
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            if is_same_pdu == False:
+            if not is_same_pdu:
                 self.logger.error(
                     "Unable to turn on LRU as both power switch outlets failed to power on"
                 )
@@ -389,7 +389,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            if is_same_pdu == False:
+            if not is_same_pdu:
                 self.logger.info(
                     "LRU successfully turn on: both outlets successfully turned on",
                 )
@@ -598,7 +598,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             is_same_pdu = True
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            if is_same_pdu == False:
+            if not is_same_pdu:
                 self._update_component_state(power=PowerState.OFF)
                 return (
                     ResultCode.OK,
@@ -612,7 +612,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
 
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            if is_same_pdu == False:
+            if not is_same_pdu:
                 self.logger.error(
                     "Unable to turn off LRU as both power switch outlets failed to power off"
                 )
