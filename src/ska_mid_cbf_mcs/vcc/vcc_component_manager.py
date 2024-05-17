@@ -485,9 +485,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._logger
             )
 
-            self._logger.info(
-                f"VCC Gain Corrections: {json.dumps(gain_corrections)}"
-            )
             # Apply Gain Correction to parameters
             gain_index = 0
             channel_index = self.channel_offset
