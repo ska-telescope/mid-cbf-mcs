@@ -481,7 +481,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             log_string = str(args["vcc_gain"])
             self._logger.info(f"Pre VCC gain values: {log_string}")
 
-            gain_corrections = GAINUtils.get_vcc_ripple_correction()
+            gain_corrections = GAINUtils.get_vcc_ripple_correction(self._logger)
+            
             self._logger.info(
                 f"VCC Gain Corrections: {json.dumps(gain_corrections)}"
             )

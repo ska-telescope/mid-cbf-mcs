@@ -9,12 +9,15 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
+import json
+import logging
 import numpy
 import scipy
 import yaml
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 
+VCC_PARAM_PATH = "mnt/vcc_param/"
 
 class GAINUtils:
     """
@@ -29,7 +32,9 @@ class GAINUtils:
         """
 
     @staticmethod
-    def get_vcc_ripple_correction() -> dict:
+    def get_vcc_ripple_correction(
+        logger: logging.Logger,
+    ) -> dict:
         """
         Applies VCC Gain ripple correction to a dictionary of gains
 
@@ -39,11 +44,15 @@ class GAINUtils:
         vcc_gain_corrections = []
         # The below source code was based off talon_FSP.py:vcc_gain_corrections
         # from ska-mid-cbf-signal-verification
-        with open("OS_Prototype_FIR_CH20.yml", "r") as file:
-            vcc_fir_prototype = yaml.safe_load(file)
+        logger.info(f"About to open file")
+        with open(
+                    f"{VCC_PARAM_PATH}OS_Prototype_FIR_CH20.yml", "r"
+                ) as file:
+                    vcc_fir_prototype = yaml.safe_load(file)
 
         fir_proto = vcc_fir_prototype["h"]
-
+        json_string = json.dumps(fir_proto)
+        logger.info(f"file opened: {json_string}")
         # TODO how to get vcc frequency slice?
         vcc_frequency_slice = None
 
