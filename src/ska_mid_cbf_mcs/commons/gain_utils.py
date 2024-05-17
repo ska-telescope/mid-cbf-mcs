@@ -101,8 +101,6 @@ class GAINUtils:
         gc_vec = numpy.clip(
             0.99 / abs(H), 0, 1
         )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
-        json_string = json.dumps(gc_vec)
-        logger.info(f"gc_vec: {json_string}")
         # Initiating the Gain Correction Dictionary
         # chan = (np.arange(0,16383, dtype=int) + 8192) % 16384
         channels = numpy.arange(0, 16383, dtype=int)
