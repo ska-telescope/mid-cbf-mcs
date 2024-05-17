@@ -52,8 +52,12 @@ class GAINUtils:
 
         fir_proto = vcc_fir_prototype["h"]
 
-        # TODO how to get vcc frequency slice?
-        vcc_frequency_slice = None
+        # TODO how to get vcc frequency slice? 0 is default
+        # Stored in test_config.yaml
+        # fs_transport_cfg:
+        # switch_map:
+        # 0 : 5
+        vcc_frequency_slice = 0
 
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
