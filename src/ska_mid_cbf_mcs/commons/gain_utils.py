@@ -65,7 +65,7 @@ class GAINUtils:
         frequency_slice_sample_rate = (
             const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
         )
-        json_string = json.dumps(fir_proto)
+
         logger.info(
             f"frequency_slice_sample_rate: {frequency_slice_sample_rate}"
         )
