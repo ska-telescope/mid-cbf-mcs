@@ -22,9 +22,6 @@ from typing import Callable, List, Optional, Tuple
 
 # tango imports
 import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
@@ -35,6 +32,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.csp.obs import CspObsComponentManager
 
 # SKA Specific imports
 
@@ -481,8 +481,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             log_string = str(args["vcc_gain"])
             self._logger.info(f"Pre VCC gain values: {log_string}")
 
-            gain_corrections = GAINUtils.get_vcc_ripple_correction(self._logger)
-            
+            gain_corrections = GAINUtils.get_vcc_ripple_correction(
+                self._logger
+            )
+
             self._logger.info(
                 f"VCC Gain Corrections: {json.dumps(gain_corrections)}"
             )
@@ -811,35 +813,35 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10**9
+                    self._stream_tuning[0] * 10 ** 9
                     + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                    self._stream_tuning[0] * 10**9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    self._stream_tuning[0] * 10 ** 9
                     + self._frequency_band_offset_stream1
-                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
                 )
 
                 frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10**9
+                    self._stream_tuning[1] * 10 ** 9
                     + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                    self._stream_tuning[1] * 10**9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    self._stream_tuning[1] * 10 ** 9
                     + self._frequency_band_offset_stream2
-                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
                 )
 
                 if (
                     frequency_band_range_1[0]
-                    + const.SEARCH_WINDOW_BW * 10**6 / 2
+                    + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
                     <= int(argin["search_window_tuning"])
                     <= frequency_band_range_1[1]
-                    - const.SEARCH_WINDOW_BW * 10**6 / 2
+                    - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
                 ) or (
                     frequency_band_range_2[0]
-                    + const.SEARCH_WINDOW_BW * 10**6 / 2
+                    + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
                     <= int(argin["search_window_tuning"])
                     <= frequency_band_range_2[1]
-                    - const.SEARCH_WINDOW_BW * 10**6 / 2
+                    - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
                 ):
                     # this is the acceptable range
                     pass
