@@ -813,35 +813,35 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10 ** 9
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[0] * 10 ** 9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 
                 frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10 ** 9
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[1] * 10 ** 9
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 
                 if (
                     frequency_band_range_1[0]
-                    + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    + const.SEARCH_WINDOW_BW * 10**6 / 2
                     <= int(argin["search_window_tuning"])
                     <= frequency_band_range_1[1]
-                    - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    - const.SEARCH_WINDOW_BW * 10**6 / 2
                 ) or (
                     frequency_band_range_2[0]
-                    + const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    + const.SEARCH_WINDOW_BW * 10**6 / 2
                     <= int(argin["search_window_tuning"])
                     <= frequency_band_range_2[1]
-                    - const.SEARCH_WINDOW_BW * 10 ** 6 / 2
+                    - const.SEARCH_WINDOW_BW * 10**6 / 2
                 ):
                     # this is the acceptable range
                     pass

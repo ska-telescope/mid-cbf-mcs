@@ -34,7 +34,9 @@ class GAINUtils:
         """
 
     @staticmethod
-    def get_vcc_ripple_correction(logger: logging.Logger,) -> dict:
+    def get_vcc_ripple_correction(
+        logger: logging.Logger,
+    ) -> dict:
         """
         Applies VCC Gain ripple correction to a dictionary of gains
 
@@ -44,7 +46,7 @@ class GAINUtils:
         vcc_gain_corrections = []
         # The below source code was based off talon_FSP.py:vcc_gain_corrections
         # from ska-mid-cbf-signal-verification
-        logger.info(f"About to open file")
+        logger.info("About to open file")
         with open(f"{VCC_PARAM_PATH}OS_Prototype_FIR_CH20.yml", "r") as file:
             vcc_fir_prototype = yaml.safe_load(file)
 
