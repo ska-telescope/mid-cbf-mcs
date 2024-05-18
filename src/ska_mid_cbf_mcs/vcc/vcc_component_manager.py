@@ -484,7 +484,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             gain_corrections = GAINUtils.get_vcc_ripple_correction(
                 self._logger
             )
-            self._logger.info(f"about to print gain corrections")
+            self._logger.info("about to print gain corrections")
             print(gain_corrections)
             # Apply Gain Correction to parameters
             gain_index = 0
