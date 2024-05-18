@@ -489,7 +489,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             # Apply Gain Correction to parameters
             gain_index = 0
             channel_index = self.channel_offset
-            self._logger.info(f"channel_offset: {channel_offset}")
+            self._logger.info(f"channel_offset: {channel_index}")
             for gain in args["vcc_gain"]:
                 self._logger.info(f"old gain: {gain}")
                 gain = gain * gain_corrections[channel_index + gain_index]
