@@ -166,7 +166,7 @@ class TestVcc:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from SCANNING
+        # test happy path observing command sequence
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
@@ -253,7 +253,7 @@ class TestVcc:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from SCANNING
+        # test happy path observing command sequence
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
@@ -330,7 +330,7 @@ class TestVcc:
 
     @pytest.mark.parametrize(
         "config_file_name",
-        [("Vcc_ConfigureScan_basic.json")],
+        ["Vcc_ConfigureScan_basic.json"],
     )
     def test_AbortScan_from_ready(
         self: TestVcc,
