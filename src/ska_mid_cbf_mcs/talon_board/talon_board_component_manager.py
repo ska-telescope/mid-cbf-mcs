@@ -145,7 +145,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         # This moves the op state model.
         super().stop_communicating()
 
-    def _subscribe_change_events(self):
+    def _subscribe_change_events(self) -> None:
         """
         Subscribe to attribute change events from HPS device proxies
         """
@@ -280,7 +280,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._talon_status_events.append(e)
         return
 
-    def off(self) -> Tuple[ResultCode, str]:
+    def off(self) -> tuple[ResultCode, str]:
         """
         Turn off Talon Board component;
 
@@ -311,7 +311,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def _attr_change_callback(
         self, fqdn: str, name: str, value: Any, quality: AttrQuality
-    ):
+    ) -> None:
         if value is None:
             self.logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
@@ -326,7 +326,10 @@ class TalonBoardComponentManager(CbfComponentManager):
                 f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
             )
 
-    # Talon board telemetry and status from device proxies.
+    # ----------------------------------------------------
+    # Talon board telemetry and status from device proxies
+    # ----------------------------------------------------
+    
     # The attribute change callback should get the latest values. But
     # to be safe in case the callback hasn't happened for it, do read_attribute.
     def talon_sysid_version(self) -> str:
@@ -523,7 +526,10 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     # TODO: read attributes 100G
 
+    # ----------------------------------------------
     # Talon board telemetry and status from Influxdb
+    # ----------------------------------------------
+    
     def fpga_die_temperature(self) -> float:
         self._throw_if_device_off()
         self._query_if_needed()
@@ -585,7 +591,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_tx_fault_status(self):
+    def mbo_tx_fault_status(self) -> bool:
         self._throw_if_device_off()
         self._query_if_needed()
         res = []
@@ -600,7 +606,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_lol_status(self):
+    def mbo_tx_lol_status(self) -> bool:
         self._throw_if_device_off()
         self._query_if_needed()
         res = []
@@ -615,7 +621,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_los_status(self):
+    def mbo_tx_los_status(self) -> bool:
         self._throw_if_device_off()
         self._query_if_needed()
         res = []
@@ -645,7 +651,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_rx_lol_status(self):
+    def mbo_rx_lol_status(self) -> bool:
         self._throw_if_device_off()
         self._query_if_needed()
         res = []
@@ -660,7 +666,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_rx_los_status(self):
+    def mbo_rx_los_status(self) -> bool:
         self._throw_if_device_off()
         self._query_if_needed()
         res = []
@@ -687,7 +693,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(int(val))
             else:
                 msg = f"{field} cannot be read."
-                self.logger.warn(msg)
+                self.logger.warning(msg)
                 res.append(-1)
         return res
 
@@ -703,7 +709,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(int(val))
             else:
                 msg = f"{field} cannot be read."
-                self.logger.warn(msg)
+                self.logger.warning(msg)
                 res.append(-1)
         return res
 
@@ -931,8 +937,12 @@ class TalonBoardComponentManager(CbfComponentManager):
                         break
             res.append(flag)
         return res
+    
+    # ---------------------
+    # Helper Functions
+    # ---------------------
 
-    def _throw_if_device_off(self):
+    def _throw_if_device_off(self) -> None:
         if self.power_state != PowerState.ON:
             tango.Except.throw_exception(
                 "Talon_Board_Off",
@@ -941,7 +951,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         return
 
-    def _query_if_needed(self):
+    def _query_if_needed(self) -> None:
         td = datetime.now() - self._last_check
         if td.total_seconds() > 10:
             try:
@@ -958,7 +968,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
 
-    def _validate_time(self, field, t):
+    def _validate_time(self, field, t) -> None:
         """
         Checks if the query result is too old. When this happens, it means
         Influxdb hasn't received a new entry in the time series recently.
@@ -1024,7 +1034,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self: TalonBoardComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,

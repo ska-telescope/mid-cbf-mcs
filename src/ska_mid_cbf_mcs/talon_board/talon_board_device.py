@@ -40,12 +40,6 @@ class TalonBoard(CbfDevice):
     converting them to the SKA format, and outputting them via the logging framework.
     """
 
-    # Some of these IDs are typically integers. But it is easier to use
-    # empty string to show the board is not assigned.
-    _subarrayID = ""
-    _dishID = ""
-    _vccID = ""
-
     # -----------------
     # Device Properties
     # -----------------
@@ -722,6 +716,12 @@ class TalonBoard(CbfDevice):
         """
         A class for the TalonBoard's init_device() "command".
         """
+        
+        # Some of these IDs are typically integers. But it is easier to use
+        # empty string to show the board is not assigned.
+        _subarrayID = ""
+        _dishID = ""
+        _vccID = ""
 
         def do(self: TalonBoard.InitCommand) -> tuple[ResultCode, str]:
             """

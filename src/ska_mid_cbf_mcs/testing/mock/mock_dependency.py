@@ -7,15 +7,15 @@ from typing import Any, List, Optional
 
 import requests
 
-__all__ = ["MockDependancy"]
+__all__ = ["MockDependency"]
 
 
-class MockDependancy:
+class MockDependency:
     class Response:
         """A mock class to replace requests.Response."""
 
         def __init__(
-            self: MockDependancy.Response,
+            self: MockDependency.Response,
             url: str,
             simulate_response_error: bool,
             sim_state: bool,
@@ -63,7 +63,7 @@ class MockDependancy:
                     self._json = self._json[int(outlet)]
                     self.text = json.dumps(self._json)
 
-        def json(self: MockDependancy.Response) -> dict[str, Any]:
+        def json(self: MockDependency.Response) -> dict[str, Any]:
             """
             Replace the patched :py:meth:`request.Response.json` with mock.
 
@@ -79,7 +79,7 @@ class MockDependancy:
         """A mock class to replace InfluxdbQueryClient"""
 
         def __init__(
-            self: MockDependancy.InfluxdbQueryClient,
+            self: MockDependency.InfluxdbQueryClient,
             sim_ping_fault: Optional[bool] = False,
         ) -> None:
             """
@@ -94,7 +94,7 @@ class MockDependancy:
             return True
 
         async def do_queries(
-            self: MockDependancy.InfluxdbQueryClient,
+            self: MockDependency.InfluxdbQueryClient,
         ) -> list[list]:
             return [
                 # _query_temperatures

@@ -25,7 +25,7 @@ from tango import DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
 from ska_mid_cbf_mcs.testing import context
-from ska_mid_cbf_mcs.testing.mock.mock_dependancy import MockDependancy
+from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -36,8 +36,6 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # Tango imports
 
 # SKA imports
-
-CONST_WAIT_TIME = 1
 
 
 class TestTalonBoard:
@@ -63,7 +61,7 @@ class TestTalonBoard:
 
             :return: a response
             """
-            return MockDependancy.InfluxdbQueryClient(
+            return MockDependency.InfluxdbQueryClient(
                 request.param["sim_ping_fault"],
             ).ping()
 
@@ -76,7 +74,7 @@ class TestTalonBoard:
 
             :return: a response
             """
-            return MockDependancy.InfluxdbQueryClient().do_queries()
+            return MockDependency.InfluxdbQueryClient().do_queries()
 
         monkeypatch.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.ping",
