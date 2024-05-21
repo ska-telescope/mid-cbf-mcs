@@ -43,7 +43,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         influx_org: str,
         influx_bucket: str,
         influx_auth_token: str,
-        instance: str,
         talon_sysid_address: str,
         eth_100g_address: str,
         talon_status_address: str,
@@ -58,7 +57,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param influx_org: Influxdb organization
         :param influx_bucket: Influxdb bucket to query
         :param influx_auth_token: Influxdb authentication token
-        :param instance: instance of device server
         :param talon_sysid_address: Talon Sysid device server name
         :param eth_100g_address: 100g ethernet device server name (missing index suffix)
         :param talon_status_address: Talon Status device server name
