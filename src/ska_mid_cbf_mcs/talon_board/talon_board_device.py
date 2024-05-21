@@ -716,12 +716,6 @@ class TalonBoard(CbfDevice):
         """
         A class for the TalonBoard's init_device() "command".
         """
-        
-        # Some of these IDs are typically integers. But it is easier to use
-        # empty string to show the board is not assigned.
-        _subarrayID = ""
-        _dishID = ""
-        _vccID = ""
 
         def do(self: TalonBoard.InitCommand) -> tuple[ResultCode, str]:
             """
@@ -731,6 +725,13 @@ class TalonBoard(CbfDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
+
+            # Some of these IDs are typically integers. But it is easier to use
+            # empty string to show the board is not assigned.
+            self._device._subarrayID = ""
+            self._device._dishID = ""
+            self._device._vccID = ""
+
             return super().do()
 
 

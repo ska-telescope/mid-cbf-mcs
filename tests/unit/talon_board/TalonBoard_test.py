@@ -93,7 +93,7 @@ class TestTalonBoard:
             InfluxDbPort="8086",
             InfluxDbOrg="ska",
             InfluxDbBucket="talon",
-            InfluxDbAuthToken="ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog==",
+            InfluxDbAuthToken="test",
             Instance="talon1_test",
             TalonDxSysIdAddress=request.param["sim_sysid_property"],
             TalonDx100GEthernetAddress="talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth",
@@ -148,7 +148,7 @@ class TestTalonBoard:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
-     
+
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -193,7 +193,7 @@ class TestTalonBoard:
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
-    
+
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -357,19 +357,19 @@ class TestTalonBoard:
         )
         assert all(v == 3.3 for v in device_under_test.mboTxVccVoltages)
         # Not currently queried.
-        # assert all(fault == False for fault in device_under_test.mboTxFaultStatus)
-        # assert all(status == False for status in device_under_test.mboTxLolStatus)
-        # assert all(status == False for status in device_under_test.mboTxLosStatus)
+        # assert all(not fault for fault in device_under_test.mboTxFaultStatus)
+        # assert all(not status for status in device_under_test.mboTxLolStatus)
+        # assert all(not status for status in device_under_test.mboTxLosStatus)
 
         assert all(v == 3.3 for v in device_under_test.mboRxVccVoltages)
         # Not currently queried.
-        # assert all(status == False for status in device_under_test.mboRxLolStatus)
-        # assert all(status == False for status in device_under_test.mboRxLosStatus)
+        # assert all(not status for status in device_under_test.mboRxLolStatus)
+        # assert all(not status for status in device_under_test.mboRxLosStatus)
 
         assert all(pwm == 255 for pwm in device_under_test.fansPwm)
         # Not currently queried.
-        # assert all(enabled == False for enabled in device_under_test.fansPwmEnable)
-        assert all(fault == False for fault in device_under_test.fansFault)
+        # assert all(not enabled for enabled in device_under_test.fansPwmEnable)
+        assert all(not fault for fault in device_under_test.fansFault)
 
         assert all(v == 10.0 for v in device_under_test.ltmInputVoltage)
         assert all(v == 10.0 for v in device_under_test.ltmOutputVoltage1)
@@ -382,14 +382,12 @@ class TestTalonBoard:
         assert all(temp == 32.0 for temp in device_under_test.ltmTemperature1)
         assert all(temp == 32.0 for temp in device_under_test.ltmTemperature2)
 
+        assert all(not warn for warn in device_under_test.ltmVoltageWarning)
+
+        assert all(not warn for warn in device_under_test.ltmCurrentWarning)
+
         assert all(
-            warn == False for warn in device_under_test.ltmVoltageWarning
-        )
-        assert all(
-            warn == False for warn in device_under_test.ltmCurrentWarning
-        )
-        assert all(
-            warn == False for warn in device_under_test.ltmTemperatureWarning
+            not warn for warn in device_under_test.ltmTemperatureWarning
         )
 
         # assert if any captured events have gone unaddressed

@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import TaskStatus
@@ -327,7 +327,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------------------------------------------
     # Talon board telemetry and status from device proxies
     # ----------------------------------------------------
-    
+
     # The attribute change callback should get the latest values. But
     # to be safe in case the callback hasn't happened for it, do read_attribute.
     def talon_sysid_version(self) -> str:
@@ -527,7 +527,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------------------------------------
     # Talon board telemetry and status from Influxdb
     # ----------------------------------------------
-    
+
     def fpga_die_temperature(self) -> float:
         self._throw_if_device_off()
         self._query_if_needed()
@@ -935,7 +935,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         break
             res.append(flag)
         return res
-    
+
     # ---------------------
     # Helper Functions
     # ---------------------
