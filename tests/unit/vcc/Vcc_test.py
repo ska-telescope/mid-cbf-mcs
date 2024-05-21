@@ -18,7 +18,7 @@ from unittest.mock import Mock
 
 import pytest
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_base.control_model import AdminMode, ObsState, SimulationMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
@@ -563,9 +563,6 @@ class TestVcc:
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
-
-        # dict to store return code and unique IDs of queued commands
-        # command_dict = {}
 
         # test issuing invalid frequency band
         return_value = device_under_test.ConfigureBand(
