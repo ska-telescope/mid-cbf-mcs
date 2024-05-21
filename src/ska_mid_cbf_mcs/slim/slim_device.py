@@ -24,6 +24,7 @@ from ska_tango_base.control_model import (
     PowerState,
     SimulationMode,
 )
+from ska_tango_base.faults import StateModelError
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
@@ -72,7 +73,7 @@ class Slim(CbfDevice):
         label="Link FQDNs",
         doc="the Tango device FQDN of the active links.",
     )
-    def linkFQDNs(self: Slim) -> List[str]:
+    def linkFQDNs(self: Slim) -> list[str]:
         """
         Returns the Tango device FQDN of the active links.
 
@@ -86,7 +87,7 @@ class Slim(CbfDevice):
         label="Link Names",
         doc="Returns the names of the active links.",
     )
-    def linkNames(self: Slim) -> List[str]:
+    def linkNames(self: Slim) -> list[str]:
         """
         Returns the names of the active links.
 
@@ -100,7 +101,7 @@ class Slim(CbfDevice):
         label="Mesh health summary",
         doc="Returns a list with the health state of each link. True if OK. False if the link is in a bad state.",
     )
-    def healthSummary(self: Slim) -> List[HealthState]:
+    def healthSummary(self: Slim) -> list[HealthState]:
         """
         Returns a list with the health state of each link.
 
@@ -114,7 +115,7 @@ class Slim(CbfDevice):
         label="Bit error rate",
         doc="Returns the bit-error rate of each link in a list",
     )
-    def bitErrorRate(self: Slim) -> List[float]:
+    def bitErrorRate(self: Slim) -> list[float]:
         """
         Returns the bit-error rate of each link in a list.
 
@@ -163,6 +164,11 @@ class Slim(CbfDevice):
             ),
         )
 
+        self.register_command_object(
+            "SlimTest",
+            self.SlimTestCommand(*device_args),
+        )
+
     # --------
     # Commands
     # --------
@@ -207,6 +213,28 @@ class Slim(CbfDevice):
 
             return (result_code, message)
 
+    class SlimTestCommand(ResponseCommand):
+        """
+        A command to test the mesh of SLIM Tx Rx Links
+        """
+
+        def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
+            """
+            SLIM Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
+
+            :return: A tuple containing a return code and a string
+                message contaiing a report on the health of the Mesh or error message
+                if exception is caught.
+            :rtype: (ResultCode, str)
+            """
+            # shorten to cm to help fit the below two function call in one line
+            cm = self.target.component_manager
+
+            # Kicks off SLIM Test
+            result_code, message = cm.slim_test()
+
+            return (result_code, message)
+        
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -231,6 +259,33 @@ class Slim(CbfDevice):
         command_handler = self.get_command_object("Off")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
+
+    def is_SlimTest_allowed(self: Slim) -> bool:
+        """
+        Determined if SlimTest is allowed
+        (allowed when the Mesh is configured)
+
+        Raises CommandError if DevState is not on and/or the Mesh has not been configured
+        :return: if SlimTest is allowed
+        :rtype: bool
+        """
+        if self.get_state() == tango.DevState.ON:
+            if self.component_manager.mesh_configured:
+                return True
+            else:
+                raise StateModelError(
+                    "The SLIM must be configured before SlimTest can be called"
+                )
+        return False
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    def SlimTest(self: Slim) -> None:
+        handler = self.get_command_object("SlimTest")
+        return_code, message = handler()
+        return [[return_code], [message]]
 
     # ---------
     # Callbacks

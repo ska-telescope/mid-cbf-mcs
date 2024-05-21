@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import re
 import threading
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import tango
 import yaml
 from ska_control_model import TaskStatus
+from beautifultable import BeautifulTable
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -28,6 +29,7 @@ from ska_tango_base.control_model import (
 )
 from ska_tango_testing import context
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -131,11 +133,9 @@ class SlimComponentManager(CbfComponentManager):
 
         :return: whether the SLIM is communicating
         """
-        return (
-            self.communication_state == CommunicationStatus.ESTABLISHED
-        ) and self._mesh_configured
+        return self.communication_state == CommunicationStatus.ESTABLISHED
 
-    def on(self) -> Tuple[ResultCode, str]:
+    def on(self) -> tuple[ResultCode, str]:
         """
         On command. Currently just returns OK. The device
         does nothing until mesh configuration is provided via
@@ -160,12 +160,12 @@ class SlimComponentManager(CbfComponentManager):
         """
         return self._config_str
 
-    def get_link_fqdns(self) -> List[str]:
+    def get_link_fqdns(self) -> list[str]:
         """
         Returns a list of SLIM Link FQDNs.
 
         :return: the SLIM links assosiated with the mesh.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         fqdns = []
         for idx, txrx in enumerate(self._active_links):
@@ -173,12 +173,12 @@ class SlimComponentManager(CbfComponentManager):
             fqdns.append(fqdn)
         return fqdns
 
-    def get_link_names(self) -> List[str]:
+    def get_link_names(self) -> list[str]:
         """
         Returns a list of SLIM Link names, formatted 'tx_device_name->rx_device_name'.
 
         :return: the names of SLIM links assosiated with the mesh.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         names = []
         for idx, txrx in enumerate(self._active_links):
@@ -186,12 +186,12 @@ class SlimComponentManager(CbfComponentManager):
             names.append(name)
         return names
 
-    def get_health_summary(self) -> List[HealthState]:
+    def get_health_summary(self) -> list[HealthState]:
         """
         Returns a list of HealthState enums describing the status of each link.
 
         :return: the health state of each SLIM link in the mesh.
-        :rtype: List[HealthState]
+        :rtype: list[HealthState]
         """
         summary = []
         for idx, txrx in enumerate(self._active_links):
@@ -199,18 +199,207 @@ class SlimComponentManager(CbfComponentManager):
             summary.append(link_health)
         return summary
 
-    def get_bit_error_rate(self) -> List[float]:
+    def get_bit_error_rate(self) -> list[float]:
         """
         Returns a list containing the bit-error rates for each link.
 
         :return: the bit-error rate (BER) of each SLIM link in the mesh.
-        :rtype: List[float]
+        :rtype: list[float]
         """
         bers = []
         for idx, txrx in enumerate(self._active_links):
             ber = self._dp_links[idx].bitErrorRate
             bers.append(ber)
         return bers
+
+    def get_device_counters(self) -> list[list[int]]:
+        """
+        Returns a list containing the counters array for each link
+
+        :return: the counter array for each SLIM link in the mesh
+        :rtype: List[List[int]]
+        """
+
+        counters = []
+        for idx, txrx in enumerate(self._active_links):
+            counter = self._dp_links[idx].counters
+            counters.append(counter)
+
+        return counters
+
+    def _calculate_rx_idle_word_rate_float(
+        self, rx_idle_word_count: int, rx_idle_error_count: int
+    ) -> tuple[str, str]:
+        """
+        TODO
+        Calculates and return a string the rate of Rx Idle Error Word Count over Rx Idle Word Count
+        Along with a status that indicates if the Rate passes the Bit Error Rate Threshold
+        Returns a tuple of the rate and the pass/fail BER status
+
+        :return: A tuple of (rx_idle_word_error_rate,rx_ber_pass_status)
+        :rtype: tuple[str,str]
+        """
+        if rx_idle_word_count == 0:
+            rx_idle_word_error_rate = "NaN"
+            rx_ber_pass_status = "Unknown"
+        else:
+            rx_idle_word_rate_float = rx_idle_error_count / rx_idle_word_count
+            rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
+            if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD:
+                rx_ber_pass_status = "Passed"
+            else:
+                rx_ber_pass_status = "Failed"
+        return (rx_idle_word_error_rate, rx_ber_pass_status)
+
+    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
+        counters: list[int] = []
+        names: list[str] = []
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]] = []
+
+        # grab the common values we need for the individual tests
+        # to minimize device proxy access
+        # try block to catch exceptions from devicce proxy access
+
+        for idx, txrx in enumerate(self._active_links):
+            dp_link = self._dp_links[idx]
+            counter = dp_link.counters
+            rx_idle_word_count = counter[2]
+            rx_idle_error_count = counter[3]
+            counters.append(counter)
+            names.append(dp_link.linkName)
+            rx_idle_word_error_rate_and_ber_pass_status.append(
+                self._calculate_rx_idle_word_rate_float(
+                    rx_idle_word_count, rx_idle_error_count
+                )
+            )
+
+        # Summary check for SLIM Link Status and Bit Error Rate
+        self._slim_links_ber_check_summary(
+            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+        )
+
+        # More detail table for the SLIM Link health
+        self._slim_table(
+            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+        )
+
+        return (ResultCode.OK, "SLIM Test Completed")
+
+    def _slim_links_ber_check_summary(
+        self: SlimComponentManager,
+        all_counters: list[int],
+        names: list[str],
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str]],
+    ):
+        """
+        Logs a summary status of the SLIM Link health for each device on the Mesh
+        Specifically, this will calcualte the bit-error rate for a rx device in the mesh
+        and compared to a threshold set in global_enum.py
+        """
+
+        res = "\nSLIM BER Check:\n\n"
+        for idx in range(len(self._active_links)):
+            counters = all_counters[idx]
+            # tx rx fqdn link name
+            name = names[idx]
+
+            rx_word_count = counters[0]
+            rx_idle_word_count = counters[2]
+
+            # word error rate: a ratio of rx idle error count compared to the
+            # count of rx idle word transmitted
+            (
+                rx_idle_word_error_rate,
+                rx_ber_pass_status,
+            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
+            rx_words = rx_word_count + rx_idle_word_count
+
+            res += f"Link Name: {name}\n"
+            res += f"Slim Link status (rx_status): {rx_ber_pass_status}\n"
+            res += f"rx_wer:{rx_idle_word_error_rate}\n"
+            res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
+            res += "\n"
+        self._logger.info(res)
+
+    def _slim_table(
+        self: SlimComponentManager,
+        all_counters: list[int],
+        names: list[str],
+        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]],
+    ):
+        """
+        Logs a summary for the rx and tx device on the Mesh
+        """
+
+        table = BeautifulTable(maxwidth=180)
+        table.columns.header = [
+            "Link",
+            "CDR locked\n(lost)",
+            "Block Aligned\n(lost)",
+            "Tx Data (Gbps)\n(words)",
+            "Tx Idle (Gbps)",
+            "Rx Data\n(Gbps)\n(words)",
+            "Rx Idle\n(Gbps)",
+            "Idle Error\nCount",
+            "Word\nError Rate",
+        ]
+
+        for idx in range(len(self._active_links)):
+            dp_link = self._dp_links[idx]
+            counters = all_counters[idx]
+            # tx rx fqdn link name
+            name = names[idx]
+            (
+                rx_idle_word_error_rate,
+                _,
+            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
+
+            rx_debug_alignment_and_lock_statuses = (
+                dp_link.rx_debug_alignment_and_lock_status
+            )
+            rx_link_occupancy = dp_link.rx_link_occupancy
+            tx_link_occupancy = dp_link.tx_link_occupancy
+
+            rx_word_count = counters[0]
+            rx_idle_word_count = counters[2]
+            rx_idle_error_count = counters[3]
+            tx_word_count = counters[6]
+            tx_idle_word_count = counters[8]
+            tx_words = tx_word_count + tx_idle_word_count
+            rx_words = rx_word_count + rx_idle_word_count
+
+            # spliting up the tx rx name from the tx rx fqdn link name
+            tx_name = (name.split("->"))[0]
+            rx_name = (name.split("->"))[1]
+
+            # Making the tx rx name shorter by keeping only the board name and the tx/rx port
+            short_name_one = (
+                (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
+            )
+            short_name_two = (
+                (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
+            )
+
+            data_row = (
+                f"{short_name_one}\n->{short_name_two}",
+                f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
+                f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
+                f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
+                # Guard for divide by zero
+                f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
+                if tx_words != 0
+                else "NaN",
+                f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
+                # Guard for divide by zero
+                f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
+                if rx_words != 0
+                else "NaN",
+                f"{rx_idle_error_count} /\n{rx_words:.2e}",
+                rx_idle_word_error_rate,
+            )
+            table.rows.append(data_row)
+
+        self._logger.info(f"\nSLIM Health Summary Table\n{table}")
 
     def _parse_link(self, link: str):
         """
@@ -220,7 +409,7 @@ class SlimComponentManager(CbfComponentManager):
         :param link: a string describing a singular SLIM link.
 
         :return: the pair of HPS tx and rx device FQDNs that make up a link.
-        :rtype: List[str]
+        :rtype: list[str]
         """
         tmp = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
 
@@ -280,7 +469,7 @@ class SlimComponentManager(CbfComponentManager):
         )  # throws exception if validation fails
         return links
 
-    def _initialize_links(self) -> Tuple[ResultCode, str]:
+    def _initialize_links(self) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to connect and starts polling each link's health state.
 
@@ -318,7 +507,8 @@ class SlimComponentManager(CbfComponentManager):
 
                 # TODO: Should replace polling here with a subscription to the link's healthState
                 # poll link health every 20 seconds
-                self._dp_links[idx].poll_command("VerifyConnection", 20000)
+                if self._simulation_mode is False:
+                    self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             self.logger.error(
                 f"Failed to initialize SLIM links: {df.args[0].desc}"
@@ -337,7 +527,7 @@ class SlimComponentManager(CbfComponentManager):
         self._mesh_configured = True
         return ResultCode.OK, "_initialize_links completed OK"
 
-    def _disconnect_links(self) -> Tuple[ResultCode, str]:
+    def _disconnect_links(self) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to disconnect and cease polling health states.
 

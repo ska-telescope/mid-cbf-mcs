@@ -50,6 +50,37 @@ class SlimLink(CbfDevice):
     # -----------------
 
     # None at this time...
+    
+    
+    rx_debug_alignment_and_lock_status = attribute(
+        dtype=("DevBoolean",),
+        access=AttrWriteType.READ,
+        max_dim_x=4,
+        label="Rx Debug Alignment and Lock Status",
+        doc="""
+            Alignment and lock status rollup attribute for debug
+            Indicated read only values will be ignored on attribute writes.
+
+            [0]: 66b block alignment lost. Read '1' = alignment lost. Write '1' to clear.
+            [1]: 66b block aligned. Read '1' = aligned. Read only.
+            [2]: Clock data recovery lock lost. Read '1' = CDR lock lost. Write '1' to clear.
+            [3]: Clock data recovery locked. Read '1' = CDR locked. Read only.
+            """,
+    )
+
+    rx_link_occupancy = attribute(
+        dtype="DevDouble",
+        access=AttrWriteType.READ,
+        label="Rx Link Occupancy",
+        doc="The Rx Link Occupancy as a percentage (0-1)",
+    )
+
+    tx_link_occupancy = attribute(
+        dtype="DevDouble",
+        access=AttrWriteType.READ,
+        label="Tx Link Occupancy",
+        doc="The Tx Link Occupancy as a percentage (0-1)",
+    )
 
     # ---------------
     # General methods
@@ -227,6 +258,34 @@ class SlimLink(CbfDevice):
         :rtype: HealthState
         """
         return self._health_state
+
+    
+    def read_rx_debug_alignment_and_lock_status(self: SlimLink) -> list[bool]:
+        """
+        Read the Debug Alignment and Lock Status Flag of the rx Device
+
+        :return Debug Alignment and Lock Status Flag of the rx Device
+        :rtype list[bool]
+        """
+        return self.component_manager.rx_debug_alignment_and_lock_status
+
+    def read_rx_link_occupancy(self: SlimLink) -> float:
+        """
+        Read the Link Occupancy of the rx Device
+
+        :return: Link Occupancy value of the rx Device
+        :rtype: float
+        """
+        return self.component_manager.rx_link_occupancy
+
+    def read_tx_link_occupancy(self: SlimLink) -> float:
+        """
+        Read the Link Occupancy of the tx Device
+
+        :return: Link Occupancy value of the tx Device
+        :rtype: float
+        """
+        return self.component_manager.tx_link_occupancy
 
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: SlimLink) -> SimulationMode:

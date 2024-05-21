@@ -15,7 +15,7 @@ import os
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
-from tango import DevState
+from tango import DevFailed, DevState
 
 # Standard imports
 
@@ -82,6 +82,23 @@ class TestSlim:
             )
             assert mesh.State() == DevState.ON
 
+    def test_SlimTest_Before_Configure(
+        self: TestSlim, test_proxies: pytest.fixture
+    ) -> None:
+        """
+        Test the "SlimTest" command before the Mesh has been configured.
+        Expects that a tango.DevFailed be caught
+
+        :param test_proxies: the proxies test fixture
+        """
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            with pytest.raises(
+                DevFailed,
+                match="The SLIM must be configured before SlimTest can be called",
+            ):
+                mesh.SlimTest()
+
     def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
         Test the "Configure" command
@@ -98,9 +115,19 @@ class TestSlim:
             for link in mesh.healthSummary:
                 assert link == HealthState.OK
 
-        # Turn off the LRUs and then the Slim devices
-        for proxy in test_proxies.talon_lru:
-            proxy.Off()
+    def test_SlimTest_After_Configure(
+        self: TestSlim, test_proxies: pytest.fixture
+    ) -> None:
+        """
+        Test the "SlimTest" command after the Mesh has been configured.
+        This should return a ResultCode.OK
+
+        :param test_proxies: the proxies test fixture
+        """
+        device_under_test = test_proxies.slim
+        for mesh in device_under_test:
+            return_code, message = mesh.SlimTest()
+            assert return_code == ResultCode.OK
 
     def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
         """
@@ -132,7 +159,7 @@ class TestSlim:
 
         device_under_test = test_proxies.slim
         for mesh in device_under_test:
-            mesh.Off()
+            assert mesh.State() == DevState.OFF
 
             # trigger stop_communicating by setting the AdminMode to OFFLINE
             mesh.adminMode = AdminMode.OFFLINE
@@ -148,5 +175,6 @@ class TestSlim:
             proxy.adminMode = AdminMode.OFFLINE
 
         for proxy in test_proxies.talon_lru:
+            proxy.Off()
             proxy.adminMode = AdminMode.OFFLINE
             proxy.set_timeout_millis(10000)

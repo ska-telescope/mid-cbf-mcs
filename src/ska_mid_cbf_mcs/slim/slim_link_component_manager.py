@@ -22,14 +22,14 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from ska_tango_testing import context
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
-
-BER_PASS_THRESHOLD = 8.000e-11
 
 
 class SlimLinkComponentManager(CbfComponentManager):
@@ -71,6 +71,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the tx device name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._tx_device_name
         return self._tx_device_name
 
     @tx_device_name.setter
@@ -94,6 +96,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the rx device name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._rx_device_name
         return self._rx_device_name
 
     @rx_device_name.setter
@@ -117,6 +121,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the link name.
         :rtype: str
         """
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator._link_name
         return self._link_name
 
     @property
@@ -180,6 +186,113 @@ class SlimLinkComponentManager(CbfComponentManager):
             )
 
         return self._rx_device_proxy.bit_error_rate
+
+    @property
+    def rx_debug_alignment_and_lock_status(
+        self: SlimLinkComponentManager,
+    ) -> list[bool]:
+        """
+        Returns the Debug Alignment and Lock Status flags of the rx HPS device
+        If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, returns an empty list
+
+        :return: Debug Alignment and Lock Status flags of the rx HPS Device
+        :rtype: list[int]
+        """
+        res = []
+
+        # if in simulation mode
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.rx_debug_alignment_and_lock_status
+
+        # if the device proxy has not been set
+        if self._rx_device_proxy is None:
+            self._logger.error(
+                "error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
+            )
+            return res
+
+        # catch errors when trying to read from the device proxy
+        try:
+            return self._rx_device_proxy.debug_alignment_and_lock_status
+        except tango.DevFailed as df:
+            self._logger.error(
+                f"error reading rx_debug_alignment_and_lock_status: {df}"
+            )
+            return res
+
+    @property
+    def rx_link_occupancy(self: SlimLinkComponentManager) -> float:
+        """
+        Retrieves and return the link occupancy of the rx device
+
+        :return: Link Occupancy of the rx Device, defaults to -1.0 if not possible
+        :raise Tango exception: if the rx device is not set.
+        :rtype: float
+        """
+        res = -1.0
+
+        # if in simulation mode
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.rx_link_occupancy
+
+        # if the device proxy has not been set
+        if self._rx_device_proxy is None:
+            self._logger.error(
+                "error reading rx_link_occupancy: Tx Rx are not yet connected"
+            )
+            return res
+
+        # catch errors when trying to read from the device proxy
+        try:
+            return self._rx_device_proxy.link_occupancy
+        except tango.DevFailed as df:
+            self._logger.error(f"error reading rx_link_occupancy: {df}")
+            return res
+
+    @property
+    def tx_link_occupancy(self: SlimLinkComponentManager) -> float:
+        """
+        Retrieves and return the link occupancy of the tx device
+
+        :return: Link Occupancy of the tx Device, defaults to -1.0 if not possible
+        :raise Tango exception: if the tx device is not set.
+        :rtype: float
+        """
+        res = -1.0
+
+        # if in simulation mode
+        if self._simulation_mode == SimulationMode.TRUE:
+            return self.slim_link_simulator.tx_link_occupancy
+
+        # if the device proxy has not been set
+        if self._tx_device_proxy is None:
+            self._logger.error(
+                "error reading tx_link_occupancy: Tx Rx are not yet connected"
+            )
+            return res
+
+        # catch errors when trying to read from the device proxy
+        try:
+            return self._tx_device_proxy.link_occupancy
+        except tango.DevFailed as df:
+            self._logger.error(f"error reading tx_link_occupancy: {df}")
+            return res
+
+    @property
+    def simulation_mode(self):
+        """
+        Get the simulation mode.
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(self, value) -> None:
+        """
+        Set the simulation mode value.
+
+        :param value: The simulation mode.
+        """
+        self._simulation_mode = value
 
     def read_counters(
         self: SlimLinkComponentManager,
@@ -448,10 +561,10 @@ class SlimLinkComponentManager(CbfComponentManager):
             if counters[5] != 0:
                 error_flag = True
                 error_msg += "cdr_lost_count not zero. "
-            if self.bit_error_rate > BER_PASS_THRESHOLD:
+            if self.bit_error_rate > const.BER_PASS_THRESHOLD:
                 error_flag = True
                 error_msg += (
-                    f"bit-error-rate higher than {BER_PASS_THRESHOLD}. "
+                    f"bit-error-rate higher than {const.BER_PASS_THRESHOLD}. "
                 )
         except tango.DevFailed as df:
             self._update_communication_state(
