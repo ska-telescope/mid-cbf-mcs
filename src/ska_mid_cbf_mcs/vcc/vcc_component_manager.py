@@ -484,31 +484,29 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             gain_corrections = GAINUtils.get_vcc_ripple_correction(
                 self._logger
             )
-            self._logger.info("about to print gain corrections")
-            print(gain_corrections)
+            
             # Apply Gain Correction to parameters
             gain_index = 0
-            channel_index = self.channel_offset
+
+            # Use a default channel_offset of 0 if not passed in
+            if 'channel_offset' in band_config.keys():
+                channel_index = band_config["channel_offset"]
+            else:
+                channel_index = 0
+
             self._logger.info(f"channel_offset: {channel_index}")
             for gain in args["vcc_gain"]:
-                self._logger.info(f"old gain: {gain}")
                 gain = gain * gain_corrections[channel_index + gain_index]
-                self._logger.info(
-                    f"gain correction: {gain_corrections[channel_index + gain_index]}"
-                )
-                self._logger.info(f"new gain: {gain}")
                 args["vcc_gain"][gain_index] = gain
                 gain_index = gain_index + 1
 
             log_string = str(args["vcc_gain"])
             self._logger.info(f"Post VCC gain values: {log_string}")
-
             args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
             args.update(
                 {"samples_per_frame": band_config["samples_per_frame"]}
             )
             json_string = json.dumps(args)
-            self._logger.info(f"Final Internal Params: {json_string}")
 
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:

@@ -58,31 +58,37 @@ class TestVccComponentManager:
                 "frequency_band": "1",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "2",
                 "dish_sample_rate": 999999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "3",
                 "dish_sample_rate": 999999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "4",
                 "dish_sample_rate": 999999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "5a",
                 "dish_sample_rate": 999999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "5b",
                 "dish_sample_rate": 999999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
         ],
     )
@@ -107,6 +113,7 @@ class TestVccComponentManager:
         (result_code, _) = vcc_component_manager.configure_band(
             json.dumps(argin)
         )
+
         assert result_code == ResultCode.OK
 
         # Check for band configuration
@@ -115,7 +122,7 @@ class TestVccComponentManager:
         )
 
         internal_params_file_name = (
-            vcc_param_path + "internal_params_default.json"
+            file_path + "internal_params_default_results.json"
         )
         with open(internal_params_file_name, "r") as f:
             json_string = f.read()
@@ -160,6 +167,7 @@ class TestVccComponentManager:
                     "frequency_band": configuration["frequency_band"],
                     "dish_sample_rate": 999999,
                     "samples_per_frame": 18,
+                    "channel_offset": 14880,
                 }
             )
         )
@@ -244,6 +252,7 @@ class TestVccComponentManager:
                     "frequency_band": configuration["frequency_band"],
                     "dish_sample_rate": 999999,
                     "samples_per_frame": 18,
+                    "channel_offset": 14880,
                 }
             )
         )
@@ -323,6 +332,7 @@ class TestVccComponentManager:
                     "frequency_band": configuration["frequency_band"],
                     "dish_sample_rate": 999999,
                     "samples_per_frame": 18,
+                    "channel_offset": 14880,
                 }
             )
         )
@@ -464,6 +474,7 @@ class TestVccComponentManager:
                     "frequency_band": configuration["frequency_band"],
                     "dish_sample_rate": 999999,
                     "samples_per_frame": 18,
+                    "channel_offset": 14880,
                 }
             )
         )
@@ -527,31 +538,37 @@ class TestVccComponentManager:
                 "frequency_band": "1",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "2",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "3",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "4",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "5a",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
             {
                 "frequency_band": "5b",
                 "dish_sample_rate": 99999,
                 "samples_per_frame": 18,
+                "channel_offset": 14880,
             },
         ],
     )
