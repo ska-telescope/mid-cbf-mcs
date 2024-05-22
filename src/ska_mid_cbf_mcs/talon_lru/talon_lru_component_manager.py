@@ -175,7 +175,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_power_switch2,
                 self.pdu2_power_state,
             ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
-            
 
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """
@@ -245,7 +244,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_power_switch1, self._pdu_outlets[0]
         )
 
-        if (self._single_outlet):
+        if self._single_outlet:
             self.pdu2_power_state = self.pdu1_power_state
         else:
             self.pdu2_power_state = self._get_outlet_power_state(
@@ -308,7 +307,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # Turn on PDU 2
         result2 = ResultCode.FAILED
-        if (self._single_outlet):
+        if self._single_outlet:
             self.logger.info("PDU 2 is not used.")
             result2 = result1
         elif self.pdu2_power_state == PowerState.ON:
@@ -364,8 +363,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-
-            msg = f'LRU failed to turn on: {"single PDU failed to turn on" if self._single_outlet else "both PDUs failed to turn on"}'
+            msg = f'LRU failed to turn on: {"single outlet failed to turn on" if self._single_outlet else "both outlets failed to turn on"}'
 
             self.logger.error(msg)
             return (
@@ -376,7 +374,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
             msg = f'LRU succesfully turned on: {"single PDU successfully turned on" if self._single_outlet else "both outlets successfully turned on"}'
             self.logger.error(msg)
-        
+
         else:
             self.logger.info(
                 "LRU successfully turn on: one outlet turned on",
@@ -480,7 +478,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Power off PDU 2
         result2 = ResultCode.FAILED
         if self._proxy_power_switch2 is not None:
-            if (self._single_outlet):
+            if self._single_outlet:
                 self.logger.info("PDU 2 is not used.")
                 result2 = result1
             else:
@@ -566,32 +564,32 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param result2: the result code of turning off PDU 2
         :return: A tuple containing a return code and a string
         """
-        #TODO: Change this into a dict
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            msg = f'Off completed OK: {"single PDU turned off" if self._single_outlet else "both PDUs turned off"}'
-            self._update_communication_state(power=PowerState.OFF)
-            return(
+            msg = f'Off completed OK: {"single outlet turned off" if self._single_outlet else "both outlets turned off"}'
+            self.logger.error("SUCCESS SUCCESS ERROR")
+            self.logger.error(msg)
+            self._update_component_state(power=PowerState.OFF)
+            return (
                 ResultCode.OK,
                 msg,
             )
 
-
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            msg = f'Unable to turn off LRU: {"single PDU failed to turn off" if self._single_outlet else "both PDUs failed to turn off"}'
+            msg = f'Unable to turn off LRU: {"single outlet failed to turn off" if self._single_outlet else "both outlets failed to turn off"}'
             self.logger.error(msg)
-            return(
+            return (
                 ResultCode.FAILED,
                 msg,
             )
 
         else:
             self.logger.error(
-                "LRU failed to turn off: one outlet turned off"
+                "LRU failed to turn off: one outlet failed to turn off"
             )
             return (
                 ResultCode.FAILED,
-                "LRU failed to turn off: one outlet turned off",
+                "LRU failed to turn off: one outlet failed to turn off",
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:

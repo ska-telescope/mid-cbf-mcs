@@ -59,17 +59,6 @@ def power_switch_fixture_2(
     return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
-@pytest.fixture(name="pdu_id", params=["matched_pdu", "mismatched_pdu"])
-def pdu_id_fixture(request: pytest.FixtureRequest) -> str:
-    """
-    Fixture that returns the pdu configuration paramterized to mock
-    when the PDUs are the same / different
-
-    :param request: the pytest request fixture which holds information about the
-                    parameterization of this fixture
-    """
-    return request.param
-
 
 @pytest.fixture(name="change_event_callbacks")
 def lru_change_event_callbacks(
