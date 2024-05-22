@@ -50,7 +50,7 @@ class TestTalonLRU:
             TalonDxBoard2="002",
             PDU1="001",
             PDU1PowerOutlet="AA41",
-            PDU2="001",
+            PDU2="002",
             PDU2PowerOutlet="AA41",
             PDUCommandTimeout="20",
         )
