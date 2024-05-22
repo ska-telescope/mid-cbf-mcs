@@ -567,8 +567,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
             msg = f'Off completed OK: {"single outlet turned off" if self._single_outlet else "both outlets turned off"}'
-            self.logger.error("SUCCESS SUCCESS ERROR")
-            self.logger.error(msg)
             self._update_component_state(power=PowerState.OFF)
             return (
                 ResultCode.OK,
