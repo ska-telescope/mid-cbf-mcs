@@ -2,7 +2,7 @@ name: talonboard
 function: talon-board
 domain: mid-csp-cbf
 command: "TalonBoard"
-instances: ["talon-001", "talon-002", "talon-003", "talon-004", "talon-005", "talon-006", "talon-007", "talon-008"]
+instances: ["talon-boards"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "TalonBoard"
   instances:
-  - name: "talon-001"
+  - name: "talon-boards"
     classes:
     - name: "TalonBoard"
       devices:
@@ -64,10 +64,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-002"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/002"
         properties:
           - name: "TalonDxBoardAddress"
@@ -108,10 +104,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-003"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/003"
         properties:
           - name: "TalonDxBoardAddress"
@@ -152,10 +144,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-004"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/004"
         properties:
           - name: "TalonDxBoardAddress"
@@ -196,10 +184,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-005"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/005"
         properties:
           - name: "TalonDxBoardAddress"
@@ -240,10 +224,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-006"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/006"
         properties:
           - name: "TalonDxBoardAddress"
@@ -284,10 +264,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-007"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/007"
         properties:
           - name: "TalonDxBoardAddress"
@@ -328,10 +304,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-  - name: "talon-008"
-    classes:
-    - name: "TalonBoard"
-      devices:
       - name: "mid_csp_cbf/talon_board/008"
         properties:
           - name: "TalonDxBoardAddress"
