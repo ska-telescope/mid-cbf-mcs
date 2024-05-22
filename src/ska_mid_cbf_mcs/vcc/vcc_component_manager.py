@@ -140,15 +140,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._frequency_band_offset_stream2
 
     @property
-    def channel_offset(self: VccComponentManager) -> int:
-        """
-        Channel offset
-
-        :return: the channel offset
-        """
-        return self._channel_offset
-
-    @property
     def rfi_flagging_mask(self: VccComponentManager) -> str:
         """
         RFI Flagging Mask
@@ -252,7 +243,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream1 = 0
         self._frequency_band_offset_stream2 = 0
-        self._channel_offset = 0
         self._rfi_flagging_mask = ""
 
         self._jones_matrix = ""
@@ -484,12 +474,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             gain_corrections = GAINUtils.get_vcc_ripple_correction(
                 self._logger
             )
-            
+
             # Apply Gain Correction to parameters
             gain_index = 0
 
             # Use a default channel_offset of 0 if not passed in
-            if 'channel_offset' in band_config.keys():
+            if "channel_offset" in band_config.keys():
                 channel_index = band_config["channel_offset"]
             else:
                 channel_index = 0
@@ -543,7 +533,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream2 = 0
         self._frequency_band_offset_stream1 = 0
-        self._channel_offset = 0
         self._stream_tuning = (0, 0)
         self._frequency_band = 0
         self._push_change_event("frequencyBand", self._frequency_band)
@@ -604,7 +593,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream2 = int(
             configuration["frequency_band_offset_stream2"]
         )
-        self._channel_offset = int(configuration["channel_offset"])
 
         if "rfi_flagging_mask" in configuration:
             self._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
