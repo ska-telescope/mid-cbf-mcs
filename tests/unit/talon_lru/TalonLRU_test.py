@@ -50,7 +50,7 @@ class TestTalonLRU:
             TalonDxBoard2="002",
             PDU1="001",
             PDU1PowerOutlet="AA41",
-            PDU2="002",
+            PDU2="001",
             PDU2PowerOutlet="AA41",
             PDUCommandTimeout="20",
         )
@@ -98,7 +98,7 @@ class TestTalonLRU:
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        
+
         """
         if (
             power_switch_1.stimulusMode == "command_success"
@@ -124,7 +124,7 @@ class TestTalonLRU:
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        
+
         """
 
         if (
@@ -152,7 +152,7 @@ class TestTalonLRU:
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        
+
         """
         # Trigger the mock start_communicating
         if (
@@ -196,6 +196,7 @@ class TestTalonLRU:
         assert result_code == [ResultCode.QUEUED]
 
         # Assert the expected result, given the stimulus mode of the power switches.
+        # Currently only set to work for mismatched PDUs to reduce test time and complexity
         expected_result_map = {
             ("command_success", "command_success"): (
                 ResultCode.OK,
@@ -297,6 +298,7 @@ class TestTalonLRU:
         assert result_code == [ResultCode.QUEUED]
 
         # Assert the expected result, given the stimulus mode of the power switches.
+        # Currently only set to work for mismatched PDUs to reduce test time and complexity
         result_map = {
             ("command_success", "command_success"): (
                 ResultCode.OK,
