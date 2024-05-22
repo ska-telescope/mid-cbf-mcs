@@ -5,6 +5,21 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.15.0
+******
+* CIP-2335 Migrated SlimTest From Engineering Console to MCS's Slim Device
+* CIP-2396 Fixed Read the Docs Build Issues on MCS
+
+0.14.2
+******
+* CIP-2418 Fix On command timeout by clearing talons with a script
+* CIP-2416 Decoupled LRU ON and clearing talon 
+
+0.14.1 (0.14.0: DO NOT USE)
+******
+* CIP-2257 Update to validate TMC-published delay model JSON data against
+  schema version 3.0 (https://schema.skao.int/ska-mid-csp-delaymodel/3.0)
+
 0.13.3
 ******
 * CIP-1983 Added talon reboot to ON sequence to stop power cycling

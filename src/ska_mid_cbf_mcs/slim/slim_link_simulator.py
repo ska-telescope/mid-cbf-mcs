@@ -121,6 +121,38 @@ class SlimLinkSimulator:
         """
         return 8.000e-12
 
+    @property
+    def rx_debug_alignment_and_lock_status(
+        self: SlimLinkSimulator,
+    ) -> list[bool]:
+        """
+        Returns the Debug Alignment and Lock Status flags of the rx HPS device
+
+        :return: Debug Alignment and Lock Status flags of the rx HPS Device
+        :rtype: list[int]
+        """
+        return [0, 1, 0, 1]
+
+    @property
+    def rx_link_occupancy(self: SlimLinkSimulator) -> float:
+        """
+        Retrieves and return the link occupancy of the rx device
+
+        :return: Link Occupancy of the rx Device
+        :rtype: float
+        """
+        return 0.5
+
+    @property
+    def tx_link_occupancy(self: SlimLinkSimulator) -> float:
+        """
+        Retrieves and return the link occupancy of the tx device
+
+        :return: Link Occupancy of the tx Device
+        :rtype: float
+        """
+        return 0.5
+
     def read_counters(self: SlimLinkSimulator) -> list[int]:
         """
         An array holding the counter values from the tx and rx devices in the order:
