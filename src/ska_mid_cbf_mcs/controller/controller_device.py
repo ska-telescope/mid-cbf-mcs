@@ -16,7 +16,7 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import tango
 from ska_tango_base import SKAController
@@ -207,14 +207,11 @@ class CbfController(SKAController):
 
         :return: a component manager for this device.
         """
+        # TODO: Verify removal
+        # self._communication_status: Optional[CommunicationStatus] = None
+        # self._component_power_mode: Optional[PowerState] = None
+        # self._simulation_mode = SimulationMode.TRUE
 
-        self.logger.debug("Entering create_component_manager()")
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        # Create the Talon-DX component manager and initialize simulationMode to on
-        self._simulation_mode = SimulationMode.TRUE
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
@@ -222,6 +219,7 @@ class CbfController(SKAController):
             logger=self.logger,
         )
 
+        # TODO: Clear unused and add base class params
         return ControllerComponentManager(
             get_num_capabilities=self.get_num_capabilities,
             vcc_fqdns_all=self.VCC,
@@ -240,9 +238,6 @@ class CbfController(SKAController):
             vis_slim_config_path=self.VisSLIMConfigPath,
             logger=self.logger,
             push_change_event=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
         )
 
 
@@ -251,17 +246,21 @@ class CbfController(SKAController):
     # --------
 
     class InitCommand(SKAController.InitCommand):
+        """
+        A class for the CbfController's Init() command.
+        """
+
         def _get_num_capabilities(
             self: CbfController.InitCommand,
         ) -> None:
             # self._max_capabilities inherited from SKAController
             # check first if property exists in DB
-            """Get number of capabilities for _init_Device.
+            """
+            Get number of capabilities for _init_Device.
             If property not found in db, then assign a default amount(197,27,16)
             """
 
             device = self._device
-
             device.write_simulationMode(True)
 
             if device._max_capabilities:
@@ -298,6 +297,8 @@ class CbfController(SKAController):
 
         def do(
             self: CbfController.InitCommand,
+            *args: Any,
+            **kwargs: Any,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -306,179 +307,113 @@ class CbfController(SKAController):
             information purpose only.
             :return: (ResultCode, str)
             """
+            (result_code, msg) = super().do(*args, **kwargs)
 
-            self.logger.debug("Entering InitCommand()")
-            message = "Entering InitCommand()"
-            self.logger.info(message)
-
-            super().do()
-
-            device = self._device
+            self._device._simulation_mode = SimulationMode.TRUE
 
             # initialize attribute values
-            device._command_progress = 0
+            self._device._command_progress = 0
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self._get_num_capabilities()
 
             # # initialize attribute values
-            device._command_progress = 0
+            self._device._command_progress = 0
 
             # TODO remove when upgrading base class from 0.11.3
-            device.set_change_event("healthState", True, True)
+            self._device.set_change_event("healthState", True, True)
 
-            message = "CbfController Init command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
+            return (result_code, msg)
 
-    class OnCommand:
+    # TODO: Update
+    def is_On_allowed(
+        self: CbfController, raise_if_disallowed=False
+    ) -> bool:
         """
-        A class for the CbfController's On() command.
+        :return: if On command is allowed
+        :rtype: bool
         """
+        result = super().is_allowed(raise_if_disallowed)
+        if self.target.get_state() == tango.DevState.ON:
+            result = False
+        return result
 
-        def is_allowed(
-            self: CbfController.OnCommand, raise_if_disallowed=False
-        ) -> bool:
-            """
-            Determine if OnCommand is allowed.
-
-            :return: if OnCommand is allowed
-            :rtype: bool
-            """
-            result = super().is_allowed(raise_if_disallowed)
-            if self.target.get_state() == tango.DevState.ON:
-                result = False
-            return result
-
-        def do(
-            self: CbfController.OnCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for On() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-
-            self.logger.info("Trying ON Command")
-
-            (result_code, message) = self.target.component_manager.on()
-
-            if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.ON)
-                self.logger.info(message)
-            elif result_code == ResultCode.FAILED:
-                self.logger.error(message)
-
-            return (result_code, message)
-
-    class OffCommand:
+    def On(
+        self: CbfController,
+    ) -> DevVarLongStringArrayType:
         """
-        A class for the CbfController's Off() command.
+        Turn the device on.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
+        command_handler = self.get_command_object(command_name="On")
+        result_code_message, command_id = command_handler()
+        return [result_code_message], [command_id]
 
-        def is_allowed(
-            self: CbfController.OffCommand, raise_if_disallowed=False
-        ) -> bool:
-            """
-            Determine if OffCommand is allowed.
-
-            :return: if OffCommand is allowed
-            :rtype: bool
-            """
-            result = super().is_allowed(raise_if_disallowed)
-            if self.target.get_state() == tango.DevState.OFF:
-                result = False
-            return result
-
-        def do(
-            self: CbfController.OffCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Off() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if self.is_allowed():
-                (result_code, message) = self.target.component_manager.off()
-            else:
-                result_code = ResultCode.FAILED
-                message = f"Off command is not allowed when op state is {self.target.op_state_model.op_state}"
-
-            if result_code == ResultCode.OK:
-                self.target._component_power_mode_changed(PowerState.OFF)
-                self.logger.info(message)
-            elif result_code == ResultCode.FAILED:
-                self.logger.error(message)
-
-            return (result_code, message)
-
-    class InitSysParamCommand:
+    # TODO: Update
+    def is_Off_allowed(
+        self: CbfController.OffCommand, raise_if_disallowed=False
+    ) -> bool:
         """
-        A class for the CbfController's InitSysParam() command.
+        :return: if Off command is allowed
+        :rtype: bool
         """
+        result = super().is_allowed(raise_if_disallowed)
+        if self.target.get_state() == tango.DevState.OFF:
+            result = False
+        return result
 
-        def is_allowed(self: CbfController.InitSysParamCommand) -> bool:
-            """
-            Determine if InitSysParamCommand is allowed
-            (allowed when state is OFF).
+    def Off(
+        self: CbfController,
+    ) -> DevVarLongStringArrayType:
+        """
+        Turn the device off.
 
-            :return: if InitSysParamCommand is allowed
-            :rtype: bool
-            """
-            return self.target.op_state_model.op_state == DevState.OFF
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command_handler = self.get_command_object(command_name="Off")
+        result_code_message, command_id = command_handler()
+        return [result_code_message], [command_id]
+        
 
-        def do(
-            self: CbfController.InitSysParamCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            This command sets the Dish ID - VCC ID mapping and k values
+    def is_InitSysParam_allowed(self: CbfController) -> bool:
+        """
+        Determine if InitSysParamCommand is allowed
+        (allowed when state is OFF).
 
-            :param argin: the Dish ID - VCC ID mapping and frequency offset (k)
-                in a json string.
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if not self.is_allowed():
-                return (
-                    ResultCode.FAILED,
-                    "InitSysParam command may be called only when state is OFF",
-                )
-
-            (
-                result_code,
-                message,
-            ) = self.target.component_manager.init_sys_param(argin)
-
-            if result_code == ResultCode.OK:
-                self.logger.info(message)
-            elif result_code == ResultCode.FAILED:
-                self.logger.error(message)
-
-            return (result_code, message)
+        :return: if InitSysParamCommand is allowed
+        :rtype: bool
+        """
+        return self.op_state_model == DevState.OFF
 
     @command(
         dtype_in="DevString",
-        doc_in="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
         dtype_out="DevVarLongStringArray",
+        doc_in="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
-    @DebugIt()
     def InitSysParam(
         self: CbfController, argin: str
-    ) -> tango.DevVarLongStringArray:
-        # PROTECTED REGION ID(CbfController.InitSysParam) ENABLED START #
-        handler = self.get_command_object("InitSysParam")
-        return_code, message = handler(argin)
-        return [[return_code], [message]]
-        # PROTECTED REGION END #    //  CbfController.InitSysParam
+    ) -> DevVarLongStringArrayType:
+        """
+        This command sets the Dish ID - VCC ID mapping and k values
+
+        :param argin: the Dish ID - VCC ID mapping and frequency offset (k) in a json string.
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        command_handler = self.get_command_object(command_name="InitSysParam")
+        result_code_message, command_id = command_handler(argin)
+        return [result_code_message], [command_id]
 
 
 # ----------
@@ -487,10 +422,7 @@ class CbfController(SKAController):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(CbfController.main) ENABLED START #
-    return run((CbfController,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  CbfController.main
-
+    return CbfController.run_server(args=args or None, **kwargs)
 
 if __name__ == "__main__":
     main()
