@@ -582,7 +582,7 @@ class FspCorrSubarrayComponentManager(
                 "outputPort"
             ] = const.DEFAULT_OUTPUT_PORT
 
-        self.logger.info(f"Vis Dest dict: {self._vis_destination_address}")
+        self._logger.info(f"Vis Dest dict: {self._vis_destination_address}")
         self._output_link_map = configuration["output_link_map"]
 
         if "channel_averaging_map" in configuration:
@@ -619,7 +619,7 @@ class FspCorrSubarrayComponentManager(
         # construct HPS ConfigureScan input
         sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
-        self.logger.info(f"Initial FSP config: {hps_fsp_configuration}")
+        self._logger.info(f"Initial FSP config: {hps_fsp_configuration}")
         hps_fsp_configuration.update(internal_params_obj)
         # append the fs_sample_rates to the configuration
         hps_fsp_configuration["fs_sample_rates"] = sample_rates
