@@ -415,9 +415,10 @@ class Fsp(CbfDevice):
 
     @command(
         dtype_in="str",
+        dtype_out="DevVarLongStringArray",
         doc_in="Delay Model, per receptor per polarization per timing beam",
     )
-    def UpdateDelayModel(self: Fsp, argin: str) -> None:
+    def UpdateDelayModel(self: Fsp, argin: str) -> DevVarLongStringArrayType:
         """
         Update the FSP's delay model (serialized JSON object)
 

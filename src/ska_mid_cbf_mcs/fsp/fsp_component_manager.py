@@ -144,6 +144,48 @@ class FspComponentManager(CbfComponentManager):
             )
         # TODO AA0.5+: PSS, PST, VLBI
 
+    def _validate_function_mode(
+        self: FspComponentManager, function_mode: str
+    ) -> str:
+        """
+        Sets functionMode attribute and pushes change event if valid, or return
+        an error message if invalid.
+
+        :param function_mode: function mode string to be evaluated
+        :return: None if validation passes, else error message string
+        """
+        match function_mode:
+            case "IDLE":
+                self.function_mode = FspModes.IDLE.value
+            case "CORR":
+                self.function_mode = FspModes.CORR.value
+            # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
+            case "PSS-BF":
+                self.logger.error(
+                    "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
+                )
+                return "PSS-BF not implemented"
+            case "PST-BF":
+                self.logger.error(
+                    "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
+                )
+                return "PST-BF not implemented"
+            case "VLBI":
+                self.logger.error(
+                    "Error in SetFunctionMode; VLBI not implemented in AA0.5"
+                )
+                return "VLBI not implemented"
+            case _:
+                return f"{function_mode} not a valid FSP function mode."
+
+        self.logger.info(
+            f"FSP set to function mode {FspModes(self.function_mode).name}"
+        )
+        self._device_attr_change_callback("functionMode", self.function_mode)
+        self._device_attr_archive_callback("functionMode", self.function_mode)
+
+        return None
+
     def start_communicating(
         self: FspComponentManager,
     ) -> None:
@@ -193,63 +235,16 @@ class FspComponentManager(CbfComponentManager):
         ):
             return
 
-        match function_mode:
-            case "IDLE":
-                self.function_mode = FspModes.IDLE.value
-            case "CORR":
-                self.function_mode = FspModes.CORR.value
-            # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
-            case "PSS-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
-                )
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "PSS-BF not implemented",
-                    ),
-                )
-                return
-            case "PST-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
-                )
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "PST-BF not implemented",
-                    ),
-                )
-                return
-            case "VLBI":
-                self.logger.error(
-                    "Error in SetFunctionMode; VLBI not implemented in AA0.5"
-                )
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "VLBI not implemented",
-                    ),
-                )
-                return
-            case _:
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        f"{function_mode} not a valid FSP function mode.",
-                    ),
-                )
-                return
-
-        self.logger.info(
-            f"FSP set to function mode {FspModes(self.function_mode).name}"
-        )
-        self._device_attr_change_callback("functionMode", self.function_mode)
-        self._device_attr_archive_callback("functionMode", self.function_mode)
+        error_msg = self._validate_function_mode(function_mode)
+        if error_msg:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    error_msg,
+                ),
+            )
+            return
 
         try:
             self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
@@ -619,7 +614,7 @@ class FspComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self.logger.debug("Entering update_delay_model")
-        result_code, message = ResultCode.OK, "UpdateDelayModels completed OK"
+        result_code, message = ResultCode.OK, "UpdateDelayModel completed OK"
         # update if current function mode is either PSS-BF, PST-BF or CORR
         if self.function_mode not in [
             FspModes.PSS_BF.value,
