@@ -24,6 +24,7 @@ from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
 from ska_tango_base.utils import convert_dict_to_list
+from ska_mid_cbf_mcs.commons.global_enum import const
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
@@ -52,6 +53,8 @@ class CbfController(CbfDevice):
     # Device Properties
     # -----------------
 
+    # Subdevice FQDNs
+
     CbfSubarray = device_property(dtype=("str",))
 
     VCC = device_property(dtype=("str",))
@@ -68,6 +71,8 @@ class CbfController(CbfDevice):
 
     VisSLIM = device_property(dtype=("str"))
 
+    # Configuration file paths
+
     TalonDxConfigPath = device_property(dtype=("str"))
 
     HWConfigPath = device_property(dtype=("str"))
@@ -76,8 +81,10 @@ class CbfController(CbfDevice):
 
     VisSLIMConfigPath = device_property(dtype=("str"))
 
-    LruTimeout = device_property(dtype=("str"))
+    # General properties
 
+    LruTimeout = device_property(dtype=("str"))
+    
     MaxCapabilities = device_property(dtype=("str"))
 
     # ----------
@@ -224,6 +231,20 @@ class CbfController(CbfDevice):
             ),
         )
 
+    def get_num_capabilities(
+        self: CbfController,
+    ) -> None:
+        # self._max_capabilities inherited from SKAController
+        # check first if property exists in DB
+        """Get number of capabilities for _init_Device.
+        If property not found in db, then assign a default amount(197,27,16)"""
+
+        if self._max_capabilities:
+            return self._max_capabilities
+        else:
+            self.logger.warning("MaxCapabilities device property not defined")
+
+
     def create_component_manager(
         self: CbfController,
     ) -> ControllerComponentManager:
@@ -232,6 +253,7 @@ class CbfController(CbfDevice):
 
         :return: a component manager for this device.
         """
+
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
@@ -239,25 +261,40 @@ class CbfController(CbfDevice):
             logger=self.logger,
         )
 
-        # TODO: Clear unused and add base class params
+        fqdn_dict = {
+            'VCC': self.VCC,
+            'FSP': self.FSP,
+            'CbfSubarray': self.CbfSubarray,
+            'TalonLRU': self.TalonLRU,
+            'TalonBoard': self.TalonBoard,
+            'PowerSwitch': self.PowerSwitch,
+            'FsSLIM': [self.FsSLIM],
+            'VisSLIM': [self.VisSLIM],
+        }
+
+        config_path_dict = { 
+            'TalonDxConfigPath': self.TalonDxConfigPath,
+            'HWConfigPath': self.HWConfigPath,
+            'FsSLIMConfigPath': self.FsSLIMConfigPath,
+            'VisSLIMConfigPath': self.VisSLIMConfigPath,
+        }
+
+        max_capabilities_dict = {
+            'VCC': self._count_vcc,
+            'FSP': self._count_fsp,
+            'Subarray': self._count_subarray,
+        }
+
         return ControllerComponentManager(
-            get_num_capabilities=self.get_num_capabilities,
-            vcc_fqdns_all=self.VCC,
-            fsp_fqdns_all=self.FSP,
-            subarray_fqdns_all=self.CbfSubarray,
-            talon_lru_fqdns_all=self.TalonLRU,
-            talon_board_fqdns_all=self.TalonBoard,
-            power_switch_fqdns_all=self.PowerSwitch,
-            fs_slim_fqdn=self.FsSLIM,
-            vis_slim_fqdn=self.VisSLIM,
+            fqdn_dict=fqdn_dict,
+            config_path_dict=config_path_dict,
+            max_capabilities_dict=max_capabilities_dict,
             lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
-            talondx_config_path=self.TalonDxConfigPath,
-            hw_config_path=self.HWConfigPath,
-            fs_slim_config_path=self.FsSLIMConfigPath,
-            vis_slim_config_path=self.VisSLIMConfigPath,
             logger=self.logger,
-            push_change_event=self.push_change_event,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
     # --------
@@ -269,11 +306,12 @@ class CbfController(CbfDevice):
         A class for the CbfController's Init() command.
         """
 
+        # TODO: Refactor!
         def _get_max_capabilities(
             self: CbfController.InitCommand,
         ) -> None:
             """
-            Get maximum number of capabilities for _init_Device.
+            Get maximum number of capabilities for _init_Device. If property not found in db, then assign a default amount(197,27,16)
             """
             device = self._device
             device._max_capabilities = {}
@@ -288,18 +326,6 @@ class CbfController(CbfDevice):
                         max_capability_instances
                     )
 
-        def _get_num_capabilities(
-            self: CbfController.InitCommand,
-        ) -> None:
-            """
-            Get number of capabilities for _init_Device.
-            If property not found in db, then assign a default amount(197,27,16)
-            """
-
-            device = self._device
-            # TODO: Confirm removal of this line
-            # device.write_simulationMode(True)
-
             if device._max_capabilities:
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
@@ -307,7 +333,7 @@ class CbfController(CbfDevice):
                     self.logger.warning(
                         "VCC capabilities not defined; defaulting to 197."
                     )
-                    device._count_vcc = 197
+                    device._count_vcc = const.DEFAULT_COUNT_VCC
 
                 try:
                     device._count_fsp = device._max_capabilities["FSP"]
@@ -315,7 +341,7 @@ class CbfController(CbfDevice):
                     self.logger.warning(
                         "FSP capabilities not defined; defaulting to 27."
                     )
-                    device._count_fsp = 27
+                    device._count_fsp = const.DEFAULT_COUNT_FSP
 
                 try:
                     device._count_subarray = device._max_capabilities[
@@ -325,7 +351,7 @@ class CbfController(CbfDevice):
                     self.logger.warning(
                         "Subarray capabilities not defined; defaulting to 16."
                     )
-                    device._count_subarray = 16
+                    device._count_subarray = const.DEFAULT_COUNT_SUBARRAY
             else:
                 self.logger.warning(
                     "MaxCapabilities device property not defined - \
@@ -351,11 +377,8 @@ class CbfController(CbfDevice):
             # initialize attribute values
             self._device._command_progress = 0
 
-            # initialize max capabilities
-            self._get_max_capabilities()
-
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
-            self._get_num_capabilities()
+            self._get_max_capabilities()
 
             # # initialize attribute values
             self._device._command_progress = 0

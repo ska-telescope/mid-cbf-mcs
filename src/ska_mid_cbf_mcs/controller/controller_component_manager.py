@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
@@ -23,7 +23,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
     ObsState,
-    PowerMode,
+    PowerState,
     SimulationMode,
 )
 from ska_telmodel.data import TMData
@@ -47,67 +47,35 @@ class ControllerComponentManager(CbfComponentManager):
 
     def __init__(
         self: ControllerComponentManager,
-        get_num_capabilities: Callable[[None], Dict[str, int]],
-        subarray_fqdns_all: List[str],
-        vcc_fqdns_all: List[str],
-        fsp_fqdns_all: List[str],
-        talon_lru_fqdns_all: List[str],
-        talon_board_fqdns_all: List[str],
-        power_switch_fqdns_all: List[str],
-        fs_slim_fqdn: str,
-        vis_slim_fqdn: str,
+        *args: Any,
+
+  
+        fqdn_dict: Dict[str, List[str]],
+        config_path_dict: Dict[str, str],
+        max_capabilities_dict: Dict[str, int],
+
         lru_timeout: int,
+        get_num_capabilities: Callable[[None], Dict[str, int]],
         talondx_component_manager: TalonDxComponentManager,
-        talondx_config_path: str,
-        hw_config_path: str,
-        fs_slim_config_path: str,
-        vis_slim_config_path: str,
-        logger: logging.Logger,
-        push_change_event: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
-        component_fault_callback: Callable,
+
+       
+        **kwargs: Any,
     ) -> None:
         """
         Initialise a new instance.
 
-        :param get_num_capabilities: method that returns the controller device's
-                maxCapabilities attribute (a dictionary specifying the number of each capability)
-        :param subarray_fqdns_all: FQDNS of all the Subarray devices
-        :param vcc_fqdns_all: FQDNS of all the Vcc devices
-        :param fsp_fqdns_all: FQDNS of all the Fsp devices
-        :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
-        :param talon_board_fqdns_all: FQDNS of all the Talon board devices
-        :param power_switch_fqdns_all: FQDNS of all the power switch devices
-        :param fs_slim_fqdn: FQDN of the frequency slice SLIM
-        :param vis_slim_fqdn: FQDN of the visibilities SLIM
+        :param get_num_capabilities: method that returns the controller device's maxCapabilities attribute (a dictionary specifying the number of each capability)
+        :param fqdn_dict: dictionary containing FQDNs for the controller's sub-elements
         :param lru_timeout: Timeout in seconds for Talon LRU device proxies
         :param talondx_component_manager: component manager for the Talon LRU
-        :param talondx_config_path: path to the directory containing configuration
-                                    files and artifacts for the Talon boards
-        :param hw_config_path: path to the yaml file containing the hardware
-                               configuration
-        :param fs_slim_config_path: path to the yaml file containing the
-                                    frequency slice SLIM configuration files
-        :param vis_slim_config_path: path to the yaml file containing the
-                                    visibilities SLIM configuration files
-        :param logger: a logger for this object to use
-        :param push_change_event: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
-            component fault
+        :param talondx_config_path: path to the directory containing configuration files and artifacts for the Talon boards
+        :param hw_config_path: path to the yaml file containing the hardware configuration
+        :param fs_slim_config_path: path to the yaml file containing the frequency slice SLIM configuration files
+        :param vis_slim_config_path: path to the yaml file containing the visibilities SLIM configuration files
         """
 
-        self._logger = logger
-
-        self._connected = False  # to device proxies
+        super().__init__(*args, **kwargs)
+        self.simulation_mode = SimulationMode.TRUE
 
         (
             self._fqdn_vcc,
@@ -119,19 +87,26 @@ class ControllerComponentManager(CbfComponentManager):
         ) = ([] for i in range(6))
 
         # init sub-element count to default
-        self._count_vcc = const.DEFAULT_COUNT_VCC
-        self._count_fsp = const.DEFAULT_COUNT_FSP
-        self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
+        self._count_vcc = max_capabilities_dict["VCC"]
+        self._count_fsp = max_capabilities_dict["FSP"]
+        self._count_subarray = max_capabilities_dict["Subarray"]
 
         # init sub-element FQDNs to all
-        self._subarray_fqdns_all = subarray_fqdns_all
-        self._vcc_fqdns_all = vcc_fqdns_all
-        self._fsp_fqdns_all = fsp_fqdns_all
-        self._talon_lru_fqdns_all = talon_lru_fqdns_all
-        self._talon_board_fqdns_all = talon_board_fqdns_all
-        self._power_switch_fqdns_all = power_switch_fqdns_all
-        self._fs_slim_fqdn = fs_slim_fqdn
-        self._vis_slim_fqdn = vis_slim_fqdn
+        self._subarray_fqdns_all = fqdn_dict["Subarray"]
+        self._vcc_fqdns_all = fqdn_dict["VCC"]
+        self._fsp_fqdns_all = fqdn_dict["FSP"]
+        self._talon_lru_fqdns_all = fqdn_dict["TalonLRU"]
+        self._talon_board_fqdns_all = fqdn_dict["TalonBoard"]
+        self._power_switch_fqdns_all = fqdn_dict["PowerSwitch"]
+        self._fs_slim_fqdn = fqdn_dict["FSSlim"][0]
+        self._vis_slim_fqdn = fqdn_dict["VISSlim"][0]
+
+        # init config paths
+        self._talondx_config_path = config_path_dict["TalonDxConfigPath"]
+        self._hw_config_path = config_path_dict["HWConfigPath"]
+        self._fs_slim_config_path = config_path_dict["FSSlimConfigPath"]
+        self._vis_slim_config_path = config_path_dict["VISSlimConfigPath"]
+
         self._lru_timeout = lru_timeout
 
         self._get_max_capabilities = get_num_capabilities
@@ -143,22 +118,8 @@ class ControllerComponentManager(CbfComponentManager):
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
 
-        self._talondx_config_path = talondx_config_path
-        self._hw_config_path = hw_config_path
-        self._fs_slim_config_path = fs_slim_config_path
-        self._vis_slim_config_path = vis_slim_config_path
-
         self._max_capabilities = {}
-
         self._proxies = {}
-
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
-        )
 
     # -------------
     # Communication
@@ -182,13 +143,13 @@ class ControllerComponentManager(CbfComponentManager):
                         self._max_capabilities[key],
                     )
                 except KeyError:
-                    self._logger.warning(
+                    self.logger.warning(
                         f"MaxCapabilities {key} count KeyError - \
                         using default value of {default}"
                     )
                     setattr(self, f"_count_{key.lower()}", default)
         else:
-            self._logger.warning(
+            self.logger.warning(
                 "MaxCapabilities device property not defined - \
                 using default values"
             )
@@ -233,7 +194,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in fqdn_variables.items():
-            self._logger.debug(f"fqdn {name}: {value}")
+            self.logger.debug(f"fqdn {name}: {value}")
 
     def _create_group_proxies(self: ControllerComponentManager) -> bool:
         """
@@ -242,26 +203,26 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the group proxies are successfully created, False otherwise.
         """
         try:
-            self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
+            self._group_vcc = CbfGroupProxy("VCC", logger=self.logger)
             self._group_vcc.add(self._fqdn_vcc)
         except tango.DevFailed:
-            self._logger.error(f"Failure in connection to {self._fqdn_vcc}")
+            self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
             return False
 
         try:
-            self._group_fsp = CbfGroupProxy("FSP", logger=self._logger)
+            self._group_fsp = CbfGroupProxy("FSP", logger=self.logger)
             self._group_fsp.add(self._fqdn_fsp)
         except tango.DevFailed:
-            self._logger.error(f"Failure in connection to {self._fqdn_fsp}")
+            self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
             return False
 
         try:
             self._group_subarray = CbfGroupProxy(
-                "CBF Subarray", logger=self._logger
+                "CBF Subarray", logger=self.logger
             )
             self._group_subarray.add(self._fqdn_subarray)
         except tango.DevFailed:
-            self._logger.error(
+            self.logger.error(
                 f"Failure in connection to {self._fqdn_subarray}"
             )
             return False
@@ -283,7 +244,7 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the hardware configuration properties are successfully written to the device, False otherwise.
         """
         try:
-            self._logger.debug(
+            self.logger.debug(
                 f"Writing hardware configuration properties to {fqdn}"
             )
 
@@ -306,7 +267,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         except tango.DevFailed as df:
             for item in df.args:
-                self._logger.error(
+                self.logger.error(
                     f"Failed to write {fqdn} HW config properties: {item.reason}"
                 )
             return False
@@ -323,12 +284,11 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the AdminMode of the device is successfully set to ONLINE, False otherwise.
         """
         try:
-            # establish proxy connection to component
-            self._logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+            self.logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             for item in df.args:
-                self._logger.error(
+                self.logger.error(
                     f"Failed to set AdminMode of {fqdn} to ONLINE: {item.reason}"
                 )
             return False
@@ -340,15 +300,14 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> bool:
         if fqdn not in self._proxies:
             try:
-                self._logger.debug(f"Trying connection to {fqdn}")
-                proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                self.logger.debug(f"Trying connection to {fqdn}")
+                proxy = CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
             except tango.DevFailed as df:
                 for item in df.args:
-                    self._logger.error(
+                    self.logger.error(
                         f"Failure in connection to {fqdn}: {item.reason}"
                     )
                 return False
-            # add proxy to proxies list
             self._proxies[fqdn] = proxy
         else:
             proxy = self._proxies[fqdn]
@@ -393,11 +352,13 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        if self._connected:
-            self._logger.info("Already communicating")
-            return
+        self.logger.debug(
+            "Entering ControllerComponentManager.start_communicating"
+        )
 
-        super().start_communicating()
+        if self._communication_state == CommunicationStatus.ESTABLISHED:
+            self.logger.info("Communication already established")
+            return
 
         with open(self._hw_config_path) as yaml_fd:
             self._hw_config = yaml.safe_load(yaml_fd)
@@ -406,7 +367,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._set_fqdns()
 
         if not self._create_group_proxies():
-            self._connected = False
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             return
 
         # NOTE: order matters here
@@ -414,29 +377,31 @@ class ControllerComponentManager(CbfComponentManager):
         # - must set VCC online after LRU to establish LRU power state
         # TODO: evaluate ordering and add further comments
         if not self._init_proxies():
-            self._connected = False
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             return
 
-        self._connected = True
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
+        super().start_communicating()
+        self._update_component_state(power=PowerState.OFF)
+        
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """
         Stop communication with the component
         """
-        self._logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager.stop_communicating"
         )
-        super().stop_communicating()
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
-        self._connected = False
+        self._update_component_state(power=PowerState.UNKNOWN)
+        super().stop_communicating()
 
-    # ---------------
-    # Command methods
-    # ---------------
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> List[str]:
         # read in list of LRUs from configuration JSON
@@ -465,17 +430,17 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
         try:
-            self._logger.info(f"Turning on LRU {lru_fqdn}")
+            self.logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.adminMode = AdminMode.OFFLINE
             proxy.simulationMode = sim_mode
             proxy.adminMode = AdminMode.ONLINE
 
             proxy.On()
         except tango.DevFailed as e:
-            self._logger.error(e)
+            self.logger.error(e)
             return (False, lru_fqdn)
 
-        self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
+        self.logger.info(f"LRU successfully turned on: {lru_fqdn}")
         return (True, None)
 
     def _turn_on_lrus(
@@ -508,7 +473,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _configure_slim_devices(self: ControllerComponentManager) -> None:
         try:
-            self._logger.info(
+            self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
             )
             for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
@@ -534,11 +499,15 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to configure SLIM: {item.reason}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
         except OSError as e:
             log_msg = f"Failed to read SLIM configuration file: {e}"
             return (ResultCode.FAILED, log_msg)
+
+    def is_on_allowed(self: ControllerComponentManager) -> bool:
+        self.logger.debug("Checking if on is allowed")
+        return True
 
     def on(
         self: ControllerComponentManager,
@@ -552,17 +521,11 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        self._logger.info("Entering ControllerComponentManager.on")
+        self.logger.debug("Entering ControllerComponentManager.on")
 
         if self.dish_utils is None:
             log_msg = "Dish-VCC mapping has not been provided."
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
-
-        # Check if connection to device proxies has been established
-        if not self._connected:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
         # Power on all the Talon boards if not in SimulationMode
@@ -589,7 +552,7 @@ class ControllerComponentManager(CbfComponentManager):
             == ResultCode.FAILED
         ):
             log_msg = "Failed to configure Talon boards"
-            self._logger.error(log_msg)
+            self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
         # Set the Simulation mode of the Subarray to the simulation mode of the controller
@@ -602,7 +565,7 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to turn on group proxies; {item.reason}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
         # Configure SLIM Mesh devices
@@ -630,7 +593,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
-                    self._logger.error(log_msg)
+                    self.logger.error(log_msg)
                     return (False, log_msg)
 
         # if subarray is IDLE go to EMPTY by removing all receptors
@@ -646,7 +609,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
-                    self._logger.error(log_msg)
+                    self.logger.error(log_msg)
                     return (False, log_msg)
 
         # wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
@@ -667,7 +630,7 @@ class ControllerComponentManager(CbfComponentManager):
             except TimeoutException:
                 # raise exception if timed out waiting to exit RESOURCING/RESTARTING
                 log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 return (False, log_msg)
 
         # if subarray not in EMPTY then we need to ABORT and RESTART
@@ -690,7 +653,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except TimeoutException:
                     # raise exception if timed out waiting to exit ABORTING/RESETTING
                     log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                    self._logger.error(log_msg)
+                    self.logger.error(log_msg)
                     return (False, log_msg)
 
             # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
@@ -709,7 +672,7 @@ class ControllerComponentManager(CbfComponentManager):
                     except TimeoutException:
                         # raise exception if timed out waiting to exit ABORTING
                         log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
-                        self._logger.error(log_msg)
+                        self.logger.error(log_msg)
                         return (False, log_msg)
 
             # finally, subarray may be restarted to EMPTY
@@ -724,7 +687,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except TimeoutException:
                     # raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
-                    self._logger.error(log_msg)
+                    self.logger.error(log_msg)
                     return (False, log_msg)
 
         return (
@@ -744,7 +707,7 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = (
                     f"Failed to turn off subarray group proxy; {item.reason}"
                 )
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result = False
 
@@ -753,7 +716,7 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result = False
 
@@ -762,7 +725,7 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result = False
 
@@ -772,7 +735,7 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to turn off SLIM proxy; {item.reason}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result = False
 
@@ -791,7 +754,7 @@ class ControllerComponentManager(CbfComponentManager):
         op_state_error_list = []
         obs_state_error_list = []
         for fqdn, proxy in self._proxies.items():
-            self._logger.debug(f"Checking final state of device {fqdn}")
+            self.logger.debug(f"Checking final state of device {fqdn}")
             # power switch device state is always ON as long as it is
             # communicating and monitoring the PDU; does not implement
             # On/Off commands, rather TurnOn/OffOutlet commands to
@@ -831,13 +794,13 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
         try:
-            self._logger.info(f"Turning off LRU {lru_fqdn}")
+            self.logger.info(f"Turning off LRU {lru_fqdn}")
             proxy.Off()
         except tango.DevFailed as e:
-            self._logger.error(e)
+            self.logger.error(e)
             return (False, lru_fqdn)
 
-        self._logger.info(f"LRU successfully turned off: {lru_fqdn}")
+        self.logger.info(f"LRU successfully turned off: {lru_fqdn}")
         return (True, None)
 
     def _turn_off_lrus(
@@ -871,6 +834,11 @@ class ControllerComponentManager(CbfComponentManager):
                 out_status = False
         return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
 
+
+    def is_off_allowed(self: ControllerComponentManager) -> bool:
+        self.logger.debug("Checking if off is allowed")
+        return True
+     
     def off(
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -882,13 +850,7 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.info("Entering ControllerComponentManager.off")
-
-        # Check if connection to device proxies has been established
-        if not self._connected:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+        self.logger.debug("Entering ControllerComponentManager.off")
 
         (result_code, message) = (ResultCode.OK, [])
 
@@ -896,7 +858,7 @@ class ControllerComponentManager(CbfComponentManager):
         for subarray in [self._proxies[fqdn] for fqdn in self._fqdn_subarray]:
             (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
             if not subarray_empty:
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
                 result_code = ResultCode.FAILED
 
@@ -912,7 +874,7 @@ class ControllerComponentManager(CbfComponentManager):
             # if HPS master shutdown failed, continue with attempting to
             # shut off power outlets via LRU device
             log_msg = "HPS Master shutdown failed."
-            self._logger.warning(log_msg)
+            self.logger.warning(log_msg)
             message.append(log_msg)
 
         # Turn off all the LRUs currently in use
@@ -930,7 +892,7 @@ class ControllerComponentManager(CbfComponentManager):
         if len(op_state_error_list) > 0:
             for fqdn, state in op_state_error_list:
                 log_msg = f"{fqdn} failed to turn OFF, current state: {state}"
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result_code = ResultCode.FAILED
 
@@ -939,42 +901,13 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = (
                     f"{fqdn} failed to restart, current obsState: {obs_state}"
                 )
-                self._logger.error(log_msg)
+                self.logger.error(log_msg)
                 message.append(log_msg)
             result_code = ResultCode.FAILED
 
         if result_code == ResultCode.OK:
             message.append("CbfController Off command completed OK")
         return (result_code, "; ".join(message))
-
-    def standby(
-        self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Turn the controller into low power standby mode
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-
-        if self._connected:
-            try:
-                self._group_vcc.command_inout("Standby")
-                self._group_fsp.command_inout("Standby")
-            except tango.DevFailed:
-                log_msg = "Failed to turn group proxies to standby"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController Standby command completed OK"
-            return (ResultCode.OK, message)
-
-        else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
 
     def _validate_init_sys_param(
         self: ControllerComponentManager,
@@ -986,10 +919,10 @@ class ControllerComponentManager(CbfComponentManager):
                 version=params["interface"], config=params, strictness=2
             )
             msg = "init_sys_param validation against ska-telmodel schema was successful!"
-            self._logger.info(msg)
+            self.logger.info(msg)
         except ValueError as e:
             msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            self._logger.error(msg)
+            self.logger.error(msg)
             return (False, msg)
         return (True, msg)
 
@@ -1003,10 +936,10 @@ class ControllerComponentManager(CbfComponentManager):
                 tm_data_filepath
             ].get_dict()
             msg = f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
-            self._logger.info(msg)
+            self.logger.info(msg)
         except (ValueError, KeyError) as e:
             msg = f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
-            self._logger.error(msg)
+            self.logger.error(msg)
             return (False, msg, None)
         return (True, msg, mid_cbf_param_dict)
 
@@ -1026,7 +959,7 @@ class ControllerComponentManager(CbfComponentManager):
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     proxy.dishID = dish_id
-                    self._logger.info(
+                    self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
                 else:
@@ -1034,11 +967,11 @@ class ControllerComponentManager(CbfComponentManager):
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                         f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                     )
-                    self._logger.warning(log_msg)
+                    self.logger.warning(log_msg)
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                    self._logger.error(log_msg)
+                    self.logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
 
         # update talon boards. The VCC ID to IP address mapping comes
@@ -1056,7 +989,7 @@ class ControllerComponentManager(CbfComponentManager):
                         if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                             dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                             proxy.write_attribute("dishID", dish_id)
-                            self._logger.info(
+                            self.logger.info(
                                 f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                             )
                         else:
@@ -1064,11 +997,11 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                                 f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
-                            self._logger.warning(log_msg)
+                            self.logger.warning(log_msg)
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
-                        self._logger.error(log_msg)
+                        self.logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
     def init_sys_param(
@@ -1085,7 +1018,7 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(f"Received sys params {params}")
+        self.logger.debug(f"Received sys params {params}")
 
         def raise_on_duplicate_keys(pairs):
             d = {}
@@ -1101,7 +1034,7 @@ class ControllerComponentManager(CbfComponentManager):
                 params, object_pairs_hook=raise_on_duplicate_keys
             )
         except ValueError as e:
-            self._logger.error(e)
+            self.logger.error(e)
             return (
                 ResultCode.FAILED,
                 "Duplicated Dish ID in the init_sys_param json",
@@ -1140,13 +1073,13 @@ class ControllerComponentManager(CbfComponentManager):
         try:
             self._update_init_sys_param(self._init_sys_param)
         except tango.DevFailed as e:
-            self._logger.error(e)
+            self.logger.error(e)
             return (
                 ResultCode.FAILED,
                 "Failed to update subarrays with init_sys_param",
             )
 
-        self._logger.info("Updated subarrays with init_sys_param")
+        self.logger.info("Updated subarrays with init_sys_param")
 
         return (
             ResultCode.OK,
