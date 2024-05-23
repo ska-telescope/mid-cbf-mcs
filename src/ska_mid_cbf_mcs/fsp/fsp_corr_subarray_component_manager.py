@@ -87,7 +87,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already communicating.")
             return
         super().start_communicating()
-        if self._component_state["power"] is None:
+        if self.power_state is None:
             self._update_component_state(power=PowerState.OFF)
 
     def _assign_vcc(

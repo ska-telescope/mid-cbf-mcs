@@ -76,26 +76,13 @@ class FspComponentManager(CbfComponentManager):
 
         self.delay_model = ""
 
-    def start_communicating(
-        self: FspComponentManager,
-    ) -> None:
-        """Establish communication with the component, then start monitoring."""
-        if self._communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Already communicating.")
-            return
-
-        self._get_function_mode_group_proxies()
-
-        super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
-
     def _get_proxy(
         self: FspComponentManager, name: str, is_group: bool
     ) -> context.DeviceProxy | context.Group | None:
         """
         Attempt to get a device proxy of the specified device.
 
-        :param name: FQDN of the device name or the name of the group proxy
+        :param name: FQDN of the device or the name of the group proxy to connect to
         :param is_group: True if the proxy to connect to is a group proxy
         :return: context.DeviceProxy, context.Group or None if no connection
             was made
@@ -157,9 +144,22 @@ class FspComponentManager(CbfComponentManager):
             )
         # TODO AA0.5+: PSS, PST, VLBI
 
+    def start_communicating(
+        self: FspComponentManager,
+    ) -> None:
+        """Establish communication with the component, then start monitoring."""
+        if self._communication_state == CommunicationStatus.ESTABLISHED:
+            self.logger.info("Already communicating.")
+            return
+
+        self._get_function_mode_group_proxies()
+
+        super().start_communicating()
+        self._update_component_state(power=PowerState.OFF)
+
     def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
-        if self._component_state["power"] != PowerState.ON:
+        if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"FSP SetFunctionMode not allowed in current state:\
                     {self._component_state['power']}"
@@ -474,7 +474,7 @@ class FspComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP On is allowed.")
-        if self._component_state["power"] not in [
+        if self.power_state not in [
             PowerState.OFF,
             PowerState.UNKNOWN,
         ]:
@@ -539,7 +539,7 @@ class FspComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP Off is allowed.")
-        if self._component_state["power"] not in [
+        if self.power_state not in [
             PowerState.ON,
             PowerState.UNKNOWN,
         ]:
@@ -621,34 +621,33 @@ class FspComponentManager(CbfComponentManager):
         self.logger.debug("Entering update_delay_model")
         result_code, message = ResultCode.OK, "UpdateDelayModels completed OK"
         # update if current function mode is either PSS-BF, PST-BF or CORR
-        if self.function_mode in [
+        if self.function_mode not in [
             FspModes.PSS_BF.value,
             FspModes.PST_BF.value,
             FspModes.CORR.value,
         ]:
-            # the whole delay model must be stored
-            self.delay_model = argin
-            delay_model = json.loads(argin)
-
-            # TODO handle delay models in function modes other than CORR
-            try:
-                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
-                    json.dumps(delay_model)
-                )
-            except tango.DevFailed as df:
-                self.logger.error(f"{df.args[0].desc}")
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                result_code, message = (
-                    ResultCode.FAILED,
-                    "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
-                )
-
-        else:
             result_code, message = (
                 ResultCode.FAILED,
                 f"Delay models not used in function mode {self.function_mode}",
+            )
+
+        # the whole delay model must be stored
+        self.delay_model = argin
+        delay_model = json.loads(argin)
+
+        # TODO handle delay models in function modes other than CORR
+        try:
+            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                json.dumps(delay_model)
+            )
+        except tango.DevFailed as df:
+            self.logger.error(f"{df.args[0].desc}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            result_code, message = (
+                ResultCode.FAILED,
+                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
             )
 
         return (result_code, message)
