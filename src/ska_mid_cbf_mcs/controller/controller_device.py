@@ -18,12 +18,12 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import Any, List, Optional, Tuple
 
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
 import tango
 from ska_tango_base import SKAController
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base.utils import convert_dict_to_list
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
@@ -34,16 +34,17 @@ from ska_mid_cbf_mcs.controller.controller_component_manager import (
 from ska_mid_cbf_mcs.controller.talondx_component_manager import (
     TalonDxComponentManager,
 )
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 
 __all__ = ["CbfController", "main"]
 
 
-class CbfController(SKAController):
+class CbfController(CbfDevice):
 
     """
     CbfController TANGO device class.
 
-    Primary point of contact for monitoring and control of Mid.CBF. 
+    Primary point of contact for monitoring and control of Mid.CBF.
     Implements state and mode indicators, and a set of state transition commmands.
     """
 
@@ -76,7 +77,8 @@ class CbfController(SKAController):
     VisSLIMConfigPath = device_property(dtype=("str"))
 
     LruTimeout = device_property(dtype=("str"))
-    
+
+    MaxCapabilities = device_property(dtype=("str"))
 
     # ----------
     # Attributes
@@ -96,7 +98,7 @@ class CbfController(SKAController):
         Read the commandProgress attribute: the percentage progress implemented for
         commands that result in state/mode transitions for a large number of
         components and/or are executed in stages (e.g power up, power down)
-        
+
         :return: the commandProgress attribute
         :rtype: int
         """
@@ -121,14 +123,14 @@ class CbfController(SKAController):
     )
     def sourceSysParam(self: CbfController) -> str:
         """
-        :return: the location of the json file that contains the mapping from Dish ID to VCC 
+        :return: the location of the json file that contains the mapping from Dish ID to VCC
                  and frequency offset k, to be retrieved using the Telescope Model.
         :rtype: str
         """
         return self.component_manager._source_init_sys_param
 
-    # TODO: wtf is dtype for List[str]???
     @attribute(
+        dtype="DevVarLongStringArray",
         label="Dish ID to VCC mapping",
         doc="Dish ID to VCC mapping. The string is in the format 'dishID:vccID'.",
     )
@@ -145,10 +147,11 @@ class CbfController(SKAController):
         return out_str
 
     @attribute(
+        dtype="DevVarLongStringArray",
         label="VCC to Dish mapping",
         doc="VCC to Dish mapping. The string is in the format 'vccID:dishID'.",
     )
-    def read_vccToDish(self: CbfController) -> List[str]:
+    def vccToDish(self: CbfController) -> List[str]:
         """
         Return dishToVcc attribute: 'vccID:dishID'
         """
@@ -161,12 +164,28 @@ class CbfController(SKAController):
         return out_str
 
     @attribute(
-        dtype=SimulationMode, 
-        memorized=True, 
+        dtype="DevVarLongStringArray",
+        max_dim_x=20,
+        doc=(
+            "Maximum number of instances of each capability type,"
+            " e.g. 'CORRELATOR:512', 'PSS-BEAMS:4'."
+        ),
+    )
+    def maxCapabilities(self: CbfController) -> list[str]:
+        """
+        Read maximum number of instances of each capability type.
+
+        :return: list of maximum number of instances of each capability type
+        """
+        return convert_dict_to_list(self._max_capabilities)
+
+    @attribute(
+        dtype=SimulationMode,
+        memorized=True,
         hw_memorized=True,
         doc="Reports the simulation mode of the device. \nSome devices may implement "
-            "both modes, while others will have simulators that set simulationMode "
-            "to True while the real devices always set simulationMode to False.",
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
     def simulationMode(self: CbfController) -> SimulationMode:
         """
@@ -175,9 +194,7 @@ class CbfController(SKAController):
         return self._talondx_component_manager.simulation_mode
 
     @simulationMode.write
-    def simulationMode(
-        self: CbfController, value: SimulationMode
-    ) -> None:
+    def simulationMode(self: CbfController, value: SimulationMode) -> None:
         """
         Set the Simulation Mode of the device.
 
@@ -197,14 +214,14 @@ class CbfController(SKAController):
         """
         super(SKAController, self).init_command_objects()
         self.register_command_object(
-            "InitSysParam", 
+            "InitSysParam",
             SubmittedSlowCommand(
                 command_name="InitSysParam",
                 command_tracker=self._command_tracker,
                 component_manager=self.component_manager,
                 method_name="init_sys_param",
                 logger=self.logger,
-            )
+            ),
         )
 
     def create_component_manager(
@@ -215,11 +232,6 @@ class CbfController(SKAController):
 
         :return: a component manager for this device.
         """
-        # TODO: Verify removal
-        # self._communication_status: Optional[CommunicationStatus] = None
-        # self._component_power_mode: Optional[PowerState] = None
-        # self._simulation_mode = SimulationMode.TRUE
-
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
@@ -248,7 +260,6 @@ class CbfController(SKAController):
             push_change_event=self.push_change_event,
         )
 
-
     # --------
     # Commands
     # --------
@@ -258,18 +269,36 @@ class CbfController(SKAController):
         A class for the CbfController's Init() command.
         """
 
+        def _get_max_capabilities(
+            self: CbfController.InitCommand,
+        ) -> None:
+            """
+            Get maximum number of capabilities for _init_Device.
+            """
+            device = self._device
+            device._max_capabilities = {}
+
+            if device.MaxCapabilities:
+                for max_capability in device.MaxCapabilities:
+                    (
+                        capability_type,
+                        max_capability_instances,
+                    ) = max_capability.split(":")
+                    device._max_capabilities[capability_type] = int(
+                        max_capability_instances
+                    )
+
         def _get_num_capabilities(
             self: CbfController.InitCommand,
         ) -> None:
-            # self._max_capabilities inherited from SKAController
-            # check first if property exists in DB
             """
             Get number of capabilities for _init_Device.
             If property not found in db, then assign a default amount(197,27,16)
             """
 
             device = self._device
-            device.write_simulationMode(True)
+            # TODO: Confirm removal of this line
+            # device.write_simulationMode(True)
 
             if device._max_capabilities:
                 try:
@@ -322,29 +351,22 @@ class CbfController(SKAController):
             # initialize attribute values
             self._device._command_progress = 0
 
+            # initialize max capabilities
+            self._get_max_capabilities()
+
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self._get_num_capabilities()
 
             # # initialize attribute values
             self._device._command_progress = 0
 
-            # TODO remove when upgrading base class from 0.11.3
-            self._device.set_change_event("healthState", True, True)
-
             return (result_code, msg)
 
-    # TODO: Update
-    def is_On_allowed(
-        self: CbfController, raise_if_disallowed=False
-    ) -> bool:
+    def is_On_allowed(self: CbfController) -> bool:
         """
-        :return: if On command is allowed
-        :rtype: bool
+        Overwrite baseclass's is_On_allowed method.
         """
-        result = super().is_allowed(raise_if_disallowed)
-        if self.target.get_state() == tango.DevState.ON:
-            result = False
-        return result
+        return True
 
     def On(
         self: CbfController,
@@ -361,18 +383,11 @@ class CbfController(SKAController):
         result_code_message, command_id = command_handler()
         return [result_code_message], [command_id]
 
-    # TODO: Update
-    def is_Off_allowed(
-        self: CbfController.OffCommand, raise_if_disallowed=False
-    ) -> bool:
+    def is_Off_allowed(self: CbfController) -> bool:
         """
-        :return: if Off command is allowed
-        :rtype: bool
+        Overwrite baseclass's is_On_allowed method.
         """
-        result = super().is_allowed(raise_if_disallowed)
-        if self.target.get_state() == tango.DevState.OFF:
-            result = False
-        return result
+        return True
 
     def Off(
         self: CbfController,
@@ -388,17 +403,15 @@ class CbfController(SKAController):
         command_handler = self.get_command_object(command_name="Off")
         result_code_message, command_id = command_handler()
         return [result_code_message], [command_id]
-        
 
     def is_InitSysParam_allowed(self: CbfController) -> bool:
         """
-        Determine if InitSysParamCommand is allowed
-        (allowed when state is OFF).
+        Determine if InitSysParamCommand is allowed (allowed when state is OFF).
 
         :return: if InitSysParamCommand is allowed
         :rtype: bool
         """
-        return self.op_state_model == DevState.OFF
+        return True
 
     @command(
         dtype_in="DevString",
@@ -418,7 +431,6 @@ class CbfController(SKAController):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
         command_handler = self.get_command_object(command_name="InitSysParam")
         result_code_message, command_id = command_handler(argin)
         return [result_code_message], [command_id]
@@ -431,6 +443,7 @@ class CbfController(SKAController):
 
 def main(args=None, **kwargs):
     return CbfController.run_server(args=args or None, **kwargs)
+
 
 if __name__ == "__main__":
     main()
