@@ -1500,6 +1500,7 @@ class CbfSubarrayComponentManager(
         self._deconfigure()
 
         full_configuration = json.loads(argin)
+        self._logger.info(f"Full Config: {full_configuration}")
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
@@ -1835,6 +1836,7 @@ class CbfSubarrayComponentManager(
         if len(self._corr_config) != 0:
             for this_fsp in self._corr_config:
                 try:
+                    self._logger.info(f"CORR Config: {this_fsp}")
                     this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
