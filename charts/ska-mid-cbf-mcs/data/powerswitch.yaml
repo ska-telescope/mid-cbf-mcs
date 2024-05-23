@@ -2,7 +2,7 @@ name: powerswitch
 function: power-switch
 domain: mid-csp-cbf
 command: "PowerSwitch"
-instances: ["power-switches"]
+instances: ["01"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "PowerSwitch"
   instances:
-  - name: "power-switches"
+  - name: "01"
     classes:
     - name: "PowerSwitch"
       devices:
