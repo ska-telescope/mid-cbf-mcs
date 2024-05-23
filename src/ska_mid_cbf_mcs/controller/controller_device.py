@@ -18,6 +18,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import Any, List, Optional, Tuple
 
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 import tango
 from ska_tango_base import SKAController
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
@@ -75,6 +76,7 @@ class CbfController(SKAController):
     VisSLIMConfigPath = device_property(dtype=("str"))
 
     LruTimeout = device_property(dtype=("str"))
+    
 
     # ----------
     # Attributes
@@ -113,7 +115,7 @@ class CbfController(SKAController):
         return self.component_manager._init_sys_param
 
     @attribute(
-        type="str",
+        dtype="str",
         label="The location of the file containing Dish ID to VCC and frequency offset k mapping.",
         doc="Source and file path to the file to be retrieved through the Telescope Model. The string is in JSON format.",
     )
@@ -125,9 +127,12 @@ class CbfController(SKAController):
         """
         return self.component_manager._source_init_sys_param
 
-
-    # TODO: handle dishToVcc and vccToDish attributes
-    def read_dishToVcc(self: CbfController) -> List[str]:
+    # TODO: wtf is dtype for List[str]???
+    @attribute(
+        label="Dish ID to VCC mapping",
+        doc="Dish ID to VCC mapping. The string is in the format 'dishID:vccID'.",
+    )
+    def dishToVcc(self: CbfController) -> List[str]:
         """
         Return dishToVcc attribute: 'dishID:vccID'
         """
@@ -139,6 +144,10 @@ class CbfController(SKAController):
         ]
         return out_str
 
+    @attribute(
+        label="VCC to Dish mapping",
+        doc="VCC to Dish mapping. The string is in the format 'vccID:dishID'.",
+    )
     def read_vccToDish(self: CbfController) -> List[str]:
         """
         Return dishToVcc attribute: 'vccID:dishID'
@@ -197,7 +206,6 @@ class CbfController(SKAController):
                 logger=self.logger,
             )
         )
-
 
     def create_component_manager(
         self: CbfController,
