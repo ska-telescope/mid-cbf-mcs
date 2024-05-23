@@ -240,9 +240,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             )
 
         # append the fs_sample_rates to the configuration
-        hps_fsp_configuration["fs_sample_rates"] = configuration.pop(
+        hps_fsp_configuration["fs_sample_rates"] = configuration[
             "fs_sample_rates"
-        )
+        ]
         self.logger.debug(
             f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
