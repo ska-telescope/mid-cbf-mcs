@@ -1075,7 +1075,7 @@ class ControllerComponentManager(CbfComponentManager):
         params: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """
         Validate and save the Dish ID - VCC ID mapping and k values.
 
@@ -1109,17 +1109,20 @@ class ControllerComponentManager(CbfComponentManager):
             )
         except ValueError as e:
             self.logger.error(e)
-            return (
-                ResultCode.FAILED,
-                "Duplicated Dish ID in the init_sys_param json",
+            task_callback(
+                result=(ResultCode.FAILED, "Duplicated Dish ID in the init_sys_param json"),
+                status=TaskStatus.FAILED,
             )
+            return 
 
         passed, msg = self._validate_init_sys_param(init_sys_param_json)
         if not passed:
-            return (
-                ResultCode.FAILED,
-                msg,
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
             )
+            return 
+        
         # If tm_data_filepath is provided, then we need to retrieve the
         # init sys param file from CAR via the telescope model
         if "tm_data_filepath" in init_sys_param_json:
@@ -1127,13 +1130,18 @@ class ControllerComponentManager(CbfComponentManager):
                 init_sys_param_json
             )
             if not passed:
-                return (ResultCode.FAILED, msg)
+                task_callback(
+                    result=(ResultCode.FAILED, msg),
+                    status=TaskStatus.FAILED,
+                )
+                return 
             passed, msg = self._validate_init_sys_param(init_sys_param_json)
             if not passed:
-                return (
-                    ResultCode.FAILED,
-                    msg,
+                task_callback(
+                    result=(ResultCode.FAILED, msg),
+                    status=TaskStatus.FAILED,
                 )
+                return 
             self._source_init_sys_param = params
             self._init_sys_param = json.dumps(init_sys_param_json)
         else:
@@ -1148,17 +1156,19 @@ class ControllerComponentManager(CbfComponentManager):
             self._update_init_sys_param(self._init_sys_param)
         except tango.DevFailed as e:
             self.logger.error(e)
-            return (
-                ResultCode.FAILED,
-                "Failed to update subarrays with init_sys_param",
+            task_callback(
+                result=(ResultCode.FAILED, "Failed to update subarrays with init_sys_param"),
+                status=TaskStatus.FAILED,
             )
+            return 
 
-        self.logger.info("Updated subarrays with init_sys_param")
-
-        return (
-            ResultCode.OK,
-            "CbfController InitSysParam command completed OK",
+        task_callback(
+            result=(ResultCode.OK, "CbfController InitSysParam command completed OK"),
+            status=TaskStatus.COMPLETED,
         )
+        return
+    
+    
 
     @check_communicating
     def init_sys_param(
