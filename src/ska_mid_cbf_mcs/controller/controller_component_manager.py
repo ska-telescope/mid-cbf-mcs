@@ -53,23 +53,19 @@ class ControllerComponentManager(CbfComponentManager):
         *args: Any,
         fqdn_dict: Dict[str, List[str]],
         config_path_dict: Dict[str, str],
-        max_capabilities_dict: Dict[str, int],
+        max_capabilities: Dict[str, int],
         lru_timeout: int,
-        get_num_capabilities: Callable[[None], Dict[str, int]],
         talondx_component_manager: TalonDxComponentManager,
         **kwargs: Any,
     ) -> None:
         """
         Initialise a new instance.
 
-        :param get_num_capabilities: method that returns the controller device's maxCapabilities attribute (a dictionary specifying the number of each capability)
         :param fqdn_dict: dictionary containing FQDNs for the controller's sub-elements
-        :param lru_timeout: Timeout in seconds for Talon LRU device proxies
-        :param talondx_component_manager: component manager for the Talon LRU
-        :param talondx_config_path: path to the directory containing configuration files and artifacts for the Talon boards
-        :param hw_config_path: path to the yaml file containing the hardware configuration
-        :param fs_slim_config_path: path to the yaml file containing the frequency slice SLIM configuration files
-        :param vis_slim_config_path: path to the yaml file containing the visibilities SLIM configuration files
+        :param config_path_dict: dictionary containing paths to configuration files
+        :param max_capabilities: dictionary containing maximum number of sub-elements
+        :param lru_timeout: timeout in seconds for LRU commands
+        :param talondx_component_manager: instance of TalonDxComponentManager
         """
 
         super().__init__(*args, **kwargs)
@@ -84,10 +80,10 @@ class ControllerComponentManager(CbfComponentManager):
             self._fqdn_power_switch,
         ) = ([] for i in range(6))
 
-        # init sub-element count to default
-        self._count_vcc = max_capabilities_dict["VCC"]
-        self._count_fsp = max_capabilities_dict["FSP"]
-        self._count_subarray = max_capabilities_dict["Subarray"]
+        # init sub-element count
+        self._count_vcc = max_capabilities["VCC"]
+        self._count_fsp = max_capabilities["FSP"]
+        self._count_subarray = max_capabilities["Subarray"]
 
         # init sub-element FQDNs to all
         self._subarray_fqdns_all = fqdn_dict["Subarray"]
@@ -107,16 +103,12 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._lru_timeout = lru_timeout
 
-        self._get_max_capabilities = get_num_capabilities
-
         self._init_sys_param = ""
         self._source_init_sys_param = ""
         self.dish_utils = None
 
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
-
-        self._max_capabilities = {}
         self._proxies = {}
 
     # -------------

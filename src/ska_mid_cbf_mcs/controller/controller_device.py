@@ -231,19 +231,6 @@ class CbfController(CbfDevice):
             ),
         )
 
-    def get_num_capabilities(
-        self: CbfController,
-    ) -> None:
-        # self._max_capabilities inherited from SKAController
-        # check first if property exists in DB
-        """Get number of capabilities for _init_Device.
-        If property not found in db, then assign a default amount(197,27,16)"""
-
-        if self._max_capabilities:
-            return self._max_capabilities
-        else:
-            self.logger.warning("MaxCapabilities device property not defined")
-
     def create_component_manager(
         self: CbfController,
     ) -> ControllerComponentManager:
@@ -278,16 +265,10 @@ class CbfController(CbfDevice):
             "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
 
-        max_capabilities_dict = {
-            "VCC": self._count_vcc,
-            "FSP": self._count_fsp,
-            "Subarray": self._count_subarray,
-        }
-
         return ControllerComponentManager(
             fqdn_dict=fqdn_dict,
             config_path_dict=config_path_dict,
-            max_capabilities_dict=max_capabilities_dict,
+            max_capabilities=self._device._max_capabilities,
             lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,
@@ -305,7 +286,6 @@ class CbfController(CbfDevice):
         A class for the CbfController's Init() command.
         """
 
-        # TODO: Refactor + shove all the capabilities into dict.
         def _get_max_capabilities(
             self: CbfController.InitCommand,
         ) -> None:
@@ -313,7 +293,6 @@ class CbfController(CbfDevice):
             Get maximum number of capabilities for _init_Device. If property not found in db, then assign a default amount(197,27,16)
             """
             device = self._device
-            device._max_capabilities = {}
 
             if device.MaxCapabilities:
                 for max_capability in device.MaxCapabilities:
@@ -325,36 +304,34 @@ class CbfController(CbfDevice):
                         max_capability_instances
                     )
 
-            if device._max_capabilities:
                 try:
-                    device._count_vcc = device._max_capabilities["VCC"]
-                except KeyError:  # not found in DB
+                    device._max_capabilities["VCC"]
+                except KeyError:
                     self.logger.warning(
-                        "VCC capabilities not defined; defaulting to 197."
+                        f"VCC capabilities not defined; defaulting to {const.DEFAULT_COUNT_VCC}."
                     )
-                    device._count_vcc = const.DEFAULT_COUNT_VCC
+                    device._max_capabilities["VCC"] = const.DEFAULT_COUNT_VCC
 
                 try:
-                    device._count_fsp = device._max_capabilities["FSP"]
-                except KeyError:  # not found in DB
+                    device._max_capabilities["FSP"]
+                except KeyError:
                     self.logger.warning(
-                        "FSP capabilities not defined; defaulting to 27."
+                        f"FSP capabilities not defined; defaulting to {const.DEFAULT_COUNT_FSP}."
                     )
-                    device._count_fsp = const.DEFAULT_COUNT_FSP
+                    device._max_capabilities["FSP"] = const.DEFAULT_COUNT_FSP
 
                 try:
-                    device._count_subarray = device._max_capabilities[
+                    device._max_capabilities["Subarray"]
+                except KeyError:
+                    self.logger.warning(
+                        f"Subarray capabilities not defined; defaulting to {const.DEFAULT_COUNT_SUBARRAY}."
+                    )
+                    device._max_capabilities[
                         "Subarray"
-                    ]
-                except KeyError:  # not found in DB
-                    self.logger.warning(
-                        "Subarray capabilities not defined; defaulting to 16."
-                    )
-                    device._count_subarray = const.DEFAULT_COUNT_SUBARRAY
+                    ] = const.DEFAULT_COUNT_SUBARRAY
             else:
                 self.logger.warning(
-                    "MaxCapabilities device property not defined - \
-                    using default value"
+                    "MaxCapabilities device property not defined - using default value"
                 )
 
         def do(
@@ -376,11 +353,9 @@ class CbfController(CbfDevice):
             # initialize attribute values
             self._device._command_progress = 0
 
-            # defines self._count_vcc, self._count_fsp, and self._count_subarray
+            # define the maximum number of capabilities
+            self._device._max_capabilities = {}
             self._get_max_capabilities()
-
-            # # initialize attribute values
-            self._device._command_progress = 0
 
             return (result_code, msg)
 
