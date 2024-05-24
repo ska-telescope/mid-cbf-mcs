@@ -17,10 +17,11 @@ import os
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ska_control_model import TaskStatus
 import tango
 import yaml
 from polling2 import TimeoutException, poll
+from ska_control_model import TaskStatus
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -30,7 +31,7 @@ from ska_tango_base.control_model import (
 )
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
-from ska_tango_base.base.component_manager import check_communicating
+
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -50,17 +51,12 @@ class ControllerComponentManager(CbfComponentManager):
     def __init__(
         self: ControllerComponentManager,
         *args: Any,
-
-  
         fqdn_dict: Dict[str, List[str]],
         config_path_dict: Dict[str, str],
         max_capabilities_dict: Dict[str, int],
-
         lru_timeout: int,
         get_num_capabilities: Callable[[None], Dict[str, int]],
         talondx_component_manager: TalonDxComponentManager,
-
-       
         **kwargs: Any,
     ) -> None:
         """
@@ -442,7 +438,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._proxies[fqdn].set_timeout_millis(10000)
         self._proxies[fqdn].command_inout("Configure", slim_config)
 
-    def _configure_slim_devices(self: ControllerComponentManager) -> None | Tuple[ResultCode, str]:
+    def _configure_slim_devices(
+        self: ControllerComponentManager,
+    ) -> None | Tuple[ResultCode, str]:
         try:
             self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
@@ -497,9 +495,7 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug("Entering ControllerComponentManager.on")
 
         task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "On", task_callback, task_abort_event
-        ):
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
         if self.dish_utils is None:
@@ -597,9 +593,6 @@ class ControllerComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_on_allowed,
             task_callback=task_callback,
         )
-
-
-
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
@@ -864,7 +857,7 @@ class ControllerComponentManager(CbfComponentManager):
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
         return True
-     
+
     def _off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
@@ -880,7 +873,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
         self.logger.debug("Entering ControllerComponentManager.off")
 
-        
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "Off", task_callback, task_abort_event
@@ -968,8 +960,6 @@ class ControllerComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )
-
-
 
     def _validate_init_sys_param(
         self: ControllerComponentManager,
@@ -1065,7 +1055,7 @@ class ControllerComponentManager(CbfComponentManager):
                         log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self.logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
-                    
+
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if init_sys_param is allowed")
         return True
@@ -1110,10 +1100,13 @@ class ControllerComponentManager(CbfComponentManager):
         except ValueError as e:
             self.logger.error(e)
             task_callback(
-                result=(ResultCode.FAILED, "Duplicated Dish ID in the init_sys_param json"),
+                result=(
+                    ResultCode.FAILED,
+                    "Duplicated Dish ID in the init_sys_param json",
+                ),
                 status=TaskStatus.FAILED,
             )
-            return 
+            return
 
         passed, msg = self._validate_init_sys_param(init_sys_param_json)
         if not passed:
@@ -1121,8 +1114,8 @@ class ControllerComponentManager(CbfComponentManager):
                 result=(ResultCode.FAILED, msg),
                 status=TaskStatus.FAILED,
             )
-            return 
-        
+            return
+
         # If tm_data_filepath is provided, then we need to retrieve the
         # init sys param file from CAR via the telescope model
         if "tm_data_filepath" in init_sys_param_json:
@@ -1134,14 +1127,14 @@ class ControllerComponentManager(CbfComponentManager):
                     result=(ResultCode.FAILED, msg),
                     status=TaskStatus.FAILED,
                 )
-                return 
+                return
             passed, msg = self._validate_init_sys_param(init_sys_param_json)
             if not passed:
                 task_callback(
                     result=(ResultCode.FAILED, msg),
                     status=TaskStatus.FAILED,
                 )
-                return 
+                return
             self._source_init_sys_param = params
             self._init_sys_param = json.dumps(init_sys_param_json)
         else:
@@ -1157,18 +1150,22 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as e:
             self.logger.error(e)
             task_callback(
-                result=(ResultCode.FAILED, "Failed to update subarrays with init_sys_param"),
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to update subarrays with init_sys_param",
+                ),
                 status=TaskStatus.FAILED,
             )
-            return 
+            return
 
         task_callback(
-            result=(ResultCode.OK, "CbfController InitSysParam command completed OK"),
+            result=(
+                ResultCode.OK,
+                "CbfController InitSysParam command completed OK",
+            ),
             status=TaskStatus.COMPLETED,
         )
         return
-    
-    
 
     @check_communicating
     def init_sys_param(
@@ -1193,4 +1190,3 @@ class ControllerComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_init_sys_param_allowed,
             task_callback=task_callback,
         )
-    

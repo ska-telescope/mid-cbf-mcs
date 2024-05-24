@@ -24,10 +24,10 @@ from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import PowerState, SimulationMode
 from ska_tango_base.utils import convert_dict_to_list
-from ska_mid_cbf_mcs.commons.global_enum import const
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -84,7 +84,7 @@ class CbfController(CbfDevice):
     # General properties
 
     LruTimeout = device_property(dtype=("str"))
-    
+
     MaxCapabilities = device_property(dtype=("str"))
 
     # ----------
@@ -244,7 +244,6 @@ class CbfController(CbfDevice):
         else:
             self.logger.warning("MaxCapabilities device property not defined")
 
-
     def create_component_manager(
         self: CbfController,
     ) -> ControllerComponentManager:
@@ -262,27 +261,27 @@ class CbfController(CbfDevice):
         )
 
         fqdn_dict = {
-            'VCC': self.VCC,
-            'FSP': self.FSP,
-            'CbfSubarray': self.CbfSubarray,
-            'TalonLRU': self.TalonLRU,
-            'TalonBoard': self.TalonBoard,
-            'PowerSwitch': self.PowerSwitch,
-            'FsSLIM': [self.FsSLIM],
-            'VisSLIM': [self.VisSLIM],
+            "VCC": self.VCC,
+            "FSP": self.FSP,
+            "CbfSubarray": self.CbfSubarray,
+            "TalonLRU": self.TalonLRU,
+            "TalonBoard": self.TalonBoard,
+            "PowerSwitch": self.PowerSwitch,
+            "FsSLIM": [self.FsSLIM],
+            "VisSLIM": [self.VisSLIM],
         }
 
-        config_path_dict = { 
-            'TalonDxConfigPath': self.TalonDxConfigPath,
-            'HWConfigPath': self.HWConfigPath,
-            'FsSLIMConfigPath': self.FsSLIMConfigPath,
-            'VisSLIMConfigPath': self.VisSLIMConfigPath,
+        config_path_dict = {
+            "TalonDxConfigPath": self.TalonDxConfigPath,
+            "HWConfigPath": self.HWConfigPath,
+            "FsSLIMConfigPath": self.FsSLIMConfigPath,
+            "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
 
         max_capabilities_dict = {
-            'VCC': self._count_vcc,
-            'FSP': self._count_fsp,
-            'Subarray': self._count_subarray,
+            "VCC": self._count_vcc,
+            "FSP": self._count_fsp,
+            "Subarray": self._count_subarray,
         }
 
         return ControllerComponentManager(
