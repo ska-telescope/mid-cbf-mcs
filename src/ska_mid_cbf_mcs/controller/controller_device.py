@@ -306,7 +306,7 @@ class CbfController(CbfDevice):
         A class for the CbfController's Init() command.
         """
 
-        # TODO: Refactor!
+        # TODO: Refactor + shove all the capabilities into dict.
         def _get_max_capabilities(
             self: CbfController.InitCommand,
         ) -> None:

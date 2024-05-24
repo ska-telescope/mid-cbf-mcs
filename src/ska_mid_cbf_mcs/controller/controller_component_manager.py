@@ -14,8 +14,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from ska_control_model import TaskStatus
 import tango
 import yaml
 from polling2 import TimeoutException, poll
@@ -28,7 +30,7 @@ from ska_tango_base.control_model import (
 )
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
-
+from ska_tango_base.base.component_manager import check_communicating
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -125,35 +127,7 @@ class ControllerComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _set_max_capabilities(self: ControllerComponentManager) -> None:
-        """
-        Set the max capabilities of the controller device
-        """
-        self._max_capabilities = self._get_max_capabilities()
-        if self._max_capabilities:
-            for key, default in [
-                ("VCC", const.DEFAULT_COUNT_VCC),
-                ("FSP", const.DEFAULT_COUNT_FSP),
-                ("Subarray", const.DEFAULT_COUNT_SUBARRAY),
-            ]:
-                try:
-                    setattr(
-                        self,
-                        f"_count_{key.lower()}",
-                        self._max_capabilities[key],
-                    )
-                except KeyError:
-                    self.logger.warning(
-                        f"MaxCapabilities {key} count KeyError - \
-                        using default value of {default}"
-                    )
-                    setattr(self, f"_count_{key.lower()}", default)
-        else:
-            self.logger.warning(
-                "MaxCapabilities device property not defined - \
-                using default values"
-            )
-
+    # TODO: Refactor to use fqdn_dict
     def _set_fqdns(self: ControllerComponentManager) -> None:
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
@@ -363,7 +337,6 @@ class ControllerComponentManager(CbfComponentManager):
         with open(self._hw_config_path) as yaml_fd:
             self._hw_config = yaml.safe_load(yaml_fd)
 
-        self._set_max_capabilities()
         self._set_fqdns()
 
         if not self._create_group_proxies():
@@ -384,7 +357,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().start_communicating()
         self._update_component_state(power=PowerState.OFF)
-        
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """
@@ -397,7 +369,6 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.adminMode = AdminMode.OFFLINE
         self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
-
 
     # ---------------------
     # Long Running Commands
@@ -471,7 +442,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._proxies[fqdn].set_timeout_millis(10000)
         self._proxies[fqdn].command_inout("Configure", slim_config)
 
-    def _configure_slim_devices(self: ControllerComponentManager) -> None:
+    def _configure_slim_devices(self: ControllerComponentManager) -> None | Tuple[ResultCode, str]:
         try:
             self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
@@ -509,9 +480,11 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug("Checking if on is allowed")
         return True
 
-    def on(
+    def _on(
         self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+    ) -> None:
         """
         Turn on the controller and its subordinate devices
 
@@ -523,10 +496,20 @@ class ControllerComponentManager(CbfComponentManager):
 
         self.logger.debug("Entering ControllerComponentManager.on")
 
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "On", task_callback, task_abort_event
+        ):
+            return
+
         if self.dish_utils is None:
-            log_msg = "Dish-VCC mapping has not been provided."
-            self.logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            msg = "Dish-VCC mapping has not been provided."
+            self.logger.error(msg)
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
+            )
+            return
 
         # Power on all the Talon boards if not in SimulationMode
         # TODO: There are two VCCs per LRU. Need to check the number of
@@ -542,18 +525,26 @@ class ControllerComponentManager(CbfComponentManager):
             self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
         # Turn on all the LRUs with the boards we need
-        lru_on_status, log_msg = self._turn_on_lrus()
+        lru_on_status, msg = self._turn_on_lrus()
         if not lru_on_status:
-            return (ResultCode.FAILED, log_msg)
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
+            )
+            return
 
         # Configure all the Talon boards
         if (
             self._talondx_component_manager.configure_talons()
             == ResultCode.FAILED
         ):
-            log_msg = "Failed to configure Talon boards"
-            self.logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            msg = "Failed to configure Talon boards"
+            self.logger.error(msg)
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
+            )
+            return
 
         # Set the Simulation mode of the Subarray to the simulation mode of the controller
         try:
@@ -564,15 +555,51 @@ class ControllerComponentManager(CbfComponentManager):
             self._group_subarray.command_inout("On")
         except tango.DevFailed as df:
             for item in df.args:
-                log_msg = f"Failed to turn on group proxies; {item.reason}"
-                self.logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+                msg = f"Failed to turn on group proxies; {item.reason}"
+                self.logger.error(msg)
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
+            )
+            return
 
         # Configure SLIM Mesh devices
-        self._configure_slim_devices()
+        configure_slim_result = self._configure_slim_devices()
+        if configure_slim_result:
+            task_callback(
+                result=configure_slim_result,
+                status=TaskStatus.FAILED,
+            )
+            return
 
-        message = "On completed OK"
-        return (ResultCode.OK, message)
+        task_callback(
+            result=(ResultCode.OK, "On completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    @check_communicating
+    def on(
+        self: ControllerComponentManager,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[ResultCode, str]:
+        """
+        Submit on operation method to task executor queue.
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._on,
+            is_cmd_allowed=self.is_on_allowed,
+            task_callback=task_callback,
+        )
+
+
+
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
@@ -834,14 +861,15 @@ class ControllerComponentManager(CbfComponentManager):
                 out_status = False
         return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
 
-
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
         return True
      
-    def off(
+    def _off(
         self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+    ) -> None:
         """
         Turn off the controller and its subordinate devices
 
@@ -851,6 +879,13 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self.logger.debug("Entering ControllerComponentManager.off")
+
+        
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Off", task_callback, task_abort_event
+        ):
+            return
 
         (result_code, message) = (ResultCode.OK, [])
 
@@ -907,7 +942,34 @@ class ControllerComponentManager(CbfComponentManager):
 
         if result_code == ResultCode.OK:
             message.append("CbfController Off command completed OK")
-        return (result_code, "; ".join(message))
+
+        task_callback(
+            result=(result_code, "; ".join(message)),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    @check_communicating
+    def off(
+        self: ControllerComponentManager,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[ResultCode, str]:
+        """
+        Submit off operation method to task executor queue.
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._off,
+            is_cmd_allowed=self.is_off_allowed,
+            task_callback=task_callback,
+        )
+
+
 
     def _validate_init_sys_param(
         self: ControllerComponentManager,
@@ -1003,15 +1065,21 @@ class ControllerComponentManager(CbfComponentManager):
                         log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         self.logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
+                    
+    def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
+        self.logger.debug("Checking if init_sys_param is allowed")
+        return True
 
-    def init_sys_param(
+    def _init_sys_param(
         self: ControllerComponentManager,
         params: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
     ) -> Tuple[ResultCode, str]:
         """
         Validate and save the Dish ID - VCC ID mapping and k values.
 
-        :param argin: the Dish ID - VCC ID mapping and k values in a
+        :param params: the Dish ID - VCC ID mapping and k values in a
                         json string.
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -1019,6 +1087,12 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self.logger.debug(f"Received sys params {params}")
+
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "InitSysParam", task_callback, task_abort_event
+        ):
+            return
 
         def raise_on_duplicate_keys(pairs):
             d = {}
@@ -1085,3 +1159,28 @@ class ControllerComponentManager(CbfComponentManager):
             ResultCode.OK,
             "CbfController InitSysParam command completed OK",
         )
+
+    @check_communicating
+    def init_sys_param(
+        self: ControllerComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Submit init_sys_param operation method to task executor queue.
+
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._init_sys_param,
+            args=argin,
+            is_cmd_allowed=self.is_init_sys_param_allowed,
+            task_callback=task_callback,
+        )
+    
