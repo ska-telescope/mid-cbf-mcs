@@ -12,6 +12,7 @@ subsystem: cbfmcs-mid
 telescope: SKA-mid
 engineeringConsoleVersion: 0.10.3
 signalVerificationVersion: 0.2.16
+imageRegistry: "artefact.skao.int"
 
 labels:
   app: ska-mid-cbf-mcs
