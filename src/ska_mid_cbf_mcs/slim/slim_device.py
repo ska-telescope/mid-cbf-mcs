@@ -25,7 +25,7 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from tango import DebugIt
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
@@ -270,9 +270,7 @@ class Slim(CbfDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(Slim.main) ENABLED START #
     return Slim.run_server(args=args or None, **kwargs)
-    # PROTECTED REGION END #    //  Slim.main
 
 
 if __name__ == "__main__":

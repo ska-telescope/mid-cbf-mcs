@@ -40,11 +40,11 @@ def device_under_test_fixture(
     :param test_context: the context in which the tests run
     :return: the device under test
     """
-    return test_context.get_device("mid_csp_cbf/fs_links/001")
+    return test_context.get_device("mid_csp_cbf/talon_board/001")
 
 
 @pytest.fixture(name="change_event_callbacks")
-def slim_link_change_event_callbacks(
+def talon_board_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
@@ -60,75 +60,61 @@ def slim_link_change_event_callbacks(
 
 
 @pytest.fixture()
-def mock_slim_tx() -> unittest.mock.Mock:
+def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("idle_ctrl_word", 123456)
-    builder.add_attribute("read_counters", [6, 7, 8])
-
-    builder.add_command("ping", None)
-    builder.add_command("clear_read_counters", None)
+    builder.add_attribute("version", "0.2.6")
+    builder.add_attribute("bitstream", 0xBEEFBABE)
     return builder()
 
 
 @pytest.fixture()
-def mock_slim_rx() -> unittest.mock.Mock:
+def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("idle_ctrl_word", 0)
-    builder.add_attribute("read_counters", [0, 1, 2, 3, 0, 0])
-    builder.add_attribute("bit_error_rate", 8e-12)
-
-    builder.add_command("ping", None)
-    builder.add_command("initialize_connection", None)
-    builder.add_command("clear_read_counters", None)
     return builder()
 
 
 @pytest.fixture()
-def mock_slim_tx_regenerate() -> unittest.mock.Mock:
+def mock_talon_status() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("idle_ctrl_word", None)
-    builder.add_attribute("read_counters", [6, 7, 8])
-
-    builder.add_command("ping", None)
-    builder.add_command("clear_read_counters", None)
+    builder.add_attribute("iopll_locked_fault", False)
+    builder.add_attribute("fs_iopll_locked_fault", False)
+    builder.add_attribute("comms_iopll_locked_fault", False)
+    builder.add_attribute("system_clk_fault", False)
+    builder.add_attribute("emif_bl_fault", False)
+    builder.add_attribute("emif_br_fault", False)
+    builder.add_attribute("emif_tr_fault", False)
+    builder.add_attribute("e100g_0_pll_fault", False)
+    builder.add_attribute("e100g_1_pll_fault", False)
+    builder.add_attribute("slim_pll_fault", False)
     return builder()
 
 
 @pytest.fixture()
-def mock_slim_rx_unhealthy() -> unittest.mock.Mock:
+def mock_hps_master() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("idle_ctrl_word", 0)
-    builder.add_attribute("read_counters", [0, 1, 2, 3, 4, 5])
-    builder.add_attribute("bit_error_rate", 8e-8)
-
-    builder.add_command("ping", None)
-    builder.add_command("initialize_connection", None)
-    builder.add_command("clear_read_counters", None)
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
-    mock_slim_tx: unittest.mock.Mock,
-    mock_slim_rx: unittest.mock.Mock,
-    mock_slim_tx_regenerate: unittest.mock.Mock,
-    mock_slim_rx_unhealthy: unittest.mock.Mock,
+    mock_talon_sysid: unittest.mock.Mock,
+    mock_ethernet_100g: unittest.mock.Mock,
+    mock_talon_status: unittest.mock.Mock,
+    mock_hps_master: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc_band: a mock VccBand device that is powered off.
-    :param mock_sw: a mock VccSearchWindow that is powered off.
-
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "talon-x/slim-tx-rx/fs-tx0": mock_slim_tx,
-        "talon-x/slim-tx-rx/fs-rx0": mock_slim_rx,
-        "talon-x/slim-tx-rx/fs-tx1": mock_slim_tx_regenerate,
-        "talon-x/slim-tx-rx/fs-rx1": mock_slim_rx_unhealthy,
+        "talondx-001/ska-talondx-sysid-ds/sysid": mock_talon_sysid,
+        "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_0": mock_ethernet_100g,
+        "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_1": mock_ethernet_100g,
+        "talondx-001/ska-talondx-status/status": mock_talon_status,
+        "talondx-001/hpsmaster/hps-1": mock_hps_master,
     }
