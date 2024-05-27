@@ -12,8 +12,8 @@
 from __future__ import annotations
 
 # Standard imports
+import gc
 import os
-import time
 from typing import Iterator
 from unittest.mock import Mock
 
@@ -28,14 +28,15 @@ from ska_mid_cbf_mcs.testing import context
 
 from ... import test_utils
 
+# Disable garbage collection to prevent tests hanging
+gc.disable()
+
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
 
 # SKA imports
-
-CONST_WAIT_TIME = 1
 
 
 class TestSlim:
@@ -163,7 +164,6 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert test_utils.device_online_and_on(device_under_test)
-        time.sleep(CONST_WAIT_TIME)
 
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
@@ -199,7 +199,6 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert test_utils.device_online_and_on(device_under_test)
-        time.sleep(CONST_WAIT_TIME)
 
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
@@ -236,7 +235,6 @@ class TestSlim:
         """
         assert test_utils.device_online_and_on(device_under_test_fail)
 
-        time.sleep(CONST_WAIT_TIME)
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test_fail.Configure(
                 mesh_config.read()

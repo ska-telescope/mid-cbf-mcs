@@ -125,10 +125,10 @@ def initial_mocks(
     mock_talon_board: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
-    Return a dictionary of device proxy mocks to pre-register. 
-    Althought these mocks are not explicitly used in TalonLRU_test.py, 
-    they are required to be pre-registered in the test harness. 
-    TalonLRU device only uses the mock's 3 digit device name 
+    Return a dictionary of device proxy mocks to pre-register.
+    Althought these mocks are not explicitly used in TalonLRU_test.py,
+    they are required to be pre-registered in the test harness.
+    TalonLRU device only uses the mock's 3 digit device name
     to create the device proxy rather then full FQDN.
 
     :param mock_vcc_band: a mock VccBand device that is powered off.

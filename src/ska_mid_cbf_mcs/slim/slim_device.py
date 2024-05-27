@@ -14,11 +14,17 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
+
+import tango
 
 # tango imports
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 from ska_tango_base.control_model import (
     HealthState,
     PowerState,
@@ -123,6 +129,26 @@ class Slim(CbfDevice):
         """
         return self.component_manager.get_bit_error_rate()
 
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: Slim) -> SimulationMode:
+        """
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: Slim, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
+
     # ---------------
     # General methods
     # ---------------
@@ -166,7 +192,10 @@ class Slim(CbfDevice):
 
         self.register_command_object(
             "SlimTest",
-            self.SlimTestCommand(*device_args),
+            self.SlimTestCommand(
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
         )
 
     # --------
@@ -213,28 +242,33 @@ class Slim(CbfDevice):
 
             return (result_code, message)
 
-    class SlimTestCommand(ResponseCommand):
+    class SlimTestCommand(FastCommand):
         """
-        A command to test the mesh of SLIM Tx Rx Links
+        A command to test the mesh of SLIM Links.
         """
+
+        def __init__(
+            self: Slim.SlimTestCommand,
+            *args: any,
+            component_manager: SlimComponentManager,
+            **kwargs: any,
+        ) -> None:
+            self.component_manager = component_manager
+            super().__init__(*args, **kwargs)
 
         def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
-            SLIM Test Command.  Checks the BER and Health Status of the mesh with the already configured links.
+            SLIM Test Command. Checks the BER and health status of the mesh's configured links.
 
             :return: A tuple containing a return code and a string
                 message contaiing a report on the health of the Mesh or error message
                 if exception is caught.
             :rtype: (ResultCode, str)
             """
-            # shorten to cm to help fit the below two function call in one line
-            cm = self.target.component_manager
 
-            # Kicks off SLIM Test
-            result_code, message = cm.slim_test()
-
+            result_code, message = self.component_manager.slim_test()
             return (result_code, message)
-        
+
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -262,10 +296,10 @@ class Slim(CbfDevice):
 
     def is_SlimTest_allowed(self: Slim) -> bool:
         """
-        Determined if SlimTest is allowed
-        (allowed when the Mesh is configured)
+        Determined if SlimTest command is allowed
 
-        Raises CommandError if DevState is not on and/or the Mesh has not been configured
+        :raises: CommandError: if DevState is not on
+        :raises: StateModelError: if the Mesh has not been configured
         :return: if SlimTest is allowed
         :rtype: bool
         """
@@ -274,7 +308,7 @@ class Slim(CbfDevice):
                 return True
             else:
                 raise StateModelError(
-                    "The SLIM must be configured before SlimTest can be called"
+                    "SLIM must be configured before SlimTest can be called"
                 )
         return False
 
@@ -293,30 +327,6 @@ class Slim(CbfDevice):
 
     # None at this time...
     # We currently rely on the SKABaseDevice implemented callbacks.
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: Slim) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: Slim, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
 
 
 # ----------

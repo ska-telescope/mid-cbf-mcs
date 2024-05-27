@@ -149,7 +149,8 @@ class SlimLinkSimulator:
         """
         return 0.5
 
-    def read_counters(self: SlimLinkSimulator) -> list[int]:
+    @property
+    def counters(self: SlimLinkSimulator) -> list[int]:
         """
         An array holding the counter values from the tx and rx devices in the order:
         [0] rx_word_count
@@ -166,6 +167,15 @@ class SlimLinkSimulator:
         :rtype: list[int]
         """
         return self._read_counters
+
+    @property
+    def is_communicating(self: SlimLinkSimulator) -> bool:
+        """
+        Returns whether or not the power switch can be communicated with.
+
+        :return: whether the power switch is communicating
+        """
+        return True
 
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,

@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 # Standard imports
+import gc
 import os
 from typing import Iterator
 from unittest.mock import Mock
@@ -25,14 +26,15 @@ from tango import DevState
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
 from ska_mid_cbf_mcs.testing import context
 
+# Disable garbage collection to prevent tests hanging
+gc.disable()
+
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
 
 # SKA imports
-
-CONST_WAIT_TIME = 1
 
 
 class TestSlimLink:
@@ -280,7 +282,7 @@ class TestSlimLink:
         assert device_under_test.txIdleCtrlWord == 123456
         assert device_under_test.rxIdleCtrlWord == 123456
         assert device_under_test.bitErrorRate == 8e-12
-        counters = device_under_test.read_counters
+        counters = device_under_test.counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
 
@@ -479,7 +481,7 @@ class TestSlimLink:
             rx_device_name=rx_device_name,
             change_event_callbacks=change_event_callbacks,
         )
-        counters = device_under_test.read_counters
+        counters = device_under_test.counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
         result, msg = device_under_test.ClearCounters()

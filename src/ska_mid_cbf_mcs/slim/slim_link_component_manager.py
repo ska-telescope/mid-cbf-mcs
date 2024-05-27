@@ -22,7 +22,6 @@ from ska_tango_base.control_model import (
     SimulationMode,
 )
 from ska_tango_testing import context
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -71,7 +70,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the tx device name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator._tx_device_name
         return self._tx_device_name
 
@@ -96,7 +95,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the rx device name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator._rx_device_name
         return self._rx_device_name
 
@@ -121,7 +120,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the link name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator._link_name
         return self._link_name
 
@@ -135,7 +134,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if the tx device is not set.
         :rtype: int
         """
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.tx_idle_ctrl_word
         if self._tx_device_proxy is None:
             tango.Except.throw_exception(
@@ -155,7 +154,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if the rx device is not set.
         :rtype: int
         """
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_idle_ctrl_word
         if self._rx_device_proxy is None:
             tango.Except.throw_exception(
@@ -175,7 +174,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if the rx device is not set.
         :rtype: float
         """
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.bit_error_rate
 
         if self._rx_device_proxy is None:
@@ -192,7 +191,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> list[bool]:
         """
-        Returns the Debug Alignment and Lock Status flags of the rx HPS device
+        Returns the Debug Alignment and Lock Status flags of the Rx HPS device
         If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, returns an empty list
 
         :return: Debug Alignment and Lock Status flags of the rx HPS Device
@@ -200,22 +199,19 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         res = []
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_debug_alignment_and_lock_status
 
-        # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._rx_device_proxy.debug_alignment_and_lock_status
         except tango.DevFailed as df:
-            self._logger.error(
+            self.logger.error(
                 f"error reading rx_debug_alignment_and_lock_status: {df}"
             )
             return res
@@ -231,22 +227,19 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         res = -1.0
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_link_occupancy
 
-        # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading rx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._rx_device_proxy.link_occupancy
         except tango.DevFailed as df:
-            self._logger.error(f"error reading rx_link_occupancy: {df}")
+            self.logger.error(f"error reading rx_link_occupancy: {df}")
             return res
 
     @property
@@ -260,39 +253,20 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         res = -1.0
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.tx_link_occupancy
 
-        # if the device proxy has not been set
         if self._tx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading tx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._tx_device_proxy.link_occupancy
         except tango.DevFailed as df:
-            self._logger.error(f"error reading tx_link_occupancy: {df}")
+            self.logger.error(f"error reading tx_link_occupancy: {df}")
             return res
-
-    @property
-    def simulation_mode(self):
-        """
-        Get the simulation mode.
-        """
-        return self._simulation_mode
-
-    @simulation_mode.setter
-    def simulation_mode(self, value) -> None:
-        """
-        Set the simulation mode value.
-
-        :param value: The simulation mode.
-        """
-        self._simulation_mode = value
 
     def read_counters(
         self: SlimLinkComponentManager,
@@ -313,7 +287,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if link is not enabled.
         :rtype: list[int]
         """
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.read_counters()
 
         if (
@@ -342,6 +316,18 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[1],
             tx_counts[2],
         ]
+
+    @property
+    def is_communicating(self: SlimLinkComponentManager) -> bool:
+        """
+        Returns whether or not the power switch can be communicated with.
+
+        :return: whether the power switch is communicating
+        """
+        if self.simulation_mode:
+            return self.slim_link_simulator.is_communicating
+        else:
+            return self.communication_state == CommunicationStatus.ESTABLISHED
 
     def start_communicating(self: SlimLinkComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -401,7 +387,13 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def is_connect_slim_tx_rx_allowed(self: SlimLinkComponentManager) -> bool:
         self.logger.debug("Checking if ConnectTxRx is allowed.")
-        return self.communication_state == CommunicationStatus.ESTABLISHED
+
+        if not self.is_communicating:
+            self.logger.warning(
+                f"ConnectSlimTxRx not allowed; CommunicationState is {self.communication_state}"
+            )
+            return False
+        return True
 
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -430,7 +422,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         ):
             return
 
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             self.slim_link_simulator.connect_slim_tx_rx()
         else:
             # Tx and Rx device names must be set to create proxies.
@@ -534,7 +526,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             + self._link_name
         )
 
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.verify_connection()
 
         if (
@@ -587,7 +579,12 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> bool:
         self.logger.debug("Checking if DisconnectTxRx is allowed.")
-        return self.communication_state == CommunicationStatus.ESTABLISHED
+        if not self.is_communicating:
+            self.logger.warning(
+                f"DisconnectSlimTxRx not allowed; CommunicationState is {self.communication_state}"
+            )
+            return False
+        return True
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -617,7 +614,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         ):
             return
 
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             self.slim_link_simulator.disconnect_slim_tx_rx()
         else:
             if self._rx_device_proxy is None:
@@ -704,7 +701,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.clearCounters()  -  "
             + self._link_name
         )
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.clear_counters()
 
         if (

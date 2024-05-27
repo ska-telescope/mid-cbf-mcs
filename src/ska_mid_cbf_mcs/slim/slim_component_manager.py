@@ -18,8 +18,8 @@ from typing import Any, Callable, Optional
 
 import tango
 import yaml
-from ska_control_model import TaskStatus
 from beautifultable import BeautifulTable
+from ska_control_model import TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -46,7 +46,7 @@ class SlimComponentManager(CbfComponentManager):
     def __init__(
         self: SlimComponentManager,
         *args: Any,
-        link_fqdns: List[str],
+        link_fqdns: list[str],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
@@ -59,7 +59,7 @@ class SlimComponentManager(CbfComponentManager):
         super().__init__(*args, **kwargs)
         self.simulation_mode = simulation_mode
 
-        self._mesh_configured = False
+        self.mesh_configured = False
         self._config_str = ""
 
         # a list of [tx_fqdn, rx_fqdn] for active links.
@@ -212,31 +212,16 @@ class SlimComponentManager(CbfComponentManager):
             bers.append(ber)
         return bers
 
-    def get_device_counters(self) -> list[list[int]]:
-        """
-        Returns a list containing the counters array for each link
-
-        :return: the counter array for each SLIM link in the mesh
-        :rtype: List[List[int]]
-        """
-
-        counters = []
-        for idx, txrx in enumerate(self._active_links):
-            counter = self._dp_links[idx].counters
-            counters.append(counter)
-
-        return counters
-
     def _calculate_rx_idle_word_rate(
         self, rx_idle_word_count: int, rx_idle_error_count: int
     ) -> tuple[str, str]:
         """
-        TODO:
-        Calculates and return a string the rate of Rx Idle Error Word Count over Rx Idle Word Count
-        Along with a status that indicates if the Rate passes the Bit Error Rate Threshold
-        Returns a tuple of the rate and the pass/fail BER status
+        Calculates the ratio of Rx idle errors to idle words and a status flag
+        that indicates if the link's error rate exceeds the pass threshold.
 
-        :return: A tuple of (rx_idle_word_error_rate,rx_ber_pass_status)
+        :param: rx_idle_word_count: The number of idle words processed since the counters were last cleared
+        :param: rx_idle_error_count: The number of idle errors encountered since the counters were last cleared
+        :return: A tuple containing the rx_idle_word_error_rate and rx_ber_pass_status
         :rtype: tuple[str,str]
         """
         if rx_idle_word_count == 0:
@@ -252,37 +237,49 @@ class SlimComponentManager(CbfComponentManager):
         return (rx_idle_word_error_rate, rx_ber_pass_status)
 
     def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
-        counters: list[int] = []
+        """
+        Examines various attributes from active SLIM Links and logs the metrics in a summary table.
+
+        :param: counters: TODO:
+        :param: names: TODO:
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: tuple[ResultCode,str]
+        """
+
+        counters: list[list[int]] = []
         names: list[str] = []
         occupancy: list[list[float]]
         debug_flags: list[list[bool]]
         rx_error_rate_and_status: list[tuple[str, str]] = []
 
-        # grab the common values we need for the individual tests
-        # to minimize device proxy access
-        # try block to catch exceptions from devicce proxy access
-
-        for idx, txrx in enumerate(self._active_links):
-            dp_link = self._dp_links[idx]
-            counter = dp_link.counters
-            rx_idle_word_count = counter[2]
-            rx_idle_error_count = counter[3]
-            counters.append(counter)
-            names.append(dp_link.linkName)
-            occupancy.append([dp_link.rx_link_occupancy, dp_link.tx_link_occupancy])
-            debug_flags.append(dp_link.rx_debug_alignment_and_lock_status)
-            rx_error_rate_and_status.append(
-                self._calculate_rx_idle_word_rate(
-                    rx_idle_word_count, rx_idle_error_count
+        try:
+            for idx, txrx in enumerate(self._active_links):
+                dp_link = self._dp_links[idx]
+                counter = dp_link.counters
+                rx_idle_word_count = counter[2]
+                rx_idle_error_count = counter[3]
+                counters.append(counter)
+                names.append(dp_link.linkName)
+                occupancy.append(
+                    [dp_link.rx_link_occupancy, dp_link.tx_link_occupancy]
                 )
-            )
+                debug_flags.append(dp_link.rx_debug_alignment_and_lock_status)
+                rx_error_rate_and_status.append(
+                    self._calculate_rx_idle_word_rate(
+                        rx_idle_word_count, rx_idle_error_count
+                    )
+                )
+        except tango.DevFailed as df:
+            self.logger.error(f"Error reading SlimLink attr: {df}")
 
         # Summary check for SLIM Link Status and Bit Error Rate
         self._slim_links_ber_check_summary(
             counters, names, rx_error_rate_and_status
         )
 
-        # More detail table for the SLIM Link health
+        # More detailed table describing each SLIM Link
         self._slim_table(
             counters, names, occupancy, debug_flags, rx_error_rate_and_status
         )
@@ -291,7 +288,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def _slim_links_ber_check_summary(
         self: SlimComponentManager,
-        all_counters: list[int],
+        counters: list[list[int]],
         names: list[str],
         rx_error_rate_and_status: list[tuple[str]],
     ) -> None:
@@ -299,26 +296,21 @@ class SlimComponentManager(CbfComponentManager):
         Logs a summary status of the SLIM Link health for each device on the Mesh
         Specifically, this will calcualte the bit-error rate for a rx device in the mesh
         and compared to a threshold set in global_enum.py
+
+        :param: counters:
         """
 
         res = "\nSLIM BER Check:\n\n"
         for idx in range(len(self._active_links)):
-            counters = all_counters[idx]
-            # tx rx fqdn link name
-            name = names[idx]
-
-            rx_word_count = counters[0]
-            rx_idle_word_count = counters[2]
-
-            # word error rate: a ratio of rx idle error count compared to the
-            # count of rx idle word transmitted
+            rx_word_count = counters[idx][0]
+            rx_idle_word_count = counters[idx][2]
             (
                 rx_idle_word_error_rate,
                 rx_ber_pass_status,
             ) = rx_error_rate_and_status[idx]
             rx_words = rx_word_count + rx_idle_word_count
 
-            res += f"Link Name: {name}\n"
+            res += f"Link Name: {names[idx]}\n"
             res += f"Slim Link status (rx_status): {rx_ber_pass_status}\n"
             res += f"rx_wer:{rx_idle_word_error_rate}\n"
             res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
@@ -327,7 +319,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def _slim_table(
         self: SlimComponentManager,
-        counters: list[int],
+        counters: list[list[int]],
         names: list[str],
         occupancy: list[float],
         debug_flags: list[bool],
@@ -361,10 +353,14 @@ class SlimComponentManager(CbfComponentManager):
 
             # Making the tx rx name shorter by keeping only the board name and the tx/rx port
             tx_name = (
-                (names[idx].split("->")[0].split("/"))[0] + "/" + (names[idx].split("->")[0].split("/"))[-1]
+                (names[idx].split("->")[0].split("/"))[0]
+                + "/"
+                + (names[idx].split("->")[0].split("/"))[-1]
             )
             rx_name = (
-                (names[idx].split("->")[1].split("/"))[0] + "/" + (names[idx].split("->")[1].split("/"))[-1]
+                (names[idx].split("->")[1].split("/"))[0]
+                + "/"
+                + (names[idx].split("->")[1].split("/"))[-1]
             )
 
             data_row = (
@@ -501,7 +497,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 # TODO: Should replace polling here with a subscription to the link's healthState
                 # poll link health every 20 seconds
-                if self._simulation_mode is False:
+                if self.simulation_mode is False:
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             self.logger.error(
@@ -518,7 +514,7 @@ class SlimComponentManager(CbfComponentManager):
             )
 
         self.logger.info("Successfully initialized SLIM links")
-        self._mesh_configured = True
+        self.mesh_configured = True
         return ResultCode.OK, "_initialize_links completed OK"
 
     def _disconnect_links(self) -> tuple[ResultCode, str]:
@@ -554,7 +550,7 @@ class SlimComponentManager(CbfComponentManager):
             raise df
 
         self.logger.info("Successfully disconnected SLIM links")
-        self._mesh_configured = False
+        self.mesh_configured = False
         return ResultCode.OK, "_disconnect_links completed OK"
 
     # ---------------------
@@ -677,7 +673,7 @@ class SlimComponentManager(CbfComponentManager):
                 dp.simulationMode = self.simulation_mode
                 dp.adminMode = AdminMode.ONLINE
 
-            if self._mesh_configured:
+            if self.mesh_configured:
                 self.logger.debug(
                     "SLIM was previously configured. Disconnecting links before re-initializing."
                 )
