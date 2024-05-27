@@ -36,8 +36,18 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_lru/001")
 
 
-@pytest.fixture(name="power_switch")
-def power_switch_fixture(
+@pytest.fixture(name="power_switch_1")
+def power_switch_1_fixture(
+    test_context: TangoTestHarnessContext,
+) -> unittest.mock.Mock:
+    """
+    Fixture that returns the power switch mock
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/001")
+
+
+@pytest.fixture(name="power_switch_2")
+def power_switch_2_fixture(
     test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
     """
@@ -66,6 +76,9 @@ def lru_change_event_callbacks(
 
 @pytest.fixture()
 def mock_talon_board() -> unittest.mock.Mock:
+    """
+    Fixture that builds the talon board mock
+    """
     builder = MockDeviceBuilder()
     builder.add_attribute("adminMode", None)
     builder.add_command("On", ResultCode.OK)
@@ -74,7 +87,20 @@ def mock_talon_board() -> unittest.mock.Mock:
 
 
 @pytest.fixture(params=["command_success", "command_fail"])
-def mock_power_switch(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+def mock_power_switch_1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+    """
+    Get a mock power switch device. This fixture is parameterized to
+    mock different pass / failure scenarios.
+
+    :param request: the pytest request fixture which holds information about the
+                    parameterization of this fixture
+    :return: a mock PowerSwitch device
+    """
+    return get_mock_power_switch(request.param)
+
+
+@pytest.fixture(params=["command_success", "command_fail"])
+def mock_power_switch_2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
     mock different pass / failure scenarios.
@@ -121,25 +147,22 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_power_switch: unittest.mock.Mock,
+    mock_power_switch_1: unittest.mock.Mock,
+    mock_power_switch_2: unittest.mock.Mock,
     mock_talon_board: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
-    Althought these mocks are not explicitly used in TalonLRU_test.py,
-    they are required to be pre-registered in the test harness.
-    TalonLRU device only uses the mock's 3 digit device name
-    to create the device proxy rather then full FQDN.
 
-    :param mock_vcc_band: a mock VccBand device that is powered off.
-    :param mock_sw: a mock VccSearchWindow that is powered off.
+    :param mock_power_switch_1: a mock power switch device that simulates both successful and failed commands
+    :param mock_power_switch_2: a mock power switch device that simulates both successful and failed commands
+    :param mock_talon_board: a mock talon board
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/talon_board/001": mock_talon_board,
         "mid_csp_cbf/talon_board/002": mock_talon_board,
-        # TODO: power_switch/001 is currently unused in testing, should be used in future to cover missing unit test cases
-        # "mid_csp_cbf/power_switch/001": mock_power_switch,
-        "mid_csp_cbf/power_switch/002": mock_power_switch,
+        "mid_csp_cbf/power_switch/001": mock_power_switch_1,
+        "mid_csp_cbf/power_switch/002": mock_power_switch_2,
     }
