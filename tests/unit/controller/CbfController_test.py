@@ -7,20 +7,26 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
+
 """Contain the tests for the CbfController."""
 
 from __future__ import annotations
 
-# Standard imports
+
+import gc
 import os
 import time
+from unittest.mock import Mock
 
 import pytest
-from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
+from ska_tango_base.commands import ResultCode
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+
+from ska_mid_cbf_mcs.controller.controller_device import CbfController
+from ska_mid_cbf_mcs.testing import context
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))  # Path
@@ -33,6 +39,8 @@ json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 CONST_WAIT_TIME = 4
 
+# To prevent tests hanging during gc.
+gc.disable()
 
 class TestCbfController:
     """
@@ -40,7 +48,7 @@ class TestCbfController:
     """
 
     def test_State(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test State
@@ -52,12 +60,12 @@ class TestCbfController:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -67,7 +75,7 @@ class TestCbfController:
     )
     def test_Commands(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
@@ -118,7 +126,7 @@ class TestCbfController:
     )
     def test_CommandsFail(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
