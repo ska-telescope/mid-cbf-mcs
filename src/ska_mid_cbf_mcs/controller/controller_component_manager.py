@@ -15,7 +15,7 @@ import json
 import logging
 import os
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import tango
 import yaml
@@ -51,9 +51,9 @@ class ControllerComponentManager(CbfComponentManager):
     def __init__(
         self: ControllerComponentManager,
         *args: Any,
-        fqdn_dict: Dict[str, List[str]],
-        config_path_dict: Dict[str, str],
-        max_capabilities: Dict[str, int],
+        fqdn_dict: dict[str, list[str]],
+        config_path_dict: dict[str, str],
+        max_capabilities: dict[str, int],
         lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
         **kwargs: Any,
@@ -121,7 +121,7 @@ class ControllerComponentManager(CbfComponentManager):
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         """
 
-        def _filter_fqdn(all_domains: List[str], config_key: str) -> List[str]:
+        def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
             return [
                 domain
                 for domain in all_domains
@@ -295,6 +295,12 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Init all proxies, return True if all proxies are connected.
         """
+
+        # NOTE: order matters here
+        # - must set PDU online before LRU to establish outlet power states
+        # - must set VCC online after LRU to establish LRU power state
+        # TODO: evaluate ordering and add further comments
+
         for fqdn in (
             self._fqdn_power_switch
             + self._fqdn_talon_lru
@@ -333,10 +339,6 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # NOTE: order matters here
-        # - must set PDU online before LRU to establish outlet power states
-        # - must set VCC online after LRU to establish LRU power state
-        # TODO: evaluate ordering and add further comments
         if not self._init_proxies():
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -362,7 +364,7 @@ class ControllerComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
-    def _get_talon_lru_fqdns(self: ControllerComponentManager) -> List[str]:
+    def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
         # read in list of LRUs from configuration JSON
         with open(
             os.path.join(
@@ -387,7 +389,7 @@ class ControllerComponentManager(CbfComponentManager):
                     fqdn_talon_lru.append(lru_fqdn)
         return fqdn_talon_lru
 
-    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> Tuple[bool, str]:
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> tuple[bool, str]:
         try:
             self.logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.adminMode = AdminMode.OFFLINE
@@ -404,7 +406,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         results = [
             self._lru_on(
                 self._proxies[fqdn],
@@ -432,7 +434,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
-    ) -> None | Tuple[ResultCode, str]:
+    ) -> None | tuple[ResultCode, str]:
         try:
             self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
@@ -468,7 +470,10 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
-        return True
+        if self._component_state["power"] == PowerState.OFF:
+            return True
+        self.logger.warning("Already on, do not need to turn on.")
+        return False
 
     def _on(
         self: ControllerComponentManager,
@@ -588,7 +593,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: CbfDeviceProxy
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
         """
@@ -709,7 +714,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
-    ) -> (bool, List[str]):
+    ) -> (bool, list[str]):
         result = True
         message = []
         try:
@@ -759,7 +764,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _check_subelements_off(
         self: ControllerComponentManager,
-    ) -> (List[str], List[str]):
+    ) -> (list[str], list[str]):
         """
         Verify that the subelements are in DevState.OFF, ObsState.EMPTY/IDLE
         """
@@ -804,7 +809,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         return (op_state_error_list, obs_state_error_list)
 
-    def _lru_off(self, proxy, lru_fqdn) -> Tuple[bool, str]:
+    def _lru_off(self, proxy, lru_fqdn) -> tuple[bool, str]:
         try:
             self.logger.info(f"Turning off LRU {lru_fqdn}")
             proxy.Off()
@@ -817,7 +822,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         if (
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
@@ -848,7 +853,10 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
-        return True
+        if self._component_state["power"] == PowerState.ON:
+            return True
+        self.logger.info("Already off, do not need to turn off.")
+        return False
 
     def _off(
         self: ControllerComponentManager,
@@ -956,7 +964,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,
-    ) -> Tuple:
+    ) -> tuple[bool, str]:
         # Validate init_sys_param against the telescope model
         try:
             telmodel_validate(
@@ -970,7 +978,9 @@ class ControllerComponentManager(CbfComponentManager):
             return (False, msg)
         return (True, msg)
 
-    def _retrieve_sys_param_file(self, init_sys_param_json) -> Tuple:
+    def _retrieve_sys_param_file(
+        self, init_sys_param_json
+    ) -> tuple[bool, str, dict]:
         # The uri was provided in the input string, therefore the mapping from Dish ID to
         # VCC and frequency offset k needs to be retrieved using the Telescope Model
         tm_data_sources = init_sys_param_json["tm_data_sources"][0]
@@ -993,7 +1003,7 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> None:
         # write the init_sys_param to each of the subarrays
         for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_attribute("sysParam", params)
+            self._proxies[fqdn].sysParam = params
 
         # set VCC values
         for fqdn in self._fqdn_vcc:
@@ -1011,7 +1021,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                         f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                     )
-                    self.logger.warning(log_msg)
+                    self.logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
             except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = f"Failure in connection to {fqdn}; {item.reason}"
@@ -1050,7 +1061,12 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if init_sys_param is allowed")
-        return True
+        if self._component_state["power"] == PowerState.OFF:
+            return True
+        self.logger.warning(
+            "InitSysParam command cannot be issued because the curremt PowerState is not 'off'."
+        )
+        return False
 
     def _init_sys_param(
         self: ControllerComponentManager,
@@ -1164,7 +1180,7 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Submit init_sys_param operation method to task executor queue.
 
