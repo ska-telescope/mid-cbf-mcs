@@ -615,6 +615,17 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
+    def fpga_die_voltages(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 7):
+            field = f"voltage-sensors_fpga-die-voltage_{i}"
+            t, val = self._telemetry[field]
+            self._validate_time(field, t)
+            res.append(val)
+        return res
+
     def humidity_sensor_temperature(self) -> float:
         self._throw_if_device_off()
         self._query_if_needed()

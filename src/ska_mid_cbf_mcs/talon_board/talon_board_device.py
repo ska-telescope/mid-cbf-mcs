@@ -259,6 +259,31 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(
+        dtype=(float,),
+        max_dim_x=7,
+        label="FPGA Die Voltages",
+        doc="FPGA Die Voltages",
+    )
+    def FpgaDieVoltages(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: the FPGA die voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltages()
+        return res
+
+    @attribute(
         dtype=float,
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
