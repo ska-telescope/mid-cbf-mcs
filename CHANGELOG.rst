@@ -9,6 +9,12 @@ Latest
 ******
 * MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
          and bumping EC to a version that integrates the new pods.
+
+0.15.0
+******
+* CIP-2335 Migrated SlimTest From Engineering Console to MCS's Slim Device
+* CIP-2396 Fixed Read the Docs Build Issues on MCS
+
 0.14.2
 ******
 * CIP-2418 Fix On command timeout by clearing talons with a script

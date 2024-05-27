@@ -545,9 +545,9 @@ class TestCbfController:
             assert test_proxies.fsp[i].State() == DevState.DISABLE
         for mesh in test_proxies.slim:
             test_proxies.wait_timeout_dev(
-                [mesh], DevState.OFF, wait_time_s, sleep_time_s
+                [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
             )
-            assert mesh.State() == DevState.OFF
+            assert mesh.State() == DevState.DISABLE
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
