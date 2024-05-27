@@ -29,7 +29,7 @@ ska-mid-cbf-engineering-console:
   #   image:
   #     registry: registry.gitlab.com/ska-telescope/ska-mid-cbf-engineering-console
   #     image: ska-mid-cbf-engineering-console
-  #     tag: 0.10.6-dev.c585f1010
+  #     tag: <dev tag from EC pipeline>
   #     pullPolicy: IfNotPresent
 
 ska-taranta:

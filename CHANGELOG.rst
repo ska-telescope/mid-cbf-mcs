@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+Latest
+******
+* MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
+         and bumping EC to a version that integrates the new pods.
 0.14.2
 ******
 * CIP-2418 Fix On command timeout by clearing talons with a script
