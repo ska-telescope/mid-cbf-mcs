@@ -10,7 +10,7 @@ enabled: true
 system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
-engineeringConsoleVersion: 0.10.7
+engineeringConsoleVersion: 0.10.8
 signalVerificationVersion: 0.2.16
 
 labels:
