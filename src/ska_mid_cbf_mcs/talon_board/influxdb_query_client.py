@@ -90,7 +90,7 @@ class InfluxdbQueryClient:
                 self._query_ltm_voltages(client),
                 self._query_ltm_currents(client),
                 self._query_ltm_temperatures(client),
-                self._query_voltages(client),
+                self._query_fpga_die_voltages(client),
             )
         return res
 
@@ -111,11 +111,11 @@ class InfluxdbQueryClient:
         |>last()'
         return await self._query_common(client, query)
 
-    async def _query_voltages(self, client):
+    async def _query_fpga_die_voltages(self, client):
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_.*?in$/)\
+        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_fpga-die-voltage_[0-6]$/)\
         |>last()'
         return await self._query_common(client, query)
 
