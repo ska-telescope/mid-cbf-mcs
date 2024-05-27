@@ -227,11 +227,11 @@ class SlimComponentManager(CbfComponentManager):
 
         return counters
 
-    def _calculate_rx_idle_word_rate_float(
+    def _calculate_rx_idle_word_rate(
         self, rx_idle_word_count: int, rx_idle_error_count: int
     ) -> tuple[str, str]:
         """
-        TODO
+        TODO:
         Calculates and return a string the rate of Rx Idle Error Word Count over Rx Idle Word Count
         Along with a status that indicates if the Rate passes the Bit Error Rate Threshold
         Returns a tuple of the rate and the pass/fail BER status
@@ -254,7 +254,9 @@ class SlimComponentManager(CbfComponentManager):
     def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
         counters: list[int] = []
         names: list[str] = []
-        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]] = []
+        occupancy: list[list[float]]
+        debug_flags: list[list[bool]]
+        rx_error_rate_and_status: list[tuple[str, str]] = []
 
         # grab the common values we need for the individual tests
         # to minimize device proxy access
@@ -267,20 +269,22 @@ class SlimComponentManager(CbfComponentManager):
             rx_idle_error_count = counter[3]
             counters.append(counter)
             names.append(dp_link.linkName)
-            rx_idle_word_error_rate_and_ber_pass_status.append(
-                self._calculate_rx_idle_word_rate_float(
+            occupancy.append([dp_link.rx_link_occupancy, dp_link.tx_link_occupancy])
+            debug_flags.append(dp_link.rx_debug_alignment_and_lock_status)
+            rx_error_rate_and_status.append(
+                self._calculate_rx_idle_word_rate(
                     rx_idle_word_count, rx_idle_error_count
                 )
             )
 
         # Summary check for SLIM Link Status and Bit Error Rate
         self._slim_links_ber_check_summary(
-            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+            counters, names, rx_error_rate_and_status
         )
 
         # More detail table for the SLIM Link health
         self._slim_table(
-            counters, names, rx_idle_word_error_rate_and_ber_pass_status
+            counters, names, occupancy, debug_flags, rx_error_rate_and_status
         )
 
         return (ResultCode.OK, "SLIM Test Completed")
@@ -289,8 +293,8 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         all_counters: list[int],
         names: list[str],
-        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str]],
-    ):
+        rx_error_rate_and_status: list[tuple[str]],
+    ) -> None:
         """
         Logs a summary status of the SLIM Link health for each device on the Mesh
         Specifically, this will calcualte the bit-error rate for a rx device in the mesh
@@ -311,7 +315,7 @@ class SlimComponentManager(CbfComponentManager):
             (
                 rx_idle_word_error_rate,
                 rx_ber_pass_status,
-            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
+            ) = rx_error_rate_and_status[idx]
             rx_words = rx_word_count + rx_idle_word_count
 
             res += f"Link Name: {name}\n"
@@ -319,14 +323,16 @@ class SlimComponentManager(CbfComponentManager):
             res += f"rx_wer:{rx_idle_word_error_rate}\n"
             res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
             res += "\n"
-        self._logger.info(res)
+        self.logger.info(res)
 
     def _slim_table(
         self: SlimComponentManager,
-        all_counters: list[int],
+        counters: list[int],
         names: list[str],
-        rx_idle_word_error_rate_and_ber_pass_status: list[tuple[str, str]],
-    ):
+        occupancy: list[float],
+        debug_flags: list[bool],
+        rx_error_rate_and_status: list[tuple[str, str]],
+    ) -> None:
         """
         Logs a summary for the rx and tx device on the Mesh
         """
@@ -345,63 +351,51 @@ class SlimComponentManager(CbfComponentManager):
         ]
 
         for idx in range(len(self._active_links)):
-            dp_link = self._dp_links[idx]
-            counters = all_counters[idx]
-            # tx rx fqdn link name
-            name = names[idx]
-            (
-                rx_idle_word_error_rate,
-                _,
-            ) = rx_idle_word_error_rate_and_ber_pass_status[idx]
-
-            rx_debug_alignment_and_lock_statuses = (
-                dp_link.rx_debug_alignment_and_lock_status
-            )
-            rx_link_occupancy = dp_link.rx_link_occupancy
-            tx_link_occupancy = dp_link.tx_link_occupancy
-
-            rx_word_count = counters[0]
-            rx_idle_word_count = counters[2]
-            rx_idle_error_count = counters[3]
-            tx_word_count = counters[6]
-            tx_idle_word_count = counters[8]
+            rx_word_count = counters[idx][0]
+            rx_idle_word_count = counters[idx][2]
+            rx_idle_error_count = counters[idx][3]
+            tx_word_count = counters[idx][6]
+            tx_idle_word_count = counters[idx][8]
             tx_words = tx_word_count + tx_idle_word_count
             rx_words = rx_word_count + rx_idle_word_count
 
-            # spliting up the tx rx name from the tx rx fqdn link name
-            tx_name = (name.split("->"))[0]
-            rx_name = (name.split("->"))[1]
-
             # Making the tx rx name shorter by keeping only the board name and the tx/rx port
-            short_name_one = (
-                (tx_name.split("/"))[0] + "/" + (tx_name.split("/"))[-1]
+            tx_name = (
+                (names[idx].split("->")[0].split("/"))[0] + "/" + (names[idx].split("->")[0].split("/"))[-1]
             )
-            short_name_two = (
-                (rx_name.split("/"))[0] + "/" + (rx_name.split("/"))[-1]
+            rx_name = (
+                (names[idx].split("->")[1].split("/"))[0] + "/" + (names[idx].split("->")[1].split("/"))[-1]
             )
 
             data_row = (
-                f"{short_name_one}\n->{short_name_two}",
-                f"{rx_debug_alignment_and_lock_statuses[3]}\n({rx_debug_alignment_and_lock_statuses[2]})",
-                f"{rx_debug_alignment_and_lock_statuses[1]}\n({rx_debug_alignment_and_lock_statuses[0]})",
-                f"{tx_link_occupancy * const.GBPS:.2f}\n({tx_word_count})",
-                # Guard for divide by zero
+                # Name
+                f"{tx_name}\n->{rx_name}",
+                # CDR locked/lost
+                f"{debug_flags[3]}\n({debug_flags[2]})",
+                # Block locked/lost
+                f"{debug_flags[1]}\n({debug_flags[0]})",
+                # Tx data
+                f"{occupancy[idx][1] * const.GBPS:.2f}\n({tx_word_count})",
+                # Tx idle - Guard for divide by zero
                 f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
                 if tx_words != 0
                 else "NaN",
-                f"{rx_link_occupancy * const.GBPS:.2f}\n({rx_word_count})",
-                # Guard for divide by zero
+                # Rx data
+                f"{occupancy[idx][0] * const.GBPS:.2f}\n({rx_word_count})",
+                # Rx idle - Guard for divide by zero
                 f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
                 if rx_words != 0
                 else "NaN",
+                # Idle error count
                 f"{rx_idle_error_count} /\n{rx_words:.2e}",
-                rx_idle_word_error_rate,
+                # Word error rate
+                rx_error_rate_and_status[idx][0],
             )
             table.rows.append(data_row)
 
-        self._logger.info(f"\nSLIM Health Summary Table\n{table}")
+        self.logger.info(f"\nSLIM Health Summary Table\n{table}")
 
-    def _parse_link(self, link: str):
+    def _parse_link(self, link: str) -> list[str]:
         """
         Each link is in the format of "tx_fqdn -> rx_fqdn". If the
         link is disabled, then the text ends with [x].
@@ -569,14 +563,19 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_off_allowed(self) -> bool:
         self.logger.debug("Checking if Off is allowed.")
-        return self.power_state == PowerState.ON
+        if self.power_state != PowerState.ON:
+            self.logger.warning(
+                f"Off not allowed; PowerState is {self.power_state}"
+            )
+            return False
+        return True
 
     def _off(
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
 
@@ -626,7 +625,7 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._off,
@@ -636,7 +635,12 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_configure_allowed(self) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
-        return self.communication_state == CommunicationStatus.ESTABLISHED
+        if self.communication_state != CommunicationStatus.ESTABLISHED:
+            self.logger.warning(
+                f"Configure not allowed; CommunicationStatus is {self.communication_state}"
+            )
+            return False
+        return True
 
     def _configure(
         self: SlimComponentManager,
@@ -738,7 +742,7 @@ class SlimComponentManager(CbfComponentManager):
         config_str: str,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._configure,

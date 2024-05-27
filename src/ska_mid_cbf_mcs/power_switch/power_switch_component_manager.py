@@ -249,7 +249,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         if (self.communication_state != CommunicationStatus.ESTABLISHED
         ) or not self.is_communicating:
             self.logger.warning(
-                f"On not allowed; CommunicationStatus is {self.communication_state}"
+                f"On not allowed; CommunicationStatus is {self.communication_state}; PowerSwitch driver is {"" if self.is_communicating else "not "}communicating"
             )
             return False
         return True            
@@ -339,9 +339,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def is_turn_off_outlet_allowed(self) -> bool:
         self.logger.debug("Checking if TurnOffOutlet is allowed.")
-        return (
-            self.communication_state == CommunicationStatus.ESTABLISHED
-        ) and self.is_communicating
+        if (self.communication_state != CommunicationStatus.ESTABLISHED
+        ) or not self.is_communicating:
+            self.logger.warning(
+                f"Off not allowed; CommunicationStatus is {self.communication_state}; PowerSwitch driver is {"" if self.is_communicating else "not "}communicating"
+            )
+            return False
+        return True
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
