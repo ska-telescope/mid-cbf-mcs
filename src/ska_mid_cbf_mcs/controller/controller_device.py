@@ -14,21 +14,19 @@ CbfController
 Sub-element controller device for Mid.CBf
 """
 
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations  # Allows forward references in type hints
 
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import tango
 from ska_tango_base import SKAController
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-from ska_tango_base.control_model import PowerState, SimulationMode
+from ska_tango_base.control_model import SimulationMode
 from ska_tango_base.utils import convert_dict_to_list
-from tango import AttrWriteType, DebugIt, DevState
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
 )
@@ -219,7 +217,7 @@ class CbfController(CbfDevice):
         """
         Sets up the command objects
         """
-        super(SKAController, self).init_command_objects()
+        super(CbfDevice, self).init_command_objects()
         self.register_command_object(
             "InitSysParam",
             SubmittedSlowCommand(
@@ -268,7 +266,7 @@ class CbfController(CbfDevice):
         return ControllerComponentManager(
             fqdn_dict=fqdn_dict,
             config_path_dict=config_path_dict,
-            max_capabilities=self._device._max_capabilities,
+            max_capabilities=self._max_capabilities,
             lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,
@@ -286,13 +284,17 @@ class CbfController(CbfDevice):
         A class for the CbfController's Init() command.
         """
 
-        def _get_max_capabilities(
-            self: CbfController.InitCommand,
-        ) -> None:
+        def _get_max_capabilities(self: CbfController.InitCommand) -> None:
             """
-            Get maximum number of capabilities for _init_Device. If property not found in db, then assign a default amount(197,27,16)
+            Get maximum number of capabilities for _init_Device. If property not found in db, then assign a default amount
             """
             device = self._device
+            capabilities = ["VCC", "FSP", "Subarray"]
+            default_values = {
+                "VCC": const.DEFAULT_COUNT_VCC,
+                "FSP": const.DEFAULT_COUNT_FSP,
+                "Subarray": const.DEFAULT_COUNT_SUBARRAY,
+            }
 
             if device.MaxCapabilities:
                 for max_capability in device.MaxCapabilities:
@@ -304,32 +306,16 @@ class CbfController(CbfDevice):
                         max_capability_instances
                     )
 
-                try:
-                    device._max_capabilities["VCC"]
-                except KeyError:
-                    self.logger.warning(
-                        f"VCC capabilities not defined; defaulting to {const.DEFAULT_COUNT_VCC}."
-                    )
-                    device._max_capabilities["VCC"] = const.DEFAULT_COUNT_VCC
-
-                try:
-                    device._max_capabilities["FSP"]
-                except KeyError:
-                    self.logger.warning(
-                        f"FSP capabilities not defined; defaulting to {const.DEFAULT_COUNT_FSP}."
-                    )
-                    device._max_capabilities["FSP"] = const.DEFAULT_COUNT_FSP
-
-                try:
-                    device._max_capabilities["Subarray"]
-                except KeyError:
-                    self.logger.warning(
-                        f"Subarray capabilities not defined; defaulting to {const.DEFAULT_COUNT_SUBARRAY}."
-                    )
-                    device._max_capabilities[
-                        "Subarray"
-                    ] = const.DEFAULT_COUNT_SUBARRAY
+                for capability in capabilities:
+                    if capability not in device._max_capabilities:
+                        self.logger.warning(
+                            f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
+                        )
+                        device._max_capabilities[capability] = default_values[
+                            capability
+                        ]
             else:
+                device._max_capabilities = default_values
                 self.logger.warning(
                     "MaxCapabilities device property not defined - using default value"
                 )

@@ -12,18 +12,16 @@
 
 from __future__ import annotations
 
-
 import gc
 import os
 import time
 from unittest.mock import Mock
 
 import pytest
-from ska_tango_base.control_model import AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
-
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
 from ska_mid_cbf_mcs.testing import context
@@ -41,6 +39,7 @@ CONST_WAIT_TIME = 4
 
 # To prevent tests hanging during gc.
 gc.disable()
+
 
 class TestCbfController:
     """

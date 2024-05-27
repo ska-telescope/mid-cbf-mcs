@@ -30,7 +30,6 @@ from ska_mid_cbf_mcs.controller.controller_device import CbfController
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-
 from ska_mid_cbf_mcs.testing.tango_harness import (
     DeviceToLoadType,
     TangoHarness,
