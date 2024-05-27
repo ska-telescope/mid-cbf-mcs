@@ -986,8 +986,12 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ---------------------
 
     def is_on_allowed(self: TalonBoardComponentManager) -> bool:
-        self.logger.debug("Checking if On is allowed.")
-        return self.power_state == PowerState.OFF
+        if self.power_state != PowerState.OFF:
+            self.logger.warning(
+                f"On not allowed; PowerState is {self.power_state}"
+            )
+            return False
+        return True
 
     def _on(
         self: TalonBoardComponentManager,
