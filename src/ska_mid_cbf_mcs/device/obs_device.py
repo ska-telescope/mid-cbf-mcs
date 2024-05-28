@@ -19,7 +19,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, cast
 
-from ska_control_model import ObsState, ObsStateModel, PowerState, ResultCode
+from ska_control_model import (
+    ObsState,
+    ObsStateModel,
+    PowerState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
@@ -370,6 +376,26 @@ class CbfObsDevice(SKAObsDevice):
         """
         return self._command_statuses
 
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: CbfObsDevice) -> SimulationMode:
+        """
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: CbfObsDevice, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.debug(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
+
     # ----------
     # Callbacks
     # ----------
@@ -505,13 +531,15 @@ class CbfObsDevice(SKAObsDevice):
             """
             (result_code, msg) = super().do(*args, **kwargs)
 
+            # Set initial simulation mode to True
+            self._device._simulation_mode = SimulationMode.TRUE
+
             self._device._obs_state = ObsState.IDLE
             self._device._commanded_obs_state = ObsState.IDLE
 
             # JSON string, deliberately left in Tango layer
             self._device._last_scan_configuration = ""
 
-            self._completed()
             return (result_code, msg)
 
     @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"

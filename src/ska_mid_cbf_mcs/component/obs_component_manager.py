@@ -50,44 +50,8 @@ class CbfObsComponentManager(CbfComponentManager):
 
         self.obs_state = ObsState.IDLE
 
-        self._config_id = None
-        self._scan_id = None
-
-    @property
-    def config_id(self: CbfObsComponentManager) -> str:
-        """
-        Configuration ID
-
-        :return: the configuration ID
-        """
-        return self._config_id
-
-    @config_id.setter
-    def config_id(self: CbfObsComponentManager, config_id: str) -> None:
-        """
-        Set the configuration ID.
-
-        :param config_id: Configuration ID
-        """
-        self._config_id = config_id
-
-    @property
-    def scan_id(self: CbfObsComponentManager) -> int:
-        """
-        Scan ID
-
-        :return: the scan ID
-        """
-        return self._scan_id
-
-    @scan_id.setter
-    def scan_id(self: CbfObsComponentManager, scan_id: int) -> None:
-        """
-        Set the scan ID.
-
-        :param scan_id: Scan ID
-        """
-        self._scan_id = scan_id
+        self.config_id = None
+        self.scan_id = None
 
     # ---------------
     # Command methods

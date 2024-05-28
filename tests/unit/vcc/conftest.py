@@ -13,7 +13,7 @@ import unittest
 
 import pytest
 import tango
-from ska_tango_base.control_model import PowerState
+from ska_control_model import PowerState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
@@ -43,7 +43,6 @@ def vcc_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
         "frequencyBand",
         "obsState",
     ]

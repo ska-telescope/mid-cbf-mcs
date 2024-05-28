@@ -25,7 +25,7 @@ import json
 from typing import List
 
 import tango
-from ska_tango_base.control_model import ObsState
+from ska_control_model import ObsState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 

@@ -19,6 +19,7 @@ from ska_control_model import (
     HealthState,
     PowerState,
     ResultCode,
+    SimulationMode,
     TaskStatus,
 )
 from ska_tango_base.executor.executor_component_manager import (
@@ -56,6 +57,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_change_callback: Callable[[str, Any], None] | None = None,
         attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
         """
@@ -73,6 +75,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             an attribute archive event needs to be pushed from the component manager
         :param health_state_callback: callback to be called when the
             HealthState of the component changes
+        :param simulation_mode: simulation mode identifies if the real component
+            or a simulator should be monitored and controlled; defaults to
+            SimulationMode.TRUE
         """
 
         super().__init__(*args, max_queue_size=MAX_QUEUED_COMMANDS, **kwargs)
@@ -91,6 +96,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
+
+        # NOTE: using component manager default of SimulationMode.TRUE,
+        # as self._simulation_mode at this point during init_device()
+        # SimulationMode.FALSE
+        self.simulation_mode = simulation_mode
 
     def task_abort_event_is_set(
         self: CbfComponentManager,
@@ -151,6 +161,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
+        self._update_component_state(power=PowerState.UNKNOWN)
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
