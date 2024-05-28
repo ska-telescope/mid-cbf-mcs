@@ -81,6 +81,8 @@ class STSwitchedPRO2Driver:
         # to the request to turn on/off an outlet
         self.state_on = "On"
         self.state_off = "Off"
+        # self.state_on = "True"
+        # self.state_off = "False"
 
         # valid range AA1 to AA48
         self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
@@ -158,6 +160,8 @@ class STSwitchedPRO2Driver:
 
         url = self.outlet_state_url.replace("REPLACE_OUTLET", outlet)
         outlet_idx = self.outlet_id_list.index(outlet)
+        #outlet_idx = 1
+        self.logger.error(f'Outlet index =  {outlet_idx}')
 
         try:
             response = requests.get(
@@ -171,18 +175,28 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
+                self.logger.error("Enter IF")
                 try:
+                    self.logger.error("Enter Try")
                     resp = response.json()
-                    state = str(resp["state"])
+                    self.logger.error(resp)
+                    # Added this outlet_idx index but seems like DLI Pro does not use it. How does that work?
+                    state = str(resp[outlet_idx]["state"])
+                    # On = 4, Off = 2, Unknown = 0
+
 
                     if state == self.state_on:
+                        self.logger.error("Power state ON")
                         power_state = PowerState.ON
                     elif state == self.state_off:
+                        self.logger.error("Power state OFF")
                         power_state = PowerState.OFF
                     else:
+                        self.logger.error("Power state Unknown")
                         power_state = PowerState.UNKNOWN
 
                 except IndexError:
+                    self.logger.error("INDEX ERROR")
                     power_state = PowerState.UNKNOWN
 
                 if power_state != self.outlets[outlet_idx].power_state:
@@ -272,6 +286,8 @@ class STSwitchedPRO2Driver:
         data = self.turn_off_action
         outlet_idx = self.outlet_id_list.index(outlet)
 
+        self.logger.error(outlet)
+
         try:
             response = requests.patch(
                 url=url,
@@ -286,6 +302,7 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
+                self.logger.error("Power State Off")
                 self.outlets[outlet_idx].power_state = PowerState.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:

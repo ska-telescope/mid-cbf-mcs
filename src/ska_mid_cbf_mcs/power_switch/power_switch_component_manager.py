@@ -203,11 +203,14 @@ class PowerSwitchComponentManager(CbfComponentManager):
         result_code: ResultCode,
         message: str,
     ) -> bool:
+        self.logger.error("CHECKING POWER STATE")
         if result_code != ResultCode.OK:
+            self.logger.error("ResultCode not OK")
             return False, message
 
         power_state = self.get_outlet_power_state(outlet)
-        self.logger.debug(f"Outlet {outlet} = {power_state}")
+        self.logger.error("Got outlet power state")
+        self.logger.error(f"Outlet {outlet} = {power_state}")
         if mode == "on":
             if power_state == PowerState.ON:
                 return True, "TurnOnOutlet completed OK"
@@ -356,7 +359,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        self.logger.debug(
+        self.logger.error(
             f"Entering PowerSwitch.TurnOffOutlet()  -  Outlet={outlet}"
         )
 
@@ -364,16 +367,19 @@ class PowerSwitchComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set(
             "TurnOffOutlet", task_callback, task_abort_event
         ):
+            self.logger.error("Abort")
             return
-
+        self.logger.error("Check mode")
         if self.simulation_mode:
             self.power_switch_simulator.turn_off_outlet(outlet)
+            self.logger.error("Sim mode")
         else:
             try:
                 (
                     result_code,
                     message,
                 ) = self.power_switch_driver.turn_off_outlet(outlet)
+                self.logger.error("Try attempt")
                 powered_off, message = self.check_power_state(
                     "off", outlet, result_code, message
                 )
@@ -382,8 +388,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         status=TaskStatus.FAILED,
                         result=(ResultCode.FAILED, message),
                     )
+                    self.logger.error("NOT POWERED OFF RETURN")
                     return
             except AssertionError as e:
+                self.logger.info("Assertion error")
                 self.logger.error(e)
                 task_callback(
                     exception=e,
@@ -393,7 +401,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         "TurnOffOutlet FAILED",
                     ),
                 )
+                self.logger.error("Returning complete status")
                 return
+        self.logger.error("Task Callback")
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(result_code, "TurnOffOutlet completed OK"),
