@@ -120,7 +120,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         """
-
         def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
             return [
                 domain
@@ -260,6 +259,9 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         fqdn: str,
     ) -> bool:
+        """
+        Initialize the device proxy, given the FQDN of the device
+        """
         if fqdn not in self._proxies:
             try:
                 self.logger.debug(f"Trying connection to {fqdn}")
@@ -365,6 +367,11 @@ class ControllerComponentManager(CbfComponentManager):
     # ---------------------
 
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
+        """
+        Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON
+
+        :return: List of FQDNs of the Talon LRUs
+        """
         # read in list of LRUs from configuration JSON
         with open(
             os.path.join(
@@ -389,7 +396,20 @@ class ControllerComponentManager(CbfComponentManager):
                     fqdn_talon_lru.append(lru_fqdn)
         return fqdn_talon_lru
 
-    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> tuple[bool, str]:
+    def _lru_on(
+        self: ControllerComponentManager, 
+        proxy: CbfDeviceProxy,
+        sim_mode: SimulationMode, 
+        lru_fqdn: str,
+    ) -> tuple[bool, str]:
+        """
+        Turn on the LRU with the given FQDN
+
+        :param proxy: Device proxy of the LRU
+        :param sim_mode: Simulation Mode of the controller
+        :param lru_fqdn: FQDN of the LRU to turn on
+        :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRU that failed to turn on
+        """
         try:
             self.logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.adminMode = AdminMode.OFFLINE
@@ -407,6 +427,11 @@ class ControllerComponentManager(CbfComponentManager):
     def _turn_on_lrus(
         self: ControllerComponentManager,
     ) -> tuple[bool, str]:
+        """
+        Turn on all of the Talon LRUs
+
+        :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
+        """
         results = [
             self._lru_on(
                 self._proxies[fqdn],
@@ -427,6 +452,12 @@ class ControllerComponentManager(CbfComponentManager):
     def _send_configure_slim_device(
         self: ControllerComponentManager, fqdn: str, config_path: str
     ) -> None:
+        """
+        Send the configuration file to the SLIM device
+
+        :param fqdn: FQDN of the SLIM device
+        :param config_path: File path to the configuration file
+        """
         with open(config_path) as f:
             slim_config = f.read()
         self._proxies[fqdn].set_timeout_millis(10000)
@@ -435,6 +466,12 @@ class ControllerComponentManager(CbfComponentManager):
     def _configure_slim_devices(
         self: ControllerComponentManager,
     ) -> None | tuple[ResultCode, str]:
+        """
+        Configure the SLIM devices
+
+        :return: Either None if the configuration is successful, or a tuple containing a return code 
+                 and a string message indicating status if the configuration fails
+        """
         try:
             self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
