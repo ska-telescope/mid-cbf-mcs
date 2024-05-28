@@ -248,51 +248,51 @@ class TestFsp:
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    # @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
-    # def test_RemoveSubarrayMembership(
-    #     self: TestFsp,
-    #     change_event_callbacks: MockTangoEventCallbackGroup,
-    #     device_under_test: context.DeviceProxy,
-    #     sub_ids: list[int],
-    # ) -> None:
-    #     """
-    #     Test removing subarray membership
+    @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
+    def test_RemoveSubarrayMembership(
+        self: TestFsp,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        sub_ids: list[int],
+    ) -> None:
+        """
+        Test removing subarray membership
 
-    #     :param change_event_callbacks: fixture that provides a
-    #         :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-    #         pertinent attributes
-    #     :param device_under_test: fixture that provides a proxy to the device
-    #         under test, in a :py:class:`context.DeviceProxy`
-    #     :param sub_ids: list of subarray IDs to remove
-    #     """
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param sub_ids: list of subarray IDs to remove
+        """
 
-    #     # set device ONLINE, ON, function mode to CORR and add subarray membership
-    #     self.test_AddSubarrayMembership(
-    #         change_event_callbacks, device_under_test, sub_ids
-    #     )
+        # set device ONLINE, ON, function mode to CORR and add subarray membership
+        self.test_AddSubarrayMembership(
+            change_event_callbacks, device_under_test, sub_ids
+        )
 
-    #     # test invalid subarray ID
-    #     assert device_under_test.RemoveSubarrayMembership(0) == [
-    #         [ResultCode.FAILED],
-    #         ["FSP does not belong to subarray 0"],
-    #     ]
+        # test invalid subarray ID
+        assert device_under_test.RemoveSubarrayMembership(0) == [
+            [ResultCode.FAILED],
+            ["FSP does not belong to subarray 0"],
+        ]
 
-    #     # test valid subarray IDs, assert subarrayMembership attribute updated
-    #     sub_ids_remaining = sub_ids.copy()
-    #     for sub_id in sub_ids:
-    #         sub_ids_remaining.pop(0)
-    #         result = device_under_test.RemoveSubarrayMembership(sub_id)
-    #         assert result == [
-    #             [ResultCode.OK],
-    #             ["RemoveSubarrayMembership completed OK"],
-    #         ]
+        # test valid subarray IDs, assert subarrayMembership attribute updated
+        sub_ids_remaining = sub_ids.copy()
+        for sub_id in sub_ids:
+            sub_ids_remaining.pop(0)
+            result = device_under_test.RemoveSubarrayMembership(sub_id)
+            assert result == [
+                [ResultCode.OK],
+                ["RemoveSubarrayMembership completed OK"],
+            ]
 
-    #         change_event_callbacks["subarrayMembership"].assert_change_event(
-    #             sub_ids_remaining
-    #         )
+            change_event_callbacks["subarrayMembership"].assert_change_event(
+                sub_ids_remaining
+            )
 
-    #     # assert if any captured events have gone unaddressed
-    #     change_event_callbacks.assert_not_called()
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "delay_model_file_name, \
