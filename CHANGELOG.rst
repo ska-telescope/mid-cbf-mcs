@@ -5,7 +5,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
-Latest
+0.15.1
 ******
 * MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
          and bumping EC to a version that integrates the new pods.
