@@ -16,7 +16,7 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # Allows forward references in type hints
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import tango
 from ska_tango_base import SKAController
@@ -83,7 +83,7 @@ class CbfController(CbfDevice):
 
     LruTimeout = device_property(dtype=("str"))
 
-    MaxCapabilities = device_property(dtype=("str"))
+    MaxCapabilities = device_property(dtype=("str",))
 
     # ----------
     # Attributes
@@ -135,11 +135,11 @@ class CbfController(CbfDevice):
         return self.component_manager._source_init_sys_param
 
     @attribute(
-        dtype="DevVarLongStringArray",
+        dtype=(str,),
         label="Dish ID to VCC mapping",
         doc="Dish ID to VCC mapping. The string is in the format 'dishID:vccID'.",
     )
-    def dishToVcc(self: CbfController) -> List[str]:
+    def dishToVcc(self: CbfController) -> list[str]:
         """
         Return dishToVcc attribute: 'dishID:vccID'
         """
@@ -152,11 +152,11 @@ class CbfController(CbfDevice):
         return out_str
 
     @attribute(
-        dtype="DevVarLongStringArray",
+        dtype=(str,),
         label="VCC to Dish mapping",
         doc="VCC to Dish mapping. The string is in the format 'vccID:dishID'.",
     )
-    def vccToDish(self: CbfController) -> List[str]:
+    def vccToDish(self: CbfController) -> list[str]:
         """
         Return dishToVcc attribute: 'vccID:dishID'
         """
@@ -169,7 +169,7 @@ class CbfController(CbfDevice):
         return out_str
 
     @attribute(
-        dtype="DevVarLongStringArray",
+        dtype=(str,),
         max_dim_x=20,
         doc=(
             "Maximum number of instances of each capability type,"
@@ -229,6 +229,46 @@ class CbfController(CbfDevice):
             ),
         )
 
+    def _get_max_capabilities(self: CbfController) -> dict[str, int]:
+        """
+        Get maximum number of capabilities. If property not found in db, then assign a default amount
+
+        :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
+        """
+        capabilities = ["VCC", "FSP", "Subarray"]
+        default_values = {
+            "VCC": const.DEFAULT_COUNT_VCC,
+            "FSP": const.DEFAULT_COUNT_FSP,
+            "Subarray": const.DEFAULT_COUNT_SUBARRAY,
+        }
+        max_capabilities = {}
+
+        if self.MaxCapabilities:
+            for max_capability in self.MaxCapabilities:
+                (
+                    capability_type,
+                    max_capability_instances,
+                ) = max_capability.split(":")
+                max_capabilities[capability_type] = int(
+                    max_capability_instances
+                )
+
+            for capability in capabilities:
+                if capability not in max_capabilities:
+                    self.logger.warning(
+                        f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
+                    )
+                    max_capabilities[capability] = default_values[
+                        capability
+                    ]
+        else:
+            max_capabilities = default_values
+            self.logger.warning(
+                "MaxCapabilities device property not defined - using default value"
+            )
+
+        return max_capabilities
+
     def create_component_manager(
         self: CbfController,
     ) -> ControllerComponentManager:
@@ -262,6 +302,10 @@ class CbfController(CbfDevice):
             "FsSLIMConfigPath": self.FsSLIMConfigPath,
             "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
+        
+        # innit _max_capabilities variable needed for the component manager
+        self._max_capabilities = self._get_max_capabilities()
+       
 
         return ControllerComponentManager(
             fqdn_dict=fqdn_dict,
@@ -279,52 +323,15 @@ class CbfController(CbfDevice):
     # Commands
     # --------
 
-    class InitCommand(SKAController.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the CbfController's Init() command.
         """
-
-        def _get_max_capabilities(self: CbfController.InitCommand) -> None:
-            """
-            Get maximum number of capabilities for _init_Device. If property not found in db, then assign a default amount
-            """
-            device = self._device
-            capabilities = ["VCC", "FSP", "Subarray"]
-            default_values = {
-                "VCC": const.DEFAULT_COUNT_VCC,
-                "FSP": const.DEFAULT_COUNT_FSP,
-                "Subarray": const.DEFAULT_COUNT_SUBARRAY,
-            }
-
-            if device.MaxCapabilities:
-                for max_capability in device.MaxCapabilities:
-                    (
-                        capability_type,
-                        max_capability_instances,
-                    ) = max_capability.split(":")
-                    device._max_capabilities[capability_type] = int(
-                        max_capability_instances
-                    )
-
-                for capability in capabilities:
-                    if capability not in device._max_capabilities:
-                        self.logger.warning(
-                            f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
-                        )
-                        device._max_capabilities[capability] = default_values[
-                            capability
-                        ]
-            else:
-                device._max_capabilities = default_values
-                self.logger.warning(
-                    "MaxCapabilities device property not defined - using default value"
-                )
-
         def do(
             self: CbfController.InitCommand,
             *args: Any,
             **kwargs: Any,
-        ) -> Tuple[ResultCode, str]:
+        ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
             :return: A tuple containing a return code and a string
@@ -335,13 +342,7 @@ class CbfController(CbfDevice):
             (result_code, msg) = super().do(*args, **kwargs)
 
             self._device._simulation_mode = SimulationMode.TRUE
-
-            # initialize attribute values
             self._device._command_progress = 0
-
-            # define the maximum number of capabilities
-            self._device._max_capabilities = {}
-            self._get_max_capabilities()
 
             return (result_code, msg)
 
@@ -400,7 +401,7 @@ class CbfController(CbfDevice):
         dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
         doc_in="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+        doc_out="tuple containing a return code and a string message indicating the status of the command.",
     )
     def InitSysParam(
         self: CbfController, argin: str

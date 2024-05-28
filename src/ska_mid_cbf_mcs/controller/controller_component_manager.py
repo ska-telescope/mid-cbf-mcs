@@ -86,20 +86,20 @@ class ControllerComponentManager(CbfComponentManager):
         self._count_subarray = max_capabilities["Subarray"]
 
         # init sub-element FQDNs to all
-        self._subarray_fqdns_all = fqdn_dict["Subarray"]
+        self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]
         self._fsp_fqdns_all = fqdn_dict["FSP"]
         self._talon_lru_fqdns_all = fqdn_dict["TalonLRU"]
         self._talon_board_fqdns_all = fqdn_dict["TalonBoard"]
         self._power_switch_fqdns_all = fqdn_dict["PowerSwitch"]
-        self._fs_slim_fqdn = fqdn_dict["FSSlim"][0]
-        self._vis_slim_fqdn = fqdn_dict["VISSlim"][0]
+        self._fs_slim_fqdn = fqdn_dict["FsSLIM"][0]
+        self._vis_slim_fqdn = fqdn_dict["VisSLIM"][0]
 
         # init config paths
         self._talondx_config_path = config_path_dict["TalonDxConfigPath"]
         self._hw_config_path = config_path_dict["HWConfigPath"]
-        self._fs_slim_config_path = config_path_dict["FSSlimConfigPath"]
-        self._vis_slim_config_path = config_path_dict["VISSlimConfigPath"]
+        self._fs_slim_config_path = config_path_dict["FsSLIMConfigPath"]
+        self._vis_slim_config_path = config_path_dict["VisSLIMConfigPath"]
 
         self._lru_timeout = lru_timeout
 
