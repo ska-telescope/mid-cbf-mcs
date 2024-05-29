@@ -21,23 +21,21 @@ import pytest_mock
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, PowerState
+from ska_tango_base.control_model import AdminMode, HealthState
+from ska_tango_testing import context
+from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.controller.controller_device import CbfController
-
-# Local imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DeviceToLoadType,
-    TangoHarness,
-)
+
+from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")
-def device_under_test_fixture(tango_harness: TangoHarness) -> CbfDeviceProxy:
+def device_under_test_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
 
@@ -45,26 +43,24 @@ def device_under_test_fixture(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
+    return test_context.get_device("mid_csp_cbf/cbf_controller/001")
 
 
-@pytest.fixture(name="device_to_load")
-def device_to_load_fixture(
-    patched_controller_device_class: Type[CbfController],
-) -> DeviceToLoadType:
-    """
-    Fixture that specifies the device to be loaded for testing.
-
-    :return: specification of the device to be loaded
-    """
-    return {
-        "path": "tests/unit/controller/devicetoload.json",
-        "package": "ska_mid_cbf_mcs.controller.controller_device",
-        "device": "controller",
-        "device_class": "CbfController",
-        "proxy": CbfDeviceProxy,
-        "patch": patched_controller_device_class,
-    }
+@pytest.fixture(name="change_event_callbacks")
+def lru_change_event_callbacks(
+    device_under_test: context.DeviceProxy,
+) -> MockTangoEventCallbackGroup:
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "longRunningCommandProgress",
+    ]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list
+    )
+    test_utils.change_event_subscriber(
+        device_under_test, change_event_attr_list, change_event_callbacks
+    )
+    return change_event_callbacks
 
 
 @pytest.fixture
@@ -75,6 +71,30 @@ def unique_id() -> str:
     :return: a unique ID
     """
     return "a unique id"
+
+
+@pytest.fixture()
+def mock_vcc_group() -> unittest.mock.Mock:
+    builder = MockGroupBuilder()
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
+    return builder()
+
+
+@pytest.fixture()
+def mock_fsp_group() -> unittest.mock.Mock:
+    builder = MockGroupBuilder()
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
+    return builder()
+
+
+@pytest.fixture()
+def mock_subarray_group() -> unittest.mock.Mock:
+    builder = MockGroupBuilder()
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
+    return builder()
 
 
 @pytest.fixture()
@@ -90,14 +110,6 @@ def mock_vcc() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_vcc_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
@@ -106,14 +118,6 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
     return builder()
 
 
@@ -138,14 +142,6 @@ def mock_subarray() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
@@ -153,6 +149,27 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
+def mock_talon_board() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_property(
+        "TalonDxBoardAddress", {"TalonDxBoardAddress": ["192.168.6.2"]}
+    )
+    return builder()
+
+
+@pytest.fixture()
+def mock_power_switch() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     return builder()
 
 
@@ -169,25 +186,21 @@ def mock_slim_mesh() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def initial_mocks(
+def initial_device_mocks(
     mock_vcc: unittest.mock.Mock,
-    mock_vcc_group: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
-    mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
-    mock_subarray_group: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
+    mock_talon_board: unittest.mock.Mock,
+    mock_power_switch: unittest.mock.Mock,
     mock_slim_mesh: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_vcc_group: a mock Vcc tango.Group.
     :param mock_fsp: a mock Fsp that is powered off.
-    :param mock_fsp_group: a mock Fsp tango.Group.
     :param mock_subarray: a mock CbfSubarray that is powered off.
-    :param mock_subarray_group: a mock CbfSubarray tango.Group.
     :param mock_talon_lru: a mock TalonLRU that is powered off.
     :param mock_slim_mesh: a mock SLIM Mesh that is powered off.
 
@@ -213,9 +226,37 @@ def initial_mocks(
         "mid_csp_cbf/talon_lru/002": mock_talon_lru,
         "mid_csp_cbf/talon_lru/003": mock_talon_lru,
         "mid_csp_cbf/talon_lru/004": mock_talon_lru,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
+        "mid_csp_cbf/talon_board/003": mock_talon_board,
+        "mid_csp_cbf/talon_board/004": mock_talon_board,
+        "mid_csp_cbf/talon_board/005": mock_talon_board,
+        "mid_csp_cbf/talon_board/006": mock_talon_board,
+        "mid_csp_cbf/talon_board/007": mock_talon_board,
+        "mid_csp_cbf/talon_board/008": mock_talon_board,
+        "mid_csp_cbf/power_switch/001": mock_talon_lru,
+        "mid_csp_cbf/power_switch/002": mock_talon_lru,
+        "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
+        "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
+    }
+
+
+@pytest.fixture()
+def initial_group_mocks(
+    mock_vcc_group: unittest.mock.Mock,
+    mock_fsp_group: unittest.mock.Mock,
+    mock_subarray_group: unittest.mock.Mock,
+) -> Dict[str, unittest.mock.Mock]:
+    """
+    Return a dictionary of group mocks to pre-register.
+
+    :param mock_vcc_group: a mock Vcc group.
+    :param mock_fsp_group: a mock Fsp group.
+    :param mock_subarray_group: a mock CbfSubarray group.
+    :return: a dictionary of group mocks to pre-register.
+    """
+    return {
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,
-        "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
-        "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
     }

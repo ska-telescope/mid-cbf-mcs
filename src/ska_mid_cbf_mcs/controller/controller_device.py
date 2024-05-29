@@ -258,9 +258,7 @@ class CbfController(CbfDevice):
                     self.logger.warning(
                         f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
                     )
-                    max_capabilities[capability] = default_values[
-                        capability
-                    ]
+                    max_capabilities[capability] = default_values[capability]
         else:
             max_capabilities = default_values
             self.logger.warning(
@@ -302,10 +300,9 @@ class CbfController(CbfDevice):
             "FsSLIMConfigPath": self.FsSLIMConfigPath,
             "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
-        
+
         # innit _max_capabilities variable needed for the component manager
         self._max_capabilities = self._get_max_capabilities()
-       
 
         return ControllerComponentManager(
             fqdn_dict=fqdn_dict,
@@ -327,6 +324,7 @@ class CbfController(CbfDevice):
         """
         A class for the CbfController's Init() command.
         """
+
         def do(
             self: CbfController.InitCommand,
             *args: Any,

@@ -29,6 +29,7 @@ from ska_tango_base.control_model import (
     PowerState,
     SimulationMode,
 )
+from ska_tango_testing import context
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
 
@@ -41,7 +42,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.controller.talondx_component_manager import (
     TalonDxComponentManager,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 
@@ -120,6 +120,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         """
+
         def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
             return [
                 domain
@@ -193,7 +194,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _write_hw_config(
         self: ControllerComponentManager,
         fqdn: str,
-        proxy: CbfDeviceProxy,
+        proxy: context.DeviceProxy,
         device_type: str,
     ) -> bool:
         """
@@ -265,7 +266,7 @@ class ControllerComponentManager(CbfComponentManager):
         if fqdn not in self._proxies:
             try:
                 self.logger.debug(f"Trying connection to {fqdn}")
-                proxy = CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                proxy = context.DeviceProxy(device_name=fqdn)
             except tango.DevFailed as df:
                 for item in df.args:
                     self.logger.error(
@@ -397,9 +398,9 @@ class ControllerComponentManager(CbfComponentManager):
         return fqdn_talon_lru
 
     def _lru_on(
-        self: ControllerComponentManager, 
-        proxy: CbfDeviceProxy,
-        sim_mode: SimulationMode, 
+        self: ControllerComponentManager,
+        proxy: context.DeviceProxy,
+        sim_mode: SimulationMode,
         lru_fqdn: str,
     ) -> tuple[bool, str]:
         """
@@ -469,7 +470,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Configure the SLIM devices
 
-        :return: Either None if the configuration is successful, or a tuple containing a return code 
+        :return: Either None if the configuration is successful, or a tuple containing a return code
                  and a string message indicating status if the configuration fails
         """
         try:
@@ -629,7 +630,7 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
     def _subarray_to_empty(
-        self: ControllerComponentManager, subarray: CbfDeviceProxy
+        self: ControllerComponentManager, subarray: context.DeviceProxy
     ) -> tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
@@ -751,7 +752,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
-    ) -> (bool, list[str]):
+    ) -> tuple[bool, list[str]]:
         result = True
         message = []
         try:
@@ -801,7 +802,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _check_subelements_off(
         self: ControllerComponentManager,
-    ) -> (list[str], list[str]):
+    ) -> tuple[list[str], list[str]]:
         """
         Verify that the subelements are in DevState.OFF, ObsState.EMPTY/IDLE
         """
