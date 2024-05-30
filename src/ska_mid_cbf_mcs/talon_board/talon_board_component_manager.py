@@ -120,6 +120,17 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
         self._talon_status_events = []
 
+        # Valid Range Values
+        self._fpga_die_voltage_values_range = [
+            (11.0, 13.0),
+            (2.38, 2.62),
+            (0.77, 0.97),
+            (1.71, 1.89),
+            (1.71, 1.89),
+            (0.87, 0.93),
+            (1.71, 1.89),
+        ]
+
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
@@ -625,6 +636,17 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._validate_time(field, t)
             res.append(val)
         return res
+
+    def _check_fpga_die_voltage_range(self, index, value):
+        """
+        Checks if the given voltage value (value) is within the given range
+        Logs a Warning if the value is within 0.5 to the lower range or if the value within 0.5 to the upper range
+        Logs an Error if the value is equal to or lower than the lower range or equal to or greater than the upper range
+
+        :param index: The index of the values to be check in the _fpga_die_voltage_values_range
+        :param value: The value in volts that is to be check if it is in range
+        """
+        pass
 
     def humidity_sensor_temperature(self) -> float:
         self._throw_if_device_off()

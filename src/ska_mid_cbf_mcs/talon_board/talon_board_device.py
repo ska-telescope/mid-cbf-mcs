@@ -262,7 +262,12 @@ class TalonBoard(SKABaseDevice):
         dtype=(float,),
         max_dim_x=7,
         label="FPGA Die Voltages",
-        doc="FPGA Die Voltages",
+        doc="Readings from FPGA Die Voltages Sensors on TalonDX",
+        unit="V",
+        min_warning=[11.5, 2.88, 1.27, 2.21, 2.21, 1.37, 2.21],
+        max_warning=[12.5, 2.12, 0.47, 1.39, 1.39, 0.43, 1.39],
+        min_alarm=[11.0, 2.38, 0.77, 1.71, 1.71, 0.87, 1.71],
+        max_alarm=[13, 2.62, 0.97, 1.89, 1.89, 0.93, 1.89],
     )
     def FpgaDieVoltages(self: TalonBoard) -> list[float]:
         """
@@ -278,7 +283,7 @@ class TalonBoard(SKABaseDevice):
         All values in the spectrum are scaled according the the give ration
         All values are in Volts (V)
 
-        :return: the FPGA die voltages in Volts(V)
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
         """
         res = self.component_manager.fpga_die_voltages()
         return res
@@ -701,6 +706,16 @@ class TalonBoard(SKABaseDevice):
         """
         self.vccID_ = value
         # PROTECTED REGION END #    //  TalonBoard.vccID_write
+
+    def write_FpgaDieVoltages(self: TalonBoard, value: list[float]):
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltages = value
 
     # ---------------
     # General methods
