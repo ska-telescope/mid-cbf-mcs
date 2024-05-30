@@ -257,7 +257,7 @@ class TalonBoard(SKABaseDevice):
         """
         res = self.component_manager.fpga_die_temperature()
         return res
-    
+
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 0",
