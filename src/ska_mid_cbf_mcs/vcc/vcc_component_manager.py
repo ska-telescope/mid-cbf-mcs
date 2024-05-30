@@ -25,9 +25,9 @@ from ska_control_model import (
     CommunicationStatus,
     ObsState,
     PowerState,
+    ResultCode,
     TaskStatus,
 )
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict

@@ -135,7 +135,7 @@ class CbfObsComponentManager(CbfComponentManager):
 
     def _scan(
         self: CbfComponentManager,
-        argin: str,
+        argin: int,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
         **kwargs,

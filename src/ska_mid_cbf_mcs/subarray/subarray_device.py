@@ -13,73 +13,186 @@ from __future__ import annotations
 
 import copy
 import json
-from typing import List, Optional, Tuple
 
-# tango imported to enable use of @tango.DebugIt. If
-# DebugIt is imported using "from tango import DebugIt"
-# then docs will not generate
 import tango
-
-# Tango imports
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
+from ska_control_model import ObsStateModel, ResultCode
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_telmodel.schema import validate as telmodel_validate
-from tango import AttrWriteType
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-
-# SKA imports
+from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
 )
 
-# Additional import
-# PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
-
-
-# PROTECTED REGION END #    //  CbfSubarray.additionnal_import
-
 __all__ = ["CbfSubarray", "main"]
 
 
-class CbfSubarray(CspSubElementSubarray):
+class CbfSubarray(CbfObsDevice):
     """
     CBFSubarray TANGO device class for the CBFSubarray prototype
     """
 
-    # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
+    # -----------------
+    # Device Properties
+    # -----------------
+
+    CbfControllerAddress = device_property(
+        dtype="str",
+        doc="FQDN of CBF CController",
+        default_value="mid_csp_cbf/sub_elt/controller",
+    )
+
+    SW1Address = device_property(dtype="str")
+
+    SW2Address = device_property(dtype="str")
+
+    VCC = device_property(dtype=("str",))
+
+    FSP = device_property(dtype=("str",))
+
+    FspCorrSubarray = device_property(dtype=("str",))
+
+    TalonBoard = device_property(dtype=("str",))
+
+    # ----------
+    # Attributes
+    # ----------
+
+    @attribute(
+        dtype="DevEnum",
+        label="Frequency band",
+        doc="Frequency band; an int in the range [0, 5]",
+        enum_labels=["1", "2", "3", "4", "5a", "5b"],
+    )
+    def frequencyBand(self: CbfSubarray) -> int:
+        """
+        Return frequency band assigned to this subarray.
+        One of ["1", "2", "3", "4", "5a", "5b", ]
+
+        :return: the frequency band
+        :rtype: int
+        """
+        return self.component_manager.frequency_band
+
+    @attribute(
+        dtype=("str",),
+        max_dim_x=197,
+        label="receptors",
+        doc="list of DISH/receptor string IDs assigned to subarray",
+    )
+    def receptors(self: CbfSubarray) -> list[str]:
+        """
+        Return list of receptors assigned to subarray
+
+        :return: the list of receptor IDs
+        :rtype: list[str]
+        """
+        return self.component_manager.dish_ids
+
+    @attribute(
+        dtype=("int",),
+        max_dim_x=197,
+        label="VCCs",
+        doc="list of VCC integer IDs assigned to subarray",
+    )
+    def read_assignedVCCs(self: CbfSubarray) -> list[int]:
+        """
+        Return list of VCCs assigned to subarray
+
+        :return: the list of VCC IDs
+        :rtype: list[int]
+        """
+        return self.component_manager.vcc_ids
+
+    @attribute(
+        dtype=("int",),
+        max_dim_x=197,
+        label="Frequency offset (k)",
+        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
+    )
+    def frequencyOffsetK(self: CbfSubarray) -> list[int]:
+        """
+        Return frequencyOffsetK attribute
+
+        :return: array of integers reporting frequencyOffsetK of receptors in subarray
+        :rtype: list[int]
+        """
+        return self.component_manager.frequency_offset_k
+
+    @frequencyOffsetK.write
+    def frequencyOffsetK(self: CbfSubarray, value: list[int]) -> None:
+        """
+        Set frequencyOffsetK attribute
+
+        :param value: list of frequencyOffsetK values
+        """
+        self.component_manager.frequency_offset_k = value
+
+    @attribute(
+        dtype="str",
+        label="sys_param",
+        doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
+    )
+    def sysParam(self: CbfSubarray) -> str:
+        """
+        Return the sys param string in json format
+
+        :return: the sys param string in json format
+        :rtype: str
+        """
+        return self.component_manager._sys_param_str
+
+    @sysParam.write
+    def sysParam(self: CbfSubarray, value: str) -> None:
+        """
+        Set the sys param string in json format
+        Should not be used by components external to Mid.CBF.
+        To set the system parameters, refer to the CbfController Tango Commands:
+        https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/lmc_mcs_interface.html#cbfcontroller-tango-commands or the CbfController api docs at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/api/CbfController/index.html
+
+        :param value: the sys param string in json format
+        """
+        self.component_manager.update_sys_param(value)
+
+    # ---------------
+    # General methods
+    # ---------------
+
+    def _init_state_model(self: CbfSubarray) -> None:
+        """Set up the state model for the device."""
+        super(CbfObsDevice, self)._init_state_model()
+
+        # subarray instantiates full observing state model
+        self.obs_state_model = ObsStateModel(
+            logger=self.logger,
+            callback=self._update_obs_state,
+        )
+
     def init_command_objects(self: CbfSubarray) -> None:
         """
         Sets up the command objects. Register the new Commands here.
         """
         super().init_command_objects()
 
-        device_args = (
-            self.component_manager,
-            self.op_state_model,
-            self.obs_state_model,
-            self.logger,
-        )
-
-        self.register_command_object(
-            "AddReceptors", self.AddReceptorsCommand(*device_args)
-        )
-        self.register_command_object(
-            "RemoveReceptors", self.RemoveReceptorsCommand(*device_args)
-        )
-        self.register_command_object(
-            "RemoveAllReceptors", self.RemoveAllReceptorsCommand(*device_args)
-        )
-
-    # PROTECTED REGION END #    //  CbfSubarray.class_variable
-
-    # ----------
-    # Helper functions
-    # ----------
+        for command_name, method_name in [
+            ("AddReceptors", "assign_vcc"),
+            ("RemoveReceptors", "release_vcc"),
+            ("RemoveAllReceptors", "release_all_vcc"),
+        ]:
+            self.register_command_object(
+                command_name,
+                SubmittedSlowCommand(
+                    command_name=command_name,
+                    command_tracker=self._command_tracker,
+                    component_manager=self.component_manager,
+                    method_name=method_name,
+                    logger=self.logger,
+                ),
+            )
 
     # Used by commands that needs resource manager in CspSubElementSubarray
     # base class (for example AddReceptors command).
@@ -96,120 +209,6 @@ class CbfSubarray(CspSubElementSubarray):
         """
         return len(self.component_manager.dish_ids)
 
-    # -----------------
-    # Device Properties
-    # -----------------
-
-    SubID = device_property(dtype="uint16")
-
-    CbfControllerAddress = device_property(
-        dtype="str",
-        doc="FQDN of CBF CController",
-        default_value="mid_csp_cbf/sub_elt/controller",
-    )
-
-    PssConfigAddress = device_property(dtype="str")
-
-    PstConfigAddress = device_property(dtype="str")
-
-    SW1Address = device_property(dtype="str")
-
-    SW2Address = device_property(dtype="str")
-
-    VCC = device_property(dtype=("str",))
-
-    FSP = device_property(dtype=("str",))
-
-    FspCorrSubarray = device_property(dtype=("str",))
-
-    FspPssSubarray = device_property(dtype=("str",))
-
-    FspPstSubarray = device_property(dtype=("str",))
-
-    TalonBoard = device_property(dtype=("str",))
-
-    # ----------
-    # Attributes
-    # ----------
-
-    frequencyBand = attribute(
-        dtype="DevEnum",
-        access=AttrWriteType.READ,
-        label="Frequency band",
-        doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=["1", "2", "3", "4", "5a", "5b"],
-    )
-
-    receptors = attribute(
-        dtype=("str",),
-        access=AttrWriteType.READ,
-        max_dim_x=197,
-        label="receptors",
-        doc="List of DISH/receptor string IDs assigned to subarray",
-    )
-
-    assignedVCCs = attribute(
-        dtype=("int",),
-        access=AttrWriteType.READ,
-        max_dim_x=197,
-        label="VCCs",
-        doc="List of VCC integer IDs assigned to subarray",
-    )
-
-    frequencyOffsetK = attribute(
-        dtype=("int",),
-        access=AttrWriteType.READ_WRITE,
-        max_dim_x=197,
-        label="Frequency offset (k)",
-        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
-    )
-
-    sysParam = attribute(
-        dtype="str",
-        access=AttrWriteType.READ_WRITE,
-        label="sys_param",
-        doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
-    )
-
-    simulationMode = attribute(
-        dtype=SimulationMode,
-        access=AttrWriteType.READ_WRITE,
-        label="Simulation Mode",
-        doc="Simulation Mode",
-    )
-
-    # ---------------
-    # General methods
-    # ---------------
-
-    class InitCommand(CspSubElementSubarray.InitCommand):
-        """
-        A class for the CbfSubarray's init_device() "command".
-        """
-
-        def do(self: CbfSubarray.InitCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-            Initialize the attributes and the properties of the CbfSubarray.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-
-            """
-            # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
-            (result_code, message) = super().do()
-
-            device = self.target
-
-            # TODO remove when upgrading base class from 0.11.3
-            device.set_change_event("healthState", True, True)
-
-            device.write_simulationMode(True)
-
-            return (result_code, message)
-
     def create_component_manager(
         self: CbfSubarray,
     ) -> CbfSubarrayComponentManager:
@@ -218,255 +217,64 @@ class CbfSubarray(CspSubElementSubarray):
 
         :return: a subarray component manager
         """
-        self.logger.info("Entering CbfSubarray.create_component_manager()")
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
-
-        self._simulation_mode = SimulationMode.TRUE
+        self.logger.debug("Entering CbfSubarray.create_component_manager()")
 
         return CbfSubarrayComponentManager(
-            subarray_id=int(self.SubID),
+            subarray_id=int(self.DeviceID),
             controller=self.CbfControllerAddress,
             vcc=self.VCC,
             fsp=self.FSP,
             fsp_corr_sub=self.FspCorrSubarray,
-            fsp_pss_sub=self.FspPssSubarray,
-            fsp_pst_sub=self.FspPstSubarray,
             talon_board=self.TalonBoard,
             logger=self.logger,
-            simulation_mode=self._simulation_mode,
-            push_change_event_callback=self.push_change_event,
-            component_resourced_callback=self._component_resourced,
-            component_configured_callback=self._component_configured,
-            component_scanning_callback=self._component_scanning,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
-            component_obs_fault_callback=self._component_obsfault,
+            attr_change_callback=self.push_change_event,
+            attr_archive_callback=self.push_archive_event,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            obs_command_running_callback=self._obs_command_running,
+            component_state_callback=self._component_state_changed,
         )
-
-    def always_executed_hook(self: CbfSubarray) -> None:
-        # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
-        """methods always executed before any TANGO command is executed"""
-        # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
-
-    def delete_device(self: CbfSubarray) -> None:
-        # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        """Hook to delete device."""
-        # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ---------
     # Callbacks
     # ---------
 
-    def _component_resourced(self: CbfSubarray, resourced: bool) -> None:
-        """
-        Handle notification that the component has started or stopped resourcing.
-
-        This is callback hook.
-
-        :param configured: whether this component is configured
-        :type configured: bool
-        """
-        if resourced:
-            self.obs_state_model.perform_action("component_resourced")
-        else:
-            self.obs_state_model.perform_action("component_unresourced")
-
-    def _component_configured(self: CbfSubarray, configured: bool) -> None:
-        """
-        Handle notification that the component has started or stopped configuring.
-
-        This is callback hook.
-
-        :param configured: whether this component is configured
-        :type configured: bool
-        """
-        if configured:
-            self.obs_state_model.perform_action("component_configured")
-        else:
-            self.obs_state_model.perform_action("component_unconfigured")
-
-    def _component_scanning(self: CbfSubarray, scanning: bool) -> None:
-        """
-        Handle notification that the component has started or stopped scanning.
-
-        This is a callback hook.
-
-        :param scanning: whether this component is scanning
-        :type scanning: bool
-        """
-        self.logger.debug(f"_component_scanning({scanning})")
-        if scanning:
-            self.obs_state_model.perform_action("component_scanning")
-        else:
-            self.obs_state_model.perform_action("component_not_scanning")
-
-    def _communication_status_changed(
-        self: CbfSubarray, communication_status: CommunicationStatus
-    ) -> None:
-        """
-        Handle change in communications status between component manager and component.
-
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
-        """
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-        elif (
-            communication_status == CommunicationStatus.ESTABLISHED
-            and self._component_power_mode is not None
-        ):
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
-
-    def _component_power_mode_changed(
-        self: CbfSubarray, power_mode: PowerMode
-    ) -> None:
-        """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
-        """
-        self._component_power_mode = power_mode
-
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
-            }
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: CbfSubarray, faulty: bool) -> None:
-        """
-        Handle component fault
-        """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
-        else:
-            self.set_status("The device has recovered from FAULT state.")
-
-    def _component_obsfault(self: CbfSubarray, faulty: bool) -> None:
-        """
-        Handle notification that the component has obsfaulted.
-
-        This is a callback hook.
-        """
-        self.component_manager.obs_faulty = faulty
-        if faulty:
-            self.obs_state_model.perform_action("component_obsfault")
-            self.set_status("The device is in FAULT state")
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
-        """
-        Set the Simulation Mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulation mode of {value}")
-        super().write_simulationMode(value)
-        self.component_manager._simulation_mode = value
-
-    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
-        self.logger.info(
-            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
-        )
-        return self.component_manager._simulation_mode
-
-    def read_frequencyBand(self: CbfSubarray) -> int:
-        # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
-        """
-        Return frequency band assigned to this subarray.
-        One of ["1", "2", "3", "4", "5a", "5b", ]
-
-        :return: the frequency band
-        :rtype: int
-        """
-        return self.component_manager.frequency_band
-        # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
-
-    def read_receptors(self: CbfSubarray) -> List[str]:
-        # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
-        """
-        Return list of receptors assigned to subarray
-
-        :return: the list of receptor IDs
-        :rtype: List[str]
-        """
-        return self.component_manager.dish_ids
-        # PROTECTED REGION END #    //  CbfSubarray.receptors_read
-
-    def read_assignedVCCs(self: CbfSubarray) -> List[int]:
-        # PROTECTED REGION ID(CbfSubarray.assignedVCCs_read) ENABLED START #
-        """
-        Return list of VCCs assigned to subarray
-
-        :return: the list of VCC IDs
-        :rtype: List[int]
-        """
-        return self.component_manager.vcc_ids
-        # PROTECTED REGION END #    //  CbfSubarray.assignedVCCs_read
-
-    def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
-        # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #
-        """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
-        return self.component_manager.frequency_offset_k
-        # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetK_read
-
-    def write_frequencyOffsetK(self: CbfSubarray, value: List[int]) -> None:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
-        """Set frequencyOffsetK attribute"""
-        self.component_manager.frequency_offset_k = value
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
-
-    def read_sysParam(self: CbfSubarray) -> str:
-        # PROTECTED REGION ID(CbfSubarray.sysParam_read) ENABLED START #
-        """
-        Return the sys param string in json format
-
-        :return: the sys param string in json format
-        :rtype: str
-        """
-        return self.component_manager._sys_param_str
-        # PROTECTED REGION END #    //  CbfSubarray.sysParam_read
-
-    def write_sysParam(self: CbfSubarray, value: str) -> None:
-        # PROTECTED REGION ID(CbfSubarray.sysParam_write) ENABLED START #
-        """
-        Set the sys param string in json format
-        Should not be used by components external to Mid.CBF.
-        To set the system parameters, refer to the CbfController Tango Commands at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/lmc_mcs_interface.html#cbfcontroller-tango-commands or the CbfController api docs at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/api/CbfController/index.html
-
-        :param value: the sys param string in json format
-        """
-        self.component_manager.update_sys_param(value)
-        # PROTECTED REGION END #    //  CbfSubarray.sysParam_write
+    # None at this time
 
     # --------
     # Commands
     # --------
 
-    #  Receptor Related Commands  #
+    #  Resourcing Commands  #
+
+    @command(
+        dtype_in="DevString",
+        doc_in="List of DISH (receptor) IDs",
+        dtype_out="DevVarLongStringArray",
+        doc_out=(
+            "A tuple containing a return code and a string message "
+            "indicating status. The message is for information purpose "
+            "only."
+        ),
+    )
+    @tango.DebugIt()
+    def AddReceptors(
+        self: CbfSubarray, argin: list[str]
+    ) -> DevVarLongStringArrayType:
+        """
+        Assign input receptors to this subarray.
+        Set subarray to ObsState.IDLE if no receptors were previously assigned,
+        i.e. subarray was previously in ObsState.EMPTY.
+
+        :param argin: list[str] of DISH IDs to add
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command_handler = self.get_command_object("AddReceptors")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
     class RemoveReceptorsCommand(
         CspSubElementSubarray.ReleaseResourcesCommand
@@ -477,7 +285,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
 
         def do(
-            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
+            self: CbfSubarray.RemoveReceptorsCommand, argin: list[str]
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for RemoveReceptors() command functionality.
@@ -492,7 +300,7 @@ class CbfSubarray(CspSubElementSubarray):
             return component_manager.release_vcc(argin)
 
         def validate_input(
-            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
+            self: CbfSubarray.RemoveReceptorsCommand, argin: list[str]
         ) -> Tuple[bool, str]:
             """
             Validate DISH/receptor IDs.
@@ -508,12 +316,12 @@ class CbfSubarray(CspSubElementSubarray):
 
     @command(
         dtype_in=("str",),
-        doc_in="List of DISH/receptor IDs",
+        doc_in="list of DISH/receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
     def RemoveReceptors(
-        self: CbfSubarray, argin: List[str]
+        self: CbfSubarray, argin: list[str]
     ) -> Tuple[ResultCode, str]:
         """
         Remove input from list of assigned receptors.
@@ -568,7 +376,6 @@ class CbfSubarray(CspSubElementSubarray):
     )
     @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
         Remove all assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
@@ -582,80 +389,8 @@ class CbfSubarray(CspSubElementSubarray):
         command = self.get_command_object("RemoveAllReceptors")
         (return_code, message) = command()
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-    class AddReceptorsCommand(CspSubElementSubarray.AssignResourcesCommand):
-        """
-        A class for CbfSubarray's AddReceptors() command.
-        """
-
-        def do(
-            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for AddReceptors() command functionality.
-
-            :param argin: The receptors to be assigned
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.assign_vcc(argin)
-
-        def validate_input(
-            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
-        ) -> Tuple[bool, str]:
-            """
-            Validate DISH/receptor ID.
-
-            :param argin: The list of DISH/receptor IDs to add.
-
-            :return: A tuple containing a boolean indicating if the configuration
-                is valid and a string message. The message is for information
-                purpose only.
-            :rtype: (bool, str)
-            """
-            return DISHUtils.are_Valid_DISH_Ids(argin)
-
-    @command(
-        dtype_in=("str",),
-        doc_in="List of DISH/receptor IDs",
-        dtype_out="DevVarLongStringArray",
-        doc_out="(ReturnType, 'informational message')",
-    )
-    @tango.DebugIt()
-    def AddReceptors(
-        self: CbfSubarray, argin: List[str]
-    ) -> Tuple[ResultCode, str]:
-        """
-        Assign input receptors to this subarray.
-        Set subarray to ObsState.IDLE if no receptors were previously assigned.
-
-        :param argin: list of DISH/receptors to add
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        command = self.get_command_object("AddReceptors")
-
-        (valid, msg) = command.validate_input(argin)
-        if not valid:
-            self._logger.error(msg)
-            tango.Except.throw_exception(
-                "Command failed",
-                msg,
-                "AddReceptors command input failed",
-                tango.ErrSeverity.ERR,
-            )
-        self.logger.info(msg)
-
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-    #  Configure Related Commands   #
+    #  Scan Commands   #
 
     class ConfigureScanCommand(CspSubElementSubarray.ConfigureScanCommand):
         """
@@ -850,7 +585,6 @@ class CbfSubarray(CspSubElementSubarray):
     )
     @tango.DebugIt()
     def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """
         """Change state to CONFIGURING.
         Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray.
@@ -879,111 +613,6 @@ class CbfSubarray(CspSubElementSubarray):
         self.logger.debug(f"obsState == {self.obsState}")
         return [[result_code], [message]]
 
-    class GoToIdleCommand(CspSubElementSubarray.GoToIdleCommand):
-        """A class for the CbfSubarray's GoToIdle command."""
-
-        def __init__(
-            self, target, op_state_model, obs_state_model, logger=None
-        ):
-            """
-            Initialise a new GoToIdleCommand instance.
-
-            :param target: the object that this base command acts upon. For
-                example, the device's component manager.
-            :type target: object
-            :param op_state_model: the op state model that this command
-                uses to check that it is allowed to run
-            :type op_state_model: :py:class:`OpStateModel`
-            :param obs_state_model: the observation state model that
-                 this command uses to check that it is allowed to run,
-                 and that it drives with actions.
-            :type obs_state_model: :py:class:`SubarrayObsStateModel`
-            :param logger: the logger to be used by this Command. If not
-                provided, then a default module logger will be used.
-            :type logger: a logger that implements the standard library
-                logger interface
-            """
-            super().__init__(
-                target=target,
-                op_state_model=op_state_model,
-                obs_state_model=obs_state_model,
-                logger=logger,
-            )
-
-        def do(self):
-            """
-            Stateless hook for GoToIdle() command functionality.
-
-            :return: A tuple containing a return code and a string
-                  message indicating status. The message is for
-                  information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.go_to_idle()
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="A tuple containing a return code and a string  message indicating status."
-        "The message is for information purpose only.",
-    )
-    def GoToIdle(self):
-        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
-        """
-        Transit the subarray from READY to IDLE obsState.
-
-        :return: 'DevVarLongStringArray' A tuple containing a return
-            code and a string message indicating status. The message is
-            for information purpose only.
-        """
-        # NOTE: ska-tango-base class also deletes self._last_scan_configuration
-        # here, but we are choosing to preserve it even in IDLE state should there
-        # be a need to check it
-
-        command = self.get_command_object("GoToIdle")
-        (return_code, message) = command()
-        return [[return_code], [message]]
-
-    class ScanCommand(CspSubElementSubarray.ScanCommand):
-        """
-        A class for CbfSubarray's Scan() command.
-        """
-
-        def do(
-            self: CbfSubarray.ScanCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Scan() command functionality.
-
-            :param argin: The scan ID as JSON formatted string.
-            :type argin: str
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            (result_code, msg) = component_manager.scan(argin)
-            return (result_code, msg)
-
-    class EndScanCommand(CspSubElementSubarray.EndScanCommand):
-        """
-        A class for CbfSubarray's EndScan() command.
-        """
-
-        def do(self: CbfSubarray.EndScanCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for EndScan() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            (result_code, msg) = component_manager.end_scan()
-            return (result_code, msg)
-
 
 # ----------
 # Run server
@@ -991,9 +620,7 @@ class CbfSubarray(CspSubElementSubarray):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(CbfSubarray.main) ENABLED START #
-    return run((CbfSubarray,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  CbfSubarray.main
+    return CbfSubarray.run_server(args=args or None, **kwargs)
 
 
 if __name__ == "__main__":

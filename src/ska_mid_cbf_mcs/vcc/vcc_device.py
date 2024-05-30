@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from typing import Any  # allow forward references in type hints
+from typing import Any
 
 # Tango imports
 import tango
@@ -171,12 +171,6 @@ class Vcc(CbfObsDevice):
             obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
         )
-
-    def always_executed_hook(self: Vcc) -> None:
-        """Hook to be executed before any commands."""
-
-    def delete_device(self: Vcc) -> None:
-        """Hook to delete device."""
 
     # --------
     # Commands

@@ -404,11 +404,18 @@ class CbfObsDevice(SKAObsDevice):
         self: CbfObsDevice,
         fault: Optional[bool] = None,
         power: Optional[PowerState] = None,
+        resourced: Optional[bool] = None,
         configured: Optional[bool] = None,
         scanning: Optional[bool] = None,
         obsfault: Optional[bool] = None,
     ) -> None:
         super()._component_state_changed(fault=fault, power=power)
+
+        if resourced is not None:
+            if resourced:
+                self.obs_state_model.perform_action("component_resourced")
+            else:
+                self.obs_state_model.perform_action("component_unresourced")
 
         if configured is not None:
             if configured:
