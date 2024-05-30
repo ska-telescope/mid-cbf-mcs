@@ -626,27 +626,61 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltages(self) -> list[float]:
+    def fpga_die_voltage_0(self) -> list[float]:
         self._throw_if_device_off()
         self._query_if_needed()
-        res = []
-        for i in range(0, 7):
-            field = f"voltage-sensors_fpga-die-voltage_{i}"
-            t, val = self._telemetry[field]
-            self._validate_time(field, t)
-            res.append(val)
-        return res
+        field = "voltage-sensors_fpga-die-voltage_0"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
 
-    def _check_fpga_die_voltage_range(self, index, value):
-        """
-        Checks if the given voltage value (value) is within the given range
-        Logs a Warning if the value is within 0.5 to the lower range or if the value within 0.5 to the upper range
-        Logs an Error if the value is equal to or lower than the lower range or equal to or greater than the upper range
+    def fpga_die_voltage_1(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_1"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
 
-        :param index: The index of the values to be check in the _fpga_die_voltage_values_range
-        :param value: The value in volts that is to be check if it is in range
-        """
-        pass
+    def fpga_die_voltage_2(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_2"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_3(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_3"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_4(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_4"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_5(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_5"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_6(self) -> list[float]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage_6"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
 
     def humidity_sensor_temperature(self) -> float:
         self._throw_if_device_off()

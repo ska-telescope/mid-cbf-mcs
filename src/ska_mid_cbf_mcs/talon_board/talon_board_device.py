@@ -257,19 +257,19 @@ class TalonBoard(SKABaseDevice):
         """
         res = self.component_manager.fpga_die_temperature()
         return res
-
+    
     @attribute(
-        dtype=(float,),
-        max_dim_x=7,
-        label="FPGA Die Voltages",
-        doc="Readings from FPGA Die Voltages Sensors on TalonDX",
+        dtype=float,
+        label="FPGA Die Voltage 0",
+        doc="Readings from FPGA Die Voltages 0 Sensors on TalonDX",
         unit="V",
-        min_warning=[11.5, 2.88, 1.27, 2.21, 2.21, 1.37, 2.21],
-        max_warning=[12.5, 2.12, 0.47, 1.39, 1.39, 0.43, 1.39],
-        min_alarm=[11.0, 2.38, 0.77, 1.71, 1.71, 0.87, 1.71],
-        max_alarm=[13, 2.62, 0.97, 1.89, 1.89, 0.93, 1.89],
+        min_warning=11.5,
+        max_warning=12.5,
+        min_alarm=11.0,
+        max_alarm=13.0,
+        access=AttrWriteType.READ_WRITE,
     )
-    def FpgaDieVoltages(self: TalonBoard) -> list[float]:
+    def FpgaDieVoltage0(self: TalonBoard) -> list[float]:
         """
         Reads the following FPGA die voltages of the Talon-DX board:
         [0] External Board Voltage (1/11 ratio)
@@ -285,7 +285,187 @@ class TalonBoard(SKABaseDevice):
 
         :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
         """
-        res = self.component_manager.fpga_die_voltages()
+        res = self.component_manager.fpga_die_voltage_0()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 1",
+        doc="Readings from FPGA Die Voltages 1 Sensors on TalonDX",
+        unit="V",
+        # min_warning=2.88,
+        # max_warning=2.12,
+        min_alarm=2.38,
+        max_alarm=2.62,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage1(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_1()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 2",
+        doc="Readings from FPGA Die Voltages 2 Sensors on TalonDX",
+        unit="V",
+        # min_warning=1.27,
+        # max_warning=0.47,
+        min_alarm=0.77,
+        max_alarm=0.97,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage2(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_2()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 3",
+        doc="Readings from FPGA Die Voltages 3 Sensors on TalonDX",
+        unit="V",
+        # min_warning=2.21,
+        # max_warning=1.39,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage3(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_3()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 4",
+        doc="Readings from FPGA Die Voltages 4 Sensors on TalonDX",
+        unit="V",
+        # min_warning=2.21,
+        # max_warning=1.39,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_4()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 5",
+        doc="Readings from FPGA Die Voltages 5 Sensors on TalonDX",
+        unit="V",
+        # min_warning=1.37,
+        # max_warning=0.43,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_5()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 6",
+        doc="Readings from FPGA Die Voltages 6 Sensors on TalonDX",
+        unit="V",
+        # min_warning=2.21,
+        # max_warning=1.39,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
+        """
+        Reads the following FPGA die voltages of the Talon-DX board:
+        [0] External Board Voltage (1/11 ratio)
+        [1] External Board Voltage (1/3 ratio)
+        [2] FPGA Die VCC (1/1000 ratio)
+        [3] FPGA Die VCCIO (1/1000 ratio)
+        [4] FPGA Die VCCPT (1/1000 ratio)
+        [5] FPGA Die VCCERAM (1/1000 ratio)
+        [6] FPGA Die VCCADC (1/1000 ratio)
+
+        All values in the spectrum are scaled according the the give ration
+        All values are in Volts (V)
+
+        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        """
+        res = self.component_manager.fpga_die_voltage_6()
         return res
 
     @attribute(
@@ -707,7 +887,7 @@ class TalonBoard(SKABaseDevice):
         self.vccID_ = value
         # PROTECTED REGION END #    //  TalonBoard.vccID_write
 
-    def write_FpgaDieVoltages(self: TalonBoard, value: list[float]):
+    def write_FpgaDieVoltage0(self: TalonBoard, value: float) -> None:
         """
         FOR TESTING ONLY
         Write the 7 dim values for FPGA Die Voltages
@@ -715,7 +895,67 @@ class TalonBoard(SKABaseDevice):
         :param value: 7 dim array representing the values for FpgaDieVoltages
         """
 
-        self.FpgaDieVoltages = value
+        self.FpgaDieVoltage0 = value
+
+    def write_FpgaDieVoltage1(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage1 = value
+
+    def write_FpgaDieVoltage2(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage2 = value
+
+    def write_FpgaDieVoltage3(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage3 = value
+
+    def write_FpgaDieVoltage4(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage4 = value
+
+    def write_FpgaDieVoltage5(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage5 = value
+
+    def write_FpgaDieVoltage6(self: TalonBoard, value: float) -> None:
+        """
+        FOR TESTING ONLY
+        Write the 7 dim values for FPGA Die Voltages
+
+        :param value: 7 dim array representing the values for FpgaDieVoltages
+        """
+
+        self.FpgaDieVoltage6 = value
 
     # ---------------
     # General methods
