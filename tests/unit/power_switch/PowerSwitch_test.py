@@ -90,8 +90,6 @@ class TestPowerSwitch:
             PowerSwitchModel="Server Technology Switched PRO2",
             PowerSwitchLogin="admn",
             PowerSwitchPassword="admn-1-Psi", 
-            
-            
         )
 
         with harness as test_context:
@@ -308,36 +306,6 @@ class TestPowerSwitch:
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    # def test_TurnOffOutlet(
-    #     self: TestPowerSwitch,
-    #     device_under_test: context.DeviceProxy,
-    #     change_event_callbacks: MockTangoEventCallbackGroup,
-    # ) -> None:
-    #     """
-    #     Tests that the outlets can be turned off individually.
-    #     """
-    #     device_under_test.simulationMode = SimulationMode.FALSE
-    #     device_under_test.adminMode = AdminMode.ONLINE
-    #     assert device_under_test.adminMode == AdminMode.ONLINE
-    #     assert device_under_test.State() == DevState.ON
-
-    #     num_outlets = device_under_test.numOutlets
-    #     assert num_outlets == 8
-
-    #     # Turn outlets off and check the state again
-    #     for i in range(0, num_outlets):
-    #         result_code, command_id = device_under_test.TurnOffOutlet(str(i))
-    #         assert result_code == [ResultCode.QUEUED]
-
-    #         change_event_callbacks[
-    #             "longRunningCommandResult"
-    #         ].assert_change_event(
-    #             (f"{command_id[0]}", '[0, "TurnOffOutlet completed OK"]')
-    #         )
-
-    #     # assert if any captured events have gone unaddressed
-    #     change_event_callbacks.assert_not_called()
-
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -447,14 +415,14 @@ class TestPowerSwitch:
         assert num_outlets == 8
 
         result_code, command_id = device_under_test.TurnOffOutlet(
-            f'AA{num_outlets + 41}'
+            f'{num_outlets + 41}'
         )
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f"Outlet ID AA{num_outlets+41} must be in the allowable outlet_id_list {outlet_id_list}"
+                f"Outlet ID {num_outlets+41} must be in the allowable outlet_id_list {outlet_id_list}"
             )
         )
 
@@ -576,7 +544,7 @@ class TestPowerSwitch:
             ].assert_change_event(
                 (
                     f"{command_id[0]}",
-                    f'[3, "Outlet {str(i)} failed to power on after sleep."]',
+                    f'[3, "Outlet AA{str(i)} failed to power on after sleep."]',
                 )
             )
 
@@ -607,18 +575,20 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.ON
 
+        outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
+
         num_outlets = device_under_test.numOutlets
         assert num_outlets == 8
 
         result_code, command_id = device_under_test.TurnOnOutlet(
-            str(num_outlets + 1)
+            str(num_outlets + 41)
         )
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f"Outlet ID AA{num_outlets+1} must be in the allowable outlet_id_list",
+                f"Outlet ID {num_outlets+41} must be in the allowable outlet_id_list {outlet_id_list}",
             )
         )
 

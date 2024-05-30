@@ -172,8 +172,6 @@ class DLIProSwitchDriver:
                 try:
                     resp = response.json()
                     state = str(resp["state"])
-                    self.logger.error(resp)
-
 
                     if state == self.state_on:
                         power_state = PowerState.ON

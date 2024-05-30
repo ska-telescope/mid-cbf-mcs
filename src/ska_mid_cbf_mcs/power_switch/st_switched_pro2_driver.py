@@ -160,8 +160,6 @@ class STSwitchedPRO2Driver:
 
         url = self.outlet_state_url.replace("REPLACE_OUTLET", outlet)
         outlet_idx = self.outlet_id_list.index(outlet)
-        #outlet_idx = 1
-        self.logger.error(f'Outlet index =  {outlet_idx}')
 
         try:
             response = requests.get(
@@ -175,32 +173,24 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.logger.error("Enter IF")
                 try:
-                    self.logger.error("Enter Try")
                     resp = response.json()
-                    self.logger.error(resp)
-                    # Added this outlet_idx index but seems like DLI Pro does not use it. How does that work?
+                    # TODO: Added outlet_idx indexer to access specific outlet for the test, will ask original author about this
                     state = str(resp[outlet_idx]["state"])
-                    # On = 4, Off = 2, Unknown = 0
-
 
                     if state == self.state_on:
-                        self.logger.error("Power state ON")
                         power_state = PowerState.ON
                     elif state == self.state_off:
-                        self.logger.error("Power state OFF")
                         power_state = PowerState.OFF
                     else:
-                        self.logger.error("Power state Unknown")
                         power_state = PowerState.UNKNOWN
 
                 except IndexError:
-                    self.logger.error("INDEX ERROR")
                     power_state = PowerState.UNKNOWN
 
                 if power_state != self.outlets[outlet_idx].power_state:
-                    raise AssertionError(
+                    # This error should be noticed in the component manager
+                    self.logger.error(
                         f"Power state of outlet ID {outlet} ({power_state})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_state}"
                     )
@@ -277,7 +267,6 @@ class STSwitchedPRO2Driver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list {self.outlet_id_list}"
@@ -285,8 +274,6 @@ class STSwitchedPRO2Driver:
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_off_action
         outlet_idx = self.outlet_id_list.index(outlet)
-
-        self.logger.error(outlet)
 
         try:
             response = requests.patch(
@@ -302,7 +289,6 @@ class STSwitchedPRO2Driver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.logger.error("Power State Off")
                 self.outlets[outlet_idx].power_state = PowerState.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
