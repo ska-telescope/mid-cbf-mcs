@@ -105,7 +105,7 @@ server:
             - "state"
             - "1000"
             - "healthstate"
-            - "3000"
+            - "10000"
             - "adminmode"
             - "3000"
   - name: "talon-003"
