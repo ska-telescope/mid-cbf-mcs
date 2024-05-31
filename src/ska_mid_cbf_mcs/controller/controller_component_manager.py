@@ -918,8 +918,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         (result_code, message) = (ResultCode.OK, [])
 
-        self.logger.info("1")
-
         # reset subarray observing state to EMPTY
         for subarray in [self._proxies[fqdn] for fqdn in self._fqdn_subarray]:
             (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
@@ -928,15 +926,11 @@ class ControllerComponentManager(CbfComponentManager):
                 message.append(log_msg)
                 result_code = ResultCode.FAILED
 
-        self.logger.info("2")
-
         # turn off subelements
         (subelement_off, log_msg) = self._turn_off_subelements()
         message.extend(log_msg)
         if not subelement_off:
             result_code = ResultCode.FAILED
-
-        self.logger.info("3")
 
         # HPS master shutdown
         result = self._talondx_component_manager.shutdown()
@@ -947,23 +941,17 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.warning(log_msg)
             message.append(log_msg)
 
-        self.logger.info("4")
-
         # Turn off all the LRUs currently in use
         (lru_off, log_msg) = self._turn_off_lrus()
         if not lru_off:
             message.append(log_msg)
             result_code = ResultCode.FAILED
 
-        self.logger.info("5")
-
-        # check final device states
+        # check final device states, log any errors
         (
             op_state_error_list,
             obs_state_error_list,
         ) = self._check_subelements_off()
-
-        self.logger.info("6")
 
         if len(op_state_error_list) > 0:
             for fqdn, state in op_state_error_list:
@@ -1014,23 +1002,32 @@ class ControllerComponentManager(CbfComponentManager):
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,
-    ) -> tuple[bool, str]:
-        # Validate init_sys_param against the telescope model
+    ) -> bool:
+        """
+        Validate the InitSysParam against the ska-telmodel schema
+
+        :param params: The InitSysParam parameters
+        :return: True if the InitSysParam parameters are valid, False otherwise
+        """
         try:
             telmodel_validate(
                 version=params["interface"], config=params, strictness=2
             )
-            msg = "init_sys_param validation against ska-telmodel schema was successful!"
-            self.logger.info(msg)
+            self.logger.info("InitSysParam validation against ska-telmodel schema was successful!")
         except ValueError as e:
-            msg = f"init_sys_param validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            self.logger.error(msg)
-            return (False, msg)
-        return (True, msg)
-
+            self.logger.error(f"InitSysParam validation against ska-telmodel schema failed with exception:\n {str(e)}")
+            return False
+        return True
+    
     def _retrieve_sys_param_file(
-        self, init_sys_param_json
-    ) -> tuple[bool, str, dict]:
+        self: ControllerComponentManager,
+        init_sys_param_json: dict,
+    ) -> tuple[bool, dict]:
+        """
+        Retrieve the sys_param file from the Telescope Model
+
+        :param init_sys_param_json: The InitSysParam parameters
+        """
         # The uri was provided in the input string, therefore the mapping from Dish ID to
         # VCC and frequency offset k needs to be retrieved using the Telescope Model
         tm_data_sources = init_sys_param_json["tm_data_sources"][0]
@@ -1039,18 +1036,21 @@ class ControllerComponentManager(CbfComponentManager):
             mid_cbf_param_dict = TMData([tm_data_sources])[
                 tm_data_filepath
             ].get_dict()
-            msg = f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
-            self.logger.info(msg)
+            self.logger.info("Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}")
         except (ValueError, KeyError) as e:
-            msg = f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
-            self.logger.error(msg)
-            return (False, msg, None)
-        return (True, msg, mid_cbf_param_dict)
+            self.logger.error(f"Retrieving the init_sys_param file failed with exception: \n {str(e)}")
+            return (False, None)
+        return (True, mid_cbf_param_dict)
 
     def _update_init_sys_param(
         self: ControllerComponentManager,
         params: str,
     ) -> None:
+        """
+        Update the InitSysParam parameters in the subarrays and VCCs as well as the talon boards
+
+        :param params: The InitSysParam parameters
+        """
         # write the init_sys_param to each of the subarrays
         for fqdn in self._fqdn_subarray:
             self._proxies[fqdn].sysParam = params
@@ -1166,10 +1166,9 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        passed, msg = self._validate_init_sys_param(init_sys_param_json)
-        if not passed:
+        if not self._validate_init_sys_param(init_sys_param_json):
             task_callback(
-                result=(ResultCode.FAILED, msg),
+                result=(ResultCode.FAILED, "Validating init_sys_param file against ska-telmodel schema failed"),
                 status=TaskStatus.FAILED,
             )
             return
@@ -1177,20 +1176,19 @@ class ControllerComponentManager(CbfComponentManager):
         # If tm_data_filepath is provided, then we need to retrieve the
         # init sys param file from CAR via the telescope model
         if "tm_data_filepath" in init_sys_param_json:
-            passed, msg, init_sys_param_json = self._retrieve_sys_param_file(
+            passed, init_sys_param_json = self._retrieve_sys_param_file(
                 init_sys_param_json
             )
             if not passed:
                 task_callback(
-                    result=(ResultCode.FAILED, msg),
+                    result=(ResultCode.FAILED, "Retrieving the init_sys_param file failed"),
                     status=TaskStatus.FAILED,
                 )
                 return
-            passed, msg = self._validate_init_sys_param(init_sys_param_json)
-            if not passed:
+            if not self._validate_init_sys_param(init_sys_param_json):
                 task_callback(
-                    result=(ResultCode.FAILED, msg),
-                    status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, "Validating init_sys_param file against ska-telmodel schema failed"),
+                status=TaskStatus.FAILED,
                 )
                 return
             self._source_init_sys_param = argin
@@ -1219,7 +1217,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_callback(
             result=(
                 ResultCode.OK,
-                "InitSysParam command completed OK",
+                "InitSysParam completed OK",
             ),
             status=TaskStatus.COMPLETED,
         )

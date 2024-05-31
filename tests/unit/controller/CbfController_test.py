@@ -157,9 +157,6 @@ class TestCbfController:
             "sys_param_dup_vcc.json",
             "sys_param_invalid_rec_id.json",
             "sys_param_dup_dishid.json",
-            "source_init_sys_param.json",
-            "source_init_sys_param_invalid_source.json",
-            "source_init_sys_param_invalid_schema.json",
         ],
     )
     def test_InitSysParam(
@@ -181,31 +178,55 @@ class TestCbfController:
         assert result_code == [ResultCode.QUEUED]
 
         if sys_param_file_path == "sys_param_4_boards.json":
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
-                    f"{command_id[0]}",
-                    '[0, "InitSysParam command completed OK"]',
-                )
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
+            )
+        elif sys_param_file_path == "sys_param_dup_dishid.json":
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (f"{command_id[0]}",  '[3, "Duplicated Dish ID in the init_sys_param json"]')
             )
         else:
-            pass
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (f"{command_id[0]}",  '[3, "Validating init_sys_param file against ska-telmodel schema failed"]')
+            )
         change_event_callbacks.assert_not_called()
+       
 
-    def test_Commands(
+    def test_On_No_SysParam(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
-        Test each of CbfController's commands.
+        Test On without InitSysParam.
+        """
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '"Command not allowed"',
+            )
+        )
+        change_event_callbacks.assert_not_called()
+
+    def test_Commands_all(
+        self: TestCbfController,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test all of CbfController's commands, expect success.
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-
+        # Establish communication
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         change_event_callbacks["state"].assert_change_event(DevState.OFF)
@@ -215,7 +236,7 @@ class TestCbfController:
         result_code, command_id = device_under_test.InitSysParam(sp)
         assert result_code == [ResultCode.QUEUED]
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "InitSysParam command completed OK"]')
+            (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
         )
 
         result_code, command_id = device_under_test.On()
