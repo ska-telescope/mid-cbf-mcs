@@ -35,7 +35,7 @@ class MockResponse:
         self._json: List[dict[str, Any]] = []
         
         # Would need to parametrize for this logic in the MockResponse constructor
-        # These state code work for st switch 2 driver
+        # These state code work for st switch 2 driver, hard written
         sim_state = "On" if sim_state else "Off"
 
         if simulate_response_error:

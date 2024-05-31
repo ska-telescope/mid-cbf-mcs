@@ -40,6 +40,8 @@ from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
 
 __all__ = ["PowerSwitchComponentManager"]
 
+# Strings hard modified for sw switch driver
+
 
 class PowerSwitchComponentManager(CbfComponentManager):
     """
