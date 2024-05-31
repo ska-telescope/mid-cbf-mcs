@@ -263,10 +263,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 0",
         doc="Readings from FPGA Die Voltages 0 Sensors on TalonDX",
         unit="V",
-        min_warning=11.5,
-        max_warning=12.5,
-        min_alarm=11.0,
-        max_alarm=13.0,
+        # min_warning=11.5,
+        # max_warning=12.5,
+        # min_alarm=11.0,
+        # max_alarm=13.0,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage0(self: TalonBoard) -> list[float]:
@@ -295,8 +295,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=2.88,
         # max_warning=2.12,
-        min_alarm=2.38,
-        max_alarm=2.62,
+        # min_alarm=2.38,
+        # max_alarm=2.62,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage1(self: TalonBoard) -> list[float]:
@@ -325,8 +325,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=1.27,
         # max_warning=0.47,
-        min_alarm=0.77,
-        max_alarm=0.97,
+        # min_alarm=0.77,
+        # max_alarm=0.97,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage2(self: TalonBoard) -> list[float]:
@@ -355,8 +355,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=2.21,
         # max_warning=1.39,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage3(self: TalonBoard) -> list[float]:
@@ -385,8 +385,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=2.21,
         # max_warning=1.39,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
@@ -415,8 +415,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=1.37,
         # max_warning=0.43,
-        min_alarm=0.87,
-        max_alarm=0.93,
+        # min_alarm=0.87,
+        # max_alarm=0.93,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
@@ -445,8 +445,8 @@ class TalonBoard(SKABaseDevice):
         unit="V",
         # min_warning=2.21,
         # max_warning=1.39,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         access=AttrWriteType.READ_WRITE,
     )
     def FpgaDieVoltage6(self: TalonBoard) -> list[float]:

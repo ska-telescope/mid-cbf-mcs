@@ -120,17 +120,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
         self._talon_status_events = []
 
-        # Valid Range Values
-        self._fpga_die_voltage_values_range = [
-            (11.0, 13.0),
-            (2.38, 2.62),
-            (0.77, 0.97),
-            (1.71, 1.89),
-            (1.71, 1.89),
-            (0.87, 0.93),
-            (1.71, 1.89),
-        ]
-
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
