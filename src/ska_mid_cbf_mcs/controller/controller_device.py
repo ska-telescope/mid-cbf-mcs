@@ -279,7 +279,7 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
-            simulation_mode=self._simulation_mode,
+            simulation_mode=SimulationMode.TRUE,
             logger=self.logger,
         )
 
@@ -350,6 +350,10 @@ class CbfController(CbfDevice):
         """
         return True
 
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @tango.DebugIt()
     def On(
         self: CbfController,
     ) -> DevVarLongStringArrayType:
@@ -371,6 +375,10 @@ class CbfController(CbfDevice):
         """
         return True
 
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @tango.DebugIt()
     def Off(
         self: CbfController,
     ) -> DevVarLongStringArrayType:
@@ -401,6 +409,7 @@ class CbfController(CbfDevice):
         doc_in="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
         doc_out="tuple containing a return code and a string message indicating the status of the command.",
     )
+    @tango.DebugIt()
     def InitSysParam(
         self: CbfController, argin: str
     ) -> DevVarLongStringArrayType:

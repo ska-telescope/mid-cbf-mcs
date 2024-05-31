@@ -17,9 +17,10 @@ from typing import Dict, Optional, Type
 
 import pytest
 import pytest_mock
+import tango
 
 # Tango imports
-import tango
+from ska_control_model import ObsState
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState
 from ska_tango_testing import context
@@ -53,6 +54,7 @@ def lru_change_event_callbacks(
     change_event_attr_list = [
         "longRunningCommandResult",
         "longRunningCommandProgress",
+        "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list
@@ -92,6 +94,7 @@ def mock_fsp_group() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
+    builder.add_attribute("simulationMode", None)
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
@@ -103,9 +106,11 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_property("DeviceID", {"DeviceID": ["1"]})
     return builder()
 
 
@@ -127,6 +132,7 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("obsState", ObsState.EMPTY)
     json_file_path = (
         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
     )
@@ -234,8 +240,8 @@ def initial_device_mocks(
         "mid_csp_cbf/talon_board/006": mock_talon_board,
         "mid_csp_cbf/talon_board/007": mock_talon_board,
         "mid_csp_cbf/talon_board/008": mock_talon_board,
-        "mid_csp_cbf/power_switch/001": mock_talon_lru,
-        "mid_csp_cbf/power_switch/002": mock_talon_lru,
+        "mid_csp_cbf/power_switch/001": mock_power_switch,
+        "mid_csp_cbf/power_switch/002": mock_power_switch,
         "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
         "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
     }

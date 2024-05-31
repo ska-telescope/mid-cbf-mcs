@@ -103,7 +103,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._lru_timeout = lru_timeout
 
-        self._init_sys_param = ""
+        self._last_init_sys_param = ""
         self._source_init_sys_param = ""
         self.dish_utils = None
 
@@ -165,14 +165,13 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the group proxies are successfully created, False otherwise.
         """
         try:
-            self._group_vcc = CbfGroupProxy("VCC", logger=self.logger)
+            self._group_vcc = CbfGroupProxy(name="VCC", logger=self.logger)
             self._group_vcc.add(self._fqdn_vcc)
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
             return False
-
         try:
-            self._group_fsp = CbfGroupProxy("FSP", logger=self.logger)
+            self._group_fsp = CbfGroupProxy(name="FSP", logger=self.logger)
             self._group_fsp.add(self._fqdn_fsp)
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
@@ -180,7 +179,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         try:
             self._group_subarray = CbfGroupProxy(
-                "CBF Subarray", logger=self.logger
+                name="CBF Subarray", logger=self.logger
             )
             self._group_subarray.add(self._fqdn_subarray)
         except tango.DevFailed:
@@ -508,6 +507,11 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
+
+        if self.dish_utils is None:
+            self.logger.warning("Dish-VCC mapping has not been provided.")
+            return False
+
         if self._component_state["power"] == PowerState.OFF:
             return True
         self.logger.warning("Already on, do not need to turn on.")
@@ -531,15 +535,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
-            return
-
-        if self.dish_utils is None:
-            msg = "Dish-VCC mapping has not been provided."
-            self.logger.error(msg)
-            task_callback(
-                result=(ResultCode.FAILED, msg),
-                status=TaskStatus.FAILED,
-            )
             return
 
         # Power on all the Talon boards if not in SimulationMode
@@ -577,13 +572,14 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # Set the Simulation mode of the Subarray to the simulation mode of the controller
+        # Set the Simulation mode of the Subarray and turn it on
         try:
-            self._group_subarray.write_attribute(
-                "simulationMode",
-                self._talondx_component_manager.simulation_mode,
-            )
-            self._group_subarray.command_inout("On")
+            # self._group_subarray.write_attribute(
+            #     "simulationMode",
+            #     self._talondx_component_manager.simulation_mode,
+            # )
+            # self._group_subarray.command_inout("On")
+            pass
         except tango.DevFailed as df:
             for item in df.args:
                 msg = f"Failed to turn on group proxies; {item.reason}"
@@ -603,6 +599,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
+        self._update_component_state(power=PowerState.ON)
         task_callback(
             result=(ResultCode.OK, "On completed OK"),
             status=TaskStatus.COMPLETED,
@@ -719,11 +716,13 @@ class ControllerComponentManager(CbfComponentManager):
                 subarray.Abort()
                 if subarray.obsState != ObsState.ABORTED:
                     try:
+                        # TODO: poll causes problem in unit test
                         poll(
                             lambda: subarray.obsState == ObsState.ABORTED,
                             timeout=const.DEFAULT_TIMEOUT,
                             step=0.5,
                         )
+                        pass
                     except TimeoutException:
                         # raise exception if timed out waiting to exit ABORTING
                         log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
@@ -919,6 +918,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         (result_code, message) = (ResultCode.OK, [])
 
+        self.logger.info("1")
+
         # reset subarray observing state to EMPTY
         for subarray in [self._proxies[fqdn] for fqdn in self._fqdn_subarray]:
             (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
@@ -927,11 +928,15 @@ class ControllerComponentManager(CbfComponentManager):
                 message.append(log_msg)
                 result_code = ResultCode.FAILED
 
+        self.logger.info("2")
+
         # turn off subelements
         (subelement_off, log_msg) = self._turn_off_subelements()
         message.extend(log_msg)
         if not subelement_off:
             result_code = ResultCode.FAILED
+
+        self.logger.info("3")
 
         # HPS master shutdown
         result = self._talondx_component_manager.shutdown()
@@ -942,17 +947,23 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.warning(log_msg)
             message.append(log_msg)
 
+        self.logger.info("4")
+
         # Turn off all the LRUs currently in use
         (lru_off, log_msg) = self._turn_off_lrus()
         if not lru_off:
             message.append(log_msg)
             result_code = ResultCode.FAILED
 
+        self.logger.info("5")
+
         # check final device states
         (
             op_state_error_list,
             obs_state_error_list,
         ) = self._check_subelements_off()
+
+        self.logger.info("6")
 
         if len(op_state_error_list) > 0:
             for fqdn, state in op_state_error_list:
@@ -971,6 +982,7 @@ class ControllerComponentManager(CbfComponentManager):
             result_code = ResultCode.FAILED
 
         if result_code == ResultCode.OK:
+            self._update_component_state(power=PowerState.OFF)
             message.append("CbfController Off command completed OK")
 
         task_callback(
@@ -1047,7 +1059,7 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._fqdn_vcc:
             try:
                 proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     proxy.dishID = dish_id
@@ -1108,21 +1120,21 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _init_sys_param(
         self: ControllerComponentManager,
-        params: str,
+        argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
     ) -> None:
         """
         Validate and save the Dish ID - VCC ID mapping and k values.
 
-        :param params: the Dish ID - VCC ID mapping and k values in a
+        :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"Received sys params {params}")
+        self.logger.debug(f"Received sys params {argin}")
 
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
@@ -1141,7 +1153,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         try:
             init_sys_param_json = json.loads(
-                params, object_pairs_hook=raise_on_duplicate_keys
+                argin, object_pairs_hook=raise_on_duplicate_keys
             )
         except ValueError as e:
             self.logger.error(e)
@@ -1181,18 +1193,18 @@ class ControllerComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                 )
                 return
-            self._source_init_sys_param = params
-            self._init_sys_param = json.dumps(init_sys_param_json)
+            self._source_init_sys_param = argin
+            self._last_init_sys_param = json.dumps(init_sys_param_json)
         else:
             self._source_init_sys_param = ""
-            self._init_sys_param = params
+            self._last_init_sys_param = argin
 
         # store the attribute
         self.dish_utils = DISHUtils(init_sys_param_json)
 
         # send init_sys_param to the subarrays
         try:
-            self._update_init_sys_param(self._init_sys_param)
+            self._update_init_sys_param(self._last_init_sys_param)
         except tango.DevFailed as e:
             self.logger.error(e)
             task_callback(
@@ -1207,7 +1219,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_callback(
             result=(
                 ResultCode.OK,
-                "CbfController InitSysParam command completed OK",
+                "InitSysParam command completed OK",
             ),
             status=TaskStatus.COMPLETED,
         )
@@ -1229,10 +1241,10 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"ComponentState={self._component_state}")
+        self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._init_sys_param,
-            args=argin,
+            args=[argin],
             is_cmd_allowed=self.is_init_sys_param_allowed,
             task_callback=task_callback,
         )

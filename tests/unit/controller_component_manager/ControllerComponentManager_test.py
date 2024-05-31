@@ -236,7 +236,7 @@ class TestControllerComponentManager:
         assert result_code == ResultCode.OK
         assert controller_component_manager._source_init_sys_param == ""
         assert (
-            controller_component_manager._init_sys_param
+            controller_component_manager._last_init_sys_param
             == sys_param_no_retrieve
         )
 
@@ -263,7 +263,7 @@ class TestControllerComponentManager:
         )
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == ""
-        assert controller_component_manager._init_sys_param == ""
+        assert controller_component_manager._last_init_sys_param == ""
 
     def test_sys_param_valid_source_and_filepath_then_invalid_source(
         self: TestControllerComponentManager,
@@ -326,7 +326,7 @@ class TestControllerComponentManager:
         )
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == ""
-        assert controller_component_manager._init_sys_param == ""
+        assert controller_component_manager._last_init_sys_param == ""
 
     def test_sys_param_send_invalid_schema(
         self: TestControllerComponentManager,
@@ -348,7 +348,7 @@ class TestControllerComponentManager:
         (result_code, _) = controller_component_manager.init_sys_param(sp)
         assert result_code == ResultCode.FAILED
         assert controller_component_manager._source_init_sys_param == ""
-        assert controller_component_manager._init_sys_param == ""
+        assert controller_component_manager._last_init_sys_param == ""
 
     def assert_sysparam_attributes_match_expected_outcome(
         self: TestControllerComponentManager,
@@ -361,6 +361,6 @@ class TestControllerComponentManager:
         )
         with open(json_file_path + "sys_param_4_boards.json") as f:
             retrieved_sys_param_file_contents = f.read().replace("\n", "")
-        assert controller_component_manager._init_sys_param.replace(
+        assert controller_component_manager._last_init_sys_param.replace(
             " ", ""
         ) == retrieved_sys_param_file_contents.replace(" ", "")
