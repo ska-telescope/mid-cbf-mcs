@@ -267,6 +267,7 @@ class TalonBoard(SKABaseDevice):
         # max_warning=12.5,
         min_alarm=11.0,
         max_alarm=13.0,
+        polling_period=10000,
     )
     def FpgaDieVoltage0(self: TalonBoard) -> list[float]:
         """
@@ -297,6 +298,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=2.38,
         max_alarm=2.62,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage1(self: TalonBoard) -> list[float]:
         """
@@ -327,6 +329,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=0.77,
         max_alarm=0.97,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage2(self: TalonBoard) -> list[float]:
         """
@@ -357,6 +360,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=1.71,
         max_alarm=1.89,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage3(self: TalonBoard) -> list[float]:
         """
@@ -387,6 +391,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=1.71,
         max_alarm=1.89,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
         """
@@ -417,6 +422,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=0.87,
         max_alarm=0.93,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
         """
@@ -447,6 +453,7 @@ class TalonBoard(SKABaseDevice):
         min_alarm=1.71,
         max_alarm=1.89,
         period=10,
+        polling_period=10000,
     )
     def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
         """
