@@ -283,11 +283,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
         value: Any,
         proxies: list[context.DeviceProxy],
         max_workers: int = MAX_GROUP_WORKERS,
-    ) -> list[bool]:
+    ) -> bool:
         """
         Helper function to perform tango.Group-like threaded write_attribute().
-        Returns list of booleans depending on each device's write_attribute success;
-        True if write was successful, False otherwise.
+        Returns a bool depending on each device's write_attribute success;
+        True if all writes were successful, False otherwise.
 
         Important note: all proxies provided must be of the same device type.
 
@@ -309,7 +309,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 proxies,
             ):
                 results.append(r)
-        return results
+        return all(results)
 
     ###########
     # Callbacks
