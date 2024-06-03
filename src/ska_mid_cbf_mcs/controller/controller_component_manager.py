@@ -42,7 +42,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.controller.talondx_component_manager import (
     TalonDxComponentManager,
 )
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 
 class ControllerComponentManager(CbfComponentManager):
@@ -115,7 +114,6 @@ class ControllerComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    # TODO: Refactor to use fqdn_dict
     def _set_fqdns(self: ControllerComponentManager) -> None:
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
@@ -160,34 +158,29 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _create_group_proxies(self: ControllerComponentManager) -> bool:
         """
-        Create group proxies for VCC, FSP, and Subarray
+        Create group proxies (list of DeviceProxy) for VCC, FSP, and Subarray
 
         :return: True if the group proxies are successfully created, False otherwise.
         """
         try:
-            self._group_vcc = CbfGroupProxy(name="VCC", logger=self.logger)
-            self._group_vcc.add(self._fqdn_vcc)
+            self._group_vcc = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_vcc))
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
             return False
+        
         try:
-            self._group_fsp = CbfGroupProxy(name="FSP", logger=self.logger)
-            self._group_fsp.add(self._fqdn_fsp)
+            self._group_fsp = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_fsp))
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
             return False
 
         try:
-            self._group_subarray = CbfGroupProxy(
-                name="CBF Subarray", logger=self.logger
-            )
-            self._group_subarray.add(self._fqdn_subarray)
+            self._group_subarray = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_subarray))
         except tango.DevFailed:
             self.logger.error(
                 f"Failure in connection to {self._fqdn_subarray}"
             )
             return False
-
         return True
 
     def _write_hw_config(
@@ -573,19 +566,32 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # Set the Simulation mode of the Subarray and turn it on
-        try:
-            self._group_subarray.write_attribute(
-                "simulationMode",
-                self._talondx_component_manager.simulation_mode,
-            )
-            self._group_subarray.command_inout("On")
-            pass
-        except tango.DevFailed as df:
-            for item in df.args:
-                msg = f"Failed to turn on group proxies; {item.reason}"
+        # try:
+        #     self._group_subarray.write_attribute(
+        #         "simulationMode",
+        #         self._talondx_component_manager.simulation_mode,
+        #     )
+        #     self._group_subarray.command_inout("On")
+        # except tango.DevFailed as df:
+        #     for item in df.args:
+        #         msg = f"Failed to turn on group proxies; {item.reason}"
+        #         self.logger.error(msg)
+        #     task_callback(
+        #         result=(ResultCode.FAILED, msg),
+        #         status=TaskStatus.FAILED,
+        #     )
+        #     return
+        
+
+        group_subarray_on_failed = False
+        for result_code, msg in self._issue_group_command(command_name="On", proxies=self._group_subarray):
+            if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
+                group_subarray_on_failed = True
+
+        if group_subarray_on_failed:
             task_callback(
-                result=(ResultCode.FAILED, msg),
+                result=(ResultCode.FAILED, "Failed to turn on subarrays"),
                 status=TaskStatus.FAILED,
             )
             return
@@ -754,34 +760,21 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> tuple[bool, list[str]]:
         result = True
         message = []
-        try:
-            self._group_subarray.command_inout("Off")
-        except tango.DevFailed as df:
-            for item in df.args:
-                log_msg = (
-                    f"Failed to turn off subarray group proxy; {item.reason}"
-                )
-                self.logger.error(log_msg)
-                message.append(log_msg)
-            result = False
+        
+        for result_code, msg in self._issue_group_command("Off", self._group_subarray):
+            if result_code == ResultCode.FAILED:
+                message.append(msg)
+                result = False
 
-        try:
-            self._group_vcc.command_inout("Off")
-        except tango.DevFailed as df:
-            for item in df.args:
-                log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
-                self.logger.error(log_msg)
-                message.append(log_msg)
-            result = False
+        for result_code, msg in self._issue_group_command("Off", self._group_vcc):
+            if result_code == ResultCode.FAILED:
+                message.append(msg)
+                result = False
 
-        try:
-            self._group_fsp.command_inout("Off")
-        except tango.DevFailed as df:
-            for item in df.args:
-                log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
-                self.logger.error(log_msg)
-                message.append(log_msg)
-            result = False
+        for result_code, msg in self._issue_group_command("Off", self._group_fsp):
+            if result_code == ResultCode.FAILED:
+                message.append(msg)
+                result = False
 
         try:
             for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
@@ -971,12 +964,15 @@ class ControllerComponentManager(CbfComponentManager):
 
         if result_code == ResultCode.OK:
             self._update_component_state(power=PowerState.OFF)
-            message.append("CbfController Off command completed OK")
-
-        task_callback(
-            result=(result_code, "; ".join(message)),
-            status=TaskStatus.COMPLETED,
-        )
+            task_callback(
+                result=(ResultCode.OK, "Off completed OK"),
+                status=TaskStatus.COMPLETED,
+            )
+        else:
+            task_callback(
+                result=(ResultCode.FAILED, "; ".join(message)),
+                status=TaskStatus.COMPLETED,
+            )
         return
 
     @check_communicating

@@ -11,23 +11,31 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from threading import Event, Lock
 from typing import Any, Callable, Optional, cast
 
+import tango
 from ska_control_model import (
     CommunicationStatus,
     HealthState,
     PowerState,
     ResultCode,
+    SimulationMode,
     TaskStatus,
 )
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.device.base_device import MAX_QUEUED_COMMANDS
 
 __all__ = ["CbfComponentManager"]
+
+# maximum number of group command worker threads
+MAX_GROUP_WORKERS = 8
 
 
 class CbfComponentManager(TaskExecutorComponentManager):
@@ -56,6 +64,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_change_callback: Callable[[str, Any], None] | None = None,
         attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
         """
@@ -73,6 +82,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             an attribute archive event needs to be pushed from the component manager
         :param health_state_callback: callback to be called when the
             HealthState of the component changes
+        :param simulation_mode: simulation mode identifies if the real component
+            or a simulator should be monitored and controlled; defaults to
+            SimulationMode.TRUE
         """
 
         super().__init__(*args, max_queue_size=MAX_QUEUED_COMMANDS, **kwargs)
@@ -91,6 +103,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
+
+        # NOTE: using component manager default of SimulationMode.TRUE,
+        # as self._simulation_mode at this point during init_device()
+        # SimulationMode.FALSE
+        self.simulation_mode = simulation_mode
 
     def task_abort_event_is_set(
         self: CbfComponentManager,
@@ -117,6 +134,72 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return True
         return False
+
+    def _issue_command_thread(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        argin: Any,
+        command_name: str,
+    ) -> Any:
+        """
+        Helper function to issue command to a DeviceProxy
+
+        :param argin: optional command argument
+        :param command_name: command to be issued
+        :param proxy: proxy target for command
+        :return: command result (if any)
+        """
+        try:
+            return (
+                proxy.command_inout(command_name, argin)
+                if argin is not None
+                else proxy.command_inout(command_name)
+            )
+        except tango.DevFailed as df:
+            return (
+                ResultCode.FAILED,
+                f"Error issuing {command_name} command to {proxy.dev_name()}; {df}",
+            )
+
+    def _issue_group_command(
+        self: CbfComponentManager,
+        command_name: str,
+        proxies: list[context.DeviceProxy],
+        argin: Any = None,
+        max_workers: int = MAX_GROUP_WORKERS,
+    ) -> list[tuple[ResultCode, str]]:
+        """
+        Helper function to perform tango.Group-like threaded command issuance.
+        Returns list of command results in the same order as the input proxies list.
+        If any command causes a tango.DevFailed exception, the result code for
+        that device's return value will be ResultCode.FAILED.
+
+        Important note: all proxies provided must be of the same device type.
+
+        For fast commands, the return value will a list of ResultCode and message
+        string tuples.
+        For Long Running Commands, the return value will be a list of ResultCode
+        and unique command ID tuples.
+
+        :param command_name: name of command to be issued
+        :param proxies: list of device proxies in group; determines ordering of
+            return values
+        :param argin: optional command argument, defaults to None
+        :param max_workers: maximum number of ThreadPoolExecutor workers
+        :return: list of proxy command returns
+        """
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for r in executor.map(
+                partial(
+                    self._issue_command_thread,
+                    argin=argin,
+                    command_name=command_name,
+                ),
+                proxies,
+            ):
+                results.append(r)
+        return results
 
     ###########
     # Callbacks
@@ -151,6 +234,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
+        self._update_component_state(power=PowerState.UNKNOWN)
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
