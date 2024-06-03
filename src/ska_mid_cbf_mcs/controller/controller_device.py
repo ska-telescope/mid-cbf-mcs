@@ -19,7 +19,6 @@ from __future__ import annotations  # Allows forward references in type hints
 from typing import Any
 
 import tango
-from ska_tango_base import SKAController
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.control_model import SimulationMode

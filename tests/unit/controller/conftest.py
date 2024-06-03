@@ -13,10 +13,9 @@ import os
 import unittest
 
 # Standard imports
-from typing import Dict, Optional, Type
+from typing import Dict
 
 import pytest
-import pytest_mock
 import tango
 
 # Tango imports

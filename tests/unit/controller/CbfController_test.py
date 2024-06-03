@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import gc
 import os
-import time
-import unittest
 from typing import Iterator
 from unittest.mock import Mock
 
@@ -23,7 +21,7 @@ import pytest
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevFailed, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
 from ska_mid_cbf_mcs.testing import context
