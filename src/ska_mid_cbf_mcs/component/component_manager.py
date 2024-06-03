@@ -139,16 +139,22 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         command: str,
         proxy: context.DeviceProxy,
+        argin: Any = None,
     ) -> Any:
         """
         Helper function to issue command to a DeviceProxy
 
         :param command: command to be issued
         :param proxy: proxy target for command
+        :param argin: optional command argument
         :return: command result (if any)
         """
         try:
-            return proxy.command_inout(command)
+            return (
+                proxy.command_inout(command, argin)
+                if argin is not None
+                else proxy.command_inout(command)
+            )
         except tango.DevFailed as df:
             self.logger.error(
                 f"Error issuing {command} command to {proxy.dev_name()}; {df}"
@@ -158,6 +164,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         command: str,
         proxies: list[context.DeviceProxy],
+        argin: Any = None,
         max_workers: int = MAX_GROUP_WORKERS,
     ) -> list[Any]:
         """
@@ -165,13 +172,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param command: command to be issued
         :param proxies: list of device proxies in group
+        :param argin: optional command argument
         :param max_workers: maximum number of ThreadPoolExecutor workers
         :return: list of proxy command returns
         """
         results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for r in executor.map(
-                partial(self._group_command, command=command), proxies
+                partial(self._group_command, command=command, argin=argin),
+                proxies,
             ):
                 results.append(r)
         return results
