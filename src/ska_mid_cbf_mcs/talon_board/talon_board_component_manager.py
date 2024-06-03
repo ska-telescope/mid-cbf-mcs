@@ -27,6 +27,9 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
+from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
+    TalonBoardSimulator,
+)
 
 
 class TalonBoardComponentManager(CbfComponentManager):
@@ -119,6 +122,10 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._proxies = dict()
         self._talon_sysid_events = []
         self._talon_status_events = []
+
+        # simulation mode:
+        self.simulation_mode = False
+        self.talon_board_simulator = TalonBoardSimulator(self._logger)
 
         super().__init__(
             logger=logger,
@@ -615,7 +622,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_0(self) -> list[float]:
+    def fpga_die_voltage_0(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_0()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_0"
@@ -623,7 +632,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_1(self) -> list[float]:
+    def fpga_die_voltage_1(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_1()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_1"
@@ -631,7 +642,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_2(self) -> list[float]:
+    def fpga_die_voltage_2(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_2()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_2"
@@ -639,7 +652,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_3(self) -> list[float]:
+    def fpga_die_voltage_3(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_3()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_3"
@@ -647,7 +662,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_4(self) -> list[float]:
+    def fpga_die_voltage_4(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_4()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_4"
@@ -655,7 +672,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_5(self) -> list[float]:
+    def fpga_die_voltage_5(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_5()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_5"
@@ -663,7 +682,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._validate_time(field, t)
         return val
 
-    def fpga_die_voltage_6(self) -> list[float]:
+    def fpga_die_voltage_6(self) -> float:
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_voltage_6()
         self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage_6"

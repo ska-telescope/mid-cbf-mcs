@@ -893,6 +893,19 @@ class TalonBoard(SKABaseDevice):
         self.vccID_ = value
         # PROTECTED REGION END #    //  TalonBoard.vccID_write
 
+    def write_simulationMode(self: TalonBoard, value: bool) -> None:
+        """
+        BaseClass Attribute Write Override
+
+        Sets the Device and the Component Manager's Simulation Mode Flag
+
+        :param value: Bool that represent the state of simulationMode
+        """
+
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+        self.logger.info(f"Talon Board Simulation Set to :{value}")
+
     # ---------------
     # General methods
     # ---------------
