@@ -90,8 +90,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # initialize attribute values
         self._sys_param_str = ""
-        self.dish_ids = []
-        self.vcc_ids = []
+        self.dish_ids = set()
+        self.vcc_ids = set()
         self.frequency_band = 0
 
         # store list of fsp configurations being used for each function mode
@@ -118,15 +118,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._count_fsp = 0
 
         # proxies to subordinate devices
-        self._proxies_vcc = []
-        self._proxies_assigned_vcc = {}
+        self._all_vcc_proxies = []
+        self._assigned_vcc_proxies = set()
         self._proxies_fsp = []
         self._proxies_fsp_corr_subarray_device = []
         self._proxies_talon_board_device = []
 
         # group proxies to subordinate devices
         # Note: VCC connected both individual and in group
-        self._group_vcc = None
         self._group_fsp = None
         self._group_fsp_corr_subarray = None
 
@@ -160,8 +159,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
                 )
 
-            if len(self._proxies_vcc) == 0:
-                self._proxies_vcc = [
+            if len(self._all_vcc_proxies) == 0:
+                self._all_vcc_proxies = [
                     context.DeviceProxy(device_name=fqdn)
                     for fqdn in self._fqdn_vcc
                 ]
@@ -182,8 +181,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._proxies_talon_board_device.append(proxy)
 
-            if self._group_vcc is None:
-                self._group_vcc = context.Group(name="VCC")
             if self._group_fsp is None:
                 self._group_fsp = context.Group(name="FSP")
             if self._group_fsp_corr_subarray is None:
@@ -195,7 +192,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
+            self.logger.error(f"{df}")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -213,7 +210,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             for proxy in self._proxies_fsp_corr_subarray_device:
                 proxy.adminMode = AdminMode.OFFLINE
         except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
+            self.logger.error(f"{df}")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -223,31 +220,35 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
-        try:
-            for proxy in self._proxies_fsp_corr_subarray_device:
+        for proxy in self._proxies_fsp_corr_subarray_device:
+            try:
                 proxy.On()
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+            except tango.DevFailed as df:
+                msg = f"Failed to turn on {proxy.dev_name()}; {df}"
+                self.logger.error(msg)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (ResultCode.FAILED, msg)
 
         self._update_component_state(power=PowerState.ON)
+        return (ResultCode.OK, "On completed OK")
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
-        try:
-            for proxy in self._proxies_fsp_corr_subarray_device:
+        for proxy in self._proxies_fsp_corr_subarray_device:
+            try:
                 proxy.Off()
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+            except tango.DevFailed as df:
+                msg = f"Failed to turn off {proxy.dev_name()}; {df}"
+                self.logger.error(msg)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (ResultCode.FAILED, msg)
 
         self._update_component_state(power=PowerState.OFF)
+        return (ResultCode.OK, "Off completed OK")
 
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
@@ -278,6 +279,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._delay_model_lock.acquire()
+        results_vcc = self._issue_group_command(
+            command_name="UpdateDelayModel",
+            proxies=list(self._assigned_vcc_proxies),
+            argin=data,
+        )
         self._group_vcc.command_inout("UpdateDelayModel", data)
         self._group_fsp.command_inout("UpdateDelayModel", data)
         self._delay_model_lock.release()
@@ -374,27 +380,28 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # Resourcing Commands
     #####################
 
-    def _assign_talon_board_subarray_id(
-        self: CbfSubarrayComponentManager, dish_id: str, assign: bool
-    ) -> None:
+    def _get_talon_proxy_from_dish_id(
+        self: CbfSubarrayComponentManager,
+        dish_id: str,
+    ) -> context.DeviceProxy:
         """
-        Assign subarray ID to the talon board with the dish_id
+        Return Talon board device proxy matching input DISH ID
 
         :param dish_id: the DISH ID
-        :param assign: true to assign the subarray id, false to remove
+        :return: proxy to Talon board device
         """
         for proxy in self._proxies_talon_board_device:
             board_dish_id = proxy.read_attribute("dishID").value
             if board_dish_id == dish_id:
-                if assign:
-                    proxy.write_attribute("subarrayID", str(self.subarray_id))
-                else:
-                    proxy.write_attribute("subarrayID", "")
-                return
-        return
+                return proxy
+        self.logger.error(
+            f"Couldn't find Talon board device with DISH ID {dish_id}; \
+                unable to update TalonBoard device subarrayID for this DISH."
+        )
+        return None
 
     def is_assign_vcc_allowed(self: CbfObsComponentManager) -> bool:
-        self.logger.debug("Checking if Scan is allowed.")
+        self.logger.debug("Checking if AddReceptors is allowed.")
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
                 f"AddReceptors not allowed in ObsState {self.obs_state}; \
@@ -405,52 +412,43 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _assign_vcc_thread(
         self: CbfSubarrayComponentManager,
-        dish_id: str,
-        vcc_id: int,
         vcc_proxy: context.DeviceProxy,
+        talon_proxy: context.DeviceProxy,
     ) -> bool:
         """
         Thread to perform individual VCC assignment.
 
-        :param dish_id: DISH ID str
-        :param vcc_id: VCC ID int
         :param vcc_proxy: proxy to VCC
+        :param talon_proxy: proxy to Talon board device with matching DISH ID
         :return: True if successfully assigned VCC proxy, otherwise False
         """
         try:
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
+            vcc_fqdn = vcc_proxy.dev_name()
             self.logger.info(
-                f"Writing VCC {vcc_id} simulation mode to: {self._simulation_mode}"
+                f"Writing {vcc_fqdn} simulation mode to: {self._simulation_mode}"
             )
             vcc_proxy.adminMode = AdminMode.OFFLINE
             vcc_proxy.simulationMode = self._simulation_mode
             vcc_proxy.adminMode = AdminMode.ONLINE
             vcc_proxy.On()
 
-            self.dish_ids.append(dish_id)
-            self.vcc_ids.append(vcc_id)
-            self._group_vcc.add(self._fqdn_vcc[vcc_id - 1])
-            self._proxies_assigned_vcc[dish_id] = vcc_proxy
-
             # change subarray membership of vcc
             vcc_proxy.subarrayMembership = self.subarray_id
             self.logger.debug(
-                f"VCC {vcc_id} subarray_id: "
+                f"{vcc_fqdn}.subarrayMembership: "
                 + f"{vcc_proxy.subarrayMembership}"
             )
 
-            # assign the subarray ID to the talon board with the matching
-            # DISH ID
-            self._assign_talon_board_subarray_id(dish_id=dish_id, assign=True)
+            # assign the subarray ID to the talon board with the matching DISH ID
+            if talon_proxy is not None:
+                talon_proxy.subarrayID = str(self.subarray_id)
 
             return True
         except tango.DevFailed as df:
-            self.logger.error(
-                f"Failed to assign VCC {vcc_id}; {df.args[0].desc}"
-            )
+            self.logger.error(f"Failed to assign VCC; {df}")
             return False
 
-    @check_communicating
     def _assign_vcc(
         self: CbfSubarrayComponentManager,
         argin: list[str],
@@ -467,8 +465,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"Current assigned receptors: {self.dish_ids}")
-
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
@@ -480,62 +476,48 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if not input_dish_valid:
             task_callback(
                 status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Invalid DISH (receptor) IDs provided.",
-                ),
+                result=(ResultCode.FAILED, msg),
             )
             return
 
         # build list of VCCs to assign
-        vccs_to_add = []
+        proxies_to_assign = []
+        dish_ids_to_add = []
+        vcc_ids_to_add = []
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
-
-            self.logger.debug(
-                f"Receptor to vcc keys: {self._dish_utils.dish_id_to_vcc_id.keys()}"
-            )
 
             if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
             else:
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "DISH (receptor) IDs provided are outside of Mid.CBF max capabilities.",
-                    ),
+                self.logger.warning(
+                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
                 )
-                return
+                continue
 
-            vcc_proxy = self._proxies_vcc[vcc_id - 1]
-
-            self.logger.debug(
-                f"dish_id = {dish_id}, vcc_proxy.dishID = {vcc_proxy.dishID}"
-            )
-
-            # only add VCC if it does not already belong to a different subarray
+            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
             vcc_subarray_id = vcc_proxy.subarrayMembership
-            self.logger.debug(f"VCC {vcc_id} subarray_id: {vcc_subarray_id}")
-            if vcc_subarray_id not in [0, self.subarray_id]:
-                self.logger.warning(
-                    f"Skipping {dish_id} already in use by subarray {vcc_subarray_id}"
-                )
-            elif dish_id not in self.dish_ids:
-                vccs_to_add.append((dish_id, vcc_id, vcc_proxy))
-            else:
-                self.logger.warning(
-                    f"Skipping {dish_id}, already assigned to this subarray."
-                )
 
+            # only add VCC if it does not already belong to a subarray
+            if vcc_subarray_id != 0:
+                self.logger.warning(
+                    f"Skipping {dish_id}, already assigned to subarray {vcc_subarray_id}"
+                )
+                continue
+
+            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
+            proxies_to_assign.append((vcc_proxy, talon_proxy))
+            dish_ids_to_add.append(dish_id)
+            vcc_ids_to_add.append(vcc_id)
+
+        successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(self._assign_vcc_thread, vcc)
-                for vcc in vccs_to_add
-            ]
-            results = [f.result() for f in futures]
+            for result in executor.map(
+                self._assign_vcc_thread, proxies_to_assign
+            ):
+                successes.append(result)
 
-        if any(not success for success in results):
+        if not all(successes):
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -545,10 +527,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        self.logger.info(f"Receptors after adding: {self.dish_ids}")
+        # Update obsState callback if previously unresourced
+        if len(self.dish_ids) == 0:
+            self._update_component_state(resourced=True)
 
-        # Update obsState callback
-        self._update_component_state(resourced=True)
+        self.dish_ids.update(dish_ids_to_add)
+        self.vcc_ids.update(vcc_ids_to_add)
+        vcc_proxy_list, _ = zip(*proxies_to_assign)
+        self._assigned_vcc_proxies.update(vcc_proxy_list)
+
+        self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
         task_callback(
             result=(ResultCode.OK, "AddReceptors completed OK"),
@@ -556,17 +544,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _assign_vcc_with_callback(
-        self: CbfSubarrayComponentManager,
-        *args,
-        hook: str,
-        obs_callback: Callable[[str, bool], None],
-        **kwargs,
-    ):
-        obs_callback(hook=hook, running=True)
-        self._assign_vcc(*args, **kwargs)
-        return obs_callback(hook=hook, running=False)
-
+    @check_communicating
     def assign_vcc(
         self: CbfObsComponentManager,
         argin: list[str],
@@ -586,95 +564,212 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             func=functools.partial(
-                self._assign_vcc_with_callback,
+                self._obs_command_with_callback,
                 hook="assign",
-                obs_callback=self._obs_command_running_callback,
+                command_thread=self._assign_vcc,
             ),
             args=[argin],
             is_cmd_allowed=self.is_assign_vcc_allowed,
             task_callback=task_callback,
         )
 
-    @check_communicating
-    def release_vcc(
-        self: CbfSubarrayComponentManager, argin: List[str]
-    ) -> Tuple[ResultCode, str]:
-        """
-        Remove receptor/dish from subarray.
+    def is_release_vcc_allowed(self: CbfObsComponentManager) -> bool:
+        self.logger.debug("Checking if RemoveReceptors is allowed.")
+        if self.obs_state not in [ObsState.IDLE]:
+            self.logger.warning(
+                f"RemoveReceptors not allowed in ObsState {self.obs_state}; \
+                    must be in ObsState.IDLE"
+            )
+            return False
+        return True
 
-        :param argin: The list of receptor/DISH IDs to be released
+    def _release_vcc_thread(
+        self: CbfSubarrayComponentManager,
+        vcc_proxy: context.DeviceProxy,
+        talon_proxy: context.DeviceProxy,
+    ) -> bool:
+        """
+        Thread to perform individual VCC assignment.
+
+        :param vcc_proxy: proxy to VCC
+        :param talon_proxy: proxy to Talon board device with matching DISH ID
+        :return: True if successfully assigned VCC proxy, otherwise False
+        """
+        try:
+            vcc_fqdn = vcc_proxy.dev_name()
+            # reset subarrayMembership Vcc attribute:
+            vcc_proxy.subarrayMembership = 0
+            self.logger.debug(
+                f"{vcc_fqdn}.subarrayMembership: "
+                + f"{vcc_proxy.subarrayMembership}"
+            )
+            vcc_proxy.Off()
+            vcc_proxy.adminMode = AdminMode.OFFLINE
+
+            # clear the subarray ID off the talon board with the matching DISH ID
+            if talon_proxy is not None:
+                talon_proxy.subarrayID = ""
+
+            return True
+        except tango.DevFailed as df:
+            self.logger.error(f"Failed to release VCC; {df}")
+            return False
+
+    def _release_vcc(
+        self: CbfSubarrayComponentManager,
+        argin: list[str],
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Remove receptors/dishes from subarray.
+
+        :param argin: The list of DISH (receptor) IDs to be removed
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"Current receptors: {self.dish_ids}")
-        for dish_id in argin:
-            self.logger.debug(f"Attempting to remove {dish_id}")
-            if dish_id in self.dish_ids:
-                if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
-                    vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-                else:
-                    return (
-                        ResultCode.FAILED,
-                        f"Invalid receptor {dish_id}. RemoveReceptors command failed.",
-                    )
-                vccFQDN = self._fqdn_vcc[vcc_id - 1]
-                vcc_proxy = self._proxies_vcc[vcc_id - 1]
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "RemoveReceptors", task_callback, task_abort_event
+        ):
+            return
 
-                self.dish_ids.remove(dish_id)
-                self.vcc_ids.remove(vcc_id)
-                self._group_vcc.remove(vccFQDN)
-                del self._proxies_assigned_vcc[dish_id]
-
-                try:
-                    # reset subarrayMembership Vcc attribute:
-                    vcc_proxy.subarrayMembership = 0
-                    self.logger.debug(
-                        f"VCC {vcc_id} subarray_id: "
-                        + f"{vcc_proxy.subarrayMembership}"
-                    )
-                except tango.DevFailed as df:
-                    msg = str(df.args[0].desc)
-                    self._component_obs_fault_callback(True)
-                    return (ResultCode.FAILED, msg)
-
-                # clear the subarray ID off the talon board with the matching
-                # DISH ID
-                self._assign_talon_board_subarray_id(
-                    dish_id=dish_id, assign=False
-                )
-
-            else:
-                msg = f"Receptor {dish_id} not found. Skipping."
-                self.logger.warning(msg)
+        input_dish_valid, msg = self._dish_utils.are_Valid_DISH_Ids(argin)
+        if not input_dish_valid:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, msg),
+            )
+            return
 
         if len(self.dish_ids) == 0:
-            self.update_component_resources(False)
-            self.logger.info("No receptors remaining.")
-        else:
-            self.logger.info(f"Receptors remaining: {self.dish_ids}")
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=(
+                    ResultCode.OK,
+                    "Subarray does not currently have any assigned receptors.",
+                ),
+            )
+            return
 
-        return (ResultCode.OK, "RemoveReceptors completed OK")
+        # build list of VCCs to remove
+        proxies_to_release = []
+        dish_ids_to_remove = []
+        vcc_ids_to_remove = []
+        for dish_id in argin:
+            self.logger.debug(f"Attempting to remove {dish_id}")
+
+            if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
+                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            else:
+                self.logger.warning(
+                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
+                )
+                continue
+
+            if dish_id not in self.dish_ids:
+                self.logger.warning(
+                    f"Skipping receptor {dish_id} as it is not currently assigned to this subarray."
+                )
+                continue
+
+            vcc_proxy = self._all_vcc_proxies[dish_id]
+            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
+            proxies_to_release.append((vcc_proxy, talon_proxy))
+            dish_ids_to_remove.append(dish_id)
+            vcc_ids_to_remove.append(vcc_id)
+
+        successes = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for result in executor.map(
+                self._release_vcc_thread, proxies_to_release
+            ):
+                successes.append(result)
+
+        if not all(successes):
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to remove all requested VCCs.",
+                ),
+            )
+            return
+
+        self.dish_ids.difference_update(dish_ids_to_remove)
+        self.vcc_ids.difference_update(vcc_ids_to_remove)
+        vcc_proxy_list, _ = zip(*proxies_to_release)
+        self._assigned_vcc_proxies.difference_update(vcc_proxy_list)
+
+        self.logger.info(f"Receptors after removal: {self.dish_ids}")
+
+        # Update obsState callback if now unresourced
+        if len(self.dish_ids) == 0:
+            self._update_component_state(resourced=False)
+
+        task_callback(
+            result=(ResultCode.OK, "RemoveReceptors completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    @check_communicating
+    def release_vcc(
+        self: CbfObsComponentManager,
+        argin: list[str],
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> tuple[TaskStatus, str]:
+        """
+        Submit RemoveReceptors operation method to task executor queue.
+
+        :param argin: The list of DISH (receptor) IDs to be removed
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            func=functools.partial(
+                self._obs_command_with_callback,
+                hook="release",
+                command_thread=self._release_vcc,
+            ),
+            args=[argin],
+            is_cmd_allowed=self.is_release_vcc_allowed,
+            task_callback=task_callback,
+        )
 
     @check_communicating
     def release_all_vcc(
-        self: CbfSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+        self: CbfObsComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> tuple[TaskStatus, str]:
         """
-        Remove all receptors/dishes from subarray.
+        Submit RemoveAllReceptors operation method to task executor queue.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (ResultCode, str)
+        :rtype: (TaskStatus, str)
         """
-        if len(self.dish_ids) > 0:
-            (rc, msg) = self.release_vcc(self.dish_ids.copy())
-            return (rc, msg.replace("RemoveReceptors", "RemoveAllReceptors"))
-        return (
-            ResultCode.FAILED,
-            "RemoveAllReceptors failed; no receptors currently assigned",
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            func=functools.partial(
+                self._obs_command_with_callback,
+                hook="release",
+                command_thread=self._release_vcc,
+            ),
+            args=[list(self.dish_ids.copy())],
+            is_cmd_allowed=self.is_release_vcc_allowed,
+            task_callback=task_callback,
         )
 
     #####################
@@ -788,7 +883,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         for dish_id, proxy in self._proxies_assigned_vcc.items():
             if proxy.State() != tango.DevState.ON:
-                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
+                msg = f"VCC {self._all_vcc_proxies.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
 
         # Validate searchWindow.
@@ -1192,8 +1287,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in self.dish_ids:
             if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
                 # Fetch K-value based on dish_id
-                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-                vcc_proxy = self._proxies_vcc[vcc_id - 1]
+                vcc_proxy = self._all_vcc_proxies[dish_id]
                 freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
                 # Calculate dish sample rate
                 dish_sample_rate = self._calculate_dish_sample_rate(

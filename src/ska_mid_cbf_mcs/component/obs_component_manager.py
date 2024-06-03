@@ -57,6 +57,23 @@ class CbfObsComponentManager(CbfComponentManager):
     # Command methods
     # ---------------
 
+    def _obs_command_with_callback(
+        self: CbfObsComponentManager,
+        *args,
+        command_thread: Callable[[Any], None],
+        hook: str,
+        **kwargs,
+    ):
+        """
+        Wrap command thread with ObsStateModel-driving callbacks.
+
+        :param command_thread: actual command thread to be executed
+        :param hook: hook for state machine action
+        """
+        self._obs_command_running_callback(hook=hook, running=True)
+        command_thread(*args, **kwargs)
+        return self._obs_command_running_callback(hook=hook, running=False)
+
     def is_configure_scan_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if self.obs_state not in [
@@ -84,17 +101,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    def _configure_scan_with_callback(
-        self: CbfComponentManager,
-        *args,
-        hook: str,
-        obs_callback: Callable[[str, bool], None],
-        **kwargs,
-    ):
-        obs_callback(hook=hook, running=True)
-        self._configure_scan(*args, **kwargs)
-        return obs_callback(hook=hook, running=False)
-
     def configure_scan(
         self: CbfObsComponentManager,
         argin: str,
@@ -114,9 +120,9 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             func=functools.partial(
-                self._configure_scan_with_callback,
+                self._obs_command_with_callback,
                 hook="configure",
-                obs_callback=self._obs_command_running_callback,
+                command_thread=self._configure_scan,
             ),
             args=[argin],
             is_cmd_allowed=self.is_configure_scan_allowed,
@@ -287,17 +293,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    def _abort_scan_with_callback(
-        self: CbfComponentManager,
-        *args,
-        hook: str,
-        obs_callback: Callable[[str, bool], None],
-        **kwargs,
-    ):
-        obs_callback(hook=hook, running=True)
-        self._abort_scan(*args, **kwargs)
-        return obs_callback(hook=hook, running=False)
-
     def abort_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -314,9 +309,9 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             func=functools.partial(
-                self._abort_scan_with_callback,
+                self._obs_command_with_callback,
                 hook="abort",
-                obs_callback=self._obs_command_running_callback,
+                command_thread=self._abort_scan,
             ),
             is_cmd_allowed=self.is_abort_scan_allowed,
             task_callback=task_callback,
@@ -345,17 +340,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    def _obs_reset_with_callback(
-        self: CbfComponentManager,
-        *args,
-        hook: str,
-        obs_callback: Callable[[str, bool], None],
-        **kwargs,
-    ):
-        obs_callback(hook=hook, running=True)
-        self._obs_reset(*args, **kwargs)
-        return obs_callback(hook=hook, running=False)
-
     def obs_reset(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -372,9 +356,9 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             func=functools.partial(
-                self._obs_reset_with_callback,
+                self._obs_command_with_callback,
                 hook="obsreset",
-                obs_callback=self._obs_command_running_callback,
+                command_thread=self._obs_reset,
             ),
             is_cmd_allowed=self.is_obs_reset_allowed,
             task_callback=task_callback,

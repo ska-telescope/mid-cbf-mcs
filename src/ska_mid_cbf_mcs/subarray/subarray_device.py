@@ -91,7 +91,7 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of receptor IDs
         :rtype: list[str]
         """
-        return self.component_manager.dish_ids
+        return list(self.component_manager.dish_ids)
 
     @attribute(
         dtype=("int",),
@@ -99,14 +99,14 @@ class CbfSubarray(CbfObsDevice):
         label="VCCs",
         doc="list of VCC integer IDs assigned to subarray",
     )
-    def read_assignedVCCs(self: CbfSubarray) -> list[int]:
+    def assignedVCCs(self: CbfSubarray) -> list[int]:
         """
         Return list of VCCs assigned to subarray
 
         :return: the list of VCC IDs
         :rtype: list[int]
         """
-        return self.component_manager.vcc_ids
+        return list(self.component_manager.vcc_ids)
 
     @attribute(
         dtype=("int",),
