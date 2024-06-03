@@ -141,16 +141,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _issue_command_thread(
         self: CbfComponentManager,
+        proxy: context.DeviceProxy,
         argin: Any,
         command_name: str,
-        proxy: context.DeviceProxy,
     ) -> Any:
         """
         Helper function to issue command to a DeviceProxy
 
+        :param proxy: proxy target for command
         :param argin: optional command argument
         :param command_name: command to be issued
-        :param proxy: proxy target for command
         :return: command result (if any)
         """
         try:
@@ -207,14 +207,14 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _read_attribute_thread(
         self: CbfComponentManager,
-        attr_name: str,
         proxy: context.DeviceProxy,
+        attr_name: str,
     ) -> Any:
         """
         Helper function to read attribute from a DeviceProxy
 
-        :param attr_name: name of attribute to be read
         :param proxy: proxy target for read_attribute
+        :param attr_name: name of attribute to be read
         :return: read attribute value
         """
         try:
@@ -256,16 +256,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _write_attribute_thread(
         self: CbfComponentManager,
+        proxy: context.DeviceProxy,
         attr_name: str,
         value: Any,
-        proxy: context.DeviceProxy,
     ) -> bool:
         """
         Helper function to write attribute from a DeviceProxy
 
+        :param proxy: proxy target for read_attribute
         :param attr_name: name of attribute to be read
         :param value: attribute value to be written
-        :param proxy: proxy target for read_attribute
         :return: read attribute value
         """
         try:
