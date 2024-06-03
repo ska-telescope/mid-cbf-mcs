@@ -416,7 +416,6 @@ class CbfObsDevice(SKAObsDevice):
                 self.obs_state_model.perform_action("component_resourced")
             else:
                 self.obs_state_model.perform_action("component_unresourced")
-
         if configured is not None:
             if configured:
                 self.obs_state_model.perform_action("component_configured")

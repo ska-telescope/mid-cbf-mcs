@@ -11,9 +11,12 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from threading import Event, Lock
 from typing import Any, Callable, Optional, cast
 
+import tango
 from ska_control_model import (
     CommunicationStatus,
     HealthState,
@@ -25,10 +28,14 @@ from ska_control_model import (
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.device.base_device import MAX_QUEUED_COMMANDS
 
 __all__ = ["CbfComponentManager"]
+
+# maximum number of group command worker threads
+MAX_GROUP_WORKERS = 4
 
 
 class CbfComponentManager(TaskExecutorComponentManager):
@@ -127,6 +134,47 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return True
         return False
+
+    def _issue_command(
+        self: CbfComponentManager,
+        command: str,
+        proxy: context.DeviceProxy,
+    ) -> Any:
+        """
+        Helper function to issue command to a DeviceProxy
+
+        :param command: command to be issued
+        :param proxy: proxy target for command
+        :return: command result (if any)
+        """
+        try:
+            return proxy.command_inout(command)
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Error issuing {command} command to {proxy.dev_name()}; {df}"
+            )
+
+    def _issue_group_command(
+        self: CbfComponentManager,
+        command: str,
+        proxies: list[context.DeviceProxy],
+        max_workers: int = MAX_GROUP_WORKERS,
+    ) -> list[Any]:
+        """
+        Helper function to perform tango.Group-like threaded command issuance.
+
+        :param command: command to be issued
+        :param proxies: list of device proxies in group
+        :param max_workers: maximum number of ThreadPoolExecutor workers
+        :return: list of proxy command returns
+        """
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for r in executor.map(
+                partial(self._group_command, command=command), proxies
+            ):
+                results.append(r)
+        return results
 
     ###########
     # Callbacks
