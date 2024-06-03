@@ -137,16 +137,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _issue_command_thread(
         self: CbfComponentManager,
+        argin: Any,
         command_name: str,
         proxy: context.DeviceProxy,
-        argin: Any = None,
     ) -> Any:
         """
         Helper function to issue command to a DeviceProxy
 
+        :param argin: optional command argument
         :param command_name: command to be issued
         :param proxy: proxy target for command
-        :param argin: optional command argument
         :return: command result (if any)
         """
         try:
@@ -184,7 +184,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param command_name: name of command to be issued
         :param proxies: list of device proxies in group; determines ordering of
             return values
-        :param argin: optional command argument
+        :param argin: optional command argument, defaults to None
         :param max_workers: maximum number of ThreadPoolExecutor workers
         :return: list of proxy command returns
         """
@@ -193,8 +193,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
             for r in executor.map(
                 partial(
                     self._issue_command_thread,
-                    command_name=command_name,
                     argin=argin,
+                    command_name=command_name,
                 ),
                 proxies,
             ):
