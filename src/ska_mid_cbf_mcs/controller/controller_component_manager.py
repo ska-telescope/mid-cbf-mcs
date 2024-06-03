@@ -574,11 +574,11 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Set the Simulation mode of the Subarray and turn it on
         try:
-            # self._group_subarray.write_attribute(
-            #     "simulationMode",
-            #     self._talondx_component_manager.simulation_mode,
-            # )
-            # self._group_subarray.command_inout("On")
+            self._group_subarray.write_attribute(
+                "simulationMode",
+                self._talondx_component_manager.simulation_mode,
+            )
+            self._group_subarray.command_inout("On")
             pass
         except tango.DevFailed as df:
             for item in df.args:
@@ -1013,12 +1013,16 @@ class ControllerComponentManager(CbfComponentManager):
             telmodel_validate(
                 version=params["interface"], config=params, strictness=2
             )
-            self.logger.info("InitSysParam validation against ska-telmodel schema was successful!")
+            self.logger.info(
+                "InitSysParam validation against ska-telmodel schema was successful!"
+            )
         except ValueError as e:
-            self.logger.error(f"InitSysParam validation against ska-telmodel schema failed with exception:\n {str(e)}")
+            self.logger.error(
+                f"InitSysParam validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            )
             return False
         return True
-    
+
     def _retrieve_sys_param_file(
         self: ControllerComponentManager,
         init_sys_param_json: dict,
@@ -1036,9 +1040,13 @@ class ControllerComponentManager(CbfComponentManager):
             mid_cbf_param_dict = TMData([tm_data_sources])[
                 tm_data_filepath
             ].get_dict()
-            self.logger.info("Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}")
+            self.logger.info(
+                "Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+            )
         except (ValueError, KeyError) as e:
-            self.logger.error(f"Retrieving the init_sys_param file failed with exception: \n {str(e)}")
+            self.logger.error(
+                f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
+            )
             return (False, None)
         return (True, mid_cbf_param_dict)
 
@@ -1168,7 +1176,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         if not self._validate_init_sys_param(init_sys_param_json):
             task_callback(
-                result=(ResultCode.FAILED, "Validating init_sys_param file against ska-telmodel schema failed"),
+                result=(
+                    ResultCode.FAILED,
+                    "Validating init_sys_param file against ska-telmodel schema failed",
+                ),
                 status=TaskStatus.FAILED,
             )
             return
@@ -1181,14 +1192,20 @@ class ControllerComponentManager(CbfComponentManager):
             )
             if not passed:
                 task_callback(
-                    result=(ResultCode.FAILED, "Retrieving the init_sys_param file failed"),
+                    result=(
+                        ResultCode.FAILED,
+                        "Retrieving the init_sys_param file failed",
+                    ),
                     status=TaskStatus.FAILED,
                 )
                 return
             if not self._validate_init_sys_param(init_sys_param_json):
                 task_callback(
-                result=(ResultCode.FAILED, "Validating init_sys_param file against ska-telmodel schema failed"),
-                status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Validating init_sys_param file against ska-telmodel schema failed",
+                    ),
+                    status=TaskStatus.FAILED,
                 )
                 return
             self._source_init_sys_param = argin
