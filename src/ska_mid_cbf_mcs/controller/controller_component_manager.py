@@ -163,19 +163,34 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the group proxies are successfully created, False otherwise.
         """
         try:
-            self._group_vcc = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_vcc))
+            self._group_vcc = list(
+                map(
+                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
+                    self._fqdn_vcc,
+                )
+            )
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
             return False
-        
+
         try:
-            self._group_fsp = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_fsp))
+            self._group_fsp = list(
+                map(
+                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
+                    self._fqdn_fsp,
+                )
+            )
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
             return False
 
         try:
-            self._group_subarray = list(map(lambda fqdn: context.DeviceProxy(device_name=fqdn), self._fqdn_subarray))
+            self._group_subarray = list(
+                map(
+                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
+                    self._fqdn_subarray,
+                )
+            )
         except tango.DevFailed:
             self.logger.error(
                 f"Failure in connection to {self._fqdn_subarray}"
@@ -565,33 +580,31 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # Set the Simulation mode of the Subarray and turn it on
-        # try:
-        #     self._group_subarray.write_attribute(
-        #         "simulationMode",
-        #         self._talondx_component_manager.simulation_mode,
-        #     )
-        #     self._group_subarray.command_inout("On")
-        # except tango.DevFailed as df:
-        #     for item in df.args:
-        #         msg = f"Failed to turn on group proxies; {item.reason}"
-        #         self.logger.error(msg)
-        #     task_callback(
-        #         result=(ResultCode.FAILED, msg),
-        #         status=TaskStatus.FAILED,
-        #     )
-        #     return
-        
+        if not self._write_group_attribute(
+            attr_name="simulationMode",
+            value=self._talondx_component_manager.simulation_mode,
+            proxies=self._group_subarray,
+        ):
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    "Failed writing simulationMode on to subarrays",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
 
         group_subarray_on_failed = False
-        for result_code, msg in self._issue_group_command(command_name="On", proxies=self._group_subarray):
+        for result_code, msg in self._issue_group_command(
+            command_name="On", proxies=self._group_subarray
+        ):
             if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
                 group_subarray_on_failed = True
 
         if group_subarray_on_failed:
             task_callback(
-                result=(ResultCode.FAILED, "Failed to turn on subarrays"),
+                result=(ResultCode.FAILED, "Failed to turn on  subarrays"),
                 status=TaskStatus.FAILED,
             )
             return
@@ -760,18 +773,24 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> tuple[bool, list[str]]:
         result = True
         message = []
-        
-        for result_code, msg in self._issue_group_command("Off", self._group_subarray):
+
+        for result_code, msg in self._issue_group_command(
+            "Off", self._group_subarray
+        ):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 result = False
 
-        for result_code, msg in self._issue_group_command("Off", self._group_vcc):
+        for result_code, msg in self._issue_group_command(
+            "Off", self._group_vcc
+        ):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 result = False
 
-        for result_code, msg in self._issue_group_command("Off", self._group_fsp):
+        for result_code, msg in self._issue_group_command(
+            "Off", self._group_fsp
+        ):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 result = False
