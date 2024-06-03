@@ -135,18 +135,22 @@ class CbfComponentManager(TaskExecutorComponentManager):
             return True
         return False
 
+    #######################
+    # Group-related methods
+    #######################
+
     def _issue_command_thread(
         self: CbfComponentManager,
+        proxy: context.DeviceProxy,
         argin: Any,
         command_name: str,
-        proxy: context.DeviceProxy,
     ) -> Any:
         """
         Helper function to issue command to a DeviceProxy
 
+        :param proxy: proxy target for command
         :param argin: optional command argument
         :param command_name: command to be issued
-        :param proxy: proxy target for command
         :return: command result (if any)
         """
         try:
@@ -200,6 +204,112 @@ class CbfComponentManager(TaskExecutorComponentManager):
             ):
                 results.append(r)
         return results
+
+    def _read_attribute_thread(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        attr_name: str,
+    ) -> Any:
+        """
+        Helper function to read attribute from a DeviceProxy
+
+        :param proxy: proxy target for read_attribute
+        :param attr_name: name of attribute to be read
+        :return: read attribute value
+        """
+        try:
+            return proxy.read_attribute(attr_name)
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Error reading {proxy.dev_name()}.{attr_name}; {df}"
+            )
+            return None
+
+    def _read_group_attribute(
+        self: CbfComponentManager,
+        attr_name: str,
+        proxies: list[context.DeviceProxy],
+        max_workers: int = MAX_GROUP_WORKERS,
+    ) -> list[Any]:
+        """
+        Helper function to perform tango.Group-like threaded read_attribute().
+        Returns list of attribute values in the same order as the input proxies list.
+        If any command causes a tango.DevFailed exception, the result code for
+        that device's return value will be None.
+
+        Important note: all proxies provided must be of the same device type.
+
+        :param attr_name: name of attribute to be read
+        :param proxies: list of device proxies in group; determines ordering of
+            return values
+        :param max_workers: maximum number of ThreadPoolExecutor workers
+        :return: list of proxy attribute values
+        """
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for r in executor.map(
+                partial(self._read_attribute_thread, attr_name=attr_name),
+                proxies,
+            ):
+                results.append(r)
+        return results
+
+    def _write_attribute_thread(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        attr_name: str,
+        value: Any,
+    ) -> bool:
+        """
+        Helper function to write attribute from a DeviceProxy
+
+        :param proxy: proxy target for read_attribute
+        :param attr_name: name of attribute to be read
+        :param value: attribute value to be written
+        :return: read attribute value
+        """
+        try:
+            proxy.write_attribute(attr_name, value)
+            return True
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Error writing {value} to {proxy.dev_name()}.{attr_name}; {df}"
+            )
+            return False
+
+    def _write_group_attribute(
+        self: CbfComponentManager,
+        attr_name: str,
+        value: Any,
+        proxies: list[context.DeviceProxy],
+        max_workers: int = MAX_GROUP_WORKERS,
+    ) -> bool:
+        """
+        Helper function to perform tango.Group-like threaded write_attribute().
+        Returns a bool depending on each device's write_attribute success;
+        True if all writes were successful, False otherwise.
+
+        Important note: all proxies provided must be of the same device type.
+
+        :param attr_name: name of attribute to be written
+        :param value: attribute value to be written
+        :param proxies: list of device proxies in group; determines ordering of
+            return values
+        :param max_workers: maximum number of ThreadPoolExecutor workers
+        :return: list of proxy attribute values
+        """
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for r in executor.map(
+                partial(
+                    self._write_attribute_thread,
+                    attr_name=attr_name,
+                    value=value,
+                ),
+                proxies,
+            ):
+                results.append(r)
+        return all(results)
 
     ###########
     # Callbacks
