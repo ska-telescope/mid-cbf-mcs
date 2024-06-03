@@ -25,6 +25,9 @@ from tango import DevState
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
+from ska_mid_cbf_mcs.testing.mock.mock_response_snmp import MockResponseSNMP
+
+NUM_OUTLETS = 24
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -78,6 +81,33 @@ class TestPowerSwitch:
         monkeypatch.setattr("requests.patch", mock_patch)
         monkeypatch.setattr("requests.get", mock_get)
 
+        def mock_get_snmp(
+            self, authData, transportTarget, *varNames, **kwargs
+        ) -> MockResponse:
+            """
+            Replace requests.get with mock method.
+
+            :param url: the URL
+            :param params: arguments to the GET
+            :param kwargs: other keyword args
+
+            :return: a response
+            """
+            # varBinds = [(1, 3), (2, 3), (4, 4)]
+            return MockResponseSNMP(
+                request.param["sim_get_error"],
+                request.param["sim_state"],
+            )
+
+            # return MockResponse(
+            #     url, request.param["sim_get_error"], request.param["sim_state"], 
+            # )
+
+        # Patches for SNMP get and set commands
+        monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.getCmd", mock_get_snmp)
+        
+
+
         harness.add_device(
             device_name="mid_csp_cbf/power_switch/001",
             device_class=PowerSwitch,
@@ -86,10 +116,16 @@ class TestPowerSwitch:
             # PowerSwitchLogin="admin",
             # PowerSwitchModel="DLI LPC9",
             # PowerSwitchPassword="1234",
-            PowerSwitchIp="192.168.1.254",
-            PowerSwitchModel="Server Technology Switched PRO2",
-            PowerSwitchLogin="admn",
-            PowerSwitchPassword="admn-1-Psi", 
+
+            # PowerSwitchIp="192.168.1.254",
+            # PowerSwitchModel="Server Technology Switched PRO2",
+            # PowerSwitchLogin="admn",
+            # PowerSwitchPassword="admn-1-Psi", 
+
+            PowerSwitchIp="192.168.1.253",
+            PowerSwitchModel="APC AP8681 SNMP",
+            PowerSwitchLogin="apc",
+            PowerSwitchPassword="apc", 
         )
 
         with harness as test_context:
@@ -184,7 +220,7 @@ class TestPowerSwitch:
         assert device_under_test.isCommunicating
 
         # Check that numOutlets is 8
-        assert device_under_test.numOutlets == 8
+        assert device_under_test.numOutlets == NUM_OUTLETS
 
     @pytest.mark.parametrize(
         "test_context",
@@ -238,11 +274,11 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         # Attempt to turn outlets off
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOffOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -252,8 +288,8 @@ class TestPowerSwitch:
             )
 
         # Attempt to turn outlets on
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOnOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -290,11 +326,11 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         # Turn outlets off and check the state again
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOffOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -365,11 +401,11 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         # Turn outlets off and check the state again
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOffOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -377,7 +413,7 @@ class TestPowerSwitch:
             ].assert_change_event(
                 (
                     f"{command_id[0]}",
-                    f'[3, "Outlet AA{i} failed to power off after sleep."]',
+                    f'[3, "Outlet {i} failed to power off after sleep."]',
                 )
             )
 
@@ -408,21 +444,18 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.ON
 
-        # Temp
-        outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
-
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         result_code, command_id = device_under_test.TurnOffOutlet(
-            f'{num_outlets + 41}'
+            f'{num_outlets + 1}'
         )
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f"Outlet ID {num_outlets+41} must be in the allowable outlet_id_list {outlet_id_list}"
+                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list"
             )
         )
 
@@ -457,11 +490,11 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOnOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -532,11 +565,11 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(1, num_outlets):
-            result_code, command_id = device_under_test.TurnOnOutlet(f"AA{i}")
+        for i in range(0, num_outlets):
+            result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
@@ -544,7 +577,7 @@ class TestPowerSwitch:
             ].assert_change_event(
                 (
                     f"{command_id[0]}",
-                    f'[3, "Outlet AA{str(i)} failed to power on after sleep."]',
+                    f'[3, "Outlet {str(i)} failed to power on after sleep."]',
                 )
             )
 
@@ -575,20 +608,18 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.ON
 
-        outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
-
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == 8
+        assert num_outlets == NUM_OUTLETS
 
         result_code, command_id = device_under_test.TurnOnOutlet(
-            str(num_outlets + 41)
+            str(num_outlets + 1)
         )
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f"Outlet ID {num_outlets+41} must be in the allowable outlet_id_list {outlet_id_list}",
+                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
             )
         )
 

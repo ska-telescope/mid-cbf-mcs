@@ -6,15 +6,30 @@ from typing import Any, List
 
 import requests
 
-__all__ = ["MockResponse"]
+from pysnmp import error as snmp_error
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+from pysnmp.hlapi import (  # noqa: F401
+    ContextData,
+    ObjectIdentity,
+    ObjectType,
+    SnmpEngine,
+    UdpTransportTarget,
+    UsmUserData,
+    getCmd,
+    setCmd,
+    usmHMACMD5AuthProtocol,
+    usmNoPrivProtocol,
+)
+from pysnmp.proto import rfc1902
+
+__all__ = ["MockResponseSNMP"]
 
 
-class MockResponse:
+class MockResponseSNMP:
     """A mock class to replace requests.Response."""
 
     def __init__(
-        self: MockResponse,
-        url: str,
+        self: MockResponseSNMP,
         simulate_response_error: bool,
         sim_state: bool,
     ) -> None:
@@ -24,25 +39,19 @@ class MockResponse:
         :param url: URL of the request
         :param simulate_response_error: set to True to simulate error response
         """
-        outlet_state_url = re.compile(
-            r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/"
-        )
-        outlet_list_url = re.compile(
-            r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
-        )
 
         self._json: List[dict[str, Any]] = []
         
         # Would need to parametrize for this logic in the MockResponse constructor
         # These state code work for st switch 2 driver, hard written
-        sim_state = "On" if sim_state else "Off"
+        sim_state = 1 if sim_state else 2
 
         if simulate_response_error:
             self.status_code = 404
         else:
             self.status_code = requests.codes.ok
 
-            for i in range(0, 8):
+            for i in range(1, 25):
                 outlet_cfg = {
                     "name": f"Outlet {i}",
                     "locked": False,
@@ -51,21 +60,13 @@ class MockResponse:
                     "state": sim_state,
                     "physical_state": True,
                     "transient_state": True,
+                    "varBinds": (None, sim_state)
                 }
 
                 self._json.append(outlet_cfg)
-
-            if outlet_list_url.fullmatch(url):
                 self.text = json.dumps(self._json)
 
-            elif outlet_state_url.fullmatch(url):
-                url.split("/")
-                outlet = url[-2]
-
-                self._json = self._json[int(outlet)]
-                self.text = json.dumps(self._json)
-
-    def json(self: MockResponse) -> dict[str, Any]:
+    def json(self: MockResponseSNMP) -> dict[str, Any]:
         """
         Replace the patched :py:meth:`request.Response.json` with mock.
 
