@@ -25,9 +25,10 @@ from tango import DevState
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
-from ska_mid_cbf_mcs.testing.mock.mock_response_snmp import MockResponseSNMP
+from ska_mid_cbf_mcs.testing.mock.mock_response_snmp import MockGetResponseSNMP, MockSetResponseSNMP
 
-NUM_OUTLETS = 24
+# TODO: Things to parametrize: num outlets, num outlet range, patch request message, device params
+NUM_OUTLETS = 8
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -78,33 +79,44 @@ class TestPowerSwitch:
                 url, request.param["sim_get_error"], request.param["sim_state"], 
             )
 
-        monkeypatch.setattr("requests.patch", mock_patch)
-        monkeypatch.setattr("requests.get", mock_get)
-
+        # TODO: Linting return function or tuple?
         def mock_get_snmp(
-            self, authData, transportTarget, *varNames, **kwargs
-        ) -> MockResponse:
+            authData, transportTarget, *varNames, **kwargs
+        ) -> MockGetResponseSNMP:
             """
-            Replace requests.get with mock method.
+            Replace pysnmp...CommandGenerator.getCmd with mock method.
 
-            :param url: the URL
+            :param self, authData, transportTarget, *varNames: arguments to the GET
+            :param kwargs: other keyword args
+
+            :return: a response
+            """
+            return MockGetResponseSNMP(
+                request.param["sim_get_error"],
+                request.param["sim_state"],
+            )
+        
+        def mock_set_snmp(
+            authData, transportTarget, *varNames, **kwargs
+        ) -> MockGetResponseSNMP:
+            """
+            Replace pysnmp...CommandGenerator.getCmd with mock method.
+
             :param params: arguments to the GET
             :param kwargs: other keyword args
 
             :return: a response
             """
-            # varBinds = [(1, 3), (2, 3), (4, 4)]
-            return MockResponseSNMP(
-                request.param["sim_get_error"],
+            return MockSetResponseSNMP(
+                request.param["sim_patch_error"],
                 request.param["sim_state"],
             )
 
-            # return MockResponse(
-            #     url, request.param["sim_get_error"], request.param["sim_state"], 
-            # )
-
-        # Patches for SNMP get and set commands
+        # Monkeypatches for patch, get, and set commands
+        monkeypatch.setattr("requests.patch", mock_patch)
+        monkeypatch.setattr("requests.get", mock_get)
         monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.getCmd", mock_get_snmp)
+        monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.setCmd", mock_set_snmp)
         
 
 
@@ -112,20 +124,20 @@ class TestPowerSwitch:
             device_name="mid_csp_cbf/power_switch/001",
             device_class=PowerSwitch,
            
-            # PowerSwitchIp="192.168.0.100",
-            # PowerSwitchLogin="admin",
-            # PowerSwitchModel="DLI LPC9",
-            # PowerSwitchPassword="1234",
+            PowerSwitchIp="192.168.0.100",
+            PowerSwitchLogin="admin",
+            PowerSwitchModel="DLI LPC9",
+            PowerSwitchPassword="1234",
 
             # PowerSwitchIp="192.168.1.254",
             # PowerSwitchModel="Server Technology Switched PRO2",
             # PowerSwitchLogin="admn",
-            # PowerSwitchPassword="admn-1-Psi", 
+            # PowerSwitchPassword="admn-1-Psi",
 
-            PowerSwitchIp="192.168.1.253",
-            PowerSwitchModel="APC AP8681 SNMP",
-            PowerSwitchLogin="apc",
-            PowerSwitchPassword="apc", 
+            # PowerSwitchIp="192.168.1.253",
+            # PowerSwitchModel="APC AP8681 SNMP",
+            # PowerSwitchLogin="apc",
+            # PowerSwitchPassword="apc",
         )
 
         with harness as test_context:
@@ -277,7 +289,7 @@ class TestPowerSwitch:
         assert num_outlets == NUM_OUTLETS
 
         # Attempt to turn outlets off
-        for i in range(0, num_outlets):
+        for i in range(1, num_outlets):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -285,10 +297,11 @@ class TestPowerSwitch:
                 "longRunningCommandResult"
             ].assert_change_event(
                 (f"{command_id[0]}", '[3, "HTTP response error"]')
+                # (f"{command_id[0]}", '[3, "Connection error: "]')
             )
 
         # Attempt to turn outlets on
-        for i in range(0, num_outlets):
+        for i in range(1, num_outlets):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -296,6 +309,7 @@ class TestPowerSwitch:
                 "longRunningCommandResult"
             ].assert_change_event(
                 (f"{command_id[0]}", '[3, "HTTP response error"]')
+                # (f"{command_id[0]}", '[3, "Connection error: "]')
             )
 
         # assert if any captured events have gone unaddressed
@@ -404,7 +418,7 @@ class TestPowerSwitch:
         assert num_outlets == NUM_OUTLETS
 
         # Turn outlets off and check the state again
-        for i in range(0, num_outlets):
+        for i in range(1, num_outlets):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -493,7 +507,7 @@ class TestPowerSwitch:
         assert num_outlets == NUM_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(0, num_outlets):
+        for i in range(1, num_outlets):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -568,7 +582,7 @@ class TestPowerSwitch:
         assert num_outlets == NUM_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(0, num_outlets):
+        for i in range(1, num_outlets):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
