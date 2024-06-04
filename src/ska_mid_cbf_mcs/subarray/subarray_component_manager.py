@@ -19,7 +19,6 @@ import concurrent.futures
 import copy
 import functools
 import json
-import logging
 import sys
 from threading import Event, Lock, Thread
 from typing import Any, Callable, Optional
@@ -35,7 +34,8 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.component_manager import check_communicating
+from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_testing import context
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -49,7 +49,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.testing import context
 
 
 class CbfSubarrayComponentManager(CbfObsComponentManager):
@@ -61,9 +60,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         subarray_id: int,
         controller: str,
         vcc: list[str],
-        fsp: List[str],
-        fsp_corr_sub: List[str],
-        talon_board: List[str],
+        fsp: list[str],
+        fsp_corr_sub: list[str],
+        talon_board: list[str],
         **kwargs: Any,
     ) -> None:
         """
@@ -76,8 +75,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
         :param talon_board: FQDNs of talon board devices
         """
-        self.logger.debug("Entering CbfSubarrayComponentManager.__init__)")
         super().__init__(*args, **kwargs)
+
+        self.obs_state = ObsState.EMPTY
 
         self._dish_utils = None
 
@@ -135,7 +135,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "Entering CbfSubarrayComponentManager.start_communicating"
         )
 
-        if self.is_communicating():
+        if self.is_communicating:
             self.logger.info("Already connected.")
             return
 
@@ -180,13 +180,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 for fqdn in self._fqdn_talon_board_device:
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._proxies_talon_board_device.append(proxy)
-
-            if self._group_fsp is None:
-                self._group_fsp = context.Group(name="FSP")
-            if self._group_fsp_corr_subarray is None:
-                self._group_fsp_corr_subarray = context.Group(
-                    name="FSP Subarray Corr"
-                )
 
             for proxy in self._proxies_fsp_corr_subarray_device:
                 proxy.adminMode = AdminMode.ONLINE
@@ -398,7 +391,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Couldn't find Talon board device with DISH ID {dish_id}; \
                 unable to update TalonBoard device subarrayID for this DISH."
         )
-        return None
+        # Talon board proxy not essential to scan operation, so we log an error
+        # but don't cause a failure
+        # return False here to fail conditionals later
+        return False
 
     def is_assign_vcc_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if AddReceptors is allowed.")
@@ -426,10 +422,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
             vcc_fqdn = vcc_proxy.dev_name()
             self.logger.info(
-                f"Writing {vcc_fqdn} simulation mode to: {self._simulation_mode}"
+                f"Writing {vcc_fqdn} simulation mode to: {self.simulation_mode}"
             )
             vcc_proxy.adminMode = AdminMode.OFFLINE
-            vcc_proxy.simulationMode = self._simulation_mode
+            vcc_proxy.simulationMode = self.simulation_mode
             vcc_proxy.adminMode = AdminMode.ONLINE
             vcc_proxy.On()
 
@@ -441,7 +437,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
 
             # assign the subarray ID to the talon board with the matching DISH ID
-            if talon_proxy is not None:
+            if talon_proxy:
                 talon_proxy.subarrayID = str(self.subarray_id)
 
             return True
@@ -481,7 +477,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # build list of VCCs to assign
-        proxies_to_assign = []
+        vcc_proxies = []
+        talon_proxies = []
         dish_ids_to_add = []
         vcc_ids_to_add = []
         for dish_id in argin:
@@ -505,15 +502,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 continue
 
+            vcc_proxies.append(vcc_proxy)
             talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
-            proxies_to_assign.append((vcc_proxy, talon_proxy))
+            talon_proxies.append(talon_proxy)
             dish_ids_to_add.append(dish_id)
             vcc_ids_to_add.append(vcc_id)
 
         successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(
-                self._assign_vcc_thread, proxies_to_assign
+                self._assign_vcc_thread, vcc_proxies, talon_proxies
             ):
                 successes.append(result)
 
@@ -527,16 +525,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Update obsState callback if previously unresourced
-        if len(self.dish_ids) == 0:
-            self._update_component_state(resourced=True)
-
         self.dish_ids.update(dish_ids_to_add)
+        receptors_push_val = list(self.dish_ids.copy())
+        receptors_push_val.sort()
+        self._device_attr_change_callback("receptors", receptors_push_val)
+        self._device_attr_archive_callback("receptors", receptors_push_val)
+
         self.vcc_ids.update(vcc_ids_to_add)
-        vcc_proxy_list, _ = zip(*proxies_to_assign)
-        self._assigned_vcc_proxies.update(vcc_proxy_list)
+        self._assigned_vcc_proxies.update(vcc_proxies)
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
+
+        # Update obsState callback if previously unresourced
+        self._update_component_state(resourced=True)
 
         task_callback(
             result=(ResultCode.OK, "AddReceptors completed OK"),
@@ -589,7 +590,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         talon_proxy: context.DeviceProxy,
     ) -> bool:
         """
-        Thread to perform individual VCC assignment.
+        Thread to perform individual VCC release.
 
         :param vcc_proxy: proxy to VCC
         :param talon_proxy: proxy to Talon board device with matching DISH ID
@@ -607,7 +608,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy.adminMode = AdminMode.OFFLINE
 
             # clear the subarray ID off the talon board with the matching DISH ID
-            if talon_proxy is not None:
+            if talon_proxy:
                 talon_proxy.subarrayID = ""
 
             return True
@@ -657,7 +658,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # build list of VCCs to remove
-        proxies_to_release = []
+        vcc_proxies = []
+        talon_proxies = []
         dish_ids_to_remove = []
         vcc_ids_to_remove = []
         for dish_id in argin:
@@ -677,16 +679,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 continue
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
+            vcc_proxies.append(vcc_proxy)
             talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
-            proxies_to_release.append((vcc_proxy, talon_proxy))
+            talon_proxies.append(talon_proxy)
             dish_ids_to_remove.append(dish_id)
             vcc_ids_to_remove.append(vcc_id)
 
         successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(
-                self._release_vcc_thread, proxies_to_release
+                self._release_vcc_thread, vcc_proxies, talon_proxies
             ):
                 successes.append(result)
 
@@ -701,15 +704,18 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         self.dish_ids.difference_update(dish_ids_to_remove)
+        receptors_push_val = list(self.dish_ids.copy())
+        receptors_push_val.sort()
+        self._device_attr_change_callback("receptors", receptors_push_val)
+        self._device_attr_archive_callback("receptors", receptors_push_val)
+
         self.vcc_ids.difference_update(vcc_ids_to_remove)
-        vcc_proxy_list, _ = zip(*proxies_to_release)
-        self._assigned_vcc_proxies.difference_update(vcc_proxy_list)
+        self._assigned_vcc_proxies.difference_update(vcc_proxies)
 
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
         # Update obsState callback if now unresourced
-        if len(self.dish_ids) == 0:
-            self._update_component_state(resourced=False)
+        self._update_component_state(resourced=False)
 
         task_callback(
             result=(ResultCode.OK, "RemoveReceptors completed OK"),
@@ -818,7 +824,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def go_to_idle(
         self: CbfSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Send subarray from READY to IDLE.
 
@@ -843,7 +849,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     @check_communicating
     def validate_input(
         self: CbfSubarrayComponentManager, argin: str
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Validate scan configuration.
 
@@ -864,22 +870,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return (False, msg)
 
         # Validate delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["delay_model_subscription_point"],
-                    logger=self.logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['delay_model_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'delayModelSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
+        # if "delay_model_subscription_point" in configuration:
+        #     try:
+        #         attribute_proxy = CbfAttributeProxy(
+        #             fqdn=configuration["delay_model_subscription_point"],
+        #             logger=self.logger,
+        #         )
+        #         attribute_proxy.ping()
+        #     except (
+        #         tango.DevFailed
+        #     ):  # attribute doesn't exist or is not set up correctly
+        #         msg = (
+        #             f"Attribute {configuration['delay_model_subscription_point']}"
+        #             " not found or not set up correctly for "
+        #             "'delayModelSubscriptionPoint'. Aborting configuration."
+        #         )
+        #         return (False, msg)
 
         for dish_id, proxy in self._proxies_assigned_vcc.items():
             if proxy.State() != tango.DevState.ON:
@@ -972,7 +978,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     # configuration at all, or the list may be empty
                     if "receptors" in fsp and len(fsp["receptors"]) > 0:
                         self.logger.debug(
-                            f"List of receptors: {self.dish_ids}"
+                            f"list of receptors: {self.dish_ids}"
                         )
                         for dish in fsp["receptors"]:
                             if dish not in self.dish_ids:
@@ -1258,7 +1264,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     @check_communicating
     def configure_scan(
         self: CbfSubarrayComponentManager, argin: str
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -1444,14 +1450,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             # Set simulation mode of FSPs to subarray sim mode
             self.logger.info(
-                f"Setting Simulation Mode of FSP {fsp_id} proxies to: {self._simulation_mode} and turning them on."
+                f"Setting Simulation Mode of FSP {fsp_id} proxies to: {self.simulation_mode} and turning them on."
             )
             for proxy in [
                 fsp_proxy,
                 fsp_corr_proxy,
             ]:
                 proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-                proxy.write_attribute("simulationMode", self._simulation_mode)
+                proxy.write_attribute("simulationMode", self.simulation_mode)
                 proxy.write_attribute("adminMode", AdminMode.ONLINE)
                 proxy.command_inout("On")
 
@@ -1551,8 +1557,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def scan(
-        self: CbfSubarrayComponentManager, argin: Dict[Any]
-    ) -> Tuple[ResultCode, str]:
+        self: CbfSubarrayComponentManager, argin: dict[Any]
+    ) -> tuple[ResultCode, str]:
         """
         Start subarray Scan operation.
 
@@ -1592,7 +1598,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return (ResultCode.STARTED, "Scan command successful")
 
     @check_communicating
-    def end_scan(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
+    def end_scan(self: CbfSubarrayComponentManager) -> tuple[ResultCode, str]:
         """
         End subarray Scan operation.
 
@@ -1724,7 +1730,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, dish: str
-    ) -> Dict:
+    ) -> dict:
         log_msg = (
             f"Calculate fs_sample_rate for freq_band:{freq_band} and {dish}"
         )
@@ -1759,7 +1765,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _calculate_fs_sample_rates(
         self: CbfSubarrayComponentManager, freq_band: str
-    ) -> List[Dict]:
+    ) -> list[dict]:
         output_sample_rates = []
         for dish in self.dish_ids:
             output_sample_rates.append(

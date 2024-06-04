@@ -47,6 +47,7 @@ class CbfObsComponentManager(CbfComponentManager):
         # callback in the CspSubElementObsDevice to drive the observing state model
         self._component_state["configured"] = None
         self._component_state["scanning"] = None
+        self._component_state["resourced"] = None
 
         self.obs_state = ObsState.IDLE
 

@@ -13,9 +13,15 @@ from __future__ import annotations
 
 import copy
 import json
+from typing import Any
 
 import tango
-from ska_control_model import ObsStateModel, ResultCode
+from ska_control_model import (
+    ObsState,
+    ObsStateModel,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from ska_telmodel.schema import validate as telmodel_validate
@@ -46,10 +52,6 @@ class CbfSubarray(CbfObsDevice):
         default_value="mid_csp_cbf/sub_elt/controller",
     )
 
-    SW1Address = device_property(dtype="str")
-
-    SW2Address = device_property(dtype="str")
-
     VCC = device_property(dtype=("str",))
 
     FSP = device_property(dtype=("str",))
@@ -64,7 +66,6 @@ class CbfSubarray(CbfObsDevice):
 
     @attribute(
         dtype="DevEnum",
-        label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
     )
@@ -81,7 +82,6 @@ class CbfSubarray(CbfObsDevice):
     @attribute(
         dtype=("str",),
         max_dim_x=197,
-        label="receptors",
         doc="list of DISH/receptor string IDs assigned to subarray",
     )
     def receptors(self: CbfSubarray) -> list[str]:
@@ -91,12 +91,13 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of receptor IDs
         :rtype: list[str]
         """
-        return list(self.component_manager.dish_ids)
+        receptors = list(self.component_manager.dish_ids.copy())
+        receptors.sort()
+        return receptors
 
     @attribute(
         dtype=("int",),
         max_dim_x=197,
-        label="VCCs",
         doc="list of VCC integer IDs assigned to subarray",
     )
     def assignedVCCs(self: CbfSubarray) -> list[int]:
@@ -111,7 +112,6 @@ class CbfSubarray(CbfObsDevice):
     @attribute(
         dtype=("int",),
         max_dim_x=197,
-        label="Frequency offset (k)",
         doc="Frequency offset (k) of all 197 receptors as an array of ints.",
     )
     def frequencyOffsetK(self: CbfSubarray) -> list[int]:
@@ -134,7 +134,6 @@ class CbfSubarray(CbfObsDevice):
 
     @attribute(
         dtype="str",
-        label="sys_param",
         doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
     )
     def sysParam(self: CbfSubarray) -> str:
@@ -245,10 +244,38 @@ class CbfSubarray(CbfObsDevice):
     # Commands
     # --------
 
+    class InitCommand(CbfObsDevice.InitCommand):
+        """
+        A class for the Subarray's init_device() "command".
+        """
+
+        def do(
+            self: CbfSubarray.InitCommand,
+            *args: Any,
+            **kwargs: Any,
+        ) -> DevVarLongStringArrayType:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code, msg) = super().do(*args, **kwargs)
+
+            self._device._obs_state = ObsState.EMPTY
+            self._device._commanded_obs_state = ObsState.EMPTY
+
+            self._device.set_change_event("receptors", True)
+            self._device.set_archive_event("receptors", True)
+
+            return (result_code, msg)
+
     #  Resourcing Commands  #
 
     @command(
-        dtype_in="DevString",
+        dtype_in=("str",),
         doc_in="List of DISH (receptor) IDs",
         dtype_out="DevVarLongStringArray",
         doc_out=(
@@ -276,53 +303,16 @@ class CbfSubarray(CbfObsDevice):
         result_code_message, command_id = command_handler(argin)
         return [[result_code_message], [command_id]]
 
-    class RemoveReceptorsCommand(
-        CspSubElementSubarray.ReleaseResourcesCommand
-    ):
-        """
-        A class for CbfSubarray's RemoveReceptors() command.
-        Equivalent to the ReleaseResourcesCommand in ADR-8.
-        """
-
-        def do(
-            self: CbfSubarray.RemoveReceptorsCommand, argin: list[str]
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for RemoveReceptors() command functionality.
-
-            :param argin: The receptors to be released
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.release_vcc(argin)
-
-        def validate_input(
-            self: CbfSubarray.RemoveReceptorsCommand, argin: list[str]
-        ) -> Tuple[bool, str]:
-            """
-            Validate DISH/receptor IDs.
-
-            :param argin: The list of DISH/receptor IDs to remove.
-
-            :return: A tuple containing a boolean indicating if the configuration
-                is valid and a string message. The message is for information
-                purpose only.
-            :rtype: (bool, str)
-            """
-            return DISHUtils.are_Valid_DISH_Ids(argin)
-
     @command(
         dtype_in=("str",),
         doc_in="list of DISH/receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
+    @tango.DebugIt()
     def RemoveReceptors(
         self: CbfSubarray, argin: list[str]
-    ) -> Tuple[ResultCode, str]:
+    ) -> DevVarLongStringArrayType:
         """
         Remove input from list of assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
@@ -333,49 +323,16 @@ class CbfSubarray(CbfObsDevice):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("RemoveReceptors")
-
-        (valid, msg) = command.validate_input(argin)
-        if not valid:
-            self._logger.error(msg)
-            tango.Except.throw_exception(
-                "Command failed",
-                msg,
-                "RemoveReceptors command input failed",
-                tango.ErrSeverity.ERR,
-            )
-
-        self.logger.info(msg)
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-    class RemoveAllReceptorsCommand(
-        CspSubElementSubarray.ReleaseAllResourcesCommand
-    ):
-        """
-        A class for CbfSubarray's RemoveAllReceptors() command.
-        """
-
-        def do(
-            self: CbfSubarray.RemoveAllReceptorsCommand,
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for RemoveAllReceptors() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
-            return component_manager.release_all_vcc()
+        command_handler = self.get_command_object("RemoveReceptors")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
     @tango.DebugIt()
-    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
+    def RemoveAllReceptors(self: CbfSubarray) -> DevVarLongStringArrayType:
         """
         Remove all assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
@@ -385,233 +342,232 @@ class CbfSubarray(CbfObsDevice):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        command = self.get_command_object("RemoveAllReceptors")
-        (return_code, message) = command()
-        return [[return_code], [message]]
+        command_handler = self.get_command_object("RemoveAllReceptors")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
     #  Scan Commands   #
 
-    class ConfigureScanCommand(CspSubElementSubarray.ConfigureScanCommand):
-        """
-        A class for CbfSubarray's ConfigureScan() command.
-        """
+    # class ConfigureScanCommand(CspSubElementSubarray.ConfigureScanCommand):
+    #     """
+    #     A class for CbfSubarray's ConfigureScan() command.
+    #     """
 
-        def do(
-            self: CbfSubarray.ConfigureScanCommand, argin: str
-        ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for ConfigureScan() command functionality.
+    #     def do(
+    #         self: CbfSubarray.ConfigureScanCommand, argin: str
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Stateless hook for ConfigureScan() command functionality.
 
-            :param argin: The configuration as JSON formatted string.
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            component_manager = self.target
+    #         :param argin: The configuration as JSON formatted string.
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         component_manager = self.target
 
-            full_configuration = json.loads(argin)
-            common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
-            # set band5Tuning to [0,0] if not specified
-            if "band_5_tuning" not in common_configuration:
-                common_configuration["band_5_tuning"] = [0, 0]
-            if "frequency_band_offset_stream1" not in common_configuration:
-                configuration["frequency_band_offset_stream1"] = 0
-            if "frequency_band_offset_stream2" not in common_configuration:
-                configuration["frequency_band_offset_stream2"] = 0
-            if "rfi_flagging_mask" not in configuration:
-                configuration["rfi_flagging_mask"] = {}
+    #         full_configuration = json.loads(argin)
+    #         common_configuration = copy.deepcopy(full_configuration["common"])
+    #         configuration = copy.deepcopy(full_configuration["cbf"])
+    #         # set band5Tuning to [0,0] if not specified
+    #         if "band_5_tuning" not in common_configuration:
+    #             common_configuration["band_5_tuning"] = [0, 0]
+    #         if "frequency_band_offset_stream1" not in common_configuration:
+    #             configuration["frequency_band_offset_stream1"] = 0
+    #         if "frequency_band_offset_stream2" not in common_configuration:
+    #             configuration["frequency_band_offset_stream2"] = 0
+    #         if "rfi_flagging_mask" not in configuration:
+    #             configuration["rfi_flagging_mask"] = {}
 
-            # Configure components
-            full_configuration["common"] = copy.deepcopy(common_configuration)
-            full_configuration["cbf"] = copy.deepcopy(configuration)
-            (result_code, message) = component_manager.configure_scan(
-                json.dumps(full_configuration)
-            )
+    #         # Configure components
+    #         full_configuration["common"] = copy.deepcopy(common_configuration)
+    #         full_configuration["cbf"] = copy.deepcopy(configuration)
+    #         (result_code, message) = component_manager.configure_scan(
+    #             json.dumps(full_configuration)
+    #         )
 
-            return (result_code, message)
+    #         return (result_code, message)
 
-        def validate_input(
-            self: CbfSubarray.ConfigureScanCommand, argin: str
-        ) -> Tuple[bool, str]:
-            """
-            Validate scan configuration.
+    #     def validate_input(
+    #         self: CbfSubarray.ConfigureScanCommand, argin: str
+    #     ) -> Tuple[bool, str]:
+    #         """
+    #         Validate scan configuration.
 
-            :param argin: The configuration as JSON formatted string.
+    #         :param argin: The configuration as JSON formatted string.
 
-            :return: A tuple containing a boolean indicating if the configuration
-                is valid and a string message. The message is for information
-                purpose only.
-            :rtype: (bool, str)
-            """
-            # try to deserialize input string to a JSON object
-            try:
-                full_configuration = json.loads(argin)
-                common_configuration = copy.deepcopy(
-                    full_configuration["common"]
-                )
-                configuration = copy.deepcopy(full_configuration["cbf"])
-            except json.JSONDecodeError:  # argument not a valid JSON object
-                msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-                return (False, msg)
+    #         :return: A tuple containing a boolean indicating if the configuration
+    #             is valid and a string message. The message is for information
+    #             purpose only.
+    #         :rtype: (bool, str)
+    #         """
+    #         # try to deserialize input string to a JSON object
+    #         try:
+    #             full_configuration = json.loads(argin)
+    #             common_configuration = copy.deepcopy(
+    #                 full_configuration["common"]
+    #             )
+    #             configuration = copy.deepcopy(full_configuration["cbf"])
+    #         except json.JSONDecodeError:  # argument not a valid JSON object
+    #             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+    #             return (False, msg)
 
-            # Validate full_configuration against the telescope model
-            try:
-                telmodel_validate(
-                    version=full_configuration["interface"],
-                    config=full_configuration,
-                    strictness=2,
-                )
-                self.logger.info("Scan configuration is valid!")
-            except ValueError as e:
-                msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
-                self.logger.error(msg)
+    #         # Validate full_configuration against the telescope model
+    #         try:
+    #             telmodel_validate(
+    #                 version=full_configuration["interface"],
+    #                 config=full_configuration,
+    #                 strictness=2,
+    #             )
+    #             self.logger.info("Scan configuration is valid!")
+    #         except ValueError as e:
+    #             msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
+    #             self.logger.error(msg)
 
-            # Validate frequencyBandOffsetStream1.
-            if "frequency_band_offset_stream1" not in configuration:
-                configuration["frequency_band_offset_stream1"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
-                pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream1' must be at most half "
-                    "of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
+    #         # Validate frequencyBandOffsetStream1.
+    #         if "frequency_band_offset_stream1" not in configuration:
+    #             configuration["frequency_band_offset_stream1"] = 0
+    #         if (
+    #             abs(int(configuration["frequency_band_offset_stream1"]))
+    #             <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+    #         ):
+    #             pass
+    #         else:
+    #             msg = (
+    #                 "Absolute value of 'frequencyBandOffsetStream1' must be at most half "
+    #                 "of the frequency slice bandwidth. Aborting configuration."
+    #             )
+    #             return (False, msg)
 
-            # Validate frequencyBandOffsetStream2.
-            if "frequency_band_offset_stream2" not in configuration:
-                configuration["frequency_band_offset_stream2"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
-                pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream2' must be at most "
-                    "half of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
+    #         # Validate frequencyBandOffsetStream2.
+    #         if "frequency_band_offset_stream2" not in configuration:
+    #             configuration["frequency_band_offset_stream2"] = 0
+    #         if (
+    #             abs(int(configuration["frequency_band_offset_stream2"]))
+    #             <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+    #         ):
+    #             pass
+    #         else:
+    #             msg = (
+    #                 "Absolute value of 'frequencyBandOffsetStream2' must be at most "
+    #                 "half of the frequency slice bandwidth. Aborting configuration."
+    #             )
+    #             return (False, msg)
 
-            # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
-            if common_configuration["frequency_band"] in ["5a", "5b"]:
-                # band5Tuning is optional
-                if "band_5_tuning" in common_configuration:
-                    pass
-                    # check if streamTuning is an array of length 2
-                    try:
-                        assert len(common_configuration["band_5_tuning"]) == 2
-                    except (TypeError, AssertionError):
-                        msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
-                        return (False, msg)
+    #         # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
+    #         if common_configuration["frequency_band"] in ["5a", "5b"]:
+    #             # band5Tuning is optional
+    #             if "band_5_tuning" in common_configuration:
+    #                 pass
+    #                 # check if streamTuning is an array of length 2
+    #                 try:
+    #                     assert len(common_configuration["band_5_tuning"]) == 2
+    #                 except (TypeError, AssertionError):
+    #                     msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
+    #                     return (False, msg)
 
-                    stream_tuning = [
-                        *map(float, common_configuration["band_5_tuning"])
-                    ]
-                    if common_configuration["frequency_band"] == "5a":
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band5Tuning must be floats between"
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                " for a 'frequencyBand' of 5a. "
-                                "Aborting configuration."
-                            )
-                            return (False, msg)
-                    else:  # configuration["frequency_band"] == "5b"
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band5Tuning must be floats between"
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                " for a 'frequencyBand' of 5b. "
-                                "Aborting configuration."
-                            )
-                            return (False, msg)
-                else:
-                    # set band5Tuning to zero for the rest of the test. This won't
-                    # change the argin in function "configureScan(argin)"
-                    common_configuration["band_5_tuning"] = [0, 0]
+    #                 stream_tuning = [
+    #                     *map(float, common_configuration["band_5_tuning"])
+    #                 ]
+    #                 if common_configuration["frequency_band"] == "5a":
+    #                     if all(
+    #                         [
+    #                             const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
+    #                             <= stream_tuning[i]
+    #                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
+    #                             for i in [0, 1]
+    #                         ]
+    #                     ):
+    #                         pass
+    #                     else:
+    #                         msg = (
+    #                             "Elements in 'band5Tuning must be floats between"
+    #                             f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+    #                             f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+    #                             f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+    #                             " for a 'frequencyBand' of 5a. "
+    #                             "Aborting configuration."
+    #                         )
+    #                         return (False, msg)
+    #                 else:  # configuration["frequency_band"] == "5b"
+    #                     if all(
+    #                         [
+    #                             const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
+    #                             <= stream_tuning[i]
+    #                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
+    #                             for i in [0, 1]
+    #                         ]
+    #                     ):
+    #                         pass
+    #                     else:
+    #                         msg = (
+    #                             "Elements in 'band5Tuning must be floats between"
+    #                             f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+    #                             f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+    #                             f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+    #                             " for a 'frequencyBand' of 5b. "
+    #                             "Aborting configuration."
+    #                         )
+    #                         return (False, msg)
+    #             else:
+    #                 # set band5Tuning to zero for the rest of the test. This won't
+    #                 # change the argin in function "configureScan(argin)"
+    #                 common_configuration["band_5_tuning"] = [0, 0]
 
-            # At this point, validate FSP, VCC, subscription parameters
-            full_configuration["common"] = copy.deepcopy(common_configuration)
-            full_configuration["cbf"] = copy.deepcopy(configuration)
-            component_manager = self.target
-            return component_manager.validate_input(
-                json.dumps(full_configuration)
-            )
+    #         # At this point, validate FSP, VCC, subscription parameters
+    #         full_configuration["common"] = copy.deepcopy(common_configuration)
+    #         full_configuration["cbf"] = copy.deepcopy(configuration)
+    #         component_manager = self.target
+    #         return component_manager.validate_input(
+    #             json.dumps(full_configuration)
+    #         )
 
-    def is_ConfigureScan_allowed(self):
-        """
-        Check if command `ConfigureScan` is allowed in the current device state.
+    # def is_ConfigureScan_allowed(self):
+    #     """
+    #     Check if command `ConfigureScan` is allowed in the current device state.
 
-        :return: ``True`` if the command is allowed
-        :rtype: boolean
-        """
-        command = self.get_command_object("ConfigureScan")
-        return command.is_allowed(raise_if_disallowed=True)
+    #     :return: ``True`` if the command is allowed
+    #     :rtype: boolean
+    #     """
+    #     command = self.get_command_object("ConfigureScan")
+    #     return command.is_allowed(raise_if_disallowed=True)
 
-    @command(
-        dtype_in="str",
-        doc_in="Scan configuration",
-        dtype_out="DevVarLongStringArray",
-        doc_out="(ReturnType, 'informational message')",
-    )
-    @tango.DebugIt()
-    def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
-        # """
-        """Change state to CONFIGURING.
-        Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray.
-        publish output links.
+    # @command(
+    #     dtype_in="str",
+    #     doc_in="Scan configuration",
+    #     dtype_out="DevVarLongStringArray",
+    #     doc_out="(ReturnType, 'informational message')",
+    # )
+    # @tango.DebugIt()
+    # def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
+    #     # """
+    #     """Change state to CONFIGURING.
+    #     Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray.
+    #     publish output links.
 
-        :param argin: The configuration as JSON formatted string.
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
+    #     :param argin: The configuration as JSON formatted string.
+    #     :return: A tuple containing a return code and a string
+    #         message indicating status. The message is for
+    #         information purpose only.
+    #     :rtype: (ResultCode, str)
+    #     """
 
-        command = self.get_command_object("ConfigureScan")
+    #     command = self.get_command_object("ConfigureScan")
 
-        (valid, msg) = command.validate_input(argin)
-        if not valid:
-            self.component_manager.raise_configure_scan_fatal_error(msg)
-        self.logger.info(msg)
-        # store the configuration on command success
-        self._last_scan_configuration = argin
+    #     (valid, msg) = command.validate_input(argin)
+    #     if not valid:
+    #         self.component_manager.raise_configure_scan_fatal_error(msg)
+    #     self.logger.info(msg)
+    #     # store the configuration on command success
+    #     self._last_scan_configuration = argin
 
-        self.logger.debug(f"obsState == {self.obsState}")
+    #     self.logger.debug(f"obsState == {self.obsState}")
 
-        (result_code, message) = command(argin)
+    #     (result_code, message) = command(argin)
 
-        self.logger.debug(f"obsState == {self.obsState}")
-        return [[result_code], [message]]
+    #     self.logger.debug(f"obsState == {self.obsState}")
+    #     return [[result_code], [message]]
 
 
 # ----------

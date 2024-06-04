@@ -43,7 +43,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     This class exists to modify the interface of the
     :py:class:`ska_tango_base.executor.executor_component_manager.TaskExecutorComponentManager`.
     The ``TaskExecutorComponentManager`` accepts ``max_queue_size`` keyword argument
-    to determine limits on worker queue length, for the management of 
+    to determine limits on worker queue length, for the management of
     SubmittedSlowCommand (LRC) threads.
 
     Additionally, this provides optional arguments for attribute change event and
