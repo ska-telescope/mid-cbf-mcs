@@ -24,17 +24,12 @@ from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
 )
-from ska_tango_base.base.component_manager import BaseComponentManager
+from ska_tango_base.base.base_component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
 __all__ = ["CbfDevice", "main"]
-
-# NOTE: to update max LRC queue size the following constants must be updated
-# see TODO in SKABaseDevice for rationale
-MAX_QUEUED_COMMANDS = 64
-MAX_REPORTED_COMMANDS = 2 * MAX_QUEUED_COMMANDS + 2  # 2 per command
 
 
 class CbfDevice(SKABaseDevice):
@@ -52,51 +47,6 @@ class CbfDevice(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
-
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
-    )
-    def longRunningCommandsInQueue(self: CbfDevice) -> list[str]:
-        """
-        Read the long running commands in the queue.
-
-         Keep track of which commands are in the queue.
-         Pop off from front as they complete.
-
-        :return: tasks in the queue
-        """
-        return self._commands_in_queue
-
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_QUEUED_COMMANDS
-    )
-    def longRunningCommandIDsInQueue(
-        self: CbfDevice,
-    ) -> list[str]:
-        """
-        Read the IDs of the long running commands in the queue.
-
-        Every client that executes a command will receive a command ID as response.
-        Keep track of IDs in the queue. Pop off from front as they complete.
-
-        :return: unique ids for the enqueued commands
-        """
-        return self._command_ids_in_queue
-
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype=("str",), max_dim_x=MAX_REPORTED_COMMANDS
-    )
-    def longRunningCommandStatus(self: CbfDevice) -> list[str]:
-        """
-        Read the status of the currently executing long running commands.
-
-        ID, status pair of the currently executing command.
-        Clients can subscribe to on_change event and wait for the
-        ID they are interested in.
-
-        :return: ID, status pairs of the currently executing commands
-        """
-        return self._command_statuses
 
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: CbfDevice) -> SimulationMode:
