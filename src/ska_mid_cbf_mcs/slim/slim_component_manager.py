@@ -414,6 +414,9 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
         except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             task_callback(
                 exception=df,
                 status=TaskStatus.FAILED,

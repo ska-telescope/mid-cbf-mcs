@@ -21,9 +21,9 @@ from typing import Any  # allow forward references in type hints
 
 # Tango imports
 import tango
+from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-from ska_tango_base.control_model import SimulationMode
+from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
 
 # SKA imports
@@ -84,6 +84,7 @@ class Vcc(CbfObsDevice):
         self.component_manager.dish_id = value
 
     @attribute(
+        abs_change=1,
         dtype="uint16",
         memorized=True,
         hw_memorized=True,
@@ -113,6 +114,7 @@ class Vcc(CbfObsDevice):
             self.push_archive_event("subarrayMembership", value)
 
     @attribute(
+        abs_change=1,
         dtype=tango.DevEnum,
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
         doc="Frequency band; an int in the range [0, 5]",
@@ -126,26 +128,6 @@ class Vcc(CbfObsDevice):
         :rtype: tango.DevEnum
         """
         return self.component_manager.frequency_band
-
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: Vcc) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: Vcc, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.debug(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
 
     # ---------------
     # General methods
@@ -210,7 +192,7 @@ class Vcc(CbfObsDevice):
             self: Vcc.InitCommand,
             *args: Any,
             **kwargs: Any,
-        ) -> tuple[ResultCode, str]:
+        ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
 

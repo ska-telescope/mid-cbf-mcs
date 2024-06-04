@@ -14,8 +14,6 @@ Copyright (c) 2019 National Research Council of Canada
 """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List
-
 import tango
 
 __all__ = ["HpsFspCorrControllerSimulator"]
@@ -42,7 +40,7 @@ class HpsFspCorrControllerSimulator:
 
         # FQDNs of all low level, correlation specific devices,
         # controlled by this device
-        self._fqdn = List[str]
+        self._fqdn = list[str]
         self._scan_id = 0
 
     # Properties that match the Tango attributes in the band devices
@@ -57,7 +55,7 @@ class HpsFspCorrControllerSimulator:
         return self._fsp_unit_id
 
     @property
-    def fqdn(self) -> List[str]:
+    def fqdn(self) -> list[str]:
         """Return the fqdn attribute."""
         return self._fqdn
 
