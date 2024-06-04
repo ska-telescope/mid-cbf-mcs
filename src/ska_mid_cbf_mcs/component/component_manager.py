@@ -30,8 +30,6 @@ from ska_tango_base.executor.executor_component_manager import (
 )
 from ska_tango_testing import context
 
-from ska_mid_cbf_mcs.device.base_device import MAX_QUEUED_COMMANDS
-
 __all__ = ["CbfComponentManager"]
 
 # maximum number of group command worker threads
@@ -43,10 +41,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
     A base component manager for SKA Mid.CBF MCS
 
     This class exists to modify the interface of the
-    :py:class:`ska_tango_base.base.component_manager.TaskExecutorComponentManager`.
-    The ``TaskExecutorComponentManager`` accepts ``max_workers`` and ``max_queue_size``
-    keyword arguments to determine limits on worker threads and queue length,
-    respectively, for the management of SubmittedSlowCommand (LRC) threads.
+    :py:class:`ska_tango_base.executor.executor_component_manager.TaskExecutorComponentManager`.
+    The ``TaskExecutorComponentManager`` accepts ``max_queue_size`` keyword argument
+    to determine limits on worker queue length, for the management of 
+    SubmittedSlowCommand (LRC) threads.
 
     Additionally, this provides optional arguments for attribute change event and
     HealthState updates, for a device to pass in its callbacks for push change events.
@@ -87,7 +85,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             SimulationMode.TRUE
         """
 
-        super().__init__(*args, max_queue_size=MAX_QUEUED_COMMANDS, **kwargs)
+        super().__init__(*args, **kwargs)
         # Here we have statically defined the state keywords useful in Mid.CBF
         # component management, allowing the use of the _update_component_state
         # method in the BaseComponentManager to issue the component state change
