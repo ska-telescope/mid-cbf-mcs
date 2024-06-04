@@ -20,15 +20,13 @@ from unittest.mock import Mock
 import pytest
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
-from ska_mid_cbf_mcs.testing import context
 
-CONST_WAIT_TIME = 4
-
-# Path
+# Paths
 file_path = os.path.dirname(os.path.abspath(__file__))
 json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
@@ -46,9 +44,8 @@ class TestCbfController:
     def cbf_controller_test_context(
         self: TestCbfController,
         initial_device_mocks: dict[str, Mock],
-        initial_group_mocks: dict[str, Mock],
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_class=CbfController,
             device_name="mid_csp_cbf/cbf_controller/001",
@@ -105,9 +102,6 @@ class TestCbfController:
 
         for name, mock in initial_device_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
-
-        for name, mock in initial_group_mocks.items():
-            harness.add_mock_group(group_name=name, group_mock=mock)
 
         with harness as test_context:
             yield test_context

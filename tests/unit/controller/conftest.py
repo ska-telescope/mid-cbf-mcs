@@ -27,7 +27,6 @@ from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 
 from ... import test_utils
 
@@ -62,41 +61,6 @@ def lru_change_event_callbacks(
         device_under_test, change_event_attr_list, change_event_callbacks
     )
     return change_event_callbacks
-
-
-@pytest.fixture
-def unique_id() -> str:
-    """
-    Return a unique ID used to test Tango layer infrastructure.
-
-    :return: a unique ID
-    """
-    return "a unique id"
-
-
-@pytest.fixture()
-def mock_vcc_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
-def mock_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_attribute("simulationMode", None)
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
 
 
 @pytest.fixture()
@@ -243,25 +207,4 @@ def initial_device_mocks(
         "mid_csp_cbf/power_switch/002": mock_power_switch,
         "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
         "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
-    }
-
-
-@pytest.fixture()
-def initial_group_mocks(
-    mock_vcc_group: unittest.mock.Mock,
-    mock_fsp_group: unittest.mock.Mock,
-    mock_subarray_group: unittest.mock.Mock,
-) -> Dict[str, unittest.mock.Mock]:
-    """
-    Return a dictionary of group mocks to pre-register.
-
-    :param mock_vcc_group: a mock Vcc group.
-    :param mock_fsp_group: a mock Fsp group.
-    :param mock_subarray_group: a mock CbfSubarray group.
-    :return: a dictionary of group mocks to pre-register.
-    """
-    return {
-        "VCC": mock_vcc_group,
-        "FSP": mock_fsp_group,
-        "CBF Subarray": mock_subarray_group,
     }
