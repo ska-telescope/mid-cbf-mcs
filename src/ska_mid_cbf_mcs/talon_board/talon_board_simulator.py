@@ -9,10 +9,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
-
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState
 
 __all__ = ["TalonBoardSimulator"]
 

@@ -125,7 +125,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         # simulation mode:
         self.simulation_mode = False
-        self.talon_board_simulator = TalonBoardSimulator(self._logger)
+        self.talon_board_simulator = TalonBoardSimulator(logger)
 
         super().__init__(
             logger=logger,
