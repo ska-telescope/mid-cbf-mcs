@@ -9,7 +9,7 @@ spec:
         claimName: sv-pvc-{{ .Release.Name }}
   containers:
   - name: sv-data-collector-cont
-    image: artefact.skao.int/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
+    image: {{ .Values.svImageRegistry }}/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
     env:
       - name: OUTPUT_DIR
         value: /app/reports
