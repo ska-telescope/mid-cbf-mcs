@@ -69,6 +69,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().__init__(*args, **kwargs)
         self.simulation_mode = SimulationMode.TRUE
+        self._lru_timeout = lru_timeout
 
         (
             self._fqdn_vcc,
@@ -100,13 +101,10 @@ class ControllerComponentManager(CbfComponentManager):
         self._fs_slim_config_path = config_path_dict["FsSLIMConfigPath"]
         self._vis_slim_config_path = config_path_dict["VisSLIMConfigPath"]
 
-        self._lru_timeout = lru_timeout
-
-        self._last_init_sys_param = ""
-        self._source_init_sys_param = ""
         self.dish_utils = None
+        self.last_init_sys_param = ""
+        self.source_init_sys_param = ""
 
-        # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
         self._proxies = {}
 
@@ -163,34 +161,28 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the group proxies are successfully created, False otherwise.
         """
         try:
-            self._group_vcc = list(
-                map(
-                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
-                    self._fqdn_vcc,
-                )
-            )
+            self._group_vcc = [
+                context.DeviceProxy(device_name=fqdn)
+                for fqdn in self._fqdn_vcc
+            ]
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
             return False
 
         try:
-            self._group_fsp = list(
-                map(
-                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
-                    self._fqdn_fsp,
-                )
-            )
+            self._group_fsp = [
+                context.DeviceProxy(device_name=fqdn)
+                for fqdn in self._fqdn_fsp
+            ]
         except tango.DevFailed:
             self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
             return False
 
         try:
-            self._group_subarray = list(
-                map(
-                    lambda fqdn: context.DeviceProxy(device_name=fqdn),
-                    self._fqdn_subarray,
-                )
-            )
+            self._group_subarray = [
+                context.DeviceProxy(device_name=fqdn)
+                for fqdn in self._fqdn_subarray
+            ]
         except tango.DevFailed:
             self.logger.error(
                 f"Failure in connection to {self._fqdn_subarray}"
@@ -334,7 +326,7 @@ class ControllerComponentManager(CbfComponentManager):
             "Entering ControllerComponentManager.start_communicating"
         )
 
-        if self._communication_state == CommunicationStatus.ESTABLISHED:
+        if self.is_communicating:
             self.logger.info("Communication already established")
             return
 
@@ -468,8 +460,13 @@ class ControllerComponentManager(CbfComponentManager):
         """
         with open(config_path) as f:
             slim_config = f.read()
+        # Longer timeout may be needed because the links need to wait
+        # for Tx/Rx to be ready. From experience this can be as late
+        # as around 5s after HPS master completes configure.
         self._proxies[fqdn].set_timeout_millis(10000)
         self._proxies[fqdn].command_inout("Configure", slim_config)
+        # restore default timeout
+        self._proxies[fqdn].set_timeout_millis(3000)
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
@@ -484,6 +481,7 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.info(
                 f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
             )
+
             for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
                 self._proxies[fqdn].write_attribute(
                     "simulationMode",
@@ -491,19 +489,12 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 self._proxies[fqdn].command_inout("On")
 
-            # Longer timeout may be needed because the links need to wait
-            # for Tx/Rx to be ready. From experience this can be as late
-            # as around 5s after HPS master completes configure.
             self._send_configure_slim_device(
                 self._fs_slim_fqdn, self._fs_slim_config_path
             )
             self._send_configure_slim_device(
                 self._vis_slim_fqdn, self._vis_slim_config_path
             )
-
-            # restore default timeout
-            self._proxies[self._fs_slim_fqdn].set_timeout_millis(3000)
-            self._proxies[self._vis_slim_fqdn].set_timeout_millis(3000)
         except tango.DevFailed as df:
             for item in df.args:
                 log_msg = f"Failed to configure SLIM: {item.reason}"
@@ -520,8 +511,9 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.warning("Dish-VCC mapping has not been provided.")
             return False
 
-        if self._component_state["power"] == PowerState.OFF:
+        if self.power_state == PowerState.OFF:
             return True
+
         self.logger.warning("Already on, do not need to turn on.")
         return False
 
@@ -902,7 +894,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
-        if self._component_state["power"] == PowerState.ON:
+        if self.power_state == PowerState.ON:
             return True
         self.logger.info("Already off, do not need to turn off.")
         return False
@@ -1223,18 +1215,18 @@ class ControllerComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                 )
                 return
-            self._source_init_sys_param = argin
-            self._last_init_sys_param = json.dumps(init_sys_param_json)
+            self.source_init_sys_param = argin
+            self.last_init_sys_param = json.dumps(init_sys_param_json)
         else:
-            self._source_init_sys_param = ""
-            self._last_init_sys_param = argin
+            self.source_init_sys_param = ""
+            self.last_init_sys_param = argin
 
         # store the attribute
         self.dish_utils = DISHUtils(init_sys_param_json)
 
         # send init_sys_param to the subarrays
         try:
-            self._update_init_sys_param(self._last_init_sys_param)
+            self._update_init_sys_param(self.last_init_sys_param)
         except tango.DevFailed as e:
             self.logger.error(e)
             task_callback(

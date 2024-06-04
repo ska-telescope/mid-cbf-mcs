@@ -118,7 +118,7 @@ class CbfController(CbfDevice):
         :return: the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format.
         :rtype: str
         """
-        return self.component_manager._init_sys_param
+        return self.component_manager.last_init_sys_param
 
     @attribute(
         dtype="str",
@@ -131,7 +131,7 @@ class CbfController(CbfDevice):
                  and frequency offset k, to be retrieved using the Telescope Model.
         :rtype: str
         """
-        return self.component_manager._source_init_sys_param
+        return self.component_manager.source_init_sys_param
 
     @attribute(
         dtype=(str,),
