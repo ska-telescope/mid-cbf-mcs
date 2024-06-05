@@ -925,16 +925,6 @@ class CbfSubarrayComponentManager(
                     "Aborting configuration."
                 )
                 return (False, msg)
-            for sw in configuration["search_window"]:
-                if sw["tdc_enable"]:
-                    for receptor in sw["tdc_destination_address"]:
-                        dish = receptor["receptor_id"]
-                        if dish not in self._dish_ids:
-                            msg = (
-                                f"'searchWindow' DISH ID {dish} "
-                                + "not assigned to subarray. Aborting configuration."
-                            )
-                            return (False, msg)
         else:
             pass
 
@@ -1038,138 +1028,6 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.error(msg)
                         return (False, msg)
-
-                    # Validate zoom_factor.
-                    if int(fsp["zoom_factor"]) in list(range(7)):
-                        pass
-                    else:
-                        msg = "'zoom_factor' must be an integer in the range [0, 6]."
-                        # this is a fatal error
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # Validate zoomWindowTuning.
-                    if (
-                        int(fsp["zoom_factor"]) > 0
-                    ):  # zoomWindowTuning is required
-                        if "zoom_window_tuning" in fsp:
-                            if fsp["frequency_band"] not in [
-                                "5a",
-                                "5b",
-                            ]:  # frequency band is not band 5
-                                frequencyBand = [
-                                    "1",
-                                    "2",
-                                    "3",
-                                    "4",
-                                    "5a",
-                                    "5b",
-                                ].index(fsp["frequency_band"])
-                                frequency_band_start = [
-                                    *map(
-                                        lambda j: j[0] * 10**9,
-                                        [
-                                            const.FREQUENCY_BAND_1_RANGE,
-                                            const.FREQUENCY_BAND_2_RANGE,
-                                            const.FREQUENCY_BAND_3_RANGE,
-                                            const.FREQUENCY_BAND_4_RANGE,
-                                        ],
-                                    )
-                                ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream1"
-                                ]
-
-                                frequency_slice_range = (
-                                    frequency_band_start
-                                    + (fsp["frequency_slice_id"] - 1)
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                    frequency_band_start
-                                    + fsp["frequency_slice_id"]
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                )
-
-                                if (
-                                    frequency_slice_range[0]
-                                    <= int(fsp["zoom_window_tuning"]) * 10**3
-                                    <= frequency_slice_range[1]
-                                ):
-                                    pass
-                                else:
-                                    msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                    self._logger.error(msg)
-                                    return (False, msg)
-                            # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                            else:
-                                if common_configuration["band_5_tuning"] == [
-                                    0,
-                                    0,
-                                ]:  # band5Tuning not specified
-                                    pass
-                                else:
-                                    # TODO: these validations of BW range are done many times
-                                    # in many places - use a common function; also may be possible
-                                    # to do them only once (ex. for band5Tuning)
-
-                                    frequency_slice_range_1 = (
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    frequency_slice_range_2 = (
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    if (
-                                        frequency_slice_range_1[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_1[1]
-                                    ) or (
-                                        frequency_slice_range_2[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_2[1]
-                                    ):
-                                        pass
-                                    else:
-                                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                        self._logger.error(msg)
-                                        return (False, msg)
-                        else:
-                            msg = "FSP specified, but 'zoomWindowTuning' not given."
-                            self._logger.error(msg)
-                            return (False, msg)
 
                     # Validate integrationTime.
                     if int(fsp["integration_factor"]) in list(
@@ -1644,14 +1502,7 @@ class CbfSubarrayComponentManager(
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
                     ]
-                # pass DISH ID as VCC ID integer to VCCs
-                if search_window["tdc_enable"]:
-                    for tdc_dest in search_window["tdc_destination_address"]:
-                        tdc_dest[
-                            "receptor_id"
-                        ] = self._dish_utils.dish_id_to_vcc_id[
-                            tdc_dest["receptor_id"]
-                        ]
+                
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
