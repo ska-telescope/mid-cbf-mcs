@@ -856,26 +856,6 @@ class CbfSubarrayComponentManager(
             msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
             return (False, msg)
 
-        # Validate dopplerPhaseCorrSubscriptionPoint.
-        if "doppler_phase_corr_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration[
-                        "doppler_phase_corr_subscription_point"
-                    ],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['doppler_phase_corr_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
-
         # Validate delay_model_subscription_point.
         try:
             attribute_proxy = CbfAttributeProxy(
@@ -1603,20 +1583,6 @@ class CbfSubarrayComponentManager(
         data = tango.DeviceData()
         data.insert(tango.DevString, json_str)
         self._group_vcc.command_inout("ConfigureScan", data)
-
-        # Configure dopplerPhaseCorrSubscriptionPoint.
-        if "doppler_phase_corr_subscription_point" in configuration:
-            attribute_proxy = CbfAttributeProxy(
-                fqdn=configuration["doppler_phase_corr_subscription_point"],
-                logger=self._logger,
-            )
-            event_id = attribute_proxy.add_change_event_callback(
-                self._doppler_phase_correction_event_callback
-            )
-            self._logger.info(
-                f"Subscribing to doppler phase correction event of id: {event_id}"
-            )
-            self._events_telstate[event_id] = attribute_proxy
 
         # Configure delayModelSubscriptionPoint.
         self._last_received_delay_model = "{}"
