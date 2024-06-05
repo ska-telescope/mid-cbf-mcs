@@ -790,19 +790,6 @@ class TestCbfSubarray:
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id
-                        ].corrBandwidth
-                        == fsp["zoom_factor"]
-                    )
-                    if fsp["zoom_factor"] > 0:
-                        assert (
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].zoomWindowTuning
-                            == fsp["zoom_window_tuning"]
-                        )
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
                         ].fspChannelOffset
                         == fsp["channel_offset"]
                     )
@@ -2883,19 +2870,6 @@ class TestCbfSubarray:
                         ].integrationFactor
                         == fsp["integration_factor"]
                     )
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].corrBandwidth
-                        == fsp["zoom_factor"]
-                    )
-                    if fsp["zoom_factor"] > 0:
-                        assert (
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].zoomWindowTuning
-                            == fsp["zoom_window_tuning"]
-                        )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id

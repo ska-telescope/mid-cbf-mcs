@@ -17,7 +17,6 @@
                 "function_mode": "CORR",
                 "receptors": ["SKA001"],
                 "frequency_slice_id": 1,
-                "zoom_factor": 0,
                 "integration_factor": 10,
                 "channel_offset": 14880,
                 "output_link_map": [ 

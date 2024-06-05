@@ -109,8 +109,6 @@ class TestFspCorrSubarrayComponentManager:
             == 0
         )
         assert fsp_corr_subarray_component_manager.frequency_slice_id == 0
-        assert fsp_corr_subarray_component_manager.bandwidth == 0
-        assert fsp_corr_subarray_component_manager.zoom_window_tuning == 0
         assert fsp_corr_subarray_component_manager.integration_factor == 0
         assert fsp_corr_subarray_component_manager.scan_id == 0
         assert fsp_corr_subarray_component_manager.config_id == ""
@@ -167,12 +165,6 @@ class TestFspCorrSubarrayComponentManager:
                     )
         else:
             logging.info("Attribute band5Tuning not in configuration")
-
-        if "zoom_window_tuning" in configuration:
-            assert (
-                fsp_corr_subarray_component_manager.zoom_window_tuning
-                == configuration["zoom_window_tuning"]
-            )
         assert (
             fsp_corr_subarray_component_manager.integration_factor
             == configuration["integration_factor"]
@@ -252,12 +244,6 @@ class TestFspCorrSubarrayComponentManager:
             == 0
         )
         assert fsp_corr_subarray_component_manager._frequency_slice_id == 0
-        assert fsp_corr_subarray_component_manager._bandwidth == 0
-        assert (
-            fsp_corr_subarray_component_manager._bandwidth_actual
-            == const.FREQUENCY_SLICE_BW
-        )
-        assert fsp_corr_subarray_component_manager._zoom_window_tuning == 0
         assert fsp_corr_subarray_component_manager._integration_factor == 0
         assert fsp_corr_subarray_component_manager._scan_id == 0
         assert fsp_corr_subarray_component_manager._config_id == ""

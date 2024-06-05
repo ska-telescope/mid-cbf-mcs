@@ -30,7 +30,6 @@
                 "function_mode": "CORR",
                 "receptors": ["SKA063"],
                 "frequency_slice_id": 1,
-                "zoom_factor": 0,
                 "integration_factor": 1,
                 "channel_offset": 14880,
                 "channel_averaging_map": [
@@ -101,7 +100,6 @@
                     }
                 ],
                 "frequency_slice_id": 1,
-                "zoom_factor": 0,
                 "integration_factor": 1
             },
             {
@@ -116,7 +114,6 @@
                     }
                 ],
                 "frequency_slice_id": 1,
-                "zoom_factor": 0,
                 "integration_factor": 1
             }
         ],
