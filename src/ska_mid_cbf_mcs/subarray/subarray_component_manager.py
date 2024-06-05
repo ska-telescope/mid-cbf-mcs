@@ -876,23 +876,22 @@ class CbfSubarrayComponentManager(
                 )
                 return (False, msg)
 
-        # Validate delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["delay_model_subscription_point"],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['delay_model_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'delayModelSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
+        # Validate delay_model_subscription_point.
+        try:
+            attribute_proxy = CbfAttributeProxy(
+                fqdn=configuration["delay_model_subscription_point"],
+                logger=self._logger,
+            )
+            attribute_proxy.ping()
+        except (
+            tango.DevFailed
+        ):  # attribute doesn't exist or is not set up correctly
+            msg = (
+                f"Attribute {configuration['delay_model_subscription_point']}"
+                " not found or not set up correctly for "
+                "'delayModelSubscriptionPoint'. Aborting configuration."
+            )
+            return (False, msg)
 
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
@@ -1620,19 +1619,18 @@ class CbfSubarrayComponentManager(
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            self._last_received_delay_model = "{}"
-            attribute_proxy = CbfAttributeProxy(
-                fqdn=configuration["delay_model_subscription_point"],
-                logger=self._logger,
-            )
-            event_id = attribute_proxy.add_change_event_callback(
-                self._delay_model_event_callback
-            )
-            self._logger.info(
-                f"Subscribing to delay model event of id: {event_id}"
-            )
-            self._events_telstate[event_id] = attribute_proxy
+        self._last_received_delay_model = "{}"
+        attribute_proxy = CbfAttributeProxy(
+            fqdn=configuration["delay_model_subscription_point"],
+            logger=self._logger,
+        )
+        event_id = attribute_proxy.add_change_event_callback(
+            self._delay_model_event_callback
+        )
+        self._logger.info(
+            f"Subscribing to delay model event of id: {event_id}"
+        )
+        self._events_telstate[event_id] = attribute_proxy
 
         # Configure jonesMatrixSubscriptionPoint
         if "jones_matrix_subscription_point" in configuration:
