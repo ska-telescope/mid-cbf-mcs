@@ -73,7 +73,7 @@ class SlimComponentManager(CbfComponentManager):
         """Establish communication with the component, then start monitoring."""
         self.logger.debug("Entering SlimComponentManager.start_communicating")
 
-        if self.communication_state == CommunicationStatus.ESTABLISHED:
+        if self.is_communicating:
             self.logger.info("Already communicating.")
             return
 
@@ -272,6 +272,9 @@ class SlimComponentManager(CbfComponentManager):
                     )
                 )
         except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.logger.error(f"Error reading SlimLink attr: {df}")
 
         # Summary check for SLIM Link Status and Bit Error Rate
@@ -500,6 +503,9 @@ class SlimComponentManager(CbfComponentManager):
                 if self.simulation_mode is False:
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.logger.error(
                 f"Failed to initialize SLIM links: {df.args[0].desc}"
             )
@@ -544,6 +550,9 @@ class SlimComponentManager(CbfComponentManager):
                 if rc[0] is not ResultCode.OK:
                     return rc[0], msg[0]
         except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.logger.error(
                 f"Failed to disconnect SLIM links: {df.args[0].desc}"
             )
@@ -599,6 +608,9 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
         except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             task_callback(
                 exception=df,
                 status=TaskStatus.FAILED,
@@ -631,7 +643,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_configure_allowed(self) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
-        if self.communication_state != CommunicationStatus.ESTABLISHED:
+        if not self.is_communicating:
             self.logger.warning(
                 f"Configure not allowed; CommunicationStatus is {self.communication_state}"
             )

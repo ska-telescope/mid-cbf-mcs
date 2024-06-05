@@ -142,23 +142,7 @@ class TestFsp:
         function_mode = FspModes.CORR.value
         assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
-        # set function mode to PSS
-        test_proxies.fsp[fsp_id].SetFunctionMode("PSS-BF")
-        time.sleep(1)
-        function_mode = FspModes.PSS_BF.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
-
-        # set function mode to PST
-        test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
-        time.sleep(1)
-        function_mode = FspModes.PST_BF.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
-
-        # set function mode to VLBI
-        test_proxies.fsp[fsp_id].SetFunctionMode("VLBI")
-        time.sleep(1)
-        function_mode = FspModes.VLBI.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
+        # TODO AA0.5+: PSS, PST, VLBI
 
         # set function mode to IDLE
         test_proxies.fsp[fsp_id].SetFunctionMode("IDLE")

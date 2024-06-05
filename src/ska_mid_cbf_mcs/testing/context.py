@@ -49,7 +49,7 @@ class TTCMExt(context.ThreadedTestTangoContextManager):
     Adds factories for group proxies.
     """
 
-    def __init__(self) -> None:
+    def __init__(self: TTCMExt) -> None:
         """Initialise a new instance."""
         self._device_info_by_class: dict[
             Union[str, Type[tango.server.Device]], list[dict[str, Any]]

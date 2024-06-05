@@ -25,13 +25,6 @@ server:
     - name: "Vcc"
       devices:
       - name: "mid_csp_cbf/vcc/001"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -55,13 +48,6 @@ server:
             values:
             - "1"
       - name: "mid_csp_cbf/vcc/002"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -85,13 +71,6 @@ server:
             values:
             - "2"
       - name: "mid_csp_cbf/vcc/003"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -115,13 +94,6 @@ server:
             values:
             - "3"
       - name: "mid_csp_cbf/vcc/004"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -145,13 +117,6 @@ server:
             values:
             - "4"
       - name: "mid_csp_cbf/vcc/005"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -175,13 +140,6 @@ server:
             values:
             - "5"
       - name: "mid_csp_cbf/vcc/006"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -205,13 +163,6 @@ server:
             values:
             - "6"
       - name: "mid_csp_cbf/vcc/007"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -235,13 +186,6 @@ server:
             values:
             - "7"
       - name: "mid_csp_cbf/vcc/008"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:

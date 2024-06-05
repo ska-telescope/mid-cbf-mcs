@@ -25,7 +25,6 @@ def power_switch_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list,
