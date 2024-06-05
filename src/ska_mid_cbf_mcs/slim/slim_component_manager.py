@@ -250,8 +250,8 @@ class SlimComponentManager(CbfComponentManager):
 
         counters: list[list[int]] = []
         names: list[str] = []
-        occupancy: list[list[float]]
-        debug_flags: list[list[bool]]
+        occupancy: list[list[float]] = []
+        debug_flags: list[list[bool]] = []
         rx_error_rate_and_status: list[tuple[str, str]] = []
 
         try:

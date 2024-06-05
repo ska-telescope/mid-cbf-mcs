@@ -255,6 +255,15 @@ class Slim(CbfDevice):
         ) -> None:
             self.component_manager = component_manager
             super().__init__(*args, **kwargs)
+            
+        def is_allowed(self: Slim.SlimTestCommand) -> bool:
+            if self.component_manager.power_state == PowerState.ON:
+                if self.component_manager.mesh_configured:
+                    return True
+                else:
+                    self.logger.error("SLIM must be configured before SlimTest can be called")
+                    return False
+            return False
 
         def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
@@ -265,9 +274,14 @@ class Slim(CbfDevice):
                 if exception is caught.
             :rtype: (ResultCode, str)
             """
-
-            result_code, message = self.component_manager.slim_test()
-            return (result_code, message)
+            if self.is_allowed():
+                result_code, message = self.component_manager.slim_test()
+                return (result_code, message)
+            else:
+                return (
+                    ResultCode.REJECTED,
+                    "Device is offline. Failed to issue SlimTest command.",
+                )
 
     @command(
         dtype_in="DevString",
@@ -293,24 +307,6 @@ class Slim(CbfDevice):
         command_handler = self.get_command_object("Off")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
-
-    def is_SlimTest_allowed(self: Slim) -> bool:
-        """
-        Determined if SlimTest command is allowed
-
-        :raises: CommandError: if DevState is not on
-        :raises: StateModelError: if the Mesh has not been configured
-        :return: if SlimTest is allowed
-        :rtype: bool
-        """
-        if self.get_state() == tango.DevState.ON:
-            if self.component_manager.mesh_configured:
-                return True
-            else:
-                raise StateModelError(
-                    "SLIM must be configured before SlimTest can be called"
-                )
-        return False
 
     @command(
         dtype_out="DevVarLongStringArray",

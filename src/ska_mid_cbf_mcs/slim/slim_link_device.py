@@ -315,10 +315,10 @@ class SlimLink(CbfDevice):
 
         def __init__(
             self: SlimLink.VerifyConnectionCommand,
-            *args: Any,
+            *args: any,
             device: SlimLink,
             component_manager: SlimLinkComponentManager,
-            **kwargs: Any,
+            **kwargs: any,
         ) -> None:
             self.device = device
             self.component_manager = component_manager
@@ -331,7 +331,7 @@ class SlimLink(CbfDevice):
 
         def do(
             self: SlimLink.VerifyConnectionCommand,
-        ) -> Tuple[ResultCode, str]:
+        ) -> tuple[ResultCode, str]:
             """
             Implement VerifyConnection command functionality.
 
@@ -365,10 +365,10 @@ class SlimLink(CbfDevice):
 
         def __init__(
             self: SlimLink.ClearCountersCommand,
-            *args: Any,
+            *args: any,
             device: SlimLink,
             component_manager: SlimLinkComponentManager,
-            **kwargs: Any,
+            **kwargs: any,
         ) -> None:
             self.device = device
             self.component_manager = component_manager

@@ -252,6 +252,42 @@ class TestSlim:
         )
         # assert if any captured events have gone unaddressed
         change_event_callbacks_fail.assert_not_called()
+        
+    @pytest.mark.parametrize(
+        "mesh_config_filename",
+        [("./tests/data/slim_test_config.yaml")],
+    )
+    def test_Configure_device_disabled(
+        self: TestSlim,
+        device_under_test_fail: context.DeviceProxy,
+        change_event_callbacks_fail: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the Configure() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        with open(mesh_config_filename, "r") as mesh_config:
+            result_code, command_id = device_under_test_fail.Configure(
+                mesh_config.read()
+            )
+
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks_fail[
+            "longRunningCommandResult"
+        ].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '"Command not allowed"',
+            )
+        )
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks_fail.assert_not_called()
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
@@ -289,3 +325,74 @@ class TestSlim:
         )
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "mesh_config_filename",
+        [
+            ("./tests/data/slim_test_config.yaml"),
+        ],
+    )
+    def test_SlimTest(
+        self: TestSlim,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the SlimTest() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        self.test_Configure(
+            device_under_test, change_event_callbacks, mesh_config_filename
+        )
+
+        result_code, message = device_under_test.SlimTest()
+        
+        assert result_code == ResultCode.OK, message
+        
+    @pytest.mark.parametrize(
+        "mesh_config_filename",
+        [
+            ("./tests/data/slim_test_config_inactive.yaml"),
+        ],
+    )
+    def test_SlimTest_no_active_links(
+        self: TestSlim,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the SlimTest() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        self.test_Configure(
+            device_under_test, change_event_callbacks, mesh_config_filename
+        )
+
+        result_code, message = device_under_test.SlimTest()
+        
+        assert result_code == ResultCode.REJECTED, message
+        
+    def test_SlimTest_links_unconfigured(
+        self: TestSlim,
+        device_under_test: context.DeviceProxy,
+    ) -> None:
+        """
+        Test the SlimTest() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        
+        result_code, message = device_under_test.SlimTest()
+        assert result_code == ResultCode.REJECTED, message
