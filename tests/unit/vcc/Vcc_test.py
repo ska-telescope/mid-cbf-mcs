@@ -18,7 +18,7 @@ from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_control_model import AdminMode, ObsState, ResultCode
+from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
