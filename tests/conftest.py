@@ -337,6 +337,7 @@ def init_proxies_fixture():
             Currently supported capabilities:
             - 1 CbfController
             - 1 CbfSubarray
+            - 1 TalonBoard
             - 4 Fsp
             - 8 Vcc
             - 1 Slim
@@ -379,6 +380,13 @@ def init_proxies_fixture():
             self.num_fsp = int(self.max_capabilities["FSP"])
             self.num_vcc = int(self.max_capabilities["VCC"])
 
+            # TalonBoard
+            # Testing one board is enough since Integration Tests only tests software
+            self.talon_board = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/talon_board/001",
+                logger=logging.getLogger(),
+            )
+            self.talon_board.set_timeout_millis(timeout_millis)
             # CbfSubarray
             self.subarray = [None]
             for proxy in [

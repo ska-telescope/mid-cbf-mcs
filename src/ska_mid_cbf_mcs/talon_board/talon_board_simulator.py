@@ -32,6 +32,8 @@ class TalonBoardSimulator:
 
         self._logger = logger
 
+    # The Voltage Values are need for Integration Tests
+    # FPGA Die Voltage as Warnings and Alarm set, and no value will trigger the Alarm
     def fpga_die_voltage_0(self) -> float:
         return 12.0
 

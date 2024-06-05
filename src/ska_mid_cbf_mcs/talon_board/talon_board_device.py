@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode,SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
@@ -261,7 +261,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 0",
-        doc="Readings from FPGA Die Voltages 0 Sensors on TalonDX",
+        doc="Value of the External Board (12V) FPGA Die Voltage Sensor",
         unit="V",
         min_warning=11.2,
         max_warning=12.8,
@@ -271,19 +271,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage0(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the External Board (12V) FPGA Die Voltages of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The External Board (12V) Voltage
         """
         res = self.component_manager.fpga_die_voltage_0()
         return res
@@ -291,7 +282,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 1",
-        doc="Readings from FPGA Die Voltages 1 Sensors on TalonDX",
+        doc="Value of the External Board (2.5V) FPGA Die Voltage Sensor",
         unit="V",
         min_warning=2.404,
         max_warning=2.596,
@@ -302,19 +293,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage1(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the External Board (2.5V) FPGA die voltages of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The External Board (2.5V) Voltage
         """
         res = self.component_manager.fpga_die_voltage_1()
         return res
@@ -322,7 +304,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 2",
-        doc="Readings from FPGA Die Voltages 2 Sensors on TalonDX",
+        doc="Value of the FPGA Die VCC Voltage Sensor",
         unit="V",
         min_warning=0.79,
         max_warning=0.95,
@@ -333,19 +315,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage2(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the FPGA Die VCC voltages of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The FPGA Die VCC Voltage
         """
         res = self.component_manager.fpga_die_voltage_2()
         return res
@@ -353,7 +326,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 3",
-        doc="Readings from FPGA Die Voltages 3 Sensors on TalonDX",
+        doc="Value of the FPGA Die VCCIO Voltage Sensor",
         unit="V",
         min_warning=1.728,
         max_warning=1.872,
@@ -364,19 +337,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage3(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the FPGA Die VCCIO of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The FPGA Die VCCIO Voltage
         """
         res = self.component_manager.fpga_die_voltage_3()
         return res
@@ -384,7 +348,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 4",
-        doc="Readings from FPGA Die Voltages 4 Sensors on TalonDX",
+        doc="Value of the FPGA Die VCCPT Voltage Sensor",
         unit="V",
         min_warning=1.728,
         max_warning=1.872,
@@ -395,19 +359,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the FPGA Die VCCPT of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The FPGA Die VCCPT Voltage
         """
         res = self.component_manager.fpga_die_voltage_4()
         return res
@@ -415,7 +370,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 5",
-        doc="Readings from FPGA Die Voltages 5 Sensors on TalonDX",
+        doc="Value of the FPGA Die VCCERAM Voltage Sensor",
         unit="V",
         min_warning=0.876,
         max_warning=0.924,
@@ -426,19 +381,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the FPGA Die VCCERAM of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The PGA Die VCCERAM Voltage
         """
         res = self.component_manager.fpga_die_voltage_5()
         return res
@@ -446,7 +392,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=float,
         label="FPGA Die Voltage 6",
-        doc="Readings from FPGA Die Voltages 6 Sensors on TalonDX",
+        doc="Value of the FPGA Die VCCERAM Voltage 6 Sensor",
         unit="V",
         min_warning=1.728,
         max_warning=1.872,
@@ -457,19 +403,10 @@ class TalonBoard(SKABaseDevice):
     )
     def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
         """
-        Reads the following FPGA die voltages of the Talon-DX board:
-        [0] External Board Voltage (1/11 ratio)
-        [1] External Board Voltage (1/3 ratio)
-        [2] FPGA Die VCC (1/1000 ratio)
-        [3] FPGA Die VCCIO (1/1000 ratio)
-        [4] FPGA Die VCCPT (1/1000 ratio)
-        [5] FPGA Die VCCERAM (1/1000 ratio)
-        [6] FPGA Die VCCADC (1/1000 ratio)
+        Reads the FPGA Die VCCADC of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        All values in the spectrum are scaled according the the give ration
-        All values are in Volts (V)
-
-        :return: A spectrum ofthe FPGA Die Voltages in Volts(V)
+        :return: The FPGA Die VCCADC Voltage
         """
         res = self.component_manager.fpga_die_voltage_6()
         return res
@@ -826,6 +763,23 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.ltm_temperature_warning()
 
+    @attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
+    )
+    def simulationMode(self: TalonBoard):
+        """
+        Expose the Base Class _simulation_mode Attribute
+        Defaults to False.
+
+        :return: If the device is in Simulation Mode  
+        """
+
+        return self._simulation_mode
     # -----------------
     # Attribute Methods
     # -----------------
