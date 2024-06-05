@@ -94,11 +94,13 @@ def slim_change_event_callbacks_fail(
 def mock_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0")
+    builder.add_attribute(
+        "linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0"
+    )
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
-    builder.add_attribute("counters", [0,0,0,0,0,0,0,0,0])
-    
+    builder.add_attribute("counters", [0, 0, 0, 0, 0, 0, 0, 0, 0])
+
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
@@ -117,11 +119,13 @@ def mock_slim_link() -> unittest.mock.Mock:
 def mock_fail_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_attribute("linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0")
+    builder.add_attribute(
+        "linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0"
+    )
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
-    builder.add_attribute("counters", [0,0,0,0,0,0,0,0,0])
-    
+    builder.add_attribute("counters", [0, 0, 0, 0, 0, 0, 0, 0, 0])
+
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)

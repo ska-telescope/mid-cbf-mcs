@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-import tango
-
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
@@ -30,7 +28,6 @@ from ska_tango_base.control_model import (
     PowerState,
     SimulationMode,
 )
-from ska_tango_base.faults import StateModelError
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
@@ -255,13 +252,15 @@ class Slim(CbfDevice):
         ) -> None:
             self.component_manager = component_manager
             super().__init__(*args, **kwargs)
-            
+
         def is_allowed(self: Slim.SlimTestCommand) -> bool:
             if self.component_manager.power_state == PowerState.ON:
                 if self.component_manager.mesh_configured:
                     return True
                 else:
-                    self.logger.error("SLIM must be configured before SlimTest can be called")
+                    self.logger.error(
+                        "SLIM must be configured before SlimTest can be called"
+                    )
                     return False
             return False
 

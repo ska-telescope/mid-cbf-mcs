@@ -252,7 +252,7 @@ class TestSlim:
         )
         # assert if any captured events have gone unaddressed
         change_event_callbacks_fail.assert_not_called()
-        
+
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./tests/data/slim_test_config.yaml")],
@@ -351,9 +351,9 @@ class TestSlim:
         )
 
         result_code, message = device_under_test.SlimTest()
-        
+
         assert result_code == ResultCode.OK, message
-        
+
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [
@@ -379,9 +379,9 @@ class TestSlim:
         )
 
         result_code, message = device_under_test.SlimTest()
-        
+
         assert result_code == ResultCode.REJECTED, message
-        
+
     def test_SlimTest_links_unconfigured(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
@@ -393,6 +393,6 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
-        
+
         result_code, message = device_under_test.SlimTest()
         assert result_code == ResultCode.REJECTED, message

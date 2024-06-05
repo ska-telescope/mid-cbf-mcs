@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 import threading
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import tango
 import yaml
@@ -45,10 +45,10 @@ class SlimComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimComponentManager,
-        *args: Any,
+        *args: any,
         link_fqdns: list[str],
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -620,7 +620,7 @@ class SlimComponentManager(CbfComponentManager):
     def off(
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> tuple[ResultCode, str]:
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
@@ -737,7 +737,7 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         config_str: str,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> tuple[ResultCode, str]:
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
