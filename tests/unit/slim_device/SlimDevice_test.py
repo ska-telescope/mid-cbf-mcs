@@ -20,11 +20,11 @@ from unittest.mock import Mock
 import pytest
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.slim.slim_device import Slim
-from ska_mid_cbf_mcs.testing import context
 
 from ... import test_utils
 
@@ -47,8 +47,8 @@ class TestSlim:
     @pytest.fixture(name="test_context")
     def slim_test_context(
         self: TestSlim, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         # This device is set up as expected
         harness.add_device(
             device_name="mid_csp_cbf/slim/001",
@@ -331,6 +331,7 @@ class TestSlim:
         [
             ("./tests/data/slim_test_config.yaml"),
         ],
+        "",
     )
     def test_SlimTest(
         self: TestSlim,

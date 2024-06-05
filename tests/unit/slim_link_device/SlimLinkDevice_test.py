@@ -20,11 +20,11 @@ from unittest.mock import Mock
 import pytest
 from ska_control_model import AdminMode, HealthState, SimulationMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
-from ska_mid_cbf_mcs.testing import context
 
 # Disable garbage collection to prevent tests hanging
 gc.disable()
@@ -45,8 +45,8 @@ class TestSlimLink:
     @pytest.fixture(name="test_context")
     def slim_link_test_context(
         self: TestSlimLink, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fs_links/001",
             device_class=SlimLink,

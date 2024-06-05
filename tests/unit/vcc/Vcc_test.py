@@ -19,11 +19,11 @@ from unittest.mock import Mock
 
 import pytest
 from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ...test_utils import device_online_and_on
@@ -49,8 +49,8 @@ class TestVcc:
     @pytest.fixture(name="test_context")
     def vcc_test_context(
         self: TestVcc, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
             device_class=Vcc,

@@ -19,11 +19,11 @@ from ska_control_model import AdminMode, SimulationMode
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
@@ -41,8 +41,8 @@ class TestPowerSwitch:
         self: TestPowerSwitch,
         request: pytest.FixtureRequest,
         monkeypatch: pytest.MonkeyPatch,
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
 
         def mock_patch(url: str, **kwargs: Any) -> MockDependency.Response:
             """

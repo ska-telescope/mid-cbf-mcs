@@ -18,11 +18,11 @@ from unittest.mock import Mock
 
 import pytest
 from ska_control_model import AdminMode, ObsState, ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
-from ska_mid_cbf_mcs.testing import context
 
 from ...test_utils import device_online_and_on
 
@@ -41,8 +41,8 @@ class TestFspCorrSubarray:
     @pytest.fixture(name="test_context")
     def fsp_corr_test_context(
         self: TestFspCorrSubarray, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fspCorrSubarray/01_01",
             device_class=FspCorrSubarray,

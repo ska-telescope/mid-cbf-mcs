@@ -353,6 +353,7 @@ class SlimComponentManager(CbfComponentManager):
             tx_idle_word_count = counters[idx][8]
             tx_words = tx_word_count + tx_idle_word_count
             rx_words = rx_word_count + rx_idle_word_count
+            link_flags = debug_flags[idx]
 
             # Making the tx rx name shorter by keeping only the board name and the tx/rx port
             tx_name = (
@@ -370,9 +371,9 @@ class SlimComponentManager(CbfComponentManager):
                 # Name
                 f"{tx_name}\n->{rx_name}",
                 # CDR locked/lost
-                f"{debug_flags[3]}\n({debug_flags[2]})",
+                f"{link_flags[3]}\n({link_flags[2]})",
                 # Block locked/lost
-                f"{debug_flags[1]}\n({debug_flags[0]})",
+                f"{link_flags[1]}\n({link_flags[0]})",
                 # Tx data
                 f"{occupancy[idx][1] * const.GBPS:.2f}\n({tx_word_count})",
                 # Tx idle - Guard for divide by zero

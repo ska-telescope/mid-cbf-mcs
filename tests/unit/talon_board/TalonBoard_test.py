@@ -20,11 +20,11 @@ from unittest.mock import Mock
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
@@ -49,8 +49,8 @@ class TestTalonBoard:
         request: pytest.FixtureRequest,
         monkeypatch: pytest.MonkeyPatch,
         initial_mocks: dict[str, Mock],
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
 
         def mock_ping(self, **kwargs: Any) -> bool:
             """

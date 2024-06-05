@@ -191,8 +191,13 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> list[bool]:
         """
-        Returns the Debug Alignment and Lock Status flags of the Rx HPS device
-        If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, returns an empty list
+        An array holding the debug flag values from the HPS rx device, in the order:
+        [0] 66b block alignment lost
+        [1] 66b block aligned
+        [2] Clock data recovery lock lost
+        [3] Clock data recovery locked
+
+        Empty if rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status
 
         :return: Debug Alignment and Lock Status flags of the rx HPS Device
         :rtype: list[int]
