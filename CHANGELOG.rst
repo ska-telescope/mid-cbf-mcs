@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+0.15.1
+******
+* MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
+         and bumping EC to a version that integrates the new pods.
+
 0.15.0
 ******
 * CIP-2335 Migrated SlimTest From Engineering Console to MCS's Slim Device
