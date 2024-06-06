@@ -84,11 +84,11 @@ class Vcc(CbfObsDevice):
         self.component_manager.dish_id = value
 
     @attribute(
+        abs_change=1,
         dtype="uint16",
         memorized=True,
         hw_memorized=True,
         doc="Subarray membership",
-        abs_change="1",
     )
     def subarrayMembership(self: Vcc) -> int:
         """
