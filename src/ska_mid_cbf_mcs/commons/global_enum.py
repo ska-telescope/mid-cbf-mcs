@@ -43,6 +43,8 @@ class Const:
 
         self.DEFAULT_TIMEOUT = 4
 
+        self.POWER_SWITCH_OUTLETS = 8
+
 
 const = Const()
 

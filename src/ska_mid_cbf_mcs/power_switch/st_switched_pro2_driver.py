@@ -81,8 +81,6 @@ class STSwitchedPRO2Driver:
         # to the request to turn on/off an outlet
         self.state_on = "On"
         self.state_off = "Off"
-        # self.state_on = "True"
-        # self.state_off = "False"
 
         # valid range AA1 to AA48
         self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
@@ -175,8 +173,8 @@ class STSwitchedPRO2Driver:
             ]:
                 try:
                     resp = response.json()
-                    # TODO: Added outlet_idx indexer to access specific outlet for the test, will ask original author about this
-                    state = str(resp[outlet_idx]["state"])
+                    # Add [outlet_idx] to access for test
+                    state = str(resp["state"])
 
                     if state == self.state_on:
                         power_state = PowerState.ON
@@ -267,6 +265,7 @@ class STSwitchedPRO2Driver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list {self.outlet_id_list}"

@@ -27,8 +27,10 @@ from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
 from ska_mid_cbf_mcs.testing.mock.mock_response_snmp import MockGetResponseSNMP, MockSetResponseSNMP
 
+from ska_mid_cbf_mcs.commons.global_enum import Const
+
 # TODO: Things to parametrize: num outlets, num outlet range, patch request message, device params
-NUM_OUTLETS = 8
+# If hard code assert num outlets, then why do it at all, other than get reqeust failure
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -39,8 +41,8 @@ class TestPowerSwitch:
     """
     Test class for PowerSwitch tests.
     """
-
-    @pytest.fixture(name="test_context")
+    power_switch_driver_model = None
+    @pytest.fixture(name="test_context", params=[{"power_switch_model":"DLI_PRO"}, {"power_switch_model": "APC_SNMP"}])
     def power_switch_test_context(
         self: TestPowerSwitch,
         request: pytest.FixtureRequest,
@@ -119,26 +121,25 @@ class TestPowerSwitch:
         monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.setCmd", mock_set_snmp)
         
 
-
-        harness.add_device(
-            device_name="mid_csp_cbf/power_switch/001",
-            device_class=PowerSwitch,
-           
-            PowerSwitchIp="192.168.0.100",
-            PowerSwitchLogin="admin",
-            PowerSwitchModel="DLI LPC9",
-            PowerSwitchPassword="1234",
-
-            # PowerSwitchIp="192.168.1.254",
-            # PowerSwitchModel="Server Technology Switched PRO2",
-            # PowerSwitchLogin="admn",
-            # PowerSwitchPassword="admn-1-Psi",
-
-            # PowerSwitchIp="192.168.1.253",
-            # PowerSwitchModel="APC AP8681 SNMP",
-            # PowerSwitchLogin="apc",
-            # PowerSwitchPassword="apc",
-        )
+        if request.param["power_switch_model"] == "DLI_PRO":
+            harness.add_device(
+                device_name="mid_csp_cbf/power_switch/001",
+                device_class=PowerSwitch,
+                PowerSwitchIp="192.168.0.100",
+                PowerSwitchLogin="admin",
+                PowerSwitchModel="DLI LPC9",
+                PowerSwitchPassword="1234",
+            )
+        elif request.param["power_switch_model"] == "APC_SNMP":
+            harness.add_device(
+                device_name="mid_csp_cbf/power_switch/001",
+                device_class=PowerSwitch,
+                PowerSwitchIp="192.168.1.253",
+                PowerSwitchModel="APC AP8681 SNMP",
+                PowerSwitchLogin="apc",
+                PowerSwitchPassword="apc",
+            )
+        self.power_switch_driver_model = request.param["power_switch_model"]
 
         with harness as test_context:
             yield test_context
@@ -186,6 +187,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": True,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -212,7 +220,14 @@ class TestPowerSwitch:
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
-                "sim_state": False,
+                "sim_state": True,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": True,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -232,7 +247,7 @@ class TestPowerSwitch:
         assert device_under_test.isCommunicating
 
         # Check that numOutlets is 8
-        assert device_under_test.numOutlets == NUM_OUTLETS
+        assert device_under_test.numOutlets == Const.POWER_SWITCH_OUTLETS
 
     @pytest.mark.parametrize(
         "test_context",
@@ -241,6 +256,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": True,
                 "sim_state": False,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": True,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -268,6 +290,14 @@ class TestPowerSwitch:
                 "sim_patch_error": True,
                 "sim_get_error": False,
                 "sim_state": None,
+                "power_switch_model": "DLI_PRO"
+                # Also need to pull new mock dependecy and mrigrate everything
+            },
+            {
+                "sim_patch_error": True,
+                "sim_get_error": False,
+                "sim_state": None,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -286,30 +316,31 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
-
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        if self.power_switch_driver_model == "DLI_PRO":
+            msg = f'[3, "HTTP response error"]'
+        elif self.power_switch_driver_model == "APC_SNMP":
+            msg = f'[3, "Connection error: "]'
         # Attempt to turn outlets off
-        for i in range(1, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "HTTP response error"]')
-                # (f"{command_id[0]}", '[3, "Connection error: "]')
+                (f"{command_id[0]}", msg)
             )
 
         # Attempt to turn outlets on
-        for i in range(1, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
             change_event_callbacks[
                 "longRunningCommandResult"
             ].assert_change_event(
-                (f"{command_id[0]}", '[3, "HTTP response error"]')
-                # (f"{command_id[0]}", '[3, "Connection error: "]')
+                (f"{command_id[0]}", msg)
             )
 
         # assert if any captured events have gone unaddressed
@@ -322,6 +353,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -340,10 +378,10 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         # Turn outlets off and check the state again
-        for i in range(0, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -363,7 +401,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-            }
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
+            },
         ],
         indirect=True,
     )
@@ -397,6 +442,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": True,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -415,10 +467,10 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         # Turn outlets off and check the state again
-        for i in range(1, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -441,7 +493,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-            }
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
+            },
         ],
         indirect=True,
     )
@@ -459,7 +518,7 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         result_code, command_id = device_under_test.TurnOffOutlet(
             f'{num_outlets + 1}'
@@ -487,6 +546,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": True,
+                "power_switch_model": "APC_SNMP"
             }
         ],
         indirect=True,
@@ -504,10 +570,10 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(1, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -527,7 +593,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-            }
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
+            },
         ],
         indirect=True,
     )
@@ -561,7 +634,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-            }
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
+            },
         ],
         indirect=True,
     )
@@ -579,10 +659,10 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         # Turn outlets on and check the state again
-        for i in range(1, num_outlets):
+        for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOnOutlet(f"{i}")
             assert result_code == [ResultCode.QUEUED]
 
@@ -605,7 +685,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-            }
+                "power_switch_model": "DLI_PRO"
+            },
+            {
+                "sim_patch_error": False,
+                "sim_get_error": False,
+                "sim_state": False,
+                "power_switch_model": "APC_SNMP"
+            },
         ],
         indirect=True,
     )
@@ -623,7 +710,7 @@ class TestPowerSwitch:
         assert device_under_test.State() == DevState.ON
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == NUM_OUTLETS
+        assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         result_code, command_id = device_under_test.TurnOnOutlet(
             str(num_outlets + 1)

@@ -209,7 +209,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return False, message
 
         power_state = self.get_outlet_power_state(outlet)
-        self.logger.error(f"Outlet {outlet} = {power_state}")
+        self.logger.debug(f"Outlet {outlet} = {power_state}")
         if mode == "on":
             if power_state == PowerState.ON:
                 return True, "TurnOnOutlet completed OK"
