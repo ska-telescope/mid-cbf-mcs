@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode,SimulationMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
@@ -776,10 +776,11 @@ class TalonBoard(SKABaseDevice):
         Expose the Base Class _simulation_mode Attribute
         Defaults to False.
 
-        :return: If the device is in Simulation Mode  
+        :return: If the device is in Simulation Mode
         """
 
         return self._simulation_mode
+
     # -----------------
     # Attribute Methods
     # -----------------

@@ -9,11 +9,11 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the TalonBoard."""
 
-import pytest
 import time
 
+import pytest
+
 # Tango imports
-from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, SimulationMode
 from tango import DevState
 
@@ -61,12 +61,11 @@ class TestTalonBoard:
             [test_proxies.talon_board], DevState.ON, wait_time_s, sleep_time_s
         )
         assert test_proxies.talon_board.State() == DevState.ON
-        
+
         # Turn on Simulation Mode
         test_proxies.talon_board.simulationMode = SimulationMode.TRUE
         assert test_proxies.talon_board.simulationMode == SimulationMode.TRUE
-        
-    
+
     def test_FPGA_Die_Voltage_Readings(self, test_proxies):
         """
         Test reading the 7 FPGA Die Voltage Attributes
