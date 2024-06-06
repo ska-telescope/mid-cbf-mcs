@@ -2391,6 +2391,7 @@ class CbfSubarrayComponentManager(
         :param vis_slim_links: the list of visibility slim tx and rx boards
         """
         board_to_fsp_id = self._board_to_fsp_id()
+        self._logger.info(f"board_to_fsp_id = {board_to_fsp_id}")
         for tx, rx in vis_slim_links:
             if tx in board_to_fsp_id and rx in board_to_fsp_id:
                 fsp_id_tx = board_to_fsp_id[tx]
@@ -2400,16 +2401,19 @@ class CbfSubarrayComponentManager(
                         fsp_tx = f
                     if f["fsp_id"] == fsp_id_rx:
                         fsp_rx = f
-            # here we assume that the first board has the lowest channel offset.
-            # Adjust the channel_id of output_host and output_port by the difference.
-            offset = fsp_tx["channel_offset"] - fsp_rx["channel_offset"]
-            for oh in fsp_tx["output_host"]:
-                oh[0] += offset
-            for op in fsp_tx["output_port"]:
-                op[0] += offset
+                self._logger.info(
+                    f"Moving output_host and output_port from FSP {fsp_id_tx} to {fsp_id_rx}"
+                )
+                # here we assume that the first board has the lowest channel offset.
+                # Adjust the channel_id of output_host and output_port by the difference.
+                offset = fsp_tx["channel_offset"] - fsp_rx["channel_offset"]
+                for oh in fsp_tx["output_host"]:
+                    oh[0] += offset
+                for op in fsp_tx["output_port"]:
+                    op[0] += offset
 
-            # Move the host and port over to the FSP that will send visibilities
-            fsp_rx["output_host"] += fsp_tx["output_host"]
-            fsp_rx["output_port"] += fsp_tx["output_port"]
-            del fsp_tx["output_host"]
-            del fsp_tx["output_port"]
+                # Move the host and port over to the FSP that will send visibilities
+                fsp_rx["output_host"] += fsp_tx["output_host"]
+                fsp_rx["output_port"] += fsp_tx["output_port"]
+                del fsp_tx["output_host"]
+                del fsp_tx["output_port"]
