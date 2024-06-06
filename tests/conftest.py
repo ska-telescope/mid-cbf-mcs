@@ -645,10 +645,10 @@ def init_proxies_fixture():
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s
             )
 
-            # self.controller.adminMode = AdminMode.OFFLINE
-            # self.wait_timeout_dev(
-            #     [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
-            # )
+            self.controller.adminMode = AdminMode.OFFLINE
+            self.wait_timeout_dev(
+                [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
+            )
 
     return TestProxies()
 

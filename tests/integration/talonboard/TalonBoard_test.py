@@ -34,6 +34,7 @@ class TestTalonBoard:
         sleep_time_s = 0.1
 
         # after init devices should be in DISABLE state
+        assert test_proxies.talon_board.adminMode == AdminMode.OFFLINE
         assert test_proxies.talon_board.State() == DevState.DISABLE
 
         # trigger start_communicating by setting the AdminMode to ONLINE
