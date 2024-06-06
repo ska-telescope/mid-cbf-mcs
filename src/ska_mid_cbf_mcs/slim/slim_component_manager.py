@@ -240,8 +240,6 @@ class SlimComponentManager(CbfComponentManager):
         """
         Examines various attributes from active SLIM Links and logs the metrics in a summary table.
 
-        :param: counters: TODO:
-        :param: names: TODO:
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.

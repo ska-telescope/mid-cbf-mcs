@@ -100,7 +100,7 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
     builder.add_attribute(
-        "counters", [1000, 100, 1000, 1, 0, 0, 1000, 100, 1000]
+        "counters", [1000, 100, 1000, 0, 0, 0, 1000, 100, 1000]
     )
     builder.add_attribute(
         "rx_debug_alignment_and_lock_status", [False, True, False, True]

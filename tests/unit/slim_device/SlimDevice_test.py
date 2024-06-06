@@ -352,7 +352,6 @@ class TestSlim:
         )
 
         result_code, message = device_under_test.SlimTest()
-
         assert result_code == ResultCode.OK, message
 
     @pytest.mark.parametrize(
@@ -380,7 +379,6 @@ class TestSlim:
         )
 
         result_code, message = device_under_test.SlimTest()
-
         assert result_code == ResultCode.REJECTED, message
 
     def test_SlimTest_links_unconfigured(
