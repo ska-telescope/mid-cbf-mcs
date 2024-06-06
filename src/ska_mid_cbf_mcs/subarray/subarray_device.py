@@ -128,6 +128,8 @@ class CbfSubarray(CspSubElementSubarray):
 
     TalonBoard = device_property(dtype=("str",))
 
+    VisSLIM = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -233,6 +235,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
             talon_board=self.TalonBoard,
+            vis_slim=self.VisSLIM,
             logger=self.logger,
             simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,

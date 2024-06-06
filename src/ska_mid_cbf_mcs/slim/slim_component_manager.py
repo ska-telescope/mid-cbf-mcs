@@ -13,11 +13,9 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import Callable, Optional
 
 import tango
-import yaml
 from beautifultable import BeautifulTable
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
@@ -33,6 +31,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 
 # from ska_mid_cbf_mcs.slim.slim_link import SLIMLink
 
@@ -181,7 +180,7 @@ class SlimComponentManager(CbfComponentManager):
 
         # each element is [tx_fqdn, rx_fqdn]
         self._config_str = config_str
-        self._active_links = self._parse_links_yaml(self._config_str)
+        self._active_links = SlimConfig(self._config_str).active_links()
 
         self._logger.info(
             f"Setting simulation mode = {self._simulation_mode} to {len(self._dp_links)} links"
@@ -451,74 +450,6 @@ class SlimComponentManager(CbfComponentManager):
             table.rows.append(data_row)
 
         self._logger.info(f"\nSLIM Health Summary Table\n{table}")
-
-    def _parse_link(self, link: str):
-        """
-        Each link is in the format of "tx_fqdn -> rx_fqdn". If the
-        link is disabled, then the text ends with [x].
-
-        :param link: a string describing a singular SLIM link.
-
-        :return: the pair of HPS tx and rx device FQDNs that make up a link.
-        :rtype: list[str]
-        """
-        tmp = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
-
-        # ignore disabled links or lines without the expected format
-        if tmp.endswith("[x]") or ("->" not in tmp):
-            return None
-        txrx = tmp.split("->")
-        if len(txrx) != 2:
-            return None
-        return txrx
-
-    def _validate_mesh_config(self, links: list) -> None:
-        """
-        Checks if the requested SLIM configuration is valid.
-
-        :param links: a list of HPS tx and rx device pairs to be configured as SLIM links.
-        :raise Tango exception: if SLIM configuration is not valid.
-        """
-        tx_set = set([x[0] for x in links])
-        rx_set = set([y[1] for y in links])
-        if len(tx_set) != len(rx_set) or len(tx_set) != len(links):
-            msg = "Tx and Rx devices must be unique in the configuration."
-            self._logger.error(msg)
-            tango.Except.throw_exception(
-                "Slim_Validate_",
-                msg,
-                "_validate_mesh_config()",
-            )
-        return
-
-    def _parse_links_yaml(self, yaml_str: str) -> list[list[str]]:
-        """
-        Parse a yaml string containing the mesh links.
-
-        :param yaml_str: the string defining the mesh links
-        :raise Tango exception: if the configuration is not valid yaml.
-        :return: a list of HPS tx and rx device pairs as [Tx FQDN, Rx FQDN]
-        :rtype: list[list[str]]
-        """
-        links = list()
-        try:
-            data = yaml.safe_load(yaml_str)
-        except yaml.YAMLError as e:
-            self._logger.error(f"Failed to load YAML: {e}")
-            tango.Except.throw_exception(
-                "Slim_Parse_YAML",
-                "Cannot parse SLIM configuration YAML",
-                "_parse_links_yaml()",
-            )
-        for k, v in data.items():
-            for line in v:
-                txrx = self._parse_link(line)
-                if txrx is not None:
-                    links.append(txrx)
-        self._validate_mesh_config(
-            links
-        )  # throws exception if validation fails
-        return links
 
     def _initialize_links(self) -> tuple[ResultCode, str]:
         """

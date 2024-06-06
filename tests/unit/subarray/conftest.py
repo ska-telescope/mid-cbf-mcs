@@ -552,6 +552,7 @@ def subarray_component_manager(
             "mid_csp_cbf/talon_board/007",
             "mid_csp_cbf/talon_board/008",
         ],
+        vis_slim="mid_csp_cbf/slim/slim-vis",
         logger=logger,
         simulation_mode=SimulationMode.TRUE,
         push_change_event_callback=push_change_event_callback,
