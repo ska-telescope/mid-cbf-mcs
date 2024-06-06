@@ -2375,7 +2375,7 @@ class CbfSubarrayComponentManager(
             fsp_id = devprops.get("FspID")[0]
             board = devprops.get("HpsFspControllerAddress")[0]
             board = board.split("/")[0]
-            board_to_fsp_id[board] = fsp_id
+            board_to_fsp_id[board] = int(fsp_id)
         return board_to_fsp_id
 
     def _update_fsp_output_host_port(
@@ -2394,16 +2394,28 @@ class CbfSubarrayComponentManager(
         self._logger.info(f"board_to_fsp_id = {board_to_fsp_id}")
         for tx, rx in vis_slim_links:
             if tx in board_to_fsp_id and rx in board_to_fsp_id:
+                fsp_tx = {}
+                fsp_rx = {}
                 fsp_id_tx = board_to_fsp_id[tx]
                 fsp_id_rx = board_to_fsp_id[rx]
+                self._logger.info(
+                    f"Moving output_host and output_port from FSP {fsp_id_tx} to {fsp_id_rx}"
+                )
                 for f in fsp:
                     if f["fsp_id"] == fsp_id_tx:
                         fsp_tx = f
                     if f["fsp_id"] == fsp_id_rx:
                         fsp_rx = f
-                self._logger.info(
-                    f"Moving output_host and output_port from FSP {fsp_id_tx} to {fsp_id_rx}"
-                )
+                if len(fsp_tx) == 0:
+                    self._logger.info(
+                        f"Failed to find entry with FSP ID = {fsp_id_tx}"
+                    )
+                    continue
+                if len(fsp_rx) == 0:
+                    self._logger.info(
+                        f"Failed to find entry with FSP ID = {fsp_id_rx}"
+                    )
+                    continue
                 # here we assume that the first board has the lowest channel offset.
                 # Adjust the channel_id of output_host and output_port by the difference.
                 offset = fsp_tx["channel_offset"] - fsp_rx["channel_offset"]
