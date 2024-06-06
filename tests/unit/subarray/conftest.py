@@ -63,7 +63,8 @@ def mock_tm() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_vcc() -> unittest.mock.Mock:
+def mock_vcc_builder() -> unittest.mock.Mock:
+    """Subarray requires unique Vcc mocks, so we return the mock builder"""
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
@@ -80,7 +81,7 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_command("UpdateJonesMatrix", None)
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -133,7 +134,7 @@ def mock_talon_board() -> unittest.mock.Mock:
 def initial_mocks(
     mock_tm: unittest.mock.Mock,
     mock_controller: unittest.mock.Mock,
-    mock_vcc: unittest.mock.Mock,
+    mock_vcc_builder: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
     mock_fsp_subarray: unittest.mock.Mock,
     mock_talon_board: unittest.mock.Mock,
@@ -143,7 +144,7 @@ def initial_mocks(
 
     :param mock_delay: a mock delayModel attribute
     :param mock_controller: a mock CbfController that is powered on.
-    :param mock_vcc: a mock Vcc that is powered on.
+    :param mock_vcc_builder: a builder for a mock Vcc that is powered on.
     :param mock_fsp: a mock Fsp that is powered off.
     :param mock_fsp_subarray: a mock Fsp function mode subarray that is powered on.
     :param mock_talon_board: a mock talon board device
@@ -153,10 +154,10 @@ def initial_mocks(
     return {
         "ska_mid/tm_leaf_node/csp_subarray_01": mock_tm,
         "mid_csp_cbf/sub_elt/controller": mock_controller,
-        "mid_csp_cbf/vcc/001": mock_vcc,
-        "mid_csp_cbf/vcc/002": mock_vcc,
-        "mid_csp_cbf/vcc/003": mock_vcc,
-        "mid_csp_cbf/vcc/004": mock_vcc,
+        "mid_csp_cbf/vcc/001": mock_vcc_builder,
+        "mid_csp_cbf/vcc/002": mock_vcc_builder,
+        "mid_csp_cbf/vcc/003": mock_vcc_builder,
+        "mid_csp_cbf/vcc/004": mock_vcc_builder,
         "mid_csp_cbf/fsp/01": mock_fsp,
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,

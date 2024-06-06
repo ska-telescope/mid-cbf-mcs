@@ -409,6 +409,7 @@ class CbfObsDevice(SKAObsDevice):
 
         :param obs_state: the new obs_state value
         """
+        self.logger.debug(f"ObsState updating to {ObsState(obs_state).name}")
         super()._update_obs_state(obs_state=obs_state)
         if hasattr(self, "component_manager"):
             self.component_manager.obs_state = obs_state

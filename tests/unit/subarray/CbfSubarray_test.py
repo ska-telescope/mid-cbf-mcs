@@ -27,7 +27,7 @@ from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 from ...test_utils import device_online_and_on
 
 # Data file path
-data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # Disable garbage collection to prevent tests hanging
 gc.disable()
@@ -74,7 +74,11 @@ class TestCbfSubarray:
             DeviceID="1",
         )
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            # subarray requires unique VCC mocks to be generated
+            if "mid_csp_cbf/vcc/" in name:
+                harness.add_mock_device(device_name=name, device_mock=mock())
+            else:
+                harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
@@ -147,13 +151,16 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "receptors, \
+        remove_all, \
         receptors_to_remove",
         [
             (
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
+                False,
                 ["SKA063", "SKA036", "SKA001"],
             ),
-            (["SKA100", "SKA036", "SKA001"], ["SKA036", "SKA100"]),
+            (["SKA100", "SKA036", "SKA001"], False, ["SKA036", "SKA100"]),
+            (["SKA100", "SKA036", "SKA001"], True, []),
         ],
     )
     def test_Add_Remove_Receptors_valid(
@@ -161,6 +168,7 @@ class TestCbfSubarray:
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         receptors: list[str],
+        remove_all: bool,
         receptors_to_remove: list[str],
     ) -> None:
         """
@@ -172,6 +180,7 @@ class TestCbfSubarray:
         :param device_under_test: fixture that provides a proxy to the device
             under test, in a :py:class:`context.DeviceProxy`
         :param receptors: list of DISH IDs to assign to subarray
+        :param remove_all: False to use RemoveReceptors, True for RemoveAllReceptors
         :param receptors_to_remove: list of DISH IDs to remove from subarray
         """
         assert device_under_test.State() == DevState.DISABLE
@@ -179,7 +188,7 @@ class TestCbfSubarray:
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
 
-        with open(data_file_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param = f.read()
         device_under_test.sysParam = sys_param
         assert device_under_test.sysParam == sys_param
@@ -226,10 +235,64 @@ class TestCbfSubarray:
                 attribute_value=tuple(receptors_push_val)
             )
 
-        # remove receptors in 2 stages
-        for input_rec in [receptors_to_remove[:-1], receptors_to_remove[-1:]]:
+        if remove_all:
+            (return_value, command_id) = device_under_test.RemoveAllReceptors()
+
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # check that the queued command succeeded
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
+                )
+            )
+        else:
+            # remove receptors in 2 stages
+            for input_rec in [
+                receptors_to_remove[:-1],
+                receptors_to_remove[-1:],
+            ]:
+                (return_value, command_id) = device_under_test.RemoveReceptors(
+                    input_rec
+                )
+
+                # check that the command was successfully queued
+                assert return_value[0] == ResultCode.QUEUED
+
+                # check that the queued command succeeded
+                change_event_callbacks[
+                    "longRunningCommandResult"
+                ].assert_change_event(
+                    (
+                        f"{command_id[0]}",
+                        f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
+                    )
+                )
+
+                # check obsState transitions
+                for obs_state in [
+                    ObsState.RESOURCING,
+                    ObsState.IDLE,
+                ]:
+                    change_event_callbacks["obsState"].assert_change_event(
+                        obs_state.value
+                    )
+
+                # assert receptors attribute updated
+                curr_rec.difference_update(input_rec)
+                receptors_push_val = list(curr_rec.copy())
+                receptors_push_val.sort()
+                change_event_callbacks["receptors"].assert_change_event(
+                    attribute_value=tuple(receptors_push_val)
+                )
+
+            # remove remaining receptor
             (return_value, command_id) = device_under_test.RemoveReceptors(
-                input_rec
+                list(curr_rec)
             )
 
             # check that the command was successfully queued
@@ -244,39 +307,6 @@ class TestCbfSubarray:
                     f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
                 )
             )
-
-            # check obsState transitions
-            for obs_state in [
-                ObsState.RESOURCING,
-                ObsState.IDLE,
-            ]:
-                change_event_callbacks["obsState"].assert_change_event(
-                    obs_state.value
-                )
-
-            # assert receptors attribute updated
-            curr_rec.difference_update(input_rec)
-            receptors_push_val = list(curr_rec.copy())
-            receptors_push_val.sort()
-            change_event_callbacks["receptors"].assert_change_event(
-                attribute_value=tuple(receptors_push_val)
-            )
-
-        # remove remaining receptor
-        (return_value, command_id) = device_under_test.RemoveReceptors(
-            list(curr_rec)
-        )
-
-        # check that the command was successfully queued
-        assert return_value[0] == ResultCode.QUEUED
-
-        # check that the queued command succeeded
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-            )
-        )
 
         # check obsState transitions
         for obs_state in [
@@ -296,20 +326,91 @@ class TestCbfSubarray:
         change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
-        "receptors",
+        "invalid_receptor",
+        [["SKA200"], ["MKT100"]],
+    )
+    def test_AddReceptors_invalid(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        invalid_receptor: list[str],
+    ) -> None:
+        """
+        Test invalid use of AddReceptors commands when a receptor ID is out of
+        valid range.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param invalid_receptor: invalid DISH ID
+        """
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.State() == DevState.OFF
+
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param = f.read()
+        device_under_test.sysParam = sys_param
+        assert device_under_test.sysParam == sys_param
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+        assert device_under_test.obsState == ObsState.EMPTY
+
+        # add receptors
+        (return_value, command_id) = device_under_test.AddReceptors(
+            invalid_receptor
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f"[{ResultCode.FAILED.value}, "
+                + f'"DISH ID {invalid_receptor[0]} is not valid. '
+                + "It must be SKA001-SKA133 or MKT000-MKT063. "
+                + 'Spaces before, after, or in the middle of the ID are not accepted."]',
+            )
+        )
+
+        # check obsState transitions
+        for obs_state in [
+            ObsState.RESOURCING,
+            ObsState.EMPTY,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert if any captured events have gone unaddressed
+        # we should not have gotten a change event from the receptors attribute
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "receptors, \
+        unassigned_receptors",
         [
-            (["SKA001", "SKA063", "SKA100", "SKA036"]),
-            (["SKA036", "SKA001", "SKA063"]),
+            (["SKA036", "SKA063"], ["SKA100"]),
+            (["SKA100", "SKA001"], ["SKA063", "SKA036"]),
         ],
     )
-    def test_RemoveAllReceptors_valid(
+    def test_RemoveReceptors_notAssigned(
         self: TestCbfSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         receptors: list[str],
+        unassigned_receptors: list[int],
     ) -> None:
         """
-        Test valid use of Add/RemoveReceptors command.
+        Test invalid use of RemoveReceptors command when a receptor to be removed
+        is not assigned to the subarray.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -317,13 +418,14 @@ class TestCbfSubarray:
         :param device_under_test: fixture that provides a proxy to the device
             under test, in a :py:class:`context.DeviceProxy`
         :param receptors: list of DISH IDs to assign to subarray
+        :param unassigned_receptors: unassigned DISH IDs
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.OFF
 
-        with open(data_file_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param = f.read()
         device_under_test.sysParam = sys_param
         assert device_under_test.sysParam == sys_param
@@ -362,13 +464,16 @@ class TestCbfSubarray:
             attribute_value=tuple(receptors)
         )
 
-        # remove all receptors
-        (return_value, command_id) = device_under_test.RemoveAllReceptors()
+        # try removing a receptor not assigned to subarray
+        (return_value, command_id) = device_under_test.RemoveReceptors(
+            unassigned_receptors
+        )
 
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command succeeded
+        # unassigned receptors will raise warning logs, but will not fail command
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
@@ -379,225 +484,285 @@ class TestCbfSubarray:
         # check obsState transitions
         for obs_state in [
             ObsState.RESOURCING,
-            ObsState.EMPTY,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert if any captured events have gone unaddressed
+        # we should not have gotten a change event from the receptors attribute
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "receptors, \
+        invalid_receptor",
+        [
+            (["SKA036", "SKA063"], ["SKA000"]),
+            (["SKA100", "SKA001"], [" MKT163"]),
+        ],
+    )
+    def test_RemoveReceptors_invalid(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        receptors: list[str],
+        invalid_receptor: list[int],
+    ) -> None:
+        """
+        Test invalid use of RemoveReceptors command when a receptor ID to be removed
+        is not in valid range.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param receptors: list of DISH IDs to assign to subarray
+        :param invalid_receptor: invalid DISH ID
+        """
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.State() == DevState.OFF
+
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param = f.read()
+        device_under_test.sysParam = sys_param
+        assert device_under_test.sysParam == sys_param
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+        assert device_under_test.obsState == ObsState.EMPTY
+
+        # add receptors
+        (return_value, command_id) = device_under_test.AddReceptors(receptors)
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command succeeded
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
+            )
+        )
+
+        # check obsState transitions
+        for obs_state in [
+            ObsState.RESOURCING,
+            ObsState.IDLE,
         ]:
             change_event_callbacks["obsState"].assert_change_event(
                 obs_state.value
             )
 
         # assert receptors attribute updated
+        receptors.sort()
         change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+            attribute_value=tuple(receptors)
+        )
+
+        # try to remove invalid receptors
+        (return_value, command_id) = device_under_test.RemoveReceptors(
+            invalid_receptor
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f"[{ResultCode.FAILED.value}, "
+                + f'"DISH ID {invalid_receptor[0]} is not valid. '
+                + "It must be SKA001-SKA133 or MKT000-MKT063. "
+                + 'Spaces before, after, or in the middle of the ID are not accepted."]',
+            )
+        )
+
+        # check obsState transitions
+        for obs_state in [
+            ObsState.RESOURCING,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert if any captured events have gone unaddressed
+        # we should not have gotten a change event from the receptors attribute
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "receptors",
+        [["SKA036", "SKA063"], ["SKA100", "SKA001"]],
+    )
+    def test_RemoveAllReceptors_invalid(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        receptors: list[str],
+    ) -> None:
+        """
+        Test invalid use of RemoveReceptors commands, when, subarray is in ObsState.EMPTY
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param receptors: list of DISH IDs to remove from subarray
+        """
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.State() == DevState.OFF
+
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param = f.read()
+        device_under_test.sysParam = sys_param
+        assert device_under_test.sysParam == sys_param
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+        assert device_under_test.obsState == ObsState.EMPTY
+
+        # try to remove receptors
+        (return_value, command_id) = device_under_test.RemoveReceptors(
+            receptors
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            )
+        )
+
+        # try to remove allreceptors
+        (return_value, command_id) = device_under_test.RemoveAllReceptors()
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            )
         )
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    # @pytest.mark.parametrize(
-    #     "receptors, \
-    #     invalid_receptor_id",
-    #     [
-    #         (["SKA100", "SKA063"], ["SKA200"]),
-    #         (["SKA036", "SKA001"], ["MKT100"]),
-    #     ],
-    # )
-    # def test_AddReceptors_invalid(
-    #     self: TestCbfSubarray,
-    #     device_under_test: context.DeviceProxy,
-    #     receptors: List[str],
-    #     invalid_receptor_id: List[str],
-    # ) -> None:
-    #     """
-    #     Test invalid use of AddReceptors commands:
-    #         - when a receptor ID is invalid (e.g. out of range)
-    #     """
-    #     assert device_under_test.State() == DevState.DISABLE
-    #     device_under_test.adminMode = AdminMode.ONLINE
+    @pytest.mark.parametrize(
+        "config_file_name, receptors, scan_file_name",
+        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+    )
+    def test_Scan(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        config_file_name: str,
+        receptors: list[int],
+        scan_file_name: str,
+    ) -> None:
+        """
+        Test a minimal successful scan configuration.
 
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     device_under_test.sysParam = sp
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param config_file_name: JSON file for the configuration
+        :param receptors: list of DISH IDs to assign to subarray
+        :param scan_file_name: JSON file for the scan ID
+        """
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.State() == DevState.OFF
 
-    #     # DevState should be OFF. Turn it to ON
-    #     device_under_test.On()
+        # prepare input data
+        with open(test_data_path + config_file_name) as f:
+            config_str = f.read().replace("\n", "")
+            configuration = json.loads(config_str)
+        with open(test_data_path + scan_file_name) as f:
+            scan_str = f.read().replace("\n", "")
+            scan = json.loads(scan_str)
 
-    #     assert device_under_test.State() == DevState.ON
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param = f.read()
+        device_under_test.sysParam = sys_param
+        assert device_under_test.sysParam == sys_param
 
-    #     # add some receptors
-    #     assert device_under_test.obsState == ObsState.EMPTY
-    #     device_under_test.AddReceptors(receptors)
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+        assert device_under_test.obsState == ObsState.EMPTY
 
-    #     assert sorted(list(device_under_test.receptors)) == sorted(receptors)
-    #     assert device_under_test.obsState == ObsState.IDLE
+        # dict to store return code and unique IDs of queued commands
+        command_dict = {}
 
-    #     # Validation of input receptors will throw an
-    #     # exception if there is an invalid receptor id
-    #     with pytest.raises(Exception):
-    #         device_under_test.AddReceptors(invalid_receptor_id)
+        # add receptors
+        command_dict["AddReceptors"] = device_under_test.AddReceptors(
+            receptors
+        )
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            config_str
+        )
+        command_dict["Scan"] = device_under_test.Scan(scan_str)
+        command_dict["EndScan"] = device_under_test.EndScan()
+        command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
-    #     assert sorted(list(device_under_test.receptors)) == sorted(receptors)
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
 
-    # @pytest.mark.parametrize(
-    #     "receptors, \
-    #     not_assigned_receptors_to_remove",
-    #     [
-    #         (["SKA036", "SKA063"], ["SKA100"]),
-    #         (["SKA100", "SKA001"], ["SKA063", "SKA036"]),
-    #     ],
-    # )
-    # def test_RemoveReceptors_notAssigned(
-    #     self: TestCbfSubarray,
-    #     device_under_test: context.DeviceProxy,
-    #     receptors: List[str],
-    #     not_assigned_receptors_to_remove: List[int],
-    # ) -> None:
-    #     """
-    #     Test invalid use of RemoveReceptors commands:
-    #         - when a receptor to be removed is not assigned to the subarray
-    #     """
-    #     assert device_under_test.State() == DevState.DISABLE
-    #     device_under_test.adminMode = AdminMode.ONLINE
+            # check that the queued command succeeded
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                )
+            )
 
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     device_under_test.sysParam = sp
+        # check all obsState transitions
+        for obs_state in [
+            ObsState.RESOURCING,
+            ObsState.IDLE,
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.READY,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
 
-    #     # DevState should be OFF. Turn it to ON
-    #     device_under_test.On()
+        # assert receptors attribute updated
+        receptors.sort()
+        change_event_callbacks["receptors"].assert_change_event(
+            attribute_value=tuple(receptors)
+        )
 
-    #     assert device_under_test.State() == DevState.ON
-    #     # add some receptors
-    #     assert device_under_test.obsState == ObsState.EMPTY
-    #     device_under_test.AddReceptors(receptors)
-
-    #     assert device_under_test.obsState == ObsState.IDLE
-
-    #     # try removing a receptor not assigned to subarray 1
-    #     device_under_test.RemoveReceptors(not_assigned_receptors_to_remove)
-
-    #     assert sorted(list(device_under_test.receptors)) == sorted(receptors)
-    #     assert device_under_test.obsState == ObsState.IDLE
-
-    # @pytest.mark.parametrize(
-    #     "receptors, \
-    #     invalid_receptors_to_remove",
-    #     [
-    #         (["SKA036", "SKA063"], ["SKA000"]),
-    #         (["SKA100", "SKA001"], [" SKA160", "MKT163"]),
-    #     ],
-    # )
-    # def test_RemoveReceptors_invalid(
-    #     self: TestCbfSubarray,
-    #     device_under_test: context.DeviceProxy,
-    #     receptors: List[str],
-    #     invalid_receptors_to_remove: List[int],
-    # ) -> None:
-    #     """
-    #     Test invalid use of RemoveReceptors commands:
-    #         - when a receptor id to be removed is not a valid receptor id
-    #     """
-    #     assert device_under_test.State() == DevState.DISABLE
-    #     device_under_test.adminMode = AdminMode.ONLINE
-
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     device_under_test.sysParam = sp
-
-    #     # DevState should be OFF. Turn it to ON
-    #     device_under_test.On()
-
-    #     assert device_under_test.State() == DevState.ON
-    #     # add some receptors
-    #     assert device_under_test.obsState == ObsState.EMPTY
-    #     device_under_test.AddReceptors(receptors)
-
-    #     assert device_under_test.obsState == ObsState.IDLE
-
-    #     # Validation of requested receptors will throw an
-    #     # exception if there is an invalid receptor id
-    #     with pytest.raises(Exception):
-    #         device_under_test.RemoveReceptors(invalid_receptors_to_remove)
-
-    #     assert sorted(list(device_under_test.receptors)) == sorted(receptors)
-    #     assert device_under_test.obsState == ObsState.IDLE
-
-    # @pytest.mark.parametrize(
-    #     "receptors", [(["SKA100", "SKA036"]), (["SKA063", "SKA001"])]
-    # )
-    # def test_RemoveAllReceptors_invalid(
-    #     self: TestCbfSubarray,
-    #     device_under_test: context.DeviceProxy,
-    #     receptors: List[str],
-    # ) -> None:
-    #     """
-    #     Test invalid use of RemoveReceptors commands:
-    #         - when a receptor to be removed is not assigned to the subarray
-    #     """
-    #     assert device_under_test.State() == DevState.DISABLE
-    #     device_under_test.adminMode = AdminMode.ONLINE
-
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     device_under_test.sysParam = sp
-
-    #     # DevState should be OFF. Turn it to ON
-    #     device_under_test.On()
-
-    #     assert device_under_test.State() == DevState.ON
-    #     assert device_under_test.obsState == ObsState.EMPTY
-
-    #     # try removing all receptors
-    #     result = device_under_test.RemoveAllReceptors()
-
-    #     assert result[0][0] == ResultCode.FAILED
-
-    # @pytest.mark.parametrize(
-    #     "config_file_name, \
-    #     receptors",
-    #     [
-    #         (
-    #             "ConfigureScan_basic_CORR.json",
-    #             ["SKA001", "SKA036", "SKA063", "SKA100"],
-    #         )
-    #     ],
-    # )
-    # def test_ConfigureScan_basic(
-    #     self: TestCbfSubarray,
-    #     device_under_test: context.DeviceProxy,
-    #     config_file_name: str,
-    #     receptors: List[str],
-    # ) -> None:
-    #     """
-    #     Test a successful scan configuration
-    #     """
-    #     assert device_under_test.State() == DevState.DISABLE
-    #     device_under_test.adminMode = AdminMode.ONLINE
-
-    #     assert device_under_test.State() == DevState.OFF
-    #     assert device_under_test.obsState == ObsState.EMPTY
-
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     device_under_test.sysParam = sp
-
-    #     device_under_test.AddReceptors(receptors)
-    #     freq_offset_k = [0] * 197
-    #     device_under_test.frequencyOffsetK = freq_offset_k
-
-    #     assert device_under_test.obsState == ObsState.IDLE
-
-    #     # configure_scan command is only allowed in op state ON
-    #     device_under_test.On()
-    #     sleep(CONST_WAIT_TIME)
-    #     assert device_under_test.State() == DevState.ON
-
-    #     # configure scan
-    #     f = open(data_file_path + config_file_name)
-    #     device_under_test.ConfigureScan(f.read().replace("\n", ""))
-    #     f.close()
-    #     sleep(CONST_WAIT_TIME)
-
-    #     assert device_under_test.obsState == ObsState.READY
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -636,7 +801,7 @@ class TestCbfSubarray:
     #     assert device_under_test.State() == DevState.ON
 
     #     # send the Scan command
-    #     f = open(data_file_path + scan_file_name)
+    #     f = open(test_data_path + scan_file_name)
     #     device_under_test.Scan(f.read().replace("\n", ""))
     #     f.close()
 

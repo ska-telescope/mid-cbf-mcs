@@ -388,8 +388,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             if board_dish_id == dish_id:
                 return proxy
         self.logger.error(
-            f"Couldn't find Talon board device with DISH ID {dish_id}; \
-                unable to update TalonBoard device subarrayID for this DISH."
+            f"Couldn't find Talon board device with DISH ID {dish_id}; "
+            + "unable to update TalonBoard device subarrayID for this DISH."
         )
         # Talon board proxy not essential to scan operation, so we log an error
         # but don't cause a failure
@@ -400,8 +400,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.debug("Checking if AddReceptors is allowed.")
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
-                f"AddReceptors not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.EMPTY or IDLE"
+                f"AddReceptors not allowed in ObsState {self.obs_state}; "
+                + "must be in ObsState.EMPTY or IDLE"
             )
             return False
         return True
@@ -525,6 +525,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Update obsState callback if previously unresourced
+        if len(self.dish_ids) == 0:
+            self._update_component_state(resourced=True)
+
         self.dish_ids.update(dish_ids_to_add)
         receptors_push_val = list(self.dish_ids.copy())
         receptors_push_val.sort()
@@ -535,9 +539,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_vcc_proxies.update(vcc_proxies)
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
-
-        # Update obsState callback if previously unresourced
-        self._update_component_state(resourced=True)
 
         task_callback(
             result=(ResultCode.OK, "AddReceptors completed OK"),
@@ -578,8 +579,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
-                f"RemoveReceptors not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.IDLE"
+                f"RemoveReceptors not allowed in ObsState {self.obs_state}; "
+                + "must be in ObsState.IDLE"
             )
             return False
         return True
@@ -647,11 +648,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # TODO: shouldn't happen
         if len(self.dish_ids) == 0:
             task_callback(
-                status=TaskStatus.COMPLETED,
+                status=TaskStatus.FAILED,
                 result=(
-                    ResultCode.OK,
+                    ResultCode.FAILED,
                     "Subarray does not currently have any assigned receptors.",
                 ),
             )
@@ -715,7 +717,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
         # Update obsState callback if now unresourced
-        self._update_component_state(resourced=False)
+        if len(self.dish_ids) == 0:
+            self._update_component_state(resourced=False)
 
         task_callback(
             result=(ResultCode.OK, "RemoveReceptors completed OK"),
@@ -950,9 +953,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     FspModes.IDLE.value,
                     function_mode_value,
                 ]:
-                    msg = f"FSP {fsp_id} currently set to function mode {valid_function_modes.index(fsp_function_mode)}, \
-                            cannot be used for {fsp['function_mode']} \
-                            until it is returned to IDLE."
+                    msg = (
+                        f"FSP {fsp_id} currently set to function mode {valid_function_modes.index(fsp_function_mode)}, "
+                        + f"cannot be used for {fsp['function_mode']} "
+                        + "until it is returned to IDLE."
+                    )
                     return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
