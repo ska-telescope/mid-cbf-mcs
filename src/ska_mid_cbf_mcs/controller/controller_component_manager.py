@@ -91,6 +91,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._talon_lru_fqdns_all = fqdn_dict["TalonLRU"]
         self._talon_board_fqdns_all = fqdn_dict["TalonBoard"]
         self._power_switch_fqdns_all = fqdn_dict["PowerSwitch"]
+        # NOTE: Hard coded to look at first index to handle FsSLIM and VisSLIM as single device
         self._fs_slim_fqdn = fqdn_dict["FsSLIM"][0]
         self._vis_slim_fqdn = fqdn_dict["VisSLIM"][0]
 
@@ -176,8 +177,8 @@ class ControllerComponentManager(CbfComponentManager):
                         for device in fqdn
                     ],
                 )
-            except tango.DevFailed:
-                self.logger.error(f"Failure in connection to {fqdn}")
+            except tango.DevFailed as df:
+                self.logger.error(f"Failure in connection to {fqdn}: {df}")
                 return False
         return True
 
@@ -460,12 +461,11 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
-    ) -> None | tuple[ResultCode, str]:
+    ) -> bool:
         """
         Configure the SLIM devices
 
-        :return: Either None if the configuration is successful, or a tuple containing a return code
-                 and a string message indicating status if the configuration fails
+        :return: True if the SLIM devices were successfully configured, False otherwise
         """
         try:
             self.logger.info(
@@ -485,14 +485,17 @@ class ControllerComponentManager(CbfComponentManager):
             self._send_configure_slim_device(
                 self._vis_slim_fqdn, self._vis_slim_config_path
             )
+            return True
         except tango.DevFailed as df:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             for item in df.args:
-                log_msg = f"Failed to configure SLIM: {item.reason}"
-                self.logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+                self.logger.error(f"Failed to configure SLIM: {item.reason}")
+            return False
         except OSError as e:
-            log_msg = f"Failed to read SLIM configuration file: {e}"
-            return (ResultCode.FAILED, log_msg)
+            self.logger.error(f"Failed to read SLIM configuration file: {e}")
+            return False
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
@@ -527,7 +530,14 @@ class ControllerComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-        # Power on all the Talon boards if not in SimulationMode
+        # The order of the following operations for is important:
+        # 1. Power on all the Talon boards by
+        #    i.  Get the FQDNs of the LRUs
+        #    ii. Sending ON command to all the LRUs
+        # 2. Configure all the Talon boards
+        # 3. Turn on all the subarrays by writing simulationMode and sending ON command
+        # 4. Configure SLIM Mesh devices
+
         # TODO: There are two VCCs per LRU. Need to check the number of
         #       VCCs turned on against the number of LRUs powered on
         if (
@@ -543,6 +553,9 @@ class ControllerComponentManager(CbfComponentManager):
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus()
         if not lru_on_status:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             task_callback(
                 result=(ResultCode.FAILED, msg),
                 status=TaskStatus.FAILED,
@@ -594,10 +607,9 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # Configure SLIM Mesh devices
-        configure_slim_result = self._configure_slim_devices()
-        if configure_slim_result:
+        if not self._configure_slim_devices():
             task_callback(
-                result=configure_slim_result,
+                result="Failed to configure SLIM devices",
                 status=TaskStatus.FAILED,
             )
             return
@@ -945,6 +957,9 @@ class ControllerComponentManager(CbfComponentManager):
         # Turn off all the LRUs currently in use
         (lru_off, log_msg) = self._turn_off_lrus()
         if not lru_off:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             message.append(log_msg)
             result_code = ResultCode.FAILED
 
@@ -1211,7 +1226,7 @@ class ControllerComponentManager(CbfComponentManager):
                 task_callback(
                     result=(
                         ResultCode.FAILED,
-                        "Validating init_sys_param file against ska-telmodel schema failed",
+                        "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed",
                     ),
                     status=TaskStatus.FAILED,
                 )
@@ -1227,6 +1242,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         # send init_sys_param to the subarrays, VCCs and talon boards
         if not self._update_init_sys_param(self.last_init_sys_param):
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
             task_callback(
                 result=(
                     ResultCode.FAILED,

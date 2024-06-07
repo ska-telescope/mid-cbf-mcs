@@ -204,6 +204,17 @@ class TestCbfController:
                     '[3, "Duplicated Dish ID in the init_sys_param json"]',
                 )
             )
+        elif (
+            sys_param_file_path == "source_init_sys_param_invalid_schema.json"
+        ):
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
+                )
+            )
         else:
             change_event_callbacks[
                 "longRunningCommandResult"
