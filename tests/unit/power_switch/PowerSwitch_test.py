@@ -19,11 +19,11 @@ from ska_control_model import AdminMode, SimulationMode
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
@@ -41,8 +41,8 @@ class TestPowerSwitch:
         self: TestPowerSwitch,
         request: pytest.FixtureRequest,
         monkeypatch: pytest.MonkeyPatch,
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
 
         def mock_patch(url: str, **kwargs: Any) -> MockDependency.Response:
             """
@@ -325,12 +325,10 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.OFFLINE
         assert device_under_test.State() == DevState.DISABLE
 
-        result_code, command_id = device_under_test.TurnOffOutlet("0")
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '"Command not allowed"')
-        )
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.TurnOffOutlet("0")
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -489,12 +487,10 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.OFFLINE
         assert device_under_test.State() == DevState.DISABLE
 
-        result_code, command_id = device_under_test.TurnOnOutlet("0")
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '"Command not allowed"')
-        )
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.TurnOnOutlet("0")
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()

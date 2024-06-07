@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 # Standard imports
+import gc
 import os
 from typing import Iterator
 from unittest.mock import Mock
@@ -19,11 +20,14 @@ from unittest.mock import Mock
 import pytest
 from ska_control_model import AdminMode, HealthState, SimulationMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
-from ska_mid_cbf_mcs.testing import context
+
+# Disable garbage collection to prevent tests hanging
+gc.disable()
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -31,8 +35,6 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # Tango imports
 
 # SKA imports
-
-CONST_WAIT_TIME = 1
 
 
 class TestSlimLink:
@@ -43,8 +45,8 @@ class TestSlimLink:
     @pytest.fixture(name="test_context")
     def slim_link_test_context(
         self: TestSlimLink, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fs_links/001",
             device_class=SlimLink,
@@ -102,6 +104,7 @@ class TestSlimLink:
             :py:class:`context.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert device_under_test.State() == DevState.ON
@@ -152,6 +155,44 @@ class TestSlimLink:
             device_under_test.txIdleCtrlWord
             == device_under_test.rxIdleCtrlWord
         )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "tx_device_name, rx_device_name",
+        [
+            (
+                "talon-x/slim-tx-rx/fs-tx0",
+                "talon-x/slim-tx-rx/fs-rx0",
+            ),
+        ],
+    )
+    def test_ConnectTxRx_not_allowed(
+        self: TestSlimLink,
+        tx_device_name: str,
+        rx_device_name: str,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the ConnectTxRx() command
+
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        # self.test_StartupState(device_under_test)
+        device_under_test.txDeviceName = tx_device_name
+        device_under_test.rxDeviceName = rx_device_name
+        device_under_test.simulationMode = SimulationMode.FALSE
+
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.ConnectTxRx()
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -280,7 +321,7 @@ class TestSlimLink:
         assert device_under_test.txIdleCtrlWord == 123456
         assert device_under_test.rxIdleCtrlWord == 123456
         assert device_under_test.bitErrorRate == 8e-12
-        counters = device_under_test.read_counters
+        counters = device_under_test.counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
 
@@ -422,6 +463,45 @@ class TestSlimLink:
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "tx_device_name, rx_device_name",
+        [
+            (
+                "talon-x/slim-tx-rx/fs-tx0",
+                "talon-x/slim-tx-rx/fs-rx0",
+            ),
+        ],
+    )
+    def test_DisconnectTxRx_not_allowed(
+        self: TestSlimLink,
+        tx_device_name: str,
+        rx_device_name: str,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the DisconnectTxRx() command
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        self.test_ConnectTxRx(
+            device_under_test=device_under_test,
+            tx_device_name=tx_device_name,
+            rx_device_name=rx_device_name,
+            change_event_callbacks=change_event_callbacks,
+        )
+
+        device_under_test.adminMode = AdminMode.OFFLINE
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.DisconnectTxRx()
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
     def test_DisconnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
@@ -479,7 +559,7 @@ class TestSlimLink:
             rx_device_name=rx_device_name,
             change_event_callbacks=change_event_callbacks,
         )
-        counters = device_under_test.read_counters
+        counters = device_under_test.counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
             assert counters[ind] == val
         result, msg = device_under_test.ClearCounters()

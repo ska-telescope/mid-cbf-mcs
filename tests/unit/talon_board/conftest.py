@@ -18,11 +18,12 @@ import unittest
 
 import pytest
 import tango
+
+# Tango imports
+from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-# Tango imports
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 from ... import test_utils
