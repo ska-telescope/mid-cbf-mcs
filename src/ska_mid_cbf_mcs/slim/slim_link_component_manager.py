@@ -15,7 +15,7 @@ from typing import Any, Callable, Optional, Tuple
 import backoff
 import tango
 from ska_control_model import TaskStatus
-from ska_tango_base.base.component_manager import check_communicating
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     HealthState,

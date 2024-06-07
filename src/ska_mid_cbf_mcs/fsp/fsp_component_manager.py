@@ -16,8 +16,8 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import PowerState, TaskStatus
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 

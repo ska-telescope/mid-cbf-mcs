@@ -62,7 +62,6 @@ def lru_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
