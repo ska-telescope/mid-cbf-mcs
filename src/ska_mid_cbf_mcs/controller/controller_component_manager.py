@@ -15,7 +15,7 @@ import json
 import logging
 import os
 import threading
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import tango
 import yaml
@@ -49,13 +49,13 @@ class ControllerComponentManager(CbfComponentManager):
 
     def __init__(
         self: ControllerComponentManager,
-        *args: Any,
+        *args: any,
         fqdn_dict: dict[str, list[str]],
         config_path_dict: dict[str, str],
         max_capabilities: dict[str, int],
         lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -68,7 +68,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         super().__init__(*args, **kwargs)
-        self.simulation_mode = SimulationMode.TRUE
         self._lru_timeout = lru_timeout
 
         (
@@ -1060,11 +1059,12 @@ class ControllerComponentManager(CbfComponentManager):
     def _update_init_sys_param(
         self: ControllerComponentManager,
         params: str,
-    ) -> None:
+    ) -> bool:
         """
         Update the InitSysParam parameters in the subarrays and VCCs as well as the talon boards
 
         :param params: The InitSysParam parameters
+        :return: True if the InitSysParam parameters are successfully updated, False otherwise
         """
         # write the init_sys_param to each of the subarrays
         for fqdn in self._fqdn_subarray:
@@ -1081,18 +1081,19 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
+                    return True
                 else:
-                    log_msg = (
+                    self.logger.error(
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                         f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                     )
-                    self.logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+                    return False
             except tango.DevFailed as df:
                 for item in df.args:
-                    log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                    self.logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+                    self.logger.error(
+                        f"Failure in connection to {fqdn}; {item.reason}"
+                    )
+                    return False
 
         # update talon boards. The VCC ID to IP address mapping comes
         # from hw_config. Then map VCC ID to DISH ID.
@@ -1118,11 +1119,13 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
                             self.logger.warning(log_msg)
+                    return True
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
-                        self.logger.error(log_msg)
-                        return (ResultCode.FAILED, log_msg)
+                        self.logger.error(
+                            f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
+                        )
+                    return False
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if init_sys_param is allowed")
@@ -1224,11 +1227,8 @@ class ControllerComponentManager(CbfComponentManager):
         # store the attribute
         self.dish_utils = DISHUtils(init_sys_param_json)
 
-        # send init_sys_param to the subarrays
-        try:
-            self._update_init_sys_param(self.last_init_sys_param)
-        except tango.DevFailed as e:
-            self.logger.error(e)
+        # send init_sys_param to the subarrays, VCCs and talon boards
+        if not self._update_init_sys_param(self.last_init_sys_param):
             task_callback(
                 result=(
                     ResultCode.FAILED,

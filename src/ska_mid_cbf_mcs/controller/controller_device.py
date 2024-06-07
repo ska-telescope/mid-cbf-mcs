@@ -16,8 +16,6 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # Allows forward references in type hints
 
-from typing import Any
-
 import tango
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
@@ -88,6 +86,7 @@ class CbfController(CbfDevice):
     # Attributes
     # ----------
 
+    # TODO: Do we really need this?
     @attribute(
         dtype="uint16",
         max_value=100,
@@ -326,8 +325,8 @@ class CbfController(CbfDevice):
 
         def do(
             self: CbfController.InitCommand,
-            *args: Any,
-            **kwargs: Any,
+            *args: any,
+            **kwargs: any,
         ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.

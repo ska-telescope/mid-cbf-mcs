@@ -13,8 +13,6 @@ import os
 import unittest
 
 # Standard imports
-from typing import Dict
-
 import pytest
 import tango
 
@@ -51,7 +49,6 @@ def lru_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
@@ -163,7 +160,7 @@ def initial_device_mocks(
     mock_talon_board: unittest.mock.Mock,
     mock_power_switch: unittest.mock.Mock,
     mock_slim_mesh: unittest.mock.Mock,
-) -> Dict[str, unittest.mock.Mock]:
+) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
 
