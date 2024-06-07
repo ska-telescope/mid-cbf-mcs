@@ -27,7 +27,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_tango_testing import context
 
 __all__ = ["TalonDxComponentManager"]
 
@@ -465,7 +465,7 @@ class TalonDxComponentManager:
 
         self.logger.info(f"Trying connection to {fqdn} device")
         try:
-            self.proxies[fqdn] = CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+            self.proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
         except tango.DevFailed as df:
             for item in df.args:
                 self.logger.error(
