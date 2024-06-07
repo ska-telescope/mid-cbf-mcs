@@ -562,6 +562,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
+        # Write simulation mode to subarrays
         if not self._write_group_attribute(
             attr_name="simulationMode",
             value=self._talondx_component_manager.simulation_mode,
@@ -576,6 +577,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
+        # Turn on all the subarrays
         group_subarray_on_failed = False
         for result_code, msg in self._issue_group_command(
             command_name="On", proxies=self._group_subarray
@@ -586,7 +588,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         if group_subarray_on_failed:
             task_callback(
-                result=(ResultCode.FAILED, "Failed to turn on  subarrays"),
+                result=(ResultCode.FAILED, "Failed to turn on subarrays"),
                 status=TaskStatus.FAILED,
             )
             return
