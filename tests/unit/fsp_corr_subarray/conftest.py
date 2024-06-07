@@ -12,19 +12,17 @@ from __future__ import annotations
 import unittest
 
 import pytest
-import tango
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 
 from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")
-def fsp_device_under_test_fixture(
+def fsp_corr_device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
     """
@@ -34,7 +32,7 @@ def fsp_device_under_test_fixture(
 
     :return: the device under test
     """
-    return test_context.get_device("mid_csp_cbf/fsp/01")
+    return test_context.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
 
 @pytest.fixture(name="change_event_callbacks")
@@ -43,9 +41,7 @@ def fsp_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "functionMode",
-        "state",
-        "subarrayMembership",
+        "obsState",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list
@@ -57,37 +53,27 @@ def fsp_change_event_callbacks(
 
 
 @pytest.fixture()
-def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
+def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
+    # Mock the Vcc subarrayMembership attribute
+    # The subarray ID for this unit test is hardcoded to 1
+    builder.add_attribute("subarrayMembership", 1)
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
-    mock_fsp_corr_subarray_device: unittest.mock.Mock,
-    mock_fsp_corr_subarray_group: unittest.mock.Mock,
+    mock_controller: unittest.mock.Mock, mock_vcc: unittest.mock.Mock
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
-    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
+    :param mock_controller: a mock CbfController.
+    :param mock_vcc: a mock Vcc.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray_device,
-        "FSP Subarray Corr": mock_fsp_corr_subarray_group,
+        "mid_csp_cbf/sub_elt/controller": mock_controller,
+        "mid_csp_cbf/vcc/001": mock_vcc,
     }

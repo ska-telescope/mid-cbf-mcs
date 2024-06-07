@@ -7,12 +7,11 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the Vcc."""
+"""Contain the tests for the FspCorrSubarray."""
 
 from __future__ import annotations
 
 import gc
-import json
 import os
 from typing import Iterator
 from unittest.mock import Mock
@@ -22,9 +21,8 @@ from ska_control_model import AdminMode, ObsState, ResultCode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
 from ska_mid_cbf_mcs.testing import context
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ...test_utils import device_online_and_on
 
@@ -35,33 +33,20 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 gc.disable()
 
 
-class TestVcc:
+class TestFspCorrSubarray:
     """
-    Test class for Vcc tests.
+    Test class for FspCorrSubarray tests.
     """
-
-    # TODO: check configured parameters in READY and IDLE?
-    # TODO: test invalid frequency band
-    # TODO: subarrayMembership?
-    # TODO: simulator vs mock HPS?
-    # TODO: validate ConfigureScan at VCC level?
 
     @pytest.fixture(name="test_context")
-    def vcc_test_context(
-        self: TestVcc, initial_mocks: dict[str, Mock]
+    def fsp_corr_test_context(
+        self: TestFspCorrSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
         harness.add_device(
-            device_name="mid_csp_cbf/vcc/001",
-            device_class=Vcc,
-            TalonLRUAddress="mid_csp_cbf/talon_lru/001",
-            VccControllerAddress="talondx-001/vcc-app/vcc-controller",
-            Band1And2Address="talondx-001/vcc-app/vcc-band-1-and-2",
-            Band3Address="talondx-001/vcc-app/vcc-band-3",
-            Band4Address="talondx-001/vcc-app/vcc-band-4",
-            Band5Address="talondx-001/vcc-app/vcc-band-5",
-            SW1Address="mid_csp_cbf/vcc_sw1/001",
-            SW2Address="mid_csp_cbf/vcc_sw2/001",
+            device_name="mid_csp_cbf/fspCorrSubarray/01_01",
+            device_class=FspCorrSubarray,
+            HpsFspCorrControllerAddress="mid_csp_cbf/talon_lru/001",
             DeviceID="1",
         )
         for name, mock in initial_mocks.items():
@@ -71,71 +56,55 @@ class TestVcc:
             yield test_context
 
     def test_State(
-        self: TestVcc, device_under_test: context.DeviceProxy
+        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test State
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        """
-        assert device_under_test.state() == DevState.DISABLE
-
-    def test_subarrayMembership(
-        self: TestVcc,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test reading & writing subarrayMembership
-
         :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.subarrayMembership == 0
-        device_under_test.subarrayMembership = 1
-        assert device_under_test.subarrayMembership == 1
-
-        # assert subarrayMembership attribute event change
-        change_event_callbacks["subarrayMembership"].assert_change_event(1)
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestVcc, device_under_test: context.DeviceProxy
+        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
-        device_under_test.simulationMode = SimulationMode.FALSE
+        """
+        Test Status
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestVcc, device_under_test: context.DeviceProxy
+        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
-        device_under_test.simulationMode = SimulationMode.FALSE
+        """
+        Test Admin Mode
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
-        self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        self: TestFspCorrSubarray,
         device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
-        Test the On/Off/Standby commands
+        Test Power commands.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param command: the command to test (one of On/Off/Standby)
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the name of the Power command to be tested
         """
-
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
 
@@ -158,10 +127,11 @@ class TestVcc:
         assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
+        "config_file_name, scan_id",
+        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_Scan(
-        self: TestVcc,
+        self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
@@ -183,25 +153,11 @@ class TestVcc:
         # prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
-            configuration = json.loads(json_str)
-        freq_band_name = configuration["frequency_band"]
-        band_configuration = {
-            "frequency_band": freq_band_name,
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
 
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         # test happy path observing command sequence
-        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
-            json.dumps(band_configuration)
-        )
-        # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
-        )
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -236,25 +192,22 @@ class TestVcc:
                 obs_state.value
             )
 
-        # assert frequencyBand attribute reset during GoToIdle
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
-
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
-        [("Vcc_ConfigureScan_basic.json", 1)],
+        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_Scan_reconfigure(
-        self: TestVcc,
+        self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
-        Test Vcc's ability to reconfigure and run multiple scans.
+        Test FspCorrSubarray's ability to reconfigure and run multiple scans.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -264,34 +217,17 @@ class TestVcc:
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
-
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # prepare device for observation
         assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
-            configuration = json.loads(json_str)
-        freq_band_name = configuration["frequency_band"]
-        band_configuration = {
-            "frequency_band": freq_band_name,
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
 
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         # test happy path observing command sequence
-        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
-            json.dumps(band_configuration)
-        )
-        # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
-        )
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -353,18 +289,15 @@ class TestVcc:
                 obs_state.value
             )
 
-        # assert frequencyBand attribute reset during GoToIdle
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
-
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name",
-        ["Vcc_ConfigureScan_basic.json"],
+        ["FspCorrSubarray_ConfigureScan_basic.json"],
     )
     def test_AbortScan_from_ready(
-        self: TestVcc,
+        self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
@@ -379,34 +312,17 @@ class TestVcc:
             under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         """
-
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # prepare device for observation
         assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
-            configuration = json.loads(json_str)
-        freq_band_name = configuration["frequency_band"]
-        band_configuration = {
-            "frequency_band": freq_band_name,
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
 
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         # test issuing AbortScan and ObsReset from READY
-        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
-            json.dumps(band_configuration)
-        )
-        # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
-        )
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -441,18 +357,15 @@ class TestVcc:
                 obs_state.value
             )
 
-        # assert frequencyBand attribute reset during ObsReset
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
-
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
-        [("Vcc_ConfigureScan_basic.json", 1)],
+        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_AbortScan_from_scanning(
-        self: TestVcc,
+        self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
@@ -468,34 +381,17 @@ class TestVcc:
             under test, in a :py:class:`context.DeviceProxy`
         :param config_file_name: JSON file for the configuration
         """
-
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # prepare device for observation
         assert device_online_and_on(device_under_test)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
-            configuration = json.loads(json_str)
-        freq_band_name = configuration["frequency_band"]
-        band_configuration = {
-            "frequency_band": freq_band_name,
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
 
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         # test issuing AbortScan and ObsReset from SCANNING
-        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
-            json.dumps(band_configuration)
-        )
-        # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
-        )
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -530,85 +426,6 @@ class TestVcc:
         ]:
             change_event_callbacks["obsState"].assert_change_event(
                 obs_state.value
-            )
-
-        # assert frequencyBand attribute reset during ObsReset
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "frequency_band, success",
-        [
-            (
-                "fail",
-                False,
-            ),
-            ("1", True),
-        ],
-    )
-    # Test scan for fail scenario
-    def test_ConfigureBand(
-        self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-        device_under_test: context.DeviceProxy,
-        frequency_band: str,
-        success: bool,
-    ) -> None:
-        """
-        Test ConfigureBand
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param config_file_name: JSON file for the configuration
-        """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        # prepare device for observation
-        assert device_online_and_on(device_under_test)
-
-        # setting band configuration with invalid frequency band
-
-        band_configuration = {
-            "frequency_band": frequency_band,
-            "dish_sample_rate": 999999,
-            "samples_per_frame": 18,
-        }
-
-        # test issuing invalid frequency band
-        return_value = device_under_test.ConfigureBand(
-            json.dumps(band_configuration)
-        )
-
-        # check that the command was successfully queued
-        assert return_value[0] == ResultCode.QUEUED
-
-        if success:
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "ConfigureBand completed OK"]',
-                )
-            )
-
-            # assert frequencyBand attribute was pushed
-            change_event_callbacks["frequencyBand"].assert_change_event(
-                freq_band_dict()[frequency_band]["band_index"]
-            )
-
-        else:
-            # check that the queued command failed
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.FAILED.value}, "frequency_band {frequency_band} is invalid."]',
-                )
             )
 
         # assert if any captured events have gone unaddressed

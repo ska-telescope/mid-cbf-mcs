@@ -24,13 +24,10 @@ from tango import DevState
 
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
-from ska_mid_cbf_mcs.testing.mock.mock_response import MockResponse
-from ska_mid_cbf_mcs.testing.mock.mock_response_snmp import MockGetResponseSNMP, MockSetResponseSNMP
 
 from ska_mid_cbf_mcs.commons.global_enum import Const
 
-# TODO: Things to parametrize: num outlets, num outlet range, patch request message, device params
-# If hard code assert num outlets, then why do it at all, other than get reqeust failure
+from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -50,7 +47,7 @@ class TestPowerSwitch:
     ) -> Iterator[context.TTCMExt.TCExt]:
         harness = context.TTCMExt()
 
-        def mock_patch(url: str, **kwargs: Any) -> MockResponse:
+        def mock_patch(url: str, **kwargs: Any) -> MockDependency.Response:
             """
             Replace requests.request method with a mock method.
 
@@ -59,7 +56,7 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockResponse(
+            return MockDependency.Response(
                 url,
                 request.param["sim_patch_error"],
                 request.param["sim_state"],
@@ -67,7 +64,7 @@ class TestPowerSwitch:
 
         def mock_get(
             url: str, params: Any = None, **kwargs: Any
-        ) -> MockResponse:
+        ) -> MockDependency.Response:
             """
             Replace requests.get with mock method.
 
@@ -77,14 +74,13 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockResponse(
-                url, request.param["sim_get_error"], request.param["sim_state"], 
+            return MockDependency.Response(
+                url, request.param["sim_get_error"], request.param["sim_state"]
             )
 
-        # TODO: Linting return function or tuple?
         def mock_get_snmp(
             authData, transportTarget, *varNames, **kwargs
-        ) -> MockGetResponseSNMP:
+        ) -> tuple:
             """
             Replace pysnmp...CommandGenerator.getCmd with mock method.
 
@@ -93,14 +89,14 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockGetResponseSNMP(
+            return MockDependency.ResponseSNMP(
                 request.param["sim_get_error"],
                 request.param["sim_state"],
             )
         
         def mock_set_snmp(
             authData, transportTarget, *varNames, **kwargs
-        ) -> MockGetResponseSNMP:
+        ) -> tuple:
             """
             Replace pysnmp...CommandGenerator.getCmd with mock method.
 
@@ -109,7 +105,7 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockSetResponseSNMP(
+            return MockDependency.ResponseSNMP(
                 request.param["sim_patch_error"],
                 request.param["sim_state"],
             )

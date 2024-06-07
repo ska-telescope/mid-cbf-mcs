@@ -60,7 +60,9 @@ class ApcPduDriver:
         # init outlet states to unknown first. The outlets can be polled
         # before initialize is called.
         self.outlets = [
-            Outlet(outlet_ID=id, outlet_name="", power_state=PowerState.UNKNOWN)
+            Outlet(
+                outlet_ID=id, outlet_name="", power_state=PowerState.UNKNOWN
+            )
             for id in self.outlet_id_list
         ]
 
