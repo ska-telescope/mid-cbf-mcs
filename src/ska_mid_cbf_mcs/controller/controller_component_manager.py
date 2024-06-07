@@ -238,9 +238,9 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
     ) -> bool:
         """
-        Set the AdminMode of the device to ONLINE, given the FQDN of the device
+        Set the AdminMode of the component device to ONLINE, given the FQDN of the device
 
-        :param fqdn: FQDN of the device
+        :param fqdn: FQDN of the component device
         :return: True if the AdminMode of the device is successfully set to ONLINE, False otherwise.
         """
         try:
@@ -287,10 +287,7 @@ class ControllerComponentManager(CbfComponentManager):
                     return False
                 break
 
-        if not self._set_proxy_online(fqdn):
-            return False
-
-        return True
+        return self._set_proxy_online(fqdn)
 
     def _init_proxies(self: ControllerComponentManager) -> bool:
         """
