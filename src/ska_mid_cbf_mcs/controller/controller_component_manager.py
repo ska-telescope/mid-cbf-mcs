@@ -767,39 +767,27 @@ class ControllerComponentManager(CbfComponentManager):
     def _turn_off_subelements(
         self: ControllerComponentManager,
     ) -> tuple[bool, list[str]]:
+        """
+        Turn off all subelements of the controller
+
+        :return: A tuple containing a boolean indicating success and a list of messages
+        """
         result = True
         message = []
+        subelements = (
+            self._group_subarray
+            + self._group_vcc
+            + self._group_fsp
+            + [
+                self._proxies[self._fs_slim_fqdn],
+                self._proxies[self._vis_slim_fqdn],
+            ]
+        )
 
-        for result_code, msg in self._issue_group_command(
-            "Off", self._group_subarray
-        ):
+        for result_code, msg in self._issue_group_command("Off", subelements):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 result = False
-
-        for result_code, msg in self._issue_group_command(
-            "Off", self._group_vcc
-        ):
-            if result_code == ResultCode.FAILED:
-                message.append(msg)
-                result = False
-
-        for result_code, msg in self._issue_group_command(
-            "Off", self._group_fsp
-        ):
-            if result_code == ResultCode.FAILED:
-                message.append(msg)
-                result = False
-
-        try:
-            for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-                self._proxies[fqdn].command_inout("Off")
-        except tango.DevFailed as df:
-            for item in df.args:
-                log_msg = f"Failed to turn off SLIM proxy; {item.reason}"
-                self.logger.error(log_msg)
-                message.append(log_msg)
-            result = False
 
         if result:
             message.append(
