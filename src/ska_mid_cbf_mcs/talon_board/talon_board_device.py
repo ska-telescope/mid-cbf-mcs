@@ -260,10 +260,16 @@ class TalonBoard(SKABaseDevice):
         """
         res = self.component_manager.fpga_die_temperature()
         return res
-
+    
+    # Note for FpgaPower1-7:
+    # Naming for the attribute is from https://confluence.skatelescope.org/display/SE/Mid+CBF+Talon+Telemetry+and+Status
+    # FpgaPower is 1-index
+    # The component_manager function called fpga_die_voltage_<0-6> if from https://confluence.skatelescope.org/pages/viewpage.action?pageId=212310893
+    # Those values are retrived from the HPS (ska-talondx-bsp-app) and is 0-index
+    # FpgaPower1 corresponds to fpga_die_voltage_0 reading, etc
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 0",
+        label="FPGA Power 1",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
         min_warning=11.2,
@@ -272,7 +278,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=13.0,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage0(self: TalonBoard) -> float:
+    def FpgaPower1(self: TalonBoard) -> float:
         """
         Reads the 12V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -288,7 +294,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 1",
+        label="FPGA Power 2",
         doc="Value of the 2.5V FPGA Die Voltage Sensor",
         unit="V",
         min_warning=2.404,
@@ -297,7 +303,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=2.62,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage1(self: TalonBoard) -> float:
+    def FpgaPower2(self: TalonBoard) -> float:
         """
         Reads the 2.5V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -313,7 +319,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 2",
+        label="FPGA Power 3",
         doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
         unit="V",
         min_warning=0.79,
@@ -322,7 +328,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=0.97,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage2(self: TalonBoard) -> float:
+    def FpgaPower3(self: TalonBoard) -> float:
         """
         Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -338,7 +344,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 3",
+        label="FPGA Power 4",
         doc="Value of the 1.8V VCCIO FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -347,7 +353,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage3(self: TalonBoard) -> float:
+    def FpgaPower4(self: TalonBoard) -> float:
         """
         Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -363,7 +369,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 4",
+        label="FPGA Power 5",
         doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -372,7 +378,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
+    def FpgaPower5(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -388,7 +394,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 5",
+        label="FPGA Power 6",
         doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
         unit="V",
         min_warning=0.876,
@@ -397,7 +403,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=0.93,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
+    def FpgaPower6(self: TalonBoard) -> list[float]:
         """
         Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -413,7 +419,7 @@ class TalonBoard(SKABaseDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 6",
+        label="FPGA Power 7",
         doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -422,7 +428,7 @@ class TalonBoard(SKABaseDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
+    def FpgaPower7(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
