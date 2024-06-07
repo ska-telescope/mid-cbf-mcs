@@ -74,13 +74,13 @@ class TestTalonBoard:
 
         # There seems to be some delay with callbacks to turn on SimulationMode on the Component Manager
         time.sleep(5)
-        assert test_proxies.talon_board.FpgaDieVoltage0 == 12.0
-        assert test_proxies.talon_board.FpgaDieVoltage1 == 2.5
-        assert test_proxies.talon_board.FpgaDieVoltage2 == 0.87
-        assert test_proxies.talon_board.FpgaDieVoltage3 == 1.8
-        assert test_proxies.talon_board.FpgaDieVoltage4 == 1.8
-        assert test_proxies.talon_board.FpgaDieVoltage5 == 0.9
-        assert test_proxies.talon_board.FpgaDieVoltage6 == 1.8
+        assert test_proxies.talon_board.FpgaPower1 == 12.0
+        assert test_proxies.talon_board.FpgaPower2 == 2.5
+        assert test_proxies.talon_board.FpgaPower3 == 0.87
+        assert test_proxies.talon_board.FpgaPower4 == 1.8
+        assert test_proxies.talon_board.FpgaPower5 == 1.8
+        assert test_proxies.talon_board.FpgaPower6 == 0.9
+        assert test_proxies.talon_board.FpgaPower7 == 1.8
 
     def test_Off(self, test_proxies):
         """
