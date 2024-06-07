@@ -21,7 +21,7 @@ import tango
 import yaml
 from polling2 import TimeoutException, poll
 from ska_control_model import TaskStatus
-from ska_tango_base.base.component_manager import check_communicating
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,

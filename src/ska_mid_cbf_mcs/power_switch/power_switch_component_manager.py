@@ -23,7 +23,7 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.component_manager import check_communicating
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
