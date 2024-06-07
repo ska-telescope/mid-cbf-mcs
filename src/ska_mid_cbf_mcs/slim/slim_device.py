@@ -14,8 +14,6 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from typing import Optional
-
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
@@ -31,7 +29,6 @@ from ska_tango_base.control_model import (
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
@@ -207,11 +204,6 @@ class Slim(CbfDevice):
         :rtype: SlimComponentManager
         """
         self.logger.debug("Entering create_component_manager()")
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        # Simulation mode default true
         return SlimComponentManager(
             link_fqdns=self.Links,
             logger=self.logger,

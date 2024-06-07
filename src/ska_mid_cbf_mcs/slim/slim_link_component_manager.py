@@ -15,6 +15,7 @@ from typing import Any, Callable, Optional, Tuple
 import backoff
 import tango
 from ska_control_model import TaskStatus
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     HealthState,
@@ -322,20 +323,15 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[2],
         ]
 
-    @property
-    def is_communicating(self: SlimLinkComponentManager) -> bool:
-        """
-        Returns whether or not the power switch can be communicated with.
-
-        :return: whether the power switch is communicating
-        """
-        if self.simulation_mode:
-            return self.slim_link_simulator.is_communicating
-        else:
-            return self.communication_state == CommunicationStatus.ESTABLISHED
-
     def start_communicating(self: SlimLinkComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.start_communicating"
+        )
+
+        if self.is_communicating:
+            self.logger.info("Already communicating.")
+            return
 
         super().start_communicating()
         # This moves the op state model
@@ -357,8 +353,7 @@ class SlimLinkComponentManager(CbfComponentManager):
     )
     def ping_slim_tx_rx(self: SlimLinkComponentManager) -> None:
         """
-        Attempts to connect to the Talon board for the first time
-        after power-on.
+        Attempts to ping each of the HPS SLIM devices while incrementing a count of the attempts made.
         """
         self._ping_count += 1
         self._tx_device_proxy.ping()
@@ -386,19 +381,114 @@ class SlimLinkComponentManager(CbfComponentManager):
         tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
         self._tx_device_name = tx
 
+    def verify_connection(
+        self: SlimLinkComponentManager,
+    ) -> tuple[ResultCode, str]:
+        """
+        Performs a health check on the SLIM link. No check is done if the link
+        is not active; instead, the health state is set to UNKNOWN.
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.verify_connection()  -  "
+            + self._link_name
+        )
+
+        if self.simulation_mode:
+            return self.slim_link_simulator.verify_connection()
+
+        if (
+            (not self._link_enabled)
+            or (self._tx_device_proxy is None)
+            or (self._rx_device_proxy is None)
+        ):
+            self.logger.warn("Tx and Rx devices have not been connected.")
+            self._update_device_health_state(HealthState.UNKNOWN)
+            return ResultCode.OK, "VerifyConnection completed OK"
+
+        error_msg = ""
+        error_flag = False
+        try:
+            if self.rx_idle_ctrl_word != self.tx_idle_ctrl_word:
+                error_flag = True
+                error_msg += (
+                    "Expected and received idle control word do not match. "
+                )
+            counters = self.read_counters()
+            if counters[4] != 0:
+                error_flag = True
+                error_msg += "block_lost_count not zero. "
+            if counters[5] != 0:
+                error_flag = True
+                error_msg += "cdr_lost_count not zero. "
+            if self.bit_error_rate > const.BER_PASS_THRESHOLD:
+                error_flag = True
+                error_msg += (
+                    f"bit-error-rate higher than {const.BER_PASS_THRESHOLD}. "
+                )
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df.args[0].desc}"
+            self.logger.error(error_msg)
+            self._update_device_health_state(HealthState.FAILED)
+            return ResultCode.FAILED, error_msg
+        if error_flag:
+            self.logger.warn(
+                f"{self._link_name}: failed health check - {error_msg}"
+            )
+            self._update_device_health_state(HealthState.FAILED)
+            return ResultCode.OK, "VerifyConnection completed OK"
+        self._update_device_health_state(HealthState.OK)
+        return ResultCode.OK, "VerifyConnection completed OK"
+
+    def clear_counters(
+        self: SlimLinkComponentManager,
+    ) -> tuple[ResultCode, str]:
+        """
+        Clears the HPS tx and rx device's read counters.
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.clearCounters()  -  "
+            + self._link_name
+        )
+        if self.simulation_mode:
+            return self.slim_link_simulator.clear_counters()
+
+        if (
+            (not self._link_enabled)
+            or (self._tx_device_proxy is None)
+            or (self._rx_device_proxy is None)
+        ):
+            self.logger.warn("Tx and Rx devices have not been connected.")
+            return ResultCode.OK, "ClearCounters completed OK"
+
+        try:
+            self._tx_device_proxy.clear_read_counters()
+            self._rx_device_proxy.clear_read_counters()
+        except tango.DevFailed:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            result_msg = f"Clearing counters failed: {self._link_name}"
+            self.logger.error(result_msg)
+            return ResultCode.FAILED, result_msg
+
+        return ResultCode.OK, "ClearCounters completed OK"
+
     # ---------------------
     # Long Running Commands
     # ---------------------
-
-    def is_connect_slim_tx_rx_allowed(self: SlimLinkComponentManager) -> bool:
-        self.logger.debug("Checking if ConnectTxRx is allowed.")
-
-        if not self.is_communicating:
-            self.logger.warning(
-                f"ConnectSlimTxRx not allowed; CommunicationState is {self.communication_state}"
-            )
-            return False
-        return True
 
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -502,6 +592,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 ),
             )
 
+    @check_communicating
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -510,86 +601,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
-            is_cmd_allowed=self.is_connect_slim_tx_rx_allowed,
             task_callback=task_callback,
         )
-
-    def verify_connection(
-        self: SlimLinkComponentManager,
-    ) -> tuple[ResultCode, str]:
-        """
-        Performs a health check on the SLIM link. No check is done if the link
-        is not active; instead, the health state is set to UNKNOWN.
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug(
-            "Entering SlimLinkComponentManager.verify_connection()  -  "
-            + self._link_name
-        )
-
-        if self.simulation_mode:
-            return self.slim_link_simulator.verify_connection()
-
-        if (
-            (not self._link_enabled)
-            or (self._tx_device_proxy is None)
-            or (self._rx_device_proxy is None)
-        ):
-            self.logger.warn("Tx and Rx devices have not been connected.")
-            self._update_device_health_state(HealthState.UNKNOWN)
-            return ResultCode.OK, "VerifyConnection completed OK"
-
-        error_msg = ""
-        error_flag = False
-        try:
-            if self.rx_idle_ctrl_word != self.tx_idle_ctrl_word:
-                error_flag = True
-                error_msg += (
-                    "Expected and received idle control word do not match. "
-                )
-            counters = self.read_counters()
-            if counters[4] != 0:
-                error_flag = True
-                error_msg += "block_lost_count not zero. "
-            if counters[5] != 0:
-                error_flag = True
-                error_msg += "cdr_lost_count not zero. "
-            if self.bit_error_rate > const.BER_PASS_THRESHOLD:
-                error_flag = True
-                error_msg += (
-                    f"bit-error-rate higher than {const.BER_PASS_THRESHOLD}. "
-                )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df.args[0].desc}"
-            self.logger.error(error_msg)
-            self._update_device_health_state(HealthState.FAILED)
-            return ResultCode.FAILED, error_msg
-        if error_flag:
-            self.logger.warn(
-                f"{self._link_name}: failed health check - {error_msg}"
-            )
-            self._update_device_health_state(HealthState.FAILED)
-            return ResultCode.OK, "VerifyConnection completed OK"
-        self._update_device_health_state(HealthState.OK)
-        return ResultCode.OK, "VerifyConnection completed OK"
-
-    def is_disconnect_slim_tx_rx_allowed(
-        self: SlimLinkComponentManager,
-    ) -> bool:
-        self.logger.debug("Checking if DisconnectTxRx is allowed.")
-        if not self.is_communicating:
-            self.logger.warning(
-                f"DisconnectSlimTxRx not allowed; CommunicationState is {self.communication_state}"
-            )
-            return False
-        return True
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -679,6 +692,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 ),
             )
 
+    @check_communicating
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -687,45 +701,5 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._disconnect_slim_tx_rx,
-            is_cmd_allowed=self.is_disconnect_slim_tx_rx_allowed,
             task_callback=task_callback,
         )
-
-    def clear_counters(
-        self: SlimLinkComponentManager,
-    ) -> tuple[ResultCode, str]:
-        """
-        Clears the HPS tx and rx device's read counters.
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug(
-            "Entering SlimLinkComponentManager.clearCounters()  -  "
-            + self._link_name
-        )
-        if self.simulation_mode:
-            return self.slim_link_simulator.clear_counters()
-
-        if (
-            (not self._link_enabled)
-            or (self._tx_device_proxy is None)
-            or (self._rx_device_proxy is None)
-        ):
-            self.logger.warn("Tx and Rx devices have not been connected.")
-            return ResultCode.OK, "ClearCounters completed OK"
-
-        try:
-            self._tx_device_proxy.clear_read_counters()
-            self._rx_device_proxy.clear_read_counters()
-        except tango.DevFailed:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            result_msg = f"Clearing counters failed: {self._link_name}"
-            self.logger.error(result_msg)
-            return ResultCode.FAILED, result_msg
-
-        return ResultCode.OK, "ClearCounters completed OK"

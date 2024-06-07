@@ -168,15 +168,6 @@ class SlimLinkSimulator:
         """
         return self._read_counters
 
-    @property
-    def is_communicating(self: SlimLinkSimulator) -> bool:
-        """
-        Returns whether or not the power switch can be communicated with.
-
-        :return: whether the power switch is communicating
-        """
-        return True
-
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,
     ) -> None:

@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
@@ -22,16 +20,10 @@ from ska_tango_base.commands import (
 )
 
 # Additional import
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    PowerState,
-    SimulationMode,
-)
+from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
@@ -62,10 +54,7 @@ class SlimLink(CbfDevice):
         :return: a component manager for this device
         :rtype: SlimLinkComponentManager
         """
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-        self._health_state = HealthState.UNKNOWN
-
+        self.logger.debug("Entering create_component_manager()")
         return SlimLinkComponentManager(
             logger=self.logger,
             health_state_callback=self._update_health_state,

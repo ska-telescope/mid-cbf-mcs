@@ -22,7 +22,7 @@ from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.slim.slim_device import Slim
 
@@ -257,7 +257,7 @@ class TestSlim:
         "mesh_config_filename",
         [("./tests/data/slim_test_config.yaml")],
     )
-    def test_Configure_device_disabled(
+    def test_Configure_not_allowed(
         self: TestSlim,
         device_under_test_fail: context.DeviceProxy,
         change_event_callbacks_fail: MockTangoEventCallbackGroup,
@@ -271,21 +271,14 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
 
-        with open(mesh_config_filename, "r") as mesh_config:
-            result_code, command_id = device_under_test_fail.Configure(
-                mesh_config.read()
-            )
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            with open(mesh_config_filename, "r") as mesh_config:
+                result_code, command_id = device_under_test_fail.Configure(
+                    mesh_config.read()
+                )
 
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks_fail[
-            "longRunningCommandResult"
-        ].assert_change_event(
-            (
-                f"{command_id[0]}",
-                '"Command not allowed"',
-            )
-        )
         # assert if any captured events have gone unaddressed
         change_event_callbacks_fail.assert_not_called()
 
@@ -328,10 +321,84 @@ class TestSlim:
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
-        [
-            ("./tests/data/slim_test_config.yaml"),
-        ],
-        "",
+        [("./tests/data/slim_test_config.yaml")],
+    )
+    def test_Off_not_allowed(
+        self: TestSlim,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the Off() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        self.test_Configure(
+            device_under_test, change_event_callbacks, mesh_config_filename
+        )
+
+        device_under_test.adminMode = AdminMode.OFFLINE
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.Off()
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "mesh_config_filename",
+        [("./tests/data/slim_test_config.yaml")],
+    )
+    def test_Off_already_off(
+        self: TestSlim,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        mesh_config_filename: str,
+    ) -> None:
+        """
+        Test the Off() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        self.test_Configure(
+            device_under_test, change_event_callbacks, mesh_config_filename
+        )
+
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '[0, "Off completed OK"]',
+            )
+        )
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '"Command not allowed"',
+            )
+        )
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "mesh_config_filename",
+        [("./tests/data/slim_test_config.yaml")],
     )
     def test_SlimTest(
         self: TestSlim,
@@ -356,9 +423,7 @@ class TestSlim:
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
-        [
-            ("./tests/data/slim_test_config_inactive.yaml"),
-        ],
+        [("./tests/data/slim_test_config_inactive.yaml")],
     )
     def test_SlimTest_no_active_links(
         self: TestSlim,
