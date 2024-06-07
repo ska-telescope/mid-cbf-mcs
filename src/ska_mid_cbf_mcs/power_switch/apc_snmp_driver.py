@@ -32,9 +32,8 @@ from pysnmp.proto import rfc1902
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState
 
-from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
-
 from ska_mid_cbf_mcs.commons.global_enum import Const
+from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["ApcSnmpDriver"]
 
@@ -71,7 +70,9 @@ class ApcSnmpDriver:
 
         # valid range 1 to 24
         Const.POWER_SWITCH_OUTLETS = 24
-        self.outlet_id_list: List(str) = [str(i+1) for i in range(0, Const.POWER_SWITCH_OUTLETS)]
+        self.outlet_id_list: List(str) = [
+            str(i + 1) for i in range(0, Const.POWER_SWITCH_OUTLETS)
+        ]
 
         # Initialize outlets
         self.outlets: List(Outlet) = []

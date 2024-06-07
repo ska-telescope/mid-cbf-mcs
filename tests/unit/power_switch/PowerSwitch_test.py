@@ -22,11 +22,9 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing import context
-
-from ska_mid_cbf_mcs.commons.global_enum import Const
-
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
@@ -38,8 +36,16 @@ class TestPowerSwitch:
     """
     Test class for PowerSwitch tests.
     """
+
     power_switch_driver_model = None
-    @pytest.fixture(name="test_context", params=[{"power_switch_model":"DLI_PRO"}, {"power_switch_model": "APC_SNMP"}])
+
+    @pytest.fixture(
+        name="test_context",
+        params=[
+            {"power_switch_model": "DLI_PRO"},
+            {"power_switch_model": "APC_SNMP"},
+        ],
+    )
     def power_switch_test_context(
         self: TestPowerSwitch,
         request: pytest.FixtureRequest,
@@ -93,7 +99,7 @@ class TestPowerSwitch:
                 request.param["sim_get_error"],
                 request.param["sim_state"],
             )
-        
+
         def mock_set_snmp(
             authData, transportTarget, *varNames, **kwargs
         ) -> tuple:
@@ -113,9 +119,14 @@ class TestPowerSwitch:
         # Monkeypatches for patch, get, and set commands
         monkeypatch.setattr("requests.patch", mock_patch)
         monkeypatch.setattr("requests.get", mock_get)
-        monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.getCmd", mock_get_snmp)
-        monkeypatch.setattr("pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.setCmd", mock_set_snmp)
-        
+        monkeypatch.setattr(
+            "pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.getCmd",
+            mock_get_snmp,
+        )
+        monkeypatch.setattr(
+            "pysnmp.entity.rfc3413.oneliner.cmdgen.CommandGenerator.setCmd",
+            mock_set_snmp,
+        )
 
         if request.param["power_switch_model"] == "DLI_PRO":
             harness.add_device(
@@ -183,14 +194,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -217,14 +228,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -252,14 +263,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": True,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": True,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -293,8 +304,8 @@ class TestPowerSwitch:
                 "sim_patch_error": True,
                 "sim_get_error": False,
                 "sim_state": None,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -314,9 +325,9 @@ class TestPowerSwitch:
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
         if self.power_switch_driver_model == "DLI_PRO":
-            msg = f'[3, "HTTP response error"]'
+            msg = '[3, "HTTP response error"]'
         elif self.power_switch_driver_model == "APC_SNMP":
-            msg = f'[3, "Connection error: "]'
+            msg = '[3, "Connection error: "]'
         # Attempt to turn outlets off
         for i in range(1, 8):
             result_code, command_id = device_under_test.TurnOffOutlet(f"{i}")
@@ -324,9 +335,7 @@ class TestPowerSwitch:
 
             change_event_callbacks[
                 "longRunningCommandResult"
-            ].assert_change_event(
-                (f"{command_id[0]}", msg)
-            )
+            ].assert_change_event((f"{command_id[0]}", msg))
 
         # Attempt to turn outlets on
         for i in range(1, 8):
@@ -335,9 +344,7 @@ class TestPowerSwitch:
 
             change_event_callbacks[
                 "longRunningCommandResult"
-            ].assert_change_event(
-                (f"{command_id[0]}", msg)
-            )
+            ].assert_change_event((f"{command_id[0]}", msg))
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -349,14 +356,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -397,13 +404,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
+                "power_switch_model": "APC_SNMP",
             },
         ],
         indirect=True,
@@ -438,14 +445,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -489,13 +496,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
+                "power_switch_model": "APC_SNMP",
             },
         ],
         indirect=True,
@@ -517,14 +524,14 @@ class TestPowerSwitch:
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
 
         result_code, command_id = device_under_test.TurnOffOutlet(
-            f'{num_outlets + 1}'
+            f"{num_outlets + 1}"
         )
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list"
+                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
             )
         )
 
@@ -542,14 +549,14 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": True,
-                "power_switch_model": "APC_SNMP"
-            }
+                "power_switch_model": "APC_SNMP",
+            },
         ],
         indirect=True,
     )
@@ -589,13 +596,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
+                "power_switch_model": "APC_SNMP",
             },
         ],
         indirect=True,
@@ -630,13 +637,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
+                "power_switch_model": "APC_SNMP",
             },
         ],
         indirect=True,
@@ -681,13 +688,13 @@ class TestPowerSwitch:
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": False,
                 "sim_get_error": False,
                 "sim_state": False,
-                "power_switch_model": "APC_SNMP"
+                "power_switch_model": "APC_SNMP",
             },
         ],
         indirect=True,

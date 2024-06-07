@@ -4,17 +4,18 @@ import json
 import re
 from datetime import datetime
 from typing import Any, List, Optional
-from pysnmp import error as snmp_error
 
 import requests
+from pysnmp import error as snmp_error
 
 __all__ = ["MockDependency"]
 
 
 class MockDependency:
-    def ResponseSNMP(simulate_response_error: bool,
-        sim_state: bool,) -> tuple: 
-
+    def ResponseSNMP(
+        simulate_response_error: bool,
+        sim_state: bool,
+    ) -> tuple:
         if simulate_response_error:
             raise snmp_error.PySnmpError()
 
@@ -22,13 +23,13 @@ class MockDependency:
         sim_state = 1 if sim_state else 2
 
         errorIndication = None
-        errorStatus  = None
+        errorStatus = None
         errorIndex = None
 
         # First sim state has no meaning, just has to be an accessible value
         varBinds = [(sim_state, sim_state)]
         returnObject = (errorIndication, errorStatus, errorIndex, varBinds)
-        
+
         return returnObject
 
     class Response:
