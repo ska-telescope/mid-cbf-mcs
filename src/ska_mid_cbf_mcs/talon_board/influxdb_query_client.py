@@ -9,6 +9,7 @@
 
 import asyncio
 import logging
+from datetime import datetime
 
 from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
 
@@ -111,7 +112,16 @@ class InfluxdbQueryClient:
         |>last()'
         return await self._query_common(client, query)
 
-    async def _query_fpga_die_voltages(self, client):
+    async def _query_fpga_die_voltages(
+        self, client
+    ) -> list[tuple[str, datetime, float]]:
+        """
+        Asynchronously queries a influxDB for FPGA Die Voltage Sensor readings
+        Queries returns the readings for all 6 voltage sensors on the FPGA Die
+
+        :return: A list of 3-value tuple that containes: Sensor Name, Time of Record, Value of the Sensor in Volts
+        :rtype: list[tuple[str,datetime,float]]
+        """
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\

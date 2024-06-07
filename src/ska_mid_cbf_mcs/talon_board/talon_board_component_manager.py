@@ -623,6 +623,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_0(self) -> float:
+        """
+        Gets the FPGA Die Voltage [0] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_0()
         self._throw_if_device_off()
@@ -633,6 +640,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_1(self) -> float:
+        """
+        Gets the FPGA Die Voltage [1] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_1()
         self._throw_if_device_off()
@@ -643,6 +657,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_2(self) -> float:
+        """
+        Gets the FPGA Die Voltage [2] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_2()
         self._throw_if_device_off()
@@ -653,6 +674,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_3(self) -> float:
+        """
+        Gets the FPGA Die Voltage [3] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_3()
         self._throw_if_device_off()
@@ -663,6 +691,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_4(self) -> float:
+        """
+        Gets the FPGA Die Voltage [4] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_4()
         self._throw_if_device_off()
@@ -673,6 +708,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_5(self) -> float:
+        """
+        Gets the FPGA Die Voltage [5] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_5()
         self._throw_if_device_off()
@@ -683,6 +725,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def fpga_die_voltage_6(self) -> float:
+        """
+        Gets the FPGA Die Voltage [6] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_voltage_6()
         self._throw_if_device_off()
