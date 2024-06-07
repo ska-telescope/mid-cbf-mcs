@@ -155,38 +155,30 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _create_group_proxies(self: ControllerComponentManager) -> bool:
         """
-        Create group proxies (list of DeviceProxy) for VCC, FSP, and Subarray
+        Create group proxies (list of DeviceProxy) for VCC, FSP, and Subarray.
+        Store as class attributes _group_vcc, _group_fsp, and _group_subarray.
 
         :return: True if the group proxies are successfully created, False otherwise.
         """
-        try:
-            self._group_vcc = [
-                context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._vcc_fqdn
-            ]
-        except tango.DevFailed:
-            self.logger.error(f"Failure in connection to {self._vcc_fqdn}")
-            return False
+        group_proxies = {
+            "_group_vcc": self._vcc_fqdn,
+            "_group_fsp": self._fsp_fqdn,
+            "_group_subarray": self._subarray_fqdn,
+        }
 
-        try:
-            self._group_fsp = [
-                context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._fsp_fqdn
-            ]
-        except tango.DevFailed:
-            self.logger.error(f"Failure in connection to {self._fsp_fqdn}")
-            return False
-
-        try:
-            self._group_subarray = [
-                context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._subarray_fqdn
-            ]
-        except tango.DevFailed:
-            self.logger.error(
-                f"Failure in connection to {self._subarray_fqdn}"
-            )
-            return False
+        for group, fqdn in group_proxies.items():
+            try:
+                setattr(
+                    self,
+                    group,
+                    [
+                        context.DeviceProxy(device_name=device)
+                        for device in fqdn
+                    ],
+                )
+            except tango.DevFailed:
+                self.logger.error(f"Failure in connection to {fqdn}")
+                return False
         return True
 
     def _write_hw_config(
