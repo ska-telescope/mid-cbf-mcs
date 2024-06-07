@@ -260,7 +260,7 @@ class TalonBoard(SKABaseDevice):
         """
         res = self.component_manager.fpga_die_temperature()
         return res
-    
+
     # Note for FpgaPower1-7:
     # Naming for the attribute is from https://confluence.skatelescope.org/display/SE/Mid+CBF+Talon+Telemetry+and+Status
     # FpgaPower is 1-index
