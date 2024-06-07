@@ -407,7 +407,9 @@ class ControllerComponentManager(CbfComponentManager):
         :param proxy: Device proxy of the LRU
         :param sim_mode: Simulation Mode of the controller
         :param lru_fqdn: FQDN of the LRU to turn on
-        :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRU that failed to turn on
+        :return: A tuple where the first element is True if the LRU was successfully turned on, 
+                 and False otherwise. If the LRU failed to turn on, the second element 
+                 of the tuple will be a string representing the FQDN of the LRU.
         """
         try:
             self.logger.info(f"Turning on LRU {lru_fqdn}")
@@ -579,7 +581,7 @@ class ControllerComponentManager(CbfComponentManager):
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    "Failed writing simulationMode on to subarrays",
+                    "Failed writing simulationMode to subarrays",
                 ),
                 status=TaskStatus.FAILED,
             )
@@ -889,7 +891,12 @@ class ControllerComponentManager(CbfComponentManager):
             if not status:
                 failed_lrus.append(fqdn)
                 out_status = False
-        return (out_status, "Successfuly powered off all Talon LRUs" if out_status else f"Failed to power off Talon LRUs: {failed_lrus}")
+        return (
+            out_status,
+            "Successfuly powered off all Talon LRUs"
+            if out_status
+            else f"Failed to power off Talon LRUs: {failed_lrus}",
+        )
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
