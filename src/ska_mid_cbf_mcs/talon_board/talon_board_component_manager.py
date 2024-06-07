@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import TaskStatus
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
@@ -98,7 +99,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if self.communication_state == CommunicationStatus.ESTABLISHED:
+        if self.is_communicating:
             self.logger.info("Already communicating.")
             return
 
@@ -1032,6 +1033,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             ),
         )
 
+    @check_communicating
     def on(
         self: TalonBoardComponentManager,
         task_callback: Optional[Callable] = None,
