@@ -427,18 +427,12 @@ class ControllerComponentManager(CbfComponentManager):
             self._lru_on(
                 self._proxies[fqdn],
                 self._talondx_component_manager.simulation_mode,
-                fqdn,
             )
             for fqdn in self._talon_lru_fqdn
         ]
 
-        failed_lrus = []
-        out_status = True
-        for status, fqdn in results:
-            if not status:
-                failed_lrus.append(fqdn)
-                out_status = False
-        return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
+        # Configure SLIM Mesh devices
+        self._configure_slim_devices()
 
     def _send_configure_slim_device(
         self: ControllerComponentManager, fqdn: str, config_path: str
