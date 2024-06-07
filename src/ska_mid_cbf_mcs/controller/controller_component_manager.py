@@ -889,7 +889,7 @@ class ControllerComponentManager(CbfComponentManager):
             if not status:
                 failed_lrus.append(fqdn)
                 out_status = False
-        return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
+        return (out_status, "Successfuly powered off all Talon LRUs" if out_status else f"Failed to power off Talon LRUs: {failed_lrus}")
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if off is allowed")
@@ -1047,7 +1047,7 @@ class ControllerComponentManager(CbfComponentManager):
                 tm_data_filepath
             ].get_dict()
             self.logger.info(
-                "Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+                f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
             )
         except (ValueError, KeyError) as e:
             self.logger.error(
@@ -1106,10 +1106,10 @@ class ControllerComponentManager(CbfComponentManager):
                     ][0]
                     if board_ip == ip:
                         vcc_id = int(vcc_id_str)
-                        proxy.write_attribute("vccID", str(vcc_id))
+                        proxy.vccID = str(vcc_id)
                         if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                             dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                            proxy.write_attribute("dishID", dish_id)
+                            proxy.dishID = dish_id
                             self.logger.info(
                                 f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                             )
