@@ -25,9 +25,9 @@ from paramiko.ssh_exception import NoValidConnectionsError, SSHException
 from scp import SCPClient, SCPException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_tango_testing import context
 
 __all__ = ["TalonDxComponentManager"]
 
