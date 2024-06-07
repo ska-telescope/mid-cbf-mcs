@@ -407,8 +407,8 @@ class ControllerComponentManager(CbfComponentManager):
         :param proxy: Device proxy of the LRU
         :param sim_mode: Simulation Mode of the controller
         :param lru_fqdn: FQDN of the LRU to turn on
-        :return: A tuple where the first element is True if the LRU was successfully turned on, 
-                 and False otherwise. If the LRU failed to turn on, the second element 
+        :return: A tuple where the first element is True if the LRU was successfully turned on,
+                 and False otherwise. If the LRU failed to turn on, the second element
                  of the tuple will be a string representing the FQDN of the LRU.
         """
         try:
