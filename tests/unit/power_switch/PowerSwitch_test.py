@@ -298,7 +298,6 @@ class TestPowerSwitch:
                 "sim_get_error": False,
                 "sim_state": None,
                 "power_switch_model": "DLI_PRO"
-                # Also need to pull new mock dependecy and mrigrate everything
             },
             {
                 "sim_patch_error": True,
