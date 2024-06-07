@@ -71,12 +71,12 @@ class ControllerComponentManager(CbfComponentManager):
         self._lru_timeout = lru_timeout
 
         (
-            self._fqdn_vcc,
-            self._fqdn_fsp,
-            self._fqdn_subarray,
-            self._fqdn_talon_lru,
-            self._fqdn_talon_board,
-            self._fqdn_power_switch,
+            self._vcc_fqdn,
+            self._fsp_fqdn,
+            self._subarray_fqdn,
+            self._talon_lru_fqdn,
+            self._talon_board_fqdn,
+            self._power_switch_fqdn,
         ) = ([] for i in range(6))
 
         # init sub-element count
@@ -124,28 +124,28 @@ class ControllerComponentManager(CbfComponentManager):
                 in list(self._hw_config[config_key].keys())
             ]
 
-        self._fqdn_vcc = list(self._vcc_fqdns_all)[: self._count_vcc]
-        self._fqdn_fsp = list(self._fsp_fqdns_all)[: self._count_fsp]
-        self._fqdn_subarray = list(self._subarray_fqdns_all)[
+        self._vcc_fqdn = list(self._vcc_fqdns_all)[: self._count_vcc]
+        self._fsp_fqdn = list(self._fsp_fqdns_all)[: self._count_fsp]
+        self._subarray_fqdn = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = _filter_fqdn(
+        self._talon_lru_fqdn = _filter_fqdn(
             self._talon_lru_fqdns_all, "talon_lru"
         )
-        self._fqdn_talon_board = _filter_fqdn(
+        self._talon_board_fqdn = _filter_fqdn(
             self._talon_board_fqdns_all, "talon_board"
         )
-        self._fqdn_power_switch = _filter_fqdn(
+        self._power_switch_fqdn = _filter_fqdn(
             self._power_switch_fqdns_all, "power_switch"
         )
 
         fqdn_variables = {
-            "VCC": self._fqdn_vcc,
-            "FSP": self._fqdn_fsp,
-            "Subarray": self._fqdn_subarray,
-            "Talon board": self._fqdn_talon_board,
-            "Talon LRU": self._fqdn_talon_lru,
-            "Power switch": self._fqdn_power_switch,
+            "VCC": self._vcc_fqdn,
+            "FSP": self._fsp_fqdn,
+            "Subarray": self._subarray_fqdn,
+            "Talon board": self._talon_board_fqdn,
+            "Talon LRU": self._talon_lru_fqdn,
+            "Power switch": self._power_switch_fqdn,
             "FS SLIM mesh": self._fs_slim_fqdn,
             "VIS SLIM mesh": self._vis_slim_fqdn,
         }
@@ -162,29 +162,29 @@ class ControllerComponentManager(CbfComponentManager):
         try:
             self._group_vcc = [
                 context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._fqdn_vcc
+                for fqdn in self._vcc_fqdn
             ]
         except tango.DevFailed:
-            self.logger.error(f"Failure in connection to {self._fqdn_vcc}")
+            self.logger.error(f"Failure in connection to {self._vcc_fqdn}")
             return False
 
         try:
             self._group_fsp = [
                 context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._fqdn_fsp
+                for fqdn in self._fsp_fqdn
             ]
         except tango.DevFailed:
-            self.logger.error(f"Failure in connection to {self._fqdn_fsp}")
+            self.logger.error(f"Failure in connection to {self._fsp_fqdn}")
             return False
 
         try:
             self._group_subarray = [
                 context.DeviceProxy(device_name=fqdn)
-                for fqdn in self._fqdn_subarray
+                for fqdn in self._subarray_fqdn
             ]
         except tango.DevFailed:
             self.logger.error(
-                f"Failure in connection to {self._fqdn_subarray}"
+                f"Failure in connection to {self._subarray_fqdn}"
             )
             return False
         return True
@@ -277,9 +277,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         # If the fqdn is of a power switch, talon LRU, or talon board, write hw config
         device_types = {
-            "power_switch": self._fqdn_power_switch,
-            "talon_lru": self._fqdn_talon_lru,
-            "talon_board": self._fqdn_talon_board,
+            "power_switch": self._power_switch_fqdn,
+            "talon_lru": self._talon_lru_fqdn,
+            "talon_board": self._talon_board_fqdn,
         }
         for device_type, device_fqdns in device_types.items():
             if fqdn in device_fqdns:
@@ -303,12 +303,12 @@ class ControllerComponentManager(CbfComponentManager):
         # TODO: evaluate ordering and add further comments
 
         for fqdn in (
-            self._fqdn_power_switch
-            + self._fqdn_talon_lru
-            + self._fqdn_talon_board
-            + self._fqdn_subarray
-            + self._fqdn_fsp
-            + self._fqdn_vcc
+            self._power_switch_fqdn
+            + self._talon_lru_fqdn
+            + self._talon_board_fqdn
+            + self._subarray_fqdn
+            + self._fsp_fqdn
+            + self._vcc_fqdn
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
             if not self._init_device_proxy(fqdn):
@@ -439,7 +439,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode,
                 fqdn,
             )
-            for fqdn in self._fqdn_talon_lru
+            for fqdn in self._talon_lru_fqdn
         ]
 
         failed_lrus = []
@@ -545,11 +545,11 @@ class ControllerComponentManager(CbfComponentManager):
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
         ):
-            self._fqdn_talon_lru = self._get_talon_lru_fqdns()
+            self._talon_lru_fqdn = self._get_talon_lru_fqdns()
             # TODO: handle subscribed events for missing LRUs
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
-            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus()
@@ -818,7 +818,7 @@ class ControllerComponentManager(CbfComponentManager):
             # communicating and monitoring the PDU; does not implement
             # On/Off commands, rather TurnOn/OffOutlet commands to
             # target specific outlets
-            if fqdn not in self._fqdn_power_switch:
+            if fqdn not in self._power_switch_fqdn:
                 try:
                     # TODO CIP-1899 The cbfcontroller is sometimes
                     # unable to read the State() of the talon_lru
@@ -839,12 +839,12 @@ class ControllerComponentManager(CbfComponentManager):
                 except TimeoutException:
                     op_state_error_list.append([fqdn, proxy.State()])
 
-            if fqdn in self._fqdn_subarray:
+            if fqdn in self._subarray_fqdn:
                 obs_state = proxy.obsState
                 if obs_state != ObsState.EMPTY:
                     obs_state_error_list.append((fqdn, obs_state))
 
-            if fqdn in self._fqdn_vcc:
+            if fqdn in self._vcc_fqdn:
                 obs_state = proxy.obsState
                 if obs_state != ObsState.IDLE:
                     obs_state_error_list.append((fqdn, obs_state))
@@ -869,12 +869,12 @@ class ControllerComponentManager(CbfComponentManager):
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
         ):
-            if len(self._fqdn_talon_lru) == 0:
-                self._fqdn_talon_lru = self._get_talon_lru_fqdns()
+            if len(self._talon_lru_fqdn) == 0:
+                self._talon_lru_fqdn = self._get_talon_lru_fqdns()
                 # TODO: handle subscribed events for missing LRUs
         else:
             # use a hard-coded example fqdn talon lru for simulation mode
-            self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
+            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
 
         # turn off LRUs
         results = [
@@ -882,7 +882,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._proxies[fqdn],
                 fqdn,
             )
-            for fqdn in self._fqdn_talon_lru
+            for fqdn in self._talon_lru_fqdn
         ]
 
         failed_lrus = []
@@ -929,7 +929,7 @@ class ControllerComponentManager(CbfComponentManager):
         (result_code, message) = (ResultCode.OK, [])
 
         # reset subarray observing state to EMPTY
-        for subarray in [self._proxies[fqdn] for fqdn in self._fqdn_subarray]:
+        for subarray in [self._proxies[fqdn] for fqdn in self._subarray_fqdn]:
             (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
             if not subarray_empty:
                 self.logger.error(log_msg)
@@ -1074,11 +1074,11 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the InitSysParam parameters are successfully updated, False otherwise
         """
         # write the init_sys_param to each of the subarrays
-        for fqdn in self._fqdn_subarray:
+        for fqdn in self._subarray_fqdn:
             self._proxies[fqdn].sysParam = params
 
         # set VCC values
-        for fqdn in self._fqdn_vcc:
+        for fqdn in self._vcc_fqdn:
             try:
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
@@ -1105,7 +1105,7 @@ class ControllerComponentManager(CbfComponentManager):
         # update talon boards. The VCC ID to IP address mapping comes
         # from hw_config. Then map VCC ID to DISH ID.
         for vcc_id_str, ip in self._hw_config["talon_board"].items():
-            for fqdn in self._fqdn_talon_board:
+            for fqdn in self._talon_board_fqdn:
                 try:
                     proxy = self._proxies[fqdn]
                     board_ip = proxy.get_property("TalonDxBoardAddress")[
