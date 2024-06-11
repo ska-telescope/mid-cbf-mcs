@@ -95,7 +95,6 @@ class CbfObsComponentManager(CbfComponentManager):
         argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Execute configure scan operation.
@@ -109,7 +108,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfObsComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit configure scan operation method to task executor queue.
@@ -148,7 +146,6 @@ class CbfObsComponentManager(CbfComponentManager):
         argin: int,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Begin scan operation.
@@ -162,7 +159,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfObsComponentManager,
         argin: int,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit scan operation method to task executor queue.
@@ -196,7 +192,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         End scan operation.
@@ -209,7 +204,6 @@ class CbfObsComponentManager(CbfComponentManager):
     def end_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Transition observing state from SCANNING to READY
@@ -240,7 +234,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Execute observing state transition from READY to IDLE.
@@ -253,7 +246,6 @@ class CbfObsComponentManager(CbfComponentManager):
     def go_to_idle(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Transition observing state from READY to IDLE
@@ -291,7 +283,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Abort the current scan operation.
@@ -304,7 +295,6 @@ class CbfObsComponentManager(CbfComponentManager):
     def abort_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Abort the current scan operation
@@ -339,7 +329,6 @@ class CbfObsComponentManager(CbfComponentManager):
         self: CbfComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Reset observing state from ABORTED or FAULT to IDLE.
@@ -352,7 +341,6 @@ class CbfObsComponentManager(CbfComponentManager):
     def obs_reset(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Reset observing state from ABORTED or FAULT to IDLE.

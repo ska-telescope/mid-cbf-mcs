@@ -79,14 +79,14 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("ConfigureScan", ResultCode.OK)
-    builder.add_command("GoToIdle", None)
-    builder.add_command("Scan", None)
-    builder.add_command("EndScan", None)
-    builder.add_result_command("ConfigureBand", ResultCode.OK)
     builder.add_result_command("UpdateDelayModel", ResultCode.OK)
-    builder.add_command("Abort", None)
-    builder.add_command("ObsReset", None)
+    builder.add_result_command("ConfigureBand", ResultCode.OK)
+    builder.add_result_command("ConfigureScan", ResultCode.OK)
+    builder.add_result_command("Scan", ResultCode.OK)
+    builder.add_result_command("EndScan", ResultCode.OK)
+    builder.add_result_command("GoToIdle", ResultCode.OK)
+    builder.add_result_command("Abort", ResultCode.OK)
+    builder.add_result_command("ObsReset", ResultCode.OK)
     return builder
 
 
@@ -117,15 +117,15 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("obsState", ObsState.IDLE)
-    builder.add_command("GoToIdle", None)
-    builder.add_command("Scan", None)
-    builder.add_command("EndScan", None)
-    builder.add_command("Abort", None)
-    builder.add_command("ObsReset", None)
     builder.add_property("FspID", {"FspID": [1]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_result_command("ConfigureScan", ResultCode.OK)
+    builder.add_result_command("Scan", ResultCode.OK)
+    builder.add_result_command("EndScan", ResultCode.OK)
+    builder.add_result_command("GoToIdle", ResultCode.OK)
+    builder.add_result_command("Abort", ResultCode.OK)
+    builder.add_result_command("ObsReset", ResultCode.OK)
     return builder()
 
 
@@ -136,8 +136,8 @@ def mock_talon_board() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayID", "")
-    builder.add_attribute("dishID", "")
-    builder.add_attribute("vccID", "")
+    builder.add_attribute("dishID", "SKA001")
+    builder.add_attribute("vccID", "1")
     return builder()
 
 

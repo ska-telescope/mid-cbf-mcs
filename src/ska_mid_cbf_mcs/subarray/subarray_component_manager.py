@@ -383,7 +383,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: proxy to Talon board device
         """
         for proxy in self._proxies_talon_board_device:
-            board_dish_id = proxy.read_attribute("dishID").value
+            board_dish_id = proxy.dishID
             if board_dish_id == dish_id:
                 return proxy
         self.logger.error(
@@ -449,7 +449,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         argin: list[str],
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Add receptors/dishes to subarray.
@@ -550,7 +549,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         argin: list[str],
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit AddReceptors operation method to task executor queue.
@@ -621,7 +619,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         argin: list[str],
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-        **kwargs,
     ) -> None:
         """
         Remove receptors/dishes from subarray.
@@ -730,7 +727,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         argin: list[str],
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit RemoveReceptors operation method to task executor queue.
@@ -758,7 +754,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def release_all_vcc(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit RemoveAllReceptors operation method to task executor queue.
@@ -1352,7 +1347,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         }
 
         # Add subset of FSP configuration to the VCC configure scan argument
-        # TODO determine necessary parameters to send to VCC for each function mode
         reduced_fsp = []
         for fsp in configuration["fsp"]:
             function_mode = fsp["function_mode"]
@@ -1696,10 +1690,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
+        scan = json.loads(argin)
+
         # Validate scan_json against the telescope model
         try:
             telmodel_validate(
-                version=argin["interface"], config=argin, strictness=1
+                version=scan["interface"], config=scan, strictness=1
             )
             self.logger.info("Scan is valid!")
         except ValueError as ve:
@@ -1716,7 +1712,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue Scan to assigned resources
-        scan = json.loads(argin)
         scan_id = scan["scan_id"]
         scan_failure = self._issue_command_all_assigned_resources(
             command_name="Scan", argin=scan_id
@@ -2008,6 +2003,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # remove all assigned VCCs to return to EMPTY
+        # TODO cant release all vcc like this
         self._release_vcc(
             task_callback=task_callback, argin=list(self.dish_ids.copy())
         )
@@ -2022,7 +2018,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def restart(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
         """
         Submit Restart operation method to task executor queue.
