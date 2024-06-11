@@ -13,7 +13,13 @@ import unittest
 
 import pytest
 import tango
-from ska_control_model import AdminMode, HealthState, ObsState, ResultCode
+from ska_control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
@@ -68,17 +74,17 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    builder.add_command("ConfigureScan", None)
+    builder.add_result_command("ConfigureScan", ResultCode.OK)
     builder.add_command("GoToIdle", None)
     builder.add_command("Scan", None)
     builder.add_command("EndScan", None)
-    builder.add_command("ConfigureBand", None)
-    builder.add_command("UpdateDelayModel", None)
-    builder.add_command("UpdateJonesMatrix", None)
+    builder.add_result_command("ConfigureBand", ResultCode.OK)
+    builder.add_result_command("UpdateDelayModel", ResultCode.OK)
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
     return builder
@@ -89,13 +95,16 @@ def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("functionMode", 0)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    builder.add_command("RemoveSubarrayMembership", None)
-    builder.add_command("UpdateDelayModel", None)
+    builder.add_result_command("AddSubarrayMembership", ResultCode.OK)
+    builder.add_result_command("SetFunctionMode", ResultCode.OK)
+    builder.add_result_command("RemoveSubarrayMembership", ResultCode.OK)
+    builder.add_result_command("UpdateDelayModel", ResultCode.OK)
     return builder()
 
 
@@ -104,6 +113,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("obsState", ObsState.IDLE)
@@ -115,6 +125,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_property("FspID", {"FspID": [1]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_result_command("ConfigureScan", ResultCode.OK)
     return builder()
 
 

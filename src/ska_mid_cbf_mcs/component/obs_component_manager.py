@@ -16,6 +16,7 @@ from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ObsState, TaskStatus
+from ska_tango_base.base.base_component_manager import check_communicating
 
 from .component_manager import CbfComponentManager
 
@@ -102,6 +103,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def configure_scan(
         self: CbfObsComponentManager,
         argin: str,
@@ -154,6 +156,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def scan(
         self: CbfObsComponentManager,
         argin: int,
@@ -201,6 +204,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def end_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -244,6 +248,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def go_to_idle(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -265,7 +270,7 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_abort_scan_allowed(self: CbfObsComponentManager) -> bool:
-        self.logger.debug("Checking if AbortScan is allowed.")
+        self.logger.debug("Checking if Abort is allowed.")
         if self.obs_state not in [
             ObsState.IDLE,
             ObsState.CONFIGURING,
@@ -275,7 +280,7 @@ class CbfObsComponentManager(CbfComponentManager):
             ObsState.RESETTING,
         ]:
             self.logger.warning(
-                f"AbortScan not allowed in ObsState {self.obs_state};\
+                f"Abort not allowed in ObsState {self.obs_state};\
                     must be in ObsState.IDLE, READY or SCANNING."
             )
             return False
@@ -294,6 +299,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def abort_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -341,6 +347,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
+    @check_communicating
     def obs_reset(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,

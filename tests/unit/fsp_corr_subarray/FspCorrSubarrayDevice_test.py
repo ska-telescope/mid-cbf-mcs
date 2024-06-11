@@ -296,14 +296,14 @@ class TestFspCorrSubarray:
         "config_file_name",
         ["FspCorrSubarray_ConfigureScan_basic.json"],
     )
-    def test_AbortScan_from_ready(
+    def test_Abort_from_ready(
         self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
     ) -> None:
         """
-        Test a AbortScan from ObsState.READY.
+        Test a Abort from ObsState.READY.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -322,11 +322,11 @@ class TestFspCorrSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from READY
+        # test issuing Abort and ObsReset from READY
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
@@ -364,7 +364,7 @@ class TestFspCorrSubarray:
         "config_file_name, scan_id",
         [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
     )
-    def test_AbortScan_from_scanning(
+    def test_Abort_from_scanning(
         self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -372,7 +372,7 @@ class TestFspCorrSubarray:
         scan_id: int,
     ) -> None:
         """
-        Test a AbortScan from ObsState.SCANNING.
+        Test a Abort from ObsState.SCANNING.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -391,12 +391,12 @@ class TestFspCorrSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from SCANNING
+        # test issuing Abort and ObsReset from SCANNING
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC

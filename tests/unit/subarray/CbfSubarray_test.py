@@ -401,7 +401,7 @@ class TestCbfSubarray:
             (["SKA100", "SKA001"], ["SKA063", "SKA036"]),
         ],
     )
-    def test_RemoveReceptors_notAssigned(
+    def test_RemoveReceptors_not_assigned(
         self: TestCbfSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -723,6 +723,8 @@ class TestCbfSubarray:
             config_str
         )
         command_dict["Scan"] = device_under_test.Scan(scan_str)
+
+        change_event_callbacks.assert_not_called()
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 

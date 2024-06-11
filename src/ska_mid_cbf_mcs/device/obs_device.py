@@ -452,7 +452,7 @@ class CbfObsDevice(SKAObsDevice):
             ("Scan", "scan"),
             ("EndScan", "end_scan"),
             ("GoToIdle", "go_to_idle"),
-            ("AbortScan", "abort_scan"),
+            ("Abort", "abort_scan"),
             ("ObsReset", "obs_reset"),
         ]:
             self.register_command_object(
@@ -706,7 +706,7 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def AbortScan(self: CbfObsDevice) -> DevVarLongStringArrayType:
+    def Abort(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Abort the current observing process and move to ABORTED obsState.
 
@@ -714,7 +714,7 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
-        command_handler = self.get_command_object("AbortScan")
+        command_handler = self.get_command_object("Abort")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 

@@ -617,7 +617,7 @@ class VccComponentManager(CbfObsComponentManager):
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
-            "AbortScan", task_callback, task_abort_event
+            "Abort", task_callback, task_abort_event
         ):
             return
 
@@ -651,7 +651,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
 
         task_callback(
-            result=(ResultCode.OK, "AbortScan completed OK"),
+            result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
