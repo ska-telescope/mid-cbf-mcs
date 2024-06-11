@@ -266,7 +266,7 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 0",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=11.2,
+        min_warning=12.1,
         max_warning=12.8,
         min_alarm=11.0,
         max_alarm=13.0,
