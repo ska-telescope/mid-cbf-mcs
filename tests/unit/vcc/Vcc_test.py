@@ -334,7 +334,7 @@ class TestVcc:
         config_file_name: str,
     ) -> None:
         """
-        Test a Abort from ObsState.READY.
+        Test Abort from ObsState.READY.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -420,7 +420,7 @@ class TestVcc:
         scan_id: int,
     ) -> None:
         """
-        Test a Abort from ObsState.SCANNING.
+        Test Abort from ObsState.SCANNING.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
