@@ -31,7 +31,6 @@ from ska_control_model import (
     ObsState,
     PowerState,
     ResultCode,
-    SimulationMode,
     TaskStatus,
 )
 from ska_tango_base.base.base_component_manager import check_communicating
@@ -396,7 +395,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # return False here to fail conditionals later
         return False
 
-    def is_assign_vcc_allowed(self: CbfObsComponentManager) -> bool:
+    def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
         self.logger.debug("Checking if AddReceptors is allowed.")
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
@@ -548,7 +547,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def assign_vcc(
-        self: CbfObsComponentManager,
+        self: CbfSubarrayComponentManager,
         argin: list[str],
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
@@ -575,7 +574,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    def is_release_vcc_allowed(self: CbfObsComponentManager) -> bool:
+    def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
@@ -728,7 +727,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def release_vcc(
-        self: CbfObsComponentManager,
+        self: CbfSubarrayComponentManager,
         argin: list[str],
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
@@ -757,7 +756,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def release_all_vcc(
-        self: CbfObsComponentManager,
+        self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
     ) -> tuple[TaskStatus, str]:
@@ -785,11 +784,31 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # Scan Commands
     #####################
 
+    def _issue_command_all_assigned_resources(
+        self: CbfSubarrayComponentManager,
+        command_name: str,
+        argin: Optional[Any] = None,
+    ) -> bool:
+        """Issue command to all subarray-assigned resources"""
+        assigned_resources = list(self._assigned_vcc_proxies) + list(
+            self._assigned_fsp_corr_proxies
+        )
+        failure = False
+        for result_code, msg in self._issue_group_command(
+            command_name=command_name, proxies=assigned_resources, argin=argin
+        ):
+            if result_code == ResultCode.FAILED:
+                self.logger.error(msg)
+                failure = True
+        return failure
+
     def _deconfigure(
         self: CbfSubarrayComponentManager,
     ) -> bool:
-        """Completely deconfigure the subarray; all initialization performed
-        by by the ConfigureScan command must be 'undone' here."""
+        """
+        Completely deconfigure the subarray; all initialization performed by the
+        ConfigureScan command must be 'undone' here.
+        """
         # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
         # ObsReset and Restart here in the CbfSubarray
         deconfigure_failure = False
@@ -824,30 +843,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._last_received_delay_model = ""
 
         return deconfigure_failure
-
-    def go_to_idle(
-        self: CbfSubarrayComponentManager,
-    ) -> tuple[ResultCode, str]:
-        """
-        Send subarray from READY to IDLE.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._deconfigure()
-
-        # issue GoToIdle to assigned VCCs
-        if self._group_vcc.get_size() > 0:
-            results = self._group_vcc.command_inout("GoToIdle")
-            self.logger.info("Results from VCC GoToIdle:")
-            for res in results:
-                self.logger.info(res.get_data())
-
-        self.update_component_configuration(False)
-
-        return (ResultCode.OK, "GoToIdle command completed OK")
 
     def validate_input(
         self: CbfSubarrayComponentManager, argin: str
@@ -1603,7 +1598,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to issue deconfigure subarray",
+                    "Failed to deconfigure subarray",
                 ),
             )
             return
@@ -1623,7 +1618,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to issue ConfigureBand command to VCC",
+                    "Failed to issue ConfigureBand command to VCC",
                 ),
             )
             return
@@ -1637,7 +1632,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to issue ConfigureScan command to VCC",
+                    "Failed to issue ConfigureScan command to VCC",
                 ),
             )
             return
@@ -1652,7 +1647,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to subscribe to delayModel attribute",
+                    "Failed to subscribe to delayModel attribute",
                 ),
             )
             return
@@ -1666,7 +1661,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to issue ConfigureScan command to FSP",
+                    "Failed to issue ConfigureScan command to FSP",
                 ),
             )
             return
@@ -1694,6 +1689,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :return: None
         """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Scan", task_callback, task_abort_event
+        ):
+            return
 
         # Validate scan_json against the telescope model
         try:
@@ -1701,153 +1702,388 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 version=argin["interface"], config=argin, strictness=1
             )
             self.logger.info("Scan is valid!")
-        except ValueError as e:
-            msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            return (False, msg)
+        except ValueError as ve:
+            self.logger.error(
+                f"Scan validation against ska-telmodel schema failed with exception:\n {ve}"
+            )
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to validate Scan input JSON",
+                ),
+            )
+            return
 
-        scan_id = argin["scan_id"]
-        data = tango.DeviceData()
-        data.insert(tango.DevShort, scan_id)
-        for group in [
-            self._group_vcc,
-            self._assigned_fsp_corr_proxies,
-        ]:
-            if group.get_size() > 0:
-                results = group.command_inout("Scan", data)
-                self.logger.info("Results from Scan:")
-                for res in results:
-                    self.logger.info(res.get_data())
+        # issue Scan to assigned resources
+        scan = json.loads(argin)
+        scan_id = scan["scan_id"]
+        scan_failure = self._issue_command_all_assigned_resources(
+            command_name="Scan", argin=scan_id
+        )
+        if scan_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue Scan command to VCC/FSP",
+                ),
+            )
+            return
 
         self.scan_id = scan_id
-        self._component_scanning_callback(True)
-        return (ResultCode.STARTED, "Scan command successful")
 
-    def end_scan(self: CbfSubarrayComponentManager) -> tuple[ResultCode, str]:
+        # Update obsState callback
+        self._update_component_state(scanning=True)
+
+        task_callback(
+            result=(ResultCode.OK, "Scan completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _end_scan(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
         """
-        End subarray Scan operation.
+        End scan operation.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "EndScan", task_callback, task_abort_event
+        ):
+            return
+
+        # issue EndScan to assigned resources
+        end_scan_failure = self._issue_command_all_assigned_resources(
+            command_name="EndScan"
+        )
+        if end_scan_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue EndScan command to VCC/FSP",
+                ),
+            )
+            return
+
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
+        task_callback(
+            result=(ResultCode.OK, "EndScan completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _go_to_idle(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Execute observing state transition from READY to IDLE.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "GoToIdle", task_callback, task_abort_event
+        ):
+            return
+
+        # issue GoToIdle to assigned resources
+        idle_failure = self._issue_command_all_assigned_resources(
+            command_name="GoToIdle"
+        )
+        if idle_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue GoToIdle command to VCC/FSP",
+                ),
+            )
+            return
+
+        # deconfigure to reset assigned FSPs and unsubscribe from events.
+        deconfigure_failure = self._deconfigure()
+        if deconfigure_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to deconfigure subarray",
+                ),
+            )
+            return
+
+        # Update obsState callback
+        self._update_component_state(configured=False)
+
+        task_callback(
+            result=(ResultCode.OK, "GoToIdle completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _abort_scan(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Abort the current scan operation.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Abort", task_callback, task_abort_event
+        ):
+            return
+
+        # issue Abort to assigned resources
+        abort_failure = self._issue_command_all_assigned_resources(
+            command_name="Abort"
+        )
+        if abort_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue Abort command to VCC/FSP",
+                ),
+            )
+            return
+
+        task_callback(
+            result=(ResultCode.OK, "Abort completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _obs_reset(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Reset the scan operation to IDLE from ABORTED or FAULT.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "ObsReset", task_callback, task_abort_event
+        ):
+            return
+
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self._component_state["obsfault"]:
+            abort_failure = self._issue_command_all_assigned_resources(
+                command_name="Abort"
+            )
+            if abort_failure:
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Abort command to VCC/FSP",
+                    ),
+                )
+                return
+
+        obsreset_failure = self._issue_command_all_assigned_resources(
+            command_name="ObsReset"
+        )
+        if obsreset_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ObsReset command to VCC/FSP",
+                ),
+            )
+            return
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        # deconfigure to reset assigned FSPs and unsubscribe from events.
+        deconfigure_failure = self._deconfigure()
+        if deconfigure_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to deconfigure subarray",
+                ),
+            )
+            return
+
+        task_callback(
+            result=(ResultCode.OK, "ObsReset completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
+        self.logger.debug("Checking if Restart is allowed.")
+        if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
+            self.logger.warning(
+                f"Restart not allowed in ObsState {self.obs_state}; "
+                + "must be in ObsState.ABORTED or FAULT"
+            )
+            return False
+        return True
+
+    def _restart(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Reset the scan operation to EMPTY from ABORTED or FAULT.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Restart", task_callback, task_abort_event
+        ):
+            return
+
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self._component_state["obsfault"]:
+            abort_failure = self._issue_command_all_assigned_resources(
+                command_name="Abort"
+            )
+            if abort_failure:
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Abort command to VCC/FSP",
+                    ),
+                )
+                return
+
+        obsreset_failure = self._issue_command_all_assigned_resources(
+            command_name="ObsReset"
+        )
+        if obsreset_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ObsReset command to VCC/FSP",
+                ),
+            )
+            return
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        # deconfigure to reset assigned FSPs and unsubscribe from events.
+        deconfigure_failure = self._deconfigure()
+        if deconfigure_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to deconfigure subarray",
+                ),
+            )
+            return
+
+        # remove all assigned VCCs to return to EMPTY
+        self._release_vcc(
+            task_callback=task_callback, argin=list(self.dish_ids.copy())
+        )
+
+        task_callback(
+            result=(ResultCode.OK, "Restart completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    @check_communicating
+    def restart(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> tuple[TaskStatus, str]:
+        """
+        Submit Restart operation method to task executor queue.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (ResultCode, str)
+        :rtype: (TaskStatus, str)
         """
-        # EndScan for all subordinate devices:
-        for group in [
-            self._group_vcc,
-            self._assigned_fsp_corr_proxies,
-        ]:
-            if group.get_size() > 0:
-                results = group.command_inout("EndScan")
-                self.logger.info("Results from EndScan:")
-                for res in results:
-                    self.logger.info(res.get_data())
-
-        self.scan_id = 0
-        self._component_scanning_callback(False)
-        return (ResultCode.OK, "EndScan command completed OK")
-
-    def abort(self: CbfSubarrayComponentManager) -> None:
-        """
-        Abort subarray configuration or operation.
-        """
-        # reset ready flag
-        self._ready = False
-
-        for group in [
-            self._group_vcc,
-            self._assigned_fsp_corr_proxies,  # TODO CIP-1850 Abort/ObsReset per FSP subarray
-        ]:
-            if group.get_size() > 0:
-                results = group.command_inout("Abort")
-                self.logger.info("Results from Abort:")
-                for res in results:
-                    self.logger.info(res.get_data())
-
-    def obsreset(self: CbfSubarrayComponentManager) -> None:
-        """
-        Reset to IDLE from abort/fault.
-        """
-        # if subarray is in FAULT, we must first abort VCC and FSP operation
-        # this will allow us to call ObsReset on them even if they are not in FAULT
-        if self.obs_faulty:
-            self.abort()
-            # use callback to reset FAULT state
-            self._component_obs_fault_callback(False)
-
-        try:
-            # send Vcc devices to IDLE
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("ObsReset")
-
-            # send any previously assigned FSPs to IDLE
-            for group in [
-                self._assigned_fsp_corr_proxies,
-            ]:
-                # TODO CIP-1850 Abort/ObsReset per FSP subarray
-                if group.get_size() > 0:
-                    results = group.command_inout("ObsReset")
-                    self.logger.info("Results from ObsReset:")
-                    for res in results:
-                        self.logger.info(res.get_data())
-
-        except tango.DevFailed:
-            self._component_obs_fault_callback(True)
-
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-        self._deconfigure()
-
-    def restart(self: CbfSubarrayComponentManager) -> None:
-        """
-        Restart to EMPTY from abort/fault.
-        """
-        # leverage obsreset to send assigned resources to IDLE and deconfigure
-        self.obsreset()
-
-        # remove all assigned VCCs to return to EMPTY
-        self.release_all_vcc()
-
-    def update_component_resources(
-        self: CbfSubarrayComponentManager, resourced: bool
-    ) -> None:
-        """
-        Update the component resource status, calling callbacks as required.
-
-        :param resourced: whether the component is resourced.
-        """
-        self.logger.debug(f"update_component_resources({resourced})")
-        if resourced:
-            # perform "component_resourced" if not previously resourced
-            if not self._resourced:
-                self._component_resourced_callback(True)
-        elif self._resourced:
-            self._component_resourced_callback(False)
-
-        self._resourced = resourced
-
-    def update_component_configuration(
-        self: CbfSubarrayComponentManager, configured: bool
-    ) -> None:
-        """
-        Update the component configuration status, calling callbacks as required.
-
-        :param configured: whether the component is configured.
-        """
-        self.logger.debug(
-            f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            func=functools.partial(
+                self._obs_command_with_callback,
+                hook="restart",
+                command_thread=self._restart,
+            ),
+            is_cmd_allowed=self.is_restart_allowed,
+            task_callback=task_callback,
         )
-        # perform component_configured/unconfigured callback if in a VALID case
-        # Cases:
-        # configured == False and self._ready == False -> INVALID: cannot issue component_unconfigured from IDLE
-        # configured == True and self._ready == False -> VALID: can issue component_configured from IDLE
-        # configured == False and self._ready == True -> VALID: can issue component_unconfigured from READY
-        # configured == True and self._ready == True -> INVALID: cannot issue component_configured from READY
-        if configured and not self._ready:
-            self._component_configured_callback(True)
-            self._ready = True
-        elif not configured and self._ready:
-            self._component_configured_callback(False)
-            self._ready = False
+
+    # def update_component_resources(
+    #     self: CbfSubarrayComponentManager, resourced: bool
+    # ) -> None:
+    #     """
+    #     Update the component resource status, calling callbacks as required.
+
+    #     :param resourced: whether the component is resourced.
+    #     """
+    #     self.logger.debug(f"update_component_resources({resourced})")
+    #     if resourced:
+    #         # perform "component_resourced" if not previously resourced
+    #         if not self._resourced:
+    #             self._component_resourced_callback(True)
+    #     elif self._resourced:
+    #         self._component_resourced_callback(False)
+
+    #     self._resourced = resourced
+
+    # def update_component_configuration(
+    #     self: CbfSubarrayComponentManager, configured: bool
+    # ) -> None:
+    #     """
+    #     Update the component configuration status, calling callbacks as required.
+
+    #     :param configured: whether the component is configured.
+    #     """
+    #     self.logger.debug(
+    #         f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
+    #     )
+    #     # perform component_configured/unconfigured callback if in a VALID case
+    #     # Cases:
+    #     # configured == False and self._ready == False -> INVALID: cannot issue component_unconfigured from IDLE
+    #     # configured == True and self._ready == False -> VALID: can issue component_configured from IDLE
+    #     # configured == False and self._ready == True -> VALID: can issue component_unconfigured from READY
+    #     # configured == True and self._ready == True -> INVALID: cannot issue component_configured from READY
+    #     if configured and not self._ready:
+    #         self._component_configured_callback(True)
+    #         self._ready = True
+    #     elif not configured and self._ready:
+    #         self._component_configured_callback(False)
+    #         self._ready = False
 
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, dish: str

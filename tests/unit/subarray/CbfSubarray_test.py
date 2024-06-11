@@ -24,8 +24,6 @@ from tango import DevState
 
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 
-from ...test_utils import device_online_and_on
-
 # Data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 

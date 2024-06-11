@@ -49,6 +49,7 @@ class CbfObsComponentManager(CbfComponentManager):
         self._component_state["configured"] = None
         self._component_state["scanning"] = None
         self._component_state["resourced"] = None
+        self._component_state["obsfault"] = None
 
         self.obs_state = ObsState.IDLE
 

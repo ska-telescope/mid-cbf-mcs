@@ -11,24 +11,14 @@ Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations
 
-import copy
-import json
 from typing import Any
 
 import tango
-from ska_control_model import (
-    ObsState,
-    ObsStateModel,
-    ResultCode,
-    SimulationMode,
-)
+from ska_control_model import ObsState, ObsStateModel
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
-from ska_telmodel.schema import validate as telmodel_validate
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
@@ -181,6 +171,7 @@ class CbfSubarray(CbfObsDevice):
             ("AddReceptors", "assign_vcc"),
             ("RemoveReceptors", "release_vcc"),
             ("RemoveAllReceptors", "release_all_vcc"),
+            ("Restart", "restart"),
         ]:
             self.register_command_object(
                 command_name,
@@ -568,6 +559,32 @@ class CbfSubarray(CbfObsDevice):
 
     #     self.logger.debug(f"obsState == {self.obsState}")
     #     return [[result_code], [message]]
+
+    @command(
+        dtype_in="DevString",
+        doc_in="JSON formatted string with the scan ID.",
+        dtype_out="DevVarLongStringArray",
+        doc_out=(
+            "A tuple containing a return code and a string message "
+            "indicating status. The message is for information purpose "
+            "only."
+        ),
+    )
+    @tango.DebugIt()
+    def Scan(self: CbfObsDevice, argin: str) -> DevVarLongStringArrayType:
+        """
+        Start an observing scan.
+        Overrides CbfObsDevice as subarray's scan input is a JSON string
+
+        :param argin: JSON formatted string with the scan ID.
+
+        :return: A tuple containing a return code and a string message
+            indicating status. The message is for information purpose
+            only.
+        """
+        command_handler = self.get_command_object("Scan")
+        result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
 
 
 # ----------
