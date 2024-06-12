@@ -46,44 +46,44 @@ resources:
     ephemeral-storage: 256Mi
 
 deviceServers:
-  cbfcontroller:
-    enabled: true
-    file: "data/cbfcontroller.yaml"
+  # cbfcontroller:
+  #   enabled: true
+  #   file: "data/cbfcontroller.yaml"
 
-  cbfsubarray:
-    enabled: true
-    file: "data/cbfsubarray.yaml"
+  # cbfsubarray:
+  #   enabled: true
+  #   file: "data/cbfsubarray.yaml"
 
-  vcc:
-    enabled: true
-    file: "data/vcc.yaml"
+  # vcc:
+  #   enabled: true
+  #   file: "data/vcc.yaml"
   
-  fsp:
-    enabled: true
-    file: "data/fsp.yaml"
+  # fsp:
+  #   enabled: true
+  #   file: "data/fsp.yaml"
   
   powerswitch:
     file: "data/powerswitch.yaml"
 
-  talonlru:
-    enabled: true
-    file: "data/talonlru.yaml"
+  # talonlru:
+  #   enabled: true
+  #   file: "data/talonlru.yaml"
 
-  talonboard:
-    enabled: true
-    file: "data/talonboard.yaml"
+  # talonboard:
+  #   enabled: true
+  #   file: "data/talonboard.yaml"
 
-  slim:
-    enabled: true
-    file: "data/slim.yaml"
+  # slim:
+  #   enabled: true
+  #   file: "data/slim.yaml"
 
-  slimlink:
-    enabled: true
-    file: "data/slimlink.yaml"
+  # slimlink:
+  #   enabled: true
+  #   file: "data/slimlink.yaml"
 
-  talondxlogconsumer:
-    enabled: true
-    file: "data/talondxlogconsumer.yaml"
+  # talondxlogconsumer:
+  #   enabled: true
+  #   file: "data/talondxlogconsumer.yaml"
 
 nodeSelector: {}
 
