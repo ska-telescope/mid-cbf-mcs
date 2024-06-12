@@ -54,16 +54,16 @@ deviceServers:
   #   enabled: true
   #   file: "data/cbfsubarray.yaml"
 
-  # vcc:
-  #   enabled: true
-  #   file: "data/vcc.yaml"
+  vcc:
+    enabled: true
+    file: "data/vcc.yaml"
   
   # fsp:
   #   enabled: true
   #   file: "data/fsp.yaml"
   
-  powerswitch:
-    file: "data/powerswitch.yaml"
+  # powerswitch:
+  #   file: "data/powerswitch.yaml"
 
   # talonlru:
   #   enabled: true
