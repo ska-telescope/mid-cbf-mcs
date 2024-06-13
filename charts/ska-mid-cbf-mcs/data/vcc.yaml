@@ -18,7 +18,7 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "Vcc"
+  name: "VccMulti"
   instances:
   - name: "vcc"
     classes:
