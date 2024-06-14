@@ -2429,3 +2429,8 @@ class CbfSubarrayComponentManager(
                 fsp_rx["output_port"] += fsp_tx["output_port"]
                 del fsp_tx["output_host"]
                 del fsp_tx["output_port"]
+
+                # set host LUT stage 2 FQDN
+                fsp_tx[
+                    "host_lut_s2_fqdn"
+                ] = f"talondx-00{fsp_id_rx}/dshostlutstage2/host_lut_s2"
