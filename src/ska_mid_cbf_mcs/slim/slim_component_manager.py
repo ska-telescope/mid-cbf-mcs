@@ -71,6 +71,7 @@ class SlimComponentManager(CbfComponentManager):
         self._link_fqdns = link_fqdns
         self._dp_links = []
         self._event_ids = {}
+        self._event_ids_count = 0
 
     def start_communicating(self: SlimComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -97,17 +98,27 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self._event_ids.update(
-                    {
-                        dp: [
-                                dp.subscribe_event(
-                                    attr_name="longRunningCommandResult",
-                                    event_type=EventType.CHANGE_EVENT,
-                                    cb_or_queuesize=self.results_callback,
-                                )
-                            ]
-                    }
-                )
+                if dp in self._event_ids:
+                    self._event_ids[dp].append(
+                        dp.subscribe_event(
+                            attr_name="longRunningCommandResult",
+                            event_type=EventType.CHANGE_EVENT,
+                            cb_or_queuesize=self.results_callback,
+                        )
+                    )
+                else:
+                    self._event_ids.update(
+                        {
+                            dp: [
+                                    dp.subscribe_event(
+                                        attr_name="longRunningCommandResult",
+                                        event_type=EventType.CHANGE_EVENT,
+                                        cb_or_queuesize=self.results_callback,
+                                    )
+                                ]
+                        }
+                    )
+                    self._event_ids_count += 1
                 self._dp_links.append(dp)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
@@ -127,7 +138,7 @@ class SlimComponentManager(CbfComponentManager):
                     f"Failed to set AdminMode of {fqdn} to ONLINE: {df.args[0].desc}"
                 )
                 return
-        self.logger.info(f"event_ids after subscription = {len(self._event_ids)}")
+        self.logger.info(f"event_ids after subscribing = {self._event_ids_count}")
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
@@ -140,10 +151,11 @@ class SlimComponentManager(CbfComponentManager):
                 device_events = self._event_ids.pop(dp)
                 while len(device_events):
                     dp.unsubscribe_event(device_events.pop())
+                    self._event_ids_count -= 1
             self._num_blocking_results = 0
             dp.adminMode = AdminMode.OFFLINE
             
-        self.logger.info(f"event_ids after unsubscription = {len(self._event_ids)}")
+        self.logger.info(f"event_ids after unsubscribing = {self._event_ids_count}")
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
