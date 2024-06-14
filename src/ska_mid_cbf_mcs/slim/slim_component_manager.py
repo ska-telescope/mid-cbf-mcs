@@ -73,9 +73,7 @@ class SlimComponentManager(CbfComponentManager):
         self._event_ids = {}
         self._event_ids_count = 0
         
-    def enable_and_subscribe(self: SlimComponentManager, fqdn: str) -> None:
-        dp = context.DeviceProxy(device_name=fqdn)
-        dp.adminMode = AdminMode.ONLINE
+    def subscribe_command_results(self: SlimComponentManager, dp: context.DeviceProxy) -> None:
         if dp in self._event_ids:
             self._event_ids[dp].append(
                 dp.subscribe_event(
@@ -122,7 +120,9 @@ class SlimComponentManager(CbfComponentManager):
 
         for fqdn in self._link_fqdns:
             try:
-                self.enable_and_subscribe(fqdn)
+                dp = context.DeviceProxy(device_name=fqdn)
+                dp.adminMode = AdminMode.ONLINE
+                self.subscribe_command_results(dp)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
                 self._update_communication_state(
@@ -155,9 +155,9 @@ class SlimComponentManager(CbfComponentManager):
                 while len(device_events):
                     dp.unsubscribe_event(device_events.pop())
                     self._event_ids_count -= 1
-            self._num_blocking_results = 0
             dp.adminMode = AdminMode.OFFLINE
-            
+        
+        self._num_blocking_results = 0
         self.logger.info(f"event_ids after unsubscribing = {self._event_ids_count}")
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
