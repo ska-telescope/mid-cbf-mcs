@@ -262,11 +262,11 @@ class MockDeviceBuilder:
         """
 
         def _mock_subscribe_event(
-            attribute_name: str,
+            attr_name: str,
             event_type: tango.EventType,
             callback: Callable[[tango.EventData], None],
-            stateless: bool,
-        ) -> None:  # TODO: should be int
+            stateless: bool = False,
+        ) -> int: 
             """
             Mock side-effect for subscribe_event method.
 
@@ -274,21 +274,27 @@ class MockDeviceBuilder:
             with the current value of the attribute if it exists. It
             doesn't actually support publishing change events.
 
-            :param attribute_name: name of the attribute for which
+            :param attr_name: name of the attribute for which
                 events are subscribed
             :param event_type: type of the event being subscribed to
             :param callback: a callback to call
             :param stateless: whether this is a stateless subscription
+            :return: a unique event subscription identifier
+            :rtype: int
             """
             attribute_value = (
                 mock_device.state()
-                if attribute_name == "state"
-                else getattr(mock_device, attribute_name)
+                if attr_name == "state"
+                else getattr(mock_device, attr_name)
             )
+            
+            # Generate a unique event_subscription_id
+            sub_id = hash(attribute_value) & 0xFFFF
+            
             if attribute_value is not None:
                 mock_event_data = unittest.mock.Mock()
                 mock_event_data.err = False
-                mock_event_data.attr_value.name = attribute_name
+                mock_event_data.attr_value.name = attr_name
                 mock_event_data.attr_value.value = attribute_value
                 mock_event_data.attr_value.quality = (
                     tango.AttrQuality.ATTR_VALID
@@ -296,6 +302,8 @@ class MockDeviceBuilder:
                 callback(mock_event_data)
             # TODO: if attribute_value is None, it might be better to call the callback
             # with a mock rather than not calling it at all.
+            
+            return sub_id
 
         mock_device.subscribe_event.side_effect = _mock_subscribe_event
 

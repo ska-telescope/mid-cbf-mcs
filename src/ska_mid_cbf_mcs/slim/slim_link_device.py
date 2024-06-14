@@ -24,7 +24,7 @@ from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+from ska_mid_cbf_mcs.device.base_device import CbfDevice, DevVarLongStringArrayType
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )
@@ -268,7 +268,7 @@ class SlimLink(CbfDevice):
 
         :param value: SimulationMode
         """
-        self.logger.debug(f"Writing simulationMode to {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
@@ -340,7 +340,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def VerifyConnection(self: SlimLink) -> None:
+    def VerifyConnection(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("VerifyConnection")
         return_code, message = command_handler()
         return [[return_code], [message]]
@@ -390,7 +390,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ClearCounters(self: SlimLink) -> None:
+    def ClearCounters(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("ClearCounters")
         return_code, message = command_handler()
         return [[return_code], [message]]
@@ -404,7 +404,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ConnectTxRx(self: SlimLink) -> None:
+    def ConnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("ConnectTxRx")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
@@ -414,7 +414,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def DisconnectTxRx(self: SlimLink) -> None:
+    def DisconnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("DisconnectTxRx")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]

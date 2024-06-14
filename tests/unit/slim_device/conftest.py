@@ -45,6 +45,22 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/slim/001")
 
 
+@pytest.fixture(name="links_under_test")
+def links_under_test_fixture(
+    test_context: TangoTestHarnessContext,
+    initial_links: dict,
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns the device under test.
+
+    :param test_context: the context in which the tests run
+    :return: the device under test
+    """
+    links = []
+    for name, _ in initial_links.items():
+        links.append(test_context.get_device(name))
+    return links
+
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
     device_under_test: context.DeviceProxy,
@@ -80,6 +96,7 @@ def slim_change_event_callbacks_fail(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
+        "state"
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list
@@ -95,7 +112,7 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute(
-        "linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0"
+        "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
     )
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
@@ -109,15 +126,17 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_command(
-        "ConnectTxRx", [[ResultCode.OK], ["ConnectTxRx Success: Mock"]]
+    builder.add_result_command(
+        "ConnectTxRx",
+        ResultCode.QUEUED,
+        "1234_ConnectTxRx",
     )
     builder.add_result_command(
         "DisconnectTxRx",
-        ResultCode.OK,
-        "DisconnectTxRx Success: Mock",
+        ResultCode.QUEUED,
+        "1234_DisconnectTxRx",
     )
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -125,7 +144,7 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute(
-        "linkName", "test/slim-tx-rx/fs-tx0->test/slim-tx-rx/fs-rx0"
+        "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
     )
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
@@ -139,19 +158,46 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_command(
-        "ConnectTxRx", [[ResultCode.FAILED], ["ConnectTxRx Failed: Mock"]]
+    builder.add_result_command(
+        "ConnectTxRx",
+        ResultCode.REJECTED,
+        "ConnectTxRx Failed: Mock",
     )
     builder.add_result_command(
         "DisconnectTxRx",
-        ResultCode.FAILED,
+        ResultCode.REJECTED,
         "DisconnectTxRx Failed: Mock",
     )
+    return builder
+
+@pytest.fixture()
+def mock_slim_tx() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("idle_ctrl_word", 123456)
+    builder.add_attribute("read_counters", [6, 7, 8])
+
+    builder.add_command("ping", None)
+    builder.add_command("clear_read_counters", None)
     return builder()
 
 
 @pytest.fixture()
-def initial_mocks(
+def mock_slim_rx() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("idle_ctrl_word", 0)
+    builder.add_attribute("read_counters", [0, 1, 2, 3, 0, 0])
+    builder.add_attribute("bit_error_rate", 8e-12)
+
+    builder.add_command("ping", None)
+    builder.add_command("initialize_connection", None)
+    builder.add_command("clear_read_counters", None)
+    return builder()
+
+
+@pytest.fixture()
+def initial_links(
     mock_slim_link: unittest.mock.Mock,
     mock_fail_slim_link: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
@@ -173,3 +219,29 @@ def initial_mocks(
         "mid_csp_cbf/slim_link_fail/003": mock_fail_slim_link,
         "mid_csp_cbf/slim_link_fail/004": mock_fail_slim_link,
     }
+    
+@pytest.fixture()
+def initial_mocks(
+    mock_slim_tx: unittest.mock.Mock,
+    mock_slim_rx: unittest.mock.Mock,
+) -> dict[str, unittest.mock.Mock]:
+    """
+    Return a dictionary of device proxy mocks to pre-register.
+
+    :param mock_vcc_band: a mock VccBand device that is powered off.
+    :param mock_sw: a mock VccSearchWindow that is powered off.
+
+    :return: a dictionary of device proxy mocks to pre-register.
+    """
+    return {
+        "talondx-001/slim-tx-rx/fs-tx0": mock_slim_tx,
+        "talondx-002/slim-tx-rx/fs-tx0": mock_slim_tx,
+        "talondx-003/slim-tx-rx/fs-tx0": mock_slim_tx,
+        "talondx-004/slim-tx-rx/fs-tx0": mock_slim_tx,
+        
+        "talondx-001/slim-tx-rx/fs-rx0": mock_slim_rx,
+        "talondx-001/slim-tx-rx/fs-rx1": mock_slim_rx,
+        "talondx-001/slim-tx-rx/fs-rx2": mock_slim_rx,
+        "talondx-001/slim-tx-rx/fs-rx3": mock_slim_rx,
+    }
+    

@@ -18,6 +18,7 @@ from typing import Callable, Optional
 
 import tango
 import yaml
+from tango import EventType
 from beautifultable import BeautifulTable
 from ska_control_model import TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
@@ -69,6 +70,7 @@ class SlimComponentManager(CbfComponentManager):
         # SLIM Link Device proxies
         self._link_fqdns = link_fqdns
         self._dp_links = []
+        self._event_ids = {}
 
     def start_communicating(self: SlimComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -95,6 +97,17 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
+                self._event_ids.update(
+                    {
+                        dp: [
+                                dp.subscribe_event(
+                                    attr_name="longRunningCommandResult",
+                                    event_type=EventType.CHANGE_EVENT,
+                                    cb_or_queuesize=self.results_callback,
+                                )
+                            ]
+                    }
+                )
                 self._dp_links.append(dp)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
@@ -122,7 +135,12 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 
         for dp in self._dp_links:
+            if dp in self._event_ids:
+                while len(self._event_ids[dp]):
+                    # TODO: Still need to test that this works.
+                    dp.unsubscribe_event(self._event_ids[dp].pop())
             dp.adminMode = AdminMode.OFFLINE
+            
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
@@ -471,6 +489,7 @@ class SlimComponentManager(CbfComponentManager):
 
     def _initialize_links(
         self: SlimComponentManager,
+        task_abort_event: Optional[threading.Event] = None,
     ) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to connect and starts polling each link's health state.
@@ -493,24 +512,34 @@ class SlimComponentManager(CbfComponentManager):
             self.logger.error(msg)
             return ResultCode.FAILED, msg
         try:
+            self._num_blocking_results = len(self._active_links)
             for idx, txrx in enumerate(self._active_links):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
 
-                # The SLIM link may need to wait for Tx/Rx to initialize
-                self._dp_links[idx].set_timeout_millis(10000)
-                [rc, msg] = self._dp_links[idx].ConnectTxRx()
-                self._dp_links[idx].set_timeout_millis(3000)
+                # This is an LRC. The following adds the command to a set of
+                # currently executing LRCs (in this thread) and subscribes to
+                # change events in the result attr, which will indicate when the 
+                # command has finished/failed.
+                [[result_code], [command_id]] = self._dp_links[idx].ConnectTxRx()
+                
+                # Guard incase LRC was rejected.
+                if result_code == ResultCode.REJECTED:
+                    message = f"SlimLink ConnectTxRx was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
+                    self.logger.error(message)
+                    self._update_component_state(fault=True)
+                    return ResultCode.FAILED, message
+                
+            lrc_status = self._wait_for_blocking_results(timeout=10.0, task_abort_event=task_abort_event)
+            
+            # TODO: Improve information density in message.
+            if lrc_status != TaskStatus.COMPLETED:
+                self.logger.error(f"ConnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}")
+                return ResultCode.FAILED, f"{self._dp_links[idx].longRunningCommandResult[1]}"
 
-                # TODO: Need to add guard incase LRC was rejected.
-                # TODO: Need to add LRC wait mechanism
-                if rc[0] is not ResultCode.OK:
-                    return rc[0], msg[0]
-
-                # TODO: Should replace polling here with a subscription to the link's healthState
-                # poll link health every 20 seconds
-                if self.simulation_mode is False:
-                    self._dp_links[idx].poll_command("VerifyConnection", 20000)
+            # Poll link health every 20 seconds
+            if self.simulation_mode is False:
+                self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
@@ -703,7 +732,7 @@ class SlimComponentManager(CbfComponentManager):
                     )
                     return
             self.logger.debug("Initializing SLIM Links")
-            result_code, msg = self._initialize_links()
+            result_code, msg = self._initialize_links(task_abort_event)
             if result_code is not ResultCode.OK:
                 task_callback(
                     status=TaskStatus.FAILED,
