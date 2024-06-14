@@ -358,14 +358,14 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Locked callback to decrement number of blocking
         """
-        self.logger.error(f"EventData attr_value:{event_data.attr_value.value}, num={self._num_blocking_results}")
-        # fetch the result code from the event_data tuple.
         try:
             if event_data.attr_value.value != ('',''):
+                # fetch the result code from the event_data tuple.
                 result_code = int(event_data.attr_value.value[1].split(',')[0].split('[')[1])
                 if result_code == ResultCode.OK:
                     with self._results_lock:
                         self._num_blocking_results -= 1
+            self.logger.debug(f"EventData attr_value:{event_data.attr_value.value}, events remaining={self._num_blocking_results}")
         except IndexError as ie:
             self.logger.error(f"IndexError caught: {ie}")
         

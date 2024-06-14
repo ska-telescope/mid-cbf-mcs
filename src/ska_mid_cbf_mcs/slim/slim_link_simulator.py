@@ -184,7 +184,6 @@ class SlimLinkSimulator:
         self._rx_idle_ctrl_word = self._tx_idle_ctrl_word
         self.clear_counters()
         self._link_enabled = True
-        self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
 
     def verify_connection(
         self: SlimLinkSimulator,

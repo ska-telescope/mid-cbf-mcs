@@ -582,15 +582,16 @@ class SlimLinkComponentManager(CbfComponentManager):
                     ),
                 )
                 return
-            self._link_enabled = True
-            self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=(
-                    ResultCode.OK,
-                    "ConnectTxRx completed OK",
-                ),
-            )
+        self._link_enabled = True
+        self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
+            
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "ConnectTxRx completed OK",
+            ),
+        )
 
     @check_communicating
     def connect_slim_tx_rx(
@@ -634,6 +635,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         if self.simulation_mode:
             self.slim_link_simulator.disconnect_slim_tx_rx()
+            self._link_enabled = False
         else:
             if self._rx_device_proxy is None:
                 task_callback(
@@ -683,14 +685,13 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._tx_device_proxy = None
                 self._link_name = ""
                 self._link_enabled = False
-
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=(
-                    ResultCode.OK,
-                    "DisconnectTxRx completed OK",
-                ),
-            )
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "DisconnectTxRx completed OK",
+            ),
+        )
 
     @check_communicating
     def disconnect_slim_tx_rx(
