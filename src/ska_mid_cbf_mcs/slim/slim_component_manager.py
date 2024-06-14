@@ -72,6 +72,32 @@ class SlimComponentManager(CbfComponentManager):
         self._dp_links = []
         self._event_ids = {}
         self._event_ids_count = 0
+        
+    def enable_and_subscribe(self: SlimComponentManager, fqdn: str) -> None:
+        dp = context.DeviceProxy(device_name=fqdn)
+        dp.adminMode = AdminMode.ONLINE
+        if dp in self._event_ids:
+            self._event_ids[dp].append(
+                dp.subscribe_event(
+                    attr_name="longRunningCommandResult",
+                    event_type=EventType.CHANGE_EVENT,
+                    cb_or_queuesize=self.results_callback,
+                )
+            )
+        else:
+            self._event_ids.update(
+                {
+                    dp: [
+                            dp.subscribe_event(
+                                attr_name="longRunningCommandResult",
+                                event_type=EventType.CHANGE_EVENT,
+                                cb_or_queuesize=self.results_callback,
+                            )
+                        ]
+                }
+            )
+            self._event_ids_count += 1
+        self._dp_links.append(dp)
 
     def start_communicating(self: SlimComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -96,30 +122,7 @@ class SlimComponentManager(CbfComponentManager):
 
         for fqdn in self._link_fqdns:
             try:
-                dp = context.DeviceProxy(device_name=fqdn)
-                dp.adminMode = AdminMode.ONLINE
-                if dp in self._event_ids:
-                    self._event_ids[dp].append(
-                        dp.subscribe_event(
-                            attr_name="longRunningCommandResult",
-                            event_type=EventType.CHANGE_EVENT,
-                            cb_or_queuesize=self.results_callback,
-                        )
-                    )
-                else:
-                    self._event_ids.update(
-                        {
-                            dp: [
-                                    dp.subscribe_event(
-                                        attr_name="longRunningCommandResult",
-                                        event_type=EventType.CHANGE_EVENT,
-                                        cb_or_queuesize=self.results_callback,
-                                    )
-                                ]
-                        }
-                    )
-                    self._event_ids_count += 1
-                self._dp_links.append(dp)
+                self.enable_and_subscribe(fqdn)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
                 self._update_communication_state(
