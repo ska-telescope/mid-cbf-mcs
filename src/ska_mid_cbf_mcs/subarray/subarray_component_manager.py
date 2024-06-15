@@ -1727,6 +1727,13 @@ class CbfSubarrayComponentManager(
         # board. First figure out the active links in the visibility mesh.
         vis_slim_links = self._get_vis_slim_active_links()
 
+        # by default connect host lut s1 to s2 on the same board
+        for fsp in configuration["fsp"]:     
+            fsp_id = int(fsp["fsp_id"])   
+            fsp[
+                "host_lut_s2_fqdn"
+            ] = f"talondx-00{fsp_id}/dshostlutstage2/host_lut_s2"
+
         self._update_fsp_output_host_port(configuration["fsp"], vis_slim_links)
 
         self._logger.info(configuration["fsp"])
