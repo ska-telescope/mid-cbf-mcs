@@ -1728,8 +1728,8 @@ class CbfSubarrayComponentManager(
         vis_slim_links = self._get_vis_slim_active_links()
 
         # by default connect host lut s1 to s2 on the same board
-        for fsp in configuration["fsp"]:     
-            fsp_id = int(fsp["fsp_id"])   
+        for fsp in configuration["fsp"]:
+            fsp_id = int(fsp["fsp_id"])
             fsp[
                 "host_lut_s2_fqdn"
             ] = f"talondx-00{fsp_id}/dshostlutstage2/host_lut_s2"
