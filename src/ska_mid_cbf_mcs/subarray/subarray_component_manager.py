@@ -1729,6 +1729,8 @@ class CbfSubarrayComponentManager(
 
         self._update_fsp_output_host_port(configuration["fsp"], vis_slim_links)
 
+        self._logger.info(configuration["fsp"])
+
         for fsp in configuration["fsp"]:
             # Configure fsp_id.
             fsp_id = int(fsp["fsp_id"])
@@ -1856,16 +1858,14 @@ class CbfSubarrayComponentManager(
         if len(self._corr_config) != 0:
             for this_fsp in self._corr_config:
                 try:
+                    self._logger.info(
+                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
+                    )
                     this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
-
-                    self._logger.info(
-                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
-                    )
-
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring "
