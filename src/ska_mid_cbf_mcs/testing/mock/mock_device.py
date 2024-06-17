@@ -264,7 +264,7 @@ class MockDeviceBuilder:
         def _mock_subscribe_event(
             attr_name: str,
             event_type: tango.EventType,
-            callback: Callable[[tango.EventData], None],
+            cb_or_queuesize: Callable[[tango.EventData], None],
             stateless: bool = False,
         ) -> int: 
             """
@@ -299,7 +299,7 @@ class MockDeviceBuilder:
                 mock_event_data.attr_value.quality = (
                     tango.AttrQuality.ATTR_VALID
                 )
-                callback(mock_event_data)
+                cb_or_queuesize(mock_event_data)
             # TODO: if attribute_value is None, it might be better to call the callback
             # with a mock rather than not calling it at all.
             

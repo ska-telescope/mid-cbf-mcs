@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import random
 import unittest
 
 import pytest
@@ -114,13 +115,14 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_attribute(
         "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
     )
-    builder.add_attribute("tx_link_occupancy", 0.5)
-    builder.add_attribute("rx_link_occupancy", 0.5)
+    builder.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[0, "ConnectTxRx completed OK"]'))
+    builder.add_attribute("txLinkOccupancy", 0.5)
+    builder.add_attribute("rxLinkOccupancy", 0.5)
     builder.add_attribute(
         "counters", [1000, 100, 1000, 0, 0, 0, 1000, 100, 1000]
     )
     builder.add_attribute(
-        "rx_debug_alignment_and_lock_status", [False, True, False, True]
+        "rxDebugAlignmentAndLockStatus", [False, True, False, True]
     )
 
     builder.add_command("set_timeout_millis", None)
@@ -146,6 +148,7 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder.add_attribute(
         "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
     )
+    builder.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[3, "ConnectTxRx FAILED"]'))
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
     builder.add_attribute(

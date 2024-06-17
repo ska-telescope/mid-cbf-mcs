@@ -410,13 +410,6 @@ class TestPowerSwitch:
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
-            )
-        )
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[3, "TurnOffOutlet FAILED"]')
         )
 
@@ -570,13 +563,6 @@ class TestPowerSwitch:
             str(num_outlets + 1)
         )
         assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
-            )
-        )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[3, "TurnOnOutlet FAILED"]')

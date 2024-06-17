@@ -18,7 +18,6 @@ from typing import Callable, Optional
 
 import tango
 import yaml
-from tango import EventType
 from beautifultable import BeautifulTable
 from ska_control_model import TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
@@ -70,32 +69,6 @@ class SlimComponentManager(CbfComponentManager):
         # SLIM Link Device proxies
         self._link_fqdns = link_fqdns
         self._dp_links = []
-        self._event_ids = {}
-        self._event_ids_count = 0
-        
-    def subscribe_command_results(self: SlimComponentManager, dp: context.DeviceProxy) -> None:
-        if dp in self._event_ids:
-            self._event_ids[dp].append(
-                dp.subscribe_event(
-                    attr_name="longRunningCommandResult",
-                    event_type=EventType.CHANGE_EVENT,
-                    cb_or_queuesize=self.results_callback,
-                )
-            )
-        else:
-            self._event_ids.update(
-                {
-                    dp: [
-                            dp.subscribe_event(
-                                attr_name="longRunningCommandResult",
-                                event_type=EventType.CHANGE_EVENT,
-                                cb_or_queuesize=self.results_callback,
-                            )
-                        ]
-                }
-            )
-            self._event_ids_count += 1
-        self._dp_links.append(dp)
 
     def start_communicating(self: SlimComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -122,7 +95,8 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self.subscribe_command_results(dp)
+                self._subscribe_command_results(dp)
+                self._dp_links.append(dp)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
                 self._update_communication_state(
@@ -142,6 +116,7 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
         self.logger.info(f"event_ids after subscribing = {self._event_ids_count}")
+        
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
@@ -159,6 +134,7 @@ class SlimComponentManager(CbfComponentManager):
         
         self._num_blocking_results = 0
         self.logger.info(f"event_ids after unsubscribing = {self._event_ids_count}")
+        
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
@@ -292,9 +268,9 @@ class SlimComponentManager(CbfComponentManager):
                 counters.append(counter)
                 names.append(dp_link.linkName)
                 occupancy.append(
-                    [dp_link.tx_link_occupancy, dp_link.rx_link_occupancy]
+                    [dp_link.txLinkOccupancy, dp_link.rxLinkOccupancy]
                 )
-                debug_flags.append(dp_link.rx_debug_alignment_and_lock_status)
+                debug_flags.append(dp_link.rxDebugAlignmentAndLockStatus)
                 rx_error_rate_and_status.append(
                     self._calculate_rx_idle_word_rate(
                         rx_idle_word_count, rx_idle_error_count
@@ -332,7 +308,7 @@ class SlimComponentManager(CbfComponentManager):
         :param: names: A list of strings containing each active SLIM link's linkName attr.
         :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM Link.
         """
-
+        self.logger.error(f"Counters: {counters}")
         res = "\nSLIM BER Check:\n\n"
         for idx in range(len(self._active_links)):
             rx_word_count = counters[idx][0]
@@ -364,7 +340,7 @@ class SlimComponentManager(CbfComponentManager):
         :param: counters: A list of lists containing each active SLIM link's counters attr.
         :param: names: A list of strings containing each active SLIM link's linkName attr.
         :param: occupancy: A list of lists containing each active SLIM link's [0] tx and [1] rx link occupancies.
-        :param: debug_flags: A list of lists containing each active SLIM link's rx_debug_alignment_and_lock_status attr.
+        :param: debug_flags: A list of lists containing each active SLIM link's rxDebugAlignmentAndLockStatus attr.
         :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM link.
         """
 
@@ -548,7 +524,7 @@ class SlimComponentManager(CbfComponentManager):
                     self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
                 
-            lrc_status = self._wait_for_blocking_results(timeout=10.0, task_abort_event=task_abort_event)
+            lrc_status = self._wait_for_blocking_results(timeout=10, task_abort_event=task_abort_event)
             
             # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:

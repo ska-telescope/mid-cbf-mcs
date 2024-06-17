@@ -218,7 +218,7 @@ class SlimLink(CbfDevice):
         return self._health_state
 
     @attribute(dtype=[bool])
-    def rx_debug_alignment_and_lock_status(self: SlimLink) -> list[bool]:
+    def rxDebugAlignmentAndLockStatus(self: SlimLink) -> list[bool]:
         """
         Alignment and lock status rollup attribute for debug
 
@@ -233,7 +233,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.rx_debug_alignment_and_lock_status
 
     @attribute(dtype=float)
-    def rx_link_occupancy(self: SlimLink) -> float:
+    def rxLinkOccupancy(self: SlimLink) -> float:
         """
         Read the Link Occupancy of the Rx Device
 
@@ -243,7 +243,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.rx_link_occupancy
 
     @attribute(dtype=float)
-    def tx_link_occupancy(self: SlimLink) -> float:
+    def txLinkOccupancy(self: SlimLink) -> float:
         """
         Read the Link Occupancy of the Tx Device
 
