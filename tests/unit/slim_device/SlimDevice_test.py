@@ -26,7 +26,6 @@ from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.slim.slim_device import Slim
-from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
 
 from ... import test_utils
 
@@ -48,7 +47,9 @@ class TestSlim:
 
     @pytest.fixture(name="test_context")
     def slim_test_context(
-        self: TestSlim, initial_mocks: dict[str, Mock], initial_links: dict[str, Mock]
+        self: TestSlim,
+        initial_mocks: dict[str, Mock],
+        initial_links: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         harness = context.ThreadedTestTangoContextManager()
         random.seed()
@@ -77,13 +78,13 @@ class TestSlim:
 
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock())
-            
+
         for name, mock in initial_links.items():
             # if "mid_csp_cbf/slim_link/" in name:
             #     mock.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[0, "ConnectTxRx completed OK"]'))
             # elif "mid_csp_cbf/slim_link_fail/" in name:
             #     mock.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[3, "ConnectTxRx FAILED"]'))
-            harness.add_device(device_name=name, device_class=SlimLink)
+            harness.add_mock_device(device_name=name, device_mock=mock())
 
         with harness as test_context:
             yield test_context
@@ -174,7 +175,7 @@ class TestSlim:
         :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
-        assert test_utils.device_online_and_on(device_under_test)  
+        assert test_utils.device_online_and_on(device_under_test)
 
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
@@ -182,7 +183,7 @@ class TestSlim:
             )
         assert command_id[0].endswith("Configure")
         assert result_code == [ResultCode.QUEUED]
-        
+
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
@@ -256,7 +257,9 @@ class TestSlim:
             )
 
         assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks_fail["state"].assert_change_event(DevState.FAULT)
+        change_event_callbacks_fail["state"].assert_change_event(
+            DevState.FAULT
+        )
 
         change_event_callbacks_fail[
             "longRunningCommandResult"
@@ -266,7 +269,7 @@ class TestSlim:
                 '[3, "SlimLink ConnectTxRx was rejected: talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"]',
             )
         )
-        
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks_fail.assert_not_called()
 
