@@ -24,7 +24,10 @@ from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 
-from ska_mid_cbf_mcs.device.base_device import CbfDevice, DevVarLongStringArrayType
+from ska_mid_cbf_mcs.device.base_device import (
+    CbfDevice,
+    DevVarLongStringArrayType,
+)
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )

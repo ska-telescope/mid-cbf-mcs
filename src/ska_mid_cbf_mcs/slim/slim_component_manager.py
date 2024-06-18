@@ -115,8 +115,10 @@ class SlimComponentManager(CbfComponentManager):
                     f"Failed to set AdminMode of {fqdn} to ONLINE: {df.args[0].desc}"
                 )
                 return
-        self.logger.info(f"event_ids after subscribing = {self._event_ids_count}")
-        
+        self.logger.info(
+            f"event_ids after subscribing = {self._event_ids_count}"
+        )
+
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
@@ -131,10 +133,12 @@ class SlimComponentManager(CbfComponentManager):
                     dp.unsubscribe_event(device_events.pop())
                     self._event_ids_count -= 1
             dp.adminMode = AdminMode.OFFLINE
-        
+
         self._num_blocking_results = 0
-        self.logger.info(f"event_ids after unsubscribing = {self._event_ids_count}")
-        
+        self.logger.info(
+            f"event_ids after unsubscribing = {self._event_ids_count}"
+        )
+
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model.
         super().stop_communicating()
@@ -308,7 +312,7 @@ class SlimComponentManager(CbfComponentManager):
         :param: names: A list of strings containing each active SLIM link's linkName attr.
         :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM Link.
         """
-        self.logger.error(f"Counters: {counters}")
+
         res = "\nSLIM BER Check:\n\n"
         for idx in range(len(self._active_links)):
             rx_word_count = counters[idx][0]
@@ -506,30 +510,41 @@ class SlimComponentManager(CbfComponentManager):
             return ResultCode.FAILED, msg
         try:
             self._num_blocking_results = len(self._active_links)
-            self.logger.debug(f"About to connect {self._num_blocking_results} times")
+            self.logger.debug(
+                f"About to connect {self._num_blocking_results} times"
+            )
             for idx, txrx in enumerate(self._active_links):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
 
                 # This is an LRC. The following adds the command to a set of
                 # currently executing LRCs (in this thread) and subscribes to
-                # change events in the result attr, which will indicate when the 
+                # change events in the result attr, which will indicate when the
                 # command has finished/failed.
-                [[result_code], [command_id]] = self._dp_links[idx].ConnectTxRx()
-                
+                [[result_code], [command_id]] = self._dp_links[
+                    idx
+                ].ConnectTxRx()
+
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = f"SlimLink ConnectTxRx was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
                     self.logger.error(message)
                     self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
-                
-            lrc_status = self._wait_for_blocking_results(timeout=10, task_abort_event=task_abort_event)
-            
+
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+
             # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(f"ConnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}")
-                return ResultCode.FAILED, self._dp_links[idx].longRunningCommandResult[1]
+                self.logger.error(
+                    f"ConnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}"
+                )
+                return (
+                    ResultCode.FAILED,
+                    self._dp_links[idx].longRunningCommandResult[1],
+                )
 
             # Poll link health every 20 seconds
             if self.simulation_mode is False:
@@ -577,13 +592,17 @@ class SlimComponentManager(CbfComponentManager):
             return ResultCode.OK, "_disconnect_links completed OK"
         try:
             self._num_blocking_results = len(self._active_links)
-            self.logger.debug(f"About to disconnect {self._num_blocking_results} times")
+            self.logger.debug(
+                f"About to disconnect {self._num_blocking_results} times"
+            )
             for idx, txrx in enumerate(self._active_links):
                 if self.simulation_mode is False:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
-                    
-                [[result_code], [command_id]] = self._dp_links[idx].DisconnectTxRx()
-                
+
+                [[result_code], [command_id]] = self._dp_links[
+                    idx
+                ].DisconnectTxRx()
+
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = f"SlimLink DisconnectTxRx was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
@@ -591,12 +610,19 @@ class SlimComponentManager(CbfComponentManager):
                     self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
 
-            lrc_status = self._wait_for_blocking_results(timeout=10.0, task_abort_event=task_abort_event)
-        
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+
             # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(f"DisconnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}")
-                return ResultCode.FAILED, self._dp_links[idx].longRunningCommandResult[1]
+                self.logger.error(
+                    f"DisconnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}"
+                )
+                return (
+                    ResultCode.FAILED,
+                    self._dp_links[idx].longRunningCommandResult[1],
+                )
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
@@ -689,7 +715,7 @@ class SlimComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )
-        
+
     def is_configure_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
         if self.power_state != PowerState.ON:

@@ -266,7 +266,7 @@ class MockDeviceBuilder:
             event_type: tango.EventType,
             cb_or_queuesize: Callable[[tango.EventData], None],
             stateless: bool = False,
-        ) -> int: 
+        ) -> int:
             """
             Mock side-effect for subscribe_event method.
 
@@ -287,10 +287,10 @@ class MockDeviceBuilder:
                 if attr_name == "state"
                 else getattr(mock_device, attr_name)
             )
-            
+
             # Generate a unique event_subscription_id
             sub_id = hash(attribute_value) & 0xFFFF
-            
+
             if attribute_value is not None:
                 mock_event_data = unittest.mock.Mock()
                 mock_event_data.err = False
@@ -302,7 +302,7 @@ class MockDeviceBuilder:
                 cb_or_queuesize(mock_event_data)
             # TODO: if attribute_value is None, it might be better to call the callback
             # with a mock rather than not calling it at all.
-            
+
             return sub_id
 
         mock_device.subscribe_event.side_effect = _mock_subscribe_event

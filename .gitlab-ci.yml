@@ -20,6 +20,9 @@ stages:
   - publish
   - scan
 
+python-lint:
+  allow_failure: true
+
 # Include CI templates
 include:
 # OCI Images

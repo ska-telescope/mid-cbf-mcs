@@ -62,6 +62,7 @@ def links_under_test_fixture(
         links.append(test_context.get_device(name))
     return links
 
+
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
     device_under_test: context.DeviceProxy,
@@ -95,10 +96,7 @@ def device_under_test_fail_fixture(
 def slim_change_event_callbacks_fail(
     device_under_test_fail: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = [
-        "longRunningCommandResult",
-        "state"
-    ]
+    change_event_attr_list = ["longRunningCommandResult", "state"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list
     )
@@ -113,9 +111,16 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute(
-        "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
+        "linkName",
+        "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
     )
-    builder.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[0, "ConnectTxRx completed OK"]'))
+    builder.add_attribute(
+        "longRunningCommandResult",
+        (
+            f"{random.randrange(0xFFFFFFFF)}_ConnectTxRx",
+            '[0, "ConnectTxRx completed OK"]',
+        ),
+    )
     builder.add_attribute("txLinkOccupancy", 0.5)
     builder.add_attribute("rxLinkOccupancy", 0.5)
     builder.add_attribute(
@@ -146,9 +151,16 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute(
-        "linkName", "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"
+        "linkName",
+        "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
     )
-    builder.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[3, "ConnectTxRx FAILED"]'))
+    builder.add_attribute(
+        "longRunningCommandResult",
+        (
+            f"{random.randrange(0xFFFFFFFF)}_ConnectTxRx",
+            '[3, "ConnectTxRx FAILED"]',
+        ),
+    )
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
     builder.add_attribute(
@@ -172,6 +184,7 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
         "DisconnectTxRx Failed: Mock",
     )
     return builder
+
 
 @pytest.fixture()
 def mock_slim_tx() -> unittest.mock.Mock:
@@ -222,7 +235,8 @@ def initial_links(
         "mid_csp_cbf/slim_link_fail/003": mock_fail_slim_link,
         "mid_csp_cbf/slim_link_fail/004": mock_fail_slim_link,
     }
-    
+
+
 @pytest.fixture()
 def initial_mocks(
     mock_slim_tx: unittest.mock.Mock,
@@ -241,10 +255,8 @@ def initial_mocks(
         "talondx-002/slim-tx-rx/fs-tx0": mock_slim_tx,
         "talondx-003/slim-tx-rx/fs-tx0": mock_slim_tx,
         "talondx-004/slim-tx-rx/fs-tx0": mock_slim_tx,
-        
         "talondx-001/slim-tx-rx/fs-rx0": mock_slim_rx,
         "talondx-001/slim-tx-rx/fs-rx1": mock_slim_rx,
         "talondx-001/slim-tx-rx/fs-rx2": mock_slim_rx,
         "talondx-001/slim-tx-rx/fs-rx3": mock_slim_rx,
     }
-    

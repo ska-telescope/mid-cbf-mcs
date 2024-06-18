@@ -14,8 +14,8 @@ from __future__ import annotations  # allow forward references in type hints
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Event, Lock
-from typing import Any, Callable, Optional, cast
 from time import sleep
+from typing import Any, Callable, Optional, cast
 
 import tango
 from ska_control_model import (
@@ -102,7 +102,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
-        
+
         # initialize lock and set of of blocking resources an LRC thread may be
         # dependent on
         self._event_ids = {}
@@ -141,8 +141,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return True
         return False
-    
-    def _subscribe_command_results(self: CbfComponentManager, dp: context.DeviceProxy) -> None:
+
+    def _subscribe_command_results(
+        self: CbfComponentManager, dp: context.DeviceProxy
+    ) -> None:
         if dp in self._event_ids:
             sub_id = dp.subscribe_event(
                 attr_name="longRunningCommandResult",
@@ -152,17 +154,19 @@ class CbfComponentManager(TaskExecutorComponentManager):
             if sub_id not in self._event_ids[dp]:
                 self._event_ids[dp].append(sub_id)
             else:
-                self.logger.debug(f"Skipping repeated event subscription: {sub_id}")
+                self.logger.debug(
+                    f"Skipping repeated event subscription: {sub_id}"
+                )
         else:
             self._event_ids.update(
                 {
                     dp: [
-                            dp.subscribe_event(
-                                attr_name="longRunningCommandResult",
-                                event_type=tango.EventType.CHANGE_EVENT,
-                                cb_or_queuesize=self.results_callback,
-                            )
-                        ]
+                        dp.subscribe_event(
+                            attr_name="longRunningCommandResult",
+                            event_type=tango.EventType.CHANGE_EVENT,
+                            cb_or_queuesize=self.results_callback,
+                        )
+                    ]
                 }
             )
             self._event_ids_count += 1
@@ -380,22 +384,27 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
-        
-    def results_callback(self: CbfComponentManager, event_data: Optional[tango.EventData]):
+
+    def results_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ):
         """
         Locked callback to decrement number of blocking
         """
         try:
-            if event_data.attr_value.value != ('',''):
+            if event_data.attr_value.value != ("", ""):
                 # fetch the result code from the event_data tuple.
-                result_code = int(event_data.attr_value.value[1].split(',')[0].split('[')[1])
+                result_code = int(
+                    event_data.attr_value.value[1].split(",")[0].split("[")[1]
+                )
                 if result_code == ResultCode.OK:
                     with self._results_lock:
                         self._num_blocking_results -= 1
-            self.logger.info(f"EventData attr_value:{event_data.attr_value.value}, events remaining={self._num_blocking_results}")
+            self.logger.info(
+                f"EventData attr_value:{event_data.attr_value.value}, events remaining={self._num_blocking_results}"
+            )
         except IndexError as ie:
             self.logger.error(f"IndexError caught: {ie}")
-        
 
     def _wait_for_blocking_results(
         self: CbfComponentManager,
@@ -445,13 +454,18 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         self.logger.error(f"NUM={self._num_blocking_results}")
         ticks = int(timeout / 0.01)  # 10 ms resolution
+        self.logger.error(f"Num ticks @ start={ticks}")
         while self._num_blocking_results:
             if task_abort_event and task_abort_event.is_set():
+                self.logger.error("1. ABORTED")
                 return TaskStatus.ABORTED
             sleep(0.01)
             ticks -= 1
-            if ticks == 0:
-                self.logger.error(f"{self._num_blocking_results} blocking results remain.")
+
+            if ticks <= 0:
+                self.logger.error(
+                    f"{self._num_blocking_results} blocking results remain."
+                )
                 return TaskStatus.FAILED
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
         return TaskStatus.COMPLETED
