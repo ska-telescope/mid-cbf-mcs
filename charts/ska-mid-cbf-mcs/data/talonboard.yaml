@@ -28,7 +28,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -68,7 +68,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -108,7 +108,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -148,7 +148,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -188,7 +188,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -228,7 +228,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -268,7 +268,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
@@ -308,7 +308,7 @@ server:
         properties:
           - name: "TalonDxBoardAddress"
             values:
-            - "NULL"
+            - "0.0.0.0"
           - name: "InfluxDbPort"
             values:
             - "8086"
