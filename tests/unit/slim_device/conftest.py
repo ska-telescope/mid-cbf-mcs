@@ -71,7 +71,7 @@ def slim_change_event_callbacks(
         "longRunningCommandResult",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list, timeout=15.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks

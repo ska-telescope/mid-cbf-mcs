@@ -452,19 +452,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :return: completed if status reached, FAILED if timed out, ABORTED if aborted
         """
-        self.logger.error(f"NUM={self._num_blocking_results}")
         ticks = int(timeout / 0.01)  # 10 ms resolution
-        self.logger.error(f"Num ticks @ start={ticks}")
         while self._num_blocking_results:
             if task_abort_event and task_abort_event.is_set():
-                self.logger.error("1. ABORTED")
                 return TaskStatus.ABORTED
             sleep(0.01)
             ticks -= 1
-
             if ticks <= 0:
                 self.logger.error(
-                    f"{self._num_blocking_results} blocking results remain."
+                    f"{self._num_blocking_results} blocking result(s) remain after {timeout}s."
                 )
                 return TaskStatus.FAILED
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")

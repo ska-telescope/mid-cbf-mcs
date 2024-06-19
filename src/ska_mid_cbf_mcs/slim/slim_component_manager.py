@@ -527,7 +527,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"SlimLink ConnectTxRx was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
+                    message = f"Nested LRC SlimLink.ConnectTxRx() was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
                     self.logger.error(message)
                     self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
@@ -539,11 +539,11 @@ class SlimComponentManager(CbfComponentManager):
             # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"ConnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"Nested LRC SlimLink.ConnectTxRx() timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
                 )
                 return (
                     ResultCode.FAILED,
-                    self._dp_links[idx].longRunningCommandResult[1],
+                    "Nested LRC SlimLink.ConnectTxRx() timed out",
                 )
 
             # Poll link health every 20 seconds
@@ -559,7 +559,7 @@ class SlimComponentManager(CbfComponentManager):
             raise df
         except IndexError as ie:
             msg = "Not enough Links defined in device properties"
-            self.logger.error(f"msg - {ie}")
+            self.logger.error(f"{msg} - {ie}")
             tango.Except.throw_exception(
                 "IndexError",
                 msg,
@@ -605,7 +605,7 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"SlimLink DisconnectTxRx was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
+                    message = f"Nested LRC SlimLink.DisconnectTxRx() was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
                     self.logger.error(message)
                     self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
@@ -617,11 +617,11 @@ class SlimComponentManager(CbfComponentManager):
             # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"DisconnectTxRx failed: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"Nested LRC SlimLink.DisconnectTxRx() timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
                 )
                 return (
                     ResultCode.FAILED,
-                    self._dp_links[idx].longRunningCommandResult[1],
+                    "Nested LRC SlimLink.DisconnectTxRx() timed out",
                 )
         except tango.DevFailed as df:
             self._update_communication_state(

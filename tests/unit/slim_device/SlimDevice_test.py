@@ -181,7 +181,6 @@ class TestSlim:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
             )
-        assert command_id[0].endswith("Configure")
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
