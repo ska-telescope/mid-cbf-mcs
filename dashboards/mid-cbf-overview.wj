@@ -4,7 +4,7 @@
   "version": "2.10.1",
   "user": "CIPA",
   "insertTime": "2024-06-14T21:13:47.887Z",
-  "updateTime": "2024-06-20T17:02:12.224Z",
+  "updateTime": "2024-06-20T22:21:50.564Z",
   "group": null,
   "groupWriteAccess": false,
   "lastUpdatedBy": "CIPA",
@@ -243,7 +243,7 @@
       "y": 6,
       "canvas": "0",
       "width": 26,
-      "height": 115,
+      "height": 102,
       "type": "LABEL",
       "inputs": {
         "text": "",
@@ -266,7 +266,7 @@
       "y": 7,
       "canvas": "0",
       "width": 24,
-      "height": 7,
+      "height": 5,
       "type": "LABEL",
       "inputs": {
         "text": "Controller",
@@ -289,7 +289,7 @@
       "y": 8,
       "canvas": "0",
       "width": 12,
-      "height": 4,
+      "height": 3,
       "type": "DEVICE_STATUS",
       "inputs": {
         "device": "taranta://mid_csp_cbf/sub_elt/controller",
@@ -314,7 +314,7 @@
       "valid": 1,
       "id": "449",
       "x": 3,
-      "y": 15,
+      "y": 20,
       "canvas": "0",
       "width": 24,
       "height": 28,
@@ -337,7 +337,7 @@
       "valid": 1,
       "id": "450",
       "x": 14,
-      "y": 16,
+      "y": 21,
       "canvas": "0",
       "width": 12,
       "height": 4,
@@ -365,7 +365,7 @@
       "valid": 1,
       "id": "457",
       "x": 4,
-      "y": 21,
+      "y": 26,
       "canvas": "0",
       "width": 22,
       "height": 3,
@@ -2520,7 +2520,7 @@
       "valid": 1,
       "id": "567",
       "x": 4,
-      "y": 27,
+      "y": 32,
       "canvas": "0",
       "width": 22,
       "height": 15,
@@ -2637,37 +2637,9 @@
     },
     {
       "valid": 1,
-      "id": "579",
-      "x": 14,
-      "y": 46,
-      "canvas": "0",
-      "width": 12,
-      "height": 4,
-      "type": "DEVICE_STATUS",
-      "inputs": {
-        "device": "taranta://mid_csp_cbf/sub_elt/subarray_01",
-        "state": {
-          "device": "taranta://null",
-          "attribute": null
-        },
-        "showDeviceName": false,
-        "showTangoDB": false,
-        "showStateString": true,
-        "showStateLED": true,
-        "LEDSize": 1,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "textSize": 1,
-        "widgetCss": "",
-        "linkTo": ""
-      },
-      "order": 83
-    },
-    {
-      "valid": 1,
       "id": "580",
       "x": 3,
-      "y": 45,
+      "y": 50,
       "canvas": "0",
       "width": 24,
       "height": 28,
@@ -2684,13 +2656,13 @@
         "linkTo": "",
         "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
       },
-      "order": 84
+      "order": 83
     },
     {
       "valid": 1,
       "id": "581",
       "x": 14,
-      "y": 46,
+      "y": 51,
       "canvas": "0",
       "width": 12,
       "height": 4,
@@ -2712,13 +2684,13 @@
         "widgetCss": "",
         "linkTo": ""
       },
-      "order": 85
+      "order": 84
     },
     {
       "valid": 1,
       "id": "582",
       "x": 4,
-      "y": 51,
+      "y": 56,
       "canvas": "0",
       "width": 22,
       "height": 3,
@@ -2747,13 +2719,13 @@
         "widgetCss": "",
         "showUnit": true
       },
-      "order": 86
+      "order": 85
     },
     {
       "valid": 1,
       "id": "584",
       "x": 3,
-      "y": 75,
+      "y": 80,
       "canvas": "0",
       "width": 24,
       "height": 28,
@@ -2770,13 +2742,13 @@
         "linkTo": "",
         "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
       },
-      "order": 87
+      "order": 86
     },
     {
       "valid": 1,
       "id": "585",
       "x": 14,
-      "y": 76,
+      "y": 81,
       "canvas": "0",
       "width": 12,
       "height": 4,
@@ -2798,13 +2770,13 @@
         "widgetCss": "",
         "linkTo": ""
       },
-      "order": 88
+      "order": 87
     },
     {
       "valid": 1,
       "id": "586",
       "x": 4,
-      "y": 81,
+      "y": 86,
       "canvas": "0",
       "width": 22,
       "height": 3,
@@ -2833,7 +2805,7 @@
         "widgetCss": "",
         "showUnit": true
       },
-      "order": 89
+      "order": 88
     },
     {
       "valid": 1,
@@ -2842,7 +2814,7 @@
       "y": 10,
       "canvas": "0",
       "width": 8,
-      "height": 23,
+      "height": 9,
       "type": "LED_DISPLAY",
       "inputs": {
         "attribute": {
@@ -2864,7 +2836,7 @@
         "alignValueRight": false,
         "customCss": ""
       },
-      "order": 90
+      "order": 89
     },
     {
       "valid": 1,
@@ -2895,7 +2867,7 @@
         "alignValueRight": false,
         "customCss": ""
       },
-      "order": 91
+      "order": 90
     },
     {
       "valid": 1,
@@ -2926,7 +2898,7 @@
         "alignValueRight": false,
         "customCss": ""
       },
-      "order": 92
+      "order": 91
     },
     {
       "valid": 1,
@@ -2949,7 +2921,7 @@
         "customCss": "text-align: center;\npadding-top:5px",
         "automaticResize": "Disabled"
       },
-      "order": 93
+      "order": 92
     },
     {
       "valid": 1,
@@ -2980,13 +2952,13 @@
         "alignValueRight": false,
         "customCss": ""
       },
-      "order": 94
+      "order": 93
     },
     {
       "valid": 1,
       "id": "593",
       "x": 4,
-      "y": 25,
+      "y": 30,
       "canvas": "0",
       "width": 22,
       "height": 2,
@@ -3003,13 +2975,13 @@
         "linkTo": "",
         "customCss": "text-align:center;"
       },
-      "order": 95
+      "order": 94
     },
     {
       "valid": 1,
       "id": "594",
       "x": 4,
-      "y": 57,
+      "y": 62,
       "canvas": "0",
       "width": 22,
       "height": 15,
@@ -3031,13 +3003,13 @@
         "customCss": "text-align: center;\ndisplay: flex;\nflex-direction: column;\nalign-items: center;",
         "showSpecificIndexValue": ""
       },
-      "order": 96
+      "order": 95
     },
     {
       "valid": 1,
       "id": "595",
       "x": 4,
-      "y": 55,
+      "y": 60,
       "canvas": "0",
       "width": 22,
       "height": 2,
@@ -3054,13 +3026,13 @@
         "linkTo": "",
         "customCss": "text-align:center;"
       },
-      "order": 97
+      "order": 96
     },
     {
       "valid": 1,
       "id": "596",
       "x": 4,
-      "y": 87,
+      "y": 92,
       "canvas": "0",
       "width": 22,
       "height": 15,
@@ -3082,13 +3054,13 @@
         "customCss": "text-align: center;\ndisplay: flex;\nflex-direction: column;\nalign-items: center;",
         "showSpecificIndexValue": ""
       },
-      "order": 98
+      "order": 97
     },
     {
       "valid": 1,
       "id": "597",
       "x": 4,
-      "y": 85,
+      "y": 90,
       "canvas": "0",
       "width": 22,
       "height": 2,
@@ -3105,7 +3077,84 @@
         "linkTo": "",
         "customCss": "text-align:center;"
       },
+      "order": 98
+    },
+    {
+      "valid": 1,
+      "id": "598",
+      "x": 3,
+      "y": 13,
+      "canvas": "0",
+      "width": 24,
+      "height": 6,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Sim Mode",
+        "textColor": "#202027",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 1.2,
+        "linkTo": "",
+        "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
+      },
       "order": 99
+    },
+    {
+      "valid": 1,
+      "id": "599",
+      "x": 21,
+      "y": 13,
+      "canvas": "0",
+      "width": 6,
+      "height": 5,
+      "type": "LED_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid-csp/control/0",
+          "attribute": "simulationmode",
+          "label": "simulationMode"
+        },
+        "relation": "=",
+        "compare": "1",
+        "trueColor": "#3ac73a",
+        "falseColor": "#ff0000",
+        "ledSize": 2,
+        "textSize": 1,
+        "showAttributeValue": false,
+        "showDeviceName": false,
+        "showTangoDB": false,
+        "showAttribute": "None",
+        "alignTextCenter": true,
+        "alignValueRight": false,
+        "customCss": "padding-top:5px;"
+      },
+      "order": 100
+    },
+    {
+      "valid": 1,
+      "id": "600",
+      "x": 4,
+      "y": 16,
+      "canvas": "0",
+      "width": 17,
+      "height": 2,
+      "type": "LABEL",
+      "inputs": {
+        "text": "If on, only LRU 1 will turn on",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 0.75,
+        "linkTo": "",
+        "customCss": "border: 0px;"
+      },
+      "order": 101
     }
   ],
   "variables": [
