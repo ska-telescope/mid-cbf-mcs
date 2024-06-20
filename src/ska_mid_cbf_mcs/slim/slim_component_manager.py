@@ -78,8 +78,6 @@ class SlimComponentManager(CbfComponentManager):
             self.logger.info("Already communicating.")
             return
 
-        super().start_communicating()
-
         self._dp_links = []
         self.logger.debug(f"Link FQDNs: {self._link_fqdns}")
         if self._link_fqdns is None:
@@ -119,6 +117,7 @@ class SlimComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {self._event_ids_count}"
         )
 
+        super().start_communicating()
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
@@ -536,10 +535,9 @@ class SlimComponentManager(CbfComponentManager):
                 timeout=10.0, task_abort_event=task_abort_event
             )
 
-            # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"Nested LRC SlimLink.ConnectTxRx() timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
                 )
                 return (
                     ResultCode.FAILED,
@@ -614,10 +612,9 @@ class SlimComponentManager(CbfComponentManager):
                 timeout=10.0, task_abort_event=task_abort_event
             )
 
-            # TODO: Improve information density in message.
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"Nested LRC SlimLink.DisconnectTxRx() timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
                 )
                 return (
                     ResultCode.FAILED,
