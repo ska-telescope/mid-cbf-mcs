@@ -14,11 +14,13 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 # tango imports
 from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import (
+    FastCommand,
+    ResultCode,
+    SubmittedSlowCommand,
+)
 from ska_tango_base.control_model import (
     HealthState,
     PowerState,
@@ -27,7 +29,6 @@ from ska_tango_base.control_model import (
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
@@ -72,7 +73,7 @@ class Slim(CbfDevice):
         label="Link FQDNs",
         doc="the Tango device FQDN of the active links.",
     )
-    def linkFQDNs(self: Slim) -> List[str]:
+    def linkFQDNs(self: Slim) -> list[str]:
         """
         Returns the Tango device FQDN of the active links.
 
@@ -86,7 +87,7 @@ class Slim(CbfDevice):
         label="Link Names",
         doc="Returns the names of the active links.",
     )
-    def linkNames(self: Slim) -> List[str]:
+    def linkNames(self: Slim) -> list[str]:
         """
         Returns the names of the active links.
 
@@ -100,7 +101,7 @@ class Slim(CbfDevice):
         label="Mesh health summary",
         doc="Returns a list with the health state of each link. True if OK. False if the link is in a bad state.",
     )
-    def healthSummary(self: Slim) -> List[HealthState]:
+    def healthSummary(self: Slim) -> list[HealthState]:
         """
         Returns a list with the health state of each link.
 
@@ -114,13 +115,33 @@ class Slim(CbfDevice):
         label="Bit error rate",
         doc="Returns the bit-error rate of each link in a list",
     )
-    def bitErrorRate(self: Slim) -> List[float]:
+    def bitErrorRate(self: Slim) -> list[float]:
         """
         Returns the bit-error rate of each link in a list.
 
         :return: the bit-error rate as a list of floats.
         """
         return self.component_manager.get_bit_error_rate()
+
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: Slim) -> SimulationMode:
+        """
+        Read the Simulation Mode of the device.
+
+        :return: Simulation Mode of the device.
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: Slim, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
 
     # ---------------
     # General methods
@@ -163,6 +184,14 @@ class Slim(CbfDevice):
             ),
         )
 
+        self.register_command_object(
+            "SlimTest",
+            self.SlimTestCommand(
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
+        )
+
     # --------
     # Commands
     # --------
@@ -175,11 +204,6 @@ class Slim(CbfDevice):
         :rtype: SlimComponentManager
         """
         self.logger.debug("Entering create_component_manager()")
-
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-
-        # Simulation mode default true
         return SlimComponentManager(
             link_fqdns=self.Links,
             logger=self.logger,
@@ -207,6 +231,49 @@ class Slim(CbfDevice):
 
             return (result_code, message)
 
+    class SlimTestCommand(FastCommand):
+        """
+        A command to test the mesh of SLIM Links.
+        """
+
+        def __init__(
+            self: Slim.SlimTestCommand,
+            *args: any,
+            component_manager: SlimComponentManager,
+            **kwargs: any,
+        ) -> None:
+            self.component_manager = component_manager
+            super().__init__(*args, **kwargs)
+
+        def is_allowed(self: Slim.SlimTestCommand) -> bool:
+            if self.component_manager.power_state == PowerState.ON:
+                if self.component_manager.mesh_configured:
+                    return True
+                else:
+                    self.logger.error(
+                        "SLIM must be configured before SlimTest can be called"
+                    )
+                    return False
+            return False
+
+        def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
+            """
+            SLIM Test Command. Checks the BER and health status of the mesh's configured links.
+
+            :return: A tuple containing a return code and a string
+                message contaiing a report on the health of the Mesh or error message
+                if exception is caught.
+            :rtype: (ResultCode, str)
+            """
+            if self.is_allowed():
+                result_code, message = self.component_manager.slim_test()
+                return (result_code, message)
+            else:
+                return (
+                    ResultCode.REJECTED,
+                    "Device is offline. Failed to issue SlimTest command.",
+                )
+
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -232,36 +299,21 @@ class Slim(CbfDevice):
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    def SlimTest(self: Slim) -> None:
+        handler = self.get_command_object("SlimTest")
+        return_code, message = handler()
+        return [[return_code], [message]]
+
     # ---------
     # Callbacks
     # ---------
 
     # None at this time...
     # We currently rely on the SKABaseDevice implemented callbacks.
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: Slim) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: Slim, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
 
 
 # ----------

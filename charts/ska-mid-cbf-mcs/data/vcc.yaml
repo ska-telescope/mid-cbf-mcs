@@ -1,8 +1,8 @@
 name: vcc
 function: coarse-channelisation
 domain: sensing
-command: "Vcc"
-instances: ["vcc-001", "vcc-002", "vcc-003", "vcc-004", "vcc-005", "vcc-006", "vcc-007", "vcc-008"]
+command: "VccMulti"
+instances: ["vcc"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "Vcc"
   instances:
-  - name: "vcc-001"
+  - name: "vcc"
     classes:
     - name: "Vcc"
       devices:
@@ -47,11 +47,6 @@ server:
           - name: "DeviceID"
             values:
             - "1"
-
-  - name: "vcc-002"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/002"
         properties:
           - name: "TalonLRUAddress"
@@ -75,11 +70,6 @@ server:
           - name: "DeviceID"
             values:
             - "2"
-
-  - name: "vcc-003"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/003"
         properties:
           - name: "TalonLRUAddress"
@@ -103,11 +93,6 @@ server:
           - name: "DeviceID"
             values:
             - "3"
-
-  - name: "vcc-004"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/004"
         properties:
           - name: "TalonLRUAddress"
@@ -131,11 +116,6 @@ server:
           - name: "DeviceID"
             values:
             - "4"
-
-  - name: "vcc-005"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/005"
         properties:
           - name: "TalonLRUAddress"
@@ -159,11 +139,6 @@ server:
           - name: "DeviceID"
             values:
             - "5"
-
-  - name: "vcc-006"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/006"
         properties:
           - name: "TalonLRUAddress"
@@ -187,11 +162,6 @@ server:
           - name: "DeviceID"
             values:
             - "6"
-
-  - name: "vcc-007"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/007"
         properties:
           - name: "TalonLRUAddress"
@@ -215,11 +185,6 @@ server:
           - name: "DeviceID"
             values:
             - "7"
-
-  - name: "vcc-008"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/008"
         properties:
           - name: "TalonLRUAddress"
@@ -243,7 +208,24 @@ server:
           - name: "DeviceID"
             values:
             - "8"
-
+    - name: "VccSearchWindow"
+      devices:
+      - name: "mid_csp_cbf/vcc_sw1/001"
+      - name: "mid_csp_cbf/vcc_sw2/001"
+      - name: "mid_csp_cbf/vcc_sw1/002"
+      - name: "mid_csp_cbf/vcc_sw2/002"
+      - name: "mid_csp_cbf/vcc_sw1/003"
+      - name: "mid_csp_cbf/vcc_sw2/003"
+      - name: "mid_csp_cbf/vcc_sw1/004"
+      - name: "mid_csp_cbf/vcc_sw2/004"
+      - name: "mid_csp_cbf/vcc_sw1/005"
+      - name: "mid_csp_cbf/vcc_sw2/005"
+      - name: "mid_csp_cbf/vcc_sw1/006"
+      - name: "mid_csp_cbf/vcc_sw2/006"
+      - name: "mid_csp_cbf/vcc_sw1/007"
+      - name: "mid_csp_cbf/vcc_sw2/007"
+      - name: "mid_csp_cbf/vcc_sw1/008"
+      - name: "mid_csp_cbf/vcc_sw2/008"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

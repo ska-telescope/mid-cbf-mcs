@@ -20,11 +20,11 @@ from unittest.mock import Mock
 import pytest
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_mid_cbf_mcs.testing import context
 
 CONST_WAIT_TIME = 2
 
@@ -41,8 +41,8 @@ class TestTalonLRU:
     def talon_lru_test_context(
         self: TestTalonLRU,
         initial_mocks: dict[str, Mock],
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_class=TalonLRU,
             device_name="mid_csp_cbf/talon_lru/001",

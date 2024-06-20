@@ -2,7 +2,7 @@ name: powerswitch
 function: power-switch
 domain: mid-csp-cbf
 command: "PowerSwitch"
-instances: ["powerswitch-001", "powerswitch-002", "powerswitch-003", "powerswitch-004"]
+instances: ["pdu"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "PowerSwitch"
   instances:
-  - name: "powerswitch-001"
+  - name: "pdu"
     classes:
     - name: "PowerSwitch"
       devices:
@@ -42,10 +42,6 @@ server:
             values:
             - "simulationMode"
             - "90000"
-  - name: "powerswitch-002"
-    classes:
-    - name: "PowerSwitch"
-      devices:
       - name: "mid_csp_cbf/power_switch/002"
         properties:
           - name: "PowerSwitchModel"
@@ -64,10 +60,6 @@ server:
             values:
             - "simulationMode"
             - "90000"
-  - name: "powerswitch-003"
-    classes:
-    - name: "PowerSwitch"
-      devices:
       - name: "mid_csp_cbf/power_switch/003"
         properties:
           - name: "PowerSwitchModel"
@@ -86,10 +78,6 @@ server:
             values:
             - "simulationMode"
             - "90000"
-  - name: "powerswitch-004"
-    classes:
-    - name: "PowerSwitch"
-      devices:
       - name: "mid_csp_cbf/power_switch/004"
         properties:
           - name: "PowerSwitchModel"

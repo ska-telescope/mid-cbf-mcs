@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import threading
 from time import sleep
-from typing import Any, Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import tango
 from ska_control_model import (
@@ -23,6 +23,7 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -59,13 +60,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def __init__(
         self: PowerSwitchComponentManager,
-        *args: Any,
+        *args: any,
         model: str,
         ip: str,
         login: str,
         password: str,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
@@ -112,15 +113,23 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :return: whether the power switch is communicating
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.is_communicating
-        else:
-            return self.power_switch_driver.is_communicating
+        if super().is_communicating:
+            if self.simulation_mode:
+                return self.power_switch_simulator.is_communicating
+            else:
+                return self.power_switch_driver.is_communicating
+        return False
 
     def start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
+        self.logger.debug("Entering PowerSwitch.start_communicating")
+
+        if self.is_communicating:
+            self.logger.info("Already communicating.")
+            return
+
         if self.simulation_mode:
             outlets = self.power_switch_simulator.outlets
         else:
@@ -245,12 +254,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
-    def is_turn_on_outlet_allowed(self) -> bool:
-        self.logger.debug("Checking if TurnOnOutlet is allowed.")
-        return (
-            self.communication_state == CommunicationStatus.ESTABLISHED
-        ) and self.is_communicating
-
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
         outlet: str,
@@ -311,11 +314,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOnOutlet completed OK"),
         )
 
+    @check_communicating
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
         Turn on the PDU outlet specified by argin.
@@ -330,15 +334,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_on_outlet,
             args=[argin],
-            is_cmd_allowed=self.is_turn_on_outlet_allowed,
             task_callback=task_callback,
         )
-
-    def is_turn_off_outlet_allowed(self) -> bool:
-        self.logger.debug("Checking if TurnOffOutlet is allowed.")
-        return (
-            self.communication_state == CommunicationStatus.ESTABLISHED
-        ) and self.is_communicating
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -346,7 +343,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[threading.Event] = None,
         **kwargs,
-    ) -> Tuple[ResultCode, str]:
+    ) -> tuple[ResultCode, str]:
         """
         Tell the power switch to turn off a specific outlet.
 
@@ -401,11 +398,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOffOutlet completed OK"),
         )
 
+    @check_communicating
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
         Turn off the PDU outlet specified by argin.
@@ -420,6 +418,5 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_off_outlet,
             args=[argin],
-            is_cmd_allowed=self.is_turn_off_outlet_allowed,
             task_callback=task_callback,
         )
