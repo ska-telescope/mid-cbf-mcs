@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
-
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
@@ -22,16 +20,10 @@ from ska_tango_base.commands import (
 )
 
 # Additional import
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    PowerState,
-    SimulationMode,
-)
+from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
@@ -62,10 +54,7 @@ class SlimLink(CbfDevice):
         :return: a component manager for this device
         :rtype: SlimLinkComponentManager
         """
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerState] = None
-        self._health_state = HealthState.UNKNOWN
-
+        self.logger.debug("Entering create_component_manager()")
         return SlimLinkComponentManager(
             logger=self.logger,
             health_state_callback=self._update_health_state,
@@ -208,7 +197,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.bit_error_rate
 
     @attribute(dtype=[int], max_dim_x=9)
-    def read_counters(self: SlimLink) -> list[int]:
+    def counters(self: SlimLink) -> list[int]:
         """
         Read the counters attribute.
 
@@ -227,6 +216,41 @@ class SlimLink(CbfDevice):
         :rtype: HealthState
         """
         return self._health_state
+
+    @attribute(dtype=[bool])
+    def rx_debug_alignment_and_lock_status(self: SlimLink) -> list[bool]:
+        """
+        Alignment and lock status rollup attribute for debug
+
+        [0]: 66b block alignment lost. Read '1' = alignment lost. Write '1' to clear.
+        [1]: 66b block aligned. Read '1' = aligned. Read only.
+        [2]: Clock data recovery lock lost. Read '1' = CDR lock lost. Write '1' to clear.
+        [3]: Clock data recovery locked. Read '1' = CDR locked. Read only.
+
+        :return Alignment and lock status rollup attribute of the Rx Device
+        :rtype list[bool]
+        """
+        return self.component_manager.rx_debug_alignment_and_lock_status
+
+    @attribute(dtype=float)
+    def rx_link_occupancy(self: SlimLink) -> float:
+        """
+        Read the Link Occupancy of the Rx Device
+
+        :return: The Rx Link Occupancy as a percentage (0-1)
+        :rtype: float
+        """
+        return self.component_manager.rx_link_occupancy
+
+    @attribute(dtype=float)
+    def tx_link_occupancy(self: SlimLink) -> float:
+        """
+        Read the Link Occupancy of the Tx Device
+
+        :return: The Tx Link Occupancy as a percentage (0-1)
+        :rtype: float
+        """
+        return self.component_manager.tx_link_occupancy
 
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: SlimLink) -> SimulationMode:
@@ -280,10 +304,10 @@ class SlimLink(CbfDevice):
 
         def __init__(
             self: SlimLink.VerifyConnectionCommand,
-            *args: Any,
+            *args: any,
             device: SlimLink,
             component_manager: SlimLinkComponentManager,
-            **kwargs: Any,
+            **kwargs: any,
         ) -> None:
             self.device = device
             self.component_manager = component_manager
@@ -296,7 +320,7 @@ class SlimLink(CbfDevice):
 
         def do(
             self: SlimLink.VerifyConnectionCommand,
-        ) -> Tuple[ResultCode, str]:
+        ) -> tuple[ResultCode, str]:
             """
             Implement VerifyConnection command functionality.
 
@@ -330,10 +354,10 @@ class SlimLink(CbfDevice):
 
         def __init__(
             self: SlimLink.ClearCountersCommand,
-            *args: Any,
+            *args: any,
             device: SlimLink,
             component_manager: SlimLinkComponentManager,
-            **kwargs: Any,
+            **kwargs: any,
         ) -> None:
             self.device = device
             self.component_manager = component_manager
@@ -344,7 +368,7 @@ class SlimLink(CbfDevice):
                 return True
             return False
 
-        def do(self: SlimLink.ClearCountersCommand) -> Tuple[ResultCode, str]:
+        def do(self: SlimLink.ClearCountersCommand) -> tuple[ResultCode, str]:
             """
             Implement ClearCounters command functionality.
 

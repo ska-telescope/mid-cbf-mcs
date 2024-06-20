@@ -20,11 +20,11 @@ from unittest.mock import Mock
 import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevState
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
-from ska_mid_cbf_mcs.testing import context
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 # To prevent tests hanging during gc.
@@ -49,8 +49,8 @@ class TestTalonBoard:
         request: pytest.FixtureRequest,
         monkeypatch: pytest.MonkeyPatch,
         initial_mocks: dict[str, Mock],
-    ) -> Iterator[context.TTCMExt.TCExt]:
-        harness = context.TTCMExt()
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        harness = context.ThreadedTestTangoContextManager()
 
         def mock_ping(self, **kwargs: Any) -> bool:
             """
@@ -250,6 +250,87 @@ class TestTalonBoard:
             (
                 f"{command_id[0]}",
                 '[0, "On completed OK"]',
+            )
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_ping_fault": False,
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
+    def test_On_not_allowed(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the On() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        with pytest.raises(
+            DevFailed, match="Communication with component is not established"
+        ):
+            device_under_test.On()
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "test_context",
+        [
+            {
+                "sim_ping_fault": False,
+                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
+            },
+        ],
+        indirect=True,
+    )
+    def test_On_already_on(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the On() command
+
+        :param device_under_test: fixture that provides a
+        :py:class:`tango.DeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        self.test_StartupState(device_under_test)
+
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '[0, "On completed OK"]',
+            )
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '"Command not allowed"',
             )
         )
 

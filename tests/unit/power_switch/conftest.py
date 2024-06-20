@@ -10,11 +10,11 @@
 from __future__ import annotations
 
 import pytest
-from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 # Tango imports
-from ska_mid_cbf_mcs.testing import context
+from ska_tango_testing import context
+from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ... import test_utils
 

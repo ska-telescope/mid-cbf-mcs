@@ -22,6 +22,16 @@ ska-tango-base:
   tangodb:
     use_pv: false
 
+ska-mid-cbf-engineering-console:
+  enabled: true
+  # Uncomment the section below to use custom Engineering Console image
+  # engineeringconsole:
+  #   image:
+  #     registry: registry.gitlab.com/ska-telescope/ska-mid-cbf-engineering-console
+  #     image: ska-mid-cbf-engineering-console
+  #     tag: <dev tag from EC pipeline>
+  #     pullPolicy: IfNotPresent
+
 ska-taranta:
   enabled: false
 

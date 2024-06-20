@@ -89,7 +89,6 @@ class Vcc(CbfObsDevice):
         memorized=True,
         hw_memorized=True,
         doc="Subarray membership",
-        abs_change="1",
     )
     def subarrayMembership(self: Vcc) -> int:
         """
