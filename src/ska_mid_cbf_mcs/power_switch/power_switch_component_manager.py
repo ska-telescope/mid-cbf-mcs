@@ -23,7 +23,7 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -40,8 +40,6 @@ from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
 )
 
 __all__ = ["PowerSwitchComponentManager"]
-
-# Strings hard modified for sw switch driver
 
 
 class PowerSwitchComponentManager(CbfComponentManager):
@@ -382,8 +380,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     )
                     return
             except AssertionError as e:
-                self.logger.info("Assertion error")
-                self.logger.error(e)
+                self.logger.error(f"Assertion error: {e}")
                 task_callback(
                     exception=e,
                     status=TaskStatus.FAILED,

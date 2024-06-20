@@ -253,7 +253,7 @@ class TestPowerSwitch:
         # Check that the device is communicating
         assert device_under_test.isCommunicating
 
-        # Check that numOutlets is 8
+        # Check that numOutlets is the same as the driver
         assert device_under_test.numOutlets == Const.POWER_SWITCH_OUTLETS
 
     @pytest.mark.parametrize(
