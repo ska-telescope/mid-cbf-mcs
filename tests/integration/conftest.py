@@ -130,8 +130,6 @@ def init_proxies_fixture():
             # fspSubarray[function mode (str)][subarray id (int)][fsp id (int)]
             self.fspSubarray = {
                 "CORR": {1: [None]},
-                "PSS-BF": {1: [None]},
-                "PST-BF": {1: [None]},
             }
 
             for proxy in [
@@ -141,22 +139,6 @@ def init_proxies_fixture():
                 for j in range(1, self.num_fsp + 1)
             ]:
                 self.fspSubarray["CORR"][1].append(proxy)
-
-            for proxy in [
-                context.DeviceProxy(
-                    device_name=f"mid_csp_cbf/fspPssSubarray/{j:02}_01",
-                )
-                for j in range(1, self.num_fsp + 1)
-            ]:
-                self.fspSubarray["PSS-BF"][1].append(proxy)
-
-            for proxy in [
-                context.DeviceProxy(
-                    device_name=f"mid_csp_cbf/fspPstSubarray/{j:02}_01",
-                )
-                for j in range(1, self.num_fsp + 1)
-            ]:
-                self.fspSubarray["PST-BF"][1].append(proxy)
 
             # Vcc
             # index == vccID
@@ -168,19 +150,6 @@ def init_proxies_fixture():
                 for i in range(1, self.num_vcc + 1)
             ]:
                 self.vcc.append(proxy)
-
-            # TODO: CIP-1470 removed VCC SW
-            # self.vccSw = [None]
-            # for i in range(1, self.num_vcc + 1):
-            #     sw = [None]
-            #     for j in range(1, 3):  # 2 search windows
-            #         sw.append(
-            #             CbfDeviceProxy(
-            #                 fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
-            #                 logger=logging.getLogger(),
-            #             )
-            #         )
-            #     self.vccSw.append(sw)
 
             # Talon LRU
             self.talon_lru = []
