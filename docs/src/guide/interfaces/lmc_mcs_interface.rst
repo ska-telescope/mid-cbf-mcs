@@ -37,7 +37,7 @@ CbfController Tango Commands
 | On           | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
 +--------------+---------------+--------------------+--------------------------------------------------------+
 
-\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 CbfSubarray Tango Commands
 ----------------------------
