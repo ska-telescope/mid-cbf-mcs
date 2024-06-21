@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import cast
 
 from ska_control_model import ResultCode, SimulationMode
-from ska_tango_base.base.base_component_manager import BaseComponentManager
+from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
