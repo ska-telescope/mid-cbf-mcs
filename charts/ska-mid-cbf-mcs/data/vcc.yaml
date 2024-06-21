@@ -1,7 +1,7 @@
 name: vcc
 function: coarse-channelisation
 domain: sensing
-command: "Vcc"
+command: "VccMulti"
 instances: ["vcc"]
 depends_on:
   - device: sys/database/2
@@ -18,7 +18,7 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "Vcc"
+  name: "VccMulti"
   instances:
   - name: "vcc"
     classes:
