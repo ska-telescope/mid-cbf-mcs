@@ -44,7 +44,7 @@ def device_under_test_fixture(
 
 
 @pytest.fixture(name="change_event_callbacks")
-def lru_change_event_callbacks(
+def controller_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
@@ -52,7 +52,7 @@ def lru_change_event_callbacks(
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list, timeout=35.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks

@@ -526,9 +526,8 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC SlimLink.ConnectTxRx() was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
+                    message = f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     self.logger.error(message)
-                    self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
 
             lrc_status = self._wait_for_blocking_results(
@@ -537,7 +536,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
@@ -603,9 +602,8 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC SlimLink.DisconnectTxRx() was rejected: {self._dp_links[idx].txDeviceName}->{self._dp_links[idx].rxDeviceName}"
+                    message = f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     self.logger.error(message)
-                    self._update_component_state(fault=True)
                     return ResultCode.FAILED, message
 
             lrc_status = self._wait_for_blocking_results(
@@ -614,7 +612,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} timed out: {self._dp_links[idx].longRunningCommandResult[1]}"
+                    f"One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
