@@ -16,7 +16,6 @@ ska-mid-cbf-mcs integration tests.
 from __future__ import absolute_import, annotations
 
 import json
-import logging
 
 # Path
 import os
@@ -25,11 +24,12 @@ import time
 import pytest
 
 # SKA imports
-from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DevState
+from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_testing import context
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+
 
 def load_data(name: str) -> dict[any, any]:
     """
@@ -81,10 +81,10 @@ def init_proxies_fixture():
             sys_param = load_data("sys_param_4_boards")
             self.dish_utils = DISHUtils(sys_param)
 
-            # # TmCspSubarrayLeafNodeTest
-            # self.tm = context.DeviceProxy(
-            #     device_name="ska_mid/tm_leaf_node/csp_subarray_01",
-            # )
+            # TmCspSubarrayLeafNodeTest
+            self.tm = context.DeviceProxy(
+                device_name="ska_mid/tm_leaf_node/csp_subarray_01",
+            )
 
             # CbfController
             self.controller = context.DeviceProxy(
@@ -340,4 +340,3 @@ def debug_device_is_on() -> bool:
         # Increase the timeout in order to allow  time for debugging
         timeout_millis = 500000  # noqa: F841
     return debug_device_is_on
-
