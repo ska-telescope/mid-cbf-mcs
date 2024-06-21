@@ -104,16 +104,16 @@ def init_proxies_fixture():
             self.num_vcc = int(self.max_capabilities["VCC"])
 
             # CbfSubarray
-            self.subarray = [None]
-            for proxy in [
-                context.DeviceProxy(
-                    device_name=f"mid_csp_cbf/sub_elt/subarray_{i:02}",
-                )
-                for i in range(1, self.num_sub + 1)
-            ]:
-                proxy.set_timeout_millis(timeout_millis)
-                self.subarray.append(proxy)
-                proxy.loggingLevel = LoggingLevel.DEBUG
+            # self.subarray = [None]
+            # for proxy in [
+            #     context.DeviceProxy(
+            #         device_name=f"mid_csp_cbf/sub_elt/subarray_{i:02}",
+            #     )
+            #     for i in range(1, self.num_sub + 1)
+            # ]:
+            #     proxy.set_timeout_millis(timeout_millis)
+            #     self.subarray.append(proxy)
+            #     proxy.loggingLevel = LoggingLevel.DEBUG
 
             # Fsp
             # index == fspID
