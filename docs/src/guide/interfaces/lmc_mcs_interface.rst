@@ -102,7 +102,7 @@ CbfSubarray Tango Commands
 | Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                                  |
 +----------------------+---------------+--------------------+-------------------------------------------------+
    
-\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 
 
