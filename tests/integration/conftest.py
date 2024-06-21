@@ -82,9 +82,9 @@ def init_proxies_fixture():
             self.dish_utils = DISHUtils(sys_param)
 
             # TmCspSubarrayLeafNodeTest
-            self.tm = context.DeviceProxy(
-                device_name="ska_mid/tm_leaf_node/csp_subarray_01",
-            )
+            # self.tm = context.DeviceProxy(
+            #     device_name="ska_mid/tm_leaf_node/csp_subarray_01",
+            # )
 
             # CbfController
             self.controller = context.DeviceProxy(
