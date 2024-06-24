@@ -1,11 +1,11 @@
 """
 The Visibility Transport class controls the HPS device servers responsible for
-routing the visibilties from FSPs to SDP. 
+routing the visibilties from FSPs to SDP.
 
-It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1, 
-supporting up to 8 boards. 
+It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
+supporting up to 8 boards.
 """
-from tango import DevFailed, DeviceProxy
+from tango import DeviceProxy
 from tango.Except import throw_exception
 
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
