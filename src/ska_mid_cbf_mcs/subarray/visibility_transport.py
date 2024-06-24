@@ -5,8 +5,7 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
-from tango import DeviceProxy
-from tango.Except import throw_exception
+from tango import DeviceProxy, Except
 
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 
@@ -188,7 +187,7 @@ class VisibilityTransport:
                 rx0 = rx
             else:
                 if rx != rx0:
-                    throw_exception(
+                    Except.throw_exception(
                         "Visibility_Transport",
                         "Only one board can be used to output visibilities",
                         "_get_vis_output_board()",
