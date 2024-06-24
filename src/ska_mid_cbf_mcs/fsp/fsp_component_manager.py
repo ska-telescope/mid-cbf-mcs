@@ -451,22 +451,6 @@ class FspComponentManager(CbfComponentManager):
 
         return (result_code, message)
 
-    def _issue_command_all_subarray_group_proxies(
-        self: FspComponentManager, command_name: str
-    ):
-        """
-        Issue command to all function mode subarray devices, independent of
-        subarray membership.
-        """
-        # TODO AA0.5+: PSS, PST, VLBI
-        group_fsp_corr_subarray = self._get_proxy(
-            "FSP Subarray Corr", is_group=True
-        )
-        for fqdn in self._fsp_corr_subarray_fqdns_all:
-            group_fsp_corr_subarray.add(fqdn)
-
-        group_fsp_corr_subarray.command_inout(command_name)
-
     def is_on_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP On is allowed.")
         if self.power_state not in [
@@ -499,10 +483,6 @@ class FspComponentManager(CbfComponentManager):
             return
 
         self._get_capability_proxies()
-
-        # TODO: in the future, DsFspController to implement on(), off()
-        # commands. Then invoke here the DsFspController on() command.
-        self._issue_command_all_subarray_group_proxies("On")
 
         # Update state callback
         self._update_component_state(power=PowerState.ON)
@@ -564,13 +544,6 @@ class FspComponentManager(CbfComponentManager):
             "Off", task_callback, task_abort_event
         ):
             return
-
-        # TODO: in the future, DsFspController to implement on(), off()
-        # commands. Then invoke here the DsFspController off() command.
-        self._issue_command_all_subarray_group_proxies("Off")
-
-        for subarray_ID in self.subarray_membership:
-            self.remove_subarray_membership(subarray_ID)
 
         # Update state callback
         self._update_component_state(power=PowerState.OFF)

@@ -92,9 +92,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.vcc_ids = set()
         self.frequency_band = 0
 
-        # store list of fsp configurations being used for each function mode
-        self._corr_config = []
-
         self._last_received_delay_model = ""
 
         self._delay_model_lock = Lock()
@@ -103,9 +100,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._events_telstate = {}
 
         # for easy device-reference
-        self.rfi_flagging_mask = {}
-        self.frequency_band_offset_stream1 = 0
-        self.frequency_band_offset_stream2 = 0
+        self._rfi_flagging_mask = {}
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
         # device proxy for easy reference to CBF controller
@@ -851,51 +848,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 failure = True
         return failure
 
-    def _deconfigure(
-        self: CbfSubarrayComponentManager,
-    ) -> bool:
-        """
-        Completely deconfigure the subarray; all initialization performed by the
-        ConfigureScan command must be 'undone' here.
-
-        :return: True if failed to deconfigure, otherwise False
-        """
-        self.logger.info("Deconfiguring subarray...")
-
-        # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
-        # ObsReset and Restart here in the CbfSubarray
-        if len(self._assigned_fsp_proxies) > 0:
-            # change FSP subarray membership
-            for result_code, msg in self._issue_group_command(
-                command_name="RemoveSubarrayMembership",
-                proxies=list(self._assigned_fsp_proxies),
-            ):
-                if result_code == ResultCode.FAILED:
-                    self.logger.error(msg)
-                    return True
-            self._assigned_fsp_proxies = set()
-
-        if len(self._assigned_fsp_corr_proxies) > 0:
-            self._assigned_fsp_corr_proxies = set()
-
-        try:
-            # unsubscribe from TMC events
-            for event_id in list(self._events_telstate.keys()):
-                self._events_telstate[event_id].remove_event(event_id)
-                del self._events_telstate[event_id]
-        except tango.DevFailed as df:
-            self.logger.error(f"Error in unsubscribing from TM events; {df}")
-            return True
-
-        # reset all private data to their initialization values
-        self._corr_config = []
-        self.scan_id = 0
-        self.config_id = ""
-        self.frequency_band = 0
-        self._last_received_delay_model = ""
-
-        return False
-
     def _validate_input(
         self: CbfSubarrayComponentManager, argin: str
     ) -> tuple[bool, str]:
@@ -1088,20 +1040,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # Configure frequency_band_offset_stream1 and 2
         # If not given, use a default value.
         if "frequency_band_offset_stream1" in configuration:
-            self.frequency_band_offset_stream1 = int(
+            self._frequency_band_offset_stream1 = int(
                 configuration["frequency_band_offset_stream1"]
             )
         else:
-            self.frequency_band_offset_stream1 = 0
+            self._frequency_band_offset_stream1 = 0
             self.logger.warning(
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
         if "frequency_band_offset_stream2" in configuration:
-            self.frequency_band_offset_stream2 = int(
+            self._frequency_band_offset_stream2 = int(
                 configuration["frequency_band_offset_stream2"]
             )
         else:
-            self.frequency_band_offset_stream2 = 0
+            self._frequency_band_offset_stream2 = 0
             self.logger.warning(
                 "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
             )
@@ -1109,9 +1061,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # Configure rfi_flagging_mask
         # If not given, use a default value.
         if "rfi_flagging_mask" in configuration:
-            self.rfi_flagging_mask = configuration["rfi_flagging_mask"]
+            self._rfi_flagging_mask = configuration["rfi_flagging_mask"]
         else:
-            self.rfi_flagging_mask = {}
+            self._rfi_flagging_mask = {}
             self.logger.warning(
                 "'rfi_flagging_mask' not specified. Defaulting to none."
             )
@@ -1120,9 +1072,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "config_id": self.config_id,
             "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
-            "frequency_band_offset_stream1": self.frequency_band_offset_stream1,
-            "frequency_band_offset_stream2": self.frequency_band_offset_stream2,
-            "rfi_flagging_mask": self.rfi_flagging_mask,
+            "frequency_band_offset_stream1": self._frequency_band_offset_stream1,
+            "frequency_band_offset_stream2": self._frequency_band_offset_stream2,
+            "rfi_flagging_mask": self._rfi_flagging_mask,
         }
 
         # Add subset of FSP configuration to the VCC configure scan argument
@@ -1147,6 +1099,112 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return vcc_failure
 
+    def _assign_fsp_corr(
+        self: CbfSubarrayComponentManager,
+        fsp_id: int,
+    ) -> bool:
+        """
+        Set FSP function mode and add subarray membership.
+
+        :param fsp_id: ID of FSP to assign
+        :return: True if failed to configure FSP device, False otherwise
+        """
+        self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
+
+        fsp_proxy = self._proxies_fsp[fsp_id - 1]
+        fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
+        try:
+            # first turn on the FSP function mode subarray device
+            fsp_corr_proxy.adminMode = AdminMode.OFFLINE
+            fsp_corr_proxy.simulationMode = self.simulation_mode
+            fsp_corr_proxy.adminMode = AdminMode.ONLINE
+
+            # TODO handle results, LRCs
+            result = fsp_corr_proxy.On()
+            if result[0] == ResultCode.FAILED:
+                self.logger.error(result[1])
+                return True
+
+            # now start assignment of FSP device
+            fsp_proxy.adminMode = AdminMode.OFFLINE
+            fsp_proxy.simulationMode = self.simulation_mode
+            fsp_proxy.adminMode = AdminMode.ONLINE
+
+            # TODO handle results, LRCs
+            result = fsp_proxy.On()
+            if result[0] == ResultCode.FAILED:
+                self.logger.error(result[1])
+                return True
+
+            # only set function mode if FSP is both IDLE and not configured for
+            # another mode
+            current_function_mode = fsp_proxy.functionMode
+            if current_function_mode != FspModes["CORR"].value:
+                if current_function_mode != FspModes.IDLE.value:
+                    self.logger.error(
+                        f"Unable to configure FSP {fsp_id} for function mode CORR, as it is currently configured for function mode {current_function_mode}"
+                    )
+                    return True
+                result = fsp_proxy.SetFunctionMode("CORR")
+                if result[0] == ResultCode.FAILED:
+                    self.logger.error(result[1])
+                    return True
+
+            result = fsp_proxy.AddSubarrayMembership(self.subarray_id)
+            if result[0] == ResultCode.FAILED:
+                self.logger.error(result[1])
+                return True
+        except tango.DevFailed as df:
+            self.logger.error(f"{df}")
+            return True
+
+        self._assigned_fsp_proxies.add(fsp_proxy)
+        self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
+        return False
+
+    def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
+        """
+        Remove subarray membership and return FSP to IDLE state if possible
+
+        :return: True if failed to release FSP device, False otherwise
+        """
+        self.logger.info("Releasing all FSP from subarray...")
+
+        try:
+            # first release assigned FSP
+            for fsp_proxy in self._assigned_fsp_proxies:
+                result = fsp_proxy.RemoveSubarrayMembership(self.subarray_id)
+                if result[0] == ResultCode.FAILED:
+                    self.logger.error(result[1])
+                    return True
+
+                # only set function mode to IDLE if FSP is not in use by another
+                # subarray
+                if len(fsp_proxy.subarrayMembership) == 0:
+                    result = fsp_proxy.SetFunctionMode("IDLE")
+                    if result[0] == ResultCode.FAILED:
+                        self.logger.error(result[1])
+                        return True
+
+                    result = fsp_proxy.Off()
+                    if result[0] == ResultCode.FAILED:
+                        self.logger.error(result[1])
+                        return True
+
+            # now turn off FSP function mode subarray proxies
+            for fsp_corr_proxy in self._assigned_fsp_corr_proxies:
+                result = fsp_corr_proxy.Off()
+                if result[0] == ResultCode.FAILED:
+                    self.logger.error(result[1])
+                    return True
+        except tango.DevFailed as df:
+            self.logger.error(f"{df}")
+            return True
+
+        self._assigned_fsp_proxies = set()
+        self._assigned_fsp_corr_proxies = set()
+        return False
+
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
@@ -1161,16 +1219,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Configuring FSP for scan...")
 
+        # build FSP configuration JSONs, add FSP
         fsp_failure = False
+        corr_config = []
         for config in configuration["fsp"]:
             fsp_config = copy.deepcopy(config)
-            # Configure fsp_id.
-            fsp_id = int(fsp_config["fsp_id"])
-            fsp_proxy = self._proxies_fsp[fsp_id - 1]
-            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
-
-            self._assigned_fsp_proxies.add(fsp_proxy)
-            self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
 
             # Add configID, frequency_band, band_5_tuning, and sub_id to fsp.
             # They are not included in the "fsp" portion of the JSON
@@ -1182,10 +1235,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             fsp_config["band_5_tuning"] = self._stream_tuning
             fsp_config[
                 "frequency_band_offset_stream1"
-            ] = self.frequency_band_offset_stream1
+            ] = self._frequency_band_offset_stream1
             fsp_config[
                 "frequency_band_offset_stream2"
-            ] = self.frequency_band_offset_stream2
+            ] = self._frequency_band_offset_stream2
 
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp_config:
@@ -1230,98 +1283,40 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
 
-                    self._corr_config.append(fsp_config)
+                    corr_config.append(fsp_config)
+
+                    # set function mode and add subarray membership
+                    fsp_failure = self._assign_fsp_corr(
+                        fsp_id=int(fsp_config["fsp_id"])
+                    )
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
                     )
                     fsp_failure = True
 
-        if fsp_failure:
-            return True
-
-        assigned_fsp_group = list(self._assigned_fsp_proxies) + list(
-            self._assigned_fsp_corr_proxies
-        )
-
-        # Set simulation mode of FSPs to subarray sim mode
-        self.logger.info(
-            f"Setting Simulation Mode of FSP {fsp_id} proxies to: {self.simulation_mode} and turning them on."
-        )
-        if not self._write_group_attribute(
-            attr_name="adminMode",
-            value=AdminMode.OFFLINE,
-            proxies=assigned_fsp_group,
-        ):
-            return True
-        if not self._write_group_attribute(
-            attr_name="simulationMode",
-            value=self.simulation_mode,
-            proxies=assigned_fsp_group,
-        ):
-            return True
-        if not self._write_group_attribute(
-            attr_name="adminMode",
-            value=AdminMode.ONLINE,
-            proxies=assigned_fsp_group,
-        ):
-            return True
-
-        for result_code, msg in self._issue_group_command(
-            command_name="On", proxies=list(assigned_fsp_group)
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                fsp_failure = True
-        if fsp_failure:
-            return True
-
-        # Configure functionMode if IDLE
-        # if fsp_proxy.functionMode == FspModes.IDLE.value:
-        #     fsp_proxy.SetFunctionMode(fsp["function_mode"])
-        for result_code, msg in self._issue_group_command(
-            command_name="SetFunctionMode",
-            proxies=list(self._assigned_fsp_proxies),
-            argin=fsp_config["function_mode"],
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                fsp_failure = True
-        if fsp_failure:
-            return True
-
-        # change FSP subarray membership
-        for result_code, msg in self._issue_group_command(
-            command_name="AddSubarrayMembership",
-            proxies=list(self._assigned_fsp_proxies),
-            argin=self.subarray_id,
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                fsp_failure = True
-        if fsp_failure:
+        if fsp_failure or len(corr_config) == 0:
             return True
 
         # Call ConfigureScan for all FSP function mode subarray devices
-        # NOTE:_corr_config is a list of fsp config JSON objects, each
+        # NOTE: corr_config is a list of fsp config JSON objects, each
         #      augmented by a number of vcc-fsp common parameters
-        if len(self._corr_config) != 0:
-            for fsp_config in self._corr_config:
-                try:
-                    # TODO handle fsp corr LRC
-                    self.logger.debug(f"fsp_config: {json.dumps(fsp_config)}")
-                    fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[
-                        int(fsp_config["fsp_id"]) - 1
-                    ]
-                    fsp_corr_proxy.set_timeout_millis(12000)
-                    fsp_corr_proxy.ConfigureScan(json.dumps(fsp_config))
+        for fsp_config in corr_config:
+            try:
+                # TODO handle fsp corr LRC
+                self.logger.debug(f"fsp_config: {json.dumps(fsp_config)}")
+                fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[
+                    int(fsp_config["fsp_id"]) - 1
+                ]
+                fsp_corr_proxy.set_timeout_millis(12000)
+                fsp_corr_proxy.ConfigureScan(json.dumps(fsp_config))
 
-                except tango.DevFailed as df:
-                    self.logger.error(
-                        "Failed to issue ConfigureScan to FSP CORR subarray device "
-                        + f"{fsp_corr_proxy.dev_name()}; {df}"
-                    )
-                    fsp_failure = True
+            except tango.DevFailed as df:
+                self.logger.error(
+                    "Failed to issue ConfigureScan to FSP CORR subarray device "
+                    + f"{fsp_corr_proxy.dev_name()}; {df}"
+                )
+                fsp_failure = True
 
         return fsp_failure
 
@@ -1361,6 +1356,40 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Subscribed to {subscription_point}; event ID: {event_id}"
         )
         self._events_telstate[event_id] = proxy
+        return False
+
+    def _deconfigure(
+        self: CbfSubarrayComponentManager,
+    ) -> bool:
+        """
+        Completely deconfigure the subarray; all initialization performed by the
+        ConfigureScan command must be 'undone' here.
+
+        :return: True if failed to deconfigure, otherwise False
+        """
+        self.logger.info("Deconfiguring subarray...")
+
+        # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
+        # ObsReset and Restart here in the CbfSubarray
+        if len(self._assigned_fsp_proxies) > 0:
+            fsp_failure = self._release_all_fsp()
+            if fsp_failure:
+                return True
+
+        try:
+            # unsubscribe from TMC events
+            for event_id in list(self._events_telstate.keys()):
+                self._events_telstate[event_id].remove_event(event_id)
+                del self._events_telstate[event_id]
+        except tango.DevFailed as df:
+            self.logger.error(f"Error in unsubscribing from TM events; {df}")
+            return True
+
+        self.scan_id = 0
+        self.config_id = ""
+        self.frequency_band = 0
+        self._last_received_delay_model = ""
+
         return False
 
     def _configure_scan(

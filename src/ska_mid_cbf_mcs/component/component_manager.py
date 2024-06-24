@@ -264,7 +264,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxy: proxy target for read_attribute
         :param attr_name: name of attribute to be read
         :param value: attribute value to be written
-        :return: read attribute value
+        :return: True if write succeeded, False otherwise
         """
         try:
             proxy.write_attribute(attr_name, value)
@@ -294,7 +294,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxies: list of device proxies in group; determines ordering of
             return values
         :param max_workers: maximum number of ThreadPoolExecutor workers
-        :return: list of proxy attribute values
+        :return: True if all writes succeeded, False otherwise
         """
         results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
