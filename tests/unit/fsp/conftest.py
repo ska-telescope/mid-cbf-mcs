@@ -64,30 +64,19 @@ def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-
-@pytest.fixture()
 def initial_mocks(
     mock_fsp_corr_subarray_device: unittest.mock.Mock,
-    mock_fsp_corr_subarray_group: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
-    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray_device,
-        "FSP Subarray Corr": mock_fsp_corr_subarray_group,
+        "mid_csp_cbf/fspCorrSubarray/01_02": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarray/01_03": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarray/01_04": mock_fsp_corr_subarray_device,
     }

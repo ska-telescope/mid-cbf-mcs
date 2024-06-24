@@ -67,7 +67,6 @@ class FspComponentManager(CbfComponentManager):
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
 
-        self._group_fsp_corr_subarray = None
         self._proxy_hps_fsp_controller = None
         self._proxy_hps_fsp_corr_controller = None
 
@@ -77,23 +76,18 @@ class FspComponentManager(CbfComponentManager):
         self.delay_model = ""
 
     def _get_proxy(
-        self: FspComponentManager, name: str, is_group: bool
-    ) -> context.DeviceProxy | context.Group | None:
+        self: FspComponentManager, name: str
+    ) -> context.DeviceProxy | None:
         """
         Attempt to get a device proxy of the specified device.
 
         :param name: FQDN of the device or the name of the group proxy to connect to
-        :param is_group: True if the proxy to connect to is a group proxy
-        :return: context.DeviceProxy, context.Group or None if no connection
+        :return: context.DeviceProxy or None if no connection
             was made
         """
         try:
-            if is_group:
-                self.logger.info(f"Creating group proxy connection {name}")
-                proxy = context.Group(name=name)
-            else:
-                self.logger.info(f"Creating device proxy connection to {name}")
-                proxy = context.DeviceProxy(device_name=name)
+            self.logger.info(f"Creating device proxy connection to {name}")
+            proxy = context.DeviceProxy(device_name=name)
             return proxy
         except tango.DevFailed as df:
             for item in df.args:
@@ -115,12 +109,12 @@ class FspComponentManager(CbfComponentManager):
             self.logger.info("Trying to connect to real HPS devices")
             if self._proxy_hps_fsp_controller is None:
                 self._proxy_hps_fsp_controller = self._get_proxy(
-                    self._hps_fsp_controller_fqdn, is_group=False
+                    self._hps_fsp_controller_fqdn
                 )
 
             if self._proxy_hps_fsp_corr_controller is None:
                 self._proxy_hps_fsp_corr_controller = self._get_proxy(
-                    self._hps_fsp_corr_controller_fqdn, is_group=False
+                    self._hps_fsp_corr_controller_fqdn
                 )
         else:
             self.logger.info("Trying to connect to Simulated HPS devices")
@@ -138,10 +132,8 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager,
     ) -> None:
         """Establish connections with the group proxies"""
-        if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = self._get_proxy(
-                "FSP Subarray Corr", is_group=True
-            )
+        self.logger.info(f"Creating group proxy connection FSP Subarray Corr")
+        self._create_group_proxies({"_group_fsp_corr_subarray": self._fsp_corr_subarray_fqdns_all})
         # TODO AA0.5+: PSS, PST, VLBI
 
     def _validate_function_mode(
@@ -305,7 +297,7 @@ class FspComponentManager(CbfComponentManager):
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
                     # remove CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_corr_subarray.remove(fqdn)
+                        self._group_fsp_corr_subarray.remove(self._get_proxy(fqdn))
                         break
                 else:
                     self.logger.error(
@@ -381,7 +373,7 @@ class FspComponentManager(CbfComponentManager):
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
                     # add CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_corr_subarray.add(fqdn)
+                        self._group_fsp_corr_subarray.append(self._get_proxy(fqdn))
                         break
                 else:
                     self.logger.error(
@@ -451,22 +443,6 @@ class FspComponentManager(CbfComponentManager):
 
         return (result_code, message)
 
-    def _issue_command_all_subarray_group_proxies(
-        self: FspComponentManager, command_name: str
-    ):
-        """
-        Issue command to all function mode subarray devices, independent of
-        subarray membership.
-        """
-        # TODO AA0.5+: PSS, PST, VLBI
-        group_fsp_corr_subarray = self._get_proxy(
-            "FSP Subarray Corr", is_group=True
-        )
-        for fqdn in self._fsp_corr_subarray_fqdns_all:
-            group_fsp_corr_subarray.add(fqdn)
-
-        group_fsp_corr_subarray.command_inout(command_name)
-
     def is_on_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP On is allowed.")
         if self.power_state not in [
@@ -502,7 +478,7 @@ class FspComponentManager(CbfComponentManager):
 
         # TODO: in the future, DsFspController to implement on(), off()
         # commands. Then invoke here the DsFspController on() command.
-        self._issue_command_all_subarray_group_proxies("On")
+        self._issue_group_command("On", self._group_fsp_corr_subarray)
 
         # Update state callback
         self._update_component_state(power=PowerState.ON)
@@ -567,7 +543,7 @@ class FspComponentManager(CbfComponentManager):
 
         # TODO: in the future, DsFspController to implement on(), off()
         # commands. Then invoke here the DsFspController off() command.
-        self._issue_command_all_subarray_group_proxies("Off")
+        self._issue_group_command("Off", self._group_fsp_corr_subarray)
 
         for subarray_ID in self.subarray_membership:
             self.remove_subarray_membership(subarray_ID)
