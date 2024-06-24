@@ -125,103 +125,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 )
                 self.logger.warning(log_msg)
 
-    def _validate_zoom_window_tuning(
-        self: FspCorrSubarrayComponentManager, configuration: dict
-    ) -> None:
-        """Validate zoom_window_tuning parameter."""
-        # parse values from configuration
-        actual_bandwidth = int(
-            const.FREQUENCY_SLICE_BW / 2 * int(configuration["zoom_factor"])
-        )
-        frequency_band_offset_stream1 = int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        frequency_band_offset_stream2 = int(
-            configuration["frequency_band_offset_stream2"]
-        )
-        zoom_window_tuning = int(configuration["zoom_window_tuning"])
-
-        # frequency band is not band 5
-        if self.frequency_band in list(range(4)):
-            frequency_band_start = [
-                *map(
-                    lambda j: j[0] * 10**9,
-                    [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE,
-                    ],
-                )
-            ][self.frequency_band] + frequency_band_offset_stream1
-
-            frequency_slice_range = (
-                frequency_band_start
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                frequency_band_start
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            if (
-                frequency_slice_range[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range[1] - actual_bandwidth * 10**6 / 2
-            ):
-                # this is the acceptable range
-                pass
-            else:
-                self.logger.warning(
-                    "'zoom_window_tuning' partially out of observed frequency slice."
-                )
-
-        # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-        else:
-            stream_tuning = configuration["band_5_tuning"]
-
-            frequency_slice_range_1 = (
-                stream_tuning[0] * 10**9
-                + frequency_band_offset_stream1
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                stream_tuning[0] * 10**9
-                + frequency_band_offset_stream1
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            frequency_slice_range_2 = (
-                stream_tuning[1] * 10**9
-                + frequency_band_offset_stream2
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                stream_tuning[1] * 10**9
-                + frequency_band_offset_stream2
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            if (
-                frequency_slice_range_1[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range_1[1] - actual_bandwidth * 10**6 / 2
-            ) or (
-                frequency_slice_range_2[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range_2[1] - actual_bandwidth * 10**6 / 2
-            ):
-                # this is the acceptable range
-                pass
-            else:
-                self.logger.warning(
-                    "'zoom_window_tuning' partially out of observed frequency slice."
-                )
-
     def _build_hps_fsp_config(
         self: FspCorrSubarrayComponentManager, configuration: dict
     ) -> str:
@@ -349,13 +252,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # release previously assigned VCCs and assign newly specified VCCs
         self._deconfigure()
         self._assign_vcc(configuration["corr_vcc_ids"])
-
-        # if zoom_factor is provided, validate zoom_window_tuning
-        if (
-            "zoom_factor" in configuration
-            and int(configuration["zoom_factor"]) != 0
-        ):
-            self._validate_zoom_window_tuning(configuration)
 
         # issue ConfigureScan to HPS FSP Corr controller
         try:

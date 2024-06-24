@@ -104,6 +104,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._events_telstate = {}
 
         # for easy device-reference
+        self.rfi_flagging_mask = {}
         self.frequency_band_offset_stream1 = 0
         self.frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
@@ -290,6 +291,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     ) -> None:
         """
         Reload sys param from input JSON
+
+        :param sys_param_str: sys params JSON string
         """
         self.logger.debug(f"Received sys param: {sys_param_str}")
         self._sys_param_str = sys_param_str
@@ -405,7 +408,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Return Talon board device proxy matching input DISH ID
 
         :param dish_id: the DISH ID
-        :return: proxy to Talon board device
+        :return: proxy to Talon board device, or None if failed to initialize proxy
         """
         for proxy in self._proxies_talon_board_device:
             board_dish_id = proxy.dishID
@@ -480,7 +483,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Add receptors/dishes to subarray.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -579,7 +582,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Submit AddReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -651,7 +654,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Remove receptors/dishes from subarray.
 
         :param argin: The list of DISH (receptor) IDs to be removed
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -758,7 +761,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Submit RemoveReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be removed
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -785,7 +788,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Submit RemoveAllReceptors operation method to task executor queue.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -815,7 +818,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     ) -> bool:
         """
         Issue command to all subarray-assigned resources
-        
+
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
         :return: True if any command failed to be issued, otherwise False
@@ -876,7 +879,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return deconfigure_failure
 
-    def validate_input(
+    def _validate_input(
         self: CbfSubarrayComponentManager, argin: str
     ) -> tuple[bool, str]:
         """
@@ -894,254 +897,27 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
-        except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
-            return (False, msg)
+        except json.JSONDecodeError as je:  # argument not a valid JSON object
+            self.logger.error(
+                f"Scan configuration object is not a valid JSON object; {je}"
+            )
+            return False
 
-        # Validate fsp.
-        for fsp in configuration["fsp"]:
-            try:
+        # Validate full_configuration against the telescope model
+        try:
+            telmodel_validate(
+                version=full_configuration["interface"],
+                config=full_configuration,
+                strictness=2,
+            )
+            self.logger.info("Scan configuration is valid!")
+        except ValueError as ve:
+            self.logger.error(
+                f"ConfigureScan JSON validation against the telescope model schema failed;\n {ve}."
+            )
+            return False
 
-                # TODO - why add these keys to the fsp dict - not good practice!
-                # TODO - create a new dict from a deep copy of the fsp dict.
-                fsp["frequency_band"] = common_configuration["frequency_band"]
-                if "frequency_band_offset_stream1" in configuration:
-                    fsp["frequency_band_offset_stream1"] = configuration[
-                        "frequency_band_offset_stream1"
-                    ]
-                if "frequency_band_offset_stream2" in configuration:
-                    fsp["frequency_band_offset_stream2"] = configuration[
-                        "frequency_band_offset_stream2"
-                    ]
-                if fsp["frequency_band"] in ["5a", "5b"]:
-                    fsp["band_5_tuning"] = common_configuration[
-                        "band_5_tuning"
-                    ]
-
-                # CORR #
-
-                if fsp["function_mode"] == "CORR":
-                    # dishes may not be specified in the
-                    # configuration at all, or the list may be empty
-                    if "receptors" in fsp and len(fsp["receptors"]) > 0:
-                        self.logger.debug(
-                            f"list of receptors: {self.dish_ids}"
-                        )
-                        for dish in fsp["receptors"]:
-                            if dish not in self.dish_ids:
-                                msg = (
-                                    f"Receptor {dish} does not belong to "
-                                    f"subarray {self.subarray_id}."
-                                )
-                                self.logger.error(msg)
-                                return (False, msg)
-                    else:
-                        msg = (
-                            "'receptors' not specified for Fsp CORR config."
-                            "Per ICD all receptors allocated to subarray are used"
-                        )
-                        self.logger.info(msg)
-
-                    frequencyBand = freq_band_dict()[fsp["frequency_band"]][
-                        "band_index"
-                    ]
-
-                    # Validate zoomWindowTuning.
-                    if (
-                        int(fsp["zoom_factor"]) > 0
-                    ):  # zoomWindowTuning is required
-                        if "zoom_window_tuning" in fsp:
-                            if fsp["frequency_band"] not in [
-                                "5a",
-                                "5b",
-                            ]:  # frequency band is not band 5
-                                frequencyBand = [
-                                    "1",
-                                    "2",
-                                    "3",
-                                    "4",
-                                    "5a",
-                                    "5b",
-                                ].index(fsp["frequency_band"])
-                                frequency_band_start = [
-                                    *map(
-                                        lambda j: j[0] * 10**9,
-                                        [
-                                            const.FREQUENCY_BAND_1_RANGE,
-                                            const.FREQUENCY_BAND_2_RANGE,
-                                            const.FREQUENCY_BAND_3_RANGE,
-                                            const.FREQUENCY_BAND_4_RANGE,
-                                        ],
-                                    )
-                                ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream1"
-                                ]
-
-                                frequency_slice_range = (
-                                    frequency_band_start
-                                    + (fsp["frequency_slice_id"] - 1)
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                    frequency_band_start
-                                    + fsp["frequency_slice_id"]
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                )
-
-                                if (
-                                    frequency_slice_range[0]
-                                    <= int(fsp["zoom_window_tuning"]) * 10**3
-                                    <= frequency_slice_range[1]
-                                ):
-                                    pass
-                                else:
-                                    msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                    self.logger.error(msg)
-                                    return (False, msg)
-                            # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                            else:
-                                if common_configuration["band_5_tuning"] == [
-                                    0,
-                                    0,
-                                ]:  # band5Tuning not specified
-                                    pass
-                                else:
-                                    # TODO: these validations of BW range are done many times
-                                    # in many places - use a common function; also may be possible
-                                    # to do them only once (ex. for band5Tuning)
-
-                                    frequency_slice_range_1 = (
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    frequency_slice_range_2 = (
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    if (
-                                        frequency_slice_range_1[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_1[1]
-                                    ) or (
-                                        frequency_slice_range_2[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_2[1]
-                                    ):
-                                        pass
-                                    else:
-                                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                        self.logger.error(msg)
-                                        return (False, msg)
-                        else:
-                            msg = "FSP specified, but 'zoomWindowTuning' not given."
-                            self.logger.error(msg)
-                            return (False, msg)
-
-                    # Validate integrationTime.
-                    if int(fsp["integration_factor"]) in list(
-                        range(
-                            const.MIN_INT_TIME,
-                            10 * const.MIN_INT_TIME + 1,
-                            const.MIN_INT_TIME,
-                        )
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "'integrationTime' must be an integer in the range"
-                            f" [1, 10] multiplied by {const.MIN_INT_TIME}."
-                        )
-                        self.logger.error(msg)
-                        return (False, msg)
-
-                    # Validate fspChannelOffset
-                    try:
-                        if "channel_offset" in fsp:
-                            if int(fsp["channel_offset"]) >= 0:
-                                pass
-                            # TODO has to be a multiple of 14880
-                            else:
-                                msg = "fspChannelOffset must be greater than or equal to zero"
-                                self.logger.error(msg)
-                                return (False, msg)
-                    except (TypeError, ValueError):
-                        msg = "fspChannelOffset must be an integer"
-                        self.logger.error(msg)
-                        return (False, msg)
-
-                    # Validate channelAveragingMap.
-                    if "channel_averaging_map" in fsp:
-                        try:
-                            # validate averaging factor
-                            for i in range(
-                                0, len(fsp["channel_averaging_map"])
-                            ):
-                                # validate channel ID of first channel in group
-                                if (
-                                    int(fsp["channel_averaging_map"][i][0])
-                                    == i
-                                    * const.NUM_FINE_CHANNELS
-                                    / const.NUM_CHANNEL_GROUPS
-                                ):
-                                    pass  # the default value is already correct
-                                else:
-                                    msg = (
-                                        f"'channelAveragingMap'[{i}][0] is not the channel ID of the "
-                                        f"first channel in a group (received {fsp['channel_averaging_map'][i][0]})."
-                                    )
-                                    self.logger.error(msg)
-                                    return (False, msg)
-                        except (
-                            TypeError,
-                            AssertionError,
-                        ):  # dimensions not correct
-                            msg = (
-                                "channel Averaging Map dimensions not correct"
-                            )
-                            self.logger.error(msg)
-                            return (False, msg)
-
-                    # TODO: validate destination addresses: outputHost, outputPort
-
-            except tango.DevFailed:  # exception in ConfigureScan
-                msg = (
-                    "An exception occurred while configuring FSPs:"
-                    f"\n{sys.exc_info()[1].args[0].desc}\n"
-                    "Aborting configuration"
-                )
-                return (False, msg)
+        # TODO: return additional validation as needed
 
         # At this point, everything has been validated.
         return (True, "Scan configuration is valid.")
@@ -1230,7 +1006,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     ) -> bool:
         """
         Issue Vcc ConfigureBand command
-        
+
         :param configuration: scan configuration dict
         :return: True if VCC ConfigureBand command failed, otherwise False
         """
@@ -1294,7 +1070,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 "'band_5_tuning' not specified. Defaulting to [0, 0]."
             )
 
-        # Configure frequencyBandOffsetStream1.
+        # Configure frequency_band_offset_stream1 and 2
+        # If not given, use a default value.
         if "frequency_band_offset_stream1" in configuration:
             self.frequency_band_offset_stream1 = int(
                 configuration["frequency_band_offset_stream1"]
@@ -1304,9 +1081,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.warning(
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
-
-        # If not given, use a default value.
-        # If malformed, use a default value, but append an error.
         if "frequency_band_offset_stream2" in configuration:
             self.frequency_band_offset_stream2 = int(
                 configuration["frequency_band_offset_stream2"]
@@ -1317,13 +1091,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
             )
 
+        # Configure rfi_flagging_mask
+        # If not given, use a default value.
+        if "rfi_flagging_mask" in configuration:
+            self.rfi_flagging_mask = configuration["rfi_flagging_mask"]
+        else:
+            self.rfi_flagging_mask = {}
+            self.logger.warning(
+                "'rfi_flagging_mask' not specified. Defaulting to none."
+            )
+
         config_dict = {
             "config_id": self.config_id,
             "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
             "frequency_band_offset_stream1": self.frequency_band_offset_stream1,
             "frequency_band_offset_stream2": self.frequency_band_offset_stream2,
-            "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+            "rfi_flagging_mask": self.rfi_flagging_mask,
         }
 
         # Add subset of FSP configuration to the VCC configure scan argument
@@ -1567,7 +1351,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Execute configure scan operation.
 
         :param argin: JSON string with the configure scan parameters
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1576,6 +1360,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
         ):
+            return
+
+        validation_failure = self._validate_input(argin)
+        if validation_failure:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to validate ConfigureScan input JSON",
+                ),
+            )
             return
 
         # deconfigure to reset assigned FSPs and unsubscribe from events.
@@ -1672,7 +1467,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Start subarray Scan operation.
 
         :param argin: The scan ID as JSON formatted string.
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1738,7 +1533,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         End scan operation.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1780,7 +1575,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Execute observing state transition from READY to IDLE.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1834,7 +1629,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Abort the current scan operation.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1873,7 +1668,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Reset the scan operation to IDLE from ABORTED or FAULT.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -1952,7 +1747,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Reset the scan operation to EMPTY from ABORTED or FAULT.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
         """
@@ -2026,7 +1821,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Submit Restart operation method to task executor queue.
 
-        :param task_callback: callback for driving status of task executor's 
+        :param task_callback: callback for driving status of task executor's
             current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
