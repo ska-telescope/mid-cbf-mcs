@@ -297,7 +297,7 @@ class TestPowerSwitch:
                 "sim_patch_error": True,
                 "sim_get_error": False,
                 "sim_state": None,
-                "power_switch_model": "DLI_PRO"
+                "power_switch_model": "DLI_PRO",
             },
             {
                 "sim_patch_error": True,

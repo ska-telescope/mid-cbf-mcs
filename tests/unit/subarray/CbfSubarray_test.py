@@ -294,7 +294,7 @@ class TestCbfSubarray:
                     attribute_value=tuple(receptors_push_val)
                 )
 
-            # remove remaining receptor
+            # remove remaining receptor(s)
             (return_value, command_id) = device_under_test.RemoveReceptors(
                 list(curr_rec)
             )
@@ -569,7 +569,7 @@ class TestCbfSubarray:
         "receptors",
         [["SKA036", "SKA063"], ["SKA100", "SKA001"]],
     )
-    def test_RemoveAllReceptors_invalid(
+    def test_RemoveAllReceptors_not_allowed(
         self: TestCbfSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,

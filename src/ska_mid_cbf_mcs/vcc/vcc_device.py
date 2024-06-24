@@ -17,8 +17,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 # Tango imports
 import tango
 from ska_control_model import SimulationMode
@@ -183,8 +181,8 @@ class Vcc(CbfObsDevice):
 
         def do(
             self: Vcc.InitCommand,
-            *args: Any,
-            **kwargs: Any,
+            *args: any,
+            **kwargs: any,
         ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.

@@ -17,7 +17,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 import json
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 # tango imports
 import tango
@@ -47,12 +47,12 @@ class VccComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
-        *args: Any,
+        *args: any,
         vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.

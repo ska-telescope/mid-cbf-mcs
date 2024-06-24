@@ -102,7 +102,7 @@ class CbfSubarray(CbfObsDevice):
     @attribute(
         dtype=("int",),
         max_dim_x=197,
-        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
+        doc="Frequency offset (k) of up to 197 receptors as an array of ints.",
     )
     def frequencyOffsetK(self: CbfSubarray) -> list[int]:
         """

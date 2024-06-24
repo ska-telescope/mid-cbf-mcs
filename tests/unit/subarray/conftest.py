@@ -87,6 +87,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_result_command("GoToIdle", ResultCode.OK)
     builder.add_result_command("Abort", ResultCode.OK)
     builder.add_result_command("ObsReset", ResultCode.OK)
+    # return unevaluated builder
     return builder
 
 

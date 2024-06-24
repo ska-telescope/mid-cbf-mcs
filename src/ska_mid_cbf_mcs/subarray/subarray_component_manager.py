@@ -510,9 +510,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
-            if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
+            try:
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            else:
+            except KeyError:
                 self.logger.warning(
                     f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
                 )
@@ -692,9 +692,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to remove {dish_id}")
 
-            if dish_id in self._dish_utils.dish_id_to_vcc_id.keys():
+            try:
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            else:
+            except KeyError:
                 self.logger.warning(
                     f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
                 )
@@ -1289,6 +1289,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if len(self._corr_config) != 0:
             for fsp_config in self._corr_config:
                 try:
+                    # TODO handle fsp corr LRC
                     self.logger.debug(f"fsp_config: {json.dumps(fsp_config)}")
                     fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[
                         int(fsp_config["fsp_id"]) - 1
