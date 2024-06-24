@@ -419,7 +419,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _abort_scan(
+    def _abort(
         self: FspCorrSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,

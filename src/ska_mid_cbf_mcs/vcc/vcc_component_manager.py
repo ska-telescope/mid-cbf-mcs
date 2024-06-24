@@ -616,7 +616,7 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _abort_scan(
+    def _abort(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,

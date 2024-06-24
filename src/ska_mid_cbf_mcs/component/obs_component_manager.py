@@ -262,7 +262,7 @@ class CbfObsComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
-    def is_abort_scan_allowed(self: CbfObsComponentManager) -> bool:
+    def is_abort_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if Abort is allowed.")
         if self.obs_state not in [
             ObsState.IDLE,
@@ -279,7 +279,7 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         return True
 
-    def _abort_scan(
+    def _abort(
         self: CbfComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
@@ -292,7 +292,7 @@ class CbfObsComponentManager(CbfComponentManager):
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
     @check_communicating
-    def abort_scan(
+    def abort(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
@@ -309,9 +309,9 @@ class CbfObsComponentManager(CbfComponentManager):
             func=functools.partial(
                 self._obs_command_with_callback,
                 hook="abort",
-                command_thread=self._abort_scan,
+                command_thread=self._abort,
             ),
-            is_cmd_allowed=self.is_abort_scan_allowed,
+            is_cmd_allowed=self.is_abort_allowed,
             task_callback=task_callback,
         )
 

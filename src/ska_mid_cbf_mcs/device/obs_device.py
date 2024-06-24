@@ -452,7 +452,7 @@ class CbfObsDevice(SKAObsDevice):
             ("Scan", "scan"),
             ("EndScan", "end_scan"),
             ("GoToIdle", "go_to_idle"),
-            ("Abort", "abort_scan"),
+            ("Abort", "abort"),
             ("ObsReset", "obs_reset"),
         ]:
             self.register_command_object(

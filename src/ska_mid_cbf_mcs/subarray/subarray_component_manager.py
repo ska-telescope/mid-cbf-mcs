@@ -1146,7 +1146,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._assigned_fsp_proxies.add(fsp_proxy)
             self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
 
-            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
+            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp.
+            # They are not included in the "fsp" portion of the JSON
             fsp_config["config_id"] = common_configuration["config_id"]
             fsp_config["sub_id"] = common_configuration["subarray_id"]
             fsp_config["frequency_band"] = common_configuration[
@@ -1614,7 +1615,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _abort_scan(
+    def _abort(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
