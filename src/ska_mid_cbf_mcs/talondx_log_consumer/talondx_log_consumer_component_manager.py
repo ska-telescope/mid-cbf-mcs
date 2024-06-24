@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 
-from ska_tango_base.base.component_manager import BaseComponentManager
+from ska_tango_base.base.base_component_manager import BaseComponentManager
 
 _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
     "FATAL": logging.CRITICAL,

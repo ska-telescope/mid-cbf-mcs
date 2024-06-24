@@ -62,7 +62,6 @@ def lru_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "longRunningCommandProgress",
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
@@ -153,6 +152,10 @@ def initial_mocks(
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
+    Althought these mocks are not explicitly used in TalonLRU_test.py,
+    they are required to be pre-registered in the test harness.
+    TalonLRU device only uses the mock's 3 digit device name
+    to create the device proxy rather then full FQDN.
 
     :param mock_power_switch_1: a mock power switch device that simulates both successful and failed commands
     :param mock_power_switch_2: a mock power switch device that simulates both successful and failed commands

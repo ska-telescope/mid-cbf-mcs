@@ -297,7 +297,19 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Configure the band via the VCC Controller device
         self.logger.info(f"Configuring VCC band {freq_band_name}")
-        frequency_band = freq_band_dict()[freq_band_name]["band_index"]
+        try:
+            frequency_band = freq_band_dict()[freq_band_name]["band_index"]
+
+        except KeyError as ke:
+            self.logger.error(str(ke))
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    f"frequency_band {freq_band_name} is invalid.",
+                ),
+            )
+            return
 
         self.logger.debug(f"simulation mode: {self.simulation_mode}")
 

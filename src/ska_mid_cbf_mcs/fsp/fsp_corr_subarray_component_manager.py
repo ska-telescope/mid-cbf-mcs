@@ -17,6 +17,7 @@ from typing import Any, Callable, Optional
 import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
@@ -25,7 +26,6 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
 from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
-from ska_mid_cbf_mcs.testing import context
 
 # Data file path
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"

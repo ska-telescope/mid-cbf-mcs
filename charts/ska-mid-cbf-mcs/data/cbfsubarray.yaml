@@ -2,7 +2,7 @@ name: cbfsubarray
 function: cbf-subarray-observation
 domain: subarray
 command: "CbfSubarray"
-instances: ["cbfsubarray-01", "cbfsubarray-02", "cbfsubarray-03"]
+instances: ["cbfsubarray"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "CbfSubarray"
   instances:
-  - name: "cbfsubarray-01"
+  - name: "cbfsubarray"
     classes:
     - name: "CbfSubarray"
       devices:
@@ -98,11 +98,7 @@ server:
             - "mid_csp_cbf/talon_board/006"
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
-
-  - name: "cbfsubarray-02"
-    classes:
-    - name: "CbfSubarray"
-      devices:
+            
       - name: "mid_csp_cbf/sub_elt/subarray_02"
         attribute_properties:
         - attribute: "scanID"
@@ -178,10 +174,6 @@ server:
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
 
-  - name: "cbfsubarray-03"
-    classes:
-    - name: "CbfSubarray"
-      devices:
       - name: "mid_csp_cbf/sub_elt/subarray_03"
         attribute_properties:
         - attribute: "scanID"

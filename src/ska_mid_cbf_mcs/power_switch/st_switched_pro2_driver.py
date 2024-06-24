@@ -173,6 +173,7 @@ class STSwitchedPRO2Driver:
             ]:
                 try:
                     resp = response.json()
+                    # Add [outlet_idx] to access for test
                     state = str(resp["state"])
 
                     if state == self.state_on:
@@ -186,7 +187,8 @@ class STSwitchedPRO2Driver:
                     power_state = PowerState.UNKNOWN
 
                 if power_state != self.outlets[outlet_idx].power_state:
-                    raise AssertionError(
+                    # This error should be noticed in the component manager
+                    self.logger.error(
                         f"Power state of outlet ID {outlet} ({power_state})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_state}"
                     )

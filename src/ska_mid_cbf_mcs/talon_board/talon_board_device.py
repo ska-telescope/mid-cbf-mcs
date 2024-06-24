@@ -14,8 +14,11 @@ TANGO device class for monitoring a Talon board.
 from __future__ import annotations
 
 # tango imports
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.base.base_device import (
+    DevVarLongStringArrayType,
+    SKABaseDevice,
+)
+from ska_tango_base.commands import ResultCode
 from tango import (
     DebugIt,
     DevVarBooleanArray,
@@ -661,16 +664,12 @@ class TalonBoard(CbfDevice):
         """
         Sets up the command objects
         """
-        super().init_command_objects()
+        super(CbfDevice, self).init_command_objects()
 
         self.register_command_object(
-            "On",
-            SubmittedSlowCommand(
-                command_name="On",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="on",
-                logger=self.logger,
+            "Off",
+            self.OffCommand(
+                component_manager=self.component_manager, logger=self.logger
             ),
         )
 
@@ -734,25 +733,22 @@ class TalonBoard(CbfDevice):
 
             return super().do()
 
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
-# ---------------------
-# Long Running Commands
-# ---------------------
+    def is_On_allowed(self: TalonBoard) -> bool:
+        return True
 
-
-def is_On_allowed(self: TalonBoard) -> bool:
-    return True
-
-
-@command(
-    dtype_out="DevVarLongStringArray",
-    doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
-)
-@DebugIt()
-def On(self: TalonBoard) -> None:
-    command_handler = self.get_command_object("On")
-    result_code_message, command_id = command_handler()
-    return [[result_code_message], [command_id]]
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
+    )
+    @DebugIt()
+    def On(self: TalonBoard) -> DevVarLongStringArrayType:
+        command_handler = self.get_command_object("On")
+        result_code_message, command_id = command_handler()
+        return [[result_code_message], [command_id]]
 
 
 # ----------
