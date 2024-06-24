@@ -19,7 +19,6 @@ import concurrent.futures
 import copy
 import functools
 import json
-import sys
 from threading import Event, Lock, Thread
 from typing import Callable, Optional
 
@@ -138,12 +137,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self._proxy_cbf_controller = context.DeviceProxy(
                     device_name=self._fqdn_controller
                 )
-                # TODO: can read max capabilities attribute?
                 self._controller_max_capabilities = dict(
                     pair.split(":")
-                    for pair in self._proxy_cbf_controller.get_property(
-                        "MaxCapabilities"
-                    )["MaxCapabilities"]
+                    for pair in self._proxy_cbf_controller.maxCapabilities
                 )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -361,7 +357,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.warning(log_msg)
                 return
 
-            self._last_received_delay_model = value
             delay_model_json = json.loads(value)
 
             # Validate delay_model_json against the telescope model
@@ -377,10 +372,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.info("Delay model is valid!")
             except ValueError as e:
                 self.logger.error(
-                    f"Delay model validation against the telescope model failed with the following exception:\n {e}."
+                    f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {e}."
                 )
-                # TODO: should this cause obs fault, or just ignore and move on?
-                # self._update_component_state(obsfault=True)
+                return
+
+            self._last_received_delay_model = value
 
             # pass DISH ID as VCC ID integer to FSPs and VCCs
             for delay_detail in delay_model_json["receptor_delays"]:
@@ -892,25 +888,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             purpose only.
         :rtype: (bool, str)
         """
-        # try to deserialize input string to a JSON object
-        try:
-            full_configuration = json.loads(argin)
-            common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
-        except json.JSONDecodeError as je:  # argument not a valid JSON object
-            self.logger.error(
-                f"Scan configuration object is not a valid JSON object; {je}"
-            )
-            return False
-
         # Validate full_configuration against the telescope model
         try:
+            full_configuration = json.loads(argin)
             telmodel_validate(
                 version=full_configuration["interface"],
                 config=full_configuration,
                 strictness=2,
             )
             self.logger.info("Scan configuration is valid!")
+        except json.JSONDecodeError as je:  # argument not a valid JSON object
+            self.logger.error(
+                f"Scan configuration object is not a valid JSON object; {je}"
+            )
+            return False
         except ValueError as ve:
             self.logger.error(
                 f"ConfigureScan JSON validation against the telescope model schema failed;\n {ve}."
@@ -920,7 +911,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # TODO: return additional validation as needed
 
         # At this point, everything has been validated.
-        return (True, "Scan configuration is valid.")
+        return True
 
     def _calculate_dish_sample_rate(
         self: CbfSubarrayComponentManager,
@@ -1145,7 +1136,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if FSP ConfigureScan command failed, otherwise False
         """
         fsp_failure = False
-        for fsp_config in configuration["fsp"]:
+        for config in configuration["fsp"]:
+            fsp_config = copy.deepcopy(config)
             # Configure fsp_id.
             fsp_id = int(fsp_config["fsp_id"])
             fsp_proxy = self._proxies_fsp[fsp_id - 1]

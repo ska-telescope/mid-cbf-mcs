@@ -11,8 +11,6 @@ Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations
 
-from typing import Any
-
 import tango
 from ska_control_model import ObsState, ObsStateModel
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
@@ -242,8 +240,8 @@ class CbfSubarray(CbfObsDevice):
 
         def do(
             self: CbfSubarray.InitCommand,
-            *args: Any,
-            **kwargs: Any,
+            *args: any,
+            **kwargs: any,
         ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
