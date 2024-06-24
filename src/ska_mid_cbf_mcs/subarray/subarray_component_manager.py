@@ -410,13 +410,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             board_dish_id = proxy.dishID
             if board_dish_id == dish_id:
                 return proxy
+        # Talon board proxy not essential to scan operation, so we log an error
+        # but don't cause a failure
+        # return None here to fail conditionals later
         self.logger.error(
             f"Couldn't find TalonBoard device with DISH ID {dish_id}; "
             + "unable to update TalonBoard device subarrayID for this DISH."
         )
-        # Talon board proxy not essential to scan operation, so we log an error
-        # but don't cause a failure
-        # return None here to fail conditionals later
         return None
 
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
@@ -529,6 +529,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             talon_proxies.append(talon_proxy)
             dish_ids_to_add.append(dish_id)
             vcc_ids_to_add.append(vcc_id)
+
+        if len(dish_ids_to_add) == 0:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "No valid DISH IDs were provided",
+                ),
+            )
+            return
 
         successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -709,6 +719,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             dish_ids_to_remove.append(dish_id)
             vcc_ids_to_remove.append(vcc_id)
 
+        if len(dish_ids_to_remove) == 0:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "No valid DISH IDs were provided",
+                ),
+            )
+            return
+
         successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for result in executor.map(
@@ -840,9 +860,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :return: True if failed to deconfigure, otherwise False
         """
+        self.logger.info("Deconfiguring subarray...")
+
         # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
         # ObsReset and Restart here in the CbfSubarray
-        deconfigure_failure = False
         if len(self._assigned_fsp_proxies) > 0:
             # change FSP subarray membership
             for result_code, msg in self._issue_group_command(
@@ -851,7 +872,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             ):
                 if result_code == ResultCode.FAILED:
                     self.logger.error(msg)
-                    deconfigure_failure = True
+                    return True
             self._assigned_fsp_proxies = set()
 
         if len(self._assigned_fsp_corr_proxies) > 0:
@@ -864,7 +885,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 del self._events_telstate[event_id]
         except tango.DevFailed as df:
             self.logger.error(f"Error in unsubscribing from TM events; {df}")
-            deconfigure_failure = True
+            return True
 
         # reset all private data to their initialization values
         self._corr_config = []
@@ -873,7 +894,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.frequency_band = 0
         self._last_received_delay_model = ""
 
-        return deconfigure_failure
+        return False
 
     def _validate_input(
         self: CbfSubarrayComponentManager, argin: str
@@ -888,6 +909,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             purpose only.
         :rtype: (bool, str)
         """
+        self.logger.info("Validating ConfigureScan input JSON...")
+
         # Validate full_configuration against the telescope model
         try:
             full_configuration = json.loads(argin)
@@ -901,17 +924,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(
                 f"Scan configuration object is not a valid JSON object; {je}"
             )
-            return False
+            return True
         except ValueError as ve:
             self.logger.error(
                 f"ConfigureScan JSON validation against the telescope model schema failed;\n {ve}."
             )
-            return False
+            return True
 
         # TODO: return additional validation as needed
 
-        # At this point, everything has been validated.
-        return True
+        return False
 
     def _calculate_dish_sample_rate(
         self: CbfSubarrayComponentManager,
@@ -1001,6 +1023,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param configuration: scan configuration dict
         :return: True if VCC ConfigureBand command failed, otherwise False
         """
+        self.logger.info("Configuring VCC band...")
+
         # Prepare args for ConfigureBand
         vcc_failure = False
         for dish_id in self.dish_ids:
@@ -1046,7 +1070,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param configuration: Mid.CBF scan configuration dict
         :return: True if VCC ConfigureScan command failed, otherwise False
         """
-
+        self.logger.info("Configuring VCC for scan...")
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         self.frequency_band = freq_band_dict()[
             common_configuration["frequency_band"]
@@ -1135,6 +1159,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param configuration: Mid.CBF scan configuration dict
         :return: True if FSP ConfigureScan command failed, otherwise False
         """
+        self.logger.info("Configuring FSP for scan...")
+
         fsp_failure = False
         for config in configuration["fsp"]:
             fsp_config = copy.deepcopy(config)
@@ -1311,6 +1337,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param callback: callback for event subscription
         :return: True if VCC ConfigureScan command failed, otherwise False
         """
+        self.logger.info(f"Attempting subscription to {subscription_point}")
+
         # split delay_model_subscription_point between device FQDN and attribute name
         subscription_point_split = subscription_point.split("/")
         fqdn = "/".join(subscription_point_split[:-1])

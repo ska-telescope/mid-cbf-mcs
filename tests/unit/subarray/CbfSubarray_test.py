@@ -452,12 +452,11 @@ class TestCbfSubarray:
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # check that the queued command succeeded
-        # unassigned receptors will raise warning logs, but will not fail command
+        # check that the queued command failed
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
+                f'[{ResultCode.FAILED.value}, "No valid DISH IDs were provided"]',
             )
         )
 
