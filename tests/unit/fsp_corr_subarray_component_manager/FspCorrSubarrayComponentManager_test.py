@@ -109,6 +109,8 @@ class TestFspCorrSubarrayComponentManager:
             == 0
         )
         assert fsp_corr_subarray_component_manager.frequency_slice_id == 0
+        assert fsp_corr_subarray_component_manager.bandwidth == 0
+        assert fsp_corr_subarray_component_manager.zoom_window_tuning == 0
         assert fsp_corr_subarray_component_manager.integration_factor == 0
         assert fsp_corr_subarray_component_manager.scan_id == 0
         assert fsp_corr_subarray_component_manager.config_id == ""
@@ -244,6 +246,12 @@ class TestFspCorrSubarrayComponentManager:
             == 0
         )
         assert fsp_corr_subarray_component_manager._frequency_slice_id == 0
+        assert fsp_corr_subarray_component_manager._bandwidth == 0
+        assert (
+            fsp_corr_subarray_component_manager._bandwidth_actual
+            == const.FREQUENCY_SLICE_BW
+        )
+        assert fsp_corr_subarray_component_manager._zoom_window_tuning == 0
         assert fsp_corr_subarray_component_manager._integration_factor == 0
         assert fsp_corr_subarray_component_manager._scan_id == 0
         assert fsp_corr_subarray_component_manager._config_id == ""
