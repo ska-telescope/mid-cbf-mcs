@@ -21,7 +21,7 @@ import functools
 import json
 import sys
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 # Tango imports
 import tango
@@ -55,14 +55,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: CbfSubarrayComponentManager,
-        *args: Any,
+        *args: any,
         subarray_id: int,
         controller: str,
         vcc: list[str],
         fsp: list[str],
         fsp_corr_sub: list[str],
         talon_board: list[str],
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -126,36 +126,46 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
 
-    def start_communicating(self: CbfSubarrayComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-        self.logger.debug(
-            "Entering CbfSubarrayComponentManager.start_communicating"
-        )
+    def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
+        """
+        Initialize proxy to controller device, read MaxCapabilities property
 
-        if self.is_communicating:
-            self.logger.info("Already connected.")
-            return
-
+        :return: True if initialization failed, otherwise False
+        """
         try:
             if self._proxy_cbf_controller is None:
                 self._proxy_cbf_controller = context.DeviceProxy(
                     device_name=self._fqdn_controller
                 )
+                # TODO: can read max capabilities attribute?
                 self._controller_max_capabilities = dict(
                     pair.split(":")
                     for pair in self._proxy_cbf_controller.get_property(
                         "MaxCapabilities"
                     )["MaxCapabilities"]
                 )
-                self._count_vcc = int(self._controller_max_capabilities["VCC"])
-                self._count_fsp = int(self._controller_max_capabilities["FSP"])
+        except tango.DevFailed as df:
+            self.logger.error(f"{df}")
+            return True
 
-                self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
-                self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
-                self._fqdn_fsp_corr_subarray_device = (
-                    self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
-                )
+        self._count_vcc = int(self._controller_max_capabilities["VCC"])
+        self._count_fsp = int(self._controller_max_capabilities["FSP"])
 
+        self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
+        self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
+        self._fqdn_fsp_corr_subarray_device = (
+            self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
+        )
+
+        return False
+
+    def _init_subelement_proxies(self: CbfSubarrayComponentManager) -> bool:
+        """
+        Initialize proxies to FSP and VCC subelements
+
+        :return: True if initialization failed, otherwise False
+        """
+        try:
             if len(self._all_vcc_proxies) == 0:
                 self._all_vcc_proxies = [
                     context.DeviceProxy(device_name=fqdn)
@@ -183,6 +193,29 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
+            return True
+
+        return False
+
+    def start_communicating(self: CbfSubarrayComponentManager) -> None:
+        """Establish communication with the component, then start monitoring."""
+        self.logger.debug(
+            "Entering CbfSubarrayComponentManager.start_communicating"
+        )
+
+        if self.is_communicating:
+            self.logger.info("Already connected.")
+            return
+
+        controller_failure = self._init_controller_proxy()
+        if controller_failure:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
+
+        subelement_failure = self._init_subelement_proxies()
+        if subelement_failure:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -210,32 +243,44 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
-        for proxy in self._proxies_fsp_corr_subarray_device:
-            try:
-                proxy.On()
-            except tango.DevFailed as df:
-                msg = f"Failed to turn on {proxy.dev_name()}; {df}"
+        """
+        Turn on FSP function mode subarray devices
+        """
+        on_failure = False
+        for result_code, msg in self._issue_group_command(
+            command_name="On", proxies=self._proxies_fsp_corr_subarray_device
+        ):
+            if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return (ResultCode.FAILED, msg)
+                on_failure = True
+
+        if on_failure:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return (ResultCode.FAILED, "Failed to turn on FSP CORR devices")
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
-        for proxy in self._proxies_fsp_corr_subarray_device:
-            try:
-                proxy.Off()
-            except tango.DevFailed as df:
-                msg = f"Failed to turn off {proxy.dev_name()}; {df}"
+        """
+        Turn off FSP function mode subarray devices
+        """
+        off_failure = False
+        for result_code, msg in self._issue_group_command(
+            command_name="Off", proxies=self._proxies_fsp_corr_subarray_device
+        ):
+            if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return (ResultCode.FAILED, msg)
+                off_failure = True
+
+        if off_failure:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return (ResultCode.FAILED, "Failed to turn off FSP CORR devices")
 
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
@@ -243,6 +288,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
+        """
+        Reload sys param from input JSON
+        """
         self.logger.debug(f"Received sys param: {sys_param_str}")
         self._sys_param_str = sys_param_str
         sys_param = json.loads(sys_param_str)
@@ -257,26 +305,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Update FSP and VCC delay models.
 
-        :param destination_type: type of device to send the delay model to
-        :param epoch: system time of delay model reception
-        :param model: delay model
+        :param model: delay model JSON string
         """
         # This method is always called on a separate thread
         self.logger.info(f"Updating delay model ...{model}")
 
         # we lock the mutex, forward the configuration, then immediately unlock it
-        self._delay_model_lock.acquire()
-        results_vcc = self._issue_group_command(
-            command_name="UpdateDelayModel",
-            proxies=list(self._assigned_vcc_proxies),
-            argin=model,
-        )
-        results_fsp = self._issue_group_command(
-            command_name="UpdateDelayModel",
-            proxies=list(self._assigned_fsp_proxies),
-            argin=model,
-        )
-        self._delay_model_lock.release()
+        with self._delay_model_lock:
+            results_vcc = self._issue_group_command(
+                command_name="UpdateDelayModel",
+                proxies=list(self._assigned_vcc_proxies),
+                argin=model,
+            )
+            results_fsp = self._issue_group_command(
+                command_name="UpdateDelayModel",
+                proxies=list(self._assigned_fsp_proxies),
+                argin=model,
+            )
 
         for result_code, msg in results_vcc + results_fsp:
             if result_code == ResultCode.FAILED:
@@ -348,26 +393,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         except Exception as e:
             self.logger.error(str(e))
 
-    def validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
-        """
-        Validate IP address format.
-
-        :param ip: IP address to be evaluated
-
-        :return: whether or not the IP address format is valid
-        :rtype: bool
-        """
-        splitip = ip.split(".")
-        if len(splitip) != 4:
-            return False
-        for ipparts in splitip:
-            if not ipparts.isdigit():
-                return False
-            ipval = int(ipparts)
-            if ipval < 0 or ipval > 255:
-                return False
-        return True
-
     #####################
     # Resourcing Commands
     #####################
@@ -392,10 +417,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         # Talon board proxy not essential to scan operation, so we log an error
         # but don't cause a failure
-        # return False here to fail conditionals later
-        return False
+        # return None here to fail conditionals later
+        return None
 
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
+        """Check if AddReceptors command is allowed in current state"""
         self.logger.debug("Checking if AddReceptors is allowed.")
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
@@ -436,7 +462,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
 
             # assign the subarray ID to the talon board with the matching DISH ID
-            if talon_proxy:
+            if talon_proxy is not None:
                 talon_proxy.subarrayID = str(self.subarray_id)
 
             return True
@@ -454,10 +480,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Add receptors/dishes to subarray.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -554,7 +579,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Submit AddReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
-
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -573,6 +599,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
     def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
+        """Check if RemoveReceptors command is allowed in current state"""
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
@@ -606,7 +633,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy.adminMode = AdminMode.OFFLINE
 
             # clear the subarray ID off the talon board with the matching DISH ID
-            if talon_proxy:
+            if talon_proxy is not None:
                 talon_proxy.subarrayID = ""
 
             return True
@@ -624,10 +651,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Remove receptors/dishes from subarray.
 
         :param argin: The list of DISH (receptor) IDs to be removed
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -732,7 +758,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Submit RemoveReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be removed
-
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -758,6 +785,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Submit RemoveAllReceptors operation method to task executor queue.
 
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -782,9 +811,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def _issue_command_all_assigned_resources(
         self: CbfSubarrayComponentManager,
         command_name: str,
-        argin: Optional[Any] = None,
+        argin: Optional[any] = None,
     ) -> bool:
-        """Issue command to all subarray-assigned resources"""
+        """
+        Issue command to all subarray-assigned resources
+        
+        :param command_name: name of command to issue to proxy group
+        :param argin: optional command input argument
+        :return: True if any command failed to be issued, otherwise False
+        """
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
@@ -803,6 +838,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Completely deconfigure the subarray; all initialization performed by the
         ConfigureScan command must be 'undone' here.
+
+        :return: True if failed to deconfigure, otherwise False
         """
         # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
         # ObsReset and Restart here in the CbfSubarray
@@ -861,93 +898,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
             return (False, msg)
 
-        # Validate delayModelSubscriptionPoint.
-        # if "delay_model_subscription_point" in configuration:
-        #     try:
-        #         attribute_proxy = CbfAttributeProxy(
-        #             fqdn=configuration["delay_model_subscription_point"],
-        #             logger=self.logger,
-        #         )
-        #         attribute_proxy.ping()
-        #     except (
-        #         tango.DevFailed
-        #     ):  # attribute doesn't exist or is not set up correctly
-        #         msg = (
-        #             f"Attribute {configuration['delay_model_subscription_point']}"
-        #             " not found or not set up correctly for "
-        #             "'delayModelSubscriptionPoint'. Aborting configuration."
-        #         )
-        #         return (False, msg)
-
-        for dish_id, proxy in self._proxies_assigned_vcc.items():
-            if proxy.State() != tango.DevState.ON:
-                msg = f"VCC {self._all_vcc_proxies.index(proxy) + 1} is not ON. Aborting configuration."
-                return (False, msg)
-
-        # Validate searchWindow.
-        if "search_window" in configuration:
-            # check if searchWindow is an array of maximum length 2
-            if len(configuration["search_window"]) > 2:
-                msg = (
-                    "'searchWindow' must be an array of maximum length 2. "
-                    "Aborting configuration."
-                )
-                return (False, msg)
-            for sw in configuration["search_window"]:
-                if sw["tdc_enable"]:
-                    for receptor in sw["tdc_destination_address"]:
-                        dish = receptor["receptor_id"]
-                        if dish not in self.dish_ids:
-                            msg = (
-                                f"'searchWindow' DISH ID {dish} "
-                                + "not assigned to subarray. Aborting configuration."
-                            )
-                            return (False, msg)
-        else:
-            pass
-
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
-                # Validate fsp_id.
-                if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
-                    fsp_id = int(fsp["fsp_id"])
-                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
-                else:
-                    msg = (
-                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
-
-                # Validate functionMode.
-                valid_function_modes = [
-                    "IDLE",
-                    "CORR",
-                    "PSS-BF",
-                    "PST-BF",
-                    "VLBI",
-                ]
-                try:
-                    function_mode_value = valid_function_modes.index(
-                        fsp["function_mode"]
-                    )
-                except ValueError:
-                    return (
-                        False,
-                        f"{fsp['function_mode']} is not a valid FSP function mode.",
-                    )
-                fsp_function_mode = fsp_proxy.functionMode
-                if fsp_function_mode not in [
-                    FspModes.IDLE.value,
-                    function_mode_value,
-                ]:
-                    msg = (
-                        f"FSP {fsp_id} currently set to function mode {valid_function_modes.index(fsp_function_mode)}, "
-                        + f"cannot be used for {fsp['function_mode']} "
-                        + "until it is returned to IDLE."
-                    )
-                    return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
@@ -992,31 +945,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]][
                         "band_index"
                     ]
-                    # Validate frequencySliceID.
-                    # TODO: move these to consts
-                    # See for ex. Fig 8-2 in the Mid.CBF DDD
-                    num_frequency_slices = [4, 5, 7, 12, 26, 26]
-                    if int(fsp["frequency_slice_id"]) in list(
-                        range(1, num_frequency_slices[frequencyBand] + 1)
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "'frequencySliceID' must be an integer in the range "
-                            f"[1, {num_frequency_slices[frequencyBand]}] "
-                            f"for a 'frequencyBand' of {fsp['frequency_band']}."
-                        )
-                        self.logger.error(msg)
-                        return (False, msg)
-
-                    # Validate zoom_factor.
-                    if int(fsp["zoom_factor"]) in list(range(7)):
-                        pass
-                    else:
-                        msg = "'zoom_factor' must be an integer in the range [0, 6]."
-                        # this is a fatal error
-                        self.logger.error(msg)
-                        return (False, msg)
 
                     # Validate zoomWindowTuning.
                     if (
@@ -1173,27 +1101,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         self.logger.error(msg)
                         return (False, msg)
 
-                    # validate outputlink
-                    # check the format
-                    try:
-                        for element in fsp["output_link_map"]:
-                            (int(element[0]), int(element[1]))
-                    except (TypeError, ValueError, IndexError):
-                        msg = "'outputLinkMap' format not correct."
-                        self.logger.error(msg)
-                        return (False, msg)
-
                     # Validate channelAveragingMap.
                     if "channel_averaging_map" in fsp:
                         try:
-                            # validate dimensions
-                            for i in range(
-                                0, len(fsp["channel_averaging_map"])
-                            ):
-                                assert (
-                                    len(fsp["channel_averaging_map"][i]) == 2
-                                )
-
                             # validate averaging factor
                             for i in range(
                                 0, len(fsp["channel_averaging_map"])
@@ -1210,25 +1120,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                                     msg = (
                                         f"'channelAveragingMap'[{i}][0] is not the channel ID of the "
                                         f"first channel in a group (received {fsp['channel_averaging_map'][i][0]})."
-                                    )
-                                    self.logger.error(msg)
-                                    return (False, msg)
-
-                                # validate averaging factor
-                                if int(fsp["channel_averaging_map"][i][1]) in [
-                                    0,
-                                    1,
-                                    2,
-                                    3,
-                                    4,
-                                    6,
-                                    8,
-                                ]:
-                                    pass
-                                else:
-                                    msg = (
-                                        f"'channelAveragingMap'[{i}][1] must be one of "
-                                        f"[0, 1, 2, 3, 4, 6, 8] (received {fsp['channel_averaging_map'][i][1]})."
                                     )
                                     self.logger.error(msg)
                                     return (False, msg)
@@ -1255,11 +1146,94 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # At this point, everything has been validated.
         return (True, "Scan configuration is valid.")
 
+    def _calculate_dish_sample_rate(
+        self: CbfSubarrayComponentManager,
+        freq_band_info: dict,
+        freq_offset_k: int,
+    ) -> int:
+        """
+        Calculate frequency slice sample rate
+
+        :param freq_band_info: constants pertaining to a given frequency band
+        :param freq_offset_k: DISH frequency offset k value
+        :return: DISH sample rate
+        """
+        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+        sample_rate_const = freq_band_info["sample_rate_const"]
+
+        return (base_dish_sample_rate_MH * mhz_to_hz) + (
+            sample_rate_const * freq_offset_k * const.DELTA_F
+        )
+
+    def _calculate_fs_sample_rate(
+        self: CbfSubarrayComponentManager, freq_band: str, dish: str
+    ) -> dict:
+        """
+        Calculate frequency slice sample rate for a given DISH
+
+        :param freq_band: target frequency band
+        :param dish: target DISH ID
+        :return: VCC output sample rate
+        """
+        log_msg = (
+            f"Calculate fs_sample_rate for freq_band:{freq_band} and {dish}"
+        )
+        self.logger.info(log_msg)
+
+        # convert the DISH ID to a VCC ID integer using DISHUtils
+        vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
+
+        # find the k value for this DISH
+        freq_offset_k = self._dish_utils.dish_id_to_k[dish]
+        freq_band_info = freq_band_dict()[freq_band]
+
+        total_num_fs = freq_band_info["total_num_FSs"]
+
+        dish_sample_rate = self._calculate_dish_sample_rate(
+            freq_band_info, freq_offset_k
+        )
+
+        log_msg = f"dish_sample_rate: {dish_sample_rate}"
+        self.logger.debug(log_msg)
+        fs_sample_rate = int(
+            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+        )
+        fs_sample_rate_for_band = {
+            "vcc_id": vcc_id,
+            "fs_sample_rate": fs_sample_rate,
+        }
+        log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"
+        self.logger.info(log_msg)
+
+        return fs_sample_rate_for_band
+
+    def _calculate_fs_sample_rates(
+        self: CbfSubarrayComponentManager, freq_band: str
+    ) -> list[dict]:
+        """
+        Calculate frequency slice sample rate for all assigned DISH
+
+        :param freq_band: target frequency band
+        :return: list of assigned VCC output sample rates
+        """
+        output_sample_rates = []
+        for dish in self.dish_ids:
+            output_sample_rates.append(
+                self._calculate_fs_sample_rate(freq_band, dish)
+            )
+
+        return output_sample_rates
+
     def _vcc_configure_band(
         self: CbfSubarrayComponentManager,
-        configuration: dict[Any],
+        configuration: dict[any],
     ) -> bool:
-        """Issue Vcc ConfigureBand command"""
+        """
+        Issue Vcc ConfigureBand command
+        
+        :param configuration: scan configuration dict
+        :return: True if VCC ConfigureBand command failed, otherwise False
+        """
         # Prepare args for ConfigureBand
         vcc_failure = False
         for dish_id in self.dish_ids:
@@ -1295,10 +1269,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _vcc_configure_scan(
         self: CbfSubarrayComponentManager,
-        common_configuration: dict[Any],
-        configuration: dict[Any],
+        common_configuration: dict[any],
+        configuration: dict[any],
     ) -> bool:
-        """Issue Vcc ConfigureScan command"""
+        """
+        Issue Vcc ConfigureScan command
+
+        :param common_configuration: common Mid.CSP scan configuration dict
+        :param configuration: Mid.CBF scan configuration dict
+        :return: True if VCC ConfigureScan command failed, otherwise False
+        """
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         self.frequency_band = freq_band_dict()[
@@ -1370,10 +1350,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
-        common_configuration: dict[Any],
-        configuration: dict[Any],
+        common_configuration: dict[any],
+        configuration: dict[any],
     ) -> bool:
-        """Issue Fsp function mode subarray ConfigureScan command"""
+        """
+        Issue FSP function mode subarray ConfigureScan command
+
+        :param common_configuration: common Mid.CSP scan configuration dict
+        :param configuration: Mid.CBF scan configuration dict
+        :return: True if FSP ConfigureScan command failed, otherwise False
+        """
         fsp_failure = False
         for fsp_config in configuration["fsp"]:
             # Configure fsp_id.
@@ -1540,7 +1526,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         subscription_point: str,
         callback: Callable,
     ) -> bool:
-        """Subscribe to change events on TM-published data subscription point"""
+        """
+        Subscribe to change events on TM-published data subscription point
+
+        :param subscription_point: FQDN of TM data subscription point
+        :param callback: callback for event subscription
+        :return: True if VCC ConfigureScan command failed, otherwise False
+        """
         # split delay_model_subscription_point between device FQDN and attribute name
         subscription_point_split = subscription_point.split("/")
         fqdn = "/".join(subscription_point_split[:-1])
@@ -1575,8 +1567,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Execute configure scan operation.
 
         :param argin: JSON string with the configure scan parameters
-
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1671,7 +1664,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _scan(
         self: CbfSubarrayComponentManager,
-        argin: int,
+        argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
     ) -> None:
@@ -1679,9 +1672,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Start subarray Scan operation.
 
         :param argin: The scan ID as JSON formatted string.
-        :type argin: str
-
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1745,7 +1738,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         End scan operation.
 
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1785,7 +1780,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Execute observing state transition from READY to IDLE.
 
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1837,7 +1834,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Abort the current scan operation.
 
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1874,7 +1873,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Reset the scan operation to IDLE from ABORTED or FAULT.
 
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1933,6 +1934,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return
 
     def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
+        """Check if Restart command is allowed in current state"""
         self.logger.debug("Checking if Restart is allowed.")
         if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
             self.logger.warning(
@@ -1950,7 +1952,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Reset the scan operation to EMPTY from ABORTED or FAULT.
 
-        :return: None
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2022,6 +2026,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Submit Restart operation method to task executor queue.
 
+        :param task_callback: callback for driving status of task executor's 
+            current LRC task
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -2036,102 +2042,4 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             ),
             is_cmd_allowed=self.is_restart_allowed,
             task_callback=task_callback,
-        )
-
-    # def update_component_resources(
-    #     self: CbfSubarrayComponentManager, resourced: bool
-    # ) -> None:
-    #     """
-    #     Update the component resource status, calling callbacks as required.
-
-    #     :param resourced: whether the component is resourced.
-    #     """
-    #     self.logger.debug(f"update_component_resources({resourced})")
-    #     if resourced:
-    #         # perform "component_resourced" if not previously resourced
-    #         if not self._resourced:
-    #             self._component_resourced_callback(True)
-    #     elif self._resourced:
-    #         self._component_resourced_callback(False)
-
-    #     self._resourced = resourced
-
-    # def update_component_configuration(
-    #     self: CbfSubarrayComponentManager, configured: bool
-    # ) -> None:
-    #     """
-    #     Update the component configuration status, calling callbacks as required.
-
-    #     :param configured: whether the component is configured.
-    #     """
-    #     self.logger.debug(
-    #         f"update_component_configuration({configured}); configured == {configured}, self._ready == {self._ready}"
-    #     )
-    #     # perform component_configured/unconfigured callback if in a VALID case
-    #     # Cases:
-    #     # configured == False and self._ready == False -> INVALID: cannot issue component_unconfigured from IDLE
-    #     # configured == True and self._ready == False -> VALID: can issue component_configured from IDLE
-    #     # configured == False and self._ready == True -> VALID: can issue component_unconfigured from READY
-    #     # configured == True and self._ready == True -> INVALID: cannot issue component_configured from READY
-    #     if configured and not self._ready:
-    #         self._component_configured_callback(True)
-    #         self._ready = True
-    #     elif not configured and self._ready:
-    #         self._component_configured_callback(False)
-    #         self._ready = False
-
-    def _calculate_fs_sample_rate(
-        self: CbfSubarrayComponentManager, freq_band: str, dish: str
-    ) -> dict:
-        log_msg = (
-            f"Calculate fs_sample_rate for freq_band:{freq_band} and {dish}"
-        )
-        self.logger.info(log_msg)
-
-        # convert the DISH ID to a VCC ID integer using DISHUtils
-        vcc_id = self._dish_utils.dish_id_to_vcc_id[dish]
-
-        # find the k value for this DISH
-        freq_offset_k = self._dish_utils.dish_id_to_k[dish]
-        freq_band_info = freq_band_dict()[freq_band]
-
-        total_num_fs = freq_band_info["total_num_FSs"]
-
-        dish_sample_rate = self._calculate_dish_sample_rate(
-            freq_band_info, freq_offset_k
-        )
-
-        log_msg = f"dish_sample_rate: {dish_sample_rate}"
-        self.logger.debug(log_msg)
-        fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
-        )
-        fs_sample_rate_for_band = {
-            "vcc_id": vcc_id,
-            "fs_sample_rate": fs_sample_rate,
-        }
-        log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"
-        self.logger.info(log_msg)
-
-        return fs_sample_rate_for_band
-
-    def _calculate_fs_sample_rates(
-        self: CbfSubarrayComponentManager, freq_band: str
-    ) -> list[dict]:
-        output_sample_rates = []
-        for dish in self.dish_ids:
-            output_sample_rates.append(
-                self._calculate_fs_sample_rate(freq_band, dish)
-            )
-
-        return output_sample_rates
-
-    def _calculate_dish_sample_rate(
-        self: CbfSubarrayComponentManager, freq_band_info, freq_offset_k
-    ):
-        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
-        sample_rate_const = freq_band_info["sample_rate_const"]
-
-        return (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * const.DELTA_F
         )
