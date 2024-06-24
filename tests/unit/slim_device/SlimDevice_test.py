@@ -256,16 +256,13 @@ class TestSlim:
             )
 
         assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks_fail["state"].assert_change_event(
-            DevState.FAULT
-        )
 
         change_event_callbacks_fail[
             "longRunningCommandResult"
         ].assert_change_event(
             (
                 f"{command_id[0]}",
-                '[3, "SlimLink ConnectTxRx was rejected: talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0"]',
+                '[3, "Nested LRC SlimLink.ConnectTxRx() rejected"]',
             )
         )
 

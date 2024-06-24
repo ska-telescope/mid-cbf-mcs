@@ -412,12 +412,12 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected"
-                    self.logger.error(message)
+                    message = "Nested LRC TalonLru.On() rejected"
+                    self.logger.error(f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected")
                     success = False
             except tango.DevFailed as df:
-                message = f"Nested LRC TalonLru.On() to {lru.dev_name()} failed: {df}"
-                self.logger.error(message)
+                message = "Nested LRC TalonLru.On() failed"
+                self.logger.error(f"Nested LRC TalonLru.On() to {lru.dev_name()} failed: {df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -788,12 +788,12 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = subelement.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC Off() to {subelement.dev_name()} rejected"
-                    self.logger.error(message)
+                    message = "Nested LRC Off() rejected"
+                    self.logger.error(f"Nested LRC Off() to {subelement.dev_name()} rejected")
                     success = False
             except tango.DevFailed as df:
-                message = f"Nested LRC Off() to {subelement.dev_name()} failed: {df}"
-                self.logger.error(message)
+                message = "Nested LRC Off() failed"
+                self.logger.error(f"Nested LRC Off() to {subelement.dev_name()} failed: {df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -885,12 +885,12 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
-                    self.logger.error(message)
+                    message = "Nested LRC TalonLru.Off() rejected"
+                    self.logger.error(f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected")
                     success = False
             except tango.DevFailed as df:
-                message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
-                self.logger.error(message)
+                message = "Nested LRC TalonLru.Off() failed"
+                self.logger.error(f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )

@@ -330,8 +330,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             # Guard incase LRC was rejected.
             if result1 == ResultCode.REJECTED:
-                message = f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
-                self.logger.error(message)
+                self.logger.error(f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected")
             else:
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
@@ -365,8 +364,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             # Guard incase LRC was rejected.
             if result2 == ResultCode.REJECTED:
-                message = f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
-                self.logger.error(message)
+                self.logger.error(f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected")
                 return result1, result2
             else:
                 lrc_status = self._wait_for_blocking_results(
@@ -402,18 +400,17 @@ class TalonLRUComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message =  f"Nested LRC TalonBoard.On() to {board.dev_name()} rejected"
-                    self.logger.error(message)
+                    self.logger.error(f"Nested LRC TalonBoard.On() to {board.dev_name()} rejected")
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Nested LRC TalonBoard.On() failed: {df}"
+                    f"Nested LRC TalonBoard.On() to {board.dev_name()} failed: {df}"
                 )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 return (
                     ResultCode.FAILED,
-                    f"Nested LRC TalonBoard.On() to {board.dev_name()} failed",
+                    f"Nested LRC TalonBoard.On() failed",
                 )
                 
         lrc_status = self._wait_for_blocking_results(
@@ -554,8 +551,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             # Guard incase LRC was rejected.
             if result1 == ResultCode.REJECTED:
-                message = f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
-                self.logger.error(message)
+                self.logger.error(f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected")
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -585,8 +581,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
                 # Guard incase LRC was rejected.
                 if result1 == ResultCode.REJECTED:
-                    message = f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
-                    self.logger.error(message)
+                    self.logger.error(f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected")
 
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
@@ -617,9 +612,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
+            self.logger.error(f"_turn_off_talon FAILED on {talondx_board_proxy.dev_name()}: {df}")
             return (
                 ResultCode.FAILED,
-                f"_turn_off_talon FAILED on {talondx_board_proxy.dev_name()}: {df}",
+                "_turn_off_talon FAILED",
             )
         return (
             ResultCode.OK,
