@@ -1,7 +1,7 @@
 import re
 
-import tango
 import yaml
+from tango.Except import throw_exception
 
 
 class SlimConfig:
@@ -55,7 +55,7 @@ class SlimConfig:
         if len(tx_set) != len(rx_set) or len(tx_set) != len(links):
             msg = "Tx and Rx devices must be unique in the configuration."
             self._logger.error(msg)
-            tango.Except.throw_exception(
+            throw_exception(
                 "Slim_Validate_",
                 msg,
                 "_validate_mesh_config()",
@@ -76,7 +76,7 @@ class SlimConfig:
             data = yaml.safe_load(yaml_str)
         except yaml.YAMLError as e:
             self._logger.error(f"Failed to load YAML: {e}")
-            tango.Except.throw_exception(
+            throw_exception(
                 "Slim_Parse_YAML",
                 "Cannot parse SLIM configuration YAML",
                 "_parse_links_yaml()",

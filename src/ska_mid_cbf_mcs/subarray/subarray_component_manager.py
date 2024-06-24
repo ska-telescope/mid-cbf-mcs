@@ -56,6 +56,7 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
+from ska_mid_cbf_mcs.subarray.visibility_transport import VisibilityTransport
 
 
 class CbfSubarrayComponentManager(
@@ -218,6 +219,9 @@ class CbfSubarrayComponentManager(
         self._frequency_band_offset_stream1 = 0
         self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
+
+        # Controls the visibility transport from FSP outputs to SDP
+        self._vis_transport = VisibilityTransport()
 
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
@@ -1722,22 +1726,6 @@ class CbfSubarrayComponentManager(
         # Configure FSP.
         # TODO add VLBI once implemented
 
-        # The output_host and output_port of a FSP entry needs to be
-        # re-assigned if the visibilities are transported to another
-        # board. First figure out the active links in the visibility mesh.
-        vis_slim_links = self._get_vis_slim_active_links()
-
-        # by default connect host lut s1 to s2 on the same board
-        for fsp in configuration["fsp"]:
-            fsp_id = int(fsp["fsp_id"])
-            fsp[
-                "host_lut_s2_fqdn"
-            ] = f"talondx-00{fsp_id}/dshostlutstage2/host_lut_s2"
-
-        self._update_fsp_output_host_port(configuration["fsp"], vis_slim_links)
-
-        self._logger.info(configuration["fsp"])
-
         for fsp in configuration["fsp"]:
             # Configure fsp_id.
             fsp_id = int(fsp["fsp_id"])
@@ -1911,6 +1899,10 @@ class CbfSubarrayComponentManager(
                         "FspPstSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
+
+        # Route visibilities from each FSP to the outputting board
+        vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+        self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
@@ -2140,6 +2132,8 @@ class CbfSubarrayComponentManager(
                 for res in results:
                     self._logger.info(res.get_data())
 
+        self._vis_transport.enable_output(self._subarray_id)
+
         self._scan_id = scan_id
         self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
@@ -2166,6 +2160,8 @@ class CbfSubarrayComponentManager(
                 self._logger.info("Results from EndScan:")
                 for res in results:
                     self._logger.info(res.get_data())
+
+        self._vis_transport.disable_output()
 
         self._scan_id = 0
         self._component_scanning_callback(False)

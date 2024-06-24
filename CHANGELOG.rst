@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+UNRELEASED CHANGES
+******************
+* CIP-2553 Reduced number of pods in MCS deployment
+* CIP-2447 Added FpgaDieVoltage[0-6] Attributes in TalonBoard Device to read from the FPGA Die Voltage Sensors
+
 0.15.1
 ******
 * MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
