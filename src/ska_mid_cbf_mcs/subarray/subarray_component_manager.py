@@ -405,7 +405,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         dish_id: str,
     ) -> context.DeviceProxy:
         """
-        Return Talon board device proxy matching input DISH ID
+        Return the TalonBoard device proxy that matches the DISH ID parameter.
 
         :param dish_id: the DISH ID
         :return: proxy to Talon board device, or None if failed to initialize proxy
@@ -415,7 +415,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             if board_dish_id == dish_id:
                 return proxy
         self.logger.error(
-            f"Couldn't find Talon board device with DISH ID {dish_id}; "
+            f"Couldn't find TalonBoard device with DISH ID {dish_id}; "
             + "unable to update TalonBoard device subarrayID for this DISH."
         )
         # Talon board proxy not essential to scan operation, so we log an error
