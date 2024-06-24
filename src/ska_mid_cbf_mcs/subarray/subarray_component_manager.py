@@ -34,11 +34,11 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from ska_telmodel.schema import validate as telmodel_validate
 from ska_telmodel.csp.common_schema import (
-    MAX_STREAMS_PER_FSP
-    MAX_CHANNELS_PER_STREAM
+    MAX_CHANNELS_PER_STREAM,
+    MAX_STREAMS_PER_FSP,
 )
+from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
@@ -993,17 +993,27 @@ class CbfSubarrayComponentManager(
                 # At most one stream (20 channels) per port per output_host
                 if "output_port" in fsp:
                     if "output_host" in fsp:
-                        for index, host_mapping in enumerate(fsp["output_host"]):
+                        for index, host_mapping in enumerate(
+                            fsp["output_host"]
+                        ):
                             start_channel = host_mapping[0]
                             if (index + 1) == len(fsp["output_host"]):
-                                end_channel = MAX_STREAMS_PER_FSP * MAX_CHANNELS_PER_STREAM
+                                end_channel = (
+                                    MAX_STREAMS_PER_FSP
+                                    * MAX_CHANNELS_PER_STREAM
+                                )
                             else:
                                 end_channel = fsp["output_host"][index + 1]
-                            
-                            ports_for_host = [entry[1] for entry in fsp["output_port"] if entry[0] >= start_channel and entry[0] < end_channel]
+
+                            ports_for_host = [
+                                entry[1]
+                                for entry in fsp["output_port"]
+                                if entry[0] >= start_channel
+                                and entry[0] < end_channel
+                            ]
                             # Ensure all ports are unique for the given host
                             if len(ports_for_host) != len(set(ports_for_host)):
-                                msg = ("'output_port' port mappings must be unique per host ")
+                                msg = "'output_port' port mappings must be unique per host "
                                 self._logger.error(msg)
                                 return (False, msg)
 
@@ -1524,7 +1534,7 @@ class CbfSubarrayComponentManager(
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
                     ]
-                
+
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
