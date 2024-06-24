@@ -386,6 +386,17 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.bandwidth
         # PROTECTED REGION END #    //  FspCorrSubarray.corrBandwidth_read
 
+    def read_zoomWindowTuning(self: FspCorrSubarray) -> int:
+        # PROTECTED REGION ID(FspCorrSubarray.zoomWindowTuning_read) ENABLED START #
+        """
+        Read the zoomWindowTuning attribute.
+
+        :return: the zoomWindowTuning attribute
+        :rtype: int
+        """
+        return self.component_manager.zoom_window_tuning
+        # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
+
     def read_integrationFactor(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.read_integrationFactor_read) ENABLED START #
         """

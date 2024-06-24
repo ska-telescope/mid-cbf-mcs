@@ -86,6 +86,9 @@ class FspCorrSubarrayComponentManager(
         self._frequency_band_offset_stream1 = 0
         self._frequency_band_offset_stream2 = 0
         self._frequency_slice_id = 0
+        self._bandwidth = 0
+        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
+        self._zoom_window_tuning = 0
         self._integration_factor = 0
         self._scan_id = 0
         self._config_id = ""
@@ -173,6 +176,17 @@ class FspCorrSubarrayComponentManager(
         return self._frequency_slice_id
 
     @property
+    def bandwidth(self: FspCorrSubarrayComponentManager) -> int:
+        """
+        Bandwidth
+
+        :return: the corr bandwidth (bandwidth to be correlated
+                 is <Full Bandwidth>/2^bandwidth).
+        :rtype: int
+        """
+        return self._bandwidth
+
+    @property
     def integration_factor(self: FspCorrSubarrayComponentManager) -> int:
         """
         Integration Factor
@@ -229,6 +243,16 @@ class FspCorrSubarrayComponentManager(
         :rtype: List[List[int]]
         """
         return self._channel_averaging_map
+
+    @property
+    def zoom_window_tuning(self: FspCorrSubarrayComponentManager) -> int:
+        """
+        Zoom Window Tuning
+
+        :return: the zoom window tuning
+        :rtype: int
+        """
+        return self._zoom_window_tuning
 
     @property
     def config_id(self: FspCorrSubarrayComponentManager) -> str:
@@ -570,6 +594,9 @@ class FspCorrSubarrayComponentManager(
         self._frequency_band_offset_stream1 = 0
         self._frequency_band_offset_stream2 = 0
         self._frequency_slice_id = 0
+        self._bandwidth = 0
+        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
+        self._zoom_window_tuning = 0
         self._integration_factor = 0
         self._scan_id = 0
         self._config_id = ""
