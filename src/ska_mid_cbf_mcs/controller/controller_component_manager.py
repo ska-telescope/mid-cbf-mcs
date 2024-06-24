@@ -154,34 +154,6 @@ class ControllerComponentManager(CbfComponentManager):
         for name, value in fqdn_variables.items():
             self.logger.debug(f"fqdn {name}: {value}")
 
-    def _create_group_proxies(self: ControllerComponentManager) -> bool:
-        """
-        Create group proxies (list of DeviceProxy) for VCC, FSP, and Subarray.
-        Store as class attributes _group_vcc, _group_fsp, and _group_subarray.
-
-        :return: True if the group proxies are successfully created, False otherwise.
-        """
-        group_proxies = {
-            "_group_vcc": self._vcc_fqdn,
-            "_group_fsp": self._fsp_fqdn,
-            "_group_subarray": self._subarray_fqdn,
-        }
-
-        for group, fqdn in group_proxies.items():
-            try:
-                setattr(
-                    self,
-                    group,
-                    [
-                        context.DeviceProxy(device_name=device)
-                        for device in fqdn
-                    ],
-                )
-            except tango.DevFailed as df:
-                self.logger.error(f"Failure in connection to {fqdn}: {df}")
-                return False
-        return True
-
     def _write_hw_config(
         self: ControllerComponentManager,
         fqdn: str,
@@ -330,8 +302,14 @@ class ControllerComponentManager(CbfComponentManager):
             self._hw_config = yaml.safe_load(yaml_fd)
 
         self._set_fqdns()
+        
+        group_proxies = {
+            "_group_vcc": self._vcc_fqdn,
+            "_group_fsp": self._fsp_fqdn,
+            "_group_subarray": self._subarray_fqdn,
+        }
 
-        if not self._create_group_proxies():
+        if not self._create_group_proxies(group_proxies):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )

@@ -243,7 +243,7 @@ class TestCbfController:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                '"Command not allowed"',
+                '[6, "Command is not allowed"]',
             )
         )
         change_event_callbacks.assert_not_called()

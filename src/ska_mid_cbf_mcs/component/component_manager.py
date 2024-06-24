@@ -174,6 +174,28 @@ class CbfComponentManager(TaskExecutorComponentManager):
     #######################
     # Group-related methods
     #######################
+    
+    def _create_group_proxies(self: CbfComponentManager, group_proxies: dict) -> bool:
+        """
+        Create group proxies (list of DeviceProxy) from the list of fqdns passed in.
+        Store as class attributes.
+        :param
+        :return: True if the group proxies are successfully created, False otherwise.
+        """
+        for group, fqdn in group_proxies.items():
+            try:
+                setattr(
+                    self,
+                    group,
+                    [
+                        context.DeviceProxy(device_name=device)
+                        for device in fqdn
+                    ],
+                )
+            except tango.DevFailed as df:
+                self.logger.error(f"Failure in connection to {fqdn}: {df}")
+                return False
+        return True
 
     def _issue_command_thread(
         self: CbfComponentManager,
