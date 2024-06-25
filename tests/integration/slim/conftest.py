@@ -29,7 +29,7 @@ from ... import test_utils
 
 @pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
-    test_context: TangoTestHarnessContext,
+    test_proxies: pytest.fixture,
 ) -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
@@ -37,7 +37,7 @@ def device_under_test_fixture(
     :param test_context: the context in which the tests run
     :return: the device under test
     """
-    return test_context.get_device("mid_csp_cbf/slim/slim-fs")
+    return test_proxies.slim
 
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
