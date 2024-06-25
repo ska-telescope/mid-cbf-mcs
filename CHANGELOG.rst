@@ -8,6 +8,12 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 UNRELEASED CHANGES
 ******************
 * CIP-2447 Added FpgaDieVoltage[0-6] Attributes in TalonBoard Device to read from the FPGA Die Voltage Sensors
+* CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
+
+  * Add cross validation for cbf.fsp.output_port for the incoming ConfigureScan
+  * Remove setting fsp subarray values from parameters removed from schema
+  * Update ConfigureScan unit test data to 3.0
+  * Update output_port default value to expanded 2-tuple format
 
 0.15.1
 ******
