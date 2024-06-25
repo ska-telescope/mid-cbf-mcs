@@ -5,6 +5,8 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
+import json
+
 from tango import DeviceProxy, Except
 
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
@@ -99,12 +101,13 @@ class VisibilityTransport:
         )
         subarray_out_info["dest_host_data"] = dest_host_data
         program_arg = {"Subarrays": subarray_out_info}
+        arg_str = json.dumps(program_arg)
 
         # FSP App is responsible for calling the "Configure" command.
         # If not already called, StartScan will fail.
-        self._dp_spead_desc.command_inout("StartScan", program_arg)
+        self._dp_spead_desc.command_inout("StartScan", arg_str)
 
-        self._dp_host_lut_s2.command_inout("Program", program_arg)
+        self._dp_host_lut_s2.command_inout("Program", arg_str)
 
         for dp in self._dp_host_lut_s1:
             dp.command_inout("Program")
@@ -177,7 +180,6 @@ class VisibilityTransport:
         """
         # TODO: This assumes only one board is used for output.
         #       This is sufficient for AA0.5. Need an update for AA1.
-        vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
         active_links = SlimConfig(vis_slim_yaml).active_links()
         rx0 = None
         for link in active_links:
