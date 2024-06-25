@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -54,6 +55,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
         self._proxy_hps_fsp_corr_controller = None
 
+        self.delay_model = ""
         self.vcc_ids = []
         self.frequency_band = 0
         self.frequency_slice_id = 0
@@ -87,8 +89,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already communicating.")
             return
         super().start_communicating()
-        if self.power_state is None:
-            self._update_component_state(power=PowerState.OFF)
+        self._update_component_state(power=PowerState.OFF)
 
     def _assign_vcc(
         self: FspCorrSubarrayComponentManager, argin: list[int]
@@ -168,6 +169,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # Command methods
     # ---------------
 
+    @check_communicating
     def on(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
         """
         Turn on FSP Corr component. This attempts to establish communication
@@ -177,8 +179,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
-
-        :raise ConnectionError: if unable to connect to HPS FSP Corr controller
         """
         self.logger.info("Entering FspCorrSubarrayComponentManager.on")
 
@@ -191,13 +191,15 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                         device_name=self._hps_fsp_corr_controller_fqdn
                     )
                 except tango.DevFailed as df:
-                    self.logger.error(str(df.args[0].desc))
+                    self.logger.error(
+                        f"Failed to connect to {self._hps_fsp_corr_controller_fqdn}; {df}"
+                    )
                     self._update_communication_state(
                         communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
                     return (
                         ResultCode.FAILED,
-                        "Failed to establish proxies to HPS FSP Corr controller device.",
+                        "Failed to establish proxy to HPS FSP Corr controller device.",
                     )
         else:
             self._proxy_hps_fsp_corr_controller = (
@@ -209,6 +211,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
 
+    @check_communicating
     def off(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
         """
         Turn off FSP component; currently unimplemented.
@@ -220,6 +223,41 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         """
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
+
+    @check_communicating
+    def update_delay_model(
+        self: FspCorrSubarrayComponentManager, argin: str
+    ) -> tuple[ResultCode, str]:
+        """
+        Update the FSP's delay model (serialized JSON object)
+
+        :param argin: the delay model data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering update_delay_model")
+
+        # the whole delay model must be stored
+        self.delay_model = argin
+        delay_model = json.loads(argin)
+
+        try:
+            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                json.dumps(delay_model)
+            )
+        except tango.DevFailed as df:
+            self.logger.error(f"{df.args[0].desc}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return (
+                ResultCode.FAILED,
+                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+            )
+
+        return (ResultCode.OK, "UpdateDelayModel completed OK")
 
     def _configure_scan(
         self: FspCorrSubarrayComponentManager,

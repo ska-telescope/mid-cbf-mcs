@@ -44,11 +44,7 @@ class TestFsp:
         harness.add_device(
             device_name="mid_csp_cbf/fsp/01",
             device_class=Fsp,
-            FspCorrSubarray=[
-                "mid_csp_cbf/fspCorrSubarray/01_01",
-                "mid_csp_cbf/fspCorrSubarray/01_02",
-                "mid_csp_cbf/fspCorrSubarray/01_03",
-            ],
+            FspCorrSubarray=list(initial_mocks.keys()),
             HpsFspControllerAddress="talondx-001/fsp-app/fsp-controller",
             HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
             DeviceID="1",
@@ -111,27 +107,24 @@ class TestFsp:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+
+        assert device_under_test.State() == DevState.OFF
 
         if command == "On":
+            expected_result = ResultCode.OK
+            expected_state = DevState.ON
             result = device_under_test.On()
-            # assert state attribute was updated and command completed OK
-            change_event_callbacks["state"].assert_change_event(DevState.ON)
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
-                    f"{result[1][0]}",
-                    f'[{ResultCode.OK.value}, "On completed OK"]',
-                )
-            )
         elif command == "Off":
-            assert device_under_test.Off()[0][0] == ResultCode.REJECTED
+            expected_result = ResultCode.REJECTED
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
         elif command == "Standby":
-            assert device_under_test.Standby()[0][0] == ResultCode.REJECTED
+            expected_result = ResultCode.REJECTED
+            expected_state = DevState.OFF
+            result = device_under_test.Standby()
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        assert result[0][0] == expected_result
+        assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize("function_mode", [FspModes.CORR])
     def test_SetFunctionMode(
@@ -293,45 +286,3 @@ class TestFsp:
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "delay_model_file_name, \
-        sub_id",
-        [("/../../data/delaymodel_unit_test.json", 1)],
-    )
-    def test_UpdateDelayModel(
-        self: TestFsp,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-        device_under_test: context.DeviceProxy,
-        delay_model_file_name: str,
-        sub_id: int,
-    ) -> None:
-        """
-        Test Fsp's UpdateDelayModel command
-
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param delay_model_file_name: JSON file for the delay model
-        :param sub_id: the subarray id
-        """
-        # set device ONLINE, ON, function mode to CORR and add subarray membership
-        self.test_AddSubarrayMembership(
-            change_event_callbacks, device_under_test, [sub_id]
-        )
-
-        # prepare input data
-        with open(file_path + delay_model_file_name) as f:
-            delay_model = f.read().replace("\n", "")
-
-        # delay model should be empty string after initialization
-        assert device_under_test.delayModel == ""
-
-        result = device_under_test.UpdateDelayModel(delay_model)
-        assert result == [
-            [ResultCode.OK.value],
-            ["UpdateDelayModel completed OK"],
-        ]
-        assert device_under_test.delayModel == delay_model

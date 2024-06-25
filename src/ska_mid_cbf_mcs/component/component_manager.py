@@ -14,6 +14,7 @@ from __future__ import annotations  # allow forward references in type hints
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Event, Lock
+from time import sleep
 from typing import Any, Callable, Optional, cast
 
 import tango
@@ -102,6 +103,14 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
+        # initialize lock and set of of blocking resources an LRC thread may be
+        # dependent on
+        self._event_ids = {}
+        self._event_ids_count = 0
+        self._results_lock = Lock()
+        self._num_blocking_results = 0
+        self._blocking_commands: set["str"] = set()
+
         # NOTE: using component manager default of SimulationMode.TRUE,
         # as self._simulation_mode at this point during init_device()
         # SimulationMode.FALSE
@@ -133,9 +142,62 @@ class CbfComponentManager(TaskExecutorComponentManager):
             return True
         return False
 
+    def _subscribe_command_results(
+        self: CbfComponentManager, dp: context.DeviceProxy
+    ) -> None:
+        if dp in self._event_ids:
+            sub_id = dp.subscribe_event(
+                attr_name="longRunningCommandResult",
+                event_type=tango.EventType.CHANGE_EVENT,
+                cb_or_queuesize=self.results_callback,
+            )
+            if sub_id not in self._event_ids[dp]:
+                self._event_ids[dp].append(sub_id)
+            else:
+                self.logger.debug(
+                    f"Skipping repeated event subscription: {sub_id}"
+                )
+        else:
+            self._event_ids.update(
+                {
+                    dp: [
+                        dp.subscribe_event(
+                            attr_name="longRunningCommandResult",
+                            event_type=tango.EventType.CHANGE_EVENT,
+                            cb_or_queuesize=self.results_callback,
+                        )
+                    ]
+                }
+            )
+            self._event_ids_count += 1
+
     #######################
     # Group-related methods
     #######################
+
+    def _create_group_proxies(
+        self: CbfComponentManager, group_proxies: dict
+    ) -> bool:
+        """
+        Create group proxies (list of DeviceProxy) from the list of fqdns passed in.
+        Store as class attributes.
+        :param
+        :return: True if the group proxies are successfully created, False otherwise.
+        """
+        for group, fqdn in group_proxies.items():
+            try:
+                setattr(
+                    self,
+                    group,
+                    [
+                        context.DeviceProxy(device_name=device)
+                        for device in fqdn
+                    ],
+                )
+            except tango.DevFailed as df:
+                self.logger.error(f"Failure in connection to {fqdn}: {df}")
+                return False
+        return True
 
     def _issue_command_thread(
         self: CbfComponentManager,
@@ -264,7 +326,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxy: proxy target for read_attribute
         :param attr_name: name of attribute to be read
         :param value: attribute value to be written
-        :return: True if write succeeded, False otherwise
+        :return: read attribute value
         """
         try:
             proxy.write_attribute(attr_name, value)
@@ -294,7 +356,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxies: list of device proxies in group; determines ordering of
             return values
         :param max_workers: maximum number of ThreadPoolExecutor workers
-        :return: True if all writes succeeded, False otherwise
+        :return: list of proxy attribute values
         """
         results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -346,6 +408,87 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
+
+    def results_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ):
+        """
+        Locked callback to decrement number of blocking
+        """
+        try:
+            if event_data.attr_value.value != ("", ""):
+                # fetch the result code from the event_data tuple.
+                result_code = int(
+                    event_data.attr_value.value[1].split(",")[0].split("[")[1]
+                )
+                if result_code == ResultCode.OK:
+                    with self._results_lock:
+                        self._num_blocking_results -= 1
+            self.logger.info(
+                f"EventData attr_value:{event_data.attr_value.value}, events remaining={self._num_blocking_results}"
+            )
+        except IndexError as ie:
+            self.logger.error(f"IndexError caught: {ie}")
+
+    def _wait_for_blocking_results(
+        self: CbfComponentManager,
+        timeout: float,
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
+        """
+        Wait for the number of anticipated results to be pushed by subordinate devices.
+
+        Example for submitted command method
+        ------------------------------------
+        def _command_thread(
+            self: CbfComponentManager,
+            task_callback: Optional[Callable] = None,
+            task_abort_event: Optional[threading.Event] = None,
+            **kwargs,
+        ):
+            # thread begins
+            # ...
+            # call a bunch of commands, get back a list of command_ids
+            command_ids = []
+            # ...
+            # continue until it the results of those commands are needed
+            # ...
+            # when we can no longer progress without the command results
+            # first reset the number of blocking results
+            self._num_blocking_results = len(command_ids)
+
+            # subscribe to the LRC results of all blocking proxies, providing the
+            # locked decrement counter method as the callback
+            for proxy in proxies_to_wait_on:
+            proxy.subscribe_event(
+                attr_name="longRunningCommandResult",
+                event_type=EventType.CHANGE_EVENT,
+                callback=self.results_callback
+            )
+
+            # call wait method
+            self._wait_for_blocking(timeout=10.0, task_abort_event=task_abort_event)
+
+            # now we can continue
+
+        :param timeout: Time to wait, in seconds.
+        :param task_abort_event: Check for abort, defaults to None
+
+        :return: completed if status reached, FAILED if timed out, ABORTED if aborted
+        """
+        ticks = int(timeout / 0.01)  # 10 ms resolution
+        while self._num_blocking_results:
+            if task_abort_event and task_abort_event.is_set():
+                return TaskStatus.ABORTED
+            sleep(0.01)
+            ticks -= 1
+            if ticks <= 0:
+                self.logger.error(
+                    f"{self._num_blocking_results} blocking result(s) remain after {timeout}s."
+                )
+                return TaskStatus.FAILED
+        self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
+        return TaskStatus.COMPLETED
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:

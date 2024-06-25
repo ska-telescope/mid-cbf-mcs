@@ -430,3 +430,45 @@ class TestFspCorrSubarray:
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "delay_model_file_name, \
+        sub_id",
+        [("/../../data/delaymodel_unit_test.json", 1)],
+    )
+    def test_UpdateDelayModel(
+        self: TestFsp,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        delay_model_file_name: str,
+        sub_id: int,
+    ) -> None:
+        """
+        Test Fsp's UpdateDelayModel command
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param delay_model_file_name: JSON file for the delay model
+        :param sub_id: the subarray id
+        """
+        # set device ONLINE, ON, function mode to CORR and add subarray membership
+        self.test_AddSubarrayMembership(
+            change_event_callbacks, device_under_test, [sub_id]
+        )
+
+        # prepare input data
+        with open(file_path + delay_model_file_name) as f:
+            delay_model = f.read().replace("\n", "")
+
+        # delay model should be empty string after initialization
+        assert device_under_test.delayModel == ""
+
+        result = device_under_test.UpdateDelayModel(delay_model)
+        assert result == [
+            [ResultCode.OK.value],
+            ["UpdateDelayModel completed OK"],
+        ]
+        assert device_under_test.delayModel == delay_model

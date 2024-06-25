@@ -127,7 +127,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
-        :return: True if initialization failed, otherwise False
+        :return: False if initialization failed, otherwise True
         """
         try:
             if self._proxy_cbf_controller is None:
@@ -140,7 +140,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
-            return True
+            return False
 
         self._count_vcc = int(self._controller_max_capabilities["VCC"])
         self._count_fsp = int(self._controller_max_capabilities["FSP"])
@@ -151,13 +151,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
         )
 
-        return False
+        return True
 
     def _init_subelement_proxies(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxies to FSP and VCC subelements
 
-        :return: True if initialization failed, otherwise False
+        :return: False if initialization failed, otherwise True
         """
         try:
             if len(self._all_vcc_proxies) == 0:
@@ -182,14 +182,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._proxies_talon_board_device.append(proxy)
 
-            for proxy in self._proxies_fsp_corr_subarray_device:
-                proxy.adminMode = AdminMode.ONLINE
+            # for proxy in self._proxies_fsp_corr_subarray_device:
+            #     proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
-            return True
+            return False
 
-        return False
+        return True
 
     def start_communicating(self: CbfSubarrayComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
@@ -201,15 +201,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already connected.")
             return
 
-        controller_failure = self._init_controller_proxy()
-        if controller_failure:
+        controller_success = self._init_controller_proxy()
+        if not controller_success:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
 
-        subelement_failure = self._init_subelement_proxies()
-        if subelement_failure:
+        subelement_success = self._init_subelement_proxies()
+        if not subelement_success:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -238,44 +238,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
         """
-        Turn on FSP function mode subarray devices
+        Set state to ON
         """
-        on_failure = False
-        for result_code, msg in self._issue_group_command(
-            command_name="On", proxies=self._proxies_fsp_corr_subarray_device
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                on_failure = True
-
-        if on_failure:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return (ResultCode.FAILED, "Failed to turn on FSP CORR devices")
-
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
         """
-        Turn off FSP function mode subarray devices
+        Set state to OFF
         """
-        off_failure = False
-        for result_code, msg in self._issue_group_command(
-            command_name="Off", proxies=self._proxies_fsp_corr_subarray_device
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                off_failure = True
-
-        if off_failure:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return (ResultCode.FAILED, "Failed to turn off FSP CORR devices")
-
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
@@ -315,7 +287,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             results_fsp = self._issue_group_command(
                 command_name="UpdateDelayModel",
-                proxies=list(self._assigned_fsp_proxies),
+                proxies=list(self._assigned_fsp_corr_proxies),
                 argin=model,
             )
 
@@ -834,32 +806,27 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
-        :return: True if any command failed to be issued, otherwise False
+        :return: False if any command failed to be issued, otherwise True
         """
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
-        failure = False
+        success = True
         for result_code, msg in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
             if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
-                failure = True
-        return failure
+                success = False
+        return success
 
-    def _validate_input(
-        self: CbfSubarrayComponentManager, argin: str
-    ) -> tuple[bool, str]:
+    def _validate_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
         """
         Validate scan configuration.
 
         :param argin: The configuration as JSON formatted string.
 
-        :return: A tuple containing a boolean indicating if the configuration
-            is valid and a string message. The message is for information
-            purpose only.
-        :rtype: (bool, str)
+        :return: False if validation failed, otherwise True
         """
         self.logger.info("Validating ConfigureScan input JSON...")
 
@@ -876,16 +843,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(
                 f"Scan configuration object is not a valid JSON object; {je}"
             )
-            return True
+            return False
         except ValueError as ve:
             self.logger.error(
                 f"ConfigureScan JSON validation against the telescope model schema failed;\n {ve}."
             )
-            return True
+            return False
 
         # TODO: return additional validation as needed
 
-        return False
+        return True
 
     def _calculate_dish_sample_rate(
         self: CbfSubarrayComponentManager,
@@ -973,12 +940,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Issue Vcc ConfigureBand command
 
         :param configuration: scan configuration dict
-        :return: True if VCC ConfigureBand command failed, otherwise False
+        :return: False if VCC ConfigureBand command failed, otherwise True
         """
         self.logger.info("Configuring VCC band...")
 
         # Prepare args for ConfigureBand
-        vcc_failure = False
+        vcc_success = True
         for dish_id in self.dish_ids:
             # Fetch K-value based on dish_id
             vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
@@ -1005,10 +972,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
 
             if result_code == ResultCode.FAILED:
-                vcc_failure = True
+                vcc_success = False
                 self.logger.error(msg)
 
-        return vcc_failure
+        return vcc_success
 
     def _vcc_configure_scan(
         self: CbfSubarrayComponentManager,
@@ -1020,7 +987,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :return: True if VCC ConfigureScan command failed, otherwise False
+        :return: False if VCC ConfigureScan command failed, otherwise True
         """
         self.logger.info("Configuring VCC for scan...")
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
@@ -1087,7 +1054,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
-        vcc_failure = False
+        vcc_success = True
         for result_code, msg in self._issue_group_command(
             command_name="ConfigureScan",
             proxies=list(self._assigned_vcc_proxies),
@@ -1095,115 +1062,92 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             if result_code == ResultCode.FAILED:
                 self.logger.error(msg)
-                vcc_failure = True
+                vcc_success = False
 
-        return vcc_failure
+        return vcc_success
 
     def _assign_fsp_corr(
-        self: CbfSubarrayComponentManager,
-        fsp_id: int,
+        self: CbfSubarrayComponentManager, fsp_id: int, function_mode: str
     ) -> bool:
         """
-        Set FSP function mode and add subarray membership.
+        Set FSP function mode and add subarray membership
 
         :param fsp_id: ID of FSP to assign
-        :return: True if failed to configure FSP device, False otherwise
+        :param function_mode: target FSP function mode
+        :return: False if failed to configure FSP device, True otherwise
         """
         self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
 
         fsp_proxy = self._proxies_fsp[fsp_id - 1]
         fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
         try:
-            # first turn on the FSP function mode subarray device
+            # TODO handle LRCs
+
+            # set FSP devices simulationMode attributes
             fsp_corr_proxy.adminMode = AdminMode.OFFLINE
             fsp_corr_proxy.simulationMode = self.simulation_mode
             fsp_corr_proxy.adminMode = AdminMode.ONLINE
-
-            # TODO handle results, LRCs
-            result = fsp_corr_proxy.On()
-            if result[0] == ResultCode.FAILED:
-                self.logger.error(result[1])
-                return True
-
-            # now start assignment of FSP device
             fsp_proxy.adminMode = AdminMode.OFFLINE
             fsp_proxy.simulationMode = self.simulation_mode
             fsp_proxy.adminMode = AdminMode.ONLINE
 
-            # TODO handle results, LRCs
-            result = fsp_proxy.On()
-            if result[0] == ResultCode.FAILED:
-                self.logger.error(result[1])
-                return True
-
             # only set function mode if FSP is both IDLE and not configured for
             # another mode
             current_function_mode = fsp_proxy.functionMode
-            if current_function_mode != FspModes["CORR"].value:
+            if current_function_mode != FspModes[function_mode].value:
                 if current_function_mode != FspModes.IDLE.value:
                     self.logger.error(
-                        f"Unable to configure FSP {fsp_id} for function mode CORR, as it is currently configured for function mode {current_function_mode}"
+                        f"Unable to configure FSP {fsp_id} for function mode {function_mode}, as it is currently configured for function mode {current_function_mode}"
                     )
-                    return True
-                result = fsp_proxy.SetFunctionMode("CORR")
+                    return False
+
+                # if FSP function mode is IDLE, turn on FSP and set function mode
+                result = fsp_proxy.On()
                 if result[0] == ResultCode.FAILED:
                     self.logger.error(result[1])
-                    return True
+                    return False
 
+                result = fsp_proxy.SetFunctionMode(function_mode)
+                if result[0] == ResultCode.FAILED:
+                    self.logger.error(result[1])
+                    return False
+
+            # finally, add subarray membership, which powers on this subarray's
+            # FSP function mode devices
             result = fsp_proxy.AddSubarrayMembership(self.subarray_id)
             if result[0] == ResultCode.FAILED:
                 self.logger.error(result[1])
-                return True
+                return False
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
-            return True
+            return False
 
         self._assigned_fsp_proxies.add(fsp_proxy)
         self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
-        return False
+        return True
 
     def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
         """
         Remove subarray membership and return FSP to IDLE state if possible
 
-        :return: True if failed to release FSP device, False otherwise
+        :return: False if failed to release FSP device, True otherwise
         """
         self.logger.info("Releasing all FSP from subarray...")
 
         try:
-            # first release assigned FSP
+            # remove subarray membership from assigned FSP
             for fsp_proxy in self._assigned_fsp_proxies:
                 result = fsp_proxy.RemoveSubarrayMembership(self.subarray_id)
                 if result[0] == ResultCode.FAILED:
                     self.logger.error(result[1])
-                    return True
-
-                # only set function mode to IDLE if FSP is not in use by another
-                # subarray
-                if len(fsp_proxy.subarrayMembership) == 0:
-                    result = fsp_proxy.SetFunctionMode("IDLE")
-                    if result[0] == ResultCode.FAILED:
-                        self.logger.error(result[1])
-                        return True
-
-                    result = fsp_proxy.Off()
-                    if result[0] == ResultCode.FAILED:
-                        self.logger.error(result[1])
-                        return True
-
-            # now turn off FSP function mode subarray proxies
-            for fsp_corr_proxy in self._assigned_fsp_corr_proxies:
-                result = fsp_corr_proxy.Off()
-                if result[0] == ResultCode.FAILED:
-                    self.logger.error(result[1])
-                    return True
+                    return False
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
-            return True
+            return False
 
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
-        return False
+        return True
 
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
@@ -1215,12 +1159,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :return: True if FSP ConfigureScan command failed, otherwise False
+        :return: False if FSP ConfigureScan command failed, otherwise True
         """
         self.logger.info("Configuring FSP for scan...")
 
         # build FSP configuration JSONs, add FSP
-        fsp_failure = False
+        fsp_success = True
         corr_config = []
         for config in configuration["fsp"]:
             fsp_config = copy.deepcopy(config)
@@ -1286,17 +1230,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     corr_config.append(fsp_config)
 
                     # set function mode and add subarray membership
-                    fsp_failure = self._assign_fsp_corr(
-                        fsp_id=int(fsp_config["fsp_id"])
+                    fsp_success = self._assign_fsp_corr(
+                        fsp_id=int(fsp_config["fsp_id"]), function_mode="CORR"
                     )
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
                     )
-                    fsp_failure = True
+                    fsp_success = False
 
-        if fsp_failure or len(corr_config) == 0:
-            return True
+        if not fsp_success or len(corr_config) == 0:
+            return False
 
         # Call ConfigureScan for all FSP function mode subarray devices
         # NOTE: corr_config is a list of fsp config JSON objects, each
@@ -1316,9 +1260,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     "Failed to issue ConfigureScan to FSP CORR subarray device "
                     + f"{fsp_corr_proxy.dev_name()}; {df}"
                 )
-                fsp_failure = True
+                fsp_success = False
 
-        return fsp_failure
+        return fsp_success
 
     def _subscribe_tm_event(
         self: CbfSubarrayComponentManager,
@@ -1365,16 +1309,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Completely deconfigure the subarray; all initialization performed by the
         ConfigureScan command must be 'undone' here.
 
-        :return: True if failed to deconfigure, otherwise False
+        :return: False if failed to deconfigure, otherwise True
         """
         self.logger.info("Deconfiguring subarray...")
 
         # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
         # ObsReset and Restart here in the CbfSubarray
         if len(self._assigned_fsp_proxies) > 0:
-            fsp_failure = self._release_all_fsp()
-            if fsp_failure:
-                return True
+            fsp_success = self._release_all_fsp()
+            if not fsp_success:
+                return False
 
         try:
             # unsubscribe from TMC events
@@ -1383,14 +1327,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 del self._events_telstate[event_id]
         except tango.DevFailed as df:
             self.logger.error(f"Error in unsubscribing from TM events; {df}")
-            return True
+            return False
 
         self.scan_id = 0
         self.config_id = ""
         self.frequency_band = 0
         self._last_received_delay_model = ""
 
-        return False
+        return True
 
     def _configure_scan(
         self: CbfSubarrayComponentManager,
@@ -1413,8 +1357,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        validation_failure = self._validate_input(argin)
-        if validation_failure:
+        validation_success = self._validate_input(argin)
+        if not validation_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1425,8 +1369,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # deconfigure to reset assigned FSPs and unsubscribe from events.
-        deconfigure_failure = self._deconfigure()
-        if deconfigure_failure:
+        deconfigure_success = self._deconfigure()
+        if not deconfigure_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1443,10 +1387,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # store configID
         self.config_id = str(common_configuration["config_id"])
 
-        vcc_configure_band_failure = self._vcc_configure_band(
+        vcc_configure_band_success = self._vcc_configure_band(
             configuration=common_configuration
         )
-        if vcc_configure_band_failure:
+        if not vcc_configure_band_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1456,11 +1400,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        vcc_configure_scan_failure = self._vcc_configure_scan(
+        vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
         )
-        if vcc_configure_scan_failure:
+        if not vcc_configure_scan_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1471,11 +1415,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # Configure delayModel subscription point
-        delay_model_failure = self._subscribe_tm_event(
+        delay_model_success = self._subscribe_tm_event(
             subscription_point=configuration["delay_model_subscription_point"],
             callback=self._delay_model_event_callback,
         )
-        if delay_model_failure:
+        if not delay_model_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1485,11 +1429,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        fsp_configure_scan_failure = self._fsp_configure_scan(
+        fsp_configure_scan_success = self._fsp_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
         )
-        if fsp_configure_scan_failure:
+        if not fsp_configure_scan_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1552,10 +1496,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # issue Scan to assigned resources
         scan_id = scan["scan_id"]
-        scan_failure = self._issue_command_all_assigned_resources(
+        scan_success = self._issue_command_all_assigned_resources(
             command_name="Scan", argin=scan_id
         )
-        if scan_failure:
+        if not scan_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1596,10 +1540,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue EndScan to assigned resources
-        end_scan_failure = self._issue_command_all_assigned_resources(
+        end_scan_success = self._issue_command_all_assigned_resources(
             command_name="EndScan"
         )
-        if end_scan_failure:
+        if not end_scan_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1638,10 +1582,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue GoToIdle to assigned resources
-        idle_failure = self._issue_command_all_assigned_resources(
+        idle_success = self._issue_command_all_assigned_resources(
             command_name="GoToIdle"
         )
-        if idle_failure:
+        if not idle_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1652,8 +1596,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # deconfigure to reset assigned FSPs and unsubscribe from events.
-        deconfigure_failure = self._deconfigure()
-        if deconfigure_failure:
+        deconfigure_success = self._deconfigure()
+        if not deconfigure_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1692,10 +1636,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue Abort to assigned resources
-        abort_failure = self._issue_command_all_assigned_resources(
+        abort_success = self._issue_command_all_assigned_resources(
             command_name="Abort"
         )
-        if abort_failure:
+        if not abort_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1733,10 +1677,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_failure = self._issue_command_all_assigned_resources(
+            abort_success = self._issue_command_all_assigned_resources(
                 command_name="Abort"
             )
-            if abort_failure:
+            if not abort_success:
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -1746,10 +1690,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        obsreset_failure = self._issue_command_all_assigned_resources(
+        obsreset_success = self._issue_command_all_assigned_resources(
             command_name="ObsReset"
         )
-        if obsreset_failure:
+        if not obsreset_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1762,8 +1706,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
         # deconfigure to reset assigned FSPs and unsubscribe from events.
-        deconfigure_failure = self._deconfigure()
-        if deconfigure_failure:
+        deconfigure_success = self._deconfigure()
+        if not deconfigure_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1812,10 +1756,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_failure = self._issue_command_all_assigned_resources(
+            abort_success = self._issue_command_all_assigned_resources(
                 command_name="Abort"
             )
-            if abort_failure:
+            if not abort_success:
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -1825,10 +1769,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        obsreset_failure = self._issue_command_all_assigned_resources(
+        obsreset_success = self._issue_command_all_assigned_resources(
             command_name="ObsReset"
         )
-        if obsreset_failure:
+        if not obsreset_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1841,8 +1785,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
         # deconfigure to reset assigned FSPs and unsubscribe from events.
-        deconfigure_failure = self._deconfigure()
-        if deconfigure_failure:
+        deconfigure_success = self._deconfigure()
+        if not deconfigure_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(

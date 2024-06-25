@@ -44,9 +44,6 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-001/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
@@ -85,9 +82,6 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-002/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
@@ -126,9 +120,6 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-003/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
@@ -167,9 +158,6 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-004/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
