@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import gc
-import os
 from typing import Iterator
 from unittest.mock import Mock
 
@@ -27,8 +26,6 @@ from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
 
 # Disable garbage collection to prevent tests hanging
 gc.disable()
-
-file_path = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestFsp:

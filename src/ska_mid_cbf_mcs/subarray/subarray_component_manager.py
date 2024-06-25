@@ -111,17 +111,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._count_vcc = 0
         self._count_fsp = 0
 
-        # proxies to subordinate devices
+        # proxies to subelement devices
         self._all_vcc_proxies = []
         self._assigned_vcc_proxies = set()
-        self._proxies_fsp = []
-        self._proxies_fsp_corr_subarray_device = []
-        self._proxies_talon_board_device = []
 
-        # group proxies to subordinate devices
-        # Note: VCC connected both individual and in group
+        self._all_fsp_proxies = []
+        self._all_fsp_corr_proxies = []
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
+
+        self._all_talon_board_proxies = []
 
     def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
         """
@@ -166,23 +165,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     for fqdn in self._fqdn_vcc
                 ]
 
-            if len(self._proxies_fsp) == 0:
-                self._proxies_fsp = [
+            if len(self._all_fsp_proxies) == 0:
+                self._all_fsp_proxies = [
                     context.DeviceProxy(device_name=fqdn)
                     for fqdn in self._fqdn_fsp
                 ]
 
-            if len(self._proxies_fsp_corr_subarray_device) == 0:
+            if len(self._all_fsp_corr_proxies) == 0:
                 for fqdn in self._fqdn_fsp_corr_subarray_device:
                     proxy = context.DeviceProxy(device_name=fqdn)
-                    self._proxies_fsp_corr_subarray_device.append(proxy)
+                    self._all_fsp_corr_proxies.append(proxy)
 
-            if len(self._proxies_talon_board_device) == 0:
+            if len(self._all_talon_board_proxies) == 0:
                 for fqdn in self._fqdn_talon_board_device:
                     proxy = context.DeviceProxy(device_name=fqdn)
-                    self._proxies_talon_board_device.append(proxy)
+                    self._all_talon_board_proxies.append(proxy)
 
-            # for proxy in self._proxies_fsp_corr_subarray_device:
+            # for proxy in self._all_fsp_corr_proxies:
             #     proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as df:
@@ -224,7 +223,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "Entering CbfSubarrayComponentManager.stop_communicating"
         )
         try:
-            for proxy in self._proxies_fsp_corr_subarray_device:
+            for proxy in self._all_fsp_corr_proxies:
                 proxy.adminMode = AdminMode.OFFLINE
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -347,7 +346,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             self._last_received_delay_model = value
 
-            # pass DISH ID as VCC ID integer to FSPs and VCCs
+            # pass DISH ID as VCC ID integer to FSPs
             for delay_detail in delay_model_json["receptor_delays"]:
                 dish_id = delay_detail["receptor"]
                 delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
@@ -375,7 +374,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param dish_id: the DISH ID
         :return: proxy to Talon board device, or None if failed to initialize proxy
         """
-        for proxy in self._proxies_talon_board_device:
+        for proxy in self._all_talon_board_proxies:
             board_dish_id = proxy.dishID
             if board_dish_id == dish_id:
                 return proxy
@@ -1078,8 +1077,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
 
-        fsp_proxy = self._proxies_fsp[fsp_id - 1]
-        fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fsp_id - 1]
+        fsp_proxy = self._all_fsp_proxies[fsp_id - 1]
+        fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id - 1]
         try:
             # TODO handle LRCs
 
@@ -1249,7 +1248,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             try:
                 # TODO handle fsp corr LRC
                 self.logger.debug(f"fsp_config: {json.dumps(fsp_config)}")
-                fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[
+                fsp_corr_proxy = self._all_fsp_corr_proxies[
                     int(fsp_config["fsp_id"]) - 1
                 ]
                 fsp_corr_proxy.set_timeout_millis(12000)

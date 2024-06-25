@@ -32,6 +32,8 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 # Disable garbage collection to prevent tests hanging
 gc.disable()
 
+file_path = os.path.dirname(os.path.abspath(__file__))
+
 
 class TestFspCorrSubarray:
     """
@@ -432,16 +434,14 @@ class TestFspCorrSubarray:
         change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
-        "delay_model_file_name, \
-        sub_id",
-        [("/../../data/delaymodel_unit_test.json", 1)],
+        "delay_model_file_name",
+        ["/../../data/delaymodel_unit_test.json"],
     )
     def test_UpdateDelayModel(
-        self: TestFsp,
+        self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         delay_model_file_name: str,
-        sub_id: int,
     ) -> None:
         """
         Test Fsp's UpdateDelayModel command
@@ -454,10 +454,7 @@ class TestFspCorrSubarray:
         :param delay_model_file_name: JSON file for the delay model
         :param sub_id: the subarray id
         """
-        # set device ONLINE, ON, function mode to CORR and add subarray membership
-        self.test_AddSubarrayMembership(
-            change_event_callbacks, device_under_test, [sub_id]
-        )
+        self.test_Power_Commands(device_under_test, "On")
 
         # prepare input data
         with open(file_path + delay_model_file_name) as f:
