@@ -169,12 +169,12 @@ def init_proxies_fixture():
                     )
                 )
 
-            # Slim
-            self.slim = [
-                context.DeviceProxy(
-                    device_name="mid_csp_cbf/slim/slim-fs",
-                )
-            ]
+            # # Slim
+            # self.slim = [
+            #     context.DeviceProxy(
+            #         device_name="mid_csp_cbf/slim/slim-fs",
+            #     )
+            # ]
 
             # SlimLink
             self.slim_link = []

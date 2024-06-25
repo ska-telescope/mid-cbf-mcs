@@ -46,23 +46,6 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/slim/001")
 
 
-@pytest.fixture(name="links_under_test")
-def links_under_test_fixture(
-    test_context: TangoTestHarnessContext,
-    initial_links: dict,
-) -> list[context.DeviceProxy]:
-    """
-    Fixture that returns the device under test.
-
-    :param test_context: the context in which the tests run
-    :return: the device under test
-    """
-    links = []
-    for name, _ in initial_links.items():
-        links.append(test_context.get_device(name))
-    return links
-
-
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
     device_under_test: context.DeviceProxy,

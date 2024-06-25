@@ -17,6 +17,8 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
 from tango import DevFailed, DevState
 
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+
 # Standard imports
 
 # Path
@@ -87,31 +89,46 @@ class TestSlim:
     ) -> None:
         """
         Test the "SlimTest" command before the Mesh has been configured.
-        Expects that a tango.DevFailed be caught
+        Expects that a IndexError be caught when trying to read counters.
 
         :param test_proxies: the proxies test fixture
         """
         device_under_test = test_proxies.slim
         for mesh in device_under_test:
-            with pytest.raises(
-                DevFailed,
-                match="The SLIM must be configured before SlimTest can be called",
-            ):
-                mesh.SlimTest()
+            rc, message = mesh.SlimTest()
+            
+            # SlimTest's is_allowed should reject the command 
+            # since it was issued before configuration 
+            assert rc == ResultCode.REJECTED
+            
 
-    def test_Configure(self: TestSlim, test_proxies: pytest.fixture) -> None:
+    def test_Configure(
+        self: TestSlim, 
+        device_under_test: list[pytest.fixture],
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the "Configure" command
 
         :param test_proxies: the proxies test fixture
         """
+        
+        # assert device_under_test.State()
 
-        device_under_test = test_proxies.slim
+        # device_under_test = test_proxies.slim
         for mesh in device_under_test:
             with open(data_file_path + "slim_test_config.yaml", "r") as f:
-                rc, msg = mesh.Configure(f.read())
+                result_code, command_id = mesh.Configure(f.read())
 
-            assert rc == ResultCode.OK
+            assert result_code == [ResultCode.QUEUED]
+
+            change_event_callbacks["longRunningCommandResult"].assert_change_event(
+                (
+                    f"{command_id[0]}",
+                    '[0, "Configure completed OK"]',
+                )
+            )
+            
             for link in mesh.healthSummary:
                 assert link == HealthState.OK
 
