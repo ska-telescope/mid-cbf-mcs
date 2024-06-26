@@ -24,6 +24,7 @@ import time
 import pytest
 
 # SKA imports
+from ska_control_model import SimulationMode
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_testing import context
 from tango import DevState
@@ -90,6 +91,7 @@ def init_proxies_fixture():
             self.controller = context.DeviceProxy(
                 device_name="mid_csp_cbf/sub_elt/controller",
             )
+            self.controller.simulationMode = SimulationMode.TRUE
             self.controller.set_timeout_millis(timeout_millis)
             self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
 
