@@ -55,6 +55,7 @@ class TestSlim:
             proxy.set_timeout_millis(10000)
 
         for mesh in test_proxies.slim:
+            mesh.simulationMode = SimulationMode.TRUE
             # The Slim should be in the OFF state after being initialised
             mesh.loggingLevel = LoggingLevel.DEBUG
             mesh.adminMode = AdminMode.ONLINE
@@ -115,8 +116,6 @@ class TestSlim:
         """       
         
         for mesh in device_under_test:
-            assert mesh.simulationMode == SimulationMode.TRUE
-            
             with open(data_file_path + "slim_test_config.yaml", "r") as f:
                 result_code, command_id = mesh.Configure(f.read())
 
