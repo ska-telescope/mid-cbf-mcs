@@ -262,6 +262,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 ),
                 proxies,
             ):
+                if r[0] == ResultCode.OK:
+                    self.logger.info(f"{r[1]}")
+                else:
+                    self.logger.error(f"{r[1]}")
                 results.append(r)
         return results
 

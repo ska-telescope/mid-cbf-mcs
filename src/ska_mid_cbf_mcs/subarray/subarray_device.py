@@ -145,6 +145,17 @@ class CbfSubarray(CbfObsDevice):
         """
         self.component_manager.update_sys_param(value)
 
+    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+        dtype="str", doc="The last valid delay model received."
+    )
+    def lastDelayModel(self: CbfObsDevice) -> str:
+        """
+        Read the last valid delay model received.
+
+        :return: the current last_received_delay_model value
+        """
+        return self.component_manager.last_received_delay_model
+
     # ---------------
     # General methods
     # ---------------

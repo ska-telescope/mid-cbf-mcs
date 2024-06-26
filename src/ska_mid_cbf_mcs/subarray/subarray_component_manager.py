@@ -104,7 +104,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.dish_ids = []
         self.frequency_band = 0
 
-        self._last_received_delay_model = ""
+        self.last_received_delay_model = ""
 
         self._delay_model_lock = Lock()
 
@@ -288,24 +288,61 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param model: delay model JSON string
         """
         # This method is always called on a separate thread
-        self.logger.info(f"Updating delay model ...{model}")
+        self.logger.info(f"Updating delay model; {model}")
 
-        # we lock the mutex, forward the configuration, then immediately unlock it
-        with self._delay_model_lock:
-            results_vcc = self._issue_group_command(
-                command_name="UpdateDelayModel",
-                proxies=list(self._assigned_vcc_proxies),
-                argin=model,
+        if model == self.last_received_delay_model:
+            log_msg = "Ignoring delay model (identical to previous)."
+            self.logger.warning(log_msg)
+            return
+        try:
+            delay_model_json = json.loads(model)
+        except (
+            json.JSONDecodeError
+        ) as je:  # delay model string not a valid JSON object
+            self.logger.error(
+                f"Delay model object is not a valid JSON object; {je}"
             )
+            return
+
+        # Validate delay_model_json against the telescope model
+        self.logger.info(
+            f"Attempting to validate the following json against the telescope model: {delay_model_json}"
+        )
+        try:
+            telmodel_validate(
+                version=delay_model_json["interface"],
+                config=delay_model_json,
+                strictness=1,
+            )
+            self.logger.info("Delay model is valid!")
+        except ValueError as e:
+            self.logger.error(
+                f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {e}."
+            )
+            return
+
+        # pass DISH ID as VCC ID integer to FSPs
+        for delay_detail in delay_model_json["receptor_delays"]:
+            dish_id = delay_detail["receptor"]
+            delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
+                dish_id
+            ]
+
+        # we lock the mutex, forward the configuration, then unlock it
+        with self._delay_model_lock:
             results_fsp = self._issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
                 argin=model,
             )
 
-        for result_code, msg in results_vcc + results_fsp:
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
+            for result_code, _ in results_fsp:
+                if result_code == ResultCode.FAILED:
+                    self.logger.error(
+                        "Failed to issue UpdateDelayModel command to FSP devices"
+                    )
+
+            self.last_received_delay_model = model
 
     @check_communicating
     def _delay_model_event_callback(
@@ -330,48 +367,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.warning(log_msg)
             return
 
-        try:
-            self.logger.info("Received delay model update.")
-
-            if value == self._last_received_delay_model:
-                log_msg = "Ignoring delay model (identical to previous)."
-                self.logger.warning(log_msg)
-                return
-
-            delay_model_json = json.loads(value)
-
-            # Validate delay_model_json against the telescope model
-            self.logger.info(
-                f"Attempting to validate the following json against the telescope model: {delay_model_json}"
-            )
-            try:
-                telmodel_validate(
-                    version=delay_model_json["interface"],
-                    config=delay_model_json,
-                    strictness=1,
-                )
-                self.logger.info("Delay model is valid!")
-            except ValueError as e:
-                self.logger.error(
-                    f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {e}."
-                )
-                return
-
-            self._last_received_delay_model = value
-
-            # pass DISH ID as VCC ID integer to FSPs
-            for delay_detail in delay_model_json["receptor_delays"]:
-                dish_id = delay_detail["receptor"]
-                delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
-                    dish_id
-                ]
-            t = Thread(
-                target=self._update_delay_model,
-                args=(json.dumps(delay_model_json),),
-            )
-            t.start()
-        except Exception as e:
-            self.logger.error(str(e))
+        t = Thread(
+            target=self._update_delay_model,
+            args=(value,),
+        )
+        t.start()
 
     #####################
     # Resourcing Commands
@@ -835,11 +835,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._assigned_fsp_corr_proxies
         )
         success = True
-        for result_code, msg in self._issue_group_command(
+        for result_code, _ in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
             if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
+                self.logger.error(
+                    f"Failed to issue {command_name} command to assigned resources"
+                )
                 success = False
         return success
 
@@ -1078,13 +1080,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         config_dict["fsp"] = reduced_fsp
 
         vcc_success = True
-        for result_code, msg in self._issue_group_command(
+        for result_code, _ in self._issue_group_command(
             command_name="ConfigureScan",
             proxies=list(self._assigned_vcc_proxies),
             argin=json.dumps(config_dict),
         ):
             if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
+                self.logger.error(
+                    "Failed to issue ConfigureScan command to VCC devices"
+                )
                 vcc_success = False
 
         return vcc_success
