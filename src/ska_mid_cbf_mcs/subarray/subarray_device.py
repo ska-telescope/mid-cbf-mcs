@@ -79,7 +79,7 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of receptor IDs
         :rtype: list[str]
         """
-        receptors = list(self.component_manager.dish_ids.copy())
+        receptors = self.component_manager.dish_ids.copy()
         receptors.sort()
         return receptors
 
@@ -95,7 +95,7 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of VCC IDs
         :rtype: list[int]
         """
-        return list(self.component_manager.vcc_ids)
+        return self.component_manager.vcc_ids
 
     @attribute(
         dtype=("int",),
@@ -348,7 +348,7 @@ class CbfSubarray(CbfObsDevice):
         ),
     )
     @tango.DebugIt()
-    def Scan(self: CbfObsDevice, argin: str) -> DevVarLongStringArrayType:
+    def Scan(self: CbfSubarray, argin: str) -> DevVarLongStringArrayType:
         """
         Start an observing scan.
         Overrides CbfObsDevice as subarray's scan input is a JSON string
@@ -361,6 +361,27 @@ class CbfSubarray(CbfObsDevice):
         """
         command_handler = self.get_command_object("Scan")
         result_code_message, command_id = command_handler(argin)
+        return [[result_code_message], [command_id]]
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out=(
+            "A tuple containing a return code and a string message "
+            "indicating status. The message is for information purpose "
+            "only."
+        ),
+    )
+    @tango.DebugIt()
+    def Restart(self: CbfSubarray) -> DevVarLongStringArrayType:
+        """
+        Restart the observing device from a FAULT/ABORTED obsState to EMPTY.
+
+        :return: A tuple containing a return code and a string message
+            indicating status. The message is for information purpose
+            only.
+        """
+        command_handler = self.get_command_object("Restart")
+        result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
 
 

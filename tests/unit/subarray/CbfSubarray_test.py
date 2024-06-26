@@ -456,7 +456,7 @@ class TestCbfSubarray:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                f'[{ResultCode.FAILED.value}, "No valid DISH IDs were provided"]',
+                f'[{ResultCode.FAILED.value}, "Failed to remove receptors."]',
             )
         )
 
@@ -880,7 +880,6 @@ class TestCbfSubarray:
             config_str
         )
         command_dict["Abort"] = device_under_test.Abort()
-        command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
@@ -905,8 +904,6 @@ class TestCbfSubarray:
             ObsState.READY,
             ObsState.ABORTING,
             ObsState.ABORTED,
-            ObsState.RESETTING,
-            ObsState.IDLE,
         ]:
             change_event_callbacks["obsState"].assert_change_event(
                 obs_state.value
@@ -965,7 +962,6 @@ class TestCbfSubarray:
         )
         command_dict["Scan"] = device_under_test.Scan(scan_str)
         command_dict["Abort"] = device_under_test.Abort()
-        command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
@@ -991,6 +987,57 @@ class TestCbfSubarray:
             ObsState.SCANNING,
             ObsState.ABORTING,
             ObsState.ABORTED,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "config_file_name, receptors",
+        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+    )
+    def test_Abort_ObsReset_from_ready(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        config_file_name: str,
+        receptors: list[int],
+    ) -> None:
+        """
+        Test ObsReset to ObsState.IDLE from ObsState.READY.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param config_file_name: JSON file for the configuration
+        :param receptors: list of DISH IDs to assign to subarray
+        """
+        # test ObsReset from READY
+        self.test_Abort_from_ready(
+            change_event_callbacks,
+            device_under_test,
+            config_file_name,
+            receptors,
+        )
+
+        (return_value, command_id) = device_under_test.ObsReset()
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
+            )
+        )
+        for obs_state in [
             ObsState.RESETTING,
             ObsState.IDLE,
         ]:
@@ -1001,4 +1048,179 @@ class TestCbfSubarray:
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    # TODO restart tests
+    @pytest.mark.parametrize(
+        "config_file_name, receptors, scan_file_name",
+        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+    )
+    def test_Abort_ObsReset_from_scanning(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        config_file_name: str,
+        receptors: list[int],
+        scan_file_name: str,
+    ) -> None:
+        """
+        Test ObsReset to ObsState.IDLE from ObsState.SCANNING.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param config_file_name: JSON file for the configuration
+        :param receptors: list of DISH IDs to assign to subarray
+        :param scan_file_name: JSON file for the scan ID
+        """
+        # test ObsReset from SCANNING
+        self.test_Abort_from_scanning(
+            change_event_callbacks,
+            device_under_test,
+            config_file_name,
+            receptors,
+            scan_file_name,
+        )
+
+        (return_value, command_id) = device_under_test.ObsReset()
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
+            )
+        )
+        for obs_state in [
+            ObsState.RESETTING,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "config_file_name, receptors",
+        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+    )
+    def test_Abort_Restart_from_ready(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        config_file_name: str,
+        receptors: list[int],
+    ) -> None:
+        """
+        Test Restart to ObsState.EMPTY from ObsState.READY.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param config_file_name: JSON file for the configuration
+        :param receptors: list of DISH IDs to assign to subarray
+        :param scan_file_name: JSON file for the scan ID
+        """
+        # test Restart from READY
+        self.test_Abort_from_ready(
+            change_event_callbacks,
+            device_under_test,
+            config_file_name,
+            receptors,
+        )
+
+        (return_value, command_id) = device_under_test.Restart()
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "Restart completed OK"]',
+            )
+        )
+        for obs_state in [
+            ObsState.RESTARTING,
+            ObsState.EMPTY,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert receptors attribute updated
+        change_event_callbacks["receptors"].assert_change_event(
+            attribute_value=()
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "config_file_name, receptors, scan_file_name",
+        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+    )
+    def test_Abort_Restart_from_scanning(
+        self: TestCbfSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        config_file_name: str,
+        receptors: list[int],
+        scan_file_name: str,
+    ) -> None:
+        """
+        Test Restart to ObsState.EMPTY from ObsState.SCANNING.
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param config_file_name: JSON file for the configuration
+        :param receptors: list of DISH IDs to assign to subarray
+        :param scan_file_name: JSON file for the scan ID
+        """
+
+        # test Restart from SCANNING
+        self.test_Abort_from_scanning(
+            change_event_callbacks,
+            device_under_test,
+            config_file_name,
+            receptors,
+            scan_file_name,
+        )
+
+        (return_value, command_id) = device_under_test.Restart()
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        # check that the queued command failed
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "Restart completed OK"]',
+            )
+        )
+        for obs_state in [
+            ObsState.RESTARTING,
+            ObsState.EMPTY,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert receptors attribute updated
+        change_event_callbacks["receptors"].assert_change_event(
+            attribute_value=()
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()

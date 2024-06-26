@@ -12,6 +12,7 @@ __all__ = ["MockDependency"]
 
 
 class MockDependency:
+    # TODO: lint error; why is ResponseSNMP not a class like Response?
     def ResponseSNMP(
         simulate_response_error: bool,
         sim_state: bool,

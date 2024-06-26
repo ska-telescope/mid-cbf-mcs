@@ -52,6 +52,19 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
 class CbfSubarrayComponentManager(CbfObsComponentManager):
     """A component manager for the CbfSubarray class."""
 
+    @property
+    def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
+        """Return the list of assigned VCC IDs"""
+        dish_ids = self.dish_ids.copy()
+        if self._dish_utils is not None:
+            return [
+                self._dish_utils.dish_id_to_vcc_id[dish] for dish in dish_ids
+            ]
+        self.logger.error(
+            "Unable to return VCC IDs as system parameters have not yet been provided."
+        )
+        return []
+
     def __init__(
         self: CbfSubarrayComponentManager,
         *args: any,
@@ -88,8 +101,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # initialize attribute values
         self._sys_param_str = ""
-        self.dish_ids = set()
-        self.vcc_ids = set()
+        self.dish_ids = []
         self.frequency_band = 0
 
         self._last_received_delay_model = ""
@@ -121,6 +133,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_corr_proxies = set()
 
         self._all_talon_board_proxies = []
+        self._assigned_talon_board_proxies = set()
 
     def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
         """
@@ -470,7 +483,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         vcc_proxies = []
         talon_proxies = []
         dish_ids_to_add = []
-        vcc_ids_to_add = []
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
@@ -496,7 +508,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
             talon_proxies.append(talon_proxy)
             dish_ids_to_add.append(dish_id)
-            vcc_ids_to_add.append(vcc_id)
 
         if len(dish_ids_to_add) == 0:
             task_callback(
@@ -529,14 +540,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if len(self.dish_ids) == 0:
             self._update_component_state(resourced=True)
 
-        self.dish_ids.update(dish_ids_to_add)
-        receptors_push_val = list(self.dish_ids.copy())
+        self.dish_ids.extend(dish_ids_to_add)
+        receptors_push_val = self.dish_ids.copy()
         receptors_push_val.sort()
         self._device_attr_change_callback("receptors", receptors_push_val)
         self._device_attr_archive_callback("receptors", receptors_push_val)
 
-        self.vcc_ids.update(vcc_ids_to_add)
         self._assigned_vcc_proxies.update(vcc_proxies)
+        self._assigned_talon_board_proxies.update(talon_proxies)
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
@@ -618,6 +629,75 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(f"Failed to release VCC; {df}")
             return False
 
+    def _release_vcc_loop(
+        self: CbfSubarrayComponentManager, dish_ids: list[str]
+    ) -> bool:
+        """
+        Main loop for use in releasing VCC resources, shared between resource-releasing
+        commands and Restart command
+
+        :param dish_ids: list of DISH IDs
+        :return: False if unsuccessful in releasing VCCs, otherwise True
+        """
+        # build list of VCCs to remove
+        vcc_proxies = []
+        talon_proxies = []
+        dish_ids_to_remove = []
+        for dish_id in dish_ids:
+            self.logger.debug(f"Attempting to remove {dish_id}")
+
+            try:
+                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            except KeyError:
+                self.logger.warning(
+                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
+                )
+                continue
+
+            if dish_id not in self.dish_ids:
+                self.logger.warning(
+                    f"Skipping receptor {dish_id} as it is not currently assigned to this subarray."
+                )
+                continue
+
+            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
+            vcc_proxies.append(vcc_proxy)
+            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
+            talon_proxies.append(talon_proxy)
+            dish_ids_to_remove.append(dish_id)
+
+        if len(dish_ids_to_remove) == 0:
+            self.logger.error(
+                "Subarray does not currently have any assigned receptors."
+            )
+            return False
+
+        successes = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for result in executor.map(
+                self._release_vcc_thread, vcc_proxies, talon_proxies
+            ):
+                successes.append(result)
+
+        if not all(successes):
+            return False
+
+        updated_dish_ids = [
+            dish for dish in self.dish_ids if dish not in dish_ids_to_remove
+        ]
+        self.dish_ids = updated_dish_ids
+        receptors_push_val = self.dish_ids.copy()
+        receptors_push_val.sort()
+        self._device_attr_change_callback("receptors", receptors_push_val)
+        self._device_attr_archive_callback("receptors", receptors_push_val)
+
+        self._assigned_vcc_proxies.difference_update(vcc_proxies)
+        self._assigned_talon_board_proxies.difference_update(talon_proxies)
+
+        self.logger.info(f"Receptors after removal: {self.dish_ids}")
+
+        return True
+
     def _release_vcc(
         self: CbfSubarrayComponentManager,
         argin: list[str],
@@ -658,72 +738,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # build list of VCCs to remove
-        vcc_proxies = []
-        talon_proxies = []
-        dish_ids_to_remove = []
-        vcc_ids_to_remove = []
-        for dish_id in argin:
-            self.logger.debug(f"Attempting to remove {dish_id}")
-
-            try:
-                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            except KeyError:
-                self.logger.warning(
-                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
-                )
-                continue
-
-            if dish_id not in self.dish_ids:
-                self.logger.warning(
-                    f"Skipping receptor {dish_id} as it is not currently assigned to this subarray."
-                )
-                continue
-
-            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
-            vcc_proxies.append(vcc_proxy)
-            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
-            talon_proxies.append(talon_proxy)
-            dish_ids_to_remove.append(dish_id)
-            vcc_ids_to_remove.append(vcc_id)
-
-        if len(dish_ids_to_remove) == 0:
+        release_success = self._release_vcc_loop(dish_ids=argin)
+        if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    "No valid DISH IDs were provided",
+                    "Failed to remove receptors.",
                 ),
             )
             return
-
-        successes = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            for result in executor.map(
-                self._release_vcc_thread, vcc_proxies, talon_proxies
-            ):
-                successes.append(result)
-
-        if not all(successes):
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to remove all requested VCCs.",
-                ),
-            )
-            return
-
-        self.dish_ids.difference_update(dish_ids_to_remove)
-        receptors_push_val = list(self.dish_ids.copy())
-        receptors_push_val.sort()
-        self._device_attr_change_callback("receptors", receptors_push_val)
-        self._device_attr_archive_callback("receptors", receptors_push_val)
-
-        self.vcc_ids.difference_update(vcc_ids_to_remove)
-        self._assigned_vcc_proxies.difference_update(vcc_proxies)
-
-        self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
         # Update obsState callback if now unresourced
         if len(self.dish_ids) == 0:
@@ -786,7 +810,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 hook="release",
                 command_thread=self._release_vcc,
             ),
-            args=[list(self.dish_ids.copy())],
+            args=[self.dish_ids.copy()],
             is_cmd_allowed=self.is_release_vcc_allowed,
             task_callback=task_callback,
         )
@@ -1273,7 +1297,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param subscription_point: FQDN of TM data subscription point
         :param callback: callback for event subscription
-        :return: True if VCC ConfigureScan command failed, otherwise False
+        :return: False if VCC ConfigureScan command failed, otherwise True
         """
         self.logger.info(f"Attempting subscription to {subscription_point}")
 
@@ -1293,13 +1317,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(
                 f"Failed to subscribe to change events for {subscription_point}; {df}"
             )
-            return True
+            return False
 
         self.logger.info(
             f"Subscribed to {subscription_point}; event ID: {event_id}"
         )
         self._events_telstate[event_id] = proxy
-        return False
+        return True
 
     def _deconfigure(
         self: CbfSubarrayComponentManager,
@@ -1796,10 +1820,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # remove all assigned VCCs to return to EMPTY
-        # TODO cant release all vcc like this
-        self._release_vcc(
-            task_callback=task_callback, argin=list(self.dish_ids.copy())
-        )
+        release_success = self._release_vcc_loop(dish_ids=self.dish_ids.copy())
+        if not release_success:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to remove receptors.",
+                ),
+            )
+            return
 
         task_callback(
             result=(ResultCode.OK, "Restart completed OK"),
