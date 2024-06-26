@@ -100,7 +100,7 @@ class VisibilityTransport:
             self._fsp_config
         )
         subarray_out_info["dest_host_data"] = dest_host_data
-        program_arg = {"Subarrays": subarray_out_info}
+        program_arg = {"Subarrays": [subarray_out_info]}
         arg_str = json.dumps(program_arg)
 
         # FSP App is responsible for calling the "Configure" command.
@@ -157,7 +157,7 @@ class VisibilityTransport:
                 next_host_idx += 1
             d = {}
             # TODO: why json???? The device servers should just take an array of integers
-            d["chan_id"] = p[0] // 20
+            d["chan_id"] = p[0]
             d["ip_addr"] = host_int
             d["udp_port_num"] = p[1]
             out.append(d)
