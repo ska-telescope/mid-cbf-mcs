@@ -130,7 +130,14 @@ class TestSlim:
             )
             
             for link in mesh.healthSummary:
-                assert link == HealthState.OK
+                change_event_callbacks["healthState"].assert_change_event(
+                (
+                    HealthState.OK
+                )
+            )
+                
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     def test_SlimTest_After_Configure(
         self: TestSlim, test_proxies: pytest.fixture
