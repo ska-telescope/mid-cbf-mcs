@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState
@@ -30,6 +31,7 @@ class SlimLinkSimulator:
 
     def __init__(
         self: SlimLinkSimulator,
+        health_state_callback: Callable[[HealthState], None] | None,
         logger: logging.Logger,
     ) -> None:
         """
@@ -48,6 +50,8 @@ class SlimLinkSimulator:
         self._read_counters = [0] * 9
         self._block_lost_cdr_lost_count = [0] * 2
         self._health_state = HealthState.UNKNOWN
+        
+        self._device_health_state_callback = health_state_callback
 
     @property
     def tx_device_name(self: SlimLinkSimulator) -> str:
@@ -167,6 +171,32 @@ class SlimLinkSimulator:
         :rtype: list[int]
         """
         return self._read_counters
+    
+    #########
+    # Helpers
+    #########
+    
+    def _update_device_health_state(
+        self: SlimLinkSimulator,
+        health_state: HealthState,
+    ) -> None:
+        """
+        Handle a health state change.
+        This is a helper method for use by subclasses.
+        :param state: the new health state of the
+            component manager.
+        """
+        with self._health_state_lock:
+            if self._health_state != health_state:
+                self._health_state = health_state
+                self._push_health_state_update(health_state)
+
+    def _push_health_state_update(
+        self: SlimLinkSimulator, health_state: HealthState
+    ) -> None:
+        if self._device_health_state_callback is not None:
+            self._device_health_state_callback(health_state)
+            
 
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,
@@ -198,14 +228,15 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         if not self._link_enabled:
-            self._health_state = HealthState.UNKNOWN
+            self._update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "link is not active"
         if (self._tx_idle_ctrl_word != self._rx_idle_ctrl_word) or (
             self._bit_error_rate > BER_PASS_THRESHOLD
         ):
-            self._health_state = HealthState.FAILED
+            
+            self._update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "link is not healthy"
-        self._health_state = HealthState.OK
+        self._update_device_health_state(HealthState.OK)
         return ResultCode.OK, "link is healthy"
 
     def disconnect_slim_tx_rx(

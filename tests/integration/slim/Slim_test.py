@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 
 import pytest
+from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
 from tango import DevFailed, DevState
@@ -112,10 +113,9 @@ class TestSlim:
 
         :param test_proxies: the proxies test fixture
         """
+        # device_under_test.simulationMode = SimulationMode.TRUE
+        assert device_under_test.simulationMode == SimulationMode.TRUE
         
-        # assert device_under_test.State()
-
-        # device_under_test = test_proxies.slim
         for mesh in device_under_test:
             with open(data_file_path + "slim_test_config.yaml", "r") as f:
                 result_code, command_id = mesh.Configure(f.read())
