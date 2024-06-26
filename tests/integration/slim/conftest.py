@@ -30,7 +30,7 @@ from ... import test_utils
 @pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
     test_proxies: pytest.fixture,
-) -> context.DeviceProxy:
+) -> list[context.DeviceProxy]:
     """
     Fixture that returns the device under test.
 
@@ -41,7 +41,7 @@ def device_under_test_fixture(
 
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
-    device_under_test: context.DeviceProxy,
+    device_under_test: list[context.DeviceProxy],
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
@@ -49,7 +49,8 @@ def slim_change_event_callbacks(
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
+    for mesh in device_under_test:
+        test_utils.change_event_subscriber(
+            mesh, change_event_attr_list, change_event_callbacks
+        )
     return change_event_callbacks
