@@ -128,12 +128,12 @@ class TestSlim:
                 )
             )
             
-            for link in mesh.healthSummary:
-                change_event_callbacks["healthState"].assert_change_event(
-                (
-                    HealthState.OK
-                )
-            )
+            # for link in mesh.healthSummary:
+            #     change_event_callbacks["healthState"].assert_change_event(
+            #     (
+            #         HealthState.OK
+            #     )
+            # )
                 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()

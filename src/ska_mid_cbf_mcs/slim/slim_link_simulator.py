@@ -228,14 +228,16 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         if not self._link_enabled:
+            self.logger.error("UPDATING HEALTH STATE: UNKNOWN")
             self._update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "link is not active"
         if (self._tx_idle_ctrl_word != self._rx_idle_ctrl_word) or (
             self._bit_error_rate > BER_PASS_THRESHOLD
         ):
-            
+            self.logger.error("UPDATING HEALTH STATE: FAILED")
             self._update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "link is not healthy"
+        self.logger.error("UPDATING HEALTH STATE: OK")
         self._update_device_health_state(HealthState.OK)
         return ResultCode.OK, "link is healthy"
 
