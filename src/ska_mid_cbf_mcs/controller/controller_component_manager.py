@@ -605,18 +605,26 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-        # Set the Simulation mode the Talon Boards to the simulation mode of the controller
-        for fqdn in self._fqdn_talon_board:
-            try:
-                talon_board_proxy = self._proxies[fqdn]
-                talon_board_proxy.write_attribute(
-                    "simulationMode",
-                    self._talondx_component_manager.simulation_mode,
-                )
-            except tango.DevFailed as df:
-                log_msg = f"Failed to set Simulation Mode to {self._talondx_component_manager.simulation_mode} for {fqdn}; {df}"
-                self._logger(log_msg)
-                return (ResultCode.FAILED, log_msg)
+        # Set the Simulation mode the Talon Boards to the simulation mode of the controller, if SimulationMode=True
+        # TODO make it so that it only turn on the boards used in talondx_config?
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.TRUE
+        ):
+            for fqdn in self._fqdn_talon_board:
+                try:
+                    talon_board_proxy = self._proxies[fqdn]
+                    talon_board_proxy.write_attribute(
+                        "simulationMode",
+                        self._talondx_component_manager.simulation_mode,
+                    )
+                    self._logger.info(
+                        f"SimulationMode{self._talondx_component_manager.simulation_mode} set for {fqdn}"
+                    )
+                except tango.DevFailed as df:
+                    log_msg = f"Failed to set Simulation Mode to {self._talondx_component_manager.simulation_mode} for {fqdn}; {df}"
+                    self._logger(log_msg)
+                    return (ResultCode.FAILED, log_msg)
 
         # Configure SLIM Mesh devices
         self._configure_slim_devices()
