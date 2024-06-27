@@ -125,7 +125,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_fpga-die-voltage_[0-6]$/)\
+        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_fpga-die-voltage-[0-6]$/)\
         |>last()'
         return await self._query_common(client, query)
 
