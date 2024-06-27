@@ -5,8 +5,6 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
-import json
-
 from tango import DeviceProxy, Except
 
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
@@ -55,6 +53,10 @@ class VisibilityTransport:
         # Parse the visibility SLIM yaml to determine which board will output
         # visibilities
         vis_out_board = self._get_vis_output_board(vis_slim_yaml)
+        if vis_out_board is None:
+            # this happens when visibility mesh is not used. Only
+            # 1 FSP is supported in this case.
+            vis_out_board = f"talondx-00{self._fsp_ids[0]}"
         self._host_lut_s2_fqdn = f"{vis_out_board}/dshostlutstage2/host_lut_s2"
         self._spead_desc_fqdn = f"{vis_out_board}/dsspeaddescriptor/spead"
 
@@ -95,19 +97,15 @@ class VisibilityTransport:
         :param scan_id: the scan ID
         :raise Tango exception: if the error occurs
         """
-        subarray_out_info = {"subarray_id": subarray_id}
         dest_host_data = self._parse_visibility_transport_info(
-            self._fsp_config
+            subarray_id, self._fsp_config
         )
-        subarray_out_info["dest_host_data"] = dest_host_data
-        program_arg = {"Subarrays": [subarray_out_info]}
-        arg_str = json.dumps(program_arg)
 
         # FSP App is responsible for calling the "Configure" command.
         # If not already called, StartScan will fail.
-        self._dp_spead_desc.command_inout("StartScan", arg_str)
+        self._dp_spead_desc.command_inout("StartScan", dest_host_data)
 
-        self._dp_host_lut_s2.command_inout("Program", arg_str)
+        self._dp_host_lut_s2.command_inout("Program", dest_host_data)
 
         for dp in self._dp_host_lut_s1:
             dp.command_inout("Program")
@@ -127,12 +125,14 @@ class VisibilityTransport:
             dp.command_inout("Unprogram")
         self._dp_host_lut_s2.command_inout("Unprogram")
 
-    def _parse_visibility_transport_info(self, fsp_config):
+    def _parse_visibility_transport_info(self, subarray_id: int, fsp_config):
         """
         output_hosts are in format [[channel_id, ip_addr]]
         output_ports are in format [[channel_id, port]]
 
         Need to match the two by channel_id to get a list of [[ip_addr, port]]
+
+        :return: a list of [subarray, channel_id, ip_addr, port] as 1D array
         """
         out = []
 
@@ -155,12 +155,9 @@ class VisibilityTransport:
             ):
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
-            d = {}
-            # TODO: why json???? The device servers should just take an array of integers
-            d["chan_id"] = p[0]
-            d["ip_addr"] = host_int
-            d["udp_port_num"] = p[1]
-            out.append(d)
+
+            dest_info = [subarray_id, p[0], host_int, p[1]]
+            out += dest_info
         return out
 
     def _ip_to_int(self, inet: str) -> int:
@@ -175,7 +172,8 @@ class VisibilityTransport:
         """
         Determine the board to output visibilities
 
-        :return: the TalonDX board ("talondx-00x") that will output visibilities
+        :return: the TalonDX board ("talondx-00x") that will output visibilities.
+                 Returns None if no links are active.
         :raise TangoException: if configuration is not valid
         """
         # TODO: This assumes only one board is used for output.
