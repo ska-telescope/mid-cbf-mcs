@@ -152,7 +152,7 @@ class TalonDxLogConsumer(SKABaseDevice):
 
             :param device_name: FQDN of target device
             """
-            self.component_manager.set_log_target(device_name)
+            self.component_manager.add_logging_target(device_name)
 
     @command(
         dtype_in=str, doc_in="FQDN of device to receive new logging target"
@@ -182,7 +182,7 @@ class TalonDxLogConsumer(SKABaseDevice):
 
             :param device_name: FQDN of target device
             """
-            self.component_manager.remove_log_target(device_name)
+            self.component_manager.remove_logging_target(device_name)
 
     @command(
         dtype_in=str, doc_in="FQDN of device to remove logging target from"

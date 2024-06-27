@@ -215,12 +215,12 @@ class LogComponentManager(BaseComponentManager):
             self.logger.exception(e)
             raise
 
-    def set_log_target(self: LogComponentManager, device_name: str) -> None:
+    def add_logging_target(self: LogComponentManager, device_name: str) -> None:
         """Add TalonDxLogConsumer as logging target for a given device"""
         logging_device = context.DeviceProxy(device_name)
         logging_device.add_logging_target(f"device::{self._name}")
 
-    def remove_log_target(self: LogComponentManager, device_name: str) -> None:
+    def remove_logging_target(self: LogComponentManager, device_name: str) -> None:
         """Remove TalonDxLogConsumer as logging target for a given device"""
         logging_device = context.DeviceProxy(device_name)
         logging_device.remove_logging_target(f"device::{self._name}")
