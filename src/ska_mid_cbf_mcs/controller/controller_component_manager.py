@@ -237,7 +237,7 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                 return False
             self._proxies[fqdn] = proxy
-            
+
             if fqdn in (
                 self._talon_lru_fqdn
                 + self._fsp_fqdn
@@ -302,7 +302,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._hw_config = yaml.safe_load(yaml_fd)
 
         self._set_fqdns()
-        
+
         group_proxies = {
             "_group_vcc": self._vcc_fqdn,
             "_group_fsp": self._fsp_fqdn,
@@ -320,7 +320,7 @@ class ControllerComponentManager(CbfComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-        
+
         self.logger.info(
             f"event_ids after subscribing = {self._event_ids_count}"
         )
@@ -347,12 +347,12 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.unsubscribe_event(device_events.pop())
                         self._event_ids_count -= 1
             proxy.adminMode = AdminMode.OFFLINE
-            
+
         self._num_blocking_results = 0
         self.logger.info(
             f"event_ids after unsubscribing = {self._event_ids_count}"
         )
-        
+
         self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
 
@@ -406,34 +406,40 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 self.logger.info(f"Turning on LRU {lru.dev_name()}")
                 lru.adminMode = AdminMode.OFFLINE
-                lru.simulationMode = self._talondx_component_manager.simulation_mode
+                lru.simulationMode = (
+                    self._talondx_component_manager.simulation_mode
+                )
                 lru.adminMode = AdminMode.ONLINE
-                
+
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC TalonLru.On() rejected"
-                    self.logger.error(f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected")
+                    self.logger.error(
+                        f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected"
+                    )
                     success = False
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
-                self.logger.error(f"Nested LRC TalonLru.On() to {lru.dev_name()} failed: {df}")
+                self.logger.error(
+                    f"Nested LRC TalonLru.On() to {lru.dev_name()} failed: {df}"
+                )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-                
+
         lrc_status = self._wait_for_blocking_results(
             timeout=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = f"One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
+            message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
             self.logger.error(message)
             success = False
         else:
             message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
             self.logger.info(message)
-            
+
         return (success, message)
 
     def _configure_slim_devices(
@@ -451,16 +457,26 @@ class ControllerComponentManager(CbfComponentManager):
             )
             success = True
             self._num_blocking_results = 2
-            slim_config_paths = [self._fs_slim_config_path, self._vis_slim_config_path]
-            for i, fqdn in enumerate([self._fs_slim_fqdn, self._vis_slim_fqdn]):
-                #TODO: simMode should prob be set by controller
-                self._proxies[fqdn].simulationMode = self._talondx_component_manager.simulation_mode
+            slim_config_paths = [
+                self._fs_slim_config_path,
+                self._vis_slim_config_path,
+            ]
+            for i, fqdn in enumerate(
+                [self._fs_slim_fqdn, self._vis_slim_fqdn]
+            ):
+                self._proxies[
+                    fqdn
+                ].simulationMode = (
+                    self._talondx_component_manager.simulation_mode
+                )
                 self._proxies[fqdn].On()
-                
+
                 with open(slim_config_paths[i]) as f:
                     slim_config = f.read()
-                    
-                [[result_code], [command_id]] = self._proxies[fqdn].Configure(slim_config)
+
+                [[result_code], [command_id]] = self._proxies[fqdn].Configure(
+                    slim_config
+                )
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = f"Nested LRC Slim.Configure() to {self._proxies[fqdn]} rejected"
@@ -479,12 +495,12 @@ class ControllerComponentManager(CbfComponentManager):
             message = f"Failed to read SLIM configuration file: {e}"
             self.logger.error(message)
             success = False
-        
+
         lrc_status = self._wait_for_blocking_results(
             timeout=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = f"One or more calls to nested LRC Slim.Configure() timed out. Check Slim logs."
+            message = "One or more calls to nested LRC Slim.Configure() timed out. Check Slim logs."
             self.logger.error(message)
             success = False
         else:
@@ -492,7 +508,6 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.info(message)
 
         return (success, message)
-        
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if on is allowed")
@@ -604,7 +619,9 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # Configure SLIM Mesh devices
-        slim_configure_status, msg = self._configure_slim_devices(task_abort_event)
+        slim_configure_status, msg = self._configure_slim_devices(
+            task_abort_event
+        )
         if not slim_configure_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -776,47 +793,57 @@ class ControllerComponentManager(CbfComponentManager):
         """
         success = True
         message = []
-        subelements_fast = (self._group_vcc + self._group_subarray)
-        subelements_slow = (self._group_fsp + self._proxies[self._fs_slim_fqdn] + self._proxies[self._vis_slim_fqdn])
+        subelements_fast = self._group_vcc + self._group_subarray
+        subelements_slow = (
+            self._group_fsp
+            + self._proxies[self._fs_slim_fqdn]
+            + self._proxies[self._vis_slim_fqdn]
+        )
         self._num_blocking_results = len(subelements_slow)
-        
+
         # Turn off subelements that implement Off() as SlowCommand
         for subelement in subelements_slow:
             try:
-                self.logger.info(f"Turning off subelement {subelement.dev_name()}")
-                            
+                self.logger.info(
+                    f"Turning off subelement {subelement.dev_name()}"
+                )
+
                 [[result_code], [command_id]] = subelement.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC Off() rejected"
-                    self.logger.error(f"Nested LRC Off() to {subelement.dev_name()} rejected")
+                    self.logger.error(
+                        f"Nested LRC Off() to {subelement.dev_name()} rejected"
+                    )
                     success = False
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
-                self.logger.error(f"Nested LRC Off() to {subelement.dev_name()} failed: {df}")
+                self.logger.error(
+                    f"Nested LRC Off() to {subelement.dev_name()} failed: {df}"
+                )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-        
+
         lrc_status = self._wait_for_blocking_results(
             timeout=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = f"One or more calls to nested LRC Off() timed out. Check Fsp and/or Slim logs."
+            message = "One or more calls to nested LRC Off() timed out. Check Fsp and/or Slim logs."
             self.logger.error(message)
             success = False
-            
+
         # Turn off subelements that implement Off() as FastCommand
-        for result_code, msg in self._issue_group_command("Off", subelements_fast):
+        for result_code, msg in self._issue_group_command(
+            "Off", subelements_fast
+        ):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 success = False
-                
+
         if success:
-            message.append(
-                "Successfully issued Off() to all subelements."
-            )
+            message.append("Successfully issued Off() to all subelements.")
         return (success, message)
 
     def _check_subelements_off(
@@ -881,16 +908,20 @@ class ControllerComponentManager(CbfComponentManager):
             lru = self._proxies[fqdn]
             try:
                 self.logger.info(f"Turning off LRU {lru.dev_name()}")
-                            
+
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC TalonLru.Off() rejected"
-                    self.logger.error(f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected")
+                    self.logger.error(
+                        f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
+                    )
                     success = False
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.Off() failed"
-                self.logger.error(f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}")
+                self.logger.error(
+                    f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
+                )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -900,13 +931,13 @@ class ControllerComponentManager(CbfComponentManager):
             timeout=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = f"One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
+            message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
             self.logger.error(message)
             success = False
         else:
             message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
             self.logger.info(message)
-            
+
         return (success, message)
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
@@ -973,7 +1004,7 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             # use a hard-coded example fqdn talon lru for simulation mode
             self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
-            
+
         lru_off_status, log_msg = self._turn_off_lrus(task_abort_event)
         if not lru_off_status:
             self._update_communication_state(

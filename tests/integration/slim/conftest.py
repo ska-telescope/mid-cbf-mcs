@@ -11,21 +11,14 @@
 
 from __future__ import annotations
 
-import random
-import unittest
-
 import pytest
-import tango
-from ska_tango_base.commands import ResultCode
 
 # Tango imports
 from ska_tango_testing import context
-from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
 from ... import test_utils
+
 
 @pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
@@ -39,14 +32,12 @@ def device_under_test_fixture(
     """
     return test_proxies.slim
 
+
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
     device_under_test: list[context.DeviceProxy],
 ) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = [
-        "longRunningCommandResult",
-        "healthState"
-    ]
+    change_event_attr_list = ["longRunningCommandResult", "healthState"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )

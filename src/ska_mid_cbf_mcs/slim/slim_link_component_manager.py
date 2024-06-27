@@ -60,7 +60,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._link_enabled = False  # True when tx rx are connected
 
         self.slim_link_simulator = SlimLinkSimulator(
-            logger=self.logger, health_state_callback=kwargs["health_state_callback"],
+            logger=self.logger,
+            health_state_callback=kwargs["health_state_callback"],
         )
 
     @property
@@ -294,7 +295,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :rtype: list[int]
         """
         if self.simulation_mode:
-            return self.slim_link_simulator.read_counters()
+            return self.slim_link_simulator.read_counters
 
         if (
             not self._link_enabled

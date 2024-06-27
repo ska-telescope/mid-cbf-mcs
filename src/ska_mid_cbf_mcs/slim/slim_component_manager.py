@@ -490,7 +490,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Triggers the configured SLIM links to connect and starts polling each link's health state.
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
-        
+
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -527,8 +527,13 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    self.logger.error(f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected")
-                    return ResultCode.FAILED, "Nested LRC SlimLink.ConnectTxRx() rejected"
+                    self.logger.error(
+                        f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        "Nested LRC SlimLink.ConnectTxRx() rejected",
+                    )
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -536,7 +541,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
@@ -602,8 +607,13 @@ class SlimComponentManager(CbfComponentManager):
 
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    self.logger.error(f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected")
-                    return ResultCode.FAILED, "Nested LRC SlimLink.DisconnectTxRx() rejected"
+                    self.logger.error(
+                        f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        "Nested LRC SlimLink.DisconnectTxRx() rejected",
+                    )
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -611,7 +621,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    f"One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,

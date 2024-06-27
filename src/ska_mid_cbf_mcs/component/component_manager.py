@@ -174,8 +174,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
     #######################
     # Group-related methods
     #######################
-    
-    def _create_group_proxies(self: CbfComponentManager, group_proxies: dict) -> bool:
+
+    def _create_group_proxies(
+        self: CbfComponentManager, group_proxies: dict
+    ) -> bool:
         """
         Create group proxies (list of DeviceProxy) from the list of fqdns passed in.
         Store as class attributes.

@@ -16,9 +16,8 @@ import pytest
 from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
-from tango import DevFailed, DevState
-
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from tango import DevState
 
 # Standard imports
 
@@ -98,14 +97,13 @@ class TestSlim:
         device_under_test = test_proxies.slim
         for mesh in device_under_test:
             rc, message = mesh.SlimTest()
-            
-            # SlimTest's is_allowed should reject the command 
-            # since it was issued before configuration 
+
+            # SlimTest's is_allowed should reject the command
+            # since it was issued before configuration
             assert rc == ResultCode.REJECTED
-            
 
     def test_Configure(
-        self: TestSlim, 
+        self: TestSlim,
         device_under_test: list[pytest.fixture],
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
@@ -113,28 +111,24 @@ class TestSlim:
         Test the "Configure" command
 
         :param test_proxies: the proxies test fixture
-        """       
-        
+        """
+
         for mesh in device_under_test:
             with open(data_file_path + "slim_test_config.yaml", "r") as f:
                 result_code, command_id = mesh.Configure(f.read())
 
             assert result_code == [ResultCode.QUEUED]
 
-            change_event_callbacks["longRunningCommandResult"].assert_change_event(
-                (
-                    f"{command_id[0]}",
-                    '[0, "Configure completed OK"]',
-                )
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "Configure completed OK"]')
             )
-            
-            # for link in mesh.healthSummary:
-            #     change_event_callbacks["healthState"].assert_change_event(
-            #     (
-            #         HealthState.OK
-            #     )
-            # )
-                
+
+            change_event_callbacks["healthState"].assert_change_event(
+                HealthState.UNKNOWN
+            )
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 

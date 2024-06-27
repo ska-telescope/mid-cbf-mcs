@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+from threading import Lock
 from typing import Callable
 
 from ska_tango_base.commands import ResultCode
@@ -38,7 +39,7 @@ class SlimLinkSimulator:
         Initialize a new instance.
         :param logger: a logger for this object to use
         """
-        self._logger = logger
+        self.logger = logger
 
         self._link_name = ""
         self._tx_device_name = ""
@@ -49,8 +50,9 @@ class SlimLinkSimulator:
         self._link_enabled = False
         self._read_counters = [0] * 9
         self._block_lost_cdr_lost_count = [0] * 2
+        self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
-        
+
         self._device_health_state_callback = health_state_callback
 
     @property
@@ -154,7 +156,7 @@ class SlimLinkSimulator:
         return 0.5
 
     @property
-    def counters(self: SlimLinkSimulator) -> list[int]:
+    def read_counters(self: SlimLinkSimulator) -> list[int]:
         """
         An array holding the counter values from the tx and rx devices in the order:
         [0] rx_word_count
@@ -171,11 +173,11 @@ class SlimLinkSimulator:
         :rtype: list[int]
         """
         return self._read_counters
-    
+
     #########
     # Helpers
     #########
-    
+
     def _update_device_health_state(
         self: SlimLinkSimulator,
         health_state: HealthState,
@@ -196,7 +198,6 @@ class SlimLinkSimulator:
     ) -> None:
         if self._device_health_state_callback is not None:
             self._device_health_state_callback(health_state)
-            
 
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,

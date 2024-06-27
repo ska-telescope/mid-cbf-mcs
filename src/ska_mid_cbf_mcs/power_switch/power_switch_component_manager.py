@@ -146,7 +146,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         super().start_communicating()
         # This moves the op state model.
         self._update_component_state(power=PowerState.ON)
-            
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""

@@ -132,8 +132,10 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager,
     ) -> None:
         """Establish connections with the group proxies"""
-        self.logger.info(f"Creating group proxy connection FSP Subarray Corr")
-        self._create_group_proxies({"_group_fsp_corr_subarray": self._fsp_corr_subarray_fqdns_all})
+        self.logger.info("Creating group proxy connection FSP Subarray Corr")
+        self._create_group_proxies(
+            {"_group_fsp_corr_subarray": self._fsp_corr_subarray_fqdns_all}
+        )
         # TODO AA0.5+: PSS, PST, VLBI
 
     def _validate_function_mode(
@@ -297,7 +299,9 @@ class FspComponentManager(CbfComponentManager):
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
                     # remove CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_corr_subarray.remove(self._get_proxy(fqdn))
+                        self._group_fsp_corr_subarray.remove(
+                            self._get_proxy(fqdn)
+                        )
                         break
                 else:
                     self.logger.error(
@@ -373,7 +377,9 @@ class FspComponentManager(CbfComponentManager):
                 for fqdn in self._fsp_corr_subarray_fqdns_all:
                     # add CORR subarray device with FQDN index matching subarray_id
                     if subarray_id == int(fqdn[-2:]):
-                        self._group_fsp_corr_subarray.append(self._get_proxy(fqdn))
+                        self._group_fsp_corr_subarray.append(
+                            self._get_proxy(fqdn)
+                        )
                         break
                 else:
                     self.logger.error(

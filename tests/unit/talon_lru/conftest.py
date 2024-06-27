@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import random
 import unittest
 
 import pytest
@@ -81,7 +80,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     """
     builder = MockDeviceBuilder()
     builder.add_attribute("adminMode", None)
-    builder.add_attribute("longRunningCommandResult", ('',''))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command(
         "On",
         ResultCode.QUEUED,
@@ -131,7 +130,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     builder.add_attribute("adminMode", None)
     builder.add_attribute("simulationMode", None)
     builder.add_attribute("numOutlets", 8)
-    builder.add_attribute("longRunningCommandResult", ('',''))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_command("GetOutletPowerState", PowerState.OFF)
 
     if param == "command_success":

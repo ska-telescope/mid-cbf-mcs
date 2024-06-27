@@ -14,7 +14,6 @@
 
 from __future__ import annotations
 
-import random
 import unittest
 
 import pytest
@@ -97,7 +96,7 @@ def mock_slim_link() -> unittest.mock.Mock:
         "linkName",
         "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
     )
-    builder.add_attribute("longRunningCommandResult", ('',''))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_attribute("txLinkOccupancy", 0.5)
     builder.add_attribute("rxLinkOccupancy", 0.5)
     builder.add_attribute(
@@ -131,7 +130,7 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
         "linkName",
         "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
     )
-    builder.add_attribute("longRunningCommandResult", ('',''))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_attribute("tx_link_occupancy", 0.5)
     builder.add_attribute("rx_link_occupancy", 0.5)
     builder.add_attribute(
