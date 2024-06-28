@@ -86,7 +86,7 @@ class SlimConfig:
 
         # just assume no links are active
         if data is None:
-            self._logger.info(f"Visibility Mesh is not configured")
+            self._logger.info("Visibility Mesh is not configured")
             return links
 
         for k, v in data.items():
