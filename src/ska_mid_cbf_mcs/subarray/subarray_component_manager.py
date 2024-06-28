@@ -55,7 +55,6 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 from ska_mid_cbf_mcs.subarray.visibility_transport import VisibilityTransport
 
 
@@ -221,7 +220,9 @@ class CbfSubarrayComponentManager(
         self._stream_tuning = [0, 0]
 
         # Controls the visibility transport from FSP outputs to SDP
-        self._vis_transport = VisibilityTransport(self._logger)
+        self._vis_transport = VisibilityTransport(
+            self._logger, self._simulation_mode
+        )
 
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
@@ -2351,89 +2352,3 @@ class CbfSubarrayComponentManager(
                     proxy.write_attribute("subarrayID", "")
                 return
         return
-
-    def _get_vis_slim_active_links(self: CbfSubarrayComponentManager) -> list:
-        """
-        Get the visibility SLIM configuration and extract the active
-        links.
-
-        :return: the list of visibility slim tx and rx boards
-        """
-        vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-        active_links = SlimConfig(vis_slim_yaml, self._logger).active_links()
-        vis_slim_links = []
-        for link in active_links:
-            # extract only the "talondx-00x" part
-            tx = link[0].split("/")[0]
-            rx = link[1].split("/")[0]
-            if tx != rx:  # we only care about transports from different boards
-                vis_slim_links.append((tx, rx))
-        return vis_slim_links
-
-    def _board_to_fsp_id(self: CbfSubarrayComponentManager) -> dict:
-        board_to_fsp_id = {}
-        props = ["FspID", "HpsFspControllerAddress"]
-        for dp in self._proxies_fsp:
-            devprops = dp.get_property(props)
-            fsp_id = devprops.get("FspID")[0]
-            board = devprops.get("HpsFspControllerAddress")[0]
-            board = board.split("/")[0]
-            board_to_fsp_id[board] = int(fsp_id)
-        return board_to_fsp_id
-
-    def _update_fsp_output_host_port(
-        self: CbfSubarrayComponentManager, fsp: list, vis_slim_links: list
-    ) -> None:
-        """
-        Re-assign the output_host and output_port to the fsp that is responsible
-        for sending data to SDP.
-
-        NOTE: this will not be needed when ADR-99 is implemented
-
-        :param fsp: the list of fsp parameters from scan configuration
-        :param vis_slim_links: the list of visibility slim tx and rx boards
-        """
-        board_to_fsp_id = self._board_to_fsp_id()
-        self._logger.info(f"board_to_fsp_id = {board_to_fsp_id}")
-        for tx, rx in vis_slim_links:
-            if tx in board_to_fsp_id and rx in board_to_fsp_id:
-                fsp_tx = {}
-                fsp_rx = {}
-                fsp_id_tx = board_to_fsp_id[tx]
-                fsp_id_rx = board_to_fsp_id[rx]
-                self._logger.info(
-                    f"Moving output_host and output_port from FSP {fsp_id_tx} to {fsp_id_rx}"
-                )
-                for f in fsp:
-                    if f["fsp_id"] == fsp_id_tx:
-                        fsp_tx = f
-                    if f["fsp_id"] == fsp_id_rx:
-                        fsp_rx = f
-                if len(fsp_tx) == 0:
-                    self._logger.info(
-                        f"Failed to find entry with FSP ID = {fsp_id_tx}"
-                    )
-                    continue
-                if len(fsp_rx) == 0:
-                    self._logger.info(
-                        f"Failed to find entry with FSP ID = {fsp_id_rx}"
-                    )
-                    continue
-                # here we assume that the first board has the lowest channel offset.
-                # Adjust the channel_id of output_host and output_port by the difference.
-                offset = fsp_tx["channel_offset"] - fsp_rx["channel_offset"]
-                for oh in fsp_tx["output_host"]:
-                    oh[0] += offset
-                for op in fsp_tx["output_port"]:
-                    op[0] += offset
-
-                # Move the host and port over to the FSP that will send visibilities
-                fsp_rx["output_host"] += fsp_tx["output_host"]
-                fsp_rx["output_port"] += fsp_tx["output_port"]
-                del fsp_tx["output_host"]
-                del fsp_tx["output_port"]
-
-                # set host LUT stage 2 FQDN
-                fsp_tx[
-                    "host_lut_s2_fqdn"
-                ] = f"talondx-00{fsp_id_rx}/dshostlutstage2/host_lut_s2"
