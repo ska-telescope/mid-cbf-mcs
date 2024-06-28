@@ -220,7 +220,7 @@ class SlimLink(CbfDevice):
         """
         return self._health_state
 
-    @attribute(dtype=[bool])
+    @attribute(dtype=[bool], max_dim_x=4)
     def rxDebugAlignmentAndLockStatus(self: SlimLink) -> list[bool]:
         """
         Alignment and lock status rollup attribute for debug

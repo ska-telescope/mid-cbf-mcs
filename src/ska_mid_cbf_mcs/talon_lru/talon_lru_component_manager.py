@@ -206,12 +206,12 @@ class TalonLRUComponentManager(CbfComponentManager):
             else:
                 self._subscribe_command_results(dp)
         self.logger.info(
-            f"event_ids after subscribing = {self._event_ids_count}"
+            f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
         super().start_communicating()
         # This moves the op state model.
-        self._update_component_state(power=self.get_lru_power_state())
+        self.get_lru_power_state()
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """
@@ -221,25 +221,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             "Entering TalonLRUComponentManager.stop_communicating"
         )
 
-        for dp in [
-            self._proxy_power_switch1,
-            self._proxy_power_switch2,
-            self._proxy_talondx_board1,
-            self._proxy_talondx_board2,
-        ]:
-            if dp in self._event_ids:
-                device_events = self._event_ids.pop(dp)
-                while len(device_events):
-                    dp.unsubscribe_event(device_events.pop())
-                    self._event_ids_count -= 1
-
+        self._unsubscribe_command_results()
         self._num_blocking_results = 0
-        self.logger.info(
-            f"event_ids after unsubscribing = {self._event_ids_count}"
-        )
 
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
         super().stop_communicating()
 
     # ---------------
@@ -301,6 +285,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             and self.pdu2_power_state == PowerState.OFF
         ):
             lru_power_state = PowerState.OFF
+
+        self.logger.error(f"Cuurent power state = {lru_power_state}")
         self._update_component_state(power=lru_power_state)
         return lru_power_state
 

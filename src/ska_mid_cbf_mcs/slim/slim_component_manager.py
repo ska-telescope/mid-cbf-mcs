@@ -114,7 +114,7 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
         self.logger.info(
-            f"event_ids after subscribing = {self._event_ids_count}"
+            f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
         super().start_communicating()
@@ -125,21 +125,12 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 
+        self._unsubscribe_command_results()
+        self._num_blocking_results = 0
+
         for dp in self._dp_links:
-            if dp in self._event_ids:
-                device_events = self._event_ids.pop(dp)
-                while len(device_events):
-                    dp.unsubscribe_event(device_events.pop())
-                    self._event_ids_count -= 1
             dp.adminMode = AdminMode.OFFLINE
 
-        self._num_blocking_results = 0
-        self.logger.info(
-            f"event_ids after unsubscribing = {self._event_ids_count}"
-        )
-
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
         super().stop_communicating()
 
     def on(self: SlimComponentManager) -> tuple[ResultCode, str]:

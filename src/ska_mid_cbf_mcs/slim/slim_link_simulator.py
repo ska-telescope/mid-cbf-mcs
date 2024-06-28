@@ -56,6 +56,25 @@ class SlimLinkSimulator:
         self._device_health_state_callback = health_state_callback
 
     @property
+    def link_name(self: SlimLinkSimulator) -> str:
+        """
+        The name of the link.
+
+        :return: the SLIM link's name.
+        :rtype: str
+        """
+        return self._link_name
+
+    @link_name.setter
+    def link_name(self: SlimLinkSimulator, link_name: str) -> None:
+        """
+        Set the link name value.
+
+        :param link_name: The link's name.
+        """
+        self._link_name = link_name
+
+    @property
     def tx_device_name(self: SlimLinkSimulator) -> str:
         """
         The name of the link's tx device.
@@ -214,7 +233,9 @@ class SlimLinkSimulator:
             return ResultCode.FAILED, "Tx/Rx device name not set"
         self._rx_idle_ctrl_word = self._tx_idle_ctrl_word
         self.clear_counters()
+        self._read_counters = [1000, 10, 100, 0, 1, 2, 1000, 10, 100]
         self._link_enabled = True
+        self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
 
     def verify_connection(
         self: SlimLinkSimulator,

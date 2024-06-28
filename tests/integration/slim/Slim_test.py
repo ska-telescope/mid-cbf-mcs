@@ -42,51 +42,52 @@ class TestSlim:
 
         :param test_proxies: the proxies test fixture
         """
-        wait_time_s = 3
-        sleep_time_s = 1
-
         # Start monitoring the TalonLRUs and power switch devices
         for proxy in test_proxies.power_switch:
+            proxy.simulationMode = SimulationMode.TRUE
             proxy.adminMode = AdminMode.ONLINE
+            assert proxy.State() == DevState.ON
 
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
-            proxy.set_timeout_millis(10000)
+            assert proxy.State() == DevState.OFF
 
         for mesh in test_proxies.slim:
             mesh.simulationMode = SimulationMode.TRUE
             # The Slim should be in the OFF state after being initialised
             mesh.loggingLevel = LoggingLevel.DEBUG
             mesh.adminMode = AdminMode.ONLINE
-
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.OFF, wait_time_s, sleep_time_s
-            )
             assert mesh.State() == DevState.OFF
 
-    def test_On(self: TestSlim, test_proxies: pytest.fixture) -> None:
+    def test_On(
+        self: TestSlim,
+        device_under_test: list[pytest.fixture],
+        lru_proxies: list[pytest.fixture],
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the "On" command
 
         :param test_proxies: the proxies test fixture
         """
-        wait_time_s = 3
-        sleep_time_s = 1
-
         # Turn on the LRUs and then the Slim devices
-        for proxy in test_proxies.talon_lru:
-            proxy.On()
+        for proxy in lru_proxies:
+            result_code, command_id = proxy.On()
+            assert result_code == [ResultCode.QUEUED]
 
-        device_under_test = test_proxies.slim
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "On completed OK"]')
+            )
+
         for mesh in device_under_test:
             mesh.On()
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.ON, wait_time_s, sleep_time_s
-            )
             assert mesh.State() == DevState.ON
 
     def test_SlimTest_Before_Configure(
-        self: TestSlim, test_proxies: pytest.fixture
+        self: TestSlim,
+        device_under_test: list[pytest.fixture],
     ) -> None:
         """
         Test the "SlimTest" command before the Mesh has been configured.
@@ -94,7 +95,6 @@ class TestSlim:
 
         :param test_proxies: the proxies test fixture
         """
-        device_under_test = test_proxies.slim
         for mesh in device_under_test:
             rc, message = mesh.SlimTest()
 
@@ -133,7 +133,7 @@ class TestSlim:
         change_event_callbacks.assert_not_called()
 
     def test_SlimTest_After_Configure(
-        self: TestSlim, test_proxies: pytest.fixture
+        self: TestSlim, device_under_test: list[pytest.fixture]
     ) -> None:
         """
         Test the "SlimTest" command after the Mesh has been configured.
@@ -141,57 +141,62 @@ class TestSlim:
 
         :param test_proxies: the proxies test fixture
         """
-        device_under_test = test_proxies.slim
         for mesh in device_under_test:
             return_code, message = mesh.SlimTest()
             assert return_code == ResultCode.OK
 
-    def test_Off(self: TestSlim, test_proxies: pytest.fixture) -> None:
+    def test_Off(
+        self: TestSlim,
+        device_under_test: list[pytest.fixture],
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the "Off" command
 
         :param test_proxies: the proxies test fixture
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        device_under_test = test_proxies.slim
         for mesh in device_under_test:
-            mesh.Off()
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.OFF, wait_time_s, sleep_time_s
-            )
-            assert mesh.State() == DevState.OFF
+            result_code, command_id = mesh.Off()
+            assert result_code == [ResultCode.QUEUED]
 
-    def test_Disconnect(self: TestSlim, test_proxies: pytest.fixture) -> None:
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "Off completed OK"]')
+            )
+
+    def test_Disconnect(
+        self: TestSlim,
+        device_under_test: list[pytest.fixture],
+        lru_proxies: list[pytest.fixture],
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        test_proxies: pytest.fixture,
+    ) -> None:
         """
         Verify the component manager can stop communicating
 
         :param test_proxies: the proxies test fixture
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        device_under_test = test_proxies.slim
         for mesh in device_under_test:
             assert mesh.State() == DevState.OFF
 
             # trigger stop_communicating by setting the AdminMode to OFFLINE
             mesh.adminMode = AdminMode.OFFLINE
-
-            # controller device should be in disable state after stop_communicating
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
-            )
             assert mesh.State() == DevState.DISABLE
 
         # Stop monitoring the TalonLRUs and power switch devices
         for proxy in test_proxies.power_switch:
             proxy.adminMode = AdminMode.OFFLINE
+            assert proxy.State() == DevState.DISABLE
 
-        for proxy in test_proxies.talon_lru:
-            proxy.Off()
+        for proxy in lru_proxies:
+            result_code, command_id = proxy.Off()
+            assert result_code == [ResultCode.QUEUED]
+
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "Off completed OK"]')
+            )
             proxy.adminMode = AdminMode.OFFLINE
-            proxy.set_timeout_millis(10000)
+            assert proxy.State() == DevState.DISABLE

@@ -322,7 +322,7 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         self.logger.info(
-            f"event_ids after subscribing = {self._event_ids_count}"
+            f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
         super().start_communicating()
@@ -335,25 +335,12 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering ControllerComponentManager.stop_communicating"
         )
+        self._unsubscribe_command_results()
+        self._num_blocking_results = 0
+
         for proxy in self._proxies.values():
-            if proxy.dev_name() in (
-                self._talon_lru_fqdn
-                + self._fsp_fqdn
-                + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-            ):
-                if proxy in self._event_ids:
-                    device_events = self._event_ids.pop(proxy)
-                    while len(device_events):
-                        proxy.unsubscribe_event(device_events.pop())
-                        self._event_ids_count -= 1
             proxy.adminMode = AdminMode.OFFLINE
 
-        self._num_blocking_results = 0
-        self.logger.info(
-            f"event_ids after unsubscribing = {self._event_ids_count}"
-        )
-
-        self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
 
     # ---------------------

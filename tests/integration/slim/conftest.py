@@ -33,6 +33,19 @@ def device_under_test_fixture(
     return test_proxies.slim
 
 
+@pytest.fixture(name="lru_proxies")
+def lru_under_test_fixture(
+    test_proxies: pytest.fixture,
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns the lru proxy used in this test.
+
+    :param test_context: the context in which the tests run
+    :return: the device under test
+    """
+    return test_proxies.talon_lru
+
+
 @pytest.fixture(name="change_event_callbacks")
 def slim_change_event_callbacks(
     device_under_test: list[context.DeviceProxy],
@@ -44,5 +57,20 @@ def slim_change_event_callbacks(
     for mesh in device_under_test:
         test_utils.change_event_subscriber(
             mesh, change_event_attr_list, change_event_callbacks
+        )
+    return change_event_callbacks
+
+
+@pytest.fixture(name="lru_change_event_callbacks")
+def lru_change_event_callbacks(
+    lru_proxies: list[context.DeviceProxy],
+) -> MockTangoEventCallbackGroup:
+    change_event_attr_list = ["longRunningCommandResult"]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list, timeout=15.0
+    )
+    for lru in lru_proxies:
+        test_utils.change_event_subscriber(
+            lru, change_event_attr_list, change_event_callbacks
         )
     return change_event_callbacks

@@ -106,7 +106,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # initialize lock and set of of blocking resources an LRC thread may be
         # dependent on
         self._event_ids = {}
-        self._event_ids_count = 0
         self._results_lock = Lock()
         self._num_blocking_results = 0
         self._blocking_commands: set["str"] = set()
@@ -145,31 +144,25 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _subscribe_command_results(
         self: CbfComponentManager, dp: context.DeviceProxy
     ) -> None:
-        if dp in self._event_ids:
-            sub_id = dp.subscribe_event(
-                attr_name="longRunningCommandResult",
-                event_type=tango.EventType.CHANGE_EVENT,
-                cb_or_queuesize=self.results_callback,
+        if dp in self._event_ids.keys():
+            self.logger.warn(
+                f"Skipping repeated longRunningCommandResult event subscription: {dp.dev_name()}"
             )
-            if sub_id not in self._event_ids[dp]:
-                self._event_ids[dp].append(sub_id)
-            else:
-                self.logger.debug(
-                    f"Skipping repeated event subscription: {sub_id}"
-                )
         else:
             self._event_ids.update(
                 {
-                    dp: [
-                        dp.subscribe_event(
-                            attr_name="longRunningCommandResult",
-                            event_type=tango.EventType.CHANGE_EVENT,
-                            cb_or_queuesize=self.results_callback,
-                        )
-                    ]
+                    dp: dp.subscribe_event(
+                        attr_name="longRunningCommandResult",
+                        event_type=tango.EventType.CHANGE_EVENT,
+                        cb_or_queuesize=self.results_callback,
+                    )
                 }
             )
-            self._event_ids_count += 1
+
+    def _unsubscribe_command_results(self: CbfComponentManager) -> None:
+        while len(self._event_ids):
+            dp, sub_id = self._event_ids.popitem()
+            dp.unsubscribe_event(sub_id)
 
     #######################
     # Group-related methods

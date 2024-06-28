@@ -134,16 +134,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
-    def stop_communicating(self) -> None:
-        """Stop communication with the component."""
-        self.logger.debug(
-            "Entering TalonBoardComponentManager.stop_communicating"
-        )
-
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
-        super().stop_communicating()
-
     def _subscribe_change_events(self) -> None:
         """
         Subscribe to attribute change events from HPS device proxies
