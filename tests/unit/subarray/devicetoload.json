@@ -95,6 +95,9 @@
                               "mid_csp_cbf/talon_board/006",
                               "mid_csp_cbf/talon_board/007",
                               "mid_csp_cbf/talon_board/008"
+                            ],
+                            "VisSLIM": [
+                                "mid_csp_cbf/slim/slim-vis"
                             ]
                         }
                     }

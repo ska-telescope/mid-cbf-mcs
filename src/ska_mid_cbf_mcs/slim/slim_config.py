@@ -1,3 +1,4 @@
+import logging
 import re
 
 import yaml
@@ -5,13 +6,14 @@ from tango import Except
 
 
 class SlimConfig:
-    def __init__(self, yaml_str):
+    def __init__(self, yaml_str: str, logger: logging.Logger):
         """
         Constructor
 
         :param yaml_str: the string defining the mesh links
         :raise Tango exception: if the configuration is not valid yaml.
         """
+        self._logger = logger
         self._active_links = self._parse_links_yaml(yaml_str)
 
     def active_links(self):
@@ -81,12 +83,18 @@ class SlimConfig:
                 "Cannot parse SLIM configuration YAML",
                 "_parse_links_yaml()",
             )
+
+        # just assume no links are active
+        if data is None:
+            self._logger.info(f"Visibility Mesh is not configured")
+            return links
+
         for k, v in data.items():
             for line in v:
                 txrx = self._parse_link(line)
                 if txrx is not None:
                     links.append(txrx)
-        self._validate_mesh_config(
-            links
-        )  # throws exception if validation fails
+
+        # throws exception if validation fails
+        self._validate_mesh_config(links)
         return links

@@ -221,7 +221,7 @@ class CbfSubarrayComponentManager(
         self._stream_tuning = [0, 0]
 
         # Controls the visibility transport from FSP outputs to SDP
-        self._vis_transport = VisibilityTransport()
+        self._vis_transport = VisibilityTransport(self._logger)
 
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
@@ -2360,7 +2360,7 @@ class CbfSubarrayComponentManager(
         :return: the list of visibility slim tx and rx boards
         """
         vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-        active_links = SlimConfig(vis_slim_yaml).active_links()
+        active_links = SlimConfig(vis_slim_yaml, self._logger).active_links()
         vis_slim_links = []
         for link in active_links:
             # extract only the "talondx-00x" part

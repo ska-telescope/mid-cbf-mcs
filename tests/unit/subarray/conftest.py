@@ -419,6 +419,50 @@ def mock_talon_board() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_vis_mesh() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("meshConfiguration", "")
+    return builder()
+
+
+@pytest.fixture()
+def mock_host_lut_s1() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("host_lut_stage_2_device_name", "")
+    builder.add_attribute("channel_offset", 0)
+    builder.add_command("connectToHostLUTStage2", ResultCode.OK)
+    builder.add_command("Program", ResultCode.OK)
+    builder.add_command("Unprogram", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
+def mock_host_lut_s2() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("host_lut_s1_chan_offsets", [0])
+    builder.add_command("Program", ResultCode.OK)
+    builder.add_command("Unprogram", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
+def mock_spead_desc() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_command("StartScan", ResultCode.OK)
+    builder.add_command("EndScan", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_doppler: unittest.mock.Mock,
     mock_delay: unittest.mock.Mock,
@@ -432,6 +476,10 @@ def initial_mocks(
     mock_fsp_subarray: unittest.mock.Mock,
     mock_fsp_subarray_group: unittest.mock.Mock,
     mock_talon_board: unittest.mock.Mock,
+    mock_vis_mesh: unittest.mock.Mock,
+    mock_host_lut_s1: unittest.mock.Mock,
+    mock_host_lut_s2: unittest.mock.Mock,
+    mock_spead_desc: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
@@ -494,6 +542,13 @@ def initial_mocks(
         "mid_csp_cbf/talon_board/006": mock_talon_board,
         "mid_csp_cbf/talon_board/007": mock_talon_board,
         "mid_csp_cbf/talon_board/008": mock_talon_board,
+        "mid_csp_cbf/slim/slim-vis": mock_vis_mesh,
+        "talondx-001/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-002/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-003/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-004/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-001/dshostlutstage2/host_lut_s2": mock_host_lut_s2,
+        "talondx-001/dsspeaddescriptor/spead": mock_spead_desc,
     }
 
 

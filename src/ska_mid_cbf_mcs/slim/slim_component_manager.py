@@ -180,7 +180,9 @@ class SlimComponentManager(CbfComponentManager):
 
         # each element is [tx_fqdn, rx_fqdn]
         self._config_str = config_str
-        self._active_links = SlimConfig(self._config_str).active_links()
+        self._active_links = SlimConfig(
+            self._config_str, self._logger
+        ).active_links()
 
         self._logger.info(
             f"Setting simulation mode = {self._simulation_mode} to {len(self._dp_links)} links"

@@ -5,8 +5,9 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
-from tango import DeviceProxy, Except
+from tango import Except
 
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 
 
@@ -15,10 +16,14 @@ class VisibilityTransport:
     # so 744 * 20 = 14880 fine channels.
     CHANNELS_PER_STREAM = 20
 
-    def __init__(self):
+    def __init__(self, logger):
         """
         Constructor
+
+        :param logger: the logger object
         """
+        self._logger = logger
+
         # Tango device proxies
         self._host_lut_s1_fqdns = []
         self._host_lut_s2_fqdn = None
@@ -52,7 +57,23 @@ class VisibilityTransport:
 
         # Parse the visibility SLIM yaml to determine which board will output
         # visibilities
-        vis_out_board = self._get_vis_output_board(vis_slim_yaml)
+        vis_out_map = self._get_vis_output_map(vis_slim_yaml)
+        vis_out_board = None
+        for fsp in self._fsp_ids:
+            if fsp in vis_out_map:
+                # Only one board is expected to be used to output visibilities
+                # to SDP
+                if (
+                    vis_out_board is not None
+                    and vis_out_map[fsp] != vis_out_board
+                ):
+                    Except.throw_exception(
+                        "Visibility_Transport",
+                        "Only one board can be used to output visibilities",
+                        "configure()",
+                    )
+                vis_out_board = vis_out_map[fsp]
+
         if vis_out_board is None:
             # this happens when visibility mesh is not used. Only
             # 1 FSP is supported in this case.
@@ -62,10 +83,15 @@ class VisibilityTransport:
 
         # Create device proxies
         self._dp_host_lut_s1 = [
-            DeviceProxy(fqdn) for fqdn in self._host_lut_s1_fqdns
+            CbfDeviceProxy(fqdn=f, logger=self._logger)
+            for f in self._host_lut_s1_fqdns
         ]
-        self._dp_host_lut_s2 = DeviceProxy(self._host_lut_s2_fqdn)
-        self._dp_spead_desc = DeviceProxy(self._spead_desc_fqdn)
+        self._dp_host_lut_s2 = CbfDeviceProxy(
+            fqdn=self._host_lut_s2_fqdn, logger=self._logger
+        )
+        self._dp_spead_desc = CbfDeviceProxy(
+            fqdn=self._spead_desc_fqdn, logger=self._logger
+        )
 
         # connect the host lut s1 devices to the host lut s2
         for s1_dp, ch_offset in zip(
@@ -142,9 +168,18 @@ class VisibilityTransport:
         min_offset = min(self._channel_offsets)
         for fsp in fsp_config:
             # the channel IDs are relative to the channel offset of the FSP entry
-            diff = fsp["channel_offset"] - min_offset
-            output_hosts += [[h[0] + diff, h[1]] for h in fsp["output_host"]]
-            output_ports += [[p[0] + diff, p[1]] for p in fsp["output_port"]]
+            if (
+                "channel_offset" in fsp
+                and "output_host" in fsp
+                and "output_port" in fsp
+            ):
+                diff = fsp["channel_offset"] - min_offset
+                output_hosts += [
+                    [h[0] + diff, h[1]] for h in fsp["output_host"]
+                ]
+                output_ports += [
+                    [p[0] + diff, p[1]] for p in fsp["output_port"]
+                ]
 
         next_host_idx = 1
         host_int = self._ip_to_int(output_hosts[0][1])
@@ -168,28 +203,20 @@ class VisibilityTransport:
             ]
         )
 
-    def _get_vis_output_board(self, vis_slim_yaml: str) -> str:
+    def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
         """
-        Determine the board to output visibilities
+        Determine which board does each FSP output route to.
 
-        :return: the TalonDX board ("talondx-00x") that will output visibilities.
-                 Returns None if no links are active.
+        :return: a dict with fsp_id as key. The value is the TalonDX board
+                 ("talondx-00x") that will output visibilities.
         :raise TangoException: if configuration is not valid
         """
-        # TODO: This assumes only one board is used for output.
-        #       This is sufficient for AA0.5. Need an update for AA1.
-        active_links = SlimConfig(vis_slim_yaml).active_links()
-        rx0 = None
+        slim_cfg = SlimConfig(vis_slim_yaml, self._logger)
+        active_links = slim_cfg.active_links()
+        vis_out_map = {}
         for link in active_links:
-            # extract only the "talondx-00x" part
+            tx = link[0].split("/")[0]  # extract the "talondx-00x" part
+            tx_num = int(tx[-3:])
             rx = link[1].split("/")[0]
-            if rx0 is None:
-                rx0 = rx
-            else:
-                if rx != rx0:
-                    Except.throw_exception(
-                        "Visibility_Transport",
-                        "Only one board can be used to output visibilities",
-                        "_get_vis_output_board()",
-                    )
-        return rx0
+            vis_out_map[tx_num] = rx
+        return vis_out_map
