@@ -453,21 +453,17 @@ class ControllerComponentManager(CbfComponentManager):
             )
         ) as f:
             talondx_config_json = json.load(f)
-        
+
         talon_in_use_fqdns = []
-        
+
         for config_command in talondx_config_json["config_commands"]:
             target_talon = config_command["target"]
             # need to update the talon board ds domain if it gets change
             talon_domain = "mid_csp_cbf/talon_board/"
-            talon_in_use_fqdns.append(talon_domain+target_talon)
+            talon_in_use_fqdns.append(talon_domain + target_talon)
             self._logger.info(f"Talon in use: {talon_domain+target_talon}")
-        
+
         return talon_in_use_fqdns
-
-
-
-
 
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> List[str]:
         # read in list of LRUs from configuration JSON
@@ -642,7 +638,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._talondx_component_manager.simulation_mode
             == SimulationMode.FALSE
         ):
-            in_use_talon_fqdns=self._get_in_use_talon_fqdns()
+            in_use_talon_fqdns = self._get_in_use_talon_fqdns()
             for fqdn in in_use_talon_fqdns:
                 try:
                     talon_board_proxy = self._proxies[fqdn]
