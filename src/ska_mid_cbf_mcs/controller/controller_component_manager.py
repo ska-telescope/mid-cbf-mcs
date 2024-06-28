@@ -438,6 +438,37 @@ class ControllerComponentManager(CbfComponentManager):
     # Command methods
     # ---------------
 
+    def _get_in_use_talon_fqdns(self: ControllerComponentManager) -> list[str]:
+        """
+        Gets a list of fqdns of the Talons in use from the Target Talons in talondx_config.json
+
+        :return talon_in_use_fqdns: a list of fqdn of the Talons in use
+        :rtype talon_in_use_fqdns: list[str]
+        """
+        with open(
+            os.path.join(
+                os.getcwd(),
+                self._talondx_config_path,
+                "talondx-config.json",
+            )
+        ) as f:
+            talondx_config_json = json.load(f)
+        
+        talon_in_use_fqdns = []
+        
+        for config_command in talondx_config_json["config_commands"]:
+            target_talon = config_command["target"]
+            # need to update the talon board ds domain if it gets change
+            talon_domain = "mid_csp_cbf/talon_board/"
+            talon_in_use_fqdns.append(talon_domain+target_talon)
+            self._logger.info(f"Talon in use: {talon_domain+target_talon}")
+        
+        return talon_in_use_fqdns
+
+
+
+
+
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> List[str]:
         # read in list of LRUs from configuration JSON
         with open(
@@ -606,28 +637,26 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-        # # Set the Simulation mode the Talon Boards to the simulation mode of the controller, if SimulationMode=True
-        # # TODO make it so that it only turn on the boards used in talondx_config?
-        # if (
-        #     self._talondx_component_manager.simulation_mode
-        #     == SimulationMode.TRUE
-        # ):
-        #     # hard coded fqdn for Talon Board, since only lru 001 is turned on in simulated mode
-        #     # make sure that the LRU above correspond to the talon board fqdn
-        #     fqdn = "mid_csp_cbf/talon_board/001"
-        #     try:
-        #         talon_board_proxy = self._proxies[fqdn]
-        #         talon_board_proxy.write_attribute(
-        #             "simulationMode",
-        #             self._talondx_component_manager.simulation_mode,
-        #         )
-        #         self._logger.info(
-        #             f"SimulationMode{self._talondx_component_manager.simulation_mode} set for {fqdn}"
-        #         )
-        #     except tango.DevFailed as df:
-        #         log_msg = f"Failed to set Simulation Mode to {self._talondx_component_manager.simulation_mode} for {fqdn}; {df}"
-        #         self._logger(log_msg)
-        #         return (ResultCode.FAILED, log_msg)
+        #  Set the SimulationMode for the Talon Boards, if SimulationMode=False
+        if (
+            self._talondx_component_manager.simulation_mode
+            == SimulationMode.FALSE
+        ):
+            in_use_talon_fqdns=self._get_in_use_talon_fqdns()
+            for fqdn in in_use_talon_fqdns:
+                try:
+                    talon_board_proxy = self._proxies[fqdn]
+                    talon_board_proxy.write_attribute(
+                        "simulationMode",
+                        SimulationMode.FALSE,
+                    )
+                    self._logger.info(
+                        f"SimulationMode {SimulationMode.FALSE} set for {fqdn}"
+                    )
+                except tango.DevFailed as df:
+                    log_msg = f"Failed to set Simulation Mode to {self._talondx_component_manager.simulation_mode} for {fqdn}; {df}"
+                    self._logger(log_msg)
+                    return (ResultCode.FAILED, log_msg)
 
         # Configure SLIM Mesh devices
         self._configure_slim_devices()
