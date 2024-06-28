@@ -164,7 +164,7 @@ class TestFsp:
                 f'[{ResultCode.OK.value}, "SetFunctionMode completed OK"]',
             )
         )
-        # assert frequencyBand attribute updated
+        # assert functionMode attribute updated
         change_event_callbacks["functionMode"].assert_change_event(
             function_mode.value
         )
@@ -280,6 +280,9 @@ class TestFsp:
             change_event_callbacks["subarrayMembership"].assert_change_event(
                 sub_ids_remaining
             )
+
+        # assert functionMode attribute updated
+        change_event_callbacks["functionMode"].assert_change_event(0)
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()

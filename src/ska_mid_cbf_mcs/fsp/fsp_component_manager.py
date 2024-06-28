@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import tango
 from ska_control_model import PowerState, SimulationMode, TaskStatus
@@ -34,11 +34,11 @@ class FspComponentManager(CbfComponentManager):
 
     def __init__(
         self: FspComponentManager,
-        *args: Any,
+        *args: any,
         fsp_id: int,
         all_fsp_corr_subarray_fqdn: list[str],
         hps_fsp_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -159,37 +159,39 @@ class FspComponentManager(CbfComponentManager):
 
     def _validate_and_set_function_mode(
         self: FspComponentManager, function_mode: str
-    ) -> str:
+    ) -> bool:
         """
         Sets functionMode attribute and pushes change event if valid, or return
         an error message if invalid.
 
         :param function_mode: function mode string to be evaluated
-        :return: None if validation passes, else error message string
+        :return: True if validation passes, otherwise False
         """
         match function_mode:
             case "IDLE":
                 self.function_mode = FspModes.IDLE.value
             case "CORR":
                 self.function_mode = FspModes.CORR.value
-            # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
             case "PSS-BF":
                 self.logger.error(
-                    "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
+                    "Error in SetFunctionMode; PSS-BF not currently implemented"
                 )
-                return "PSS-BF not implemented"
+                return False
             case "PST-BF":
                 self.logger.error(
-                    "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
+                    "Error in SetFunctionMode; PST-BF not currently implemented"
                 )
-                return "PST-BF not implemented"
+                return False
             case "VLBI":
                 self.logger.error(
-                    "Error in SetFunctionMode; VLBI not implemented in AA0.5"
+                    "Error in SetFunctionMode; VLBI not currently implemented"
                 )
-                return "VLBI not implemented"
+                return False
             case _:
-                return f"{function_mode} not a valid FSP function mode."
+                self.logger.error(
+                    f"{function_mode} not a valid FSP function mode."
+                )
+                return False
 
         self.logger.info(
             f"FSP set to function mode {FspModes(self.function_mode).name}"
@@ -197,7 +199,7 @@ class FspComponentManager(CbfComponentManager):
         self._device_attr_change_callback("functionMode", self.function_mode)
         self._device_attr_archive_callback("functionMode", self.function_mode)
 
-        return None
+        return True
 
     def _set_function_mode(
         self: FspComponentManager,
@@ -217,13 +219,15 @@ class FspComponentManager(CbfComponentManager):
         ):
             return
 
-        error_msg = self._validate_and_set_function_mode(function_mode)
-        if error_msg:
+        function_mode_success = self._validate_and_set_function_mode(
+            function_mode
+        )
+        if not function_mode_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    error_msg,
+                    f"Failed to set FSP function mode to {function_mode}",
                 ),
             )
             return
@@ -288,45 +292,43 @@ class FspComponentManager(CbfComponentManager):
                 self.logger.error(
                     f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
                 )
-                return False
 
             case FspModes.CORR.value:
-                for fqdn, proxy in self._all_fsp_corr.items():
-                    # TODO: alternative to matching index in FQDN?
-                    # remove CORR subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        try:
-                            result = proxy.Off()
-                            if result[0] == ResultCode.FAILED:
-                                raise tango.DevFailed
-                        except tango.DevFailed as df:
-                            self.logger.error(
-                                f"Failed to turn off {fqdn}; {df}"
-                            )
-                            return False
-                        return True
-                self.logger.error(
-                    f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
-                )
-                return False
+                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                try:
+                    proxy = self._all_fsp_corr[fqdn]
+                    result = proxy.Off()
+                    if result[0] == ResultCode.FAILED:
+                        self.logger.error(
+                            f"Failed to turn off {fqdn}; {result}"
+                        )
+                        return False
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn off {fqdn}; {df}")
+                    return False
+                return True
 
             case FspModes.PSS_BF.value:
                 self.logger.error(
-                    f"Error in removing subarray {subarray_id}; PSS-BF not implemented in AA0.5"
+                    f"Error in removing subarray {subarray_id}; PSS-BF not currently implemented"
                 )
-                return False
 
             case FspModes.PST_BF.value:
                 self.logger.error(
-                    f"Error in removing subarray {subarray_id}; PST-BF not implemented in AA0.5"
+                    f"Error in removing subarray {subarray_id}; PST-BF not currently implemented"
                 )
-                return False
 
             case FspModes.VLBI.value:
                 self.logger.error(
-                    f"Error in removing subarray {subarray_id}; VLBI not implemented in AA0.5"
+                    f"Error in removing subarray {subarray_id}; VLBI not currently implemented"
                 )
-                return False
+
+        return False
 
     @check_communicating
     def remove_subarray_membership(
@@ -367,6 +369,9 @@ class FspComponentManager(CbfComponentManager):
             # if no current subarray membership, reset to function mode IDLE and
             # power off
             if len(self.subarray_membership) == 0:
+                self.logger.info(
+                    "No current subarray membership, resetting function mode to IDLE"
+                )
                 self._validate_and_set_function_mode("IDLE")
                 self.off()
 
@@ -395,45 +400,44 @@ class FspComponentManager(CbfComponentManager):
                 self.logger.error(
                     f"FSP {self._fsp_id} function mode is IDLE; error adding subarray {subarray_id} function mode device to group proxy."
                 )
-                return False
 
             case FspModes.CORR.value:
-                for fqdn, proxy in self._all_fsp_corr.items():
-                    # TODO: alternative to matching index in FQDN?
-                    # add CORR subarray device with FQDN index matching subarray_id
-                    if subarray_id == int(fqdn[-2:]):
-                        try:
-                            result = proxy.On()
-                            if result[0] == ResultCode.FAILED:
-                                raise tango.DevFailed
-                        except tango.DevFailed as df:
-                            self.logger.error(
-                                f"Failed to turn on {fqdn}; {df}"
-                            )
-                            return False
-                        return True
-                self.logger.error(
-                    f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties."
-                )
-                return False
+                # TODO: alternative to hardcoded FQDN?
+                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                try:
+                    proxy = self._all_fsp_corr[fqdn]
+                    result = proxy.On()
+                    if result[0] == ResultCode.FAILED:
+                        self.logger.error(
+                            f"Failed to turn on {fqdn}; {result}"
+                        )
+                        return False
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn on {fqdn}; {df}")
+                    return False
+                return True
 
             case FspModes.PSS_BF.value:
                 self.logger.error(
-                    f"Error in adding subarray {subarray_id}; PSS-BF not implemented in AA0.5"
+                    f"Error in adding subarray {subarray_id}; PSS-BF not currently implemented"
                 )
-                return False
 
             case FspModes.PST_BF.value:
                 self.logger.error(
-                    f"Error in adding subarray {subarray_id}; PST-BF not implemented in AA0.5"
+                    f"Error in adding subarray {subarray_id}; PST-BF not currently implemented"
                 )
-                return False
 
             case FspModes.VLBI.value:
                 self.logger.error(
-                    f"Error in adding subarray {subarray_id}; VLBI not implemented in AA0.5"
+                    f"Error in adding subarray {subarray_id}; VLBI not currently implemented"
                 )
-                return False
+
+        return False
 
     @check_communicating
     def add_subarray_membership(

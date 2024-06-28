@@ -284,15 +284,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     ) -> None:
         """
         Update FSP and VCC delay models.
+        This method is always started in a separate thread.
 
         :param model: delay model JSON string
         """
-        # This method is always called on a separate thread
         self.logger.info(f"Updating delay model; {model}")
 
         if model == self.last_received_delay_model:
-            log_msg = "Ignoring delay model (identical to previous)."
-            self.logger.warning(log_msg)
+            self.logger.warning(
+                "Ignoring delay model (identical to previous)."
+            )
             return
         try:
             delay_model_json = json.loads(model)
@@ -367,11 +368,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.warning(log_msg)
             return
 
-        t = Thread(
-            target=self._update_delay_model,
-            args=(value,),
-        )
-        t.start()
+        Thread(target=self._update_delay_model, args=(value,)).start()
 
     #####################
     # Resourcing Commands
@@ -834,7 +831,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
-        success = True
         for result_code, _ in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
@@ -842,8 +838,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     f"Failed to issue {command_name} command to assigned resources"
                 )
-                success = False
-        return success
+                return False
+        return True
 
     def _validate_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
         """
