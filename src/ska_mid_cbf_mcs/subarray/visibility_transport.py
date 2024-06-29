@@ -16,14 +16,13 @@ class VisibilityTransport:
     # so 744 * 20 = 14880 fine channels.
     CHANNELS_PER_STREAM = 20
 
-    def __init__(self, logger, simulation_mode):
+    def __init__(self, logger):
         """
         Constructor
 
         :param logger: the logger object
         """
         self._logger = logger
-        self._simulation_mode = simulation_mode
 
         # Tango device proxies
         self._host_lut_s1_fqdns = []
@@ -49,8 +48,8 @@ class VisibilityTransport:
         :param board_to_fsp_id: a dict to convert talon board str to fsp ID
         :raise Tango exception: if the error occurs
         """
-        if self._simulation_mode:
-            return
+        self._logger.info("Configuring visibility transport devices")
+
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
         self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
         self._host_lut_s1_fqdns = [
@@ -126,8 +125,7 @@ class VisibilityTransport:
         :param scan_id: the scan ID
         :raise Tango exception: if the error occurs
         """
-        if self._simulation_mode:
-            return
+        self._logger.info("Enable visibility output")
 
         dest_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config
@@ -152,9 +150,7 @@ class VisibilityTransport:
         :raise Tango exception: if the configuration is not valid yaml, or
                                 configuration is not valid.
         """
-        if self._simulation_mode:
-            return
-
+        self._logger.info("Disable visibility output")
         self._dp_spead_desc.command_inout("EndScan")
         for dp in self._dp_host_lut_s1:
             dp.command_inout("Unprogram")

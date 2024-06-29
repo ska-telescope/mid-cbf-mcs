@@ -221,7 +221,7 @@ class CbfSubarrayComponentManager(
 
         # Controls the visibility transport from FSP outputs to SDP
         self._vis_transport = VisibilityTransport(
-            self._logger, self._simulation_mode
+            self._logger,
         )
 
         # device proxy for easy reference to CBF controller
@@ -1902,8 +1902,9 @@ class CbfSubarrayComponentManager(
                     self.raise_configure_scan_fatal_error(msg)
 
         # Route visibilities from each FSP to the outputting board
-        vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-        self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
+        if self._simulation_mode == SimulationMode.FALSE:
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
@@ -2133,7 +2134,8 @@ class CbfSubarrayComponentManager(
                 for res in results:
                     self._logger.info(res.get_data())
 
-        self._vis_transport.enable_output(self._subarray_id)
+        if self._simulation_mode == SimulationMode.FALSE:
+            self._vis_transport.enable_output(self._subarray_id)
 
         self._scan_id = scan_id
         self._component_scanning_callback(True)
@@ -2162,7 +2164,8 @@ class CbfSubarrayComponentManager(
                 for res in results:
                     self._logger.info(res.get_data())
 
-        self._vis_transport.disable_output()
+        if self._simulation_mode == SimulationMode.FALSE:
+            self._vis_transport.disable_output()
 
         self._scan_id = 0
         self._component_scanning_callback(False)
