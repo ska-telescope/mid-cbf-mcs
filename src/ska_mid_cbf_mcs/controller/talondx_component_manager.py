@@ -158,12 +158,12 @@ class TalonDxComponentManager:
                     "simulationMode",
                     SimulationMode.FALSE,
                 )
-                self._logger.info(
+                self.logger.info(
                     f"SimulationMode {SimulationMode.FALSE} set for talon{target}"
                 )
             except tango.DevFailed as df:
                 log_msg = f"Failed to set Simulation Mode to {SimulationMode.FALSE} for talon{target}; {df}"
-                self._logger(log_msg)
+                self.logger(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
         self.logger.info(f"Completed configuring talon board {target}")
