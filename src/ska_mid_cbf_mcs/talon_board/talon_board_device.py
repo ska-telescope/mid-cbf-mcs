@@ -1017,7 +1017,12 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            return super().do()
+            (result_code, message) = super().do()
+
+            device = self.target
+            device.write_simulationMode(SimulationMode.TRUE)
+
+            return (result_code, message)
 
     class OnCommand(SKABaseDevice.OnCommand):
         """
