@@ -73,10 +73,12 @@ class CbfDevice(SKABaseDevice):
     # ---------------
 
     def init_command_objects(self: CbfDevice) -> None:
-        """Set up the command objects."""
+        """
+        Set up the command objects."
+        """
         super().init_command_objects()
 
-        # overriding base On/Off SubmittedSlowCommand register with FastCommand objects
+        # Overriding base On/Off SubmittedSlowCommand register with FastCommand objects
         self.register_command_object(
             "On",
             self.OnCommand(
@@ -166,12 +168,10 @@ class CbfDevice(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             return self.component_manager.off()
-
-
+        
 # ----------
 # Run server
 # ----------
-
 
 def main(*args: str, **kwargs: str) -> int:
     """

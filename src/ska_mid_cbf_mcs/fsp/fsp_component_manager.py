@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 from threading import Event
 from typing import Any, Callable, Optional
-
 import tango
 from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
@@ -72,7 +71,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_hps_fsp_corr_controller = None
 
         self.subarray_membership = []
-        self.function_mode = FspModes.IDLE.value  # IDLE
+        self.function_mode = FspModes.IDLE.value
 
         self.delay_model = ""
 
@@ -82,10 +81,10 @@ class FspComponentManager(CbfComponentManager):
         """
         Attempt to get a device proxy of the specified device.
 
-        :param name: FQDN of the device or the name of the group proxy to connect to
-        :param is_group: True if the proxy to connect to is a group proxy
+        :param name: FQDN of the device or the name of the group proxy to connect to.
+        :param is_group: True if the proxy to connect to is a group proxy.
         :return: context.DeviceProxy, context.Group or None if no connection
-            was made
+                 was made.
         """
         try:
             if is_group:
@@ -108,8 +107,10 @@ class FspComponentManager(CbfComponentManager):
     def _get_capability_proxies(
         self: FspComponentManager,
     ) -> None:
-        """Establish connections with the capability proxies"""
-        # for now, assume that given addresses are valid
+        """
+        Establish connections with the capability proxies
+        """
+        # NOTE: for now, assume that given addresses are valid
 
         if not self.simulation_mode:
             self.logger.info("Trying to connect to real HPS devices")

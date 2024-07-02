@@ -9,14 +9,11 @@
 
 # Copyright (c) 2024 National Research Council of Canada
 
-from __future__ import annotations  # allow forward references in type hints
-
+from __future__ import annotations
 import functools
 from threading import Event
 from typing import Any, Callable, Optional
-
 from ska_control_model import ObsState, TaskStatus
-
 from .component_manager import CbfComponentManager
 
 __all__ = ["CbfObsComponentManager"]
@@ -35,10 +32,11 @@ class CbfObsComponentManager(CbfComponentManager):
     ) -> None:
         """
         Initialise a new CbfObsComponentManager instance.
+
+        :param obs_command_running_callback: Callback to perform observing state model invoked/completed actions
         """
         super().__init__(*args, **kwargs)
 
-        # callback to perform observing state model invoked/completed actions
         self._obs_command_running_callback = obs_command_running_callback
 
         # Here we have statically defined the observing state keywords useful in Mid.CBF
@@ -49,15 +47,19 @@ class CbfObsComponentManager(CbfComponentManager):
         self._component_state["scanning"] = None
 
         self.obs_state = ObsState.IDLE
-
         self.config_id = None
         self.scan_id = None
 
     # ---------------
-    # Command methods
+    # Command Methods
     # ---------------
 
     def is_configure_scan_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if ConfigureScan is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if self.obs_state not in [
             ObsState.IDLE,
@@ -124,6 +126,11 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_scan_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if Scan is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if Scan is allowed.")
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
@@ -172,6 +179,11 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_end_scan_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if EndScan is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if EndScan is allowed.")
         if self.obs_state not in [ObsState.SCANNING]:
             self.logger.warning(
@@ -215,6 +227,11 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_go_to_idle_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if GoToIdle is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if GoToIdle is allowed.")
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
@@ -258,6 +275,11 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_abort_scan_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if AbortScan is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if AbortScan is allowed.")
         if self.obs_state not in [
             ObsState.IDLE,
@@ -323,6 +345,11 @@ class CbfObsComponentManager(CbfComponentManager):
         )
 
     def is_obs_reset_allowed(self: CbfObsComponentManager) -> bool:
+        """
+        Check if ObsReset is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         self.logger.debug("Checking if ObsReset is allowed.")
         if self.obs_state not in [ObsState.FAULT, ObsState.ABORTED]:
             self.logger.warning(
