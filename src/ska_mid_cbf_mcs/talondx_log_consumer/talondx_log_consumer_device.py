@@ -140,10 +140,11 @@ class TalonDxLogConsumer(SKABaseDevice):
 
         # build previous logging level filter for removal later
         previous_logging_level = self._logging_level
-        previous_filter = TalonDxLogConsumerFilter(
-            self.get_name(),
-            _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
-        )
+        if previous_logging_level is not None:
+            previous_filter = TalonDxLogConsumerFilter(
+                self.get_name(),
+                _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
+            )
 
         try:
             self._logging_level = LoggingLevel(value)
