@@ -6,7 +6,6 @@
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
-
 """
 Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
 Herzberg Astronomy and Astrophysics, National Research Council of Canada
@@ -97,10 +96,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.main) ENABLED START #
     return TmCspSubarrayLeafNodeTest.run_server(args=args, **kwargs)
-    # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.main
-
 
 if __name__ == "__main__":
     main()
