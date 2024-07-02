@@ -34,7 +34,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # ------------------
 
     @attribute(
-        abs_change=1,
         dtype="str",
         memorized=True,
         hw_memorized=True,
