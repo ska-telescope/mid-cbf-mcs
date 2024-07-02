@@ -138,13 +138,8 @@ class TalonDxLogConsumer(SKABaseDevice):
                         return False
                 return True
 
-        # build previous logging level filter for removal later
+        # Store old logging level for filter removal later
         previous_logging_level = self._logging_level
-        if previous_logging_level is not None:
-            previous_filter = TalonDxLogConsumerFilter(
-                self.get_name(),
-                _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
-            )
 
         try:
             self._logging_level = LoggingLevel(value)
@@ -154,6 +149,13 @@ class TalonDxLogConsumer(SKABaseDevice):
                 f"{list(LoggingLevel.__members__.values())} "
             ) from value_error
 
+        # Remove previously applied filter
+        if previous_logging_level is not None:
+            self.logger.removeFilter(TalonDxLogConsumerFilter(
+                self.get_name(),
+                _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
+            ))
+
         # Set the logger to DEBUG level so that all logs from the HPS devices
         # are forwarded to the logging targets. The log level for each HPS
         # device is controlled at the HPS device level
@@ -161,9 +163,6 @@ class TalonDxLogConsumer(SKABaseDevice):
         self.logger.tango_logger.set_level(
             _LMC_TO_TANGO_LOGGING_LEVEL[LoggingLevel.DEBUG]
         )
-
-        # Remove previously applied filter
-        self.logger.removeFilter(previous_filter)
 
         # Add new filter
         log_filter = TalonDxLogConsumerFilter(
