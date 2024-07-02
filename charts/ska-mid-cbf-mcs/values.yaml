@@ -50,9 +50,9 @@ deviceServers:
     enabled: true
     file: "data/cbfcontroller.yaml"
 
-  # cbfsubarray:
-  #   enabled: true
-  #   file: "data/cbfsubarray.yaml"
+  cbfsubarray:
+    enabled: true
+    file: "data/cbfsubarray.yaml"
 
   vcc:
     enabled: true

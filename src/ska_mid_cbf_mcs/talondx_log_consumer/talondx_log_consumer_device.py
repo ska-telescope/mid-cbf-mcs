@@ -151,10 +151,12 @@ class TalonDxLogConsumer(SKABaseDevice):
 
         # Remove previously applied filter
         if previous_logging_level is not None:
-            self.logger.removeFilter(TalonDxLogConsumerFilter(
-                self.get_name(),
-                _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
-            ))
+            self.logger.removeFilter(
+                TalonDxLogConsumerFilter(
+                    self.get_name(),
+                    _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
+                )
+            )
 
         # Set the logger to DEBUG level so that all logs from the HPS devices
         # are forwarded to the logging targets. The log level for each HPS
