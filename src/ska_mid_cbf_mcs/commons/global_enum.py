@@ -5,6 +5,7 @@ __all__ = ["const", "freq_band_dict", "FspModes"]
 
 # TODO - Temporary class. These values should be retrieved from their respective devices (?)
 
+
 class Const:
     def __init__(self):
         self.MIN_INT_TIME = 1  # ADR-35: changed from 140 ms to 1 (factor)

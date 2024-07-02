@@ -10,10 +10,13 @@
 # Copyright (c) 2024 National Research Council of Canada
 
 from __future__ import annotations
+
 import functools
 from threading import Event
 from typing import Any, Callable, Optional
+
 from ska_control_model import ObsState, TaskStatus
+
 from .component_manager import CbfComponentManager
 
 __all__ = ["CbfObsComponentManager"]

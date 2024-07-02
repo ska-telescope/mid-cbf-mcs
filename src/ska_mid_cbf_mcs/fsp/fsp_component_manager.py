@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from threading import Event
 from typing import Any, Callable, Optional
+
 import tango
 from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating

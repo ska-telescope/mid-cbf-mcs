@@ -32,6 +32,7 @@ from ska_tango_base.control_model import (
 from ska_tango_testing import context
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
+
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -253,7 +254,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
     ) -> bool:
         """
-        Initialize the device proxy, given the FQDN of the device, store the proxy in the _proxies dictionary 
+        Initialize the device proxy, given the FQDN of the device, store the proxy in the _proxies dictionary
         and set the AdminMode to ONLINE
 
         :param fqdn: FQDN of the device
@@ -293,7 +294,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if all proxies are connected, False otherwise.
         """
-        
+
         # NOTE: order matters here
         # - must set PDU online before LRU to establish outlet power states
         # - must set VCC online after LRU to establish LRU power state
@@ -860,8 +861,8 @@ class ControllerComponentManager(CbfComponentManager):
         return (op_state_error_list, obs_state_error_list)
 
     def _lru_off(
-        self: ControllerComponentManager, 
-        proxy: context.DeviceProxy, 
+        self: ControllerComponentManager,
+        proxy: context.DeviceProxy,
         lru_fqdn: str,
     ) -> tuple[bool, str]:
         """

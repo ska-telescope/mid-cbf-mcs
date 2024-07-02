@@ -10,6 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
+
 import tango
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
@@ -327,7 +328,7 @@ class CbfController(CbfDevice):
             """
             Stateless hook for device initialisation.
 
-            :return: A tuple containing a return code and a string message indicating status. 
+            :return: A tuple containing a return code and a string message indicating status.
                      The message is for information purpose only.
             :rtype: (ResultCode, str)
             """
@@ -354,7 +355,7 @@ class CbfController(CbfDevice):
         """
         Turn the device on.
 
-        :return: A tuple containing a return code and a string message indicating status. 
+        :return: A tuple containing a return code and a string message indicating status.
                  The message is for information purpose only.
         :rtype: (ResultCode, str)
         """
@@ -378,7 +379,7 @@ class CbfController(CbfDevice):
         """
         Turn the device off.
 
-        :return: A tuple containing a return code and a string message indicating status. 
+        :return: A tuple containing a return code and a string message indicating status.
                  The message is for information purpose only.
         :rtype: (ResultCode, str)
         """
@@ -422,6 +423,7 @@ class CbfController(CbfDevice):
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     return CbfController.run_server(args=args or None, **kwargs)

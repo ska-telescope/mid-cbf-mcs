@@ -20,11 +20,11 @@ from __future__ import annotations
 from typing import cast
 
 from ska_control_model import ResultCode, SimulationMode
-from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
 )
+from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
@@ -96,10 +96,8 @@ class CbfDevice(SKABaseDevice):
     # Commands
     # --------
 
-    @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype_out="DevVarLongStringArray"
-    )
-    @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Put the device into standby mode; currently unimplemented in Mid.CBF
@@ -168,10 +166,12 @@ class CbfDevice(SKABaseDevice):
             :rtype: (ResultCode, str)
             """
             return self.component_manager.off()
-        
+
+
 # ----------
 # Run server
 # ----------
+
 
 def main(*args: str, **kwargs: str) -> int:
     """

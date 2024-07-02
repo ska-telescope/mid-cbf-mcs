@@ -283,9 +283,7 @@ class CbfObsDevice(SKAObsDevice):
     # Attributes
     # ----------
 
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype="uint16", doc="The observing device ID."
-    )
+    @attribute(dtype="uint16", doc="The observing device ID.")
     def deviceID(self: CbfObsDevice) -> int:
         """
         Read the device's ID.
@@ -294,7 +292,7 @@ class CbfObsDevice(SKAObsDevice):
         """
         return self.DeviceID
 
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    @attribute(
         dtype="uint64",
         doc="The scan identification number to be inserted in the output products.",
     )
@@ -306,7 +304,7 @@ class CbfObsDevice(SKAObsDevice):
         """
         return self.component_manager.scan_id
 
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    @attribute(
         dtype="str",
         doc="The configuration ID specified into the JSON configuration.",
     )
@@ -318,9 +316,7 @@ class CbfObsDevice(SKAObsDevice):
         """
         return self.component_manager.config_id
 
-    @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype="str", doc="The last valid scan configuration."
-    )
+    @attribute(dtype="str", doc="The last valid scan configuration.")
     def lastScanConfiguration(self: CbfObsDevice) -> str:
         """
         Read the last valid scan configuration of the device.
@@ -495,10 +491,8 @@ class CbfObsDevice(SKAObsDevice):
 
             return (result_code, msg)
 
-    @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype_out="DevVarLongStringArray"
-    )
-    @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
     def Standby(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Put the device into standby mode.

@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import time
+
 import backoff
 import tango
 import yaml
@@ -165,7 +166,7 @@ class TalonDxComponentManager:
     ) -> ResultCode:
         """
         Copy the relevant device server binaries and FPGA bitstream to each
-        Talon board. 
+        Talon board.
 
         :param talon_cfg: configuration for the Talon board to configure
         :return: ResultCode.OK if all artifacts were copied successfully,
@@ -364,7 +365,7 @@ class TalonDxComponentManager:
                     f"Failed connection to {fqdn} device: {item.reason}"
                 )
             ret = ResultCode.FAILED
-            
+
         return ret
 
     def _configure_hps_master(
@@ -434,7 +435,7 @@ class TalonDxComponentManager:
             """
 
         return kill_script
-    
+
     def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
         """
         Clear the Talon board by sending a script to the Talon
@@ -497,9 +498,9 @@ class TalonDxComponentManager:
         configuring the networking, copying the device server binaries and
         FPGA bitstream, starting the HPS master device server, creating the
         device proxies and sending the configure command to the HPS master.
-        
+
         :param talon_cfg: configuration for the Talon board to configure
-        :return: a tuple containing a ResultCode and a string message. 
+        :return: a tuple containing a ResultCode and a string message.
         """
         if self._clear_talon(talon_cfg) == ResultCode.FAILED:
             return (ResultCode.FAILED, "_clear_talon FAILED")
@@ -528,7 +529,7 @@ class TalonDxComponentManager:
         target = talon_cfg["target"]
         self.logger.info(f"Completed configuring talon board {target}")
         return (ResultCode.OK, "_configure_talon_thread completed OK")
-    
+
     def _setup_tango_host_file(
         self: TalonDxComponentManager,
     ) -> None:
@@ -569,7 +570,7 @@ class TalonDxComponentManager:
         except IOError as e:
             self.logger.error(e)
             return ResultCode.FAILED
-    
+
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
         Performs all actions to configure the Talon boards after power on and
@@ -602,9 +603,9 @@ class TalonDxComponentManager:
             return ResultCode.FAILED
 
         return ResultCode.OK
-    
-     # --- Shutdown Talon Methods --- #
-    
+
+    # --- Shutdown Talon Methods --- #
+
     def _shutdown_talon_thread(
         self: TalonDxComponentManager, talon_cfg
     ) -> tuple(ResultCode, str):
@@ -638,7 +639,7 @@ class TalonDxComponentManager:
             ResultCode.OK,
             f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
-    
+
     def shutdown(
         self: TalonDxComponentManager,
     ) -> ResultCode:
@@ -668,4 +669,3 @@ class TalonDxComponentManager:
             ret = ResultCode.FAILED
 
         return ret
-    

@@ -10,10 +10,12 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Event, Lock
 from typing import Any, Callable, Optional, cast
+
 import tango
 from ska_control_model import (
     CommunicationStatus,
