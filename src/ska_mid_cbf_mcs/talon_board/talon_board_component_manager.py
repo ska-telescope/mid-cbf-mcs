@@ -16,7 +16,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -124,7 +124,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_status_events = []
 
         # simulation mode:
-        self.simulation_mode = False
+        self.simulation_mode = SimulationMode.TRUE
         self.talon_board_simulator = TalonBoardSimulator(logger)
 
         super().__init__(
