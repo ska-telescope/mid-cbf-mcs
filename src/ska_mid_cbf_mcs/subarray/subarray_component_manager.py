@@ -194,9 +194,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._all_talon_board_proxies.append(proxy)
 
-            # for proxy in self._all_fsp_corr_proxies:
-            #     proxy.adminMode = AdminMode.ONLINE
-
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -334,7 +331,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             results_fsp = self._issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
-                argin=model,
+                argin=json.dumps(delay_model_json),
             )
 
             for result_code, _ in results_fsp:

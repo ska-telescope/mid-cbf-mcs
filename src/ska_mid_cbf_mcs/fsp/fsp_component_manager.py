@@ -290,7 +290,7 @@ class FspComponentManager(CbfComponentManager):
         match self.function_mode:
             case FspModes.IDLE.value:
                 self.logger.error(
-                    f"FSP {self._fsp_id} function mode is IDLE; error removing subarray {subarray_id} function mode device from group proxy."
+                    f"FSP {self._fsp_id} function mode is IDLE, no subarray membership to remove."
                 )
 
             case FspModes.CORR.value:

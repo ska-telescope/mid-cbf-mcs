@@ -37,19 +37,19 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         Initialise a new CbfObsComponentManager instance.
         """
-        super().__init__(*args, **kwargs)
+
+        # supply observing state machine trigger keywords
+        super().__init__(
+            *args,
+            configured=None,
+            scanning=None,
+            resourced=None,
+            obsfault=None,
+            **kwargs,
+        )
 
         # callback to perform observing state model invoked/completed actions
         self._obs_command_running_callback = obs_command_running_callback
-
-        # Here we have statically defined the observing state keywords useful in Mid.CBF
-        # component management, allowing the use of the _update_component_state
-        # method in the BaseComponentManager to issue the component state change
-        # callback in the CspSubElementObsDevice to drive the observing state model
-        self._component_state["configured"] = None
-        self._component_state["scanning"] = None
-        self._component_state["resourced"] = None
-        self._component_state["obsfault"] = None
 
         self.obs_state = ObsState.IDLE
 
