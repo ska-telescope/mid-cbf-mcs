@@ -11,10 +11,17 @@
 
 from __future__ import annotations
 
+import logging
+
 from ska_control_model import LoggingLevel
 
 # tango imports
 from ska_tango_base import SKABaseDevice
+from ska_tango_base.base.logging import (
+    _LMC_TO_PYTHON_LOGGING_LEVEL,
+    _LMC_TO_TANGO_LOGGING_LEVEL,
+)
+from ska_tango_base.faults import LoggingLevelError
 from tango.server import command
 
 from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
@@ -81,15 +88,87 @@ class TalonDxLogConsumer(SKABaseDevice):
         self: TalonDxLogConsumer, value: LoggingLevel
     ) -> None:
         """
-        Set the logging level for the device.
-
-        Both the Python logger and the Tango logger are updated.
+        Sets logging level for the device. Both the Python logger and the
+        Tango logger are updated. Overrides the base class attribute to
+        accept all log levels coming from HPS devices, but still limit the
+        logging level of TalonDxLogConsumer logs.
 
         :param value: Logging level for logger
 
         :raises LoggingLevelError: for invalid value
         """
-        self.component_manager.logging_level = value
+        # Setting logger.propagate to False fixes the duplicated logs issue (CIP-1674)
+        if self.logger.propagate:
+            self.logger.propagate = False
+
+        class TalonDxLogConsumerFilter(logging.Filter):
+            """
+            Filter for the logging level of the TalonDxLogConsumer.
+            """
+
+            def __init__(
+                self: TalonDxLogConsumerFilter,
+                device_name: str,
+                log_level: int,
+            ) -> None:
+                """
+                Create a new instance.
+
+                :param device_name: FQDN of the TalonDxLogConsumer device that this
+                    filter is for
+                :param log_level: logging level of the TalonDxLogConsumer device
+                """
+                self.device_name = device_name
+                self.log_level = log_level
+
+            def filter(
+                self: TalonDxLogConsumerFilter, record: logging.LogRecord
+            ) -> bool:
+                """
+                Filter all TalonDxLogConsumer logs that do not satisfy the log
+                    level requirement.
+                Also adds the tango-device tag if it does not already exist.
+
+                :param record: log record to filter
+                """
+                if not hasattr(record, "tags"):
+                    record.tags = f"tango-device:{self.device_name}"
+
+                    if self.log_level > record.levelno:
+                        return False
+                return True
+
+        # build previous logging level filter for removal later
+        previous_logging_level = self._logging_level
+        previous_filter = TalonDxLogConsumerFilter(
+            self.get_name(),
+            _LMC_TO_PYTHON_LOGGING_LEVEL[previous_logging_level],
+        )
+
+        try:
+            self._logging_level = LoggingLevel(value)
+        except ValueError as value_error:
+            raise LoggingLevelError(
+                f"Invalid level - {value} - must be one of "
+                f"{list(LoggingLevel.__members__.values())} "
+            ) from value_error
+
+        # Set the logger to DEBUG level so that all logs from the HPS devices
+        # are forwarded to the logging targets. The log level for each HPS
+        # device is controlled at the HPS device level
+        self.logger.setLevel(_LMC_TO_PYTHON_LOGGING_LEVEL[LoggingLevel.DEBUG])
+        self.logger.tango_logger.set_level(
+            _LMC_TO_TANGO_LOGGING_LEVEL[LoggingLevel.DEBUG]
+        )
+
+        # Remove previously applied filter
+        self.logger.removeFilter(previous_filter)
+
+        # Add new filter
+        log_filter = TalonDxLogConsumerFilter(
+            self.get_name(), _LMC_TO_PYTHON_LOGGING_LEVEL[self._logging_level]
+        )
+        self.logger.addFilter(log_filter)
 
     # --------
     # Commands
@@ -154,7 +233,9 @@ class TalonDxLogConsumer(SKABaseDevice):
 
             :param device_name: FQDN of target device
             """
-            self.component_manager.add_logging_target(device_name)
+            self.component_manager.add_logging_target(
+                target=self.get_name(), device_name=device_name
+            )
 
     @command(
         dtype_in=str, doc_in="FQDN of device to receive new logging target"
@@ -184,7 +265,9 @@ class TalonDxLogConsumer(SKABaseDevice):
 
             :param device_name: FQDN of target device
             """
-            self.component_manager.remove_logging_target(device_name)
+            self.component_manager.remove_logging_target(
+                target=self.get_name(), device_name=device_name
+            )
 
     @command(
         dtype_in=str, doc_in="FQDN of device to remove logging target from"

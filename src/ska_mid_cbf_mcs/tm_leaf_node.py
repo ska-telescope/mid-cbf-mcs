@@ -98,5 +98,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 def main(args=None, **kwargs):
     return TmCspSubarrayLeafNodeTest.run_server(args=args, **kwargs)
 
+
 if __name__ == "__main__":
     main()
