@@ -19,6 +19,7 @@ from requests.structures import CaseInsensitiveDict
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerState
 
+from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["DLIProSwitchDriver"]
@@ -82,7 +83,10 @@ class DLIProSwitchDriver:
         self.state_off = "False"
 
         # valid range 0 to 7
-        self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+        Const.POWER_SWITCH_OUTLETS = 8
+        self.outlet_id_list: List(str) = [
+            str(i) for i in range(0, Const.POWER_SWITCH_OUTLETS)
+        ]
 
         # Initialize outlets
         self.outlets: List(Outlet) = []

@@ -23,7 +23,7 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_base.base.component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -364,7 +364,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             "TurnOffOutlet", task_callback, task_abort_event
         ):
             return
-
         if self.simulation_mode:
             result_code, message = self.power_switch_simulator.turn_off_outlet(
                 outlet
@@ -385,7 +384,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                     )
                     return
             except AssertionError as e:
-                self.logger.error(e)
+                self.logger.error(f"Assertion error: {e}")
                 task_callback(
                     exception=e,
                     status=TaskStatus.FAILED,
