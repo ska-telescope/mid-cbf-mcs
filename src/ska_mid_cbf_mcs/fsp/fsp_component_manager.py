@@ -8,6 +8,7 @@
 # See LICENSE.txt for more info.
 
 # Copyright (c) 2019 National Research Council of Canada
+
 from __future__ import annotations
 
 import json
@@ -35,7 +36,9 @@ from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
 
 
 class FspComponentManager(CbfComponentManager):
-    """A component manager for the Fsp device."""
+    """
+    A component manager for the Fsp device.
+    """
 
     def __init__(
         self: FspComponentManager,
@@ -63,7 +66,6 @@ class FspComponentManager(CbfComponentManager):
         self._fsp_id = fsp_id
 
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
-
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
 
@@ -73,8 +75,11 @@ class FspComponentManager(CbfComponentManager):
 
         self.subarray_membership = []
         self.function_mode = FspModes.IDLE.value
-
         self.delay_model = ""
+
+    # -------------
+    # Communication
+    # -------------
 
     def _get_proxy(
         self: FspComponentManager, name: str, is_group: bool
@@ -84,8 +89,7 @@ class FspComponentManager(CbfComponentManager):
 
         :param name: FQDN of the device or the name of the group proxy to connect to.
         :param is_group: True if the proxy to connect to is a group proxy.
-        :return: context.DeviceProxy, context.Group or None if no connection
-                 was made.
+        :return: context.DeviceProxy, context.Group or None if no connection was made.
         """
         try:
             if is_group:
@@ -105,88 +109,17 @@ class FspComponentManager(CbfComponentManager):
             )
             return None
 
-    def _get_capability_proxies(
-        self: FspComponentManager,
-    ) -> None:
-        """
-        Establish connections with the capability proxies
-        """
-        # NOTE: for now, assume that given addresses are valid
-
-        if not self.simulation_mode:
-            self.logger.info("Trying to connect to real HPS devices")
-            if self._proxy_hps_fsp_controller is None:
-                self._proxy_hps_fsp_controller = self._get_proxy(
-                    self._hps_fsp_controller_fqdn, is_group=False
-                )
-
-            if self._proxy_hps_fsp_corr_controller is None:
-                self._proxy_hps_fsp_corr_controller = self._get_proxy(
-                    self._hps_fsp_corr_controller_fqdn, is_group=False
-                )
-        else:
-            self.logger.info("Trying to connect to Simulated HPS devices")
-            self._proxy_hps_fsp_corr_controller = (
-                HpsFspCorrControllerSimulator(
-                    self._hps_fsp_corr_controller_fqdn
-                )
-            )
-            self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
-                self._hps_fsp_controller_fqdn,
-                self._proxy_hps_fsp_corr_controller,
-            )
-
     def _get_function_mode_group_proxies(
         self: FspComponentManager,
     ) -> None:
-        """Establish connections with the group proxies"""
+        """
+        Establish connections with the group proxies
+        """
         if self._group_fsp_corr_subarray is None:
             self._group_fsp_corr_subarray = self._get_proxy(
                 "FSP Subarray Corr", is_group=True
             )
         # TODO AA0.5+: PSS, PST, VLBI
-
-    def _validate_function_mode(
-        self: FspComponentManager, function_mode: str
-    ) -> str:
-        """
-        Sets functionMode attribute and pushes change event if valid, or return
-        an error message if invalid.
-
-        :param function_mode: function mode string to be evaluated
-        :return: None if validation passes, else error message string
-        """
-        match function_mode:
-            case "IDLE":
-                self.function_mode = FspModes.IDLE.value
-            case "CORR":
-                self.function_mode = FspModes.CORR.value
-            # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
-            case "PSS-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
-                )
-                return "PSS-BF not implemented"
-            case "PST-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
-                )
-                return "PST-BF not implemented"
-            case "VLBI":
-                self.logger.error(
-                    "Error in SetFunctionMode; VLBI not implemented in AA0.5"
-                )
-                return "VLBI not implemented"
-            case _:
-                return f"{function_mode} not a valid FSP function mode."
-
-        self.logger.info(
-            f"FSP set to function mode {FspModes(self.function_mode).name}"
-        )
-        self._device_attr_change_callback("functionMode", self.function_mode)
-        self._device_attr_archive_callback("functionMode", self.function_mode)
-
-        return None
 
     def start_communicating(
         self: FspComponentManager,
@@ -201,98 +134,9 @@ class FspComponentManager(CbfComponentManager):
         super().start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
-        self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"FSP SetFunctionMode not allowed in current state:\
-                    {self._component_state['power']}"
-            )
-            return False
-        if len(self.subarray_membership) > 0:
-            self.logger.warning(
-                f"FSP {self._fsp_id} currently belongs to \
-                    subarray(s) {self.subarray_membership}, \
-                    cannot change function mode at this time."
-            )
-            return False
-        return True
-
-    @check_communicating
-    def _set_function_mode(
-        self: FspComponentManager,
-        function_mode: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        """
-        Switch the function mode of the HPS FSP controller
-
-        :return: None
-        """
-        # set task status in progress, check for abort event
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "SetFunctionMode", task_callback, task_abort_event
-        ):
-            return
-
-        error_msg = self._validate_function_mode(function_mode)
-        if error_msg:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    error_msg,
-                ),
-            )
-            return
-
-        try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
-        except tango.DevFailed as df:
-            self.logger.error(f"{df.args[0].desc}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue SetFunctionMode command to HPS FSP controller",
-                ),
-            )
-            return
-
-        task_callback(
-            result=(ResultCode.OK, "SetFunctionMode completed OK"),
-            status=TaskStatus.COMPLETED,
-        )
-        return
-
-    def set_function_mode(
-        self: FspComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-    ) -> tuple[TaskStatus, str]:
-        """
-        Switch the function mode of the FSP; can only be done if currently
-        unassigned from any subarray membership.
-
-        :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (TaskStatus, str)
-        """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._set_function_mode,
-            args=[argin],
-            is_cmd_allowed=self.is_set_function_mode_allowed,
-            task_callback=task_callback,
-        )
+    # -------------
+    # Fast Commands
+    # -------------
 
     def _remove_subarray_from_group_proxy(
         self: FspComponentManager, subarray_id: int
@@ -453,6 +297,112 @@ class FspComponentManager(CbfComponentManager):
 
         return (result_code, message)
 
+    @check_communicating
+    def update_delay_model(
+        self: FspComponentManager, argin: str
+    ) -> DevVarLongStringArrayType:
+        """
+        Update the FSP's delay model (serialized JSON object)
+
+        :param argin: the delay model data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering update_delay_model")
+        result_code, message = ResultCode.OK, "UpdateDelayModel completed OK"
+        # update if current function mode is either PSS-BF, PST-BF or CORR
+        if self.function_mode not in [
+            FspModes.PSS_BF.value,
+            FspModes.PST_BF.value,
+            FspModes.CORR.value,
+        ]:
+            result_code, message = (
+                ResultCode.FAILED,
+                f"Delay models not used in function mode {self.function_mode}",
+            )
+
+        # the whole delay model must be stored
+        self.delay_model = argin
+        delay_model = json.loads(argin)
+
+        # TODO handle delay models in function modes other than CORR
+        try:
+            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                json.dumps(delay_model)
+            )
+        except tango.DevFailed as df:
+            self.logger.error(f"{df.args[0].desc}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            result_code, message = (
+                ResultCode.FAILED,
+                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+            )
+
+        return (result_code, message)
+
+    @check_communicating
+    def get_fsp_corr_config_id(
+        self: FspComponentManager,
+    ) -> str:
+        """
+        Get the configID for all the fspCorrSubarray
+
+        :return: the configID
+        :rtype: str
+        """
+
+        if self._connected:
+            result = {}
+            for proxy in self._proxy_fsp_corr_subarray:
+                result[str(proxy)] = proxy.configID
+            return str(result)
+
+        else:
+            log_msg = "Fsp getConfigID command failed: \
+                    proxies not connected"
+            self.logger.error(log_msg)
+            return ""
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- On Command --- #
+    def _get_capability_proxies(
+        self: FspComponentManager,
+    ) -> None:
+        """
+        Establish connections with the capability proxies
+        """
+        # NOTE: for now, assume that given addresses are valid
+
+        if not self.simulation_mode:
+            self.logger.info("Trying to connect to real HPS devices")
+            if self._proxy_hps_fsp_controller is None:
+                self._proxy_hps_fsp_controller = self._get_proxy(
+                    self._hps_fsp_controller_fqdn, is_group=False
+                )
+
+            if self._proxy_hps_fsp_corr_controller is None:
+                self._proxy_hps_fsp_corr_controller = self._get_proxy(
+                    self._hps_fsp_corr_controller_fqdn, is_group=False
+                )
+        else:
+            self.logger.info("Trying to connect to Simulated HPS devices")
+            self._proxy_hps_fsp_corr_controller = (
+                HpsFspCorrControllerSimulator(
+                    self._hps_fsp_corr_controller_fqdn
+                )
+            )
+            self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
+                self._hps_fsp_controller_fqdn,
+                self._proxy_hps_fsp_corr_controller,
+            )
+
     def _issue_command_all_subarray_group_proxies(
         self: FspComponentManager, command_name: str
     ):
@@ -534,6 +484,7 @@ class FspComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- Off Command --- #
     def is_off_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP Off is allowed.")
         if self.power_state not in [
@@ -602,72 +553,138 @@ class FspComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- SetFunctionMode Command --- #
+    def _validate_function_mode(
+        self: FspComponentManager, function_mode: str
+    ) -> str:
+        """
+        Sets functionMode attribute and pushes change event if valid, or return
+        an error message if invalid.
+
+        :param function_mode: function mode string to be evaluated
+        :return: None if validation passes, else error message string
+        """
+        match function_mode:
+            case "IDLE":
+                self.function_mode = FspModes.IDLE.value
+            case "CORR":
+                self.function_mode = FspModes.CORR.value
+            # CIP-1924 temporarily removed PSS/PST as they are not currently implemented
+            case "PSS-BF":
+                self.logger.error(
+                    "Error in SetFunctionMode; PSS-BF not implemented in AA0.5"
+                )
+                return "PSS-BF not implemented"
+            case "PST-BF":
+                self.logger.error(
+                    "Error in SetFunctionMode; PST-BF not implemented in AA0.5"
+                )
+                return "PST-BF not implemented"
+            case "VLBI":
+                self.logger.error(
+                    "Error in SetFunctionMode; VLBI not implemented in AA0.5"
+                )
+                return "VLBI not implemented"
+            case _:
+                return f"{function_mode} not a valid FSP function mode."
+
+        self.logger.info(
+            f"FSP set to function mode {FspModes(self.function_mode).name}"
+        )
+        self._device_attr_change_callback("functionMode", self.function_mode)
+        self._device_attr_archive_callback("functionMode", self.function_mode)
+
+        return None
+
+    def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
+        self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
+        if self.power_state != PowerState.ON:
+            self.logger.warning(
+                f"FSP SetFunctionMode not allowed in current state:\
+                    {self._component_state['power']}"
+            )
+            return False
+        if len(self.subarray_membership) > 0:
+            self.logger.warning(
+                f"FSP {self._fsp_id} currently belongs to \
+                    subarray(s) {self.subarray_membership}, \
+                    cannot change function mode at this time."
+            )
+            return False
+        return True
+
     @check_communicating
-    def update_delay_model(
-        self: FspComponentManager, argin: str
-    ) -> DevVarLongStringArrayType:
+    def _set_function_mode(
+        self: FspComponentManager,
+        function_mode: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
         """
-        Update the FSP's delay model (serialized JSON object)
+        Switch the function mode of the HPS FSP controller
 
-        :param argin: the delay model data
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :return: None
         """
-        self.logger.debug("Entering update_delay_model")
-        result_code, message = ResultCode.OK, "UpdateDelayModel completed OK"
-        # update if current function mode is either PSS-BF, PST-BF or CORR
-        if self.function_mode not in [
-            FspModes.PSS_BF.value,
-            FspModes.PST_BF.value,
-            FspModes.CORR.value,
-        ]:
-            result_code, message = (
-                ResultCode.FAILED,
-                f"Delay models not used in function mode {self.function_mode}",
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "SetFunctionMode", task_callback, task_abort_event
+        ):
+            return
+
+        error_msg = self._validate_function_mode(function_mode)
+        if error_msg:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    error_msg,
+                ),
             )
+            return
 
-        # the whole delay model must be stored
-        self.delay_model = argin
-        delay_model = json.loads(argin)
-
-        # TODO handle delay models in function modes other than CORR
         try:
-            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
-                json.dumps(delay_model)
-            )
+            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
         except tango.DevFailed as df:
             self.logger.error(f"{df.args[0].desc}")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            result_code, message = (
-                ResultCode.FAILED,
-                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue SetFunctionMode command to HPS FSP controller",
+                ),
             )
+            return
 
-        return (result_code, message)
+        task_callback(
+            result=(ResultCode.OK, "SetFunctionMode completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
 
-    @check_communicating
-    def get_fsp_corr_config_id(
+    def set_function_mode(
         self: FspComponentManager,
-    ) -> str:
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[TaskStatus, str]:
         """
-        Get the configID for all the fspCorrSubarray
+        Switch the function mode of the FSP; can only be done if currently
+        unassigned from any subarray membership.
 
-        :return: the configID
-        :rtype: str
+        :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
         """
-
-        if self._connected:
-            result = {}
-            for proxy in self._proxy_fsp_corr_subarray:
-                result[str(proxy)] = proxy.configID
-            return str(result)
-
-        else:
-            log_msg = "Fsp getConfigID command failed: \
-                    proxies not connected"
-            self.logger.error(log_msg)
-            return ""
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._set_function_mode,
+            args=[argin],
+            is_cmd_allowed=self.is_set_function_mode_allowed,
+            task_callback=task_callback,
+        )

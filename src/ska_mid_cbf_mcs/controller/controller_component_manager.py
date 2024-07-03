@@ -45,7 +45,9 @@ from ska_mid_cbf_mcs.controller.talondx_component_manager import (
 
 
 class ControllerComponentManager(CbfComponentManager):
-    """A component manager for the CbfController device."""
+    """
+    A component manager for the CbfController device.
+    """
 
     def __init__(
         self: ControllerComponentManager,
@@ -359,10 +361,17 @@ class ControllerComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.UNKNOWN)
         super().stop_communicating()
 
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None so far.
+
     # ---------------------
     # Long Running Commands
     # ---------------------
 
+    # --- On Command --- #
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
         """
         Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON.
@@ -654,6 +663,7 @@ class ControllerComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- Off Command --- #
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: context.DeviceProxy
     ) -> tuple[bool, str]:
@@ -1044,6 +1054,7 @@ class ControllerComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- InitSysParam Command --- #
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,

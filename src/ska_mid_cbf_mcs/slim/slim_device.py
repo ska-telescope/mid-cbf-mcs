@@ -40,14 +40,12 @@ class Slim(CbfDevice):
     TANGO device class for controlling and monitoring the SLIM
     """
 
-    # PROTECTED REGION ID(Slim.class_variable) ENABLED START #
     MAX_NUM_LINKS = 16  # AA 0.5
-
-    # PROTECTED REGION END #    //  Slim.class_variable
 
     # -----------------
     # Device Properties
     # -----------------
+
     Links = device_property(dtype=("str",))
 
     # ----------
@@ -146,6 +144,7 @@ class Slim(CbfDevice):
     # ---------------
     # General methods
     # ---------------
+
     def always_executed_hook(self: Slim) -> None:
         # PROTECTED REGION ID(Slim.always_executed_hook) ENABLED START #
         pass

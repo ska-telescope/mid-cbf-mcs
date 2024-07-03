@@ -4,15 +4,8 @@
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
-#
-# """
-# HpsFspControllerSimulator Class
-#
-# This class is used to simulate the behaviour of the HPS FSP controller
-# device when the Talon-DX hardware is not connected.
-# """
 
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 import tango
 
@@ -39,14 +32,15 @@ class HpsFspControllerSimulator:
         fsp_corr_controller: HpsFspCorrControllerSimulator,
     ) -> None:
         self.device_name = device_name
-
         self._state = tango.DevState.INIT
         self._function_mode = FspModes.IDLE.value
         self._fsp_corr_controller = fsp_corr_controller
 
     # Methods that match the Tango commands in the band devices
     def State(self: HpsFspControllerSimulator) -> tango.DevState:
-        """Get the current state of the device"""
+        """
+        Get the current state of the device
+        """
         return self._state
 
     def SetFunctionMode(
@@ -69,5 +63,5 @@ class HpsFspControllerSimulator:
         elif f_mode == "VLBI":
             self._function_mode = FspModes.VLBI.value
         else:
-            # error
+            # Error
             pass

@@ -52,6 +52,12 @@ class PowerSwitch(CbfDevice):
     PowerSwitchLogin = device_property(dtype="str")
     PowerSwitchPassword = device_property(dtype="str")
 
+    # ----------
+    # Attributes
+    # ----------
+
+    # None at this time...
+
     # ---------------
     # General methods
     # ---------------

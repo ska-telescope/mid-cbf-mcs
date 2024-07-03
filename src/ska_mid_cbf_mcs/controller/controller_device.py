@@ -202,9 +202,9 @@ class CbfController(CbfDevice):
         self._simulation_mode = value
         self._talondx_component_manager.simulation_mode = value
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: CbfController) -> None:
         """
@@ -311,9 +311,9 @@ class CbfController(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfDevice.InitCommand):
         """
@@ -338,6 +338,10 @@ class CbfController(CbfDevice):
             self._device._command_progress = 0
 
             return (result_code, msg)
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def is_On_allowed(self: CbfController) -> bool:
         """

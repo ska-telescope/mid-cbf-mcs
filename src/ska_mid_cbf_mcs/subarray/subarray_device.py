@@ -179,7 +179,7 @@ class CbfSubarray(CspSubElementSubarray):
     )
 
     # ---------------
-    # General methods
+    # General Methods
     # ---------------
 
     class InitCommand(CspSubElementSubarray.InitCommand):
@@ -374,7 +374,7 @@ class CbfSubarray(CspSubElementSubarray):
             self.set_status("The device is in FAULT state")
 
     # ------------------
-    # Attributes methods
+    # Attributes Methods
     # ------------------
 
     def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:

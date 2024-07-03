@@ -8,14 +8,10 @@
 # See LICENSE.txt for more info.
 
 # """
-# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
 # """
 
-# Fsp Tango device prototype
-# Fsp TANGO device class for the prototype
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 from typing import Any
 
@@ -93,9 +89,9 @@ class Fsp(CbfDevice):
         """
         return self.component_manager.delay_model
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: Fsp) -> None:
         """
@@ -160,9 +156,9 @@ class Fsp(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfDevice.InitCommand):
         """
@@ -194,59 +190,6 @@ class Fsp(CbfDevice):
             self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, message)
-
-    def is_On_allowed(self: Fsp) -> bool:
-        """
-        Overriding the base class is_On_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
-        """
-        return True
-
-    def is_Off_allowed(self: Fsp) -> bool:
-        """
-        Overriding the base class is_Off_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
-        """
-        return True
-
-    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
-        """
-        Determine if SetFunctionMode is allowed
-        (allowed if FSP state is ON).
-
-        :return: if SetFunctionMode is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="FSP function mode",
-    )
-    def SetFunctionMode(
-        self: Fsp, function_mode: str
-    ) -> DevVarLongStringArrayType:
-        """
-        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
-        turn one of them ON according to argin, and all others DISABLE.
-
-        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: DevVarLongStringArrayType
-
-        """
-        command_handler = self.get_command_object(
-            command_name="SetFunctionMode"
-        )
-        result_code_message, command_id = command_handler(function_mode)
-        return [[result_code_message], [command_id]]
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -413,6 +356,19 @@ class Fsp(CbfDevice):
             """
             return self.component_manager.update_delay_model(argin)
 
+    def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
+        """
+        Determine if UpdateDelayModelis allowed
+        (allowed if FSP state is ON and ObsState is
+        READY OR SCANNINNG).
+
+        :return: if UpdateDelayModel is allowed
+        :rtype: bool
+        """
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
     @command(
         dtype_in="str",
         dtype_out="DevVarLongStringArray",
@@ -428,22 +384,69 @@ class Fsp(CbfDevice):
         result_code, message = command_handler(argin)
         return [[result_code], [message]]
 
-    def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
-        """
-        Determine if UpdateDelayModelis allowed
-        (allowed if FSP state is ON and ObsState is
-        READY OR SCANNINNG).
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
-        :return: if UpdateDelayModel is allowed
+    def is_On_allowed(self: Fsp) -> bool:
+        """
+        Overriding the base class is_On_allowed so that the command may be queued,
+        relying on the component manager equivalent method instead.
+        """
+        return True
+
+    def is_Off_allowed(self: Fsp) -> bool:
+        """
+        Overriding the base class is_Off_allowed so that the command may be queued,
+        relying on the component manager equivalent method instead.
+        """
+        return True
+
+    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
+        """
+        Determine if SetFunctionMode is allowed
+        (allowed if FSP state is ON).
+
+        :return: if SetFunctionMode is allowed
         :rtype: bool
         """
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
+    @command(
+        dtype_in="str",
+        dtype_out="DevVarLongStringArray",
+        doc_in="FSP function mode",
+    )
+    def SetFunctionMode(
+        self: Fsp, function_mode: str
+    ) -> DevVarLongStringArrayType:
+        """
+        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
+        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
+        turn one of them ON according to argin, and all others DISABLE.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: DevVarLongStringArrayType
+
+        """
+        command_handler = self.get_command_object(
+            command_name="SetFunctionMode"
+        )
+        result_code_message, command_id = command_handler(function_mode)
+        return [[result_code_message], [command_id]]
+
     # ----------
     # Callbacks
     # ----------
+
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------

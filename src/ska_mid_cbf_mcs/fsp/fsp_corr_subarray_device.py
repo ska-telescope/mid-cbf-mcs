@@ -38,9 +38,9 @@ class FspCorrSubarray(CbfObsDevice):
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
 
-    # ----------
-    # Properties
-    # ----------
+    # -----------------
+    # Device Properties
+    # -----------------
 
     HpsFspCorrControllerAddress = device_property(dtype="str")
 
@@ -89,9 +89,9 @@ class FspCorrSubarray(CbfObsDevice):
         """
         return self.component_manager.frequency_slice_id
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def create_component_manager(
         self: FspCorrSubarray,
@@ -113,9 +113,9 @@ class FspCorrSubarray(CbfObsDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     # TODO - currently not used
     def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
@@ -190,6 +190,10 @@ class FspCorrSubarray(CbfObsDevice):
         result["outputPort"] = triple[1] + (argin - triple[0]) * triple[2]
 
         return str(result)
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     # ----------
     # Callbacks
