@@ -12,25 +12,26 @@ __all__ = ["MockDependency"]
 
 
 class MockDependency:
-    def ResponseSNMP(
-        simulate_response_error: bool,
-        sim_state: bool,
-    ) -> tuple:
-        if simulate_response_error:
-            raise snmp_error.PySnmpError()
+    class ResponseSNMP:
+        """A mock class to replace requests.ResponseSNMP."""
 
-        returnObject: tuple = ()
-        sim_state = 1 if sim_state else 2
+        def do(
+            self: MockDependency.ResponseSNMP,
+            simulate_response_error: bool,
+            sim_state: bool,
+        ) -> tuple:
+            if simulate_response_error:
+                raise snmp_error.PySnmpError()
 
-        errorIndication = None
-        errorStatus = None
-        errorIndex = None
+            state = 1 if sim_state else 2
 
-        # First sim state has no meaning, just has to be an accessible value
-        varBinds = [(sim_state, sim_state)]
-        returnObject = (errorIndication, errorStatus, errorIndex, varBinds)
+            errorIndication = None
+            errorStatus = None
+            errorIndex = None
 
-        return returnObject
+            varBinds = [(1, state)]
+
+            return (errorIndication, errorStatus, errorIndex, varBinds)
 
     class Response:
         """A mock class to replace requests.Response."""
