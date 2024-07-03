@@ -7,26 +7,18 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# """
-# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
-# """
-
-# Vcc TANGO device class
 
 from __future__ import annotations
 
 from typing import Any  # allow forward references in type hints
 
-# Tango imports
 import tango
 from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
 
-# SKA imports
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
@@ -128,9 +120,9 @@ class Vcc(CbfObsDevice):
         """
         return self.component_manager.frequency_band
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: Vcc) -> None:
         """
@@ -178,9 +170,9 @@ class Vcc(CbfObsDevice):
     def delete_device(self: Vcc) -> None:
         """Hook to delete device."""
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfObsDevice.InitCommand):
         """
@@ -214,6 +206,10 @@ class Vcc(CbfObsDevice):
             self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, msg)
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     @command(
         dtype_in="DevString",
