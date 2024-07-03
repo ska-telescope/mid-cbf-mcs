@@ -11,15 +11,12 @@
 
 from __future__ import annotations
 
-# tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
     SubmittedSlowCommand,
 )
-
-# Additional import
 from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
@@ -41,86 +38,9 @@ class SlimLink(CbfDevice):
     # Device Properties
     # -----------------
 
-    # None at this time...
-
-    # ---------------
-    # General methods
-    # ---------------
-
-    def create_component_manager(self: SlimLink) -> SlimLinkComponentManager:
-        """
-        Create and return a component manager for this device.
-
-        :return: a component manager for this device
-        :rtype: SlimLinkComponentManager
-        """
-        self.logger.debug("Entering create_component_manager()")
-        return SlimLinkComponentManager(
-            logger=self.logger,
-            health_state_callback=self._update_health_state,
-            communication_state_callback=self._communication_state_changed,
-            component_state_callback=self._component_state_changed,
-        )
-
-    def init_command_objects(self: SlimLink) -> None:
-        """
-        Sets up the command objects
-        """
-        super().init_command_objects()
-
-        self.register_command_object(
-            "ConnectTxRx",
-            SubmittedSlowCommand(
-                command_name="ConnectTxRx",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="connect_slim_tx_rx",
-                logger=self.logger,
-            ),
-        )
-        self.register_command_object(
-            "VerifyConnection",
-            self.VerifyConnectionCommand(
-                device=self,
-                component_manager=self.component_manager,
-                logger=self.logger,
-            ),
-        )
-        self.register_command_object(
-            "DisconnectTxRx",
-            SubmittedSlowCommand(
-                command_name="DisconnectTxRx",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="disconnect_slim_tx_rx",
-                logger=self.logger,
-            ),
-        )
-        self.register_command_object(
-            "ClearCounters",
-            self.ClearCountersCommand(
-                device=self,
-                component_manager=self.component_manager,
-                logger=self.logger,
-            ),
-        )
-
-    def always_executed_hook(self: SlimLink) -> None:
-        """Hook to be executed before any commands."""
-
-    def delete_device(self: SlimLink) -> None:
-        """Hook to delete device."""
-
     # ----------
-    # Callbacks
+    # Attributes
     # ----------
-
-    # None at this time...
-    # We currently rely on the SKABaseDevice implemented callbacks.
-
-    # -----------------
-    # Attribute Methods
-    # -----------------
 
     @attribute(dtype=str)
     def txDeviceName(self: SlimLink) -> str:
@@ -272,9 +192,83 @@ class SlimLink(CbfDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # --------
-    # Commands
-    # --------
+    # --------------
+    # Initialization
+    # --------------
+
+    def create_component_manager(self: SlimLink) -> SlimLinkComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device
+        :rtype: SlimLinkComponentManager
+        """
+        self.logger.debug("Entering create_component_manager()")
+        return SlimLinkComponentManager(
+            logger=self.logger,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
+        )
+
+    def init_command_objects(self: SlimLink) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
+
+        self.register_command_object(
+            "ConnectTxRx",
+            SubmittedSlowCommand(
+                command_name="ConnectTxRx",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="connect_slim_tx_rx",
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "VerifyConnection",
+            self.VerifyConnectionCommand(
+                device=self,
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "DisconnectTxRx",
+            SubmittedSlowCommand(
+                command_name="DisconnectTxRx",
+                command_tracker=self._command_tracker,
+                component_manager=self.component_manager,
+                method_name="disconnect_slim_tx_rx",
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "ClearCounters",
+            self.ClearCountersCommand(
+                device=self,
+                component_manager=self.component_manager,
+                logger=self.logger,
+            ),
+        )
+
+    def always_executed_hook(self: SlimLink) -> None:
+        """
+        Hook to be executed before any commands.
+        """
+        pass
+
+    def delete_device(self: SlimLink) -> None:
+        """
+        Hook to delete device.
+        """
+        pass
+
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
@@ -418,6 +412,13 @@ class SlimLink(CbfDevice):
         command_handler = self.get_command_object("DisconnectTxRx")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
+
+    # ----------
+    # Callbacks
+    # ----------
+
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------

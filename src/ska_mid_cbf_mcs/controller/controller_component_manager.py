@@ -372,6 +372,7 @@ class ControllerComponentManager(CbfComponentManager):
     # ---------------------
 
     # --- On Command --- #
+
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
         """
         Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON.
@@ -664,6 +665,7 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
     # --- Off Command --- #
+
     def _subarray_to_empty(
         self: ControllerComponentManager, subarray: context.DeviceProxy
     ) -> tuple[bool, str]:
@@ -1055,6 +1057,7 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
     # --- InitSysParam Command --- #
+
     def _validate_init_sys_param(
         self: ControllerComponentManager,
         params: dict,

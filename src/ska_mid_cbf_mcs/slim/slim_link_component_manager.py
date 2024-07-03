@@ -63,6 +63,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             logger=self.logger,
         )
 
+    # --- Properties --- #
+
     @property
     def tx_device_name(self: SlimLinkComponentManager) -> str:
         """
@@ -274,6 +276,35 @@ class SlimLinkComponentManager(CbfComponentManager):
             self.logger.error(f"error reading tx_link_occupancy: {df}")
             return res
 
+    # -------------
+    # Communication
+    # -------------
+
+    def start_communicating(self: SlimLinkComponentManager) -> None:
+        """Establish communication with the component, then start monitoring."""
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.start_communicating"
+        )
+
+        if self.is_communicating:
+            self.logger.info("Already communicating.")
+            return
+
+        super().start_communicating()
+        # This moves the op state model
+        self._update_component_state(power=PowerState.ON)
+
+    def stop_communicating(self: SlimLinkComponentManager) -> None:
+        """Stop communication with the component."""
+
+        self._update_component_state(power=PowerState.UNKNOWN)
+        # This moves the op state model
+        super().stop_communicating()
+
+    # ---------------
+    # General Methods
+    # ---------------
+
     def read_counters(
         self: SlimLinkComponentManager,
     ) -> list[int]:
@@ -322,27 +353,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[1],
             tx_counts[2],
         ]
-
-    def start_communicating(self: SlimLinkComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-        self.logger.debug(
-            "Entering SlimLinkComponentManager.start_communicating"
-        )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
-        # This moves the op state model
-        self._update_component_state(power=PowerState.ON)
-
-    def stop_communicating(self: SlimLinkComponentManager) -> None:
-        """Stop communication with the component."""
-
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model
-        super().stop_communicating()
 
     @backoff.on_exception(
         backoff.constant,
@@ -485,6 +495,12 @@ class SlimLinkComponentManager(CbfComponentManager):
             return ResultCode.FAILED, result_msg
 
         return ResultCode.OK, "ClearCounters completed OK"
+
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None so far.
 
     # ---------------------
     # Long Running Commands

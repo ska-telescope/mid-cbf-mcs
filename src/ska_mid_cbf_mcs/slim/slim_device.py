@@ -7,14 +7,9 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-TANGO device class for controlling and monitoring the
-Serial Lightweight Interconnect Mesh (SLIM)
-"""
 
 from __future__ import annotations
 
-# tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
@@ -37,7 +32,8 @@ __all__ = ["Slim", "main"]
 
 class Slim(CbfDevice):
     """
-    TANGO device class for controlling and monitoring the SLIM
+    TANGO device class for controlling and monitoring the
+    Serial Lightweight Interconnect Mesh (SLIM)
     """
 
     MAX_NUM_LINKS = 16  # AA 0.5
@@ -141,19 +137,25 @@ class Slim(CbfDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
-    def always_executed_hook(self: Slim) -> None:
-        # PROTECTED REGION ID(Slim.always_executed_hook) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  Slim.always_executed_hook
+    def create_component_manager(self: Slim) -> SlimComponentManager:
+        """
+        Create and return a component manager for this device.
 
-    def delete_device(self: Slim) -> None:
-        # PROTECTED REGION ID(Slim.delete_device) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  Slim.delete_device
+        :return: a component manager for this device.
+        :rtype: SlimComponentManager
+        """
+        self.logger.debug("Entering create_component_manager()")
+        return SlimComponentManager(
+            link_fqdns=self.Links,
+            logger=self.logger,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
+        )
 
     def init_command_objects(self: Slim) -> None:
         """
@@ -191,25 +193,21 @@ class Slim(CbfDevice):
             ),
         )
 
-    # --------
-    # Commands
-    # --------
-
-    def create_component_manager(self: Slim) -> SlimComponentManager:
+    def always_executed_hook(self: Slim) -> None:
         """
-        Create and return a component manager for this device.
-
-        :return: a component manager for this device.
-        :rtype: SlimComponentManager
+        Hook to be executed before any commands.
         """
-        self.logger.debug("Entering create_component_manager()")
-        return SlimComponentManager(
-            link_fqdns=self.Links,
-            logger=self.logger,
-            health_state_callback=self._update_health_state,
-            communication_state_callback=self._communication_state_changed,
-            component_state_callback=self._component_state_changed,
-        )
+        pass
+
+    def delete_device(self: Slim) -> None:
+        """
+        Hook to delete device.
+        """
+        pass
+
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
@@ -274,6 +272,19 @@ class Slim(CbfDevice):
                 )
 
     @command(
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    def SlimTest(self: Slim) -> None:
+        handler = self.get_command_object("SlimTest")
+        return_code, message = handler()
+        return [[return_code], [message]]
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
         dtype_out="DevVarLongStringArray",
@@ -297,15 +308,6 @@ class Slim(CbfDevice):
         command_handler = self.get_command_object("Off")
         result_code_message, command_id = command_handler()
         return [[result_code_message], [command_id]]
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
-    )
-    def SlimTest(self: Slim) -> None:
-        handler = self.get_command_object("SlimTest")
-        return_code, message = handler()
-        return [[return_code], [message]]
 
     # ---------
     # Callbacks

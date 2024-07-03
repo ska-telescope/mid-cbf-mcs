@@ -372,6 +372,7 @@ class FspComponentManager(CbfComponentManager):
     # ---------------------
 
     # --- On Command --- #
+
     def _get_capability_proxies(
         self: FspComponentManager,
     ) -> None:
@@ -485,6 +486,7 @@ class FspComponentManager(CbfComponentManager):
         )
 
     # --- Off Command --- #
+
     def is_off_allowed(self: FspComponentManager) -> bool:
         self.logger.debug("Checking if FSP Off is allowed.")
         if self.power_state not in [
@@ -554,6 +556,7 @@ class FspComponentManager(CbfComponentManager):
         )
 
     # --- SetFunctionMode Command --- #
+
     def _validate_function_mode(
         self: FspComponentManager, function_mode: str
     ) -> str:
