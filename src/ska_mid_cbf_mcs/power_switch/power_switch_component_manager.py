@@ -118,6 +118,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 return self.power_switch_driver.is_communicating
         return False
 
+    # -------------
+    # Communication
+    # -------------
+
     def start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
@@ -146,7 +150,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
             )
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
-        """Stop communication with the component."""
+        """
+        Stop communication with the component.
+        """
         if not self.simulation_mode:
             self.power_switch_driver.stop()
 
@@ -154,22 +160,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         # This moves the op state model.
         super().stop_communicating()
 
-    def get_outlet_power_state(
-        self: PowerSwitchComponentManager, outlet: str
-    ) -> PowerState:
-        """
-        Get the power state of a specific outlet.
-
-        :param outlet: outlet ID
-        :return: power state of the outlet
-
-        :raise AssertionError: if outlet ID is out of bounds
-        """
-
-        if self.simulation_mode:
-            return self.power_switch_simulator.get_outlet_power_state(outlet)
-        else:
-            return self.power_switch_driver.get_outlet_power_state(outlet)
+    # ----------------
+    # Helper Functions
+    # ----------------
 
     def get_power_switch_driver(
         self: PowerSwitchComponentManager,
@@ -247,6 +240,27 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         False,
                         f"Outlet {outlet} failed to power off after sleep.",
                     )
+
+    # -------------
+    # Fast Commands
+    # -------------
+
+    def get_outlet_power_state(
+        self: PowerSwitchComponentManager, outlet: str
+    ) -> PowerState:
+        """
+        Get the power state of a specific outlet.
+
+        :param outlet: outlet ID
+        :return: power state of the outlet
+
+        :raise AssertionError: if outlet ID is out of bounds
+        """
+
+        if self.simulation_mode:
+            return self.power_switch_simulator.get_outlet_power_state(outlet)
+        else:
+            return self.power_switch_driver.get_outlet_power_state(outlet)
 
     # ---------------------
     # Long Running Commands
