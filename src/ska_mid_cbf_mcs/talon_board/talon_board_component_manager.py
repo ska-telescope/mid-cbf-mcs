@@ -66,7 +66,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         super().__init__(*args, **kwargs)
 
-        # influxdb
+        # Influxdb
         self._db_client = InfluxdbQueryClient(
             hostname=hostname,
             influx_port=influx_port,
@@ -76,14 +76,14 @@ class TalonBoardComponentManager(CbfComponentManager):
             logger=self.logger,
         )
 
-        # HPS device proxies.
+        # --- HPS device proxies --- #
         self._talon_sysid_fqdn = talon_sysid_address
         self._eth_100g_0_fqdn = f"{eth_100g_address}_0"
         self._eth_100g_1_fqdn = f"{eth_100g_address}_1"
         self._talon_status_fqdn = talon_status_address
         self._hps_master_fqdn = hps_master_address
 
-        # Subscribed device proxy attributes
+        # --- Subscribed Device Proxy Attributes --- #
         self._talon_sysid_attrs = {}
         self._talon_status_attrs = {}
 
@@ -93,8 +93,14 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
         self._talon_status_events = []
 
+    # -------------
+    # Communication
+    # -------------
+
     def start_communicating(self) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
         self.logger.debug(
             "Entering TalonBoardComponentManager.start_communicating"
         )
@@ -104,6 +110,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return
 
         super().start_communicating()
+
         try:
             for fqdn in [
                 self._talon_sysid_fqdn,
@@ -135,7 +142,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self) -> None:
-        """Stop communication with the component."""
+        """
+        Stop communication with the component.
+        """
         self.logger.debug(
             "Entering TalonBoardComponentManager.stop_communicating"
         )
@@ -326,7 +335,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
 
     # ----------------------------------------------------
-    # Talon board telemetry and status from device proxies
+    # Talon Board Telemetry and Status from Device Proxies
     # ----------------------------------------------------
 
     # The attribute change callback should get the latest values. But
@@ -526,7 +535,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # TODO: read attributes 100G
 
     # ----------------------------------------------
-    # Talon board telemetry and status from Influxdb
+    # Talon Board Rtelemetry and Status from Influxdb
     # ----------------------------------------------
 
     def fpga_die_temperature(self) -> float:
@@ -937,9 +946,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             res.append(flag)
         return res
 
-    # ---------------------
+    # ----------------
     # Helper Functions
-    # ---------------------
+    # ----------------
 
     def _throw_if_device_off(self) -> None:
         if self.power_state != PowerState.ON:

@@ -27,7 +27,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
 
 
 class TalonLRUComponentManager(CbfComponentManager):
-    """A component manager for the TalonLRU device."""
+    """
+    A component manager for the TalonLRU device.
+    """
 
     def __init__(
         self: TalonLRUComponentManager,
@@ -277,9 +279,17 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._update_component_state(power=lru_power_state)
         return lru_power_state
 
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None at the moment...
+
     # ---------------------
     # Long Running Commands
     # ---------------------
+
+    # --- On Command --- #
 
     def _turn_on_pdus(
         self: TalonLRUComponentManager,
@@ -453,6 +463,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_on_allowed,
             task_callback=task_callback,
         )
+
+    # --- Off Command --- #
 
     def _turn_off_pdus(
         self: TalonLRUComponentManager,
