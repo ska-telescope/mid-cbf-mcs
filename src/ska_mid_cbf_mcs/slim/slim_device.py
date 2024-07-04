@@ -14,17 +14,14 @@ Serial Lightweight Interconnect Mesh (SLIM)
 
 from __future__ import annotations
 
+from ska_control_model import HealthState, PowerState, SimulationMode
+
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
     SubmittedSlowCommand,
-)
-from ska_tango_base.control_model import (
-    HealthState,
-    PowerState,
-    SimulationMode,
 )
 from tango import DebugIt
 from tango.server import attribute, command, device_property

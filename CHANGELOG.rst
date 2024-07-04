@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+UNRELEASED CHANGES
+******************
+* CIP-2447 Added FpgaDieVoltage[0-6] Attributes in TalonBoard Device to read from the FPGA Die Voltage Sensors
+* MAP-115 Updated MCS overview Taranta dashboard to include more info LRUs, sim mode and updates to the DISH ID
+* MAP-116 Change initial board IP loading so it is set to an explicitly placeholder value until a HW config file is applied
+* CIP-2604 Fixes issue where unused Talon times-out while trying to set SimulationMode in MCS's TalonBoard during Controller's On Command
+
 0.15.1
 ******
 * MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment

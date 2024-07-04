@@ -20,15 +20,15 @@ from typing import Callable, Optional
 import tango
 import yaml
 from polling2 import TimeoutException, poll
-from ska_control_model import TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
+from ska_control_model import (
     AdminMode,
     ObsState,
     PowerState,
     SimulationMode,
+    TaskStatus,
 )
+from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
@@ -562,6 +562,8 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # Configure all the Talon boards
+        # Clears process inside the Talon Board to make it a clean state
+        # Also sets the simulation mode of the Talon Boards based on TalonDx Compnent Manager's SimulationMode Attribute
         if (
             self._talondx_component_manager.configure_talons()
             == ResultCode.FAILED

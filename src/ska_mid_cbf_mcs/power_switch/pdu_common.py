@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ska_tango_base.control_model import PowerState
+from ska_control_model import PowerState
 
 
 class Outlet:

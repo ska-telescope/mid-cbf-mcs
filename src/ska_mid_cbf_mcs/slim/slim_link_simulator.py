@@ -15,8 +15,8 @@ import logging
 from threading import Lock
 from typing import Callable
 
+from ska_control_model import HealthState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState
 
 __all__ = ["SlimLinkSimulator"]
 

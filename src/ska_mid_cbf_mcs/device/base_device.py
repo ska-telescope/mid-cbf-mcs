@@ -29,7 +29,20 @@ from ska_tango_base.commands import FastCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
-__all__ = ["CbfDevice", "main"]
+__all__ = ["CbfDevice", "CbfFastCommand", "main"]
+
+
+class CbfFastCommand(FastCommand):
+    """Overrides base FastCommand to instantiate component manager"""
+
+    def __init__(
+        self: CbfFastCommand,
+        *args,
+        component_manager: BaseComponentManager,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.component_manager = component_manager
 
 
 class CbfDevice(SKABaseDevice):

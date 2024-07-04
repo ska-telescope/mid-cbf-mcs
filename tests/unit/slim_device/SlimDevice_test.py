@@ -406,7 +406,7 @@ class TestSlim:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
-                '"Command not allowed"',
+                '[6, "Command is not allowed"]',
             )
         )
         # assert if any captured events have gone unaddressed

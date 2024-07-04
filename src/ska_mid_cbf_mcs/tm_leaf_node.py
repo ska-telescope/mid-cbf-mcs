@@ -11,19 +11,15 @@ Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
 Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 
-TmCspSubarrayLeafNodeTest Tango device prototype
-
 TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
 """
+from __future__ import annotations
 
-import os
-
-from ska_tango_base.base.base_device import SKABaseDevice
-from tango import AttrWriteType
-from tango.server import attribute, run
-
-file_path = os.path.dirname(os.path.abspath(__file__))
-
+from ska_tango_base.base.base_device import (
+    DevVarLongStringArrayType,
+    SKABaseDevice,
+)
+from tango.server import attribute
 
 __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
 
@@ -33,36 +29,64 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
     """
 
-    # ----------
-    # Attributes
-    # ----------
-
-    delayModel = attribute(
-        dtype="str",
-        access=AttrWriteType.READ_WRITE,
-        label="Delay model coefficients",
-        doc="Delay model coefficients",
-    )
-
-    # ---------------
-    # General methods
-    # ---------------
-
-    def init_device(self):
-        super().init_device()
-        self._delay_model = ""  # this is a JSON object as a string
-        self.set_change_event("delayModel", True, True)
-
     # ------------------
     # Attributes methods
     # ------------------
 
-    def read_delayModel(self):
+    @attribute(
+        dtype="str",
+        memorized=True,
+        hw_memorized=True,
+        doc="Delay model",
+    )
+    def delayModel(self: TmCspSubarrayLeafNodeTest) -> str:
+        """
+        Read the delayModel attribute.
+
+        :return: current delayModel value
+        :rtype: str
+        """
         return self._delay_model
 
-    def write_delayModel(self, value):
+    @delayModel.write
+    def delayModel(self: TmCspSubarrayLeafNodeTest, value: str) -> None:
+        """
+        Read the delayModel attribute.
+
+        :param value: the delay model value
+        """
         self._delay_model = value
         self.push_change_event("delayModel", value)
+
+    # --------
+    # Commands
+    # --------
+
+    class InitCommand(SKABaseDevice.InitCommand):
+        """
+        A class for the Fsp's init_device() "command".
+        """
+
+        def do(
+            self: TmCspSubarrayLeafNodeTest.InitCommand,
+            *args: any,
+            **kwargs: any,
+        ) -> DevVarLongStringArrayType:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code, message) = super().do(*args, **kwargs)
+
+            self._delay_model = ""
+            self.set_change_event("delayModel", True, True)
+
+            return (result_code, message)
 
 
 # ----------
@@ -71,7 +95,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
 
 def main(args=None, **kwargs):
-    return run((TmCspSubarrayLeafNodeTest,), args=args, **kwargs)
+    return TmCspSubarrayLeafNodeTest.run_server(args=args, **kwargs)
 
 
 if __name__ == "__main__":
