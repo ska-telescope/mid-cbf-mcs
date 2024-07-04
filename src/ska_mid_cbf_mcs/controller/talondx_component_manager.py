@@ -147,6 +147,28 @@ class TalonDxComponentManager:
             return (ResultCode.FAILED, "_configure_hps_master FAILED")
 
         target = talon_cfg["target"]
+
+        # Talon Board DS defaults to SimulationMode.TRUE so that some attributes has default values when starting up
+        # Since we only need configure a physical Talon Board if SimulationMode.FALSE, the only time we need to set
+        # simulation mode of the Talon Board is to SimulationMode.FALSE
+        if self.simulation_mode == SimulationMode.FALSE:
+            target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
+            try:
+                talon_board_proxy = CbfDeviceProxy(
+                    fqdn=target_talon_fqdn, logger=self.logger
+                )
+                talon_board_proxy.write_attribute(
+                    "simulationMode",
+                    SimulationMode.FALSE,
+                )
+                self.logger.info(
+                    f"SimulationMode {SimulationMode.FALSE} set for talon{target}"
+                )
+            except tango.DevFailed as df:
+                log_msg = f"Failed to set Simulation Mode to {SimulationMode.FALSE} for talon{target}; {df}"
+                self.logger(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
         self.logger.info(f"Completed configuring talon board {target}")
         return (ResultCode.OK, "_configure_talon_thread completed OK")
 

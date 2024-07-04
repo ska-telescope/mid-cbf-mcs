@@ -584,6 +584,8 @@ class ControllerComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
         # Configure all the Talon boards
+        # Clears process inside the Talon Board to make it a clean state
+        # Also sets the simulation mode of the Talon Boards based on TalonDx Compnent Manager's SimulationMode Attribute
         if (
             self._talondx_component_manager.configure_talons()
             == ResultCode.FAILED
@@ -604,19 +606,6 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = f"Failed to turn on group proxies; {item.reason}"
                 self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-
-        # Set the Simulation mode the Talon Boards to the simulation mode of the controller
-        for fqdn in self._fqdn_talon_board:
-            try:
-                talon_board_proxy = self._proxies[fqdn]
-                talon_board_proxy.write_attribute(
-                    "simulationMode",
-                    self._talondx_component_manager.simulation_mode,
-                )
-            except tango.DevFailed as df:
-                log_msg = f"Failed to set Simulation Mode to {self._talondx_component_manager.simulation_mode} for {fqdn}; {df}"
-                self._logger(log_msg)
-                return (ResultCode.FAILED, log_msg)
 
         # Configure SLIM Mesh devices
         self._configure_slim_devices()
