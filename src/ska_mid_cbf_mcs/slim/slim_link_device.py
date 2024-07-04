@@ -406,8 +406,8 @@ class SlimLink(CbfDevice):
     @DebugIt()
     def ConnectTxRx(self: SlimLink) -> None:
         command_handler = self.get_command_object("ConnectTxRx")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -416,8 +416,8 @@ class SlimLink(CbfDevice):
     @DebugIt()
     def DisconnectTxRx(self: SlimLink) -> None:
         command_handler = self.get_command_object("DisconnectTxRx")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
 
 # ----------

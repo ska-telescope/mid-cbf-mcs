@@ -364,8 +364,8 @@ class CbfController(CbfDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object(command_name="On")
-        result_code_message, command_id = command_handler()
-        return [result_code_message], [command_id]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     def is_Off_allowed(self: CbfController) -> bool:
         """
@@ -389,8 +389,8 @@ class CbfController(CbfDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object(command_name="Off")
-        result_code_message, command_id = command_handler()
-        return [result_code_message], [command_id]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     def is_InitSysParam_allowed(self: CbfController) -> bool:
         """
@@ -421,8 +421,8 @@ class CbfController(CbfDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object(command_name="InitSysParam")
-        result_code_message, command_id = command_handler(argin)
-        return [result_code_message], [command_id]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
 
 # ----------

@@ -119,16 +119,11 @@ class TestVcc:
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         command: str,
     ) -> None:
         """
         Test the On/Off/Standby commands
-
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
         :param device_under_test: fixture that provides a proxy to the device
             under test, in a :py:class:`context.DeviceProxy`
         :param command: the command to test (one of On/Off/Standby)
@@ -363,14 +358,14 @@ class TestVcc:
         "config_file_name",
         ["Vcc_ConfigureScan_basic.json"],
     )
-    def test_AbortScan_from_ready(
+    def test_Abort_from_ready(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
     ) -> None:
         """
-        Test a AbortScan from ObsState.READY.
+        Test Abort from ObsState.READY.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -399,7 +394,7 @@ class TestVcc:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from READY
+        # test issuing Abort and ObsReset from READY
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
@@ -410,7 +405,7 @@ class TestVcc:
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
@@ -451,7 +446,7 @@ class TestVcc:
         "config_file_name, scan_id",
         [("Vcc_ConfigureScan_basic.json", 1)],
     )
-    def test_AbortScan_from_scanning(
+    def test_Abort_from_scanning(
         self: TestVcc,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -459,7 +454,7 @@ class TestVcc:
         scan_id: int,
     ) -> None:
         """
-        Test a AbortScan from ObsState.SCANNING.
+        Test Abort from ObsState.SCANNING.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -488,7 +483,7 @@ class TestVcc:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from SCANNING
+        # test issuing Abort and ObsReset from SCANNING
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
@@ -500,7 +495,7 @@ class TestVcc:
             json_str
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC

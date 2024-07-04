@@ -22,6 +22,8 @@ from __future__ import annotations
 import os
 
 import tango
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import FastCommand
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
@@ -49,6 +51,19 @@ class FspCorrSubarray(CbfObsDevice):
     # ----------
     # Attributes
     # ----------
+
+    @attribute(
+        dtype="str",
+        doc="Differential off-boresight beam delay model",
+    )
+    def delayModel(self: FspCorrSubarrayComponentManager) -> str:
+        """
+        Read the delayModel attribute.
+
+        :return: the delayModel attribute.
+        :rtype: string
+        """
+        return self.component_manager.delay_model
 
     @attribute(
         dtype=("uint16",),
@@ -95,6 +110,19 @@ class FspCorrSubarray(CbfObsDevice):
     # General methods
     # ---------------
 
+    def init_command_objects(self: FspCorrSubarrayComponentManager) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
+
+        self.register_command_object(
+            "UpdateDelayModel",
+            self.UpdateDelayModelCommand(
+                component_manager=self.component_manager, logger=self.logger
+            ),
+        )
+
     def create_component_manager(
         self: FspCorrSubarray,
     ) -> FspCorrSubarrayComponentManager:
@@ -119,83 +147,66 @@ class FspCorrSubarray(CbfObsDevice):
     # Commands
     # --------
 
-    # TODO - currently not used
-    def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
+    def is_UpdateDelayModel_allowed(
+        self: FspCorrSubarrayComponentManager,
+    ) -> bool:
         """
-        Determine if getLinkAndAddress is allowed
-        (allowed if destination addresses are received,
-        meaning outputLinkMap also received (checked in subarray validate scan)).
+        Determine if UpdateDelayModelis allowed
+        (allowed if FSP state is ON and ObsState is
+        READY OR SCANNINNG).
 
-        :return: if getLinkAndAddress is allowed
+        :return: if UpdateDelayModel is allowed
         :rtype: bool
         """
-        if self._vis_destination_address["outputHost"] == []:
-            return False
-        return True
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    class UpdateDelayModelCommand(FastCommand):
+        """
+        A class for the Fsp's UpdateDelayModel() command.
+        """
+
+        def __init__(
+            self: FspCorrSubarrayComponentManager.UpdateDelayModelCommand,
+            *args,
+            component_manager: FspCorrSubarrayComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: FspCorrSubarrayComponentManager.UpdateDelayModelCommand,
+            argin: str,
+        ) -> DevVarLongStringArrayType:
+            """
+            Stateless hook for UpdateDelayModel() command functionality.
+
+            :param argin: the delay model data
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.update_delay_model(argin)
 
     @command(
-        dtype_in="DevULong",
-        doc_in="channel ID",
-        dtype_out="DevString",
-        doc_out="output link and destination addresses in JSON",
+        dtype_in="str",
+        dtype_out="DevVarLongStringArray",
+        doc_in="Delay Model, per receptor per polarization per timing beam",
     )
-    def getLinkAndAddress(self: FspCorrSubarray, argin: int) -> str:
+    def UpdateDelayModel(
+        self: FspCorrSubarrayComponentManager, argin: str
+    ) -> DevVarLongStringArrayType:
         """
-        Get output link and destination addresses in JSON based on a channel ID.
+        Update the FSP's delay model (serialized JSON object)
 
-        :param argin: the channel id.
-
-        :return: the output link and destination addresses in JSON.
-        :rtype: str
+        :param argin: the delay model data
         """
-        if argin < 0 or argin > 14479:
-            msg = "channelID should be between 0 to 14479"
-            tango.Except.throw_exception(
-                "Command failed",
-                msg,
-                "getLinkAndAddress",
-                tango.ErrSeverity.ERR,
-            )
-            return
-
-        result = {
-            "outputLink": 0,
-            "outputHost": "",
-            "outputPort": 0,
-        }
-        # Get output link by finding the first element[1] that's greater than argin
-        link = 0
-        for element in self._output_link_map:
-            if argin >= element[0]:
-                link = element[1]
-            else:
-                break
-        result["outputLink"] = link
-        # Get 3 addresses by finding the first element[1] that's greater than argin
-        host = ""
-        for element in self._vis_destination_address["outputHost"]:
-            if argin >= element[0]:
-                host = element[1]
-            else:
-                break
-        result["outputHost"] = host
-
-        # Port is different. the array is given as [[start_channel, start_value, increment],[start_channel, start_value, increment],.....]
-        # value = start_value + (channel - start_channel)*increment
-        triple = []  # find the triple with correct start_value
-        for element in self._vis_destination_address["outputPort"]:
-            if argin >= element[0]:
-                triple = element
-            else:
-                break
-
-        result["outputPort"] = triple[1] + (argin - triple[0]) * triple[2]
-
-        return str(result)
-
-    # ----------
-    # Callbacks
-    # ----------
+        command_handler = self.get_command_object("UpdateDelayModel")
+        result_code, message = command_handler(argin)
+        return [[result_code], [message]]
 
 
 # ----------

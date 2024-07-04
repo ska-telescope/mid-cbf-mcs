@@ -17,9 +17,6 @@ from __future__ import annotations  # allow forward references in type hints
 import tango
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
-    HpsFspCorrControllerSimulator,
-)
 
 __all__ = ["HpsFspControllerSimulator"]
 
@@ -36,13 +33,11 @@ class HpsFspControllerSimulator:
     def __init__(
         self: HpsFspControllerSimulator,
         device_name: str,
-        fsp_corr_controller: HpsFspCorrControllerSimulator,
     ) -> None:
         self.device_name = device_name
 
         self._state = tango.DevState.INIT
         self._function_mode = FspModes.IDLE.value
-        self._fsp_corr_controller = fsp_corr_controller
 
     # Methods that match the Tango commands in the band devices
     def State(self: HpsFspControllerSimulator) -> tango.DevState:

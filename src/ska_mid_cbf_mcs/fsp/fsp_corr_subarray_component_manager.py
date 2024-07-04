@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
+from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -54,6 +55,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
         self._proxy_hps_fsp_corr_controller = None
 
+        self.delay_model = ""
         self.vcc_ids = []
         self.frequency_band = 0
         self.frequency_slice_id = 0
@@ -87,8 +89,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already communicating.")
             return
         super().start_communicating()
-        if self.power_state is None:
-            self._update_component_state(power=PowerState.OFF)
+        self._update_component_state(power=PowerState.OFF)
 
     def _assign_vcc(
         self: FspCorrSubarrayComponentManager, argin: list[int]
@@ -124,103 +125,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                     "VCC {vccID} not assigned to FSP CORR subarray. Skipping."
                 )
                 self.logger.warning(log_msg)
-
-    def _validate_zoom_window_tuning(
-        self: FspCorrSubarrayComponentManager, configuration: dict
-    ) -> None:
-        """Validate zoom_window_tuning parameter."""
-        # parse values from configuration
-        actual_bandwidth = int(
-            const.FREQUENCY_SLICE_BW / 2 * int(configuration["zoom_factor"])
-        )
-        frequency_band_offset_stream1 = int(
-            configuration["frequency_band_offset_stream1"]
-        )
-        frequency_band_offset_stream2 = int(
-            configuration["frequency_band_offset_stream2"]
-        )
-        zoom_window_tuning = int(configuration["zoom_window_tuning"])
-
-        # frequency band is not band 5
-        if self.frequency_band in list(range(4)):
-            frequency_band_start = [
-                *map(
-                    lambda j: j[0] * 10**9,
-                    [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE,
-                    ],
-                )
-            ][self.frequency_band] + frequency_band_offset_stream1
-
-            frequency_slice_range = (
-                frequency_band_start
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                frequency_band_start
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            if (
-                frequency_slice_range[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range[1] - actual_bandwidth * 10**6 / 2
-            ):
-                # this is the acceptable range
-                pass
-            else:
-                self.logger.warning(
-                    "'zoom_window_tuning' partially out of observed frequency slice."
-                )
-
-        # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-        else:
-            stream_tuning = configuration["band_5_tuning"]
-
-            frequency_slice_range_1 = (
-                stream_tuning[0] * 10**9
-                + frequency_band_offset_stream1
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                stream_tuning[0] * 10**9
-                + frequency_band_offset_stream1
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            frequency_slice_range_2 = (
-                stream_tuning[1] * 10**9
-                + frequency_band_offset_stream2
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + (self.frequency_slice_id - 1)
-                * const.FREQUENCY_SLICE_BW
-                * 10**6,
-                stream_tuning[1] * 10**9
-                + frequency_band_offset_stream2
-                - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                + self.frequency_slice_id * const.FREQUENCY_SLICE_BW * 10**6,
-            )
-
-            if (
-                frequency_slice_range_1[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range_1[1] - actual_bandwidth * 10**6 / 2
-            ) or (
-                frequency_slice_range_2[0] + actual_bandwidth * 10**6 / 2
-                <= zoom_window_tuning * 10**3
-                <= frequency_slice_range_2[1] - actual_bandwidth * 10**6 / 2
-            ):
-                # this is the acceptable range
-                pass
-            else:
-                self.logger.warning(
-                    "'zoom_window_tuning' partially out of observed frequency slice."
-                )
 
     def _build_hps_fsp_config(
         self: FspCorrSubarrayComponentManager, configuration: dict
@@ -265,6 +169,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # Command methods
     # ---------------
 
+    @check_communicating
     def on(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
         """
         Turn on FSP Corr component. This attempts to establish communication
@@ -274,8 +179,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
-
-        :raise ConnectionError: if unable to connect to HPS FSP Corr controller
         """
         self.logger.info("Entering FspCorrSubarrayComponentManager.on")
 
@@ -288,13 +191,15 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                         device_name=self._hps_fsp_corr_controller_fqdn
                     )
                 except tango.DevFailed as df:
-                    self.logger.error(str(df.args[0].desc))
+                    self.logger.error(
+                        f"Failed to connect to {self._hps_fsp_corr_controller_fqdn}; {df}"
+                    )
                     self._update_communication_state(
                         communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
                     return (
                         ResultCode.FAILED,
-                        "Failed to establish proxies to HPS FSP Corr controller device.",
+                        "Failed to establish proxy to HPS FSP Corr controller device.",
                     )
         else:
             self._proxy_hps_fsp_corr_controller = (
@@ -306,6 +211,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
 
+    @check_communicating
     def off(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
         """
         Turn off FSP component; currently unimplemented.
@@ -317,6 +223,41 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         """
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
+
+    @check_communicating
+    def update_delay_model(
+        self: FspCorrSubarrayComponentManager, argin: str
+    ) -> tuple[ResultCode, str]:
+        """
+        Update the FSP's delay model (serialized JSON object)
+
+        :param argin: the delay model data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering update_delay_model")
+
+        # the whole delay model must be stored
+        self.delay_model = argin
+        delay_model = json.loads(argin)
+
+        try:
+            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                json.dumps(delay_model)
+            )
+        except tango.DevFailed as df:
+            self.logger.error(f"{df.args[0].desc}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return (
+                ResultCode.FAILED,
+                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+            )
+
+        return (ResultCode.OK, "UpdateDelayModel completed OK")
 
     def _configure_scan(
         self: FspCorrSubarrayComponentManager,
@@ -349,13 +290,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # release previously assigned VCCs and assign newly specified VCCs
         self._deconfigure()
         self._assign_vcc(configuration["corr_vcc_ids"])
-
-        # if zoom_factor is provided, validate zoom_window_tuning
-        if (
-            "zoom_factor" in configuration
-            and int(configuration["zoom_factor"]) != 0
-        ):
-            self._validate_zoom_window_tuning(configuration)
 
         # issue ConfigureScan to HPS FSP Corr controller
         try:
@@ -523,7 +457,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _abort_scan(
+    def _abort(
         self: FspCorrSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
@@ -536,7 +470,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
-            "AbortScan", task_callback, task_abort_event
+            "Abort", task_callback, task_abort_event
         ):
             return
         try:
@@ -557,7 +491,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             return
 
         task_callback(
-            result=(ResultCode.OK, "AbortScan completed OK"),
+            result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
