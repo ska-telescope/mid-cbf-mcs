@@ -85,16 +85,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
             SimulationMode.TRUE
         """
 
-        super().__init__(*args, **kwargs)
-
-        # Here we have statically defined the state keywords useful in Mid.CBF
-        # component management, allowing the use of the _update_component_state
-        # method in the BaseComponentManager to issue the component state change
-        # callback to drive the operational state model
-        self._component_state = {
-            "fault": None,
-            "power": None,
-        }
+        # supply operating state machine trigger keywords
+        super().__init__(
+            *args,
+            fault=None,
+            power=None,
+            **kwargs,
+        )
 
         self._device_attr_change_callback = attr_change_callback
         self._device_attr_archive_callback = attr_archive_callback

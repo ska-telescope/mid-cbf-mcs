@@ -13,12 +13,13 @@ import unittest
 
 import pytest
 import tango
+from ska_control_model import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 
 from ... import test_utils
 
@@ -44,7 +45,6 @@ def fsp_change_event_callbacks(
     change_event_attr_list = [
         "longRunningCommandResult",
         "functionMode",
-        "state",
         "subarrayMembership",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
@@ -60,21 +60,14 @@ def fsp_change_event_callbacks(
 def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
+    builder.add_command("On", (ResultCode.OK, "test"))
+    builder.add_command("Off", (ResultCode.OK, "test"))
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
     mock_fsp_corr_subarray_device: unittest.mock.Mock,
-    mock_fsp_corr_subarray_group: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -84,10 +77,9 @@ def initial_mocks(
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
-    return {
-        "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray_device,
-        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray_device,
-        "FSP Subarray Corr": mock_fsp_corr_subarray_group,
-    }
+    mocks = {}
+    for sub_id in range(1, const.MAX_SUBARRAY + 1):
+        mocks[
+            f"mid_csp_cbf/fspCorrSubarray/01_{sub_id:02}"
+        ] = mock_fsp_corr_subarray_device
+    return mocks

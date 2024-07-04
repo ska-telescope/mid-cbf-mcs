@@ -293,8 +293,8 @@ class Slim(CbfDevice):
     @DebugIt()
     def Configure(self: Slim, argin: str) -> None:
         command_handler = self.get_command_object("Configure")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     def is_Off_allowed(self: Slim) -> bool:
         return True
@@ -306,8 +306,8 @@ class Slim(CbfDevice):
     @DebugIt()
     def Off(self: Slim) -> None:
         command_handler = self.get_command_object("Off")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     # ---------
     # Callbacks

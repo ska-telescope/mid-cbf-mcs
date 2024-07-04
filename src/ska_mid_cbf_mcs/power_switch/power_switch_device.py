@@ -238,8 +238,8 @@ class PowerSwitch(CbfDevice):
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
         command_handler = self.get_command_object(command_name="TurnOnOutlet")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="DevString",
@@ -250,8 +250,8 @@ class PowerSwitch(CbfDevice):
     @DebugIt()
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
         command_handler = self.get_command_object(command_name="TurnOffOutlet")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     # ---------
     # Callbacks

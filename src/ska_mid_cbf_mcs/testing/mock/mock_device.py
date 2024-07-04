@@ -265,7 +265,7 @@ class MockDeviceBuilder:
             attribute_name: str,
             event_type: tango.EventType,
             callback: Callable[[tango.EventData], None],
-            stateless: bool,
+            stateless: bool = False,
         ) -> None:  # TODO: should be int
             """
             Mock side-effect for subscribe_event method.

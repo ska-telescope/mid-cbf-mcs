@@ -11,14 +11,14 @@ def change_event_subscriber(
 ) -> dict:
     # subscribe to and provide event IDs for all specified attributes
     attr_event_ids = {}
-    for event_type in change_event_attr_list:
-        attr_event_ids[event_type] = dut.subscribe_event(
-            event_type,
+    for attr_name in change_event_attr_list:
+        attr_event_ids[attr_name] = dut.subscribe_event(
+            attr_name,
             tango.EventType.CHANGE_EVENT,
-            change_event_callbacks[event_type],
+            change_event_callbacks[attr_name],
         )
         # assert against first empty change event received
-        change_event_callbacks.assert_change_event(event_type, Anything)
+        change_event_callbacks.assert_change_event(attr_name, Anything)
     return attr_event_ids
 
 

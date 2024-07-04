@@ -40,8 +40,6 @@ class Fsp(CbfDevice):
 
     HpsFspControllerAddress = device_property(dtype="str")
 
-    HpsFspCorrControllerAddress = device_property(dtype="str")
-
     # ----------
     # Attributes
     # ----------
@@ -76,28 +74,15 @@ class Fsp(CbfDevice):
         """
         return self.component_manager.subarray_membership
 
-    @attribute(
-        dtype="str",
-        doc="Differential off-boresight beam delay model",
-    )
-    def delayModel(self: Fsp) -> str:
-        """
-        Read the delayModel attribute.
-
-        :return: the delayModel attribute.
-        :rtype: string
-        """
-        return self.component_manager.delay_model
-
-    # --------------
-    # Initialization
-    # --------------
+    # ---------------
+    # General methods
+    # ---------------
 
     def init_command_objects(self: Fsp) -> None:
         """
         Sets up the command objects
         """
-        super(CbfDevice, self).init_command_objects()
+        super().init_command_objects()
 
         self.register_command_object(
             "SetFunctionMode",
@@ -124,13 +109,6 @@ class Fsp(CbfDevice):
             ),
         )
 
-        self.register_command_object(
-            "UpdateDelayModel",
-            self.UpdateDelayModelCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
     def create_component_manager(self: Fsp) -> FspComponentManager:
         """
         Create and return a component manager for this device.
@@ -145,9 +123,8 @@ class Fsp(CbfDevice):
 
         return FspComponentManager(
             fsp_id=self.DeviceID,
-            fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
+            all_fsp_corr_subarray_fqdn=self.FspCorrSubarray,
             hps_fsp_controller_fqdn=self.HpsFspControllerAddress,
-            hps_fsp_corr_controller_fqdn=self.HpsFspCorrControllerAddress,
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,
@@ -190,6 +167,59 @@ class Fsp(CbfDevice):
             self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, message)
+
+    def is_On_allowed(self: Fsp) -> bool:
+        """
+        Overriding the base class is_On_allowed so that the command may be queued,
+        relying on the component manager equivalent method instead.
+        """
+        return True
+
+    def is_Off_allowed(self: Fsp) -> bool:
+        """
+        Overriding the base class is_Off_allowed so that the command may be queued,
+        relying on the component manager equivalent method instead.
+        """
+        return True
+
+    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
+        """
+        Determine if SetFunctionMode is allowed
+        (allowed if FSP state is ON).
+
+        :return: if SetFunctionMode is allowed
+        :rtype: bool
+        """
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in="str",
+        dtype_out="DevVarLongStringArray",
+        doc_in="FSP function mode",
+    )
+    def SetFunctionMode(
+        self: Fsp, function_mode: str
+    ) -> DevVarLongStringArrayType:
+        """
+        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
+        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
+        turn one of them ON according to argin, and all others DISABLE.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: DevVarLongStringArrayType
+
+        """
+        command_handler = self.get_command_object(
+            command_name="SetFunctionMode"
+        )
+        result_code, command_id = command_handler(function_mode)
+        return [[result_code], [command_id]]
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -312,141 +342,6 @@ class Fsp(CbfDevice):
         )
         result_code, message = command_handler(sub_id)
         return [[result_code], [message]]
-
-    # TODO: is this command needed?
-    # If not also remove the get_fsp_corr_config_id method
-    @command(
-        dtype_out="DevString",
-        doc_out="returns configID for all the fspCorrSubarray",
-    )
-    def getConfigID(self: Fsp) -> str:
-        """
-        Get the configID for all the fspCorrSubarray
-
-        :return: the configID
-        :rtype: str
-        """
-        return self.component_manager.get_fsp_corr_config_id()
-
-    class UpdateDelayModelCommand(FastCommand):
-        """
-        A class for the Fsp's UpdateDelayModel() command.
-        """
-
-        def __init__(
-            self: Fsp.UpdateDelayModelCommand,
-            *args,
-            component_manager: FspComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
-
-        def do(
-            self: Fsp.UpdateDelayModelCommand, argin: str
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for UpdateDelayModel() command functionality.
-
-            :param argin: the delay model data
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.update_delay_model(argin)
-
-    def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
-        """
-        Determine if UpdateDelayModelis allowed
-        (allowed if FSP state is ON and ObsState is
-        READY OR SCANNINNG).
-
-        :return: if UpdateDelayModel is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="Delay Model, per receptor per polarization per timing beam",
-    )
-    def UpdateDelayModel(self: Fsp, argin: str) -> DevVarLongStringArrayType:
-        """
-        Update the FSP's delay model (serialized JSON object)
-
-        :param argin: the delay model data
-        """
-        command_handler = self.get_command_object("UpdateDelayModel")
-        result_code, message = command_handler(argin)
-        return [[result_code], [message]]
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    def is_On_allowed(self: Fsp) -> bool:
-        """
-        Overriding the base class is_On_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
-        """
-        return True
-
-    def is_Off_allowed(self: Fsp) -> bool:
-        """
-        Overriding the base class is_Off_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
-        """
-        return True
-
-    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
-        """
-        Determine if SetFunctionMode is allowed
-        (allowed if FSP state is ON).
-
-        :return: if SetFunctionMode is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="FSP function mode",
-    )
-    def SetFunctionMode(
-        self: Fsp, function_mode: str
-    ) -> DevVarLongStringArrayType:
-        """
-        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
-        turn one of them ON according to argin, and all others DISABLE.
-
-        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: DevVarLongStringArrayType
-
-        """
-        command_handler = self.get_command_object(
-            command_name="SetFunctionMode"
-        )
-        result_code_message, command_id = command_handler(function_mode)
-        return [[result_code_message], [command_id]]
-
-    # ----------
-    # Callbacks
-    # ----------
-
-    # None at this time...
-    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 # tango imports
 import tango
@@ -21,9 +21,9 @@ from ska_control_model import (
     CommunicationStatus,
     ObsState,
     PowerState,
+    ResultCode,
     TaskStatus,
 )
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
@@ -43,12 +43,12 @@ class VccComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
-        *args: Any,
+        *args: any,
         vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
@@ -612,7 +612,7 @@ class VccComponentManager(CbfObsComponentManager):
         )
         return
 
-    def _abort_scan(
+    def _abort(
         self: VccComponentManager,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
@@ -625,7 +625,7 @@ class VccComponentManager(CbfObsComponentManager):
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
-            "AbortScan", task_callback, task_abort_event
+            "Abort", task_callback, task_abort_event
         ):
             return
 
@@ -659,7 +659,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
 
         task_callback(
-            result=(ResultCode.OK, "AbortScan completed OK"),
+            result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
         )
         return
