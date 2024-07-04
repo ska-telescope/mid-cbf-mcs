@@ -2,11 +2,9 @@ name: TmCspSubarrayLeafNodeTest
 function: tm-leaf-node
 domain: mid-csp-cbf
 command: "TmCspSubarrayLeafNodeTest"
-instances: ["tm", "tm2"]
+instances: ["tm"]
 depends_on:
   - device: sys/database/2
-  - device: mid_csp_cbf/sub_elt/subarray_01
-  - device: mid_csp_cbf/sub_elt/subarray_01
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -27,33 +25,6 @@ server:
     - name: "TmCspSubarrayLeafNodeTest"
       devices:
       - name: "ska_mid/tm_leaf_node/csp_subarray_01"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "polled_attr"
-            values:
-            - "visdestinationaddress"
-            - "1000"
-  - name: "tm2"
-    classes:
-    - name: "TmCspSubarrayLeafNodeTest"
-      devices:
-      - name: "ska_mid/tm_leaf_node/csp_subarray_02"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "polled_attr"
-            values:
-            - "visdestinationaddress"
-            - "1000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
