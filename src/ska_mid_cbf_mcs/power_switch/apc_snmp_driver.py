@@ -29,8 +29,8 @@ from pysnmp.hlapi import (  # noqa: F401
     usmNoPrivProtocol,
 )
 from pysnmp.proto import rfc1902
+from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet

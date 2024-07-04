@@ -11,6 +11,9 @@
 
 from __future__ import annotations
 
+# Additional import
+from ska_control_model import AdminMode, HealthState, SimulationMode
+
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
@@ -18,9 +21,6 @@ from ska_tango_base.commands import (
     ResultCode,
     SubmittedSlowCommand,
 )
-
-# Additional import
-from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 

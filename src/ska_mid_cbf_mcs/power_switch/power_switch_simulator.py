@@ -14,8 +14,8 @@ from __future__ import annotations
 import logging
 from typing import List
 
+from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 

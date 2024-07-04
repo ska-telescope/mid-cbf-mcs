@@ -14,10 +14,9 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import AdminMode, PowerState, SimulationMode, TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerState, SimulationMode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.component.component_manager import (

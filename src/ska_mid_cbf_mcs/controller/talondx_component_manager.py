@@ -23,8 +23,8 @@ import yaml
 from paramiko import AutoAddPolicy, SSHClient
 from paramiko.ssh_exception import NoValidConnectionsError, SSHException
 from scp import SCPClient, SCPException
+from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -121,7 +121,7 @@ class TalonDxComponentManager:
 
     def _configure_talon_thread(
         self: TalonDxComponentManager, talon_cfg
-    ) -> tuple(ResultCode, str):
+    ) -> tuple[ResultCode, str]:
         if self._clear_talon(talon_cfg) == ResultCode.FAILED:
             return (ResultCode.FAILED, "_clear_talon FAILED")
 
@@ -147,6 +147,25 @@ class TalonDxComponentManager:
             return (ResultCode.FAILED, "_configure_hps_master FAILED")
 
         target = talon_cfg["target"]
+
+        # Talon Board DS defaults to SimulationMode.TRUE so that some attributes has default values when starting up
+        # Since we only need configure a physical Talon Board if SimulationMode.FALSE, the only time we need to set
+        # simulation mode of the Talon Board is to SimulationMode.FALSE
+        if self.simulation_mode == SimulationMode.FALSE:
+            target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
+            try:
+                talon_board_proxy = context.DeviceProxy(
+                    device_name=target_talon_fqdn
+                )
+                talon_board_proxy.simulationMode = SimulationMode.FALSE
+                self.logger.info(
+                    f"simulationMode set to FALSE for talon{target}"
+                )
+            except tango.DevFailed as df:
+                log_msg = f"Failed to set simulationMode to FALSE for talon{target}; {df}"
+                self.logger(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
         self.logger.info(f"Completed configuring talon board {target}")
         return (ResultCode.OK, "_configure_talon_thread completed OK")
 
@@ -629,7 +648,7 @@ class TalonDxComponentManager:
 
     def _shutdown_talon_thread(
         self: TalonDxComponentManager, talon_cfg
-    ) -> tuple(ResultCode, str):
+    ) -> tuple[ResultCode, str]:
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
