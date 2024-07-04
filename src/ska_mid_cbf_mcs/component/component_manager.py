@@ -101,8 +101,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
-        # initialize lock and set of of blocking resources an LRC thread may be
-        # dependent on
+        # initialize a lock and the set of of blocking resources 
+        # that an LRC thread may depend on
         self._event_ids = {}
         self._results_lock = Lock()
         self._num_blocking_results = 0
@@ -142,24 +142,24 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _subscribe_command_results(
         self: CbfComponentManager, dp: context.DeviceProxy
     ) -> None:
-        if dp in self._event_ids.keys():
+        if dp in self._event_ids.values():
             self.logger.warn(
                 f"Skipping repeated longRunningCommandResult event subscription: {dp.dev_name()}"
             )
         else:
             self._event_ids.update(
                 {
-                    dp: dp.subscribe_event(
+                    dp.subscribe_event(
                         attr_name="longRunningCommandResult",
                         event_type=tango.EventType.CHANGE_EVENT,
                         cb_or_queuesize=self.results_callback,
-                    )
+                    ): dp
                 }
             )
 
     def _unsubscribe_command_results(self: CbfComponentManager) -> None:
         while len(self._event_ids):
-            dp, sub_id = self._event_ids.popitem()
+            sub_id, dp = self._event_ids.popitem()
             dp.unsubscribe_event(sub_id)
 
     #######################
