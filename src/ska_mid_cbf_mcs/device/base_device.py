@@ -25,7 +25,6 @@ from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
 )
-from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import FastCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
