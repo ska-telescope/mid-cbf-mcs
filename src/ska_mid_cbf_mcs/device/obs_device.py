@@ -602,10 +602,10 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("ConfigureScan")
-        result_code_message, command_id = command_handler(argin)
+        result_code, command_id = command_handler(argin)
         # store configuration in Tango layer
         self._last_scan_configuration = argin
-        return [[result_code_message], [command_id]]
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="uint64",
@@ -629,8 +629,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("Scan")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -650,8 +650,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("EndScan")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -673,8 +673,8 @@ class CbfObsDevice(SKAObsDevice):
         # reset configuration in Tango layer
         self._last_scan_configuration = ""
         command_handler = self.get_command_object("GoToIdle")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -694,8 +694,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("ObsReset")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -715,8 +715,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("Abort")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
 
 # ----------

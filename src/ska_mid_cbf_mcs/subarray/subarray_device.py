@@ -300,8 +300,8 @@ class CbfSubarray(CbfObsDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object("AddReceptors")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in=("str",),
@@ -324,8 +324,8 @@ class CbfSubarray(CbfObsDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object("RemoveReceptors")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -343,8 +343,8 @@ class CbfSubarray(CbfObsDevice):
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object("RemoveAllReceptors")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     #  Scan Commands   #
 
@@ -371,8 +371,8 @@ class CbfSubarray(CbfObsDevice):
             only.
         """
         command_handler = self.get_command_object("Scan")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -392,8 +392,8 @@ class CbfSubarray(CbfObsDevice):
             only.
         """
         command_handler = self.get_command_object("Restart")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
 
 # ----------

@@ -999,7 +999,7 @@ class TestCbfSubarray:
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
     )
-    def test_Abort_ObsReset_from_ready(
+    def test_ObsReset_abort_from_ready(
         self: TestCbfSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -1052,7 +1052,7 @@ class TestCbfSubarray:
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
-    def test_Abort_ObsReset_from_scanning(
+    def test_ObsReset_abort_from_scanning(
         self: TestCbfSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,

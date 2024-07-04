@@ -832,6 +832,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
             if result_code == ResultCode.FAILED:
+                # TODO: nested LRC
                 self.logger.error(
                     f"Failed to issue {command_name} command to assigned resources"
                 )
@@ -990,6 +991,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
 
             if result_code == ResultCode.FAILED:
+                # TODO: nested LRC
                 vcc_success = False
                 self.logger.error(msg)
 
@@ -1079,6 +1081,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             argin=json.dumps(config_dict),
         ):
             if result_code == ResultCode.FAILED:
+                # TODO: nested LRC
                 self.logger.error(
                     "Failed to issue ConfigureScan command to VCC devices"
                 )
