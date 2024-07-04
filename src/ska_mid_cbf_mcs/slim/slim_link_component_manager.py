@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import backoff
 import tango
@@ -40,9 +40,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimLinkComponentManager,
-        *args: Any,
+        *args: any,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
@@ -596,8 +596,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
@@ -696,8 +696,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._disconnect_slim_tx_rx,

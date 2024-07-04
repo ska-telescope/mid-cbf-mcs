@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Optional
 
 import requests
 from pysnmp import error as snmp_error
@@ -55,7 +55,7 @@ class MockDependency:
                 r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
             )
 
-            self._json: List[dict[str, Any]] = []
+            self._json: list[dict[str, any]] = []
 
             if simulate_response_error:
                 self.status_code = 404
@@ -85,7 +85,7 @@ class MockDependency:
                     self._json = self._json[int(outlet)]
                     self.text = json.dumps(self._json)
 
-        def json(self: MockDependency.Response) -> dict[str, Any]:
+        def json(self: MockDependency.Response) -> dict[str, any]:
             """
             Replace the patched :py:meth:`request.Response.json` with mock.
 

@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
 import requests
 from requests.structures import CaseInsensitiveDict
@@ -84,12 +83,12 @@ class DLIProSwitchDriver:
 
         # valid range 0 to 7
         Const.POWER_SWITCH_OUTLETS = 8
-        self.outlet_id_list: List(str) = [
+        self.outlet_id_list: list[str] = [
             str(i) for i in range(0, Const.POWER_SWITCH_OUTLETS)
         ]
 
         # Initialize outlets
-        self.outlets: List(Outlet) = []
+        self.outlets: list[Outlet] = []
 
     def initialize(self: DLIProSwitchDriver) -> None:
         """
@@ -299,7 +298,7 @@ class DLIProSwitchDriver:
             self.logger.error("Failed to connect to power switch")
             return ResultCode.FAILED, "Connection error"
 
-    def get_outlet_list(self: DLIProSwitchDriver) -> List(Outlet):
+    def get_outlet_list(self: DLIProSwitchDriver) -> list[Outlet]:
         """
         Query the power switch for a list of outlets and get their name
         and current state.
@@ -321,7 +320,7 @@ class DLIProSwitchDriver:
 
             if response.status_code == requests.codes.ok:
                 # Extract the outlet list
-                outlets: List(Outlet) = []
+                outlets: list[Outlet] = []
                 resp_list = response.json()
 
                 for idx, resp_dict in enumerate(resp_list):
