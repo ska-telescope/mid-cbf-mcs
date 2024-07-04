@@ -17,8 +17,6 @@
 
 from __future__ import annotations
 
-from typing import Any  # allow forward references in type hints
-
 # Tango imports
 import tango
 from ska_control_model import SimulationMode
@@ -172,12 +170,6 @@ class Vcc(CbfObsDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    def always_executed_hook(self: Vcc) -> None:
-        """Hook to be executed before any commands."""
-
-    def delete_device(self: Vcc) -> None:
-        """Hook to delete device."""
-
     # --------
     # Commands
     # --------
@@ -189,8 +181,8 @@ class Vcc(CbfObsDevice):
 
         def do(
             self: Vcc.InitCommand,
-            *args: Any,
-            **kwargs: Any,
+            *args: any,
+            **kwargs: any,
         ) -> DevVarLongStringArrayType:
             """
             Stateless hook for device initialisation.
@@ -235,8 +227,8 @@ class Vcc(CbfObsDevice):
         :rtype: DevVarLongStringArrayType
         """
         command_handler = self.get_command_object(command_name="ConfigureBand")
-        result_code_message, command_id = command_handler(band_config)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(band_config)
+        return [[result_code], [command_id]]
 
 
 # ----------

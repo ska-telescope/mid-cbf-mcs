@@ -32,6 +32,8 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 # Disable garbage collection to prevent tests hanging
 gc.disable()
 
+file_path = os.path.dirname(os.path.abspath(__file__))
+
 
 class TestFspCorrSubarray:
     """
@@ -296,14 +298,14 @@ class TestFspCorrSubarray:
         "config_file_name",
         ["FspCorrSubarray_ConfigureScan_basic.json"],
     )
-    def test_AbortScan_from_ready(
+    def test_Abort_from_ready(
         self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
         config_file_name: str,
     ) -> None:
         """
-        Test a AbortScan from ObsState.READY.
+        Test a Abort from ObsState.READY.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -322,11 +324,11 @@ class TestFspCorrSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from READY
+        # test issuing Abort and ObsReset from READY
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
@@ -364,7 +366,7 @@ class TestFspCorrSubarray:
         "config_file_name, scan_id",
         [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
     )
-    def test_AbortScan_from_scanning(
+    def test_Abort_from_scanning(
         self: TestFspCorrSubarray,
         change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
@@ -372,7 +374,7 @@ class TestFspCorrSubarray:
         scan_id: int,
     ) -> None:
         """
-        Test a AbortScan from ObsState.SCANNING.
+        Test a Abort from ObsState.SCANNING.
 
         :param change_event_callbacks: fixture that provides a
             :py:class:`MockTangoEventCallbackGroup` that is subscribed to
@@ -391,12 +393,12 @@ class TestFspCorrSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing AbortScan and ObsReset from SCANNING
+        # test issuing Abort and ObsReset from SCANNING
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
-        command_dict["AbortScan"] = device_under_test.AbortScan()
+        command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
         # assertions for all issued LRC
@@ -430,3 +432,40 @@ class TestFspCorrSubarray:
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "delay_model_file_name",
+        ["/../../data/delaymodel_unit_test.json"],
+    )
+    def test_UpdateDelayModel(
+        self: TestFspCorrSubarray,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        device_under_test: context.DeviceProxy,
+        delay_model_file_name: str,
+    ) -> None:
+        """
+        Test Fsp's UpdateDelayModel command
+
+        :param change_event_callbacks: fixture that provides a
+            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
+            pertinent attributes
+        :param device_under_test: fixture that provides a proxy to the device
+            under test, in a :py:class:`context.DeviceProxy`
+        :param delay_model_file_name: JSON file for the delay model
+        :param sub_id: the subarray id
+        """
+        self.test_Power_Commands(device_under_test, "On")
+
+        # prepare input data
+        with open(file_path + delay_model_file_name) as f:
+            delay_model = f.read().replace("\n", "")
+
+        # delay model should be empty string after initialization
+        assert device_under_test.delayModel == ""
+
+        result = device_under_test.UpdateDelayModel(delay_model)
+        assert result == [
+            [ResultCode.OK.value],
+            ["UpdateDelayModel completed OK"],
+        ]
+        assert device_under_test.delayModel == delay_model

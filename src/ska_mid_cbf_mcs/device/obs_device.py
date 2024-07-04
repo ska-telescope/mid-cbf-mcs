@@ -357,12 +357,18 @@ class CbfObsDevice(SKAObsDevice):
         self: CbfObsDevice,
         fault: Optional[bool] = None,
         power: Optional[PowerState] = None,
+        resourced: Optional[bool] = None,
         configured: Optional[bool] = None,
         scanning: Optional[bool] = None,
         obsfault: Optional[bool] = None,
     ) -> None:
         super()._component_state_changed(fault=fault, power=power)
 
+        if resourced is not None:
+            if resourced:
+                self.obs_state_model.perform_action("component_resourced")
+            else:
+                self.obs_state_model.perform_action("component_unresourced")
         if configured is not None:
             if configured:
                 self.obs_state_model.perform_action("component_configured")
@@ -403,6 +409,7 @@ class CbfObsDevice(SKAObsDevice):
 
         :param obs_state: the new obs_state value
         """
+        self.logger.debug(f"ObsState updating to {ObsState(obs_state).name}")
         super()._update_obs_state(obs_state=obs_state)
         if hasattr(self, "component_manager"):
             self.component_manager.obs_state = obs_state
@@ -445,7 +452,7 @@ class CbfObsDevice(SKAObsDevice):
             ("Scan", "scan"),
             ("EndScan", "end_scan"),
             ("GoToIdle", "go_to_idle"),
-            ("AbortScan", "abort_scan"),
+            ("Abort", "abort"),
             ("ObsReset", "obs_reset"),
         ]:
             self.register_command_object(
@@ -595,10 +602,10 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("ConfigureScan")
-        result_code_message, command_id = command_handler(argin)
+        result_code, command_id = command_handler(argin)
         # store configuration in Tango layer
         self._last_scan_configuration = argin
-        return [[result_code_message], [command_id]]
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="uint64",
@@ -622,8 +629,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("Scan")
-        result_code_message, command_id = command_handler(argin)
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler(argin)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -643,8 +650,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("EndScan")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -666,8 +673,8 @@ class CbfObsDevice(SKAObsDevice):
         # reset configuration in Tango layer
         self._last_scan_configuration = ""
         command_handler = self.get_command_object("GoToIdle")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -687,8 +694,8 @@ class CbfObsDevice(SKAObsDevice):
             only.
         """
         command_handler = self.get_command_object("ObsReset")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -699,7 +706,7 @@ class CbfObsDevice(SKAObsDevice):
         ),
     )
     @DebugIt()
-    def AbortScan(self: CbfObsDevice) -> DevVarLongStringArrayType:
+    def Abort(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Abort the current observing process and move to ABORTED obsState.
 
@@ -707,9 +714,9 @@ class CbfObsDevice(SKAObsDevice):
             indicating status. The message is for information purpose
             only.
         """
-        command_handler = self.get_command_object("AbortScan")
-        result_code_message, command_id = command_handler()
-        return [[result_code_message], [command_id]]
+        command_handler = self.get_command_object("Abort")
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
 
 
 # ----------
