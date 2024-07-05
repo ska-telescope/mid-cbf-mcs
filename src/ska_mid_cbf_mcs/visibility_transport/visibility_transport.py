@@ -5,7 +5,7 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
-from tango import Except
+from tango import DevFailed, Except
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
@@ -46,71 +46,43 @@ class VisibilityTransport:
         :param fsp_config: FSP part of the scan configuration json object
         :param vis_slim_yaml: the visibility mesh config yaml
         :param board_to_fsp_id: a dict to convert talon board str to fsp ID
-        :raise Tango exception: if the error occurs
         """
         self._logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
         self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
-        self._host_lut_s1_fqdns = [
-            f"talondx-00{id}/dshostlutstage1/host_lut_s1"
-            for id in self._fsp_ids
-        ]
 
         # Parse the visibility SLIM yaml to determine which board will output
-        # visibilities
+        # visibilities.
         vis_out_map = self._get_vis_output_map(vis_slim_yaml)
-        vis_out_board = None
-        for fsp in self._fsp_ids:
-            if fsp in vis_out_map:
-                # Only one board is expected to be used to output visibilities
-                # to SDP
-                if (
-                    vis_out_board is not None
-                    and vis_out_map[fsp] != vis_out_board
-                ):
-                    Except.throw_exception(
-                        "Visibility_Transport",
-                        "Only one board can be used to output visibilities",
-                        "configure()",
-                    )
-                vis_out_board = vis_out_map[fsp]
 
-        if vis_out_board is None:
-            # this happens when visibility mesh is not used. Only
-            # 1 FSP is supported in this case.
-            vis_out_board = f"talondx-00{self._fsp_ids[0]}"
-        self._host_lut_s2_fqdn = f"{vis_out_board}/dshostlutstage2/host_lut_s2"
-        self._spead_desc_fqdn = f"{vis_out_board}/dsspeaddescriptor/spead"
+        try:
+            self._create_device_proxies(vis_out_map)
 
-        # Create device proxies
-        self._dp_host_lut_s1 = [
-            CbfDeviceProxy(fqdn=f, logger=self._logger)
-            for f in self._host_lut_s1_fqdns
-        ]
-        self._dp_host_lut_s2 = CbfDeviceProxy(
-            fqdn=self._host_lut_s2_fqdn, logger=self._logger
-        )
-        self._dp_spead_desc = CbfDeviceProxy(
-            fqdn=self._spead_desc_fqdn, logger=self._logger
-        )
+            # connect the host lut s1 devices to the host lut s2
+            for s1_dp, ch_offset in zip(
+                self._dp_host_lut_s1, self._channel_offsets
+            ):
+                s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
+                s1_dp.channel_offset = ch_offset
+                s1_dp.connectToHostLUTStage2()
 
-        # connect the host lut s1 devices to the host lut s2
-        for s1_dp, ch_offset in zip(
-            self._dp_host_lut_s1, self._channel_offsets
-        ):
-            s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
-            s1_dp.channel_offset = ch_offset
-            s1_dp.connectToHostLUTStage2()
-
-        # write the channel offsets of each FSP to host lut s2
-        self._dp_host_lut_s2.host_lut_s1_chan_offsets = self._channel_offsets
+            # write the channel offsets of each FSP to host lut s2
+            self._dp_host_lut_s2.host_lut_s1_chan_offsets = (
+                self._channel_offsets
+            )
+        except DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._logger.error(
+                f"Failed to configure visibility transport devices: {msg}"
+            )
 
         self._fsp_config = fsp_config
 
     def enable_output(
         self,
         subarray_id: int,
+        scan_id: int,
     ) -> None:
         """
         Enable the output of visibilities. This should be called after
@@ -123,7 +95,6 @@ class VisibilityTransport:
         :param fsp_config: FSP part of the scan configuration json object
         :param n_vcc: number of receptors
         :param scan_id: the scan ID
-        :raise Tango exception: if the error occurs
         """
         self._logger.info("Enable visibility output")
 
@@ -131,14 +102,22 @@ class VisibilityTransport:
             subarray_id, self._fsp_config
         )
 
-        # FSP App is responsible for calling the "Configure" command.
-        # If not already called, StartScan will fail.
-        self._dp_spead_desc.command_inout("StartScan", dest_host_data)
+        try:
+            self._configure_spead_desc(subarray_id, scan_id)
 
-        self._dp_host_lut_s2.command_inout("Program", dest_host_data)
+            # FSP App is responsible for calling the "Configure" command.
+            # If not already called, StartScan will fail.
+            self._dp_spead_desc.command_inout("StartScan", dest_host_data)
 
-        for dp in self._dp_host_lut_s1:
-            dp.command_inout("Program")
+            self._dp_host_lut_s2.command_inout("Program", dest_host_data)
+
+            for dp in self._dp_host_lut_s1:
+                dp.command_inout("Program")
+        except DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._logger.error(
+                f"Failed to configure visibility transport devices: {msg}"
+            )
 
     def disable_output(self):
         """
@@ -146,15 +125,19 @@ class VisibilityTransport:
         - Issue EndScan command to SPEAD Descriptor DS
         - Unprogram all the host lut s1 devices
         - Unprogram the host lut s2 device
-
-        :raise Tango exception: if the configuration is not valid yaml, or
-                                configuration is not valid.
         """
         self._logger.info("Disable visibility output")
-        self._dp_spead_desc.command_inout("EndScan")
-        for dp in self._dp_host_lut_s1:
-            dp.command_inout("Unprogram")
-        self._dp_host_lut_s2.command_inout("Unprogram")
+
+        try:
+            self._dp_spead_desc.command_inout("EndScan")
+            for dp in self._dp_host_lut_s1:
+                dp.command_inout("Unprogram")
+            self._dp_host_lut_s2.command_inout("Unprogram")
+        except DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._logger.error(
+                f"Failed to configure visibility transport devices: {msg}"
+            )
 
     def _parse_visibility_transport_info(self, subarray_id: int, fsp_config):
         """
@@ -207,6 +190,72 @@ class VisibilityTransport:
                 for i, v in enumerate(reversed(inet.split(".")))
             ]
         )
+
+    def _create_device_proxies(self, vis_out_map: dict) -> None:
+        """
+        Create Tango device proxies for the HPS device servers
+        used for outputting data for this subarray
+
+        :param vis_out_map: dict mapping fsp_id to the board responsible
+                            for sending visibilities to SDP
+        """
+        vis_out_board = None
+        for fsp in self._fsp_ids:
+            if fsp in vis_out_map:
+                # Only one board is expected to be used to output visibilities
+                # to SDP
+                if (
+                    vis_out_board is not None
+                    and vis_out_map[fsp] != vis_out_board
+                ):
+                    Except.throw_exception(
+                        "Visibility_Transport",
+                        "Only one board can be used to output visibilities",
+                        "configure()",
+                    )
+                vis_out_board = vis_out_map[fsp]
+
+        if vis_out_board is None:
+            # this happens when visibility mesh is not used. Only
+            # 1 FSP is supported in this case.
+            vis_out_board = f"talondx-00{self._fsp_ids[0]}"
+
+        self._host_lut_s1_fqdns = [
+            f"talondx-00{id}/dshostlutstage1/host_lut_s1"
+            for id in self._fsp_ids
+        ]
+        self._host_lut_s2_fqdn = f"{vis_out_board}/dshostlutstage2/host_lut_s2"
+        self._spead_desc_fqdn = f"{vis_out_board}/dsspeaddescriptor/spead"
+
+        # Create device proxies
+        self._dp_host_lut_s1 = [
+            CbfDeviceProxy(fqdn=f, logger=self._logger)
+            for f in self._host_lut_s1_fqdns
+        ]
+        self._dp_host_lut_s2 = CbfDeviceProxy(
+            fqdn=self._host_lut_s2_fqdn, logger=self._logger
+        )
+        self._dp_spead_desc = CbfDeviceProxy(
+            fqdn=self._spead_desc_fqdn, logger=self._logger
+        )
+
+    def _configure_spead_desc(self, subarray_id: int, scan_id: int) -> None:
+        n_vcc = len(self._fsp_config["corr_vcc_ids"])
+        n_baselines = n_vcc * (n_vcc + 1) // 2
+        vis_count = n_baselines * self.CHANNELS_PER_STREAM
+
+        # The SPEAD descriptor attributes have 1 value per subarray.
+        # For AA0.5/1, there is only one subarray.
+        attrs = []
+        attrs.append(("scan_id_high", [scan_id >> 32]))
+        attrs.append(("scan_id_low", [scan_id & 0xFFFFFFFF]))
+        attrs.append(("channel_id", [min(self._channel_offsets)]))
+        attrs.append(("baseline_id", [0]))
+        attrs.append(("channel_count", [self.CHANNELS_PER_STREAM]))
+        attrs.append(("baseline_count", [n_baselines]))
+        attrs.append(("visibility_count", [vis_count]))
+        self._dp_spead_desc.write_attributes(attrs)
+        self._dp_spead_desc.Configure(subarray_id)
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
         """

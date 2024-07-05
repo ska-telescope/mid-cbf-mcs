@@ -55,7 +55,9 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-from ska_mid_cbf_mcs.subarray.visibility_transport import VisibilityTransport
+from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
+    VisibilityTransport,
+)
 
 
 class CbfSubarrayComponentManager(
@@ -2135,7 +2137,7 @@ class CbfSubarrayComponentManager(
                     self._logger.info(res.get_data())
 
         if self._simulation_mode == SimulationMode.FALSE:
-            self._vis_transport.enable_output(self._subarray_id)
+            self._vis_transport.enable_output(self._subarray_id, scan_id)
 
         self._scan_id = scan_id
         self._component_scanning_callback(True)
