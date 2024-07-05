@@ -79,6 +79,9 @@ class TestSlim:
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock())
 
+        # TBD how to handle nested LRC's in unit tests. This was an attempt to get 
+        # unique command ids. Also the links had to be set up as real devices, not mocks
+        # in order to get change events to publish, but have since been set back to mocks.
         for name, mock in initial_links.items():
             # if "mid_csp_cbf/slim_link/" in name:
             #     mock.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[0, "ConnectTxRx completed OK"]'))
@@ -247,6 +250,8 @@ class TestSlim:
         """
         device_under_test_fail.simulationMode = SimulationMode.FALSE
         assert test_utils.device_online_and_on(device_under_test_fail)
+        # Rather than sub to state change events, could more simply do:
+        # assert device_under_test.State() == DevState.ON
         change_event_callbacks_fail["state"].assert_change_event(DevState.OFF)
         change_event_callbacks_fail["state"].assert_change_event(DevState.ON)
 

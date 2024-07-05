@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import time
 
 import pytest
 from ska_control_model import SimulationMode
@@ -50,11 +51,11 @@ class TestSlim:
 
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
+            time.sleep(0.1)
             assert proxy.State() == DevState.OFF
 
         for mesh in test_proxies.slim:
             mesh.simulationMode = SimulationMode.TRUE
-            # The Slim should be in the OFF state after being initialised
             mesh.loggingLevel = LoggingLevel.DEBUG
             mesh.adminMode = AdminMode.ONLINE
             assert mesh.State() == DevState.OFF
@@ -125,6 +126,8 @@ class TestSlim:
                 (f"{command_id[0]}", '[0, "Configure completed OK"]')
             )
 
+            # TBD what change event calls should happen, would need the SlimLink simulator
+            # to push events if we want it to properly model the real world system.
             change_event_callbacks["healthState"].assert_change_event(
                 HealthState.UNKNOWN
             )

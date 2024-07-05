@@ -144,7 +144,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 "PowerSwitch outlets reported None after initialization. Communication not established."
             )
         super().start_communicating()
-        # This moves the op state model.
         self._update_component_state(power=PowerState.ON)
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:

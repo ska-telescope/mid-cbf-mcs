@@ -508,10 +508,6 @@ class SlimComponentManager(CbfComponentManager):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
 
-                # This is an LRC. The following adds the command to a set of
-                # currently executing LRCs (in this thread) and subscribes to
-                # change events in the result attr, which will indicate when the
-                # command has finished/failed.
                 [[result_code], [command_id]] = self._dp_links[
                     idx
                 ].ConnectTxRx()

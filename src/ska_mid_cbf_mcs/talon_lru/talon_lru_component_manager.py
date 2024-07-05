@@ -209,7 +209,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         )
 
         super().start_communicating()
-        # This moves the op state model.
         self.get_lru_power_state()
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
@@ -284,8 +283,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             and self.pdu2_power_state == PowerState.OFF
         ):
             lru_power_state = PowerState.OFF
-
-        self.logger.error(f"Cuurent power state = {lru_power_state}")
+        
         self._update_component_state(power=lru_power_state)
         return lru_power_state
 
