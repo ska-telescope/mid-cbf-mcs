@@ -51,7 +51,7 @@ class TestSlim:
 
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
-            time.sleep(0.1)
+            time.sleep(0.2)
             assert proxy.State() == DevState.OFF
 
         for mesh in test_proxies.slim:

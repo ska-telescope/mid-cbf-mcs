@@ -79,7 +79,7 @@ class TestSlim:
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock())
 
-        # TBD how to handle nested LRC's in unit tests. This was an attempt to get 
+        # TBD how to handle nested LRC's in unit tests. This was an attempt to get
         # unique command ids. Also the links had to be set up as real devices, not mocks
         # in order to get change events to publish, but have since been set back to mocks.
         for name, mock in initial_links.items():

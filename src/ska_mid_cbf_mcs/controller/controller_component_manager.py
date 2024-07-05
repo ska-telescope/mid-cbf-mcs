@@ -782,7 +782,9 @@ class ControllerComponentManager(CbfComponentManager):
         """
         success = True
         message = []
-        subelements_fast = self._group_vcc + self._group_fsp + self._group_subarray
+        subelements_fast = (
+            self._group_vcc + self._group_fsp + self._group_subarray
+        )
         subelements_slow = (
             self._proxies[self._fs_slim_fqdn]
             + self._proxies[self._vis_slim_fqdn]

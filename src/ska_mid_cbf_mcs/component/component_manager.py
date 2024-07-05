@@ -101,7 +101,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
-        # initialize a lock and the set of of blocking resources 
+        # initialize a lock and the set of of blocking resources
         # that an LRC thread may depend on
         self._event_ids = {}
         self._results_lock = Lock()

@@ -283,7 +283,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             and self.pdu2_power_state == PowerState.OFF
         ):
             lru_power_state = PowerState.OFF
-        
+
         self._update_component_state(power=lru_power_state)
         return lru_power_state
 
