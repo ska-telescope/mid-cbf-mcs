@@ -1003,7 +1003,7 @@ class CbfSubarrayComponentManager(
                                     * MAX_CHANNELS_PER_STREAM
                                 )
                             else:
-                                end_channel = fsp["output_host"][index + 1]
+                                end_channel = fsp["output_host"][index + 1][0]
 
                             ports_for_host = [
                                 entry[1]
