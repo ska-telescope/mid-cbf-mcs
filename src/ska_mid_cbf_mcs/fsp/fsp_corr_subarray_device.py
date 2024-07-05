@@ -75,7 +75,7 @@ class FspCorrSubarray(CbfObsDevice):
         Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
 
         :return: the list of assigned VCC IDs
-        :rtype: List[int]
+        :rtype: list[int]
         """
         return self.component_manager.vcc_ids
 

@@ -15,7 +15,6 @@ import re
 import socket
 import time
 from threading import Lock, Thread
-from typing import List
 
 import paramiko
 from ska_control_model import PowerState
@@ -137,7 +136,7 @@ class ApcPduDriver:
             ssh.close()
         return True
 
-    def get_outlet_list(self: ApcPduDriver) -> List(Outlet):
+    def get_outlet_list(self: ApcPduDriver) -> list[Outlet]:
         out_list = []
         outlets = self._outlet_status(
             "all"

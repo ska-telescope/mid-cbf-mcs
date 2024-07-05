@@ -22,7 +22,6 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-from typing import List
 
 import tango
 from ska_control_model import ObsState
@@ -58,12 +57,12 @@ class VccBandSimulator:
 
     # Properties that match the Tango attributes in the band devices
     @property
-    def obsState(self) -> List[float]:
+    def obsState(self) -> list[float]:
         """Return the Obs state attribute."""
         return self._obs_state
 
     @property
-    def vccGain(self) -> List[float]:
+    def vccGain(self) -> list[float]:
         """Return the VCC gain attribute."""
         return self._vcc_gain
 
@@ -78,7 +77,7 @@ class VccBandSimulator:
         return self._frequency_band
 
     @property
-    def frequencyBandOffset(self) -> List[int]:
+    def frequencyBandOffset(self) -> list[int]:
         """Return the frequency band offset attribute."""
         return self._frequency_band_offset
 
