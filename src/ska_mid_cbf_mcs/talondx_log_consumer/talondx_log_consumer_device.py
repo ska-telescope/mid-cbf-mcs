@@ -216,7 +216,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         en/latest/14/Logging.html#log-consumer
 
         :param log_message: Parts of the TLS log message
-        :type log_message: List[str]
+        :type log_message: list[str]
         """
         command_handler = self.get_command_object(command_name="Log")
         command_handler(log_message)

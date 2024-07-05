@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
 import requests
 from requests.structures import CaseInsensitiveDict
@@ -83,10 +82,10 @@ class STSwitchedPRO2Driver:
         self.state_off = "Off"
 
         # valid range AA1 to AA48
-        self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
+        self.outlet_id_list: list[str] = [f"AA{i}" for i in range(1, 49)]
 
         # Initialize outlets
-        self.outlets: List(Outlet) = []
+        self.outlets: list[Outlet] = []
 
     def initialize(self: STSwitchedPRO2Driver) -> None:
         """
@@ -302,7 +301,7 @@ class STSwitchedPRO2Driver:
             self.logger.error("Failed to connect to power switch")
             return ResultCode.FAILED, "Connection error"
 
-    def get_outlet_list(self: STSwitchedPRO2Driver) -> List(Outlet):
+    def get_outlet_list(self: STSwitchedPRO2Driver) -> list[Outlet]:
         """
         Query the power switch for a list of outlets and get their name
         and current state.
@@ -324,7 +323,7 @@ class STSwitchedPRO2Driver:
 
             if response.status_code == requests.codes.ok:
                 # Extract the outlet list
-                outlets: List(Outlet) = []
+                outlets: list[Outlet] = []
                 resp_list = response.json()
 
                 for idx, resp_dict in enumerate(resp_list):
