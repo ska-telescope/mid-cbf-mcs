@@ -5,6 +5,8 @@ routing the visibilties from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
+import logging
+
 from tango import DevFailed, Except
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -16,7 +18,7 @@ class VisibilityTransport:
     # so 744 * 20 = 14880 fine channels.
     CHANNELS_PER_STREAM = 20
 
-    def __init__(self, logger):
+    def __init__(self, logger: logging.Logger):
         """
         Constructor
 
@@ -34,8 +36,11 @@ class VisibilityTransport:
 
         self._channel_offsets = []
         self._fsp_config = None
+        self._n_vcc = 0
 
-    def configure(self, fsp_config, vis_slim_yaml: str) -> None:
+    def configure(
+        self, fsp_config: list, vis_slim_yaml: str, n_vcc: int
+    ) -> None:
         """
         Configure the visibility transport devices.
         - determine which board is responsible for outputting visibilities
@@ -77,6 +82,7 @@ class VisibilityTransport:
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
+        self._n_vcc = n_vcc
         self._fsp_config = fsp_config
 
     def enable_output(
@@ -139,7 +145,9 @@ class VisibilityTransport:
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
-    def _parse_visibility_transport_info(self, subarray_id: int, fsp_config):
+    def _parse_visibility_transport_info(
+        self, subarray_id: int, fsp_config: list
+    ):
         """
         output_hosts are in format [[channel_id, ip_addr]]
         output_ports are in format [[channel_id, port]]
@@ -240,8 +248,7 @@ class VisibilityTransport:
         )
 
     def _configure_spead_desc(self, subarray_id: int, scan_id: int) -> None:
-        n_vcc = len(self._fsp_config["corr_vcc_ids"])
-        n_baselines = n_vcc * (n_vcc + 1) // 2
+        n_baselines = self._n_vcc * (self._n_vcc + 1) // 2
         vis_count = n_baselines * self.CHANNELS_PER_STREAM
 
         # The SPEAD descriptor attributes have 1 value per subarray.

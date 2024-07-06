@@ -1905,8 +1905,12 @@ class CbfSubarrayComponentManager(
 
         # Route visibilities from each FSP to the outputting board
         if self._simulation_mode == SimulationMode.FALSE:
+            # TODO: this assumes the configure_scan has only one
+            n_vcc = len(self._corr_config[0]["corr_vcc_ids"])
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
+            self._vis_transport.configure(
+                configuration["fsp"], vis_slim_yaml, n_vcc
+            )
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
