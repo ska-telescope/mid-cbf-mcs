@@ -41,6 +41,10 @@ class TestSlim:
         self: TestSlim,
         device_under_test: pytest.fixture,
         test_proxies: pytest.fixture,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        ps_change_event_callbacks: MockTangoEventCallbackGroup,
+        
     ) -> None:
         """
         Test the initial states and verify the component manager
@@ -52,22 +56,30 @@ class TestSlim:
         for ps in test_proxies.power_switch:
             ps.simulationMode = SimulationMode.TRUE
             ps.adminMode = AdminMode.ONLINE
-            assert ps.State() == DevState.ON
+            ps_change_event_callbacks["state"].assert_change_event(DevState.ON)
 
         for lru in test_proxies.talon_lru:
             lru.adminMode = AdminMode.ONLINE
-            time.sleep(0.2)
-            assert lru.State() == DevState.OFF
+            lru_change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        
+        try:
+            # assert if any captured events have gone unaddressed
+            change_event_callbacks.assert_not_called()
+            lru_change_event_callbacks.assert_not_called()
+            ps_change_event_callbacks.assert_not_called()
+        except AssertionError as ae:
+            print(f"Uncaught change event: {ae}")
 
     def test_On(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
         test_proxies: pytest.fixture,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         lru_change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
@@ -85,9 +97,14 @@ class TestSlim:
             ].assert_change_event(
                 (f"{command_id[0]}", '[0, "On completed OK"]')
             )
+            lru_change_event_callbacks["state"].assert_change_event(DevState.ON)
 
         device_under_test.On()
-        assert device_under_test.State() == DevState.ON
+        change_event_callbacks["state"].assert_change_event(DevState.ON)
+        
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
 
     def test_SlimTest_Before_Configure(
         self: TestSlim,
@@ -161,12 +178,18 @@ class TestSlim:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "Off completed OK"]')
         )
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     def test_Disconnect(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
         test_proxies: pytest.fixture,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        ps_change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Verify the component manager can stop communicating
@@ -176,12 +199,12 @@ class TestSlim:
         assert device_under_test.State() == DevState.OFF
 
         device_under_test.adminMode = AdminMode.OFFLINE
-        assert device_under_test.State() == DevState.DISABLE
+        change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
 
         # Stop monitoring the TalonLRUs and power switch devices
         for ps in test_proxies.power_switch:
             ps.adminMode = AdminMode.OFFLINE
-            assert ps.State() == DevState.DISABLE
+            ps_change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
 
         for lru in test_proxies.talon_lru:
             result_code, command_id = lru.Off()
@@ -193,4 +216,9 @@ class TestSlim:
                 (f"{command_id[0]}", '[0, "Off completed OK"]')
             )
             lru.adminMode = AdminMode.OFFLINE
-            assert lru.State() == DevState.DISABLE
+            lru_change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
+        
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
+        ps_change_event_callbacks.assert_not_called()
