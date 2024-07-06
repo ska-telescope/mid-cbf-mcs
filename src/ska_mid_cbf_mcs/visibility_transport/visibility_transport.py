@@ -109,7 +109,7 @@ class VisibilityTransport:
         )
 
         try:
-            self._configure_spead_desc(subarray_id, scan_id)
+            # self._configure_spead_desc(subarray_id, scan_id)
 
             # FSP App is responsible for calling the "Configure" command.
             # If not already called, StartScan will fail.
@@ -263,6 +263,8 @@ class VisibilityTransport:
         attrs.append(("visibility_count", [vis_count]))
         self._dp_spead_desc.write_attributes(attrs)
         self._dp_spead_desc.Configure(subarray_id)
+
+        self._logger.info(f"SPEAD descriptor attributes: {attrs}")
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
         """
