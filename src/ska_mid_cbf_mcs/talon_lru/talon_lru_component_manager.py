@@ -464,8 +464,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Talon board turned off with unexpected result code {result_code}: {msg}"
                 )
 
-
-
         # Power off both outlets
         result1 = ResultCode.FAILED
         if self._proxy_power_switch1 is not None:
@@ -491,7 +489,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 if result2 == ResultCode.OK:
                     self.pdu2_power_mode = PowerMode.OFF
                     self._logger.info("PDU 2 successfully turned off.")
-
 
         # Determine what result code to return
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
