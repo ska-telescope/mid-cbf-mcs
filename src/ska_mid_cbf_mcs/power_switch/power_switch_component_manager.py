@@ -136,22 +136,21 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         # We only want CommunicationStatus.Established if
         # the PDU responded with a valid list of outlets.
-        if outlets:
-            super().start_communicating()
-            # This moves the op state model.
-            self._update_component_state(power=PowerState.ON)
-        else:
+        if not outlets:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
+            self.logger.error(
+                "PowerSwitch outlets reported None after initialization. Communication not established."
+            )
+        super().start_communicating()
+        self._update_component_state(power=PowerState.ON)
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
         if not self.simulation_mode:
             self.power_switch_driver.stop()
 
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
         super().stop_communicating()
 
     def get_outlet_power_state(
@@ -281,7 +280,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return
 
         if self.simulation_mode:
-            self.power_switch_simulator.turn_on_outlet(outlet)
+            result_code, message = self.power_switch_simulator.turn_on_outlet(
+                outlet
+            )
         else:
             try:
                 result_code, message = self.power_switch_driver.turn_on_outlet(
@@ -363,7 +364,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         ):
             return
         if self.simulation_mode:
-            self.power_switch_simulator.turn_off_outlet(outlet)
+            result_code, message = self.power_switch_simulator.turn_off_outlet(
+                outlet
+            )
         else:
             try:
                 (

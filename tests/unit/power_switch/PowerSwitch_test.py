@@ -95,7 +95,8 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockDependency.ResponseSNMP(
+            return MockDependency.ResponseSNMP.do(
+                self,
                 request.param["sim_get_error"],
                 request.param["sim_state"],
             )
@@ -104,14 +105,15 @@ class TestPowerSwitch:
             authData, transportTarget, *varNames, **kwargs
         ) -> tuple:
             """
-            Replace pysnmp...CommandGenerator.getCmd with mock method.
+            Replace pysnmp...CommandGenerator.setCmd with mock method.
 
-            :param params: arguments to the GET
+            :param params: arguments to the SET
             :param kwargs: other keyword args
 
             :return: a response
             """
-            return MockDependency.ResponseSNMP(
+            return MockDependency.ResponseSNMP.do(
+                self,
                 request.param["sim_patch_error"],
                 request.param["sim_state"],
             )

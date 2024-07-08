@@ -268,7 +268,7 @@ class Slim(CbfDevice):
             else:
                 return (
                     ResultCode.REJECTED,
-                    "Device is offline. Failed to issue SlimTest command.",
+                    "Failed to issue SlimTest command. Check device state and configuration.",
                 )
 
     @command(

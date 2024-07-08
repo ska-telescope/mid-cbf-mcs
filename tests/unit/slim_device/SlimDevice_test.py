@@ -14,11 +14,12 @@ from __future__ import annotations
 # Standard imports
 import gc
 import os
+import random
 from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_control_model import AdminMode
+from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
@@ -46,9 +47,12 @@ class TestSlim:
 
     @pytest.fixture(name="test_context")
     def slim_test_context(
-        self: TestSlim, initial_mocks: dict[str, Mock]
+        self: TestSlim,
+        initial_mocks: dict[str, Mock],
+        initial_links: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         harness = context.ThreadedTestTangoContextManager()
+        random.seed()
         # This device is set up as expected
         harness.add_device(
             device_name="mid_csp_cbf/slim/001",
@@ -73,7 +77,17 @@ class TestSlim:
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock())
+
+        # TBD how to handle nested LRC's in unit tests. This was an attempt to get
+        # unique command ids. Also the links had to be set up as real devices, not mocks
+        # in order to get change events to publish, but have since been set back to mocks.
+        for name, mock in initial_links.items():
+            # if "mid_csp_cbf/slim_link/" in name:
+            #     mock.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[0, "ConnectTxRx completed OK"]'))
+            # elif "mid_csp_cbf/slim_link_fail/" in name:
+            #     mock.add_attribute("longRunningCommandResult", (f'{random.randrange(0xFFFFFFFF)}_ConnectTxRx', '[3, "ConnectTxRx FAILED"]'))
+            harness.add_mock_device(device_name=name, device_mock=mock())
 
         with harness as test_context:
             yield test_context
@@ -163,13 +177,13 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
         assert test_utils.device_online_and_on(device_under_test)
 
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test.Configure(
                 mesh_config.read()
             )
-
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
@@ -198,6 +212,7 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
         assert test_utils.device_online_and_on(device_under_test)
 
         with open(mesh_config_filename, "r") as mesh_config:
@@ -233,7 +248,12 @@ class TestSlim:
         :py:class:`tango.DeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
         """
+        device_under_test_fail.simulationMode = SimulationMode.FALSE
         assert test_utils.device_online_and_on(device_under_test_fail)
+        # Rather than sub to state change events, could more simply do:
+        # assert device_under_test.State() == DevState.ON
+        change_event_callbacks_fail["state"].assert_change_event(DevState.OFF)
+        change_event_callbacks_fail["state"].assert_change_event(DevState.ON)
 
         with open(mesh_config_filename, "r") as mesh_config:
             result_code, command_id = device_under_test_fail.Configure(
@@ -247,9 +267,10 @@ class TestSlim:
         ].assert_change_event(
             (
                 f"{command_id[0]}",
-                '[3, "ConnectTxRx Failed: Mock"]',
+                '[3, "Nested LRC SlimLink.ConnectTxRx() rejected"]',
             )
         )
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks_fail.assert_not_called()
 
