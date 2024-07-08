@@ -140,9 +140,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         return False
 
     def _subscribe_command_results(
-        self: CbfComponentManager, dp: context.DeviceProxy
+        self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
-        dev_name = dp.dev_name()
+        dev_name = proxy.dev_name()
         if dev_name in self._event_ids:
             self.logger.warning(
                 f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
@@ -151,7 +151,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         self._event_ids.update(
             {
-                dev_name: dp.subscribe_event(
+                dev_name: proxy.subscribe_event(
                     attr_name="longRunningCommandResult",
                     event_type=tango.EventType.CHANGE_EVENT,
                     cb_or_queuesize=self.results_callback,
@@ -159,18 +159,17 @@ class CbfComponentManager(TaskExecutorComponentManager):
             }
         )
 
-    # TODO: refactor everywhere
     def _unsubscribe_command_results(
-        self: CbfComponentManager, dp: context.DeviceProxy
+        self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
-        dev_name = dp.dev_name()
-        name, sub_id = self._event_ids.pop(dev_name, None)
-        if sub_id is None:
+        dev_name = proxy.dev_name()
+        name, event_id = self._event_ids.pop(dev_name, None)
+        if event_id is None:
             self.logger.warning(
-                f"No longRunningCommandResult event subscription for {dev_name}"
+                f"No longRunningCommandResult event subscription for {name}"
             )
             return
-        dp.unsubscribe_event(sub_id)
+        proxy.unsubscribe_event(event_id)
 
     #######################
     # Group-related methods

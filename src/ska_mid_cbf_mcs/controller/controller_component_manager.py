@@ -335,7 +335,13 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering ControllerComponentManager.stop_communicating"
         )
-        self._unsubscribe_command_results()
+        for fqdn, proxy in self._proxies:
+            if fqdn in (
+                self._talon_lru_fqdn
+                + self._fsp_fqdn
+                + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+            ):
+                self._unsubscribe_command_results(proxy)
         self._num_blocking_results = 0
 
         for proxy in self._proxies.values():

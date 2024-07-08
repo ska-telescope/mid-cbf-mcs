@@ -219,7 +219,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             "Entering TalonLRUComponentManager.stop_communicating"
         )
 
-        self._unsubscribe_command_results()
+        for proxy in [
+            self._proxy_power_switch1,
+            self._proxy_power_switch2,
+            self._proxy_talondx_board1,
+            self._proxy_talondx_board2,
+        ]:
+            self._unsubscribe_command_results(proxy)
         self._num_blocking_results = 0
 
         super().stop_communicating()

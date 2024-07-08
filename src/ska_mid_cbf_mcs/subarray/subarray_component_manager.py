@@ -1222,7 +1222,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # build FSP configuration JSONs, add FSP
         all_fsp_config = []
         for config in configuration["fsp"]:
-            fsp_config = self._build_fsp_config(copy.deepcopy(config))
+            fsp_config = self._build_fsp_config(
+                fsp_config=copy.deepcopy(config),
+                common_configuration=common_configuration,
+            )
 
             fsp_id = fsp_config["fsp_id"]
             fsp_success = False
