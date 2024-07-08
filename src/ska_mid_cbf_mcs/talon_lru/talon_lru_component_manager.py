@@ -511,6 +511,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._logger.info(
                 f"Turning off board in lru: {board_id}, {talondx_board_proxy}"
             )
+            ping_result = talondx_board_proxy.ping()
+            self._logger.info(f"Ping result: {ping_result}")
             talondx_board_proxy.Off()
         except tango.DevFailed as df:
             return (
