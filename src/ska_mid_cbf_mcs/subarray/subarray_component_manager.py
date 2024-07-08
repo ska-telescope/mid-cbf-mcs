@@ -55,6 +55,9 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
+    VisibilityTransport,
+)
 
 
 class CbfSubarrayComponentManager(
@@ -102,6 +105,7 @@ class CbfSubarrayComponentManager(
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
         talon_board: List[str],
+        vis_slim: str,
         logger: logging.Logger,
         simulation_mode: SimulationMode,
         push_change_event_callback: Optional[Callable],
@@ -126,6 +130,7 @@ class CbfSubarrayComponentManager(
         :param fsp_pss_sub: FQDNs of subordinate FSP PSS-BF subarray devices
         :param fsp_pst_sub: FQDNs of subordinate FSP PST-BF devices
         :param talon_board: FQDNs of talon board devices
+        :param vis_slim: FQDN of the visibility SLIM device
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -165,6 +170,7 @@ class CbfSubarrayComponentManager(
         self._fqdn_fsp_pss_subarray_device = fsp_pss_sub
         self._fqdn_fsp_pst_subarray_device = fsp_pst_sub
         self._fqdn_talon_board_device = talon_board
+        self._fqdn_vis_slim_device = vis_slim
 
         # set to determine if resources are assigned
         self._resourced = False
@@ -215,6 +221,11 @@ class CbfSubarrayComponentManager(
         self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
+        # Controls the visibility transport from FSP outputs to SDP
+        self._vis_transport = VisibilityTransport(
+            self._logger,
+        )
+
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
         self._controller_max_capabilities = {}
@@ -229,6 +240,11 @@ class CbfSubarrayComponentManager(
         self._proxies_fsp_pss_subarray_device = []
         self._proxies_fsp_pst_subarray_device = []
         self._proxies_talon_board_device = []
+
+        # subarray does not control the visibility SLIM. It only
+        # queries the config to figure out how to route the visibilities,
+        # and updates the scan configuration accordingly.
+        self._proxy_vis_slim = None
 
         # group proxies to subordinate devices
         # Note: VCC connected both individual and in group
@@ -320,6 +336,11 @@ class CbfSubarrayComponentManager(
                 for fqdn in self._fqdn_talon_board_device:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     self._proxies_talon_board_device.append(proxy)
+
+            if self._proxy_vis_slim is None:
+                self._proxy_vis_slim = CbfDeviceProxy(
+                    fqdn=self._fqdn_vis_slim_device, logger=self._logger
+                )
 
             if self._group_vcc is None:
                 self._group_vcc = CbfGroupProxy(
@@ -1835,16 +1856,14 @@ class CbfSubarrayComponentManager(
         if len(self._corr_config) != 0:
             for this_fsp in self._corr_config:
                 try:
+                    self._logger.info(
+                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
+                    )
                     this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.set_timeout_millis(12000)
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
-
-                    self._logger.info(
-                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
-                    )
-
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring "
@@ -1883,6 +1902,11 @@ class CbfSubarrayComponentManager(
                         "FspPstSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
+
+        # Route visibilities from each FSP to the outputting board
+        if self._simulation_mode == SimulationMode.FALSE:
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
@@ -2112,6 +2136,9 @@ class CbfSubarrayComponentManager(
                 for res in results:
                     self._logger.info(res.get_data())
 
+        if self._simulation_mode == SimulationMode.FALSE:
+            self._vis_transport.enable_output(self._subarray_id)
+
         self._scan_id = scan_id
         self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
@@ -2138,6 +2165,9 @@ class CbfSubarrayComponentManager(
                 self._logger.info("Results from EndScan:")
                 for res in results:
                     self._logger.info(res.get_data())
+
+        if self._simulation_mode == SimulationMode.FALSE:
+            self._vis_transport.disable_output()
 
         self._scan_id = 0
         self._component_scanning_callback(False)
