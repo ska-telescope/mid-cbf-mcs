@@ -36,11 +36,8 @@ class VisibilityTransport:
 
         self._channel_offsets = []
         self._fsp_config = None
-        self._n_vcc = 0
 
-    def configure(
-        self, fsp_config: list, vis_slim_yaml: str, n_vcc: int
-    ) -> None:
+    def configure(self, fsp_config: list, vis_slim_yaml: str) -> None:
         """
         Configure the visibility transport devices.
         - determine which board is responsible for outputting visibilities
@@ -82,13 +79,11 @@ class VisibilityTransport:
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
-        self._n_vcc = n_vcc
         self._fsp_config = fsp_config
 
     def enable_output(
         self,
         subarray_id: int,
-        scan_id: int,
     ) -> None:
         """
         Enable the output of visibilities. This should be called after
@@ -109,8 +104,6 @@ class VisibilityTransport:
         )
 
         try:
-            # self._configure_spead_desc(subarray_id, scan_id)
-
             # FSP App is responsible for calling the "Configure" command.
             # If not already called, StartScan will fail.
             self._dp_spead_desc.command_inout("StartScan", dest_host_data)
@@ -246,25 +239,6 @@ class VisibilityTransport:
         self._dp_spead_desc = CbfDeviceProxy(
             fqdn=self._spead_desc_fqdn, logger=self._logger
         )
-
-    def _configure_spead_desc(self, subarray_id: int, scan_id: int) -> None:
-        n_baselines = self._n_vcc * (self._n_vcc + 1) // 2
-        vis_count = n_baselines * self.CHANNELS_PER_STREAM
-
-        # The SPEAD descriptor attributes have 1 value per subarray.
-        # For AA0.5/1, there is only one subarray.
-        attrs = []
-        attrs.append(("scan_id_high", [scan_id >> 32]))
-        attrs.append(("scan_id_low", [scan_id & 0xFFFFFFFF]))
-        attrs.append(("channel_id", [min(self._channel_offsets)]))
-        attrs.append(("baseline_id", [0]))
-        attrs.append(("channel_count", [self.CHANNELS_PER_STREAM]))
-        attrs.append(("baseline_count", [n_baselines]))
-        attrs.append(("visibility_count", [vis_count]))
-        self._dp_spead_desc.write_attributes(attrs)
-        self._dp_spead_desc.Configure(subarray_id)
-
-        self._logger.info(f"SPEAD descriptor attributes: {attrs}")
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
         """
