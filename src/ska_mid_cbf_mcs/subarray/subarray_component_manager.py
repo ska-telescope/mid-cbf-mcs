@@ -802,27 +802,44 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         command_name: str,
         argin: Optional[any] = None,
-    ) -> bool:
+        lrc: bool = False,
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
         """
         Issue command to all subarray-assigned resources
 
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
-        :return: False if any command failed to be issued, otherwise True
+        :param lrc: True if the command to issue is long-running
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+
+        :return: TaskStatus
         """
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
-        for result_code, _ in self._issue_group_command(
+
+        if lrc:
+            self._num_blocking_results = len(assigned_resources)
+
+        for [[result_code], [command_id]] in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
-            if result_code == ResultCode.FAILED:
-                # TODO: nested LRC
+            if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error(
-                    f"Failed to issue {command_name} command to assigned resources"
+                    f"Failed to issue {command_name} command to assigned resources; {result_code}"
                 )
-                return False
-        return True
+                return TaskStatus.FAILED
+
+        if lrc:
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+            if lrc_status != TaskStatus.COMPLETED:
+                self.logger.error("One or more command calls timed out.")
+                return lrc_status
+
+        return TaskStatus.COMPLETED
 
     def _validate_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
         """
@@ -939,17 +956,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def _vcc_configure_band(
         self: CbfSubarrayComponentManager,
         configuration: dict[any],
-    ) -> bool:
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
         """
         Issue Vcc ConfigureBand command
 
         :param configuration: scan configuration dict
-        :return: False if VCC ConfigureBand command failed, otherwise True
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+
+        :return: VCC ConfigureBand command TaskStatus
         """
         self.logger.info("Configuring VCC band...")
 
         # Prepare args for ConfigureBand
-        vcc_success = True
+        self._num_blocking_results = len(self.dish_ids)
         for dish_id in self.dish_ids:
             vcc_proxy = self._all_vcc_proxies[dish_id]
 
@@ -965,34 +985,52 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 configuration["frequency_band"]
             ]["num_samples_per_frame"]
 
-            result_code, msg = vcc_proxy.ConfigureBand(
-                json.dumps(
-                    {
-                        "frequency_band": configuration["frequency_band"],
-                        "dish_sample_rate": int(dish_sample_rate),
-                        "samples_per_frame": int(samples_per_frame),
-                    }
+            try:
+                [[result_code], [command_id]] = vcc_proxy.ConfigureBand(
+                    json.dumps(
+                        {
+                            "frequency_band": configuration["frequency_band"],
+                            "dish_sample_rate": int(dish_sample_rate),
+                            "samples_per_frame": int(samples_per_frame),
+                        }
+                    )
                 )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{vcc_proxy.dev_name()} ConfigureBand command rejected"
+                    )
+                    return TaskStatus.FAILED
+
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to issue ConfigureBand to {vcc_proxy.dev_name()}; {df}"
+                )
+                return TaskStatus.FAILED
+
+        lrc_status = self._wait_for_blocking_results(
+            timeout=10.0, task_abort_event=task_abort_event
+        )
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to VCC ConfigureBand command timed out."
             )
 
-            if result_code == ResultCode.FAILED:
-                # TODO: nested LRC
-                vcc_success = False
-                self.logger.error(msg)
-
-        return vcc_success
+        return lrc_status
 
     def _vcc_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
-    ) -> bool:
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
         """
         Issue Vcc ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :return: False if VCC ConfigureScan command failed, otherwise True
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+
+        :return: VCC ConfigureScan command TaskStatus
         """
         self.logger.info("Configuring VCC for scan...")
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
@@ -1059,20 +1097,34 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
-        vcc_success = True
-        for result_code, _ in self._issue_group_command(
-            command_name="ConfigureScan",
-            proxies=list(self._assigned_vcc_proxies),
-            argin=json.dumps(config_dict),
-        ):
-            if result_code == ResultCode.FAILED:
-                # TODO: nested LRC
-                self.logger.error(
-                    "Failed to issue ConfigureScan command to VCC devices"
-                )
-                vcc_success = False
+        # issue ConfigureScan to assigned VCCs
+        self._num_blocking_results = len(self._assigned_vcc_proxies)
 
-        return vcc_success
+        for vcc_proxy in self._assigned_vcc_proxies:
+            try:
+                [[result_code], [command_id]] = vcc_proxy.ConfigureScan(
+                    json.dumps(config_dict)
+                )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{vcc_proxy.dev_name()} ConfigureScan command rejected"
+                    )
+                    return TaskStatus.FAILED
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to issue ConfigureScan to {vcc_proxy.dev_name()}; {df}"
+                )
+                return TaskStatus.FAILED
+
+        lrc_status = self._wait_for_blocking_results(
+            timeout=10.0, task_abort_event=task_abort_event
+        )
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to VCC ConfigureScan command timed out."
+            )
+
+        return lrc_status
 
     def _assign_fsp(
         self: CbfSubarrayComponentManager, fsp_id: int, function_mode: str
@@ -1209,13 +1261,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
-    ) -> bool:
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :return: False if FSP ConfigureScan command failed, otherwise True
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+
+        :return: FSP ConfigureScan command TaskStatus
         """
         self.logger.info("Configuring FSP for scan...")
 
@@ -1228,7 +1283,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
 
             fsp_id = fsp_config["fsp_id"]
-            fsp_success = False
             match fsp_config["function_mode"]:
                 case "CORR":
                     # Parameter named "corr_vcc_ids" used by HPS contains the
@@ -1256,7 +1310,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         fsp_id=fsp_id, function_mode="CORR"
                     )
                     if not fsp_success:
-                        return False
+                        return TaskStatus.FAILED
 
                     fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
                     self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
@@ -1273,18 +1327,34 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Call ConfigureScan for all FSP function mode subarray devices
         self._num_blocking_results = len(all_fsp_config)
+
         for fsp_config, proxy in all_fsp_config:
             try:
                 # TODO handle fsp corr LRC
                 self.logger.debug(f"fsp_config: {fsp_config}")
-                proxy.ConfigureScan(json.dumps(fsp_config))
+                [[result_code], [command_id]] = proxy.ConfigureScan(
+                    json.dumps(fsp_config)
+                )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{proxy.dev_name()} ConfigureScan command rejected"
+                    )
+                    return TaskStatus.FAILED
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {proxy.dev_name()}; {df}"
                 )
-                return False
+                return TaskStatus.FAILED
 
-        return fsp_success
+        lrc_status = self._wait_for_blocking_results(
+            timeout=10.0, task_abort_event=task_abort_event
+        )
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to FSP ConfigureScan command timed out."
+            )
+
+        return lrc_status
 
     def _subscribe_tm_event(
         self: CbfSubarrayComponentManager,
@@ -1409,10 +1479,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # store configID
         self.config_id = str(common_configuration["config_id"])
 
-        vcc_configure_band_success = self._vcc_configure_band(
-            configuration=common_configuration
+        vcc_configure_band_status = self._vcc_configure_band(
+            configuration=common_configuration,
+            task_abort_event=task_abort_event,
         )
-        if not vcc_configure_band_success:
+        if vcc_configure_band_status == TaskStatus.FAILED:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ConfigureBand command to VCC",
+                ),
+            )
+            return
+        elif vcc_configure_band_status == TaskStatus.ABORTED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1422,11 +1502,21 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        vcc_configure_scan_success = self._vcc_configure_scan(
+        vcc_configure_scan_status = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            task_abort_event=task_abort_event,
         )
-        if not vcc_configure_scan_success:
+        if vcc_configure_scan_status == TaskStatus.FAILED:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ConfigureScan command to VCC",
+                ),
+            )
+            return
+        elif vcc_configure_band_status == TaskStatus.ABORTED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1451,16 +1541,26 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        fsp_configure_scan_success = self._fsp_configure_scan(
+        fsp_configure_scan_status = self._fsp_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            task_abort_event=task_abort_event,
         )
-        if not fsp_configure_scan_success:
+        if fsp_configure_scan_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue ConfigureScan command to FSP",
+                ),
+            )
+            return
+        elif fsp_configure_scan_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "ConfigureScan command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1518,15 +1618,27 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # issue Scan to assigned resources
         scan_id = scan["scan_id"]
-        scan_success = self._issue_command_all_assigned_resources(
-            command_name="Scan", argin=scan_id
+        scan_status = self._issue_command_all_assigned_resources(
+            command_name="Scan",
+            argin=scan_id,
+            lrc=True,
+            task_abort_event=task_abort_event,
         )
-        if not scan_success:
+        if scan_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue Scan command to VCC/FSP",
+                ),
+            )
+            return
+        elif scan_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Scan command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1562,15 +1674,24 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue EndScan to assigned resources
-        end_scan_success = self._issue_command_all_assigned_resources(
-            command_name="EndScan"
+        end_scan_status = self._issue_command_all_assigned_resources(
+            command_name="EndScan", lrc=True, task_abort_event=task_abort_event
         )
-        if not end_scan_success:
+        if end_scan_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue EndScan command to VCC/FSP",
+                ),
+            )
+            return
+        elif end_scan_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "EndScan command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1604,15 +1725,26 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue GoToIdle to assigned resources
-        idle_success = self._issue_command_all_assigned_resources(
-            command_name="GoToIdle"
+        go_to_idle_status = self._issue_command_all_assigned_resources(
+            command_name="GoToIdle",
+            lrc=True,
+            task_abort_event=task_abort_event,
         )
-        if not idle_success:
+        if go_to_idle_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue GoToIdle command to VCC/FSP",
+                ),
+            )
+            return
+        elif go_to_idle_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "GoToIdle command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1658,15 +1790,24 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue Abort to assigned resources
-        abort_success = self._issue_command_all_assigned_resources(
-            command_name="Abort"
+        abort_status = self._issue_command_all_assigned_resources(
+            command_name="Abort", lrc=True, task_abort_event=task_abort_event
         )
-        if not abort_success:
+        if abort_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue Abort command to VCC/FSP",
+                ),
+            )
+            return
+        elif abort_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "Abort command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1699,10 +1840,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_success = self._issue_command_all_assigned_resources(
-                command_name="Abort"
+            abort_status = self._issue_command_all_assigned_resources(
+                command_name="Abort",
+                lrc=True,
+                task_abort_event=task_abort_event,
             )
-            if not abort_success:
+            if abort_status == TaskStatus.FAILED:
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -1711,16 +1854,36 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
+            elif abort_status == TaskStatus.ABORTED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result=(
+                        ResultCode.ABORTED,
+                        "Abort command aborted by task executor abort event.",
+                    ),
+                )
+                return
 
-        obsreset_success = self._issue_command_all_assigned_resources(
-            command_name="ObsReset"
+        obs_reset_status = self._issue_command_all_assigned_resources(
+            command_name="ObsReset",
+            lrc=True,
+            task_abort_event=task_abort_event,
         )
-        if not obsreset_success:
+        if obs_reset_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue ObsReset command to VCC/FSP",
+                ),
+            )
+            return
+        elif obs_reset_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "ObsReset command aborted by task executor abort event.",
                 ),
             )
             return
@@ -1778,10 +1941,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_success = self._issue_command_all_assigned_resources(
-                command_name="Abort"
+            abort_status = self._issue_command_all_assigned_resources(
+                command_name="Abort",
+                lrc=True,
+                task_abort_event=task_abort_event,
             )
-            if not abort_success:
+            if abort_status == TaskStatus.FAILED:
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(
@@ -1790,16 +1955,36 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
+            elif abort_status == TaskStatus.ABORTED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result=(
+                        ResultCode.ABORTED,
+                        "Abort command aborted by task executor abort event.",
+                    ),
+                )
+                return
 
-        obsreset_success = self._issue_command_all_assigned_resources(
-            command_name="ObsReset"
+        obs_reset_status = self._issue_command_all_assigned_resources(
+            command_name="ObsReset",
+            lrc=True,
+            task_abort_event=task_abort_event,
         )
-        if not obsreset_success:
+        if obs_reset_status == TaskStatus.FAILED:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue ObsReset command to VCC/FSP",
+                ),
+            )
+            return
+        elif obs_reset_status == TaskStatus.ABORTED:
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result=(
+                    ResultCode.ABORTED,
+                    "ObsReset command aborted by task executor abort event.",
                 ),
             )
             return

@@ -231,7 +231,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         proxies: list[context.DeviceProxy],
         argin: Any = None,
         max_workers: int = MAX_GROUP_WORKERS,
-    ) -> list[tuple[ResultCode, str]]:
+    ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
         Returns list of command results in the same order as the input proxies list.
