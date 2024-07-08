@@ -489,7 +489,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 if result2 == ResultCode.OK:
                     self.pdu2_power_mode = PowerMode.OFF
                     self._logger.info("PDU 2 successfully turned off.")
-        
+
         # Determine what result code to return
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self.update_component_fault(True)
