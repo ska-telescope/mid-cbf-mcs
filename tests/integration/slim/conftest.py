@@ -85,7 +85,7 @@ def test_proxies_fixture() -> pytest.fixture:
 def slim_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = ["longRunningCommandResult", "state", "healthState"]
+    change_event_attr_list = ["longRunningCommandResult", "State", "healthState"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
@@ -99,7 +99,7 @@ def slim_change_event_callbacks(
 def lru_change_event_callbacks(
     test_proxies: pytest.fixture,
 ) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = ["longRunningCommandResult", "state"]
+    change_event_attr_list = ["longRunningCommandResult", "State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
@@ -113,7 +113,7 @@ def lru_change_event_callbacks(
 def ps_change_event_callbacks(
     test_proxies: pytest.fixture,
 ) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = ["state"]
+    change_event_attr_list = ["State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
