@@ -39,13 +39,13 @@ class PowerSwitchSimulator:
 
         # The text must match the powerswitch.yaml
         if model == "DLI LPC9":
-            self.outlet_id_list: list[str] = [str(i) for i in range(0, 8)]
+            self.outlet_id_list = [str(i) for i in range(0, 8)]
         elif model == "Server Technology Switched PRO2":
-            self.outlet_id_list: list[str] = [f"AA{i}" for i in range(1, 49)]
+            self.outlet_id_list = [f"AA{i}" for i in range(1, 49)]
         elif model == "APC AP8681 SSH":
-            self.outlet_id_list: list[str] = [f"{i}" for i in range(1, 25)]
+            self.outlet_id_list = [f"{i}" for i in range(1, 25)]
         elif model == "APC AP8681 SNMP":
-            self.outlet_id_list: list[str] = [f"{i}" for i in range(1, 25)]
+            self.outlet_id_list = [f"{i}" for i in range(1, 25)]
         else:
             raise AssertionError(f"Invalid PDU model: {model}")
 
@@ -136,7 +136,7 @@ class PowerSwitchSimulator:
 
         :return: list of all the outlets available in this power switch
         """
-        outlets: list[Outlet] = []
+        outlets = []
         for i in range(0, len(self.outlet_id_list)):
             outlets.append(
                 Outlet(

@@ -164,8 +164,7 @@ class TalonBoard(CbfDevice):
 
         :return: the FPGA bitstream version
         """
-        res = self.component_manager.talon_sysid_version()
-        return res
+        return self.component_manager.talon_sysid_version()
 
     @attribute(
         dtype=int,
@@ -178,8 +177,7 @@ class TalonBoard(CbfDevice):
 
         :return: a 32 bit unique identifier for the bitstream
         """
-        res = self.component_manager.talon_sysid_bitstream()
-        return res
+        return self.component_manager.talon_sysid_bitstream()
 
     # TalonStatus Attr
     @attribute(
