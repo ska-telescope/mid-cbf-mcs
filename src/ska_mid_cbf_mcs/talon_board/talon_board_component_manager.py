@@ -16,7 +16,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerMode
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -26,9 +26,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
-)
-from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
-    TalonBoardSimulator,
 )
 
 
@@ -122,10 +119,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._proxies = dict()
         self._talon_sysid_events = []
         self._talon_status_events = []
-
-        # simulation mode:
-        self.simulation_mode = SimulationMode.TRUE
-        self.talon_board_simulator = TalonBoardSimulator(logger)
 
         super().__init__(
             logger=logger,
@@ -618,125 +611,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_0(self) -> float:
-        """
-        Gets the FPGA Die Voltage [0] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_0()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-0"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_1(self) -> float:
-        """
-        Gets the FPGA Die Voltage [1] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_1()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-1"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_2(self) -> float:
-        """
-        Gets the FPGA Die Voltage [2] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_2()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-2"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_3(self) -> float:
-        """
-        Gets the FPGA Die Voltage [3] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_3()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-3"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_4(self) -> float:
-        """
-        Gets the FPGA Die Voltage [4] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_4()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-4"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_5(self) -> float:
-        """
-        Gets the FPGA Die Voltage [5] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_5()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-5"
-        t, val = self._telemetry[field]
-        self._validate_time(field, t)
-        return val
-
-    def fpga_die_voltage_6(self) -> float:
-        """
-        Gets the FPGA Die Voltage [6] Sensor Value from the Talon Board
-
-        :return: The Sensor Reading in Volts
-        :rtype: float
-        """
-        # To prevent null readings while a talon board is not connected
-        if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_voltage_6()
-        self._throw_if_device_off()
-        self._query_if_needed()
-        field = "voltage-sensors_fpga-die-voltage-6"
         t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val

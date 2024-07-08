@@ -9,7 +9,6 @@
 
 import asyncio
 import logging
-from datetime import datetime
 
 from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
 
@@ -91,7 +90,6 @@ class InfluxdbQueryClient:
                 self._query_ltm_voltages(client),
                 self._query_ltm_currents(client),
                 self._query_ltm_temperatures(client),
-                self._query_fpga_die_voltages(client),
             )
         return res
 
@@ -109,23 +107,6 @@ class InfluxdbQueryClient:
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
         |>filter(fn: (r) => r["_field"] =~ /temperature-sensors_.*?temp$/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_fpga_die_voltages(
-        self, client
-    ) -> list[tuple[str, datetime, float]]:
-        """
-        Asynchronously queries a influxDB for FPGA Die Voltage Sensor readings
-        Queries returns the readings for all 6 voltage sensors on the FPGA Die
-
-        :return: A list of 3-value tuple that containes: Sensor Name, Time of Record, Value of the Sensor in Volts
-        :rtype: list[tuple[str,datetime,float]]
-        """
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_fpga-die-voltage-[0-6]$/)\
         |>last()'
         return await self._query_common(client, query)
 
