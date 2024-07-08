@@ -10,11 +10,8 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
-from threading import Event
-from typing import Callable, Optional
-
 import tango
-from ska_control_model import PowerState, SimulationMode, TaskStatus
+from ska_control_model import AdminMode, PowerState, SimulationMode
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
@@ -140,23 +137,6 @@ class FspComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
-    def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
-        self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"FSP SetFunctionMode not allowed in current state:\
-                    {self._component_state['power']}"
-            )
-            return False
-        if len(self.subarray_membership) > 0:
-            self.logger.warning(
-                f"FSP {self._fsp_id} currently belongs to \
-                    subarray(s) {self.subarray_membership}, \
-                    cannot change function mode at this time."
-            )
-            return False
-        return True
-
     def _validate_and_set_function_mode(
         self: FspComponentManager, function_mode: str
     ) -> bool:
@@ -167,99 +147,27 @@ class FspComponentManager(CbfComponentManager):
         :param function_mode: function mode string to be evaluated
         :return: True if validation passes, otherwise False
         """
-        match function_mode:
-            case "IDLE":
-                self.function_mode = FspModes.IDLE.value
-            case "CORR":
-                self.function_mode = FspModes.CORR.value
-            case "PSS-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PSS-BF not currently implemented"
-                )
-                return False
-            case "PST-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PST-BF not currently implemented"
-                )
-                return False
-            case "VLBI":
-                self.logger.error(
-                    "Error in SetFunctionMode; VLBI not currently implemented"
-                )
-                return False
-            case _:
-                self.logger.error(
-                    f"{function_mode} not a valid FSP function mode."
-                )
-                return False
+        # TODO: remove these conditions as new function modes are implemented
+        if function_mode not in FspModes._member_names_ or function_mode in [
+            "PSS-BF",
+            "PST-BF",
+            "VLBI",
+        ]:
+            self.logger.error(
+                f"{function_mode} not a valid FSP function mode."
+            )
+            return False
 
-        self.logger.info(
-            f"FSP set to function mode {FspModes(self.function_mode).name}"
-        )
+        self.function_mode = FspModes[function_mode].value
         self._device_attr_change_callback("functionMode", self.function_mode)
         self._device_attr_archive_callback("functionMode", self.function_mode)
+        self.logger.info(f"FSP set to function mode {function_mode}")
 
         return True
 
-    def _set_function_mode(
-        self: FspComponentManager,
-        function_mode: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        """
-        Switch the function mode of the HPS FSP controller
-
-        :return: None
-        """
-        # set task status in progress, check for abort event
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "SetFunctionMode", task_callback, task_abort_event
-        ):
-            return
-
-        function_mode_success = self._validate_and_set_function_mode(
-            function_mode
-        )
-        if not function_mode_success:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    f"Failed to set FSP function mode to {function_mode}",
-                ),
-            )
-            return
-
-        try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
-        except tango.DevFailed as df:
-            self.logger.error(f"{df.args[0].desc}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue SetFunctionMode command to HPS FSP controller",
-                ),
-            )
-            return
-
-        task_callback(
-            result=(ResultCode.OK, "SetFunctionMode completed OK"),
-            status=TaskStatus.COMPLETED,
-        )
-        return
-
-    @check_communicating
     def set_function_mode(
-        self: FspComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-    ) -> tuple[TaskStatus, str]:
+        self: FspComponentManager, function_mode: str
+    ) -> None:
         """
         Switch the function mode of the FSP; can only be done if currently
         unassigned from any subarray membership.
@@ -269,15 +177,30 @@ class FspComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (TaskStatus, str)
+        :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"Component state: {self._component_state}")
-        return self.submit_task(
-            self._set_function_mode,
-            args=[argin],
-            is_cmd_allowed=self.is_set_function_mode_allowed,
-            task_callback=task_callback,
+        function_mode_success = self._validate_and_set_function_mode(
+            function_mode
         )
+        if not function_mode_success:
+            return (
+                ResultCode.FAILED,
+                f"Failed to set FSP function mode to {function_mode}",
+            )
+
+        try:
+            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
+        except tango.DevFailed as df:
+            self.logger.error(f"{df.args[0].desc}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return (
+                ResultCode.FAILED,
+                "Failed to issue SetFunctionMode command to HPS FSP controller",
+            )
+
+        return (ResultCode.OK, "SetFunctionMode completed OK")
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
         """
@@ -385,8 +308,6 @@ class FspComponentManager(CbfComponentManager):
             f"FSP does not belong to subarray {subarray_id}",
         )
 
-    # TODO: subarray handle FSP GoToIdle and resetting function mode to IDLE
-
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """
         Turn on FSP function mode subarray device for specified subarray
@@ -406,6 +327,10 @@ class FspComponentManager(CbfComponentManager):
                 fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
                 try:
                     proxy = self._all_fsp_corr[fqdn]
+                    # set FSP devices simulationMode attributes
+                    proxy.adminMode = AdminMode.OFFLINE
+                    proxy.simulationMode = self.simulation_mode
+                    proxy.adminMode = AdminMode.ONLINE
                     result = proxy.On()
                     if result[0] == ResultCode.FAILED:
                         self.logger.error(

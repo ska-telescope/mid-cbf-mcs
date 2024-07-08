@@ -484,7 +484,7 @@ class SlimComponentManager(CbfComponentManager):
             f"Creating {len(self._active_links)} links: {self._active_links}"
         )
         if len(self._active_links) == 0:
-            self.logger.warn(
+            self.logger.warning(
                 "No active links are defined in the mesh configuration"
             )
             return ResultCode.OK, "_initialize_links completed OK"

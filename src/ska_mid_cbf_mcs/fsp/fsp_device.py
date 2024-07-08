@@ -22,7 +22,7 @@ from typing import Any
 import tango
 from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
@@ -90,12 +90,8 @@ class Fsp(CbfDevice):
 
         self.register_command_object(
             "SetFunctionMode",
-            SubmittedSlowCommand(
-                command_name="SetFunctionMode",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="set_function_mode",
-                logger=self.logger,
+            self.SetFunctionModeCommand(
+                component_manager=self.component_manager, logger=self.logger
             ),
         )
 
@@ -194,9 +190,49 @@ class Fsp(CbfDevice):
         :return: if SetFunctionMode is allowed
         :rtype: bool
         """
-        if self.dev_state() == tango.DevState.ON:
+        current_state = self.dev_state()
+        if current_state == tango.DevState.ON:
+            subarray_membership = self.component_manager.subarray_membership
+            if len(subarray_membership) > 0:
+                self.logger.warning(
+                    f"FSP already belongs to subarray(s) {subarray_membership}"
+                    " and cannot change function mode at this time."
+                )
+                return False
             return True
+        self.logger.error(
+            f"FSP SetFunctionMode not allowed in current state: {current_state}"
+        )
         return False
+
+    class SetFunctionModeCommand(FastCommand):
+        """
+        A class for the Fsp's SetFunctionMode command.
+        """
+
+        def __init__(
+            self: Fsp.SetFunctionModeCommand,
+            *args,
+            component_manager: FspComponentManager,
+            **kwargs,
+        ) -> None:
+            super().__init__(*args, **kwargs)
+            self.component_manager = component_manager
+
+        def do(
+            self: Fsp.SetFunctionModeCommand, function_mode: str
+        ) -> DevVarLongStringArrayType:
+            """
+            Stateless hook for SetFunctionMode command functionality.
+
+            :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.component_manager.set_function_mode(function_mode)
 
     @command(
         dtype_in="str",

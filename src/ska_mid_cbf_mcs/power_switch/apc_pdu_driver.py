@@ -95,7 +95,7 @@ class ApcPduDriver:
                 warn = (
                     f"Failed to poll PDU outlets {self.num_failed_polls} times"
                 )
-                self.logger.warn(warn)
+                self.logger.warning(warn)
                 if self.num_failed_polls == n_fail_to_print_err:
                     self.logger.error(
                         f"Failed to poll PDU outlets {n_fail_to_print_err} times consecutively. The PDU likely cannot be reached."

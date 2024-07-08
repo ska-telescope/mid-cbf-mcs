@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
@@ -51,7 +51,7 @@ class Const:
 const = Const()
 
 
-class FspModes(Enum):
+class FspModes(IntEnum):
     IDLE = 0
     CORR = 1
     PSS_BF = 2

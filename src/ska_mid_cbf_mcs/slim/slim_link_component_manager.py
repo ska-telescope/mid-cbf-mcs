@@ -406,7 +406,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._tx_device_proxy is None)
             or (self._rx_device_proxy is None)
         ):
-            self.logger.warn("Tx and Rx devices have not been connected.")
+            self.logger.warning("Tx and Rx devices have not been connected.")
             self._update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "VerifyConnection completed OK"
 
@@ -439,7 +439,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._update_device_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
-            self.logger.warn(
+            self.logger.warning(
                 f"{self._link_name}: failed health check - {error_msg}"
             )
             self._update_device_health_state(HealthState.FAILED)
@@ -470,7 +470,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._tx_device_proxy is None)
             or (self._rx_device_proxy is None)
         ):
-            self.logger.warn("Tx and Rx devices have not been connected.")
+            self.logger.warning("Tx and Rx devices have not been connected.")
             return ResultCode.OK, "ClearCounters completed OK"
 
         try:

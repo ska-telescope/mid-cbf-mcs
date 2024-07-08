@@ -222,7 +222,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 return True, "TurnOnOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async events
-                self.logger.warn(
+                self.logger.warning(
                     "The outlet's power state is not 'on' as expected. Waiting for 5 seconds before rechecking the power state..."
                 )
                 sleep(5)
@@ -237,7 +237,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 return True, "TurnOffOutlet completed OK"
             else:
                 # TODO: This is a temporary workaround for CIP-2050 until the power switch deals with async
-                self.logger.warn(
+                self.logger.warning(
                     "The outlet's power state is not 'off' as expected. Waiting for 5 seconds before rechecking the power state..."
                 )
                 sleep(5)

@@ -96,7 +96,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_controller = controller
         self._fqdn_vcc = vcc
         self._fqdn_fsp = fsp
-        self._fqdn_fsp_corr_subarray_device = fsp_corr_sub
+        self._fqdn_fsp_corr = fsp_corr_sub
         self._fqdn_talon_board_device = talon_board
 
         # initialize attribute values
@@ -117,39 +117,33 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
-        # device proxy for easy reference to CBF controller
-        self._proxy_cbf_controller = None
+        # store max capabilities from controller for easy reference
         self._controller_max_capabilities = {}
         self._count_vcc = 0
         self._count_fsp = 0
 
         # proxies to subelement devices
-        self._all_vcc_proxies = []
+        self._all_vcc_proxies = {}
         self._assigned_vcc_proxies = set()
 
-        self._all_fsp_proxies = []
-        self._all_fsp_corr_proxies = []
+        self._all_fsp_proxies = {}
+        self._all_fsp_corr_proxies = {}
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
 
         self._all_talon_board_proxies = []
-        self._assigned_talon_board_proxies = set()
 
-    def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
+    def _get_max_capabilities(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
         :return: False if initialization failed, otherwise True
         """
         try:
-            if self._proxy_cbf_controller is None:
-                self._proxy_cbf_controller = context.DeviceProxy(
-                    device_name=self._fqdn_controller
-                )
-                self._controller_max_capabilities = dict(
-                    pair.split(":")
-                    for pair in self._proxy_cbf_controller.maxCapabilities
-                )
+            controller = context.DeviceProxy(device_name=self._fqdn_controller)
+            self._controller_max_capabilities = dict(
+                pair.split(":") for pair in controller.maxCapabilities
+            )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -157,11 +151,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._count_vcc = int(self._controller_max_capabilities["VCC"])
         self._count_fsp = int(self._controller_max_capabilities["FSP"])
 
-        self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
-        self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
-        self._fqdn_fsp_corr_subarray_device = (
-            self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
-        )
+        del self._fqdn_vcc[: self._count_vcc]
+        del self._fqdn_fsp[: self._count_fsp]
+        del self._fqdn_fsp_corr[: self._count_fsp]
 
         return True
 
@@ -172,27 +164,25 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: False if initialization failed, otherwise True
         """
         try:
-            if len(self._all_vcc_proxies) == 0:
-                self._all_vcc_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._fqdn_vcc
-                ]
+            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+                dish_id = self._dish_utils.dish_id_to_vcc_id[vcc_id]
+                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
+                    device_name=fqdn
+                )
 
-            if len(self._all_fsp_proxies) == 0:
-                self._all_fsp_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._fqdn_fsp
-                ]
+            for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
+                zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
+            ):
+                self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
+                    device_name=fsp_fqdn
+                )
+                self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
+                    device_name=fsp_corr_fqdn
+                )
 
-            if len(self._all_fsp_corr_proxies) == 0:
-                for fqdn in self._fqdn_fsp_corr_subarray_device:
-                    proxy = context.DeviceProxy(device_name=fqdn)
-                    self._all_fsp_corr_proxies.append(proxy)
-
-            if len(self._all_talon_board_proxies) == 0:
-                for fqdn in self._fqdn_talon_board_device:
-                    proxy = context.DeviceProxy(device_name=fqdn)
-                    self._all_talon_board_proxies.append(proxy)
+            for fqdn in self._fqdn_talon_board_device:
+                proxy = context.DeviceProxy(device_name=fqdn)
+                self._all_talon_board_proxies.append(proxy)
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -210,7 +200,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already connected.")
             return
 
-        controller_success = self._init_controller_proxy()
+        controller_success = self._get_max_capabilities()
         if not controller_success:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -233,7 +223,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "Entering CbfSubarrayComponentManager.stop_communicating"
         )
         try:
-            for proxy in self._all_fsp_corr_proxies:
+            # TODO: do this here?
+            for proxy in self._all_fsp_corr_proxies.values():
                 proxy.adminMode = AdminMode.OFFLINE
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -241,6 +232,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
+
+        # delete all device proxies
+        self._all_vcc_proxies = {}
+        self._all_fsp_proxies = {}
+        self._all_fsp_corr_proxies = {}
+        self._all_talon_board_proxies = []
 
         super().stop_communicating()
 
@@ -382,9 +379,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: proxy to Talon board device, or None if failed to initialize proxy
         """
         for proxy in self._all_talon_board_proxies:
-            board_dish_id = proxy.dishID
-            if board_dish_id == dish_id:
+            if proxy.dishID == dish_id:
                 return proxy
+
         # Talon board proxy not essential to scan operation, so we log an error
         # but don't cause a failure
         # return None here to fail conditionals later
@@ -480,15 +477,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
-            try:
-                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            except KeyError:
-                self.logger.warning(
-                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
-                )
-                continue
-
-            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
+            vcc_proxy = self._all_vcc_proxies[dish_id]
             vcc_subarray_id = vcc_proxy.subarrayMembership
 
             # only add VCC if it does not already belong to a subarray
@@ -499,8 +488,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 continue
 
             vcc_proxies.append(vcc_proxy)
-            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
-            talon_proxies.append(talon_proxy)
+            talon_proxies.append(self._get_talon_proxy_from_dish_id(dish_id))
             dish_ids_to_add.append(dish_id)
 
         if len(dish_ids_to_add) == 0:
@@ -541,7 +529,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._device_attr_archive_callback("receptors", receptors_push_val)
 
         self._assigned_vcc_proxies.update(vcc_proxies)
-        self._assigned_talon_board_proxies.update(talon_proxies)
+
+        # subscribe to LRC results for VCC scan operation
+        for vcc_proxy in vcc_proxies:
+            self._subscribe_command_results(vcc_proxy)
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
@@ -640,24 +631,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in dish_ids:
             self.logger.debug(f"Attempting to remove {dish_id}")
 
-            try:
-                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            except KeyError:
-                self.logger.warning(
-                    f"Skipping {dish_id}, outside of Mid.CBF max capabilities."
-                )
-                continue
-
             if dish_id not in self.dish_ids:
                 self.logger.warning(
                     f"Skipping receptor {dish_id} as it is not currently assigned to this subarray."
                 )
                 continue
 
-            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
+            vcc_proxy = self._all_vcc_proxies[dish_id]
             vcc_proxies.append(vcc_proxy)
-            talon_proxy = self._get_talon_proxy_from_dish_id(dish_id)
-            talon_proxies.append(talon_proxy)
+            talon_proxies.append(self._get_talon_proxy_from_dish_id(dish_id))
             dish_ids_to_remove.append(dish_id)
 
         if len(dish_ids_to_remove) == 0:
@@ -686,7 +668,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._device_attr_archive_callback("receptors", receptors_push_val)
 
         self._assigned_vcc_proxies.difference_update(vcc_proxies)
-        self._assigned_talon_board_proxies.difference_update(talon_proxies)
+
+        # unsubscribe from VCC LRC results
+        for vcc_proxy in vcc_proxies:
+            self._unsubscribe_command_results(vcc_proxy)
 
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
@@ -966,14 +951,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # Prepare args for ConfigureBand
         vcc_success = True
         for dish_id in self.dish_ids:
-            # Fetch K-value based on dish_id
-            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-            vcc_proxy = self._all_vcc_proxies[vcc_id - 1]
-            freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
-            # Calculate dish sample rate
+            vcc_proxy = self._all_vcc_proxies[dish_id]
+
+            # Fetch K-value based on dish_id, calculate dish sample rate
             dish_sample_rate = self._calculate_dish_sample_rate(
-                freq_band_dict()[configuration["frequency_band"]],
-                freq_offset_k,
+                freq_band_info=freq_band_dict()[
+                    configuration["frequency_band"]
+                ],
+                freq_offset_k=self._dish_utils.dish_id_to_k[dish_id],
             )
             # Fetch samples per frame for this freq band
             samples_per_frame = freq_band_dict()[
@@ -1089,7 +1074,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return vcc_success
 
-    def _assign_fsp_corr(
+    def _assign_fsp(
         self: CbfSubarrayComponentManager, fsp_id: int, function_mode: str
     ) -> bool:
         """
@@ -1101,15 +1086,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
 
-        fsp_proxy = self._all_fsp_proxies[fsp_id - 1]
-        fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id - 1]
+        fsp_proxy = self._all_fsp_proxies[fsp_id]
         try:
             # TODO handle LRCs
 
             # set FSP devices simulationMode attributes
-            fsp_corr_proxy.adminMode = AdminMode.OFFLINE
-            fsp_corr_proxy.simulationMode = self.simulation_mode
-            fsp_corr_proxy.adminMode = AdminMode.ONLINE
             fsp_proxy.adminMode = AdminMode.OFFLINE
             fsp_proxy.simulationMode = self.simulation_mode
             fsp_proxy.adminMode = AdminMode.ONLINE
@@ -1146,7 +1127,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         self._assigned_fsp_proxies.add(fsp_proxy)
-        self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
+
+        # subscribe to LRC results for FSP scan operation
+        self._subscribe_command_results(fsp_proxy)
+
         return True
 
     def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
@@ -1164,6 +1148,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 if result[0] == ResultCode.FAILED:
                     self.logger.error(result[1])
                     return False
+
+                self._unsubscribe_command_results(fsp_proxy)
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -1171,6 +1157,53 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
         return True
+
+    def _build_fsp_config(
+        self: CbfSubarrayComponentManager,
+        fsp_config: dict[any],
+        common_configuration: dict[any],
+    ) -> dict[any]:
+        """
+        Build FSP function mode ConfigureScan input JSON dict.
+        Adds the following parameters missing from the "fsp" portion of the JSON:
+        config_id, sub_id, frequency_band, band_5_tuning, frequency_band_offset_stream1,
+        frequency_band_offset_stream2, channel_offset, fs_sample_rates, subarray_vcc_ids
+
+        :param fsp_config: Mid.CBF FSP scan configuration dict
+        :param common_configuration: common Mid.CSP scan configuration dict
+        :return: FSP function mode ConfigureScan input dict
+        """
+        fsp_config["config_id"] = common_configuration["config_id"]
+        fsp_config["sub_id"] = common_configuration["subarray_id"]
+        fsp_config["frequency_band"] = common_configuration["frequency_band"]
+        fsp_config["band_5_tuning"] = self._stream_tuning
+        fsp_config[
+            "frequency_band_offset_stream1"
+        ] = self._frequency_band_offset_stream1
+        fsp_config[
+            "frequency_band_offset_stream2"
+        ] = self._frequency_band_offset_stream2
+
+        # channel_offset is optional
+        if "channel_offset" not in fsp_config:
+            self.logger.warning(
+                "channel_offset not defined in configuration. Assigning default of 1."
+            )
+            fsp_config["channel_offset"] = 1
+
+        fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
+            common_configuration["frequency_band"]
+        )
+
+        # Parameter named "subarray_vcc_ids" used by HPS contains all the VCCs
+        # assigned to the subarray
+        fsp_config["subarray_vcc_ids"] = []
+        for dish in self.dish_ids:
+            fsp_config["subarray_vcc_ids"].append(
+                self._dish_utils.dish_id_to_vcc_id[dish]
+            )
+
+        return fsp_config
 
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
@@ -1187,54 +1220,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info("Configuring FSP for scan...")
 
         # build FSP configuration JSONs, add FSP
-        fsp_success = True
-        corr_config = []
+        all_fsp_config = []
         for config in configuration["fsp"]:
-            fsp_config = copy.deepcopy(config)
+            fsp_config = self._build_fsp_config(copy.deepcopy(config))
 
-            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp.
-            # They are not included in the "fsp" portion of the JSON
-            fsp_config["config_id"] = common_configuration["config_id"]
-            fsp_config["sub_id"] = common_configuration["subarray_id"]
-            fsp_config["frequency_band"] = common_configuration[
-                "frequency_band"
-            ]
-            fsp_config["band_5_tuning"] = self._stream_tuning
-            fsp_config[
-                "frequency_band_offset_stream1"
-            ] = self._frequency_band_offset_stream1
-            fsp_config[
-                "frequency_band_offset_stream2"
-            ] = self._frequency_band_offset_stream2
-
-            # Add channel_offset if it was omitted from the configuration (it is optional).
-            if "channel_offset" not in fsp_config:
-                self.logger.warning(
-                    "channel_offset not defined in configuration. Assigning default of 1."
-                )
-                fsp_config["channel_offset"] = 1
-
-            # Add the fs_sample_rate for all dishes
-            fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
-                common_configuration["frequency_band"]
-            )
-
-            # Add all DISH IDs for subarray and for correlation to fsp
-            # Parameter named "subarray_vcc_ids" used by HPS contains all the
-            # VCCs assigned to the subarray
-            # Parameter named "corr_vcc_ids" used by HPS contains the
-            # subset of the subarray VCCs for which the correlation results
-            # are requested to be used in Mid.CBF output products (visibilities)
-            fsp_config["subarray_vcc_ids"] = []
-            for dish in self.dish_ids:
-                fsp_config["subarray_vcc_ids"].append(
-                    self._dish_utils.dish_id_to_vcc_id[dish]
-                )
-
+            fsp_id = fsp_config["fsp_id"]
+            fsp_success = False
             match fsp_config["function_mode"]:
                 case "CORR":
-                    # dishes may not be specified in the
-                    # configuration at all, or the list may be empty
+                    # Parameter named "corr_vcc_ids" used by HPS contains the
+                    # subset of the subarray VCCs for which the correlation results
+                    # are requested to be used in Mid.CBF output products (visibilities);
+                    # dishes may not be specified in the configuration at all,
+                    # or the list may be empty
                     fsp_config["corr_vcc_ids"] = []
                     if (
                         "receptors" not in fsp_config
@@ -1250,40 +1248,38 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
 
-                    corr_config.append(fsp_config)
-
                     # set function mode and add subarray membership
-                    fsp_success = self._assign_fsp_corr(
-                        fsp_id=int(fsp_config["fsp_id"]), function_mode="CORR"
+                    fsp_success = self._assign_fsp(
+                        fsp_id=fsp_id, function_mode="CORR"
+                    )
+                    if not fsp_success:
+                        return False
+
+                    fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
+                    self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
+                    # subscribe to LRC results for FSP scan operation
+                    self._subscribe_command_results(fsp_corr_proxy)
+
+                    all_fsp_config.append(
+                        json.dumps(fsp_config), fsp_corr_proxy
                     )
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
                     )
-                    fsp_success = False
-
-        if not fsp_success or len(corr_config) == 0:
-            return False
 
         # Call ConfigureScan for all FSP function mode subarray devices
-        # NOTE: corr_config is a list of fsp config JSON objects, each
-        #      augmented by a number of vcc-fsp common parameters
-        for fsp_config in corr_config:
+        self._num_blocking_results = len(all_fsp_config)
+        for fsp_config, proxy in all_fsp_config:
             try:
                 # TODO handle fsp corr LRC
-                self.logger.debug(f"fsp_config: {json.dumps(fsp_config)}")
-                fsp_corr_proxy = self._all_fsp_corr_proxies[
-                    int(fsp_config["fsp_id"]) - 1
-                ]
-                fsp_corr_proxy.set_timeout_millis(12000)
-                fsp_corr_proxy.ConfigureScan(json.dumps(fsp_config))
-
+                self.logger.debug(f"fsp_config: {fsp_config}")
+                proxy.ConfigureScan(json.dumps(fsp_config))
             except tango.DevFailed as df:
                 self.logger.error(
-                    "Failed to issue ConfigureScan to FSP CORR subarray device "
-                    + f"{fsp_corr_proxy.dev_name()}; {df}"
+                    f"Failed to issue ConfigureScan to {proxy.dev_name()}; {df}"
                 )
-                fsp_success = False
+                return False
 
         return fsp_success
 
@@ -1331,13 +1327,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Completely deconfigure the subarray; all initialization performed by the
         ConfigureScan command must be 'undone' here.
+        This method is invoked by GoToIdle, ConfigureScan, ObsReset and Restart
+        in CbfSubarray
 
         :return: False if failed to deconfigure, otherwise True
         """
         self.logger.info("Deconfiguring subarray...")
 
-        # component_manager._deconfigure is invoked by GoToIdle, ConfigureScan,
-        # ObsReset and Restart here in the CbfSubarray
         if len(self._assigned_fsp_proxies) > 0:
             fsp_success = self._release_all_fsp()
             if not fsp_success:

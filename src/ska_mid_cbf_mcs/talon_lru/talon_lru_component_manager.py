@@ -545,7 +545,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             elif result_code == ResultCode.OK:
                 self.logger.info(f"Talon board successfully turned off: {msg}")
             else:
-                self.logger.warn(
+                self.logger.warning(
                     f"Talon board turned off with unexpected result code {result_code}: {msg}"
                 )
         return None
