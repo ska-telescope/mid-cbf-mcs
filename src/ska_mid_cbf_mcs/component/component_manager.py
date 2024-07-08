@@ -159,8 +159,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _unsubscribe_command_results(self: CbfComponentManager) -> None:
         while len(self._event_ids):
-            sub_id, dp = self._event_ids.popitem()
-            dp.unsubscribe_event(sub_id)
+            event_id, dp = self._event_ids.popitem()
+            dp.unsubscribe_event(event_id)
 
     #######################
     # Group-related methods

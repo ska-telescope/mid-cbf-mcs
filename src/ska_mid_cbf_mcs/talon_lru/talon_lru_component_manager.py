@@ -315,17 +315,17 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.logger.error(
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
+                lrc_status = TaskStatus.FAILED
             else:
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
 
-            if lrc_status != TaskStatus.COMPLETED:
-                if result1 != ResultCode.REJECTED:
-                    self.logger.error(
-                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
-                    )
-                    result1 = ResultCode.FAILED
+            if (lrc_status != TaskStatus.COMPLETED) and (result1 != ResultCode.REJECTED):
+                self.logger.error(
+                    f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
+                )
+                result1 = ResultCode.FAILED
             else:
                 self.pdu1_power_state = PowerState.ON
                 self.logger.info(
