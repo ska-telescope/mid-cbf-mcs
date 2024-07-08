@@ -510,9 +510,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         try:
             talondx_board_proxy.Off()
         except tango.DevFailed as df:
-            return (
-                ResultCode.FAILED,
-                f"_turn_off_boards FAILED on Talon board {board_id}: {df}",
+            self._logger.warn(
+                f"Talon board {board_id} OFF command failed: {df}"
             )
         return (
             ResultCode.OK,
