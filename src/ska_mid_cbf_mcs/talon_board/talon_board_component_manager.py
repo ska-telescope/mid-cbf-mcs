@@ -379,6 +379,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.info(
+            f"FQDNs: {self._talon_sysid_fqdn}, {self._talon_status_fqdn}"
+        )
         for ev in self._talon_sysid_events:
             for name, id in ev.items():
                 self._logger.info(
