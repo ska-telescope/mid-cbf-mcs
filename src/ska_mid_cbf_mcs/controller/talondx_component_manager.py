@@ -653,7 +653,7 @@ class TalonDxComponentManager:
         self: TalonDxComponentManager, talon_cfg
     ) -> tuple(ResultCode, str):
         target = talon_cfg["target"]
-        if self.simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode == SimulationMode.FALSE:
             target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
             try:
                 talon_board_proxy = CbfDeviceProxy(
