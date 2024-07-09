@@ -9,8 +9,8 @@
 
 from __future__ import annotations
 
-import concurrent.futures
 import logging
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Callable, List, Optional, Tuple
 
 import tango
@@ -436,6 +436,35 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
+        # Stop monitoring talon board telemetries and fault status
+        talondx_board_proxies_by_id = {
+            1: self._proxy_talondx_board1,
+            2: self._proxy_talondx_board2,
+        }
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._turn_off_boards, board_id, proxy_talondx_board
+                )
+                for board_id, proxy_talondx_board in talondx_board_proxies_by_id.items()
+            ]
+            wait(futures)
+            results = [f.result() for f in futures]
+        for result_code, msg in results:
+            if result_code == ResultCode.FAILED:
+                return (
+                    ResultCode.FAILED,
+                    f"Failed to turn off Talon board: {msg}",
+                )
+            elif result_code == ResultCode.OK:
+                self._logger.info(
+                    f"Talon board successfully turned off: {msg}"
+                )
+            else:
+                self._logger.warn(
+                    f"Talon board turned off with unexpected result code {result_code}: {msg}"
+                )
+
         # Power off both outlets
         result1 = ResultCode.FAILED
         if self._proxy_power_switch1 is not None:
@@ -462,34 +491,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self.pdu2_power_mode = PowerMode.OFF
                     self._logger.info("PDU 2 successfully turned off.")
 
-        # Stop monitoring talon board telemetries and fault status
-        talondx_board_proxies_by_id = {
-            1: self._proxy_talondx_board1,
-            2: self._proxy_talondx_board2,
-        }
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(
-                    self._turn_off_boards, board_id, proxy_talondx_board
-                )
-                for board_id, proxy_talondx_board in talondx_board_proxies_by_id.items()
-            ]
-            results = [f.result() for f in futures]
-        for result_code, msg in results:
-            if result_code == ResultCode.FAILED:
-                return (
-                    ResultCode.FAILED,
-                    f"Failed to turn off Talon board: {msg}",
-                )
-            elif result_code == ResultCode.OK:
-                self._logger.info(
-                    f"Talon board successfully turned off: {msg}"
-                )
-            else:
-                self._logger.warn(
-                    f"Talon board turned off with unexpected result code {result_code}: {msg}"
-                )
-
         # Determine what result code to return
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
             self.update_component_fault(True)
@@ -508,6 +509,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager, board_id, talondx_board_proxy
     ):
         try:
+            talondx_board_proxy.set_timeout_millis(12000)
             talondx_board_proxy.Off()
         except tango.DevFailed as df:
             return (
