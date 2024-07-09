@@ -54,6 +54,13 @@ class VisibilityTransport:
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
         self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
 
+        if len(self._channel_offsets) == 0:
+            self._channel_offsets = [0]
+
+        self._logger.info(
+            f"FSP IDs = {self._fsp_ids}, channel_offsets = {self._channel_offsets}"
+        )
+
         # Parse the visibility SLIM yaml to determine which board will output
         # visibilities.
         vis_out_map = self._get_vis_output_map(vis_slim_yaml)
@@ -65,6 +72,9 @@ class VisibilityTransport:
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._channel_offsets
             ):
+                self._logger.info(
+                    f"Connecting to {self._host_lut_s2_fqdn} with channel offset {ch_offset}"
+                )
                 s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
                 s1_dp.channel_offset = ch_offset
                 s1_dp.connectToHostLUTStage2()
