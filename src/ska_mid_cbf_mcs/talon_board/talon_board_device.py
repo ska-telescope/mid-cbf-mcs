@@ -266,10 +266,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 0",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=11.2,
-        max_warning=12.8,
-        min_alarm=11.0,
-        max_alarm=13.0,
+        # min_warning=11.2,
+        # max_warning=12.8,
+        # min_alarm=11.0,
+        # max_alarm=13.0,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage0(self: TalonBoard) -> float:
@@ -291,10 +291,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 1",
         doc="Value of the 2.5V FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=2.404,
-        max_warning=2.596,
-        min_alarm=2.38,
-        max_alarm=2.62,
+        # min_warning=2.404,
+        # max_warning=2.596,
+        # min_alarm=2.38,
+        # max_alarm=2.62,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage1(self: TalonBoard) -> float:
@@ -316,10 +316,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 2",
         doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=0.79,
-        max_warning=0.95,
-        min_alarm=0.77,
-        max_alarm=0.97,
+        # min_warning=0.79,
+        # max_warning=0.95,
+        # min_alarm=0.77,
+        # max_alarm=0.97,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage2(self: TalonBoard) -> float:
@@ -341,10 +341,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 3",
         doc="Value of the 1.8V VCCIO FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_warning=1.728,
+        # max_warning=1.872,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage3(self: TalonBoard) -> float:
@@ -366,10 +366,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 4",
         doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_warning=1.728,
+        # max_warning=1.872,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
@@ -391,10 +391,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 5",
         doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=0.876,
-        max_warning=0.924,
-        min_alarm=0.87,
-        max_alarm=0.93,
+        # min_warning=0.876,
+        # max_warning=0.924,
+        # min_alarm=0.87,
+        # max_alarm=0.93,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
@@ -416,10 +416,10 @@ class TalonBoard(SKABaseDevice):
         label="FPGA Die Voltage 6",
         doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        # min_warning=1.728,
+        # max_warning=1.872,
+        # min_alarm=1.71,
+        # max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
