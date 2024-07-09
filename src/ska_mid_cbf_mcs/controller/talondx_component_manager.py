@@ -652,6 +652,25 @@ class TalonDxComponentManager:
     def _shutdown_talon_thread(
         self: TalonDxComponentManager, talon_cfg
     ) -> tuple(ResultCode, str):
+        target = talon_cfg["target"]
+        if self.simulation_mode == SimulationMode.TRUE:
+            target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
+            try:
+                talon_board_proxy = CbfDeviceProxy(
+                    fqdn=target_talon_fqdn, logger=self.logger
+                )
+                talon_board_proxy.write_attribute(
+                    "simulationMode",
+                    SimulationMode.TRUE,
+                )
+                self.logger.info(
+                    f"SimulationMode {SimulationMode.TRUE} set for talon{target}"
+                )
+            except tango.DevFailed as df:
+                log_msg = f"Failed to set Simulation Mode to {SimulationMode.FALSE} for talon{target}; {df}"
+                self.logger(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
