@@ -315,7 +315,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.logger.error(
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
-                
+
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
@@ -350,7 +350,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                 )
                 return result1, ResultCode.FAILED
-            
+
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
@@ -492,10 +492,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # _determine_on_result_code will update the component power state
         task_callback(
             status=TaskStatus.COMPLETED,
-            result=(
-                self._determine_on_result_code(result1, result2),
-                "On completed OK",
-            ),
+            result=self._determine_on_result_code(result1, result2),
         )
 
     @check_communicating
@@ -659,11 +656,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            msg = f'Off completed OK: {"single outlet turned off" if self._using_single_outlet else "both outlets turned off"}'
+            self.logger.info(
+                f'Off completed OK: {"single outlet turned off" if self._using_single_outlet else "both outlets turned off"}'
+            )
             self._update_component_state(power=PowerState.OFF)
             return (
                 ResultCode.OK,
-                msg,
+                "Off completed OK",
             )
 
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
@@ -675,12 +674,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
 
         else:
-            self.logger.error(
-                "LRU failed to turn off: one outlet failed to turn off"
-            )
+            msg = "LRU failed to turn off: one outlet failed to turn off"
+            self.logger.error(msg)
             return (
                 ResultCode.FAILED,
-                "LRU failed to turn off: one outlet failed to turn off",
+                msg,
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
@@ -725,8 +723,8 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # _determine_off_result_code will update the component power state
         task_callback(
-            result=self._determine_off_result_code(result1, result2),
             status=TaskStatus.COMPLETED,
+            result=self._determine_off_result_code(result1, result2),
         )
 
     @check_communicating
