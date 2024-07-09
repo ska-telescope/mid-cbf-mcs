@@ -803,6 +803,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         command_name: str,
         argin: Optional[any] = None,
         lrc: bool = False,
+        task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -811,7 +812,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
         :param lrc: True if the command to issue is long-running
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_callback: callback for driving status of task executor's
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
 
         :return: TaskStatus
         """
@@ -835,8 +838,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
-            if lrc_status != TaskStatus.COMPLETED:
+            if lrc_status == TaskStatus.FAILED:
                 self.logger.error("One or more command calls timed out.")
+                return lrc_status
+            if lrc_status == TaskStatus.ABORTED:
+                self.logger.warning(
+                    f"{command_name} command aborted by task executor abort event."
+                )
                 return lrc_status
 
         return TaskStatus.COMPLETED
@@ -962,7 +970,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Issue Vcc ConfigureBand command
 
         :param configuration: scan configuration dict
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: event indicating AbortCommands has been issued
 
         :return: VCC ConfigureBand command TaskStatus
         """
@@ -1028,7 +1036,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: event indicating AbortCommands has been issued
 
         :return: VCC ConfigureScan command TaskStatus
         """
@@ -1268,7 +1276,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: event indicating AbortCommands has been issued
 
         :return: FSP ConfigureScan command TaskStatus
         """
