@@ -481,6 +481,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
         return TaskStatus.COMPLETED
 
+    def toggle_simulation_mode(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        simulation_mode: SimulationMode,
+    ) -> bool:
+        proxy.adminMode = AdminMode.OFFLINE
+        proxy.simulationMode = simulation_mode
+        proxy.adminMode = AdminMode.ONLINE
+        return proxy.adminMode == simulation_mode
+
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
         """

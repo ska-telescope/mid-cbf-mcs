@@ -140,7 +140,6 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
-        self.logger.error(f"{datetime.now()}----- STATE SET TO OFF!!! -----")
 
     def _subscribe_change_events(self) -> None:
         """

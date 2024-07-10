@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import os
 
-import pytest
 from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
+from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
@@ -37,7 +37,7 @@ class TestSlimLink:
 
     def test_Online(
         self: TestSlimLink,
-        device_under_test: pytest.fixture,
+        device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
@@ -60,7 +60,7 @@ class TestSlimLink:
 
     def test_ConnectTxRx(
         self: TestSlimLink,
-        device_under_test: pytest.fixture,
+        device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
@@ -83,7 +83,7 @@ class TestSlimLink:
 
     def test_VerifyConnection(
         self: TestSlimLink,
-        device_under_test: pytest.fixture,
+        device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
@@ -108,7 +108,7 @@ class TestSlimLink:
 
     def test_DisconnectTxRx(
         self: TestSlimLink,
-        device_under_test: pytest.fixture,
+        device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
@@ -131,7 +131,7 @@ class TestSlimLink:
 
     def test_Offline(
         self: TestSlimLink,
-        device_under_test: pytest.fixture,
+        device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """

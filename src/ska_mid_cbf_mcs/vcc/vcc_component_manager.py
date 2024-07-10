@@ -262,6 +262,10 @@ class VccComponentManager(CbfObsComponentManager):
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:

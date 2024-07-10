@@ -14,6 +14,7 @@ from __future__ import annotations
 import pytest
 
 # Tango imports
+from ska_control_model import SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -45,7 +46,7 @@ def test_proxies_fixture() -> pytest.fixture:
 
             Includes:
             - 4 TalonLru
-            - 4 PowerSwitch
+            - 2 PowerSwitch
             - 4 SlimLink
             """
 
@@ -60,7 +61,7 @@ def test_proxies_fixture() -> pytest.fixture:
 
             # Power switch
             self.power_switch = []
-            for i in range(1, 4):  # 3 Power Switches
+            for i in (1, 2):  # 2 Power Switches
                 self.power_switch.append(
                     context.DeviceProxy(
                         device_name=f"mid_csp_cbf/power_switch/{i:03}",
@@ -69,12 +70,16 @@ def test_proxies_fixture() -> pytest.fixture:
 
             # SlimLink
             self.slim_link = []
-            for i in range(0, 3):  # 4 SlimLinks
+            for i in range(0, 4):  # 4 SlimLinks
                 self.slim_link.append(
                     context.DeviceProxy(
                         device_name=f"mid_csp_cbf/fs_links/{i:03}",
                     )
                 )
+            
+            # Set all proxies used in this test suite to simMode.TRUE
+            for proxy in (self.talon_lru + self.power_switch + self.slim_link):
+                proxy.simulationMode = SimulationMode.TRUE
 
     return TestProxies()
 

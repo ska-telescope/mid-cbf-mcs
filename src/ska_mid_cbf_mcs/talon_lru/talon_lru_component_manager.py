@@ -132,13 +132,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             "mid_csp_cbf/power_switch/" + pdu
         )
         if power_switch_proxy is not None:
-            # TODO: Refactor proxy simulation mode setting in controller instead.
             try:
-                # Set the power switch's simulation mode and set admin mode to ONLINE
-                power_switch_proxy.adminMode = AdminMode.OFFLINE
-                power_switch_proxy.simulationMode = self.simulation_mode
-                power_switch_proxy.adminMode = AdminMode.ONLINE
-
                 power_state = power_switch_proxy.GetOutletPowerState(
                     pdu_outlet
                 )
@@ -161,11 +155,19 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_power_switch1,
             self.pdu1_power_state,
         ) = self._init_power_switch(self._pdus[0], self._pdu_outlets[0])
+        # If PDU1 and PDU2 match, use same proxy
         if self._pdus[0] == self._pdus[1]:
             self._proxy_power_switch2 = self._proxy_power_switch1
-            self.pdu2_power_state = self.pdu1_power_state
+            # If outlet1 and outlet2 match, use same power state, set single outlet flag
             if self._pdu_outlets[0] == self._pdu_outlets[1]:
+                self.pdu2_power_state = self.pdu1_power_state
                 self._using_single_outlet = True
+            else:
+                self.pdu2_power_state = (
+                    self._proxy_power_switch2.GetOutletPowerState(
+                        self._pdu_outlets[1]
+                    )
+                )
         else:
             (
                 self._proxy_power_switch2,
