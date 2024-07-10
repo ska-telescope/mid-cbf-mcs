@@ -436,34 +436,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
-        # Stop monitoring talon board telemetries and fault status
-        talondx_board_proxies_by_id = {
-            1: self._proxy_talondx_board1,
-            2: self._proxy_talondx_board2,
-        }
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(
-                    self._turn_off_boards, board_id, proxy_talondx_board
-                )
-                for board_id, proxy_talondx_board in talondx_board_proxies_by_id.items()
-            ]
-            results = [f.result() for f in futures]
-        for result_code, msg in results:
-            if result_code == ResultCode.FAILED:
-                return (
-                    ResultCode.FAILED,
-                    f"Failed to turn off Talon board: {msg}",
-                )
-            elif result_code == ResultCode.OK:
-                self._logger.info(
-                    f"Talon board successfully turned off: {msg}"
-                )
-            else:
-                self._logger.warn(
-                    f"Talon board turned off with unexpected result code {result_code}: {msg}"
-                )
-
         # Power off both outlets
         result1 = ResultCode.FAILED
         if self._proxy_power_switch1 is not None:
@@ -503,20 +475,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             self.update_component_power_mode(PowerMode.OFF)
             return (ResultCode.OK, "Both outlets successfully turned off")
-
-    def _turn_off_boards(
-        self: TalonLRUComponentManager, board_id, talondx_board_proxy
-    ):
-        try:
-            talondx_board_proxy.Off()
-        except tango.DevFailed as df:
-            self._logger.warn(
-                f"Talon board {board_id} OFF command failed: {df}"
-            )
-        return (
-            ResultCode.OK,
-            f"_turn_off_boards completed OK on Talon board {board_id}",
-        )
 
     def standby(
         self: TalonLRUComponentManager,
