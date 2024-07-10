@@ -7,14 +7,13 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for MCS Slim integration tests."""
+"""This module contains pytest-specific test harness for MCS VCC integration tests."""
 
 from __future__ import annotations
 
 import pytest
 
 # Tango imports
-from ska_control_model import SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -28,7 +27,7 @@ def device_under_test_fixture() -> context.DeviceProxy:
 
     :return: the device under test
     """
-    return context.DeviceProxy(device_name="mid_csp_cbf/slim/slim-fs")
+    return context.DeviceProxy(device_name="mid_csp_cbf/vcc/001")
 
 
 @pytest.fixture(name="test_proxies")
@@ -77,15 +76,11 @@ def test_proxies_fixture() -> pytest.fixture:
                     )
                 )
 
-            # Set all proxies used in this test suite to simMode.TRUE
-            for proxy in self.talon_lru + self.power_switch + self.slim_link:
-                proxy.simulationMode = SimulationMode.TRUE
-
     return TestProxies()
 
 
 @pytest.fixture(name="change_event_callbacks")
-def slim_change_event_callbacks(
+def vcc_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     """

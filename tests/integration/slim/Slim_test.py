@@ -56,18 +56,18 @@ class TestSlim:
         """
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
-             
+
         # Start monitoring the TalonLRUs and power switch devices
         for ps in test_proxies.power_switch:
             ps.adminMode = AdminMode.ONLINE
             ps_change_event_callbacks["State"].assert_change_event(DevState.ON)
-            
+
         for lru in test_proxies.talon_lru:
             lru.adminMode = AdminMode.ONLINE
             lru_change_event_callbacks["State"].assert_change_event(
                 DevState.OFF
             )
-        
+
         device_under_test.adminMode = AdminMode.ONLINE
         change_event_callbacks["State"].assert_change_event(DevState.OFF)
 

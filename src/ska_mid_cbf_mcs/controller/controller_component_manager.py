@@ -392,7 +392,7 @@ class ControllerComponentManager(CbfComponentManager):
                 proxy=ps,
                 simulation_mode=self._talondx_component_manager.simulation_mode,
             )
-            
+
         success = True
         self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
