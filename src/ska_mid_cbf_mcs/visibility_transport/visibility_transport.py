@@ -164,7 +164,7 @@ class VisibilityTransport:
         # Merge the output hosts and ports from FSP entries to one
         output_hosts = []
         output_ports = []
-        #min_offset = min(self._channel_offsets)
+        # min_offset = min(self._channel_offsets)
         for fsp in fsp_config:
             # the channel IDs are relative to the channel offset of the FSP entry
             if (
@@ -172,12 +172,14 @@ class VisibilityTransport:
                 and "output_host" in fsp
                 and "output_port" in fsp
             ):
-                #diff = fsp["channel_offset"] - min_offset
+                # diff = fsp["channel_offset"] - min_offset
                 output_hosts += [
-                    [h[0] + fsp["channel_offset"], h[1]] for h in fsp["output_host"]
+                    [h[0] + fsp["channel_offset"], h[1]]
+                    for h in fsp["output_host"]
                 ]
                 output_ports += [
-                    [p[0] + fsp["channel_offset"], p[1]] for p in fsp["output_port"]
+                    [p[0] + fsp["channel_offset"], p[1]]
+                    for p in fsp["output_port"]
                 ]
 
         next_host_idx = 1
