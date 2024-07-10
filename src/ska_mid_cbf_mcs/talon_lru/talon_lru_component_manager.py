@@ -461,7 +461,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 if result2 == ResultCode.OK:
                     self.pdu2_power_mode = PowerMode.OFF
                     self._logger.info("PDU 2 successfully turned off.")
-        
+
         # Stop monitoring talon board telemetries and fault status
         talondx_board_proxies_by_id = {
             1: self._proxy_talondx_board1,
