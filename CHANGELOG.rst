@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+
+0.15.2
+******
 * CIP-2560 Moved visibility transport logic from FSP App to VisibilityTransport class. Multi-FSP support.
 * CIP-2553 Reduced number of pods in MCS deployment
 * CIP-2447 Added FpgaDieVoltage[0-6] Attributes in TalonBoard Device to read from the FPGA Die Voltage Sensors
