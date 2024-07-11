@@ -837,6 +837,19 @@ class ControllerComponentManager(CbfComponentManager):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 success = False
+        
+        # Turn off TalonBoard devices. 
+        # NOTE: This is separated from the subelements_fast group call because 
+        #       a failure shouldn't cause Controller.Off() to fail.
+        try:
+            for fqdn in self._fqdn_talon_board:
+                self._proxies[fqdn].Off()
+        except tango.DevFailed as df:
+            for item in df.args:
+                # Log a warning, but continue when the talon board fails to turn off
+                log_msg = f"Failed to turn off Talon proxy; {item.reason}"
+                self.logger.warning(log_msg)
+                message.append(log_msg)
 
         if success:
             message.append("Successfully issued Off() to all subelements.")

@@ -48,6 +48,10 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
 
+from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
+    VisibilityTransport,
+)
+
 
 class CbfSubarrayComponentManager(CbfObsComponentManager):
     """A component manager for the CbfSubarray class."""
@@ -74,6 +78,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         fsp: list[str],
         fsp_corr_sub: list[str],
         talon_board: list[str],
+        vis_slim: str,
         **kwargs: any,
     ) -> None:
         """
@@ -85,6 +90,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param fsp: FQDNs of subordinate FSP devices
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
         :param talon_board: FQDNs of talon board devices
+        :param vis_slim: FQDN of the visibility SLIM device
         """
         super().__init__(*args, **kwargs)
 
@@ -98,6 +104,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = fsp
         self._fqdn_fsp_corr_subarray_device = fsp_corr_sub
         self._fqdn_talon_board_device = talon_board
+        self._fqdn_vis_slim_device = vis_slim
 
         # initialize attribute values
         self._sys_param_str = ""
@@ -117,6 +124,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
+        # Controls the visibility transport from FSP outputs to SDP
+        self._vis_transport = VisibilityTransport(
+            logger = self.logger,
+        )
+
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
         self._controller_max_capabilities = {}
@@ -134,6 +146,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._all_talon_board_proxies = []
         self._assigned_talon_board_proxies = set()
+        
+        # subarray does not control the visibility SLIM. It only
+        # queries the config to figure out how to route the visibilities,
+        # and updates the scan configuration accordingly.
+        self._proxy_vis_slim = None
 
     def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
         """
@@ -193,6 +210,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 for fqdn in self._fqdn_talon_board_device:
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._all_talon_board_proxies.append(proxy)
+                    
+            if self._proxy_vis_slim is None:
+                self._proxy_vis_slim = context.DeviceProxy(
+                    device_name=self._fqdn_vis_slim_device
+                )
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -1210,9 +1232,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp_config:
                 self.logger.warning(
-                    "channel_offset not defined in configuration. Assigning default of 1."
+                    "channel_offset not defined in configuration. Assigning default of 0."
                 )
-                fsp_config["channel_offset"] = 1
+                fsp_config["channel_offset"] = 0
 
             # Add the fs_sample_rate for all dishes
             fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
@@ -1284,6 +1306,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     + f"{fsp_corr_proxy.dev_name()}; {df}"
                 )
                 fsp_success = False
+        
+        # Route visibilities from each FSP to the outputting board
+        if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         return fsp_success
 
@@ -1531,6 +1559,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+        
+        if not self.simulation_mode:
+            self.logger.info("Visibility transport enable output")
+            self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
 
@@ -1575,6 +1607,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+        
+        if not self.simulation_mode:
+            self.logger.info("Visibility transport disable output")
+            self._vis_transport.disable_output()
 
         # Update obsState callback
         self._update_component_state(scanning=False)
