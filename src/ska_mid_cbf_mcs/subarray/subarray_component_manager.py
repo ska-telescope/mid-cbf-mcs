@@ -126,7 +126,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Controls the visibility transport from FSP outputs to SDP
         self._vis_transport = VisibilityTransport(
-            self._logger,
+            logger = self.logger,
         )
 
         # device proxy for easy reference to CBF controller
@@ -1232,9 +1232,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp_config:
                 self.logger.warning(
-                    "channel_offset not defined in configuration. Assigning default of 1."
+                    "channel_offset not defined in configuration. Assigning default of 0."
                 )
-                fsp_config["channel_offset"] = 1
+                fsp_config["channel_offset"] = 0
 
             # Add the fs_sample_rate for all dishes
             fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
@@ -1309,6 +1309,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         
         # Route visibilities from each FSP to the outputting board
         if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
             self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
@@ -1560,6 +1561,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
         
         if not self.simulation_mode:
+            self.logger.info("Visibility transport enable output")
             self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
@@ -1607,6 +1609,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
         
         if not self.simulation_mode:
+            self.logger.info("Visibility transport disable output")
             self._vis_transport.disable_output()
 
         # Update obsState callback

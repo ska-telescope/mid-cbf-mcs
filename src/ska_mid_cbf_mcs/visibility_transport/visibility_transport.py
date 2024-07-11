@@ -24,7 +24,7 @@ class VisibilityTransport:
 
         :param logger: the logger object
         """
-        self._logger = logger
+        self.logger = logger
 
         # Tango device proxies
         self._host_lut_s1_fqdns = []
@@ -49,10 +49,17 @@ class VisibilityTransport:
         :param vis_slim_yaml: the visibility mesh config yaml
         :param board_to_fsp_id: a dict to convert talon board str to fsp ID
         """
-        self._logger.info("Configuring visibility transport devices")
+        self.logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
         self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
+
+        if len(self._channel_offsets) == 0:
+            self._channel_offsets = [0]
+
+        self.logger.info(
+            f"FSP IDs = {self._fsp_ids}, channel_offsets = {self._channel_offsets}"
+        )
 
         # Parse the visibility SLIM yaml to determine which board will output
         # visibilities.
@@ -65,6 +72,9 @@ class VisibilityTransport:
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._channel_offsets
             ):
+                self.logger.info(
+                    f"Connecting to {self._host_lut_s2_fqdn} with channel offset {ch_offset}"
+                )
                 s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
                 s1_dp.channel_offset = ch_offset
                 s1_dp.connectToHostLUTStage2()
@@ -75,7 +85,7 @@ class VisibilityTransport:
             )
         except DevFailed as df:
             msg = str(df.args[0].desc)
-            self._logger.error(
+            self.logger.error(
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
@@ -97,7 +107,7 @@ class VisibilityTransport:
         :param n_vcc: number of receptors
         :param scan_id: the scan ID
         """
-        self._logger.info("Enable visibility output")
+        self.logger.info("Enable visibility output")
 
         dest_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config
@@ -114,7 +124,7 @@ class VisibilityTransport:
                 dp.command_inout("Program")
         except DevFailed as df:
             msg = str(df.args[0].desc)
-            self._logger.error(
+            self.logger.error(
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
@@ -125,7 +135,7 @@ class VisibilityTransport:
         - Unprogram all the host lut s1 devices
         - Unprogram the host lut s2 device
         """
-        self._logger.info("Disable visibility output")
+        self.logger.info("Disable visibility output")
 
         try:
             self._dp_spead_desc.command_inout("EndScan")
@@ -134,7 +144,7 @@ class VisibilityTransport:
             self._dp_host_lut_s2.command_inout("Unprogram")
         except DevFailed as df:
             msg = str(df.args[0].desc)
-            self._logger.error(
+            self.logger.error(
                 f"Failed to configure visibility transport devices: {msg}"
             )
 
@@ -154,7 +164,6 @@ class VisibilityTransport:
         # Merge the output hosts and ports from FSP entries to one
         output_hosts = []
         output_ports = []
-        min_offset = min(self._channel_offsets)
         for fsp in fsp_config:
             # the channel IDs are relative to the channel offset of the FSP entry
             if (
@@ -162,12 +171,13 @@ class VisibilityTransport:
                 and "output_host" in fsp
                 and "output_port" in fsp
             ):
-                diff = fsp["channel_offset"] - min_offset
                 output_hosts += [
-                    [h[0] + diff, h[1]] for h in fsp["output_host"]
+                    [h[0] + fsp["channel_offset"], h[1]]
+                    for h in fsp["output_host"]
                 ]
                 output_ports += [
-                    [p[0] + diff, p[1]] for p in fsp["output_port"]
+                    [p[0] + fsp["channel_offset"], p[1]]
+                    for p in fsp["output_port"]
                 ]
 
         next_host_idx = 1
@@ -230,14 +240,14 @@ class VisibilityTransport:
 
         # Create device proxies
         self._dp_host_lut_s1 = [
-            CbfDeviceProxy(fqdn=f, logger=self._logger)
+            CbfDeviceProxy(fqdn=f, logger=self.logger)
             for f in self._host_lut_s1_fqdns
         ]
         self._dp_host_lut_s2 = CbfDeviceProxy(
-            fqdn=self._host_lut_s2_fqdn, logger=self._logger
+            fqdn=self._host_lut_s2_fqdn, logger=self.logger
         )
         self._dp_spead_desc = CbfDeviceProxy(
-            fqdn=self._spead_desc_fqdn, logger=self._logger
+            fqdn=self._spead_desc_fqdn, logger=self.logger
         )
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
@@ -248,7 +258,7 @@ class VisibilityTransport:
                  ("talondx-00x") that will output visibilities.
         :raise TangoException: if configuration is not valid
         """
-        slim_cfg = SlimConfig(vis_slim_yaml, self._logger)
+        slim_cfg = SlimConfig(vis_slim_yaml, self.logger)
         active_links = slim_cfg.active_links()
         vis_out_map = {}
         for link in active_links:
