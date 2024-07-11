@@ -223,7 +223,7 @@ class CbfSubarrayComponentManager(
 
         # Controls the visibility transport from FSP outputs to SDP
         self._vis_transport = VisibilityTransport(
-            self._logger,
+            logger=self._logger,
         )
 
         # device proxy for easy reference to CBF controller
@@ -1779,9 +1779,9 @@ class CbfSubarrayComponentManager(
             # Add channel_offset if it was omitted from the configuration (it is optional).
             if "channel_offset" not in fsp:
                 self._logger.warning(
-                    "channel_offset not defined in configuration. Assigning default of 1."
+                    "channel_offset not defined in configuration. Assigning default of 0."
                 )
-                fsp["channel_offset"] = 1
+                fsp["channel_offset"] = 0
 
             # Add all DISH IDs for subarray and for correlation to fsp
             # Parameter named "subarray_vcc_ids" used by HPS contains all the
@@ -1905,6 +1905,7 @@ class CbfSubarrayComponentManager(
 
         # Route visibilities from each FSP to the outputting board
         if self._simulation_mode == SimulationMode.FALSE:
+            self._logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
             self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
@@ -2137,6 +2138,7 @@ class CbfSubarrayComponentManager(
                     self._logger.info(res.get_data())
 
         if self._simulation_mode == SimulationMode.FALSE:
+            self._logger.info("Visibility transport enable output")
             self._vis_transport.enable_output(self._subarray_id)
 
         self._scan_id = scan_id
@@ -2167,6 +2169,7 @@ class CbfSubarrayComponentManager(
                     self._logger.info(res.get_data())
 
         if self._simulation_mode == SimulationMode.FALSE:
+            self._logger.info("Visibility transport disable output")
             self._vis_transport.disable_output()
 
         self._scan_id = 0
