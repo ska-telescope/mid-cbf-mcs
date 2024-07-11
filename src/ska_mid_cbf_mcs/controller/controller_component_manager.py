@@ -783,6 +783,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._proxies[fqdn].Off()
         except tango.DevFailed as df:
             for item in df.args:
+                # Log a warning and continue when the talon board fails to turn off
                 log_msg = f"Failed to turn off Talon proxy; {item.reason}"
                 self._logger.warning(log_msg)
                 message.append(log_msg)
