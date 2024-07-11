@@ -571,7 +571,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._pdu_outlets[1]
                 )
                 # Guard incase LRC was rejected.
-                if result1 == ResultCode.REJECTED:
+                if result2 == ResultCode.REJECTED:
                     self.logger.error(
                         f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                     )
@@ -591,58 +591,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                     )
                     result2 = ResultCode.OK
         return result1, result2
-
-    def _turn_off_talon(
-        self: TalonLRUComponentManager,
-        talondx_board_proxy: context.DeviceProxy,
-    ) -> tuple[ResultCode, str]:
-        """
-        Turn off the specified Talon board.
-        """
-        try:
-            talondx_board_proxy.Off()
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"_turn_off_talon FAILED on {talondx_board_proxy.dev_name()}: {df}"
-            )
-            return (
-                ResultCode.FAILED,
-                "_turn_off_talon FAILED",
-            )
-        return (ResultCode.OK, "_turn_off_talon completed OK")
-
-    def _turn_off_talons(
-        self: TalonLRUComponentManager,
-    ) -> None | tuple[ResultCode, str]:
-        """
-        Turn off the two Talon boards, threaded.
-
-        :return: ResultCode.FAILED if one of the boards failed to turn off, None otherwise
-        """
-        group_talon_board = [
-            self._proxy_talondx_board1,
-            self._proxy_talondx_board2,
-        ]
-
-        # Turn off all the talons
-        for result_code, msg in self._issue_group_command(
-            command_name="Off", proxies=group_talon_board
-        ):
-            if result_code == ResultCode.FAILED:
-                return (
-                    ResultCode.FAILED,
-                    f"Failed to turn off Talon board: {msg}",
-                )
-            elif result_code == ResultCode.OK:
-                self.logger.info(f"Talon board successfully turned off: {msg}")
-            else:
-                self.logger.warn(
-                    f"Talon board turned off with unexpected result code {result_code}: {msg}"
-                )
-        return None
 
     def _determine_off_result_code(
         self: TalonLRUComponentManager,
@@ -713,15 +661,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # Power off both outlets
         result1, result2 = self._turn_off_pdus(task_abort_event)
-
-        # Stop monitoring talon board telemetries and fault status
-        talon_off_result = self._turn_off_talons()
-        if talon_off_result:
-            task_callback(
-                result=talon_off_result,
-                status=TaskStatus.FAILED,
-            )
-            return
 
         # _determine_off_result_code will update the component power state
         task_callback(
