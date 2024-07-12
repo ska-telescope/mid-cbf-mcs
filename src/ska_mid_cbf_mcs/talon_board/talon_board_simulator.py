@@ -30,7 +30,7 @@ class TalonBoardSimulator:
         :param logger: a logger for this object to use
         """
 
-        self._logger = logger
+        self.logger = logger
 
         # Init FPGA sensor attr
         self._fpga_die_voltages = [12.0, 2.5, 0.87, 1.8, 1.8, 0.9, 1.8]

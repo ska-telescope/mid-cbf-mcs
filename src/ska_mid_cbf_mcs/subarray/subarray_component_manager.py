@@ -47,7 +47,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
 )
@@ -126,7 +125,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Controls the visibility transport from FSP outputs to SDP
         self._vis_transport = VisibilityTransport(
-            logger = self.logger,
+            logger=self.logger,
         )
 
         # device proxy for easy reference to CBF controller
@@ -146,7 +145,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._all_talon_board_proxies = []
         self._assigned_talon_board_proxies = set()
-        
+
         # subarray does not control the visibility SLIM. It only
         # queries the config to figure out how to route the visibilities,
         # and updates the scan configuration accordingly.
@@ -210,7 +209,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 for fqdn in self._fqdn_talon_board_device:
                     proxy = context.DeviceProxy(device_name=fqdn)
                     self._all_talon_board_proxies.append(proxy)
-                    
+
             if self._proxy_vis_slim is None:
                 self._proxy_vis_slim = context.DeviceProxy(
                     device_name=self._fqdn_vis_slim_device
@@ -1306,7 +1305,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     + f"{fsp_corr_proxy.dev_name()}; {df}"
                 )
                 fsp_success = False
-        
+
         # Route visibilities from each FSP to the outputting board
         if not self.simulation_mode:
             self.logger.info("Configuring visibility transport")
@@ -1559,7 +1558,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-        
+
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
             self._vis_transport.enable_output(self._subarray_id)
@@ -1607,7 +1606,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-        
+
         if not self.simulation_mode:
             self.logger.info("Visibility transport disable output")
             self._vis_transport.disable_output()

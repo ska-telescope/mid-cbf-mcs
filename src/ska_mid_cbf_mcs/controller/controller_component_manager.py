@@ -837,9 +837,9 @@ class ControllerComponentManager(CbfComponentManager):
             if result_code == ResultCode.FAILED:
                 message.append(msg)
                 success = False
-        
-        # Turn off TalonBoard devices. 
-        # NOTE: This is separated from the subelements_fast group call because 
+
+        # Turn off TalonBoard devices.
+        # NOTE: This is separated from the subelements_fast group call because
         #       a failure shouldn't cause Controller.Off() to fail.
         try:
             for fqdn in self._fqdn_talon_board:

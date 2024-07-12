@@ -40,8 +40,8 @@ class InfluxdbQueryClient:
         self._influx_bucket = influx_bucket
         self._influx_auth_token = influx_auth_token
 
-        self._logger = logger
-        self._logger.info(
+        self.logger = logger
+        self.logger.info(
             f"InfluxdbQueryClient: using {self._hostname}:{self._influx_port}"
         )
 
@@ -58,12 +58,12 @@ class InfluxdbQueryClient:
                 org=self._influx_org,
             ) as client:
                 ready = await client.ping()
-                self._logger.info(
+                self.logger.info(
                     f"Ping InfluxDB at {self._hostname}:{self._influx_port}: {ready}"
                 )
                 return ready
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 f"Unexpected error when pinging InfluxDB at {self._hostname}:{self._influx_port}: {e}"
             )
             return False
