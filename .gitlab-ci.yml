@@ -11,6 +11,7 @@ variables:
 stages:
   - lint
   - build
+  - test
   - deploy
   - integration
   - staging
