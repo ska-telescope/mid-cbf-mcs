@@ -16,6 +16,7 @@ UNRELEASED CHANGES
 * MAP-115 Updated MCS overview Taranta dashboard to include more info LRUs, sim mode and updates to the DISH ID
 * MAP-116 Change initial board IP loading so it is set to an explicitly placeholder value until a HW config file is applied
 * CIP-2604 Fixes issue where unused Talon times-out while trying to set SimulationMode in MCS's TalonBoard during Controller's On Command
+* CIP-2365 Fixing shutdown order to fix off command failure, logging warning instead of error when talon board fails to turn off
 
 0.15.1
 ******

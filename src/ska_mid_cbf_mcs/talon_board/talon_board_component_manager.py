@@ -379,24 +379,32 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        for ev in self._talon_sysid_events:
-            for name, id in ev.items():
-                self._logger.info(
-                    f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
-                )
-                self._proxies[self._talon_sysid_fqdn].remove_event(name, id)
+        try:
+            for ev in self._talon_sysid_events:
+                for name, id in ev.items():
+                    self._logger.info(
+                        f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
+                    )
+                    self._proxies[self._talon_sysid_fqdn].remove_event(
+                        name, id
+                    )
 
-        for ev in self._talon_status_events:
-            for name, id in ev.items():
-                self._logger.info(
-                    f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
-                )
-                self._proxies[self._talon_status_fqdn].remove_event(name, id)
+            for ev in self._talon_status_events:
+                for name, id in ev.items():
+                    self._logger.info(
+                        f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
+                    )
+                    self._proxies[self._talon_status_fqdn].remove_event(
+                        name, id
+                    )
+        finally:
+            self._proxies = {}
+            self._talon_sysid_attrs = {}
+            self._talon_status_attrs = {}
+            self._talon_sysid_events = []
+            self._talon_status_events = []
+            self.update_component_power_mode(PowerMode.OFF)
 
-        self._talon_sysid_attrs = {}
-        self._talon_status_attrs = {}
-
-        self.update_component_power_mode(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(
