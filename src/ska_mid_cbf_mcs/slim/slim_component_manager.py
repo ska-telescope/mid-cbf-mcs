@@ -667,7 +667,7 @@ class SlimComponentManager(CbfComponentManager):
         self._config_str = config_str
 
         try:
-            self._active_links = SlimConfig(self._config_str, self._logger).active_links()
+            self._active_links = SlimConfig(self._config_str, self.logger).active_links()
 
             self.logger.debug(
                 f"Configuring {len(self._dp_links)} links with simulationMode = {self.simulation_mode}"

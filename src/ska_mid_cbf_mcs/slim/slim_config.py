@@ -13,7 +13,7 @@ class SlimConfig:
         :param yaml_str: the string defining the mesh links
         :raise Tango exception: if the configuration is not valid yaml.
         """
-        self._logger = logger
+        self.logger = logger
         self._active_links = self._parse_links_yaml(yaml_str)
 
     def active_links(self):
