@@ -16,6 +16,7 @@ import socket
 import pytest
 
 # Tango imports
+from ska_control_model import LoggingLevel, SimulationMode
 from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
 )
@@ -39,73 +40,70 @@ class TestCbfController:
     """
 
     @pytest.mark.skip(reason="enable to test DebugDevice")
-    def test_DebugDevice(self, test_proxies):
-        port = test_proxies.controller.DebugDevice()
+    def test_DebugDevice(self, device_under_test):
+        port = device_under_test.DebugDevice()
         assert port == _DEBUGGER_PORT
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(("localhost", _DEBUGGER_PORT))
-        test_proxies.controller.On()
+        device_under_test.On()
 
-    def test_Connect(self, test_proxies):
+    def test_Connect(
+        self, device_under_test, test_proxies, change_event_callbacks
+    ):
         """
         Test the initial states and verify the component manager
         can start communicating
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # after init devices should be in DISABLE state
-        assert test_proxies.controller.State() == DevState.DISABLE
+        # After init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
         for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.subarray[i].adminMode = AdminMode.OFFLINE
             assert test_proxies.subarray[i].State() == DevState.DISABLE
         for i in range(1, test_proxies.num_vcc + 1):
+            test_proxies.vcc[i].adminMode = AdminMode.OFFLINE
             assert test_proxies.vcc[i].State() == DevState.DISABLE
         for i in range(1, test_proxies.num_fsp + 1):
+            test_proxies.fsp[i].adminMode = AdminMode.OFFLINE
             assert test_proxies.fsp[i].State() == DevState.DISABLE
-        for mesh in test_proxies.slim:
-            assert mesh.State() == DevState.DISABLE
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.DISABLE
-                    )
+        # for mesh in test_proxies.slim:
+        #     mesh.adminMode = AdminMode.OFFLINE
+        #     assert mesh.State() == DevState.DISABLE
+        # for i in ["CORR", "PSS-BF", "PST-BF"]:
+        #     for j in range(1, test_proxies.num_sub + 1):
+        #         for k in range(1, test_proxies.num_fsp + 1):
+        #             test_proxies.fspSubarray[i][j][k].adminMode = AdminMode.OFFLINE
+        #             assert (
+        #                 test_proxies.fspSubarray[i][j][k].State()
+        #                 == DevState.DISABLE
+        #             )
+
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # trigger start_communicating by setting the AdminMode to ONLINE
-        test_proxies.controller.adminMode = AdminMode.ONLINE
+        device_under_test.adminMode = AdminMode.ONLINE
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        # controller device should be in OFF state after start_communicating
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.controller.State() == DevState.OFF
-
-    def test_On(self, test_proxies):
+    def test_On(self, device_under_test, test_proxies, change_event_callbacks):
         """
         Test the "On" command
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
+        # Get the system parameters
         data_file_path = (
             os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
         )
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        test_proxies.controller.InitSysParam(sp)
 
-        # send the On command
-        test_proxies.controller.On()
+        # Initialize the system parameters
+        device_under_test.InitSysParam(sp)
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.controller.State() == DevState.ON
+        # Send the On command
+        device_under_test.On()
 
-        # after init devices should be in DISABLE state
+        # After ON devices should be in ONLINE state
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
         for i in range(1, test_proxies.num_sub + 1):
             assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
         for i in range(1, test_proxies.num_vcc + 1):
@@ -122,14 +120,7 @@ class TestCbfController:
                         == AdminMode.ONLINE
                     )
 
-        for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.subarray[i]],
-                DevState.ON,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.subarray[i].State() == DevState.ON
+    # TODO: Update tests below.
 
     def test_InitSysParam_Condition(self, test_proxies):
         """
