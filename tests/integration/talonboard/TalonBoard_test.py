@@ -10,14 +10,11 @@
 """Contain the tests for the TalonBoard."""
 from __future__ import annotations
 
-import time
-
-import pytest
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, SimulationMode
 
 # Tango imports
 from ska_tango_testing import context
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, SimulationMode
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
