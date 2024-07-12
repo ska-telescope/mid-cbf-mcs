@@ -7,9 +7,9 @@ supporting up to 8 boards.
 """
 import logging
 
+from ska_tango_testing import context
 from tango import DevFailed, Except
 
-from ska_tango_testing import context
 from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 
 
@@ -240,8 +240,7 @@ class VisibilityTransport:
 
         # Create device proxies
         self._dp_host_lut_s1 = [
-            context.DeviceProxy(device_name=f)
-            for f in self._host_lut_s1_fqdns
+            context.DeviceProxy(device_name=f) for f in self._host_lut_s1_fqdns
         ]
         self._dp_host_lut_s2 = context.DeviceProxy(
             device_name=self._host_lut_s2_fqdn

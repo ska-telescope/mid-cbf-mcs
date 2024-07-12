@@ -1,8 +1,8 @@
 import logging
 import re
 
+import tango
 import yaml
-from tango import Except
 
 
 class SlimConfig:

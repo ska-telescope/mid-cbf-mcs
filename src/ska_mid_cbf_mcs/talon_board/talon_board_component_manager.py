@@ -286,7 +286,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        try:    
+        try:
             if not self.simulation_mode:
                 for ev in self._talon_sysid_events:
                     for name, id in ev.items():
@@ -312,7 +312,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._talon_sysid_events = []
             self._talon_status_events = []
             self._update_component_state(power=PowerState.OFF)
-        
+
         return (ResultCode.OK, "Off completed OK")
 
     def _attr_change_callback(
