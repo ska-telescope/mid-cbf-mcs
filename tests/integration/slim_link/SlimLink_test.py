@@ -52,7 +52,7 @@ class TestSlimLink:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
-        
+
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
         change_event_callbacks["State"].assert_change_event(DevState.ON)

@@ -13,7 +13,6 @@ from __future__ import annotations
 import copy
 import json
 import os
-import time
 
 import pytest
 from ska_control_model import ResultCode, SimulationMode

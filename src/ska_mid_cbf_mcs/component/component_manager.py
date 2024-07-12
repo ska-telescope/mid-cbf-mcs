@@ -19,6 +19,7 @@ from typing import Any, Callable, Optional, cast
 
 import tango
 from ska_control_model import (
+    AdminMode,
     CommunicationStatus,
     HealthState,
     PowerState,
