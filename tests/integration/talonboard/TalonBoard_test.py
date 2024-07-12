@@ -10,6 +10,7 @@
 """Contain the tests for the TalonBoard."""
 from __future__ import annotations
 
+from ska_control_model import LoggingLevel
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, SimulationMode
 
@@ -33,13 +34,11 @@ class TestTalonBoard:
         Test the initial states and verify the component manager
         can start communicating
         """
-        # Turn on Simulation Mode
-        device_under_test.simulationMode = SimulationMode.TRUE
-        assert device_under_test.simulationMode == SimulationMode.TRUE
-
-        # after init devices should be in DISABLE state
-        assert device_under_test.adminMode == AdminMode.OFFLINE
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
         assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE

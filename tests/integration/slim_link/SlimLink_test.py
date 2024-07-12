@@ -47,8 +47,13 @@ class TestSlimLink:
         :param device_under_test: the device under test
         :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
+        
+        # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
         change_event_callbacks["State"].assert_change_event(DevState.ON)
         change_event_callbacks["healthState"].assert_change_event(

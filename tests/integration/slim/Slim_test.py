@@ -54,6 +54,9 @@ class TestSlim:
         :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
         :param ps_change_event_callbacks: a mock object that receives PowerSwitch's subscribed change events.
         """
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
 
