@@ -535,7 +535,7 @@ class ControllerComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-        # The order of the following operations for is important:
+        # The order of the following operations for ON is important:
         # 1. Power on all the Talon boards by
         #    i.  Get the FQDNs of the LRUs
         #    ii. Sending ON command to all the LRUs
@@ -1204,7 +1204,7 @@ class ControllerComponentManager(CbfComponentManager):
         if self._component_state["power"] == PowerState.OFF:
             return True
         self.logger.warning(
-            "InitSysParam command cannot be issued because the curremt PowerState is not 'off'."
+            "InitSysParam command cannot be issued because the current PowerState is not 'off'."
         )
         return False
 

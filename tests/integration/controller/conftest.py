@@ -209,7 +209,10 @@ def controller_change_event_callbacks(
     :param device_under_test: the device whose change events will be subscribed to.
     :return: the change event callback object
     """
-    change_event_attr_list = ["longRunningCommandResult", "State"]
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "State",
+    ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
