@@ -7,6 +7,12 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
+
+  * Add cross validation for cbf.fsp.output_port for the incoming ConfigureScan
+  * Remove setting fsp subarray values from parameters removed from schema
+  * Update ConfigureScan unit test data to 3.0
+  * Update output_port default value to expanded 2-tuple format
 
 0.15.2
 ******
@@ -17,12 +23,6 @@ UNRELEASED CHANGES
 * MAP-116 Change initial board IP loading so it is set to an explicitly placeholder value until a HW config file is applied
 * CIP-2604 Fixes issue where unused Talon times-out while trying to set SimulationMode in MCS's TalonBoard during Controller's On Command
 * CIP-2365 Fixing shutdown order to fix off command failure, logging warning instead of error when talon board fails to turn off
-* CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
-
-  * Add cross validation for cbf.fsp.output_port for the incoming ConfigureScan
-  * Remove setting fsp subarray values from parameters removed from schema
-  * Update ConfigureScan unit test data to 3.0
-  * Update output_port default value to expanded 2-tuple format
 
 0.15.1
 ******
