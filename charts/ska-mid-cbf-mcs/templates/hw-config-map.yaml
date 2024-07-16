@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  hw_config.yaml: | 
+    {{ .Values.hw_config }}
+kind: ConfigMap
+metadata:
+  name: hwconfig-configmap
