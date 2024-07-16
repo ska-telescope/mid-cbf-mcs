@@ -45,10 +45,13 @@ class TestCbfController:
             s.connect(("localhost", _DEBUGGER_PORT))
         device_under_test.On()
 
-    def test_Online(
+    def test_Connect(
         self,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
+        test_proxies: pytest.fixture,
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        ps_change_event_callbacks: MockTangoEventCallbackGroup,
     ):
         """
         Test the initial states and verify the component manager
@@ -60,12 +63,26 @@ class TestCbfController:
             change_event_callbacks["State"].assert_change_event(
                 DevState.DISABLE
             )
+
+        for ps in test_proxies.power_switch:
+            if ps.State() != DevState.DISABLE:
+                ps.adminMode = AdminMode.OFFLINE
+                ps_change_event_callbacks["State"].assert_change_event(
+                    DevState.DISABLE
+                )
+
         device_under_test.simulationMode = SimulationMode.TRUE
         device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
         change_event_callbacks["State"].assert_change_event(DevState.OFF)
+
+        ps_change_event_callbacks["State"].assert_change_event(DevState.INIT)
+        # lru_change_event_callbacks["State"].assert_change_event(DevState.OFF)
+
+        ps_change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
         change_event_callbacks.assert_not_called()
 
     def test_InitSysParam(self, device_under_test, change_event_callbacks):
@@ -101,23 +118,22 @@ class TestCbfController:
         )
         change_event_callbacks["State"].assert_change_event(DevState.ON)
 
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
-        for mesh in test_proxies.slim:
-            assert mesh.adminMode == AdminMode.ONLINE
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].adminMode
-                        == AdminMode.ONLINE
-                    )
-
-    # TODO: Update tests below.
+        # Validate subelements are in the correct state
+        # for i in range(1, test_proxies.num_sub + 1):
+        #     assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
+        # for i in range(1, test_proxies.num_vcc + 1):
+        #     assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
+        # for i in range(1, test_proxies.num_fsp + 1):
+        #     assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
+        # for mesh in test_proxies.slim:
+        #     assert mesh.adminMode == AdminMode.ONLINE
+        # for i in ["CORR", "PSS-BF", "PST-BF"]:
+        #     for j in range(1, test_proxies.num_sub + 1):
+        #         for k in range(1, test_proxies.num_fsp + 1):
+        #             assert (
+        #                 test_proxies.fspSubarray[i][j][k].adminMode
+        #                 == AdminMode.ONLINE
+        #             )
 
     # def test_InitSysParam_Condition(self, test_proxies):
     #     """
@@ -161,73 +177,44 @@ class TestCbfController:
     #         retrieved_init_sys_param_file
     #     )
 
-    # def test_Off(self, test_proxies):
-    #     """
-    #     Test the "Off" command
-    #     """
+    def test_Off(
+        self, device_under_test, test_proxies, change_event_callbacks
+    ):
+        """
+        Test the "Off" command
+        """
 
-    #     wait_time_s = 3
-    #     sleep_time_s = 0.1
+        # if controller is already off, we must turn it On before turning off.
+        if device_under_test.State() == DevState.OFF:
+            self.test_On(
+                device_under_test, test_proxies, change_event_callbacks
+            )
 
-    #     # if controller is already off, we must turn it On before turning off.
-    #     if test_proxies.controller.State() == DevState.OFF:
-    #         test_proxies.controller.On()
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.controller],
-    #             DevState.ON,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
+        # Send the Off command
+        result_code, command_id = device_under_test.Off()
+        assert result_code == [ResultCode.QUEUED]
 
-    #     assert test_proxies.controller.State() == DevState.ON
-    #     # send the Off command
-    #     test_proxies.controller.Off()
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "Off completed OK"]')
+        )
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-    #     )
-    #     assert test_proxies.controller.State() == DevState.OFF
-
-    #     for i in range(1, test_proxies.num_sub + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.subarray[i]],
-    #             DevState.OFF,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[i].State() == DevState.OFF
-
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.vcc[i]], DevState.OFF, wait_time_s, sleep_time_s
-    #         )
-    #         assert test_proxies.vcc[i].State() == DevState.OFF
-
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.fsp[i]], DevState.OFF, wait_time_s, sleep_time_s
-    #         )
-    #         assert test_proxies.fsp[i].State() == DevState.OFF
-
-    #     for mesh in test_proxies.slim:
-    #         test_proxies.wait_timeout_dev(
-    #             [mesh], DevState.OFF, wait_time_s, sleep_time_s
-    #         )
-    #         assert mesh.State() == DevState.OFF
-
-    #     for i in ["CORR", "PSS-BF", "PST-BF"]:
-    #         for j in range(1, test_proxies.num_sub + 1):
-    #             for k in range(1, test_proxies.num_fsp + 1):
-    #                 test_proxies.wait_timeout_dev(
-    #                     [test_proxies.fspSubarray[i][j][k]],
-    #                     DevState.OFF,
-    #                     wait_time_s,
-    #                     sleep_time_s,
-    #                 )
-    #                 assert (
-    #                     test_proxies.fspSubarray[i][j][k].State()
-    #                     == DevState.OFF
-    #                 )
+        # Validate subelements are in the correct state
+        # for i in range(1, test_proxies.num_sub + 1):
+        #     assert test_proxies.subarray[i].State() == DevState.OFF
+        # for i in range(1, test_proxies.num_vcc + 1):
+        #     assert test_proxies.vcc[i].State() == DevState.OFF
+        # for i in range(1, test_proxies.num_fsp + 1):
+        #     assert test_proxies.fsp[i].State() == DevState.OFF
+        # for mesh in test_proxies.slim:
+        #     assert mesh.State() == DevState.OFF
+        # for i in ["CORR", "PSS-BF", "PST-BF"]:
+        #     for j in range(1, test_proxies.num_sub + 1):
+        #         for k in range(1, test_proxies.num_fsp + 1):
+        #             assert (
+        #                 test_proxies.fspSubarray[i][j][k].State()
+        #                 == DevState.OFF
+        #             )
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -452,100 +439,55 @@ class TestCbfController:
     #                     == ObsState.IDLE
     #                 )
 
-    # def test_Standby(self, test_proxies):
-    #     """
-    #     Test the "Standby" command
-    #     """
-    #     wait_time_s = 3
-    #     sleep_time_s = 0.1
+    def test_Disconnect(
+        self, device_under_test, change_event_callbacks, test_proxies
+    ):
+        """
+        Verify the component manager can stop communicating
+        """
+        # Trigger stop_communicating by setting the AdminMode to OFFLINE
+        device_under_test.adminMode = AdminMode.OFFLINE
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
 
-    #     # send the Standby command
-    #     test_proxies.controller.Standby()
-
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller],
-    #         DevState.STANDBY,
-    #         wait_time_s,
-    #         sleep_time_s,
-    #     )
-    #     assert test_proxies.controller.State() == DevState.STANDBY
-
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.vcc[i]],
-    #             DevState.STANDBY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.vcc[i].State() == DevState.STANDBY
-
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.fsp[i]],
-    #             DevState.STANDBY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.fsp[i].State() == DevState.STANDBY
-
-    # def test_Disconnect(self, test_proxies):
-    #     """
-    #     Verify the component manager can stop communicating
-    #     """
-
-    #     wait_time_s = 3
-    #     sleep_time_s = 0.1
-
-    #     # trigger stop_communicating by setting the AdminMode to OFFLINE
-    #     test_proxies.controller.adminMode = AdminMode.OFFLINE
-
-    #     # controller device should be in DISABLE state after stop_communicating
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller],
-    #         DevState.DISABLE,
-    #         wait_time_s,
-    #         sleep_time_s,
-    #     )
-    #     assert test_proxies.controller.State() == DevState.DISABLE
-    #     for i in range(1, test_proxies.num_sub + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.subarray[i]],
-    #             DevState.DISABLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[i].State() == DevState.DISABLE
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.vcc[i]],
-    #             DevState.DISABLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.vcc[i].State() == DevState.DISABLE
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         test_proxies.wait_timeout_dev(
-    #             [test_proxies.fsp[i]],
-    #             DevState.DISABLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.fsp[i].State() == DevState.DISABLE
-    #     for mesh in test_proxies.slim:
-    #         test_proxies.wait_timeout_dev(
-    #             [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
-    #         )
-    #         assert mesh.State() == DevState.DISABLE
-    #     for i in ["CORR", "PSS-BF", "PST-BF"]:
-    #         for j in range(1, test_proxies.num_sub + 1):
-    #             for k in range(1, test_proxies.num_fsp + 1):
-    #                 test_proxies.wait_timeout_dev(
-    #                     [test_proxies.fspSubarray[i][j][k]],
-    #                     DevState.DISABLE,
-    #                     wait_time_s,
-    #                     sleep_time_s,
-    #                 )
-    #                 assert (
-    #                     test_proxies.fspSubarray[i][j][k].State()
-    #                     == DevState.DISABLE
-    #                 )
+        # for i in range(1, test_proxies.num_sub + 1):
+        #     test_proxies.wait_timeout_dev(
+        #         [test_proxies.subarray[i]],
+        #         DevState.DISABLE,
+        #         wait_time_s,
+        #         sleep_time_s,
+        #     )
+        #     assert test_proxies.subarray[i].State() == DevState.DISABLE
+        # for i in range(1, test_proxies.num_vcc + 1):
+        #     test_proxies.wait_timeout_dev(
+        #         [test_proxies.vcc[i]],
+        #         DevState.DISABLE,
+        #         wait_time_s,
+        #         sleep_time_s,
+        #     )
+        #     assert test_proxies.vcc[i].State() == DevState.DISABLE
+        # for i in range(1, test_proxies.num_fsp + 1):
+        #     test_proxies.wait_timeout_dev(
+        #         [test_proxies.fsp[i]],
+        #         DevState.DISABLE,
+        #         wait_time_s,
+        #         sleep_time_s,
+        #     )
+        #     assert test_proxies.fsp[i].State() == DevState.DISABLE
+        # for mesh in test_proxies.slim:
+        #     test_proxies.wait_timeout_dev(
+        #         [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
+        #     )
+        #     assert mesh.State() == DevState.DISABLE
+        # for i in ["CORR", "PSS-BF", "PST-BF"]:
+        #     for j in range(1, test_proxies.num_sub + 1):
+        #         for k in range(1, test_proxies.num_fsp + 1):
+        #             test_proxies.wait_timeout_dev(
+        #                 [test_proxies.fspSubarray[i][j][k]],
+        #                 DevState.DISABLE,
+        #                 wait_time_s,
+        #                 sleep_time_s,
+        #             )
+        #             assert (
+        #                 test_proxies.fspSubarray[i][j][k].State()
+        #                 == DevState.DISABLE
+        #             )

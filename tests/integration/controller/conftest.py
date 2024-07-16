@@ -220,3 +220,45 @@ def controller_change_event_callbacks(
         device_under_test, change_event_attr_list, change_event_callbacks
     )
     return change_event_callbacks
+
+
+@pytest.fixture(name="lru_change_event_callbacks")
+def lru_change_event_callbacks(
+    test_proxies: pytest.fixture,
+) -> MockTangoEventCallbackGroup:
+    """
+    Fixture that returns the TalonLru's change event callback group.
+
+    :param test_proxies: the device proxies used in this scope.
+    :return: the change event callback object for TalonLru devices
+    """
+    change_event_attr_list = ["longRunningCommandResult", "State"]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list, timeout=15.0
+    )
+    for lru in test_proxies.talon_lru:
+        test_utils.change_event_subscriber(
+            lru, change_event_attr_list, change_event_callbacks
+        )
+    return change_event_callbacks
+
+
+@pytest.fixture(name="ps_change_event_callbacks")
+def ps_change_event_callbacks(
+    test_proxies: pytest.fixture,
+) -> MockTangoEventCallbackGroup:
+    """
+    Fixture that returns the PowerSwitch's change event callback group.
+
+    :param test_proxies: the device proxies used in this scope.
+    :return: the change event callback object for PowerSwitch devices
+    """
+    change_event_attr_list = ["State"]
+    change_event_callbacks = MockTangoEventCallbackGroup(
+        *change_event_attr_list, timeout=15.0
+    )
+    for lru in test_proxies.power_switch:
+        test_utils.change_event_subscriber(
+            lru, change_event_attr_list, change_event_callbacks
+        )
+    return change_event_callbacks
