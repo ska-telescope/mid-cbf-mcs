@@ -14,6 +14,7 @@ from __future__ import annotations
 import pytest
 
 # Tango imports
+from ska_control_model import SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -46,7 +47,6 @@ def test_proxies_fixture() -> pytest.fixture:
             Includes:
             - 4 TalonLru
             - 2 PowerSwitch
-            - 4 SlimLink
             """
 
             # Talon LRU
@@ -67,14 +67,9 @@ def test_proxies_fixture() -> pytest.fixture:
                     )
                 )
 
-            # SlimLink
-            self.slim_link = []
-            for i in range(0, 4):  # 4 SlimLinks
-                self.slim_link.append(
-                    context.DeviceProxy(
-                        device_name=f"mid_csp_cbf/fs_links/{i:03}",
-                    )
-                )
+            # Set all proxies used in this test suite to simMode.TRUE
+            for proxy in self.talon_lru + self.power_switch:
+                proxy.simulationMode = SimulationMode.TRUE
 
     return TestProxies()
 
@@ -89,9 +84,9 @@ def vcc_change_event_callbacks(
     :param device_under_test: the device whose change events will be subscribed to.
     :return: the change event callback object
     """
-    change_event_attr_list = ["longRunningCommandResult", "State"]
+    change_event_attr_list = ["longRunningCommandResult", "obsState", "State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=15.0
+        *change_event_attr_list, timeout=60.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks

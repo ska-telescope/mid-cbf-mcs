@@ -210,6 +210,7 @@ class TestSlim:
         device_under_test.adminMode = AdminMode.OFFLINE
         change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
 
+        # Stop monitoring the TalonLRUs and power switch devices
         for lru in test_proxies.talon_lru:
             result_code, command_id = lru.Off()
             assert result_code == [ResultCode.QUEUED]
@@ -227,8 +228,7 @@ class TestSlim:
             lru_change_event_callbacks["State"].assert_change_event(
                 DevState.DISABLE
             )
-
-        # Stop monitoring the TalonLRUs and power switch devices
+        
         for ps in test_proxies.power_switch:
             ps.adminMode = AdminMode.OFFLINE
             ps_change_event_callbacks["State"].assert_change_event(

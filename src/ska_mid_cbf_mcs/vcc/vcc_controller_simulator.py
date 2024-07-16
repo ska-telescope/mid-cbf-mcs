@@ -19,6 +19,7 @@ from __future__ import annotations  # allow forward references in type hints
 import tango
 
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
+from tango import DevState
 
 __all__ = ["VccControllerSimulator"]
 
@@ -52,7 +53,7 @@ class VccControllerSimulator:
             vcc_band_5,
         ]
 
-        self._state = tango.DevState.INIT
+        self._state = DevState.INIT
 
         self._frequency_band = 0
 

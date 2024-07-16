@@ -37,7 +37,7 @@ def talon_board_change_event_callbacks(
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
         "longRunningCommandResult",
-        "state",
+        "State",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list

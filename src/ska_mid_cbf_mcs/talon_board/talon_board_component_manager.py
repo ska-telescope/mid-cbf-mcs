@@ -102,7 +102,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering TalonBoardComponentManager.start_communicating"
         )
-        self.logger.error(f"{datetime.now()}----- ENTERING!!! -----")
 
         if self.is_communicating:
             self.logger.info("Already communicating.")
