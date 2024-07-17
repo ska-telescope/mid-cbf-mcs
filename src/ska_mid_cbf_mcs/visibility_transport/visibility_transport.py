@@ -109,19 +109,25 @@ class VisibilityTransport:
         """
         self._logger.info("Enable visibility output")
 
+        self._logger.info(f"fsp config is : {self._fsp_config}")
         dest_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config
         )
+        self._logger.info(f"dest_host_data is {dest_host_data}")
 
         try:
             # FSP App is responsible for calling the "Configure" command.
             # If not already called, StartScan will fail.
+            self._logger.info("at start of try")
             self._dp_spead_desc.command_inout("StartScan", dest_host_data)
-
+            self._logger.info("after startscan")
             self._dp_host_lut_s2.command_inout("Program", dest_host_data)
+            self._logger.info("after program lut s2")
 
             for dp in self._dp_host_lut_s1:
+                self._logger.info(f"dp is: {dp}")
                 dp.command_inout("Program")
+                self._logger.info("dp has been programmed")
         except DevFailed as df:
             msg = str(df.args[0].desc)
             self._logger.error(

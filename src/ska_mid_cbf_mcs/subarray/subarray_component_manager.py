@@ -1907,6 +1907,8 @@ class CbfSubarrayComponentManager(
         if self._simulation_mode == SimulationMode.FALSE:
             self._logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._logger.info(f"fsp config is: {configuration['fsp']}")
+            self._logger.info(f"vis slim yaml is: {vis_slim_yaml}")
             self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         # save configuration into latestScanConfig
