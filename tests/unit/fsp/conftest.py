@@ -73,7 +73,6 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
-    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

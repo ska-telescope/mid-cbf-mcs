@@ -12,9 +12,11 @@
 from __future__ import annotations
 
 import logging
+from threading import Lock
+from typing import Callable
 
+from ska_control_model import HealthState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState
 
 __all__ = ["SlimLinkSimulator"]
 
@@ -30,13 +32,14 @@ class SlimLinkSimulator:
 
     def __init__(
         self: SlimLinkSimulator,
+        health_state_callback: Callable[[HealthState], None] | None,
         logger: logging.Logger,
     ) -> None:
         """
         Initialize a new instance.
         :param logger: a logger for this object to use
         """
-        self._logger = logger
+        self.logger = logger
 
         self._link_name = ""
         self._tx_device_name = ""
@@ -47,7 +50,29 @@ class SlimLinkSimulator:
         self._link_enabled = False
         self._read_counters = [0] * 9
         self._block_lost_cdr_lost_count = [0] * 2
+        self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
+
+        self._device_health_state_callback = health_state_callback
+
+    @property
+    def link_name(self: SlimLinkSimulator) -> str:
+        """
+        The name of the link.
+
+        :return: the SLIM link's name.
+        :rtype: str
+        """
+        return self._link_name
+
+    @link_name.setter
+    def link_name(self: SlimLinkSimulator, link_name: str) -> None:
+        """
+        Set the link name value.
+
+        :param link_name: The link's name.
+        """
+        self._link_name = link_name
 
     @property
     def tx_device_name(self: SlimLinkSimulator) -> str:
@@ -150,7 +175,7 @@ class SlimLinkSimulator:
         return 0.5
 
     @property
-    def counters(self: SlimLinkSimulator) -> list[int]:
+    def read_counters(self: SlimLinkSimulator) -> list[int]:
         """
         An array holding the counter values from the tx and rx devices in the order:
         [0] rx_word_count
@@ -168,6 +193,31 @@ class SlimLinkSimulator:
         """
         return self._read_counters
 
+    #########
+    # Helpers
+    #########
+
+    def _update_device_health_state(
+        self: SlimLinkSimulator,
+        health_state: HealthState,
+    ) -> None:
+        """
+        Handle a health state change.
+        This is a helper method for use by subclasses.
+        :param state: the new health state of the
+            component manager.
+        """
+        with self._health_state_lock:
+            if self._health_state != health_state:
+                self._health_state = health_state
+                self._push_health_state_update(health_state)
+
+    def _push_health_state_update(
+        self: SlimLinkSimulator, health_state: HealthState
+    ) -> None:
+        if self._device_health_state_callback is not None:
+            self._device_health_state_callback(health_state)
+
     def connect_slim_tx_rx(
         self: SlimLinkSimulator,
     ) -> None:
@@ -183,6 +233,7 @@ class SlimLinkSimulator:
             return ResultCode.FAILED, "Tx/Rx device name not set"
         self._rx_idle_ctrl_word = self._tx_idle_ctrl_word
         self.clear_counters()
+        self._read_counters = [1000, 10, 100, 0, 1, 2, 1000, 10, 100]
         self._link_enabled = True
         self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
 
@@ -199,14 +250,14 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         if not self._link_enabled:
-            self._health_state = HealthState.UNKNOWN
+            self._update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "link is not active"
         if (self._tx_idle_ctrl_word != self._rx_idle_ctrl_word) or (
             self._bit_error_rate > BER_PASS_THRESHOLD
         ):
-            self._health_state = HealthState.FAILED
+            self._update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "link is not healthy"
-        self._health_state = HealthState.OK
+        self._update_device_health_state(HealthState.OK)
         return ResultCode.OK, "link is healthy"
 
     def disconnect_slim_tx_rx(

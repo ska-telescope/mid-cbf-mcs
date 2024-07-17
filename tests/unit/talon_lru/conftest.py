@@ -65,7 +65,7 @@ def lru_change_event_callbacks(
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list, timeout=35.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks
@@ -80,8 +80,16 @@ def mock_talon_board() -> unittest.mock.Mock:
     """
     builder = MockDeviceBuilder()
     builder.add_attribute("adminMode", None)
-    builder.add_command("On", ResultCode.OK)
-    builder.add_command("Off", ResultCode.OK)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
+    builder.add_result_command(
+        "On",
+        ResultCode.QUEUED,
+        "1234_On",
+    )
+    builder.add_command(
+        "Off",
+        ResultCode.OK,
+    )
     return builder()
 
 
@@ -121,20 +129,20 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     builder.add_attribute("stimulusMode", param)
     builder.add_attribute("adminMode", None)
     builder.add_attribute("simulationMode", None)
+    builder.add_attribute("numOutlets", 8)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
+    builder.add_command("GetOutletPowerState", PowerState.OFF)
+
     if param == "command_success":
         # Connection to power switch is working as expected.
-        builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
-            "TurnOnOutlet", ResultCode.OK, "Success message"
+            "TurnOnOutlet", ResultCode.QUEUED, "Success message"
         )
         builder.add_result_command(
-            "TurnOffOutlet", ResultCode.OK, "Success message"
+            "TurnOffOutlet", ResultCode.QUEUED, "Success message"
         )
     elif param == "command_fail":
         # Can communicate with the power switch, but the turn on/off outlet commands fail.
-        builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerState", PowerState.OFF)
         builder.add_result_command(
             "TurnOnOutlet", ResultCode.FAILED, "Failed message"
         )

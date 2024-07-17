@@ -48,6 +48,8 @@ class CbfSubarray(CbfObsDevice):
 
     TalonBoard = device_property(dtype=("str",))
 
+    VisSLIM = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -225,6 +227,7 @@ class CbfSubarray(CbfObsDevice):
             fsp=self.FSP,
             fsp_corr_sub=self.FspCorrSubarray,
             talon_board=self.TalonBoard,
+            vis_slim=self.VisSLIM,
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Optional
 
 import requests
 from pysnmp import error as snmp_error
@@ -12,26 +12,26 @@ __all__ = ["MockDependency"]
 
 
 class MockDependency:
-    # TODO: lint error; why is ResponseSNMP not a class like Response?
-    def ResponseSNMP(
-        simulate_response_error: bool,
-        sim_state: bool,
-    ) -> tuple:
-        if simulate_response_error:
-            raise snmp_error.PySnmpError()
+    class ResponseSNMP:
+        """A mock class to replace requests.ResponseSNMP."""
 
-        returnObject: tuple = ()
-        sim_state = 1 if sim_state else 2
+        def do(
+            self: MockDependency.ResponseSNMP,
+            simulate_response_error: bool,
+            sim_state: bool,
+        ) -> tuple:
+            if simulate_response_error:
+                raise snmp_error.PySnmpError()
 
-        errorIndication = None
-        errorStatus = None
-        errorIndex = None
+            state = 1 if sim_state else 2
 
-        # First sim state has no meaning, just has to be an accessible value
-        varBinds = [(sim_state, sim_state)]
-        returnObject = (errorIndication, errorStatus, errorIndex, varBinds)
+            errorIndication = None
+            errorStatus = None
+            errorIndex = None
 
-        return returnObject
+            varBinds = [(1, state)]
+
+            return (errorIndication, errorStatus, errorIndex, varBinds)
 
     class Response:
         """A mock class to replace requests.Response."""
@@ -55,7 +55,7 @@ class MockDependency:
                 r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
             )
 
-            self._json: List[dict[str, Any]] = []
+            self._json: list[dict[str, any]] = []
 
             if simulate_response_error:
                 self.status_code = 404
@@ -85,7 +85,7 @@ class MockDependency:
                     self._json = self._json[int(outlet)]
                     self.text = json.dumps(self._json)
 
-        def json(self: MockDependency.Response) -> dict[str, Any]:
+        def json(self: MockDependency.Response) -> dict[str, any]:
             """
             Replace the patched :py:meth:`request.Response.json` with mock.
 

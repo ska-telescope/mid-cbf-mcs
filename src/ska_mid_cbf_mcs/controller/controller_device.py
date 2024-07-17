@@ -12,9 +12,9 @@
 from __future__ import annotations
 
 import tango
+from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-from ska_tango_base.control_model import SimulationMode
 from ska_tango_base.utils import convert_dict_to_list
 from tango.server import attribute, command, device_property
 

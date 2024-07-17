@@ -15,7 +15,8 @@ TANGO device class for controlling and monitoring the web power switch that dist
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+# Additional import
+from ska_control_model import PowerState, SimulationMode
 
 # tango imports
 from ska_tango_base.commands import (
@@ -23,9 +24,6 @@ from ska_tango_base.commands import (
     ResultCode,
     SubmittedSlowCommand,
 )
-
-# Additional import
-from ska_tango_base.control_model import PowerState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -168,7 +166,7 @@ class PowerSwitch(CbfDevice):
         A class for the PowerSwitch's init_device() "command".
         """
 
-        def do(self: PowerSwitch.InitCommand) -> Tuple[ResultCode, str]:
+        def do(self: PowerSwitch.InitCommand) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -191,9 +189,9 @@ class PowerSwitch(CbfDevice):
 
         def __init__(
             self: PowerSwitch.GetOutletPowerStateCommand,
-            *args: Any,
+            *args: any,
             component_manager: PowerSwitchComponentManager,
-            **kwargs: Any,
+            **kwargs: any,
         ) -> None:
             self.component_manager = component_manager
             super().__init__(*args, **kwargs)

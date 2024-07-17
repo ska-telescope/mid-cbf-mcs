@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
 from pysnmp import error as snmp_error
 from pysnmp.entity.rfc3413.oneliner import cmdgen
@@ -29,8 +28,8 @@ from pysnmp.hlapi import (  # noqa: F401
     usmNoPrivProtocol,
 )
 from pysnmp.proto import rfc1902
+from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
 
 from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
@@ -70,12 +69,12 @@ class ApcSnmpDriver:
 
         # valid range 1 to 24
         Const.POWER_SWITCH_OUTLETS = 24
-        self.outlet_id_list: List(str) = [
+        self.outlet_id_list: list[str] = [
             str(i + 1) for i in range(0, Const.POWER_SWITCH_OUTLETS)
         ]
 
         # Initialize outlets
-        self.outlets: List(Outlet) = []
+        self.outlets: list[Outlet] = []
 
         # Snmp Auth
         self.auth = UsmUserData(
@@ -263,7 +262,7 @@ class ApcSnmpDriver:
         except snmp_error.PySnmpError as e:
             return ResultCode.FAILED, f"Connection error: {e}"
 
-    def get_outlet_list(self: ApcSnmpDriver) -> List(Outlet):
+    def get_outlet_list(self: ApcSnmpDriver) -> list[Outlet]:
         """
         Query the power switch for a list of outlets and get their name
         and current state.
@@ -273,7 +272,7 @@ class ApcSnmpDriver:
         """
 
         # Extract the outlet list
-        outlets: List(Outlet) = []
+        outlets: list[Outlet] = []
 
         # Create cmdgen for snmp requests
         cmdGen = cmdgen.CommandGenerator()

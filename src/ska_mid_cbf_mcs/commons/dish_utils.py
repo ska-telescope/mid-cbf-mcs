@@ -8,8 +8,6 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 
 class DISHUtils:
     """
@@ -46,7 +44,7 @@ class DISHUtils:
             self.dish_id_to_k[r] = v["k"]
 
     @staticmethod
-    def are_Valid_DISH_Ids(argin: List[str]) -> Tuple[bool, str]:
+    def are_Valid_DISH_Ids(argin: list[str]) -> tuple[bool, str]:
         """
         Checks a list of DISH IDs are either
         SKA001-SKA133 or MKT000-MKT063. Spaces before, after, or in the
@@ -68,7 +66,7 @@ class DISHUtils:
         return (True, "DISH IDs are valid.")
 
     @staticmethod
-    def is_Valid_DISH_Id(argin: str) -> Tuple[bool, str]:
+    def is_Valid_DISH_Id(argin: str) -> tuple[bool, str]:
         """
         Checks the DISH id is either
         SKA001-SKA133 or MKT000-MKT063. Spaces before, after, or in the

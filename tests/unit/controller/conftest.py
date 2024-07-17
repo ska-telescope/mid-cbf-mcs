@@ -44,7 +44,7 @@ def device_under_test_fixture(
 
 
 @pytest.fixture(name="change_event_callbacks")
-def lru_change_event_callbacks(
+def controller_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
@@ -52,7 +52,7 @@ def lru_change_event_callbacks(
         "state",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list, timeout=35.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks
@@ -81,6 +81,7 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -113,6 +114,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -145,6 +147,7 @@ def mock_slim_mesh() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_result_command("Configure", ResultCode.OK)

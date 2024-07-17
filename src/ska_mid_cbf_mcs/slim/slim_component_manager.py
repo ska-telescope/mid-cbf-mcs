@@ -11,22 +11,20 @@
 
 from __future__ import annotations
 
-import re
 import threading
 from typing import Callable, Optional
 
 import tango
-import yaml
 from beautifultable import BeautifulTable
-from ska_control_model import TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
+from ska_control_model import (
     AdminMode,
     HealthState,
     PowerState,
     SimulationMode,
+    TaskStatus,
 )
+from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -34,6 +32,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.slim.slim_config import SlimConfig
 
 __all__ = ["SlimComponentManager"]
 
@@ -81,8 +80,6 @@ class SlimComponentManager(CbfComponentManager):
             self.logger.info("Already communicating.")
             return
 
-        super().start_communicating()
-
         self._dp_links = []
         self.logger.debug(f"Link FQDNs: {self._link_fqdns}")
         if self._link_fqdns is None:
@@ -98,6 +95,7 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
+                self._subscribe_command_results(dp)
                 self._dp_links.append(dp)
             except AttributeError as ae:
                 # Thrown if the device exists in the db but the executable is not running.
@@ -117,6 +115,11 @@ class SlimComponentManager(CbfComponentManager):
                     f"Failed to set AdminMode of {fqdn} to ONLINE: {df.args[0].desc}"
                 )
                 return
+        self.logger.info(
+            f"event_ids after subscribing = {len(self._event_ids)}"
+        )
+
+        super().start_communicating()
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
@@ -124,10 +127,12 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 
+        self._unsubscribe_command_results()
+        self._num_blocking_results = 0
+
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
+
         super().stop_communicating()
 
     # ---------------
@@ -226,6 +231,57 @@ class SlimComponentManager(CbfComponentManager):
 
         return (rx_idle_word_error_rate, rx_ber_pass_status)
 
+    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
+        """
+        Examines various attributes from active SLIM Links and logs the metrics in a summary table.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: tuple[ResultCode,str]
+        """
+
+        counters: list[list[int]] = []
+        names: list[str] = []
+        occupancy: list[list[float]] = []
+        debug_flags: list[list[bool]] = []
+        rx_error_rate_and_status: list[tuple[str, str]] = []
+
+        try:
+            for idx, txrx in enumerate(self._active_links):
+                dp_link = self._dp_links[idx]
+                counter = dp_link.counters
+                rx_idle_word_count = counter[2]
+                rx_idle_error_count = counter[3]
+                counters.append(counter)
+                names.append(dp_link.linkName)
+                occupancy.append(
+                    [dp_link.txLinkOccupancy, dp_link.rxLinkOccupancy]
+                )
+                debug_flags.append(dp_link.rxDebugAlignmentAndLockStatus)
+                rx_error_rate_and_status.append(
+                    self._calculate_rx_idle_word_rate(
+                        rx_idle_word_count, rx_idle_error_count
+                    )
+                )
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error(f"Error reading SlimLink attr: {df}")
+
+        # Summary check for SLIM Link Status and Bit Error Rate
+        self._slim_links_ber_check_summary(
+            counters, names, rx_error_rate_and_status
+        )
+
+        # More detailed table describing each SLIM Link
+        self._slim_table(
+            counters, names, occupancy, debug_flags, rx_error_rate_and_status
+        )
+
+        return (ResultCode.OK, "SLIM Test Completed")
+
     def _slim_links_ber_check_summary(
         self: SlimComponentManager,
         counters: list[list[int]],
@@ -272,7 +328,7 @@ class SlimComponentManager(CbfComponentManager):
         :param: counters: A list of lists containing each active SLIM link's counters attr.
         :param: names: A list of strings containing each active SLIM link's linkName attr.
         :param: occupancy: A list of lists containing each active SLIM link's [0] tx and [1] rx link occupancies.
-        :param: debug_flags: A list of lists containing each active SLIM link's rx_debug_alignment_and_lock_status attr.
+        :param: debug_flags: A list of lists containing each active SLIM link's rxDebugAlignmentAndLockStatus attr.
         :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM link.
         """
 
@@ -339,85 +395,94 @@ class SlimComponentManager(CbfComponentManager):
 
         self.logger.info(f"\nSLIM Health Summary Table\n{table}")
 
-    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
+    def _initialize_links(
+        self: SlimComponentManager,
+        task_abort_event: Optional[threading.Event] = None,
+    ) -> tuple[ResultCode, str]:
         """
-        Examines various attributes from active SLIM Links and logs the metrics in a summary table.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: tuple[ResultCode,str]
-        """
-
-        counters: list[list[int]] = []
-        names: list[str] = []
-        occupancy: list[list[float]] = []
-        debug_flags: list[list[bool]] = []
-        rx_error_rate_and_status: list[tuple[str, str]] = []
-
-        try:
-            for idx, txrx in enumerate(self._active_links):
-                dp_link = self._dp_links[idx]
-                counter = dp_link.counters
-                rx_idle_word_count = counter[2]
-                rx_idle_error_count = counter[3]
-                counters.append(counter)
-                names.append(dp_link.linkName)
-                occupancy.append(
-                    [dp_link.tx_link_occupancy, dp_link.rx_link_occupancy]
-                )
-                debug_flags.append(dp_link.rx_debug_alignment_and_lock_status)
-                rx_error_rate_and_status.append(
-                    self._calculate_rx_idle_word_rate(
-                        rx_idle_word_count, rx_idle_error_count
-                    )
-                )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(f"Error reading SlimLink attr: {df}")
-
-        # Summary check for SLIM Link Status and Bit Error Rate
-        self._slim_links_ber_check_summary(
-            counters, names, rx_error_rate_and_status
-        )
-
-        # More detailed table describing each SLIM Link
-        self._slim_table(
-            counters, names, occupancy, debug_flags, rx_error_rate_and_status
-        )
-
-        return (ResultCode.OK, "SLIM Test Completed")
-
-    # -------------
-    # Fast Commands
-    # -------------
-
-    def on(self: SlimComponentManager) -> tuple[ResultCode, str]:
-        """
-        On command. Currently just returns OK. The device
-        does nothing until mesh configuration is provided via
-        the Configure command.
+        Triggers the configured SLIM links to connect and starts polling each link's health state.
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug("Entering SlimComponentManager.on")
+        self.logger.debug(
+            f"Creating {len(self._active_links)} links: {self._active_links}"
+        )
+        if len(self._active_links) == 0:
+            self.logger.warn(
+                "No active links are defined in the mesh configuration"
+            )
+            return ResultCode.OK, "_initialize_links completed OK"
+        if len(self._active_links) > len(self._dp_links):
+            msg = "Too many links defined in the link configuration. Not enough SlimLink devices exist."
+            self.logger.error(msg)
+            return ResultCode.FAILED, msg
+        try:
+            self._num_blocking_results = len(self._active_links)
+            self.logger.debug(
+                f"About to connect {self._num_blocking_results} times"
+            )
+            for idx, txrx in enumerate(self._active_links):
+                self._dp_links[idx].txDeviceName = txrx[0]
+                self._dp_links[idx].rxDeviceName = txrx[1]
 
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
+                [[result_code], [command_id]] = self._dp_links[
+                    idx
+                ].ConnectTxRx()
 
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
+                # Guard incase LRC was rejected.
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        "Nested LRC SlimLink.ConnectTxRx() rejected",
+                    )
 
-    # --- Off Command --- #
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+
+            if lrc_status != TaskStatus.COMPLETED:
+                self.logger.error(
+                    "One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Nested LRC SlimLink.ConnectTxRx() timed out",
+                )
+
+            # Poll link health every 20 seconds
+            if self.simulation_mode is False:
+                self._dp_links[idx].poll_command("VerifyConnection", 20000)
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error(
+                f"Failed to initialize SLIM links: {df.args[0].desc}"
+            )
+            raise df
+        except IndexError as ie:
+            msg = "Not enough Links defined in device properties"
+            self.logger.error(f"{msg} - {ie}")
+            tango.Except.throw_exception(
+                "IndexError",
+                msg,
+                "_initialize_links()",
+            )
+
+        self.logger.info("Successfully initialized SLIM links")
+        self.mesh_configured = True
+        return ResultCode.OK, "_initialize_links completed OK"
 
     def _disconnect_links(
         self: SlimComponentManager,
+        task_abort_event: Optional[threading.Event] = None,
     ) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to disconnect and cease polling health states.
@@ -436,14 +501,40 @@ class SlimComponentManager(CbfComponentManager):
             )
             return ResultCode.OK, "_disconnect_links completed OK"
         try:
+            self._num_blocking_results = len(self._active_links)
+            self.logger.debug(
+                f"About to disconnect {self._num_blocking_results} times"
+            )
             for idx, txrx in enumerate(self._active_links):
-                self._dp_links[idx].stop_poll_command("VerifyConnection")
-                [rc, msg] = self._dp_links[idx].DisconnectTxRx()
+                if self.simulation_mode is False:
+                    self._dp_links[idx].stop_poll_command("VerifyConnection")
 
-                # TODO: Need to add guard incase LRC was rejected.
-                # TODO: Need to add LRC wait mechanism
-                if rc[0] is not ResultCode.OK:
-                    return rc[0], msg[0]
+                [[result_code], [command_id]] = self._dp_links[
+                    idx
+                ].DisconnectTxRx()
+
+                # Guard incase LRC was rejected.
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        "Nested LRC SlimLink.DisconnectTxRx() rejected",
+                    )
+
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+
+            if lrc_status != TaskStatus.COMPLETED:
+                self.logger.error(
+                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Nested LRC SlimLink.DisconnectTxRx() timed out",
+                )
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
@@ -456,6 +547,10 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.info("Successfully disconnected SLIM links")
         self.mesh_configured = False
         return ResultCode.OK, "_disconnect_links completed OK"
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def is_off_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Off is allowed.")
@@ -491,7 +586,7 @@ class SlimComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
 
         try:
-            rc, msg = self._disconnect_links()
+            rc, msg = self._disconnect_links(task_abort_event)
             if rc is not ResultCode.OK:
                 task_callback(
                     status=TaskStatus.FAILED,
@@ -533,144 +628,14 @@ class SlimComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
-    # --- Configure Command --- #
-
-    def _parse_link(self: SlimComponentManager, link: str) -> list[str]:
-        """
-        Each link is in the format of "tx_fqdn -> rx_fqdn". If the
-        link is disabled, then the text ends with [x].
-
-        :param link: a string describing a singular SLIM link.
-
-        :return: the pair of HPS tx and rx device FQDNs that make up a link.
-        :rtype: list[str]
-        """
-        cleaned_link = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
-
-        # ignore disabled links or lines without the expected format
-        if cleaned_link.endswith("[x]") or ("->" not in cleaned_link):
-            return None
-
-        tx_rx_pair = cleaned_link.split("->")
-        if len(tx_rx_pair) == 2:
-            return tx_rx_pair
-
-        return None
-
-    def _validate_mesh_config(self: SlimComponentManager, links: list) -> None:
-        """
-        Checks if the requested SLIM configuration is valid.
-
-        :param links: a list of HPS tx and rx device pairs to be configured as SLIM links.
-        :raise Tango exception: if SLIM configuration is not valid.
-        """
-        tx_set = set([x[0] for x in links])
-        rx_set = set([y[1] for y in links])
-        if len(tx_set) != len(rx_set) or len(tx_set) != len(links):
-            msg = "Tx and Rx devices must be unique in the configuration."
-            self.logger.error(msg)
-            tango.Except.throw_exception(
-                "Slim_Validate_",
-                msg,
-                "_validate_mesh_config()",
+    def is_configure_allowed(self: SlimComponentManager) -> bool:
+        self.logger.debug("Checking if Configure is allowed.")
+        if self.power_state != PowerState.ON:
+            self.logger.warning(
+                f"Configure not allowed; PowerState is {self.power_state}"
             )
-        return
-
-    def _parse_links_yaml(
-        self: SlimComponentManager, yaml_str: str
-    ) -> list[list[str]]:
-        """
-        Parse a yaml string containing the mesh links.
-
-        :param yaml_str: the string defining the mesh links
-        :raise Tango exception: if the configuration is not valid yaml.
-        :return: a list of HPS tx and rx device pairs as [Tx FQDN, Rx FQDN]
-        :rtype: list[list[str]]
-        """
-        try:
-            data = yaml.safe_load(yaml_str)
-        except yaml.YAMLError as e:
-            self.logger.error(f"Failed to load YAML: {e}")
-            tango.Except.throw_exception(
-                "Slim_Parse_YAML",
-                "Cannot parse SLIM configuration YAML",
-                "_parse_links_yaml()",
-            )
-
-        links = [
-            self._parse_link(line)
-            for value in data.values()
-            for line in value
-            if self._parse_link(line) is not None
-        ]
-
-        self._validate_mesh_config(
-            links
-        )  # throws exception if validation fails
-        return links
-
-    def _initialize_links(
-        self: SlimComponentManager,
-    ) -> tuple[ResultCode, str]:
-        """
-        Triggers the configured SLIM links to connect and starts polling each link's health state.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug(
-            f"Creating {len(self._active_links)} links: {self._active_links}"
-        )
-        if len(self._active_links) == 0:
-            self.logger.warn(
-                "No active links are defined in the mesh configuration"
-            )
-            return ResultCode.OK, "_initialize_links completed OK"
-        if len(self._active_links) > len(self._dp_links):
-            msg = "Too many links defined in the link configuration. Not enough SlimLink devices exist."
-            self.logger.error(msg)
-            return ResultCode.FAILED, msg
-        try:
-            for idx, txrx in enumerate(self._active_links):
-                self._dp_links[idx].txDeviceName = txrx[0]
-                self._dp_links[idx].rxDeviceName = txrx[1]
-
-                # The SLIM link may need to wait for Tx/Rx to initialize
-                self._dp_links[idx].set_timeout_millis(10000)
-                [rc, msg] = self._dp_links[idx].ConnectTxRx()
-                self._dp_links[idx].set_timeout_millis(3000)
-
-                # TODO: Need to add guard incase LRC was rejected.
-                # TODO: Need to add LRC wait mechanism
-                if rc[0] is not ResultCode.OK:
-                    return rc[0], msg[0]
-
-                # TODO: Should replace polling here with a subscription to the link's healthState
-                # poll link health every 20 seconds
-                if self.simulation_mode is False:
-                    self._dp_links[idx].poll_command("VerifyConnection", 20000)
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"Failed to initialize SLIM links: {df.args[0].desc}"
-            )
-            raise df
-        except IndexError as ie:
-            msg = "Not enough Links defined in device properties"
-            self.logger.error(f"msg - {ie}")
-            tango.Except.throw_exception(
-                "IndexError",
-                msg,
-                "_initialize_links()",
-            )
-
-        self.logger.info("Successfully initialized SLIM links")
-        self.mesh_configured = True
-        return ResultCode.OK, "_initialize_links completed OK"
+            return False
+        return True
 
     def _configure(
         self: SlimComponentManager,
@@ -697,7 +662,9 @@ class SlimComponentManager(CbfComponentManager):
         self._config_str = config_str
 
         try:
-            self._active_links = self._parse_links_yaml(self._config_str)
+            self._active_links = SlimConfig(
+                self._config_str, self.logger
+            ).active_links()
 
             self.logger.debug(
                 f"Configuring {len(self._dp_links)} links with simulationMode = {self.simulation_mode}"
@@ -711,7 +678,7 @@ class SlimComponentManager(CbfComponentManager):
                 self.logger.debug(
                     "SLIM was previously configured. Disconnecting links before re-initializing."
                 )
-                result_code, msg = self._disconnect_links()
+                result_code, msg = self._disconnect_links(task_abort_event)
                 if result_code is not ResultCode.OK:
                     task_callback(
                         status=TaskStatus.FAILED,
@@ -722,7 +689,7 @@ class SlimComponentManager(CbfComponentManager):
                     )
                     return
             self.logger.debug("Initializing SLIM Links")
-            result_code, msg = self._initialize_links()
+            result_code, msg = self._initialize_links(task_abort_event)
             if result_code is not ResultCode.OK:
                 task_callback(
                     status=TaskStatus.FAILED,
@@ -778,5 +745,6 @@ class SlimComponentManager(CbfComponentManager):
         return self.submit_task(
             self._configure,
             args=[config_str],
+            is_cmd_allowed=self.is_configure_allowed,
             task_callback=task_callback,
         )

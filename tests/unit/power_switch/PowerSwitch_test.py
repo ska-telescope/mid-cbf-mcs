@@ -95,7 +95,8 @@ class TestPowerSwitch:
 
             :return: a response
             """
-            return MockDependency.ResponseSNMP(
+            return MockDependency.ResponseSNMP.do(
+                self,
                 request.param["sim_get_error"],
                 request.param["sim_state"],
             )
@@ -104,14 +105,15 @@ class TestPowerSwitch:
             authData, transportTarget, *varNames, **kwargs
         ) -> tuple:
             """
-            Replace pysnmp...CommandGenerator.getCmd with mock method.
+            Replace pysnmp...CommandGenerator.setCmd with mock method.
 
-            :param params: arguments to the GET
+            :param params: arguments to the SET
             :param kwargs: other keyword args
 
             :return: a response
             """
-            return MockDependency.ResponseSNMP(
+            return MockDependency.ResponseSNMP.do(
+                self,
                 request.param["sim_patch_error"],
                 request.param["sim_state"],
             )
@@ -526,13 +528,6 @@ class TestPowerSwitch:
         assert result_code == [ResultCode.QUEUED]
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
-            )
-        )
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[3, "TurnOffOutlet FAILED"]')
         )
 
@@ -714,13 +709,6 @@ class TestPowerSwitch:
             str(num_outlets + 1)
         )
         assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                f"Outlet ID {num_outlets+1} must be in the allowable outlet_id_list",
-            )
-        )
 
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[3, "TurnOnOutlet FAILED"]')

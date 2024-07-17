@@ -10,18 +10,18 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import backoff
 import tango
-from ska_control_model import TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
+from ska_control_model import (
     HealthState,
     PowerState,
     SimulationMode,
+    TaskStatus,
 )
+from ska_tango_base.base.base_component_manager import check_communicating
+from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -40,9 +40,9 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimLinkComponentManager,
-        *args: Any,
+        *args: any,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
@@ -61,6 +61,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         self.slim_link_simulator = SlimLinkSimulator(
             logger=self.logger,
+            health_state_callback=kwargs["health_state_callback"],
         )
 
     # --- Properties --- #
@@ -124,7 +125,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :rtype: str
         """
         if self.simulation_mode:
-            return self.slim_link_simulator._link_name
+            return self.slim_link_simulator.link_name
         return self._link_name
 
     @property
@@ -325,7 +326,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :rtype: list[int]
         """
         if self.simulation_mode:
-            return self.slim_link_simulator.read_counters()
+            return self.slim_link_simulator.read_counters
 
         if (
             not self._link_enabled
@@ -353,6 +354,20 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[1],
             tx_counts[2],
         ]
+
+    def start_communicating(self: SlimLinkComponentManager) -> None:
+        """Establish communication with the component, then start monitoring."""
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.start_communicating"
+        )
+
+        if self.is_communicating:
+            self.logger.info("Already communicating.")
+            return
+
+        super().start_communicating()
+        # This moves the op state model
+        self._update_component_state(power=PowerState.ON)
 
     @backoff.on_exception(
         backoff.constant,
@@ -600,20 +615,21 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
             self._link_enabled = True
             self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=(
-                    ResultCode.OK,
-                    "ConnectTxRx completed OK",
-                ),
-            )
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "ConnectTxRx completed OK",
+            ),
+        )
 
     @check_communicating
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
@@ -650,6 +666,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         if self.simulation_mode:
             self.slim_link_simulator.disconnect_slim_tx_rx()
+            self._link_enabled = False
         else:
             if self._rx_device_proxy is None:
                 task_callback(
@@ -699,21 +716,20 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._tx_device_proxy = None
                 self._link_name = ""
                 self._link_enabled = False
-
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=(
-                    ResultCode.OK,
-                    "DisconnectTxRx completed OK",
-                ),
-            )
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "DisconnectTxRx completed OK",
+            ),
+        )
 
     @check_communicating
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> Tuple[ResultCode, str]:
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._disconnect_slim_tx_rx,

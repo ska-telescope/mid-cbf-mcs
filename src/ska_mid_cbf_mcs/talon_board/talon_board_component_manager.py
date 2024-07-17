@@ -15,10 +15,9 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
 from tango import AttrQuality
 
@@ -28,6 +27,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
+)
+from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
+    TalonBoardSimulator,
 )
 
 
@@ -93,9 +95,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = []
         self._talon_status_events = []
 
-    # -------------
-    # Communication
-    # -------------
+        self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
     def start_communicating(self) -> None:
         """
@@ -104,54 +104,45 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering TalonBoardComponentManager.start_communicating"
         )
+        self.logger.error(f"{datetime.now()}----- ENTERING!!! -----")
 
         if self.is_communicating:
             self.logger.info("Already communicating.")
             return
 
         super().start_communicating()
+        if not self.simulation_mode:
+            try:
+                for fqdn in [
+                    self._talon_sysid_fqdn,
+                    self._eth_100g_0_fqdn,
+                    self._eth_100g_1_fqdn,
+                    self._talon_status_fqdn,
+                    self._hps_master_fqdn,
+                ]:
+                    if fqdn is not None:
+                        self._proxies[fqdn] = context.DeviceProxy(
+                            device_name=fqdn
+                        )
+                        self.logger.debug(f"Created device proxy for {fqdn}")
+                    else:
+                        self._update_communication_state(
+                            CommunicationStatus.NOT_ESTABLISHED
+                        )
+                        self.logger.error(
+                            "Failed to establish proxies to devices in properties. Check charts."
+                        )
+                        return
+            except tango.DevFailed as df:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                self.logger.error(df.args[0].desc)
+                return
 
-        try:
-            for fqdn in [
-                self._talon_sysid_fqdn,
-                self._eth_100g_0_fqdn,
-                self._eth_100g_1_fqdn,
-                self._talon_status_fqdn,
-                self._hps_master_fqdn,
-            ]:
-                if fqdn is not None:
-                    self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
-                    self.logger.debug(f"Created device proxy for {fqdn}")
-                else:
-                    self._update_communication_state(
-                        CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    self.logger.error(
-                        "Failed to establish proxies to devices in properties. Check charts."
-                    )
-                    return
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(df.args[0].desc)
-            return
-
-        self._update_communication_state(CommunicationStatus.ESTABLISHED)
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
-
-    def stop_communicating(self) -> None:
-        """
-        Stop communication with the component.
-        """
-        self.logger.debug(
-            "Entering TalonBoardComponentManager.stop_communicating"
-        )
-
-        self._update_component_state(power=PowerState.UNKNOWN)
-        # This moves the op state model.
-        super().stop_communicating()
+        self.logger.error(f"{datetime.now()}----- STATE SET TO OFF!!! -----")
 
     def _subscribe_change_events(self) -> None:
         """
@@ -297,24 +288,33 @@ class TalonBoardComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        for ev in self._talon_sysid_events:
-            for name, id in ev.items():
-                self.logger.info(
-                    f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
-                )
-                self._proxies[self._talon_sysid_fqdn].remove_event(name, id)
+        try:
+            if not self.simulation_mode:
+                for ev in self._talon_sysid_events:
+                    for name, id in ev.items():
+                        self.logger.info(
+                            f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
+                        )
+                        self._proxies[self._talon_sysid_fqdn].remove_event(
+                            name, id
+                        )
 
-        for ev in self._talon_status_events:
-            for name, id in ev.items():
-                self.logger.info(
-                    f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
-                )
-                self._proxies[self._talon_status_fqdn].remove_event(name, id)
+                for ev in self._talon_status_events:
+                    for name, id in ev.items():
+                        self.logger.info(
+                            f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
+                        )
+                        self._proxies[self._talon_status_fqdn].remove_event(
+                            name, id
+                        )
+        finally:
+            self._proxies = {}
+            self._talon_sysid_attrs = {}
+            self._talon_status_attrs = {}
+            self._talon_sysid_events = []
+            self._talon_status_events = []
+            self._update_component_state(power=PowerState.OFF)
 
-        self._talon_sysid_attrs = {}
-        self._talon_status_attrs = {}
-
-        self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
     def _attr_change_callback(
@@ -342,6 +342,9 @@ class TalonBoardComponentManager(CbfComponentManager):
     # to be safe in case the callback hasn't happened for it, do read_attribute.
     def talon_sysid_version(self) -> str:
         """Returns the bitstream version string"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.sysid_version
+
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -358,6 +361,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_sysid_bitstream(self) -> int:
         """Returns the least 32 bits of md5 checksum of the bitstream name"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.sysid_bitstream
+
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -374,6 +380,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_iopll_locked_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -390,6 +399,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_fs_iopll_locked_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -406,6 +418,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_comms_iopll_locked_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -422,6 +437,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_system_clk_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -438,6 +456,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_emif_bl_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -454,6 +475,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_emif_br_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -470,6 +494,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_emif_tr_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -486,6 +513,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_e100g_0_pll_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -502,6 +532,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_e100g_1_pll_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -518,6 +551,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
+        if self.simulation_mode:
+            return self.talon_board_simulator.status_slim_pll_fault
+
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
                 "TalonBoard_NoDeviceProxy",
@@ -539,9 +575,138 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------------------------------------
 
     def fpga_die_temperature(self) -> float:
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            return self.talon_board_simulator.fpga_die_temperature
         self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_0(self) -> float:
+        """
+        Gets the FPGA Die Voltage [0] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[0]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-0"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_1(self) -> float:
+        """
+        Gets the FPGA Die Voltage [1] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[1]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-1"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_2(self) -> float:
+        """
+        Gets the FPGA Die Voltage [2] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[2]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-2"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_3(self) -> float:
+        """
+        Gets the FPGA Die Voltage [3] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[3]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-3"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_4(self) -> float:
+        """
+        Gets the FPGA Die Voltage [4] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[4]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-4"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_5(self) -> float:
+        """
+        Gets the FPGA Die Voltage [5] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[5]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-5"
+        t, val = self._telemetry[field]
+        self._validate_time(field, t)
+        return val
+
+    def fpga_die_voltage_6(self) -> float:
+        """
+        Gets the FPGA Die Voltage [6] Sensor Value from the Talon Board
+
+        :return: The Sensor Reading in Volts
+        :rtype: float
+        """
+        # To prevent null readings while a talon board is not connected
+        if self.simulation_mode:
+            die_voltages = self.talon_board_simulator.fpga_die_voltages
+            return die_voltages[6]
+        self._throw_if_device_off()
+        self._query_if_needed()
+        field = "voltage-sensors_fpga-die-voltage-6"
         t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
@@ -1021,18 +1186,23 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-        self._subscribe_change_events()
-        self._update_component_state(power=PowerState.ON)
-        ping_res = asyncio.run(self._db_client.ping())
+        if not self.simulation_mode:
+            self._subscribe_change_events()
+            ping_res = asyncio.run(self._db_client.ping())
 
-        if not ping_res:
-            self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-            self._update_component_state(fault=True)
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, "Failed to connect to InfluxDB"),
-            )
-            return
+            if not ping_res:
+                self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
+                self._update_component_state(fault=True)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to connect to InfluxDB",
+                    ),
+                )
+                return
+
+        self._update_component_state(power=PowerState.ON)
 
         task_callback(
             status=TaskStatus.COMPLETED,

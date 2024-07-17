@@ -11,17 +11,23 @@
 
 from __future__ import annotations
 
+# Additional import
+from ska_control_model import AdminMode, HealthState, SimulationMode
+
+# tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
     SubmittedSlowCommand,
 )
-from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 from tango import DebugIt
 from tango.server import attribute, command
 
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+from ska_mid_cbf_mcs.device.base_device import (
+    CbfDevice,
+    DevVarLongStringArrayType,
+)
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
     SlimLinkComponentManager,
 )
@@ -137,8 +143,8 @@ class SlimLink(CbfDevice):
         """
         return self._health_state
 
-    @attribute(dtype=[bool])
-    def rx_debug_alignment_and_lock_status(self: SlimLink) -> list[bool]:
+    @attribute(dtype=[bool], max_dim_x=4)
+    def rxDebugAlignmentAndLockStatus(self: SlimLink) -> list[bool]:
         """
         Alignment and lock status rollup attribute for debug
 
@@ -153,7 +159,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.rx_debug_alignment_and_lock_status
 
     @attribute(dtype=float)
-    def rx_link_occupancy(self: SlimLink) -> float:
+    def rxLinkOccupancy(self: SlimLink) -> float:
         """
         Read the Link Occupancy of the Rx Device
 
@@ -163,7 +169,7 @@ class SlimLink(CbfDevice):
         return self.component_manager.rx_link_occupancy
 
     @attribute(dtype=float)
-    def tx_link_occupancy(self: SlimLink) -> float:
+    def txLinkOccupancy(self: SlimLink) -> float:
         """
         Read the Link Occupancy of the Tx Device
 
@@ -188,7 +194,7 @@ class SlimLink(CbfDevice):
 
         :param value: SimulationMode
         """
-        self.logger.debug(f"Writing simulationMode to {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
@@ -334,7 +340,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def VerifyConnection(self: SlimLink) -> None:
+    def VerifyConnection(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("VerifyConnection")
         return_code, message = command_handler()
         return [[return_code], [message]]
@@ -384,7 +390,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ClearCounters(self: SlimLink) -> None:
+    def ClearCounters(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("ClearCounters")
         return_code, message = command_handler()
         return [[return_code], [message]]
@@ -398,7 +404,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def ConnectTxRx(self: SlimLink) -> None:
+    def ConnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("ConnectTxRx")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
@@ -408,7 +414,7 @@ class SlimLink(CbfDevice):
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def DisconnectTxRx(self: SlimLink) -> None:
+    def DisconnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
         command_handler = self.get_command_object("DisconnectTxRx")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
