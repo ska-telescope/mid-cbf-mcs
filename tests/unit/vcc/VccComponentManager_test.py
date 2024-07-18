@@ -427,8 +427,7 @@ class TestVccComponentManager:
             f"{vcc_component_manager.frequency_band}"
         )
         mock_vcc_band.ConfigureScan.assert_not_called()
-        
-    
+
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]
     )
@@ -451,7 +450,7 @@ class TestVccComponentManager:
         vcc_component_manager.on()
 
         # assert mock_wib.State == DevState.ON
-        
+
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = json.loads(json_str)
