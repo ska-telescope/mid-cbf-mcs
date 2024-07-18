@@ -113,6 +113,8 @@ class ControllerComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
+    # --- Start Communicating --- #
+
     def _set_fqdns(self: ControllerComponentManager) -> None:
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count.
@@ -402,6 +404,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on all of the Talon LRUs
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
@@ -454,6 +457,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Configure the SLIM devices
 
+        :param task_abort_event: Event to signal task abort
         :return: True if the SLIM devices were successfully configured, False otherwise
         """
         try:
@@ -540,6 +544,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on the controller and its subordinate devices
 
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -659,6 +665,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Submit on operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -674,7 +681,8 @@ class ControllerComponentManager(CbfComponentManager):
     # --- Off Command --- #
 
     def _subarray_to_empty(
-        self: ControllerComponentManager, subarray: context.DeviceProxy
+        self: ControllerComponentManager,
+        subarray: context.DeviceProxy,
     ) -> tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
@@ -806,6 +814,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off all subelements of the controller
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a boolean indicating success and a list of messages
         """
         success = True
@@ -933,6 +942,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off all of the Talon LRUs
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
