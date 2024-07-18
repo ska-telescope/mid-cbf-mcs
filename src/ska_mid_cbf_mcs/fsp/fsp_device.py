@@ -182,45 +182,6 @@ class Fsp(CbfDevice):
         """
         return True
 
-    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
-        """
-        Determine if SetFunctionMode is allowed
-        (allowed if FSP state is ON).
-
-        :return: if SetFunctionMode is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="FSP function mode",
-    )
-    def SetFunctionMode(
-        self: Fsp, function_mode: str
-    ) -> DevVarLongStringArrayType:
-        """
-        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
-        turn one of them ON according to argin, and all others DISABLE.
-
-        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: DevVarLongStringArrayType
-
-        """
-        command_handler = self.get_command_object(
-            command_name="SetFunctionMode"
-        )
-        result_code, command_id = command_handler(function_mode)
-        return [[result_code], [command_id]]
-
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
         Determine if AddSubarrayMembership is allowed
@@ -342,6 +303,49 @@ class Fsp(CbfDevice):
         )
         result_code, message = command_handler(sub_id)
         return [[result_code], [message]]
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
+        """
+        Determine if SetFunctionMode is allowed
+        (allowed if FSP state is ON).
+
+        :return: if SetFunctionMode is allowed
+        :rtype: bool
+        """
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in="str",
+        dtype_out="DevVarLongStringArray",
+        doc_in="FSP function mode",
+    )
+    def SetFunctionMode(
+        self: Fsp, function_mode: str
+    ) -> DevVarLongStringArrayType:
+        """
+        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
+        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
+        turn one of them ON according to argin, and all others DISABLE.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: DevVarLongStringArrayType
+
+        """
+        command_handler = self.get_command_object(
+            command_name="SetFunctionMode"
+        )
+        result_code, command_id = command_handler(function_mode)
+        return [[result_code], [command_id]]
 
 
 # ----------

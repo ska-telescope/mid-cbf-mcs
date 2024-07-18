@@ -58,5 +58,5 @@ class HpsFspControllerSimulator:
         elif f_mode == "VLBI":
             self._function_mode = FspModes.VLBI.value
         else:
-            # Error
+            # Error: Invalid function mode
             pass
