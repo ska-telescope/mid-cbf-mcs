@@ -1003,6 +1003,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off the controller and its subordinate devices
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1104,6 +1105,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Submit off operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1265,6 +1267,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1379,6 +1382,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

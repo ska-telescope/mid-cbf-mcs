@@ -97,6 +97,10 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
+    # -------------
+    # Communication
+    # -------------
+
     def start_communicating(self) -> None:
         """
         Establish communication with the component, then start monitoring.
@@ -104,7 +108,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering TalonBoardComponentManager.start_communicating"
         )
-        self.logger.error(f"{datetime.now()}----- ENTERING!!! -----")
 
         if self.is_communicating:
             self.logger.info("Already communicating.")
@@ -142,142 +145,10 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
-        self.logger.error(f"{datetime.now()}----- STATE SET TO OFF!!! -----")
 
-    def _subscribe_change_events(self) -> None:
-        """
-        Subscribe to attribute change events from HPS device proxies
-        """
-        # Talon System ID attributes
-        self._talon_sysid_events = []
-
-        if self._talon_sysid_fqdn is not None:
-            e = {
-                "version": self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name="version",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_sysid_events.append(e)
-            e = {
-                "Bitstream": self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name="Bitstream",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_sysid_events.append(e)
-
-        # Talon Status attributes
-        self._talon_status_events = []
-
-        if self._talon_status_fqdn is not None:
-            e = {
-                "iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "fs_iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="fs_iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "comms_iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="comms_iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "system_clk_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="system_clk_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_bl_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_bl_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_br_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_br_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_tr_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_tr_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "e100g_0_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="e100g_0_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "e100g_1_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="e100g_1_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "slim_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="slim_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-        return
+    # -------------
+    # Fast Commands
+    # -------------
 
     def off(self) -> tuple[ResultCode, str]:
         """
@@ -316,23 +187,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._update_component_state(power=PowerState.OFF)
 
         return (ResultCode.OK, "Off completed OK")
-
-    def _attr_change_callback(
-        self, fqdn: str, name: str, value: Any, quality: AttrQuality
-    ) -> None:
-        if value is None:
-            self.logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-        self.logger.debug(f"Attr Change callback: {name} -> {value}")
-        if fqdn == self._talon_sysid_fqdn:
-            self._talon_sysid_attrs[name] = value
-        elif fqdn == self._talon_status_fqdn:
-            self._talon_status_attrs[name] = value
-        else:
-            self.logger.warning(
-                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
-            )
 
     # ----------------------------------------------------
     # Talon Board Telemetry and Status from Device Proxies
@@ -571,7 +425,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # TODO: read attributes 100G
 
     # ----------------------------------------------
-    # Talon Board Rtelemetry and Status from Influxdb
+    # Talon Board Telemetry and Status from Influxdb
     # ----------------------------------------------
 
     def fpga_die_temperature(self) -> float:
@@ -1160,7 +1014,171 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    def _attr_change_callback(
+        self, fqdn: str, name: str, value: Any, quality: AttrQuality
+    ) -> None:
+        """
+        Callback for attribute change.
+
+        :param fqdn: The FQDN of the device
+        :param name: attribute name
+        :param value: attribute value
+        """
+        if value is None:
+            self.logger.warning(
+                f"None value for attribute {name} of device {fqdn}"
+            )
+        self.logger.debug(f"Attr Change callback: {name} -> {value}")
+        if fqdn == self._talon_sysid_fqdn:
+            self._talon_sysid_attrs[name] = value
+        elif fqdn == self._talon_status_fqdn:
+            self._talon_status_attrs[name] = value
+        else:
+            self.logger.warning(
+                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
+            )
+
+    def _subscribe_change_events(self) -> None:
+        """
+        Subscribe to attribute change events from HPS device proxies
+        """
+        # Talon System ID attributes
+        self._talon_sysid_events = []
+
+        if self._talon_sysid_fqdn is not None:
+            e = {
+                "version": self._proxies[
+                    self._talon_sysid_fqdn
+                ].add_change_event_callback(
+                    attribute_name="version",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_sysid_events.append(e)
+            e = {
+                "Bitstream": self._proxies[
+                    self._talon_sysid_fqdn
+                ].add_change_event_callback(
+                    attribute_name="Bitstream",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_sysid_events.append(e)
+
+        # Talon Status attributes
+        self._talon_status_events = []
+
+        if self._talon_status_fqdn is not None:
+            e = {
+                "iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "fs_iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="fs_iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "comms_iopll_locked_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="comms_iopll_locked_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "system_clk_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="system_clk_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "emif_bl_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_bl_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "emif_br_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_br_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "emif_tr_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="emif_tr_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "e100g_0_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="e100g_0_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "e100g_1_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="e100g_1_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+            e = {
+                "slim_pll_fault": self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name="slim_pll_fault",
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+            }
+            self._talon_status_events.append(e)
+        return
+
     def is_on_allowed(self: TalonBoardComponentManager) -> bool:
+        """
+        Check if On operation is allowed.
+
+        :return: True if allowed, False otherwise
+        """
         if self.power_state != PowerState.OFF:
             self.logger.warning(
                 f"On not allowed; PowerState is {self.power_state}"
@@ -1178,6 +1196,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         Turn on Talon Board component. This attempts to establish communication
         with the devices on the HPS, and subscribe to attribute changes.
 
+        :param task_callback: Callback function to report task status
+        :param task_abort_event: Event to abort the task
         :raise ConnectionError: if unable to connect to HPS VCC devices
         """
         self.logger.debug("Entering TalonBoardComponentManager.on")
@@ -1218,6 +1238,11 @@ class TalonBoardComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
         **kwargs: Any,
     ) -> tuple[ResultCode, str]:
+        """
+        Submit on operation method to task executor queue.
+
+        :param task_callback: Callback function to report task status
+        """
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,
