@@ -265,6 +265,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- Turn On Outlet --- #
+
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
         outlet: str,
@@ -349,6 +351,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
             args=[argin],
             task_callback=task_callback,
         )
+
+    # --- Turn Off Outlet --- #
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,

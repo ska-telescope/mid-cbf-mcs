@@ -64,7 +64,9 @@ class SlimLinkComponentManager(CbfComponentManager):
             health_state_callback=kwargs["health_state_callback"],
         )
 
-    # --- Properties --- #
+    # -----------------
+    # Device Properties
+    # -----------------
 
     @property
     def tx_device_name(self: SlimLinkComponentManager) -> str:
@@ -282,7 +284,9 @@ class SlimLinkComponentManager(CbfComponentManager):
     # -------------
 
     def start_communicating(self: SlimLinkComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
         self.logger.debug(
             "Entering SlimLinkComponentManager.start_communicating"
         )
@@ -296,7 +300,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.ON)
 
     def stop_communicating(self: SlimLinkComponentManager) -> None:
-        """Stop communication with the component."""
+        """
+        Stop communication with the component.
+        """
 
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model
@@ -355,20 +361,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[2],
         ]
 
-    def start_communicating(self: SlimLinkComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-        self.logger.debug(
-            "Entering SlimLinkComponentManager.start_communicating"
-        )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
-        # This moves the op state model
-        self._update_component_state(power=PowerState.ON)
-
     @backoff.on_exception(
         backoff.constant,
         (Exception, tango.DevFailed),
@@ -385,6 +377,10 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._rx_device_proxy.ping()
 
     def sync_idle_ctrl_words(self: SlimLinkComponentManager) -> None:
+        """
+        If IdleCtrlWord is not set in the Tx device, generate a new one and set it in both Tx and Rx devices.
+        Otherwise set the Rx device's IdleCtrlWord to the Tx device's IdleCtrlWord.
+        """
         idle_ctrl_word = self.tx_idle_ctrl_word
 
         # If Tx's IdleCtrlWord reads as None, regenerate.
@@ -397,6 +393,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
     def init_tx_for_loopback(self: SlimLinkComponentManager) -> None:
+        """
+        Initialize the Tx device for serial loopback.
+        """
         # To put SLIM Rx back in serial loopback, we need to determine
         # the Tx device name it should reference for ICW comparisons.
         rx = self._rx_device_name
@@ -521,6 +520,8 @@ class SlimLinkComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- ConnectTxRx --- #
+
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -635,6 +636,8 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._connect_slim_tx_rx,
             task_callback=task_callback,
         )
+
+    # --- DisconnectTxRx --- #
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,

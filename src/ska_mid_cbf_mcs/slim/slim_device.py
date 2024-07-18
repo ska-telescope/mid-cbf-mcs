@@ -11,8 +11,6 @@
 from __future__ import annotations
 
 from ska_control_model import HealthState, PowerState, SimulationMode
-
-# tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
@@ -241,6 +239,11 @@ class Slim(CbfDevice):
             super().__init__(*args, **kwargs)
 
         def is_allowed(self: Slim.SlimTestCommand) -> bool:
+            """
+            Check if the command is allowed to be executed.
+
+            :return: True if the command is allowed to be executed, False otherwise.
+            """
             if self.component_manager.power_state == PowerState.ON:
                 if self.component_manager.mesh_configured:
                     return True
