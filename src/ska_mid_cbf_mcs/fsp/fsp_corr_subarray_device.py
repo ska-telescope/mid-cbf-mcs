@@ -205,10 +205,11 @@ class FspCorrSubarray(CbfObsDevice):
         command_handler = self.get_command_object("UpdateDelayModel")
         result_code, message = command_handler(argin)
         return [[result_code], [message]]
-    
+
     # ---------------------
     # Long Running Commands
     # ---------------------
+
 
 # ----------
 # Run server

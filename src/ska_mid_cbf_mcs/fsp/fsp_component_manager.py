@@ -41,7 +41,7 @@ class FspComponentManager(CbfComponentManager):
         fsp_id: int,
         all_fsp_corr_subarray_fqdn: list[str],
         # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
-        hps_fsp_controller_fqdn: str, 
+        hps_fsp_controller_fqdn: str,
         **kwargs: any,
     ) -> None:
         """
@@ -67,7 +67,7 @@ class FspComponentManager(CbfComponentManager):
 
         self.subarray_membership = []
         self.function_mode = FspModes.IDLE.value  # IDLE
-        
+
     # -------------
     # Communication
     # -------------
