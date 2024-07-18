@@ -80,7 +80,7 @@ group SLIM Vis Link
 slimlink   ->  hpsdevices    : DisconnectTxRx
 end loop
 
-controller ->  talon_board   : PowerOff
+controller ->  talon_board   : Off
 note over subarray       : Subarray\nObsState EMPTY
 controller ->  hpsmaster     : Shutdown(3)
 group no Tango exception on Shutdown
