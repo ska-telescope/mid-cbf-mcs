@@ -31,9 +31,6 @@ class Const:
         self.FREQUENCY_BAND_3_RANGE_HZ = (1.65 * 10**9, 3.05 * 10**9)
         self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10**9, 5.18 * 10**9)
 
-        self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
-        self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
-
         self.MAX_VCC = 4
         self.MAX_SUBARRAY = 16
 
@@ -42,6 +39,9 @@ class Const:
         self.DEFAULT_COUNT_SUBARRAY = 16
 
         self.DEFAULT_TIMEOUT = 4
+
+        self.BER_PASS_THRESHOLD = 8.000e-11
+        self.GBPS = 25.78125 * 64 / 66
 
 
 const = Const()

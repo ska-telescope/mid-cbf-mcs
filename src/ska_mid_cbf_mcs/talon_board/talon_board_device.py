@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
@@ -34,6 +34,9 @@ from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
 # PROTECTED REGION END #    //  TalonBoard.additionnal_import
 
 __all__ = ["TalonBoard", "main"]
+
+# Global Varibale for polling period of Attributes, in ms
+ATTR_POLLING_PERIOD = 10000
 
 
 class TalonBoard(SKABaseDevice):
@@ -256,6 +259,181 @@ class TalonBoard(SKABaseDevice):
         :return: the FPGA die temperature in deg Celcius
         """
         res = self.component_manager.fpga_die_temperature()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 0",
+        doc="Value of the 12V FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=11.2,
+        max_warning=12.8,
+        min_alarm=11.0,
+        max_alarm=13.0,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage0(self: TalonBoard) -> float:
+        """
+        Reads the 12V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 11.2V or >= 12.8V
+        ATTR_ALARM  is trigger when the value is <= 11.0V or >= 13.0V
+
+        :return: 12V FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_0()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 1",
+        doc="Value of the 2.5V FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=2.404,
+        max_warning=2.596,
+        min_alarm=2.38,
+        max_alarm=2.62,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage1(self: TalonBoard) -> float:
+        """
+        Reads the 2.5V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 2.404V or >= 2.596V
+        ATTR_ALARM  is trigger when the value is <= 2.38V or >= 2.62V
+
+        :return: 2.5V FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_1()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 2",
+        doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=0.79,
+        max_warning=0.95,
+        min_alarm=0.77,
+        max_alarm=0.97,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage2(self: TalonBoard) -> float:
+        """
+        Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 0.79V or >= 0.95V
+        ATTR_ALARM  is trigger when the value is <= 0.77V or >= 0.97V
+
+        :return: 0.8V VCC FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_2()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 3",
+        doc="Value of the 1.8V VCCIO FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=1.728,
+        max_warning=1.872,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage3(self: TalonBoard) -> float:
+        """
+        Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
+        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
+
+        :return: The FPGA Die VCCIO Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_3()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 4",
+        doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=1.728,
+        max_warning=1.872,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
+        """
+        Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
+        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
+
+        :return: The FPGA Die VCCPT Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_4()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 5",
+        doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=0.876,
+        max_warning=0.924,
+        min_alarm=0.87,
+        max_alarm=0.93,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
+        """
+        Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 0.876V or >= 0.924V
+        ATTR_ALARM  is trigger when the value is <= 0.87V or >= 0.93V
+
+        :return: The PGA Die VCCERAM Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_5()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die Voltage 6",
+        doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
+        unit="V",
+        min_warning=1.728,
+        max_warning=1.872,
+        min_alarm=1.71,
+        max_alarm=1.89,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
+        """
+        Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
+        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
+
+        :return: The FPGA Die VCCADC Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_6()
         return res
 
     @attribute(
@@ -610,6 +788,24 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.ltm_temperature_warning()
 
+    @attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
+    )
+    def simulationMode(self: TalonBoard):
+        """
+        Expose the Base Class _simulation_mode Attribute
+        Defaults to False.
+
+        :return: If the device is in Simulation Mode
+        """
+
+        return self._simulation_mode
+
     # -----------------
     # Attribute Methods
     # -----------------
@@ -676,6 +872,19 @@ class TalonBoard(SKABaseDevice):
         """
         self.vccID_ = value
         # PROTECTED REGION END #    //  TalonBoard.vccID_write
+
+    def write_simulationMode(self: TalonBoard, value: bool) -> None:
+        """
+        BaseClass Attribute Write Override
+
+        Sets the Device and the Component Manager's Simulation Mode Flag
+
+        :param value: Bool that represent the state of simulationMode
+        """
+
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+        self.logger.info(f"Talon Board Simulation Set to :{value}")
 
     # ---------------
     # General methods
@@ -808,7 +1017,12 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            return super().do()
+            (result_code, message) = super().do()
+
+            device = self.target
+            device.write_simulationMode(SimulationMode.TRUE)
+
+            return (result_code, message)
 
     class OnCommand(SKABaseDevice.OnCommand):
         """

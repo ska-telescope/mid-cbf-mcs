@@ -216,8 +216,7 @@ def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_attribute("PDU1PowerMode", PowerMode.OFF)
-    builder.add_attribute("PDU2PowerMode", PowerMode.OFF)
+    builder.add_attribute("LRUPowerMode", PowerMode.OFF)
     return builder()
 
 

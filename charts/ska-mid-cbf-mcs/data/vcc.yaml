@@ -2,7 +2,7 @@ name: vcc
 function: coarse-channelisation
 domain: sensing
 command: "VccMulti"
-instances: ["vcc-001", "vcc-002", "vcc-003", "vcc-004", "vcc-005", "vcc-006", "vcc-007", "vcc-008"]
+instances: ["vcc"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,7 +20,7 @@ livenessProbe:
 server:
   name: "VccMulti"
   instances:
-  - name: "vcc-001"
+  - name: "vcc"
     classes:
     - name: "Vcc"
       devices:
@@ -60,15 +60,6 @@ server:
           - name: "VccID"
             values:
             - "1"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/001"
-      - name: "mid_csp_cbf/vcc_sw2/001"
-
-  - name: "vcc-002"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/002"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -105,15 +96,6 @@ server:
           - name: "VccID"
             values:
             - "2"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/002"
-      - name: "mid_csp_cbf/vcc_sw2/002"
-
-  - name: "vcc-003"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/003"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -150,15 +132,6 @@ server:
           - name: "VccID"
             values:
             - "3"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/003"
-      - name: "mid_csp_cbf/vcc_sw2/003"
-
-  - name: "vcc-004"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/004"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -195,15 +168,6 @@ server:
           - name: "VccID"
             values:
             - "4"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/004"
-      - name: "mid_csp_cbf/vcc_sw2/004"
-
-  - name: "vcc-005"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/005"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -240,14 +204,6 @@ server:
           - name: "VccID"
             values:
             - "5"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/005"
-      - name: "mid_csp_cbf/vcc_sw2/005"
-  - name: "vcc-006"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/006"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -284,14 +240,6 @@ server:
           - name: "VccID"
             values:
             - "6"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/006"
-      - name: "mid_csp_cbf/vcc_sw2/006"
-  - name: "vcc-007"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/007"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -328,14 +276,6 @@ server:
           - name: "VccID"
             values:
             - "7"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/007"
-      - name: "mid_csp_cbf/vcc_sw2/007"
-  - name: "vcc-008"
-    classes:
-    - name: "Vcc"
-      devices:
       - name: "mid_csp_cbf/vcc/008"
         attribute_properties:
         - attribute: "subarrayMembership"
@@ -374,6 +314,20 @@ server:
             - "8"
     - name: "VccSearchWindow"
       devices:
+      - name: "mid_csp_cbf/vcc_sw1/001"
+      - name: "mid_csp_cbf/vcc_sw2/001"
+      - name: "mid_csp_cbf/vcc_sw1/002"
+      - name: "mid_csp_cbf/vcc_sw2/002"
+      - name: "mid_csp_cbf/vcc_sw1/003"
+      - name: "mid_csp_cbf/vcc_sw2/003"
+      - name: "mid_csp_cbf/vcc_sw1/004"
+      - name: "mid_csp_cbf/vcc_sw2/004"
+      - name: "mid_csp_cbf/vcc_sw1/005"
+      - name: "mid_csp_cbf/vcc_sw2/005"
+      - name: "mid_csp_cbf/vcc_sw1/006"
+      - name: "mid_csp_cbf/vcc_sw2/006"
+      - name: "mid_csp_cbf/vcc_sw1/007"
+      - name: "mid_csp_cbf/vcc_sw2/007"
       - name: "mid_csp_cbf/vcc_sw1/008"
       - name: "mid_csp_cbf/vcc_sw2/008"
 image:

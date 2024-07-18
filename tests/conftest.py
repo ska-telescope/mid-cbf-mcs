@@ -337,6 +337,7 @@ def init_proxies_fixture():
             Currently supported capabilities:
             - 1 CbfController
             - 1 CbfSubarray
+            - 1 TalonBoard
             - 4 Fsp
             - 8 Vcc
             - 1 Slim
@@ -379,6 +380,13 @@ def init_proxies_fixture():
             self.num_fsp = int(self.max_capabilities["FSP"])
             self.num_vcc = int(self.max_capabilities["VCC"])
 
+            # TalonBoard
+            # Testing one board is enough since Integration Tests only tests software
+            self.talon_board = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/talon_board/001",
+                logger=logging.getLogger(),
+            )
+            self.talon_board.set_timeout_millis(timeout_millis)
             # CbfSubarray
             self.subarray = [None]
             for proxy in [
@@ -637,10 +645,10 @@ def init_proxies_fixture():
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s
             )
 
-            # self.controller.adminMode = AdminMode.OFFLINE
-            # self.wait_timeout_dev(
-            #     [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
-            # )
+            self.controller.adminMode = AdminMode.OFFLINE
+            self.wait_timeout_dev(
+                [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
+            )
 
     return TestProxies()
 
@@ -703,12 +711,12 @@ def init_delay_model_test_fixture():
                     # among receptors_under_test:
                     for i_rec in receptors_to_remove:
                         for jj, entry in enumerate(
-                            delay_model_all_obj[i_dm]["delay_details"]
+                            delay_model_all_obj[i_dm]["receptor_delays"]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["delay_details"].pop(
-                                    jj
-                                )
+                                delay_model_all_obj[i_dm][
+                                    "receptor_delays"
+                                ].pop(jj)
 
             return delay_model_all_obj
 
