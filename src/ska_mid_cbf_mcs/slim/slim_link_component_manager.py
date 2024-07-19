@@ -520,7 +520,7 @@ class SlimLinkComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
-    # --- ConnectTxRx --- #
+    # --- ConnectTxRx Command --- #
 
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -637,7 +637,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
-    # --- DisconnectTxRx --- #
+    # --- DisconnectTxRx Command --- #
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,

@@ -9,6 +9,7 @@
 
 # Copyright (c) 2023 National Research Council of Canada
 
+
 from __future__ import annotations
 
 import threading
@@ -61,7 +62,7 @@ class SlimComponentManager(CbfComponentManager):
         self.mesh_configured = False
         self._config_str = ""
 
-        # a list of [tx_fqdn, rx_fqdn] for active links.
+        # A list of [tx_fqdn, rx_fqdn] for active links.
         self._active_links = []
 
         # SLIM Link Device proxies
@@ -126,9 +127,7 @@ class SlimComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
 
     def stop_communicating(self: SlimComponentManager) -> None:
-        """
-        Stop communication with the component.
-        """
+        """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 
         self._unsubscribe_command_results()
@@ -139,9 +138,25 @@ class SlimComponentManager(CbfComponentManager):
 
         super().stop_communicating()
 
-    # ---------------
-    # General Methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
+
+    def on(self: SlimComponentManager) -> tuple[ResultCode, str]:
+        """
+        On command. Currently just returns OK. The device
+        does nothing until mesh configuration is provided via
+        the Configure command.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering SlimComponentManager.on")
+
+        self._update_component_state(power=PowerState.ON)
+        return (ResultCode.OK, "On completed OK")
 
     # --- Getters --- #
 
@@ -206,7 +221,66 @@ class SlimComponentManager(CbfComponentManager):
             bers.append(ber)
         return bers
 
-    # --- Slim Test --- #
+    # --- Slim Test Command --- #
+
+    def _calculate_rx_idle_word_rate(
+        self: SlimComponentManager,
+        rx_idle_word_count: int,
+        rx_idle_error_count: int,
+    ) -> tuple[str, str]:
+        """
+        Calculates the ratio of Rx idle errors to idle words and a status flag
+        that indicates if the link's error rate exceeds the pass threshold.
+
+        :param: rx_idle_word_count: The number of idle words processed since the counters were last cleared
+        :param: rx_idle_error_count: The number of idle errors encountered since the counters were last cleared
+        :return: A tuple containing the rx_idle_word_error_rate and rx_ber_pass_status
+        :rtype: tuple[str,str]
+        """
+        if rx_idle_word_count == 0:
+            return ("NaN", "Unknown")
+
+        rx_idle_word_rate_float = rx_idle_error_count / rx_idle_word_count
+        rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
+        rx_ber_pass_status = (
+            "Passed"
+            if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD
+            else "Failed"
+        )
+
+        return (rx_idle_word_error_rate, rx_ber_pass_status)
+
+    def _slim_links_ber_check_summary(
+        self: SlimComponentManager,
+        counters: list[list[int]],
+        names: list[str],
+        rx_error_rate_and_status: list[tuple[str]],
+    ) -> None:
+        """
+        Logs a summary health status for each SLIM link in the mesh.
+        Specifically, this will compare the word-error-rate calculated for each rx device to the pass/fail threshold set in global_enum.py.
+
+        :param: counters: A list of lists containing each active SLIM link's counters attr.
+        :param: names: A list of strings containing each active SLIM link's linkName attr.
+        :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM Link.
+        """
+
+        res = "\nSLIM BER Check:\n\n"
+        for idx in range(len(self._active_links)):
+            rx_word_count = counters[idx][0]
+            rx_idle_word_count = counters[idx][2]
+            (
+                rx_idle_word_error_rate,
+                rx_ber_pass_status,
+            ) = rx_error_rate_and_status[idx]
+            rx_words = rx_word_count + rx_idle_word_count
+
+            res += f"Link Name: {names[idx]}\n"
+            res += f"Slim Link status (rx_status): {rx_ber_pass_status}\n"
+            res += f"rx_wer:{rx_idle_word_error_rate}\n"
+            res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
+            res += "\n"
+        self.logger.info(res)
 
     def _slim_table(
         self: SlimComponentManager,
@@ -289,65 +363,6 @@ class SlimComponentManager(CbfComponentManager):
 
         self.logger.info(f"\nSLIM Health Summary Table\n{table}")
 
-    def _slim_links_ber_check_summary(
-        self: SlimComponentManager,
-        counters: list[list[int]],
-        names: list[str],
-        rx_error_rate_and_status: list[tuple[str]],
-    ) -> None:
-        """
-        Logs a summary health status for each SLIM link in the mesh.
-        Specifically, this will compare the word-error-rate calculated for each rx device to the pass/fail threshold set in global_enum.py.
-
-        :param: counters: A list of lists containing each active SLIM link's counters attr.
-        :param: names: A list of strings containing each active SLIM link's linkName attr.
-        :param: rx_error_rate_and_status: A list of tuples containing abridged health stats for each active SLIM Link.
-        """
-
-        res = "\nSLIM BER Check:\n\n"
-        for idx in range(len(self._active_links)):
-            rx_word_count = counters[idx][0]
-            rx_idle_word_count = counters[idx][2]
-            (
-                rx_idle_word_error_rate,
-                rx_ber_pass_status,
-            ) = rx_error_rate_and_status[idx]
-            rx_words = rx_word_count + rx_idle_word_count
-
-            res += f"Link Name: {names[idx]}\n"
-            res += f"Slim Link status (rx_status): {rx_ber_pass_status}\n"
-            res += f"rx_wer:{rx_idle_word_error_rate}\n"
-            res += f"rx_rate_gbps:{rx_idle_word_count / rx_words * const.GBPS if rx_words != 0 else 'NaN'}\n"
-            res += "\n"
-        self.logger.info(res)
-
-    def _calculate_rx_idle_word_rate(
-        self: SlimComponentManager,
-        rx_idle_word_count: int,
-        rx_idle_error_count: int,
-    ) -> tuple[str, str]:
-        """
-        Calculates the ratio of Rx idle errors to idle words and a status flag
-        that indicates if the link's error rate exceeds the pass threshold.
-
-        :param: rx_idle_word_count: The number of idle words processed since the counters were last cleared
-        :param: rx_idle_error_count: The number of idle errors encountered since the counters were last cleared
-        :return: A tuple containing the rx_idle_word_error_rate and rx_ber_pass_status
-        :rtype: tuple[str,str]
-        """
-        if rx_idle_word_count == 0:
-            return ("NaN", "Unknown")
-
-        rx_idle_word_rate_float = rx_idle_error_count / rx_idle_word_count
-        rx_idle_word_error_rate = f"{rx_idle_word_rate_float:.3e}"
-        rx_ber_pass_status = (
-            "Passed"
-            if rx_idle_word_rate_float < const.BER_PASS_THRESHOLD
-            else "Failed"
-        )
-
-        return (rx_idle_word_error_rate, rx_ber_pass_status)
-
     def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
         """
         Examines various attributes from active SLIM Links and logs the metrics in a summary table.
@@ -403,7 +418,7 @@ class SlimComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
-    # --- Off --- #
+    # --- Off Command --- #
 
     def _disconnect_links(
         self: SlimComponentManager,
@@ -412,7 +427,6 @@ class SlimComponentManager(CbfComponentManager):
         """
         Triggers the configured SLIM links to disconnect and cease polling health states.
 
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -492,8 +506,6 @@ class SlimComponentManager(CbfComponentManager):
         """
         Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
 
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
@@ -552,7 +564,7 @@ class SlimComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
-    # --- Configure --- #
+    # --- Configure Command --- #
 
     def _initialize_links(
         self: SlimComponentManager,
