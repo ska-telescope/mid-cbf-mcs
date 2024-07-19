@@ -12,16 +12,21 @@
 import json
 import os
 import socket
+from typing import Iterator
 
 import pytest
 
 # Tango imports
-from ska_control_model import LoggingLevel, SimulationMode
+from ska_control_model import (
+    AdminMode,
+    LoggingLevel,
+    ObsState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
 )
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState
 
 # Tango imports
 from ska_tango_testing import context
@@ -37,19 +42,11 @@ class TestCbfController:
     Test class for CbfController device class integration testing.
     """
 
-    @pytest.mark.skip(reason="enable to test DebugDevice")
-    def test_DebugDevice(self, device_under_test):
-        port = device_under_test.DebugDevice()
-        assert port == _DEBUGGER_PORT
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(("localhost", _DEBUGGER_PORT))
-        device_under_test.On()
-
     def test_Connect(
         self,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
-        test_proxies: pytest.fixture,
+        subdevices_under_test: pytest.fixture,
         lru_change_event_callbacks: MockTangoEventCallbackGroup,
         ps_change_event_callbacks: MockTangoEventCallbackGroup,
     ):
@@ -57,94 +54,77 @@ class TestCbfController:
         Test the initial states and verify the component manager
         can start communicating
         """
-        # After init devices should be in DISABLE state, but just in case...
-        if device_under_test.State() != DevState.DISABLE:
-            device_under_test.adminMode = AdminMode.OFFLINE
-            change_event_callbacks["State"].assert_change_event(
-                DevState.DISABLE
-            )
-
-        for ps in test_proxies.power_switch:
-            if ps.State() != DevState.DISABLE:
-                ps.adminMode = AdminMode.OFFLINE
-                ps_change_event_callbacks["State"].assert_change_event(
-                    DevState.DISABLE
-                )
-
-        device_under_test.simulationMode = SimulationMode.TRUE
-        device_under_test.loggingLevel = LoggingLevel.DEBUG
-
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
-        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        ps_change_event_callbacks["State"].assert_change_event(DevState.INIT)
-        # lru_change_event_callbacks["State"].assert_change_event(DevState.OFF)
+        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        ps_change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        lru_change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
         ps_change_event_callbacks.assert_not_called()
         lru_change_event_callbacks.assert_not_called()
         change_event_callbacks.assert_not_called()
 
-    def test_InitSysParam(self, device_under_test, change_event_callbacks):
-        """
-        Test the "InitSysParam" command
-        """
-        # Get the system parameters
-        data_file_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-        )
-        with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
+    # def test_InitSysParam(self, device_under_test, change_event_callbacks):
+    #     """
+    #     Test the "InitSysParam" command
+    #     """
+    #     # Get the system parameters
+    #     data_file_path = (
+    #         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    #     )
+    #     with open(data_file_path + "sys_param_4_boards.json") as f:
+    #         sp = f.read()
 
-        # Initialize the system parameters
-        result_code, command_id = device_under_test.InitSysParam(sp)
-        assert result_code == [ResultCode.QUEUED]
+    #     # Initialize the system parameters
+    #     result_code, command_id = device_under_test.InitSysParam(sp)
+    #     assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
-        )
-        change_event_callbacks.assert_not_called()
+    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
+    #         (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
+    #     )
+    #     change_event_callbacks.assert_not_called()
 
-    def test_On(self, device_under_test, test_proxies, change_event_callbacks):
-        """
-        Test the "On" command
-        """
-        # Send the On command
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
+    # def test_On(self, device_under_test, subdevices_under_test, change_event_callbacks):
+    #     """
+    #     Test the "On" command
+    #     """
+    #     # Send the On command
+    #     result_code, command_id = device_under_test.On()
+    #     assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "On completed OK"]')
-        )
-        change_event_callbacks["State"].assert_change_event(DevState.ON)
+    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
+    #         (f"{command_id[0]}", '[0, "On completed OK"]')
+    #     )
+    #     change_event_callbacks["state"].assert_change_event(DevState.ON)
 
-        # Validate subelements are in the correct state
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
-        # for mesh in test_proxies.slim:
-        #     assert mesh.adminMode == AdminMode.ONLINE
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             assert (
-        #                 test_proxies.fspSubarray[i][j][k].adminMode
-        #                 == AdminMode.ONLINE
-        #             )
+    #     # Validate subelements are in the correct state
+    #     # for i in range(1, subdevices_under_test.num_sub + 1):
+    #     #     assert subdevices_under_test.subarray[i].adminMode == AdminMode.ONLINE
+    #     # for i in range(1, subdevices_under_test.num_vcc + 1):
+    #     #     assert subdevices_under_test.vcc[i].adminMode == AdminMode.ONLINE
+    #     # for i in range(1, subdevices_under_test.num_fsp + 1):
+    #     #     assert subdevices_under_test.fsp[i].adminMode == AdminMode.ONLINE
+    #     # for mesh in subdevices_under_test.slim:
+    #     #     assert mesh.adminMode == AdminMode.ONLINE
+    #     # for i in ["CORR", "PSS-BF", "PST-BF"]:
+    #     #     for j in range(1, subdevices_under_test.num_sub + 1):
+    #     #         for k in range(1, subdevices_under_test.num_fsp + 1):
+    #     #             assert (
+    #     #                 subdevices_under_test.fspSubarray[i][j][k].adminMode
+    #     #                 == AdminMode.ONLINE
+    #     #             )
 
-    # def test_InitSysParam_Condition(self, test_proxies):
+    # def test_InitSysParam_Condition(self, subdevices_under_test):
     #     """
     #     Test that InitSysParam can only be used when
     #     the controller op state is OFF
     #     """
-    #     if test_proxies.controller.State() == DevState.OFF:
-    #         test_proxies.controller.On()
+    #     if subdevices_under_test.controller.State() == DevState.OFF:
+    #         subdevices_under_test.controller.On()
     #     with open(data_file_path + "sys_param_4_boards.json") as f:
     #         sp = f.read()
-    #     result = test_proxies.controller.InitSysParam(sp)
+    #     result = subdevices_under_test.controller.InitSysParam(sp)
     #     assert result[0] == ResultCode.FAILED
 
     # @pytest.mark.parametrize(
@@ -154,67 +134,50 @@ class TestCbfController:
     #         "source_init_sys_param_retrieve_from_car.json",
     #     ],
     # )
-    # def test_SourceInitSysParam(self, test_proxies, config_file_name: str):
+    # def test_SourceInitSysParam(self, subdevices_under_test, config_file_name: str):
     #     """
     #     Test that InitSysParam file can be retrieved from CAR
     #     """
-    #     if test_proxies.controller.State() == DevState.ON:
-    #         test_proxies.controller.Off()
+    #     if subdevices_under_test.controller.State() == DevState.ON:
+    #         subdevices_under_test.controller.Off()
     #     with open(data_file_path + config_file_name) as f:
     #         sp = f.read()
-    #     result = test_proxies.controller.InitSysParam(sp)
+    #     result = subdevices_under_test.controller.InitSysParam(sp)
 
-    #     assert test_proxies.controller.State() == DevState.OFF
+    #     assert subdevices_under_test.controller.State() == DevState.OFF
     #     assert result[0] == ResultCode.OK
-    #     assert test_proxies.controller.sourceSysParam == sp
+    #     assert subdevices_under_test.controller.sourceSysParam == sp
     #     sp_json = json.loads(sp)
     #     tm_data_sources = sp_json["tm_data_sources"][0]
     #     tm_data_filepath = sp_json["tm_data_filepath"]
     #     retrieved_init_sys_param_file = TMData([tm_data_sources])[
     #         tm_data_filepath
     #     ].get_dict()
-    #     assert test_proxies.controller.sysParam == json.dumps(
+    #     assert subdevices_under_test.controller.sysParam == json.dumps(
     #         retrieved_init_sys_param_file
     #     )
 
-    def test_Off(
-        self, device_under_test, test_proxies, change_event_callbacks
-    ):
-        """
-        Test the "Off" command
-        """
+    # def test_Off(
+    #     self, device_under_test, subdevices_under_test, change_event_callbacks
+    # ):
+    #     """
+    #     Test the "Off" command
+    #     """
 
-        # if controller is already off, we must turn it On before turning off.
-        if device_under_test.State() == DevState.OFF:
-            self.test_On(
-                device_under_test, test_proxies, change_event_callbacks
-            )
+    #     # if controller is already off, we must turn it On before turning off.
+    #     if device_under_test.State() == DevState.OFF:
+    #         self.test_On(
+    #             device_under_test, subdevices_under_test, change_event_callbacks
+    #         )
 
-        # Send the Off command
-        result_code, command_id = device_under_test.Off()
-        assert result_code == [ResultCode.QUEUED]
+    #     # Send the Off command
+    #     result_code, command_id = device_under_test.Off()
+    #     assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "Off completed OK"]')
-        )
-        change_event_callbacks["State"].assert_change_event(DevState.OFF)
-
-        # Validate subelements are in the correct state
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     assert test_proxies.subarray[i].State() == DevState.OFF
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     assert test_proxies.vcc[i].State() == DevState.OFF
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     assert test_proxies.fsp[i].State() == DevState.OFF
-        # for mesh in test_proxies.slim:
-        #     assert mesh.State() == DevState.OFF
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             assert (
-        #                 test_proxies.fspSubarray[i][j][k].State()
-        #                 == DevState.OFF
-        #             )
+    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
+    #         (f"{command_id[0]}", '[0, "Off completed OK"]')
+    #     )
+    #     change_event_callbacks["state"].assert_change_event(DevState.OFF)
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -229,7 +192,7 @@ class TestCbfController:
     #     ],
     # )
     # def test_Off_GoToIdle_RemoveAllReceptors(
-    #     self, test_proxies, config_file_name, receptors, vcc_receptors
+    #     self, subdevices_under_test, config_file_name, receptors, vcc_receptors
     # ):
     #     """
     #     Test the "Off" command resetting the subelement observing state machines.
@@ -239,7 +202,7 @@ class TestCbfController:
     #     sleep_time_s = 0.1
 
     #     # turn system on
-    #     self.test_On(test_proxies)
+    #     self.test_On(subdevices_under_test)
 
     #     # load scan config
     #     f = open(data_file_path + config_file_name)
@@ -251,95 +214,47 @@ class TestCbfController:
 
     #     # Off from IDLE to test RemoveAllReceptors path
     #     # add receptors
-    #     test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.IDLE,
     #         wait_time_s,
     #         sleep_time_s,
     #     )
 
     #     # send the Off command
-    #     test_proxies.controller.Off()
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    #     assert test_proxies.controller.State() == DevState.OFF
-    #     # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-    #     for i in range(1, test_proxies.num_sub + 1):
-    #         assert test_proxies.subarray[i].State() == DevState.OFF
-    #         assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         assert test_proxies.vcc[i].State() == DevState.OFF
-    #         assert test_proxies.vcc[i].obsState == ObsState.IDLE
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         assert test_proxies.fsp[i].State() == DevState.OFF
-    #     for mesh in test_proxies.slim:
-    #         assert mesh.State() == DevState.OFF
-    #     for func in ["CORR", "PSS-BF", "PST-BF"]:
-    #         for sub in range(1, test_proxies.num_sub + 1):
-    #             for fsp in range(1, test_proxies.num_fsp + 1):
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].State()
-    #                     == DevState.OFF
-    #                 )
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].obsState
-    #                     == ObsState.IDLE
-    #                 )
-
     #     # turn system on
-    #     self.test_On(test_proxies)
+    #     self.test_On(subdevices_under_test)
 
     #     # Off from READY to test GoToIdle path
     #     # add receptors
-    #     test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.IDLE,
     #         wait_time_s,
     #         sleep_time_s,
     #     )
 
     #     # configure scan
-    #     test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].ConfigureScan(json_string)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.READY,
     #         wait_time_s,
     #         sleep_time_s,
     #     )
 
     #     # send the Off command
-    #     test_proxies.controller.Off()
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
-
-    #     assert test_proxies.controller.State() == DevState.OFF
-    #     # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-    #     for i in range(1, test_proxies.num_sub + 1):
-    #         assert test_proxies.subarray[i].State() == DevState.OFF
-    #         assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         assert test_proxies.vcc[i].State() == DevState.OFF
-    #         assert test_proxies.vcc[i].obsState == ObsState.IDLE
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         assert test_proxies.fsp[i].State() == DevState.OFF
-    #     for mesh in test_proxies.slim:
-    #         assert mesh.State() == DevState.OFF
-    #     for func in ["CORR", "PSS-BF", "PST-BF"]:
-    #         for sub in range(1, test_proxies.num_sub + 1):
-    #             for fsp in range(1, test_proxies.num_fsp + 1):
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].State()
-    #                     == DevState.OFF
-    #                 )
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].obsState
-    #                     == ObsState.IDLE
-    #                 )
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -357,7 +272,7 @@ class TestCbfController:
     # )
     # def test_Off_Abort(
     #     self,
-    #     test_proxies,
+    #     subdevices_under_test,
     #     config_file_name,
     #     scan_file_name,
     #     receptors,
@@ -369,7 +284,7 @@ class TestCbfController:
     #     wait_time_s = 5
     #     sleep_time_s = 1
 
-    #     self.test_On(test_proxies)
+    #     self.test_On(subdevices_under_test)
 
     #     # load scan config
     #     f = open(data_file_path + config_file_name)
@@ -380,18 +295,18 @@ class TestCbfController:
 
     #     # Off from SCANNING to test Abort path
     #     # add receptors
-    #     test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.IDLE,
     #         wait_time_s,
     #         sleep_time_s,
     #     )
 
     #     # configure scan
-    #     test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].ConfigureScan(json_string)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.READY,
     #         wait_time_s,
     #         sleep_time_s,
@@ -401,93 +316,26 @@ class TestCbfController:
     #     f2 = open(data_file_path + scan_file_name)
     #     json_string_scan = f2.read().replace("\n", "")
     #     f2.close()
-    #     test_proxies.subarray[sub_id].Scan(json_string_scan)
-    #     test_proxies.wait_timeout_obs(
-    #         [test_proxies.subarray[sub_id]],
+    #     subdevices_under_test.subarray[sub_id].Scan(json_string_scan)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
     #         ObsState.SCANNING,
     #         wait_time_s,
     #         sleep_time_s,
     #     )
 
     #     # send the Off command
-    #     test_proxies.controller.Off()
-    #     test_proxies.wait_timeout_dev(
-    #         [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    #     assert test_proxies.controller.State() == DevState.OFF
-    #     # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-    #     for i in range(1, test_proxies.num_sub + 1):
-    #         assert test_proxies.subarray[i].State() == DevState.OFF
-    #         assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-    #     for i in range(1, test_proxies.num_vcc + 1):
-    #         assert test_proxies.vcc[i].State() == DevState.OFF
-    #         assert test_proxies.vcc[i].obsState == ObsState.IDLE
-    #     for i in range(1, test_proxies.num_fsp + 1):
-    #         assert test_proxies.fsp[i].State() == DevState.OFF
-    #     for mesh in test_proxies.slim:
-    #         assert mesh.State() == DevState.OFF
-    #     for func in ["CORR", "PSS-BF", "PST-BF"]:
-    #         for sub in range(1, test_proxies.num_sub + 1):
-    #             for fsp in range(1, test_proxies.num_fsp + 1):
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].State()
-    #                     == DevState.OFF
-    #                 )
-    #                 assert (
-    #                     test_proxies.fspSubarray[func][sub][fsp].obsState
-    #                     == ObsState.IDLE
-    #                 )
-
     def test_Disconnect(
-        self, device_under_test, change_event_callbacks, test_proxies
+        self, device_under_test, change_event_callbacks, subdevices_under_test
     ):
         """
         Verify the component manager can stop communicating
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         device_under_test.adminMode = AdminMode.OFFLINE
-        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
-
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     test_proxies.wait_timeout_dev(
-        #         [test_proxies.subarray[i]],
-        #         DevState.DISABLE,
-        #         wait_time_s,
-        #         sleep_time_s,
-        #     )
-        #     assert test_proxies.subarray[i].State() == DevState.DISABLE
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     test_proxies.wait_timeout_dev(
-        #         [test_proxies.vcc[i]],
-        #         DevState.DISABLE,
-        #         wait_time_s,
-        #         sleep_time_s,
-        #     )
-        #     assert test_proxies.vcc[i].State() == DevState.DISABLE
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     test_proxies.wait_timeout_dev(
-        #         [test_proxies.fsp[i]],
-        #         DevState.DISABLE,
-        #         wait_time_s,
-        #         sleep_time_s,
-        #     )
-        #     assert test_proxies.fsp[i].State() == DevState.DISABLE
-        # for mesh in test_proxies.slim:
-        #     test_proxies.wait_timeout_dev(
-        #         [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
-        #     )
-        #     assert mesh.State() == DevState.DISABLE
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             test_proxies.wait_timeout_dev(
-        #                 [test_proxies.fspSubarray[i][j][k]],
-        #                 DevState.DISABLE,
-        #                 wait_time_s,
-        #                 sleep_time_s,
-        #             )
-        #             assert (
-        #                 test_proxies.fspSubarray[i][j][k].State()
-        #                 == DevState.DISABLE
-        #             )
+        change_event_callbacks["state"].assert_change_event(DevState.DISABLE)

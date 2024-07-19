@@ -66,7 +66,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # TODO: remove?
         # self._vcc_id = vcc_id
-        
+
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -358,7 +358,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         fb_index = self._freq_band_index[freq_band_name]
-        
+
         if self.simulation_mode:
             self._band_simulators[fb_index].SetInternalParameters(json_string)
         else:
@@ -447,7 +447,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the ConfigureScan command to the HPS
         fb_index = self._freq_band_index[self._freq_band_name]
-        
+
         if self.simulation_mode:
             self._band_simulators[fb_index].ConfigureScan(argin)
         else:
@@ -547,7 +547,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the EndScan command to the HPS
         fb_index = self._freq_band_index[self._freq_band_name]
-        
+
         if self.simulation_mode:
             self._band_simulators[fb_index].EndScan()
         else:
@@ -645,7 +645,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         if self._freq_band_name != "":
             fb_index = self._freq_band_index[self._freq_band_name]
-            
+
             if self.simulation_mode:
                 self._band_simulators[fb_index].Abort()
             else:
@@ -698,7 +698,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         if self._freq_band_name != "":
             fb_index = self._freq_band_index[self._freq_band_name]
-            
+
             if self.simulation_mode:
                 self._band_simulators[fb_index].ObsReset()
             else:

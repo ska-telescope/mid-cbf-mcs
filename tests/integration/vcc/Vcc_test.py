@@ -115,7 +115,7 @@ class TestVcc:
         result_code, message = device_under_test.On()  # Slow command
         assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
-        
+
         # assert if any captured events have gone unaddressed
         lru_change_event_callbacks.assert_not_called()
 
@@ -134,12 +134,12 @@ class TestVcc:
 
         result_code, message = device_under_test.Off()  # Slow command
         change_event_callbacks["State"].assert_change_event(DevState.OFF)
-        
+
         # Turn DUT back on for next test.
         assert device_under_test.adminMode == AdminMode.ONLINE
         device_under_test.On()
         change_event_callbacks["State"].assert_change_event(DevState.ON)
-        
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -188,7 +188,7 @@ class TestVcc:
 
         """
         assert device_under_test.State() == DevState.ON
-        
+
         with open(data_file_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = copy.deepcopy(json.loads(json_str))
@@ -215,7 +215,7 @@ class TestVcc:
 
         result_code, command_id = device_under_test.ConfigureScan(json_str)
         assert result_code == [ResultCode.QUEUED]
-        
+
         # TODO: Taylor, where does this state get set? configured=True calls the component_configured trigger..
         # I also don't understand how it ends up as READY since component_configured destination is CONFIGURING_READY
         change_event_callbacks["obsState"].assert_change_event(
@@ -225,10 +225,8 @@ class TestVcc:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "ConfigureScan completed OK"]')
         )
-        
-        change_event_callbacks["obsState"].assert_change_event(
-            ObsState.READY
-        )
+
+        change_event_callbacks["obsState"].assert_change_event(ObsState.READY)
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -263,7 +261,7 @@ class TestVcc:
             ObsState.SCANNING
         )
         assert device_under_test.scanID == scan_id
-        
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -287,10 +285,8 @@ class TestVcc:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "EndScan completed OK"]')
         )
-        change_event_callbacks["obsState"].assert_change_event(
-            ObsState.READY
-        )
-        
+        change_event_callbacks["obsState"].assert_change_event(ObsState.READY)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -315,10 +311,8 @@ class TestVcc:
             (f"{command_id[0]}", '[0, "GoToIdle completed OK"]')
         )
 
-        change_event_callbacks["obsState"].assert_change_event(
-            ObsState.IDLE
-        )
-        
+        change_event_callbacks["obsState"].assert_change_event(ObsState.IDLE)
+
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -345,17 +339,19 @@ class TestVcc:
         """
         assert device_under_test.obsState == ObsState.IDLE
         assert device_under_test.State() == DevState.ON
-        
+
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
-        
+
         # Abort from READY
-        self.test_ConfigureScan(device_under_test, change_event_callbacks, config_file_name)
+        self.test_ConfigureScan(
+            device_under_test, change_event_callbacks, config_file_name
+        )
         assert device_under_test.obsState == ObsState.READY
 
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
-        
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
@@ -370,7 +366,7 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 )
             )
-        
+
         # check all obsState transitions
         for obs_state in [
             ObsState.ABORTING,
@@ -381,7 +377,7 @@ class TestVcc:
             change_event_callbacks["obsState"].assert_change_event(
                 obs_state.value
             )
-            
+
         # assert frequencyBand attribute reset during ObsReset
         # change_event_callbacks["frequencyBand"].assert_change_event(0)
 
@@ -390,13 +386,15 @@ class TestVcc:
         change_event_callbacks.assert_not_called()
 
         # abort from SCANNING
-        self.test_ConfigureScan(device_under_test, change_event_callbacks, config_file_name)
+        self.test_ConfigureScan(
+            device_under_test, change_event_callbacks, config_file_name
+        )
         self.test_Scan(device_under_test, change_event_callbacks, scan_id)
         assert device_under_test.obsState == ObsState.SCANNING
-        
+
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
-        
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
@@ -445,7 +443,7 @@ class TestVcc:
 
         """
         assert device_under_test.State() == DevState.ON
-        
+
         device_under_test.Off()  # Slow command
         change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
@@ -471,7 +469,7 @@ class TestVcc:
             lru_change_event_callbacks["State"].assert_change_event(
                 DevState.DISABLE
             )
-        
+
         for ps in test_proxies.power_switch:
             ps.adminMode = AdminMode.OFFLINE
             ps_change_event_callbacks["State"].assert_change_event(

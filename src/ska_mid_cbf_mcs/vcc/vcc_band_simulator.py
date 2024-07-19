@@ -25,9 +25,9 @@ import json
 import time
 
 from ska_control_model import ObsState
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from tango import DevState
 
 __all__ = ["VccBandSimulator"]
 
@@ -128,7 +128,7 @@ class VccBandSimulator:
             int(configuration["frequency_band_offset_stream1"]),
             int(configuration["frequency_band_offset_stream2"]),
         ]
-        
+
         self._obs_state = ObsState.READY
 
     def Scan(self: VccBandSimulator, scan_id: int) -> None:

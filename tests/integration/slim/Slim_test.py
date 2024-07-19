@@ -228,7 +228,7 @@ class TestSlim:
             lru_change_event_callbacks["State"].assert_change_event(
                 DevState.DISABLE
             )
-        
+
         for ps in test_proxies.power_switch:
             ps.adminMode = AdminMode.OFFLINE
             ps_change_event_callbacks["State"].assert_change_event(
