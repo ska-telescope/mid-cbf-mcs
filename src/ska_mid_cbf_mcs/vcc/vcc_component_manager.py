@@ -729,6 +729,9 @@ class VccComponentManager(CbfObsComponentManager):
         # reset configured attributes
         self._deconfigure()
 
+        # Update obsState callback
+        self._update_component_state(configured=False)
+
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),
             status=TaskStatus.COMPLETED,
