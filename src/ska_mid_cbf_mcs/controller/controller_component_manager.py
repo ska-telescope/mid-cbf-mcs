@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-import threading
+from threading import Event, Lock, Thread
 from typing import Callable, Optional
 
 import tango
@@ -284,6 +284,41 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
         return True
 
+    def _start_communicating_thread(self: ControllerComponentManager) -> None:
+        """
+        Thread for start_communicating operation.
+        """
+        with self._admin_mode_lock:
+            with open(self._hw_config_path) as yaml_fd:
+                self._hw_config = yaml.safe_load(yaml_fd)
+
+            self._set_fqdns()
+
+            group_proxies = {
+                "_group_vcc": self._vcc_fqdn,
+                "_group_fsp": self._fsp_fqdn,
+                "_group_subarray": self._subarray_fqdn,
+            }
+
+            if not self._create_group_proxies(group_proxies):
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+
+            if not self._init_proxies():
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+
+            self.logger.info(
+                f"event_ids after subscribing = {len(self._event_ids)}"
+            )
+
+            super().start_communicating()
+            self._update_component_state(power=PowerState.OFF)
+
     def start_communicating(
         self: ControllerComponentManager,
     ) -> None:
@@ -298,35 +333,20 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.info("Already communicating")
             return
 
-        with open(self._hw_config_path) as yaml_fd:
-            self._hw_config = yaml.safe_load(yaml_fd)
+        Thread(target=self._start_communicating_thread).start()
 
-        self._set_fqdns()
+    def _stop_communicating_thread(self: ControllerComponentManager) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        with self._admin_mode_lock:
+            self._unsubscribe_command_results()
+            self._num_blocking_results = 0
 
-        group_proxies = {
-            "_group_vcc": self._vcc_fqdn,
-            "_group_fsp": self._fsp_fqdn,
-            "_group_subarray": self._subarray_fqdn,
-        }
+            for proxy in self._proxies.values():
+                proxy.adminMode = AdminMode.OFFLINE
 
-        if not self._create_group_proxies(group_proxies):
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
-
-        if not self._init_proxies():
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
-
-        self.logger.info(
-            f"event_ids after subscribing = {len(self._event_ids)}"
-        )
-
-        super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
+            super().stop_communicating()
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """
@@ -335,13 +355,7 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering ControllerComponentManager.stop_communicating"
         )
-        self._unsubscribe_command_results()
-        self._num_blocking_results = 0
-
-        for proxy in self._proxies.values():
-            proxy.adminMode = AdminMode.OFFLINE
-
-        super().stop_communicating()
+        Thread(target=self._stop_communicating_thread).start()
 
     # ---------------------
     # Long Running Commands
@@ -379,7 +393,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
         Turn on all of the Talon LRUs
@@ -437,7 +451,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> bool:
         """
         Configure the SLIM devices
@@ -518,7 +532,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _on(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Turn on the controller and its subordinate devices
@@ -779,7 +793,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, list[str]]:
         """
         Turn off all subelements of the controller
@@ -904,7 +918,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
         Turn off all of the Talon LRUs
@@ -959,7 +973,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Turn off the controller and its subordinate devices
@@ -1212,7 +1226,7 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Validate and save the Dish ID - VCC ID mapping and k values.

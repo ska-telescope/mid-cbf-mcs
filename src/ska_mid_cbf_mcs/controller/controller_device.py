@@ -86,27 +86,6 @@ class CbfController(CbfDevice):
     # Attributes
     # ----------
 
-    # TODO: Do we really need this?
-    @attribute(
-        dtype="uint16",
-        max_value=100,
-        min_value=0,
-        polling_period=3000,
-        abs_change=5,
-        rel_change=2,
-        doc="Percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
-    )
-    def commandProgress(self: CbfController) -> int:
-        """
-        Read the commandProgress attribute: the percentage progress implemented for
-        commands that result in state/mode transitions for a large number of
-        components and/or are executed in stages (e.g power up, power down)
-
-        :return: the commandProgress attribute
-        :rtype: int
-        """
-        return self._command_progress
-
     @attribute(
         dtype="str",
         label="Dish ID to VCC and frequency offset k mapping",

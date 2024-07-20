@@ -110,16 +110,6 @@ server:
           - name: "VisSLIMConfigPath"
             values:
             - "mnt/slim/vis_slim_config.yaml"
-          - name: "polled_attr"
-            values:
-            - "commandprogress"
-            - "3000"
-            - "receptortovcc"
-            - "3000"
-            - "vcctoreceptor"
-            - "3000"
-            - "subarrayconfigid"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

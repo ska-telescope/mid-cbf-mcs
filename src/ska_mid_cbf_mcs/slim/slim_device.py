@@ -26,6 +26,7 @@ from ska_tango_base.commands import (
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
@@ -36,11 +37,6 @@ class Slim(CbfDevice):
     """
     TANGO device class for controlling and monitoring the SLIM
     """
-
-    # PROTECTED REGION ID(Slim.class_variable) ENABLED START #
-    MAX_NUM_LINKS = 16  # AA 0.5
-
-    # PROTECTED REGION END #    //  Slim.class_variable
 
     # -----------------
     # Device Properties
@@ -66,7 +62,7 @@ class Slim(CbfDevice):
 
     @attribute(
         dtype=(str,),
-        max_dim_x=MAX_NUM_LINKS,
+        max_dim_x=const.MAX_NUM_FS_LINKS,
         label="Link FQDNs",
         doc="the Tango device FQDN of the active links.",
     )
@@ -80,7 +76,7 @@ class Slim(CbfDevice):
 
     @attribute(
         dtype=(str,),
-        max_dim_x=MAX_NUM_LINKS,
+        max_dim_x=const.MAX_NUM_FS_LINKS,
         label="Link Names",
         doc="Returns the names of the active links.",
     )
@@ -94,7 +90,7 @@ class Slim(CbfDevice):
 
     @attribute(
         dtype=(HealthState,),
-        max_dim_x=MAX_NUM_LINKS,
+        max_dim_x=const.MAX_NUM_FS_LINKS,
         label="Mesh health summary",
         doc="Returns a list with the health state of each link. True if OK. False if the link is in a bad state.",
     )
@@ -108,7 +104,7 @@ class Slim(CbfDevice):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=MAX_NUM_LINKS,
+        max_dim_x=const.MAX_NUM_FS_LINKS,
         label="Bit error rate",
         doc="Returns the bit-error rate of each link in a list",
     )
@@ -143,15 +139,6 @@ class Slim(CbfDevice):
     # ---------------
     # General methods
     # ---------------
-    def always_executed_hook(self: Slim) -> None:
-        # PROTECTED REGION ID(Slim.always_executed_hook) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  Slim.always_executed_hook
-
-    def delete_device(self: Slim) -> None:
-        # PROTECTED REGION ID(Slim.delete_device) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  Slim.delete_device
 
     def init_command_objects(self: Slim) -> None:
         """

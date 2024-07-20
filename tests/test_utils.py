@@ -3,6 +3,8 @@ from ska_control_model import AdminMode
 from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
+EVENT_TIMEOUT = 10
+
 
 def change_event_subscriber(
     dut: tango.DeviceProxy,

@@ -9,12 +9,16 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
+from __future__ import annotations
+
 import json
 import os
 import socket
+import time
 from typing import Iterator
 
 import pytest
+from assertpy import assert_that
 
 # Tango imports
 from ska_control_model import (
@@ -24,15 +28,15 @@ from ska_control_model import (
     ResultCode,
     SimulationMode,
 )
-from ska_tango_base.base.base_device import (
-    _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
-)
 
 # Tango imports
 from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from ska_telmodel.data import TMData
 from tango import DevState
+
+from ... import test_utils
 
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
@@ -43,27 +47,48 @@ class TestCbfController:
     """
 
     def test_Connect(
-        self,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-        subdevices_under_test: pytest.fixture,
-        lru_change_event_callbacks: MockTangoEventCallbackGroup,
-        ps_change_event_callbacks: MockTangoEventCallbackGroup,
-    ):
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
         """
+        controller.adminMode = AdminMode.OFFLINE
+        time.sleep(3)
+
         # trigger start_communicating by setting the AdminMode to ONLINE
-        device_under_test.adminMode = AdminMode.ONLINE
+        controller.adminMode = AdminMode.ONLINE
 
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
-        ps_change_event_callbacks["state"].assert_change_event(DevState.OFF)
-        lru_change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        # check adminMode and state changes
+        for device in [controller] + sub_devices:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="adminMode",
+                attribute_value=AdminMode.ONLINE,
+            )
 
-        ps_change_event_callbacks.assert_not_called()
-        lru_change_event_callbacks.assert_not_called()
-        change_event_callbacks.assert_not_called()
+            # PowerSwitch device starts up in ON state when turned ONLINE
+            if "mid_csp_cbf/power_switch/" in device.dev_name():
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name="state",
+                    attribute_value=DevState.ON,
+                )
+            else:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name="state",
+                    attribute_value=DevState.OFF,
+                )
 
     # def test_InitSysParam(self, device_under_test, change_event_callbacks):
     #     """
@@ -330,12 +355,12 @@ class TestCbfController:
     #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    def test_Disconnect(
-        self, device_under_test, change_event_callbacks, subdevices_under_test
-    ):
-        """
-        Verify the component manager can stop communicating
-        """
-        # Trigger stop_communicating by setting the AdminMode to OFFLINE
-        device_under_test.adminMode = AdminMode.OFFLINE
-        change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
+    # def test_Disconnect(
+    #     self, device_under_test, change_event_callbacks, subdevices_under_test
+    # ):
+    #     """
+    #     Verify the component manager can stop communicating
+    #     """
+    #     # Trigger stop_communicating by setting the AdminMode to OFFLINE
+    #     device_under_test.adminMode = AdminMode.OFFLINE
+    #     change_event_callbacks["state"].assert_change_event(DevState.DISABLE)

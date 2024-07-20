@@ -50,14 +50,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_lru/002"
         properties:
           - name: "TalonDxBoard1"
@@ -81,14 +73,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_lru/003"
         properties:
           - name: "TalonDxBoard1"
@@ -112,14 +96,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_lru/004"
         properties:
           - name: "TalonDxBoard1"

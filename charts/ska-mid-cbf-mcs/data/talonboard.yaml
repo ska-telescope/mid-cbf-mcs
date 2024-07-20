@@ -56,14 +56,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-001/hpsmaster/hps-1"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/002"
         properties:
           - name: "TalonDxBoardAddress"
@@ -96,14 +88,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-002/hpsmaster/hps-2"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/003"
         properties:
           - name: "TalonDxBoardAddress"
@@ -136,14 +120,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-003/hpsmaster/hps-3"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/004"
         properties:
           - name: "TalonDxBoardAddress"
@@ -176,14 +152,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-004/hpsmaster/hps-4"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/005"
         properties:
           - name: "TalonDxBoardAddress"
@@ -216,14 +184,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-005/hpsmaster/hps-5"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/006"
         properties:
           - name: "TalonDxBoardAddress"
@@ -256,14 +216,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-006/hpsmaster/hps-6"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/007"
         properties:
           - name: "TalonDxBoardAddress"
@@ -296,14 +248,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-007/hpsmaster/hps-7"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/008"
         properties:
           - name: "TalonDxBoardAddress"
@@ -336,14 +280,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-008/hpsmaster/hps-8"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

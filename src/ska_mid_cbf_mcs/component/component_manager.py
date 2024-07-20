@@ -95,6 +95,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
+        # lock for adminMode-triggered start/stop_communicating threads
+        self._admin_mode_lock = Lock()
+
         self._device_attr_change_callback = attr_change_callback
         self._device_attr_archive_callback = attr_archive_callback
 
