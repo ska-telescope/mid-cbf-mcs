@@ -230,7 +230,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
     ) -> bool:
         """
-        Initialize the device proxy, given the FQDN of the device, store the proxy in the _proxies dictionary
+        Initialize the device proxy from its FQDN, store the proxy in the _proxies dictionary,
         and set the AdminMode to ONLINE
 
         :param fqdn: FQDN of the device
