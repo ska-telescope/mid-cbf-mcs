@@ -32,8 +32,6 @@ from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
     TalonBoardComponentManager,
 )
 
-# Additional import
-
 __all__ = ["TalonBoard", "main"]
 
 # Global Varibale for polling period of Attributes, in ms
@@ -827,9 +825,10 @@ class TalonBoard(CbfDevice):
         """
         return self.component_manager.ltm_temperature_warning()
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
+
     def always_executed_hook(self: TalonBoard) -> None:
         pass
 
@@ -848,17 +847,6 @@ class TalonBoard(CbfDevice):
                 component_manager=self.component_manager, logger=self.logger
             ),
         )
-
-    # ----------
-    # Callbacks
-    # ----------
-
-    # None at this time...
-    # We currently rely on the SKABaseDevice implemented callbacks.
-
-    # --------
-    # Commands
-    # --------
 
     def create_component_manager(
         self: TalonBoard,
@@ -886,6 +874,10 @@ class TalonBoard(CbfDevice):
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
+
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
@@ -925,6 +917,13 @@ class TalonBoard(CbfDevice):
         command_handler = self.get_command_object("On")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
+
+    # ----------
+    # Callbacks
+    # ----------
+
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------

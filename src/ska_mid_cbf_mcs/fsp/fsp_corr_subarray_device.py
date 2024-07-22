@@ -7,10 +7,8 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# """
-# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
+
 # """
 
 # """ FspCorrSubarray Tango device prototype
@@ -42,9 +40,9 @@ class FspCorrSubarray(CbfObsDevice):
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
 
-    # ----------
-    # Properties
-    # ----------
+    # -----------------
+    # Device Properties
+    # -----------------
 
     HpsFspCorrControllerAddress = device_property(dtype="str")
 
@@ -106,9 +104,9 @@ class FspCorrSubarray(CbfObsDevice):
         """
         return self.component_manager.frequency_slice_id
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: FspCorrSubarrayComponentManager) -> None:
         """
@@ -143,9 +141,9 @@ class FspCorrSubarray(CbfObsDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     def is_UpdateDelayModel_allowed(
         self: FspCorrSubarrayComponentManager,
@@ -207,6 +205,10 @@ class FspCorrSubarray(CbfObsDevice):
         command_handler = self.get_command_object("UpdateDelayModel")
         result_code, message = command_handler(argin)
         return [[result_code], [message]]
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
 
 # ----------
