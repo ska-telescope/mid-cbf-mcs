@@ -520,9 +520,9 @@ class ControllerComponentManager(CbfComponentManager):
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         """
-        Check if the On command is allowed
+        Check if the On command is allowed.
 
-        :return: True if the On command is allowed, False otherwise
+        :return: True if the On command is allowed, else False.
         """
         self.logger.debug("Checking if on is allowed")
 
