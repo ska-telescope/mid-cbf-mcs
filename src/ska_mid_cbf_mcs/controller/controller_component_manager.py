@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from threading import Event, Lock, Thread
+from threading import Event, Thread
 from typing import Callable, Optional
 
 import tango
@@ -1154,7 +1154,14 @@ class ControllerComponentManager(CbfComponentManager):
         """
         # write the init_sys_param to each of the subarrays
         for fqdn in self._subarray_fqdn:
-            self._proxies[fqdn].sysParam = params
+            try:
+                self._proxies[fqdn].sysParam = params
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self.logger.error(
+                        f"Failure in connection to {fqdn}; {item.reason}"
+                    )
+                    return False
 
         # set VCC values
         for fqdn in self._vcc_fqdn:
@@ -1167,7 +1174,6 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
-                    return True
                 else:
                     self.logger.error(
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
@@ -1200,12 +1206,11 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                             )
                         else:
-                            log_msg = (
+                            self.logger.error(
                                 f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                                 f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
-                            self.logger.warning(log_msg)
-                    return True
+                            return False
                 except tango.DevFailed as df:
                     for item in df.args:
                         self.logger.error(
@@ -1213,9 +1218,11 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                     return False
 
+        return True
+
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
         self.logger.debug("Checking if init_sys_param is allowed")
-        if self._component_state["power"] == PowerState.OFF:
+        if self.power_state == PowerState.OFF:
             return True
         self.logger.warning(
             "InitSysParam command cannot be issued because the current PowerState is not 'off'."

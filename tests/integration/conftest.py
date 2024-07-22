@@ -17,17 +17,18 @@ from ska_tango_testing import context
 from ska_mid_cbf_mcs.commons.global_enum import const
 
 
-@pytest.fixture(name="controller", scope="module", autouse=True)
+@pytest.fixture(name="controller", scope="session", autouse=True)
 def controller_proxy() -> context.DeviceProxy:
     """
     Fixture that returns a proxy to the controller device.
 
     :return: DeviceProxy to CbfController device
     """
+    print("\n\n\n H I \n\n\n")
     return context.DeviceProxy(device_name="mid_csp_cbf/sub_elt/controller")
 
 
-@pytest.fixture(name="subarray", scope="module", autouse=True)
+@pytest.fixture(name="subarray", scope="session", autouse=True)
 def subarray_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to subarray devices.
@@ -41,7 +42,7 @@ def subarray_proxies() -> list[context.DeviceProxy]:
 
 
 # TODO: upgrade fsp corr fixture for multiple subarrays
-@pytest.fixture(name="fsp_corr", scope="module", autouse=True)
+@pytest.fixture(name="fsp_corr", scope="session", autouse=True)
 def fsp_corr_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to FSP CORR subarray devices.
@@ -56,7 +57,7 @@ def fsp_corr_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="fsp", scope="module", autouse=True)
+@pytest.fixture(name="fsp", scope="session", autouse=True)
 def fsp_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to FSP devices.
@@ -69,7 +70,7 @@ def fsp_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="vcc", scope="module", autouse=True)
+@pytest.fixture(name="vcc", scope="session", autouse=True)
 def vcc_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to VCC devices.
@@ -82,7 +83,7 @@ def vcc_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="talon_lru", scope="module", autouse=True)
+@pytest.fixture(name="talon_lru", scope="session", autouse=True)
 def talon_lru_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to Talon LRU devices.
@@ -95,7 +96,7 @@ def talon_lru_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="talon_board", scope="module", autouse=True)
+@pytest.fixture(name="talon_board", scope="session", autouse=True)
 def talon_board_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to Talon board devices.
@@ -108,7 +109,7 @@ def talon_board_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="power_switch", scope="module", autouse=True)
+@pytest.fixture(name="power_switch", scope="session", autouse=True)
 def power_switch_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to power switch devices.
@@ -121,7 +122,7 @@ def power_switch_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="slim_fs", scope="module", autouse=True)
+@pytest.fixture(name="slim_fs", scope="session", autouse=True)
 def slim_fs_proxy() -> context.DeviceProxy:
     """
     Fixture that returns a proxy to the frequency slice SLIM device.
@@ -131,7 +132,7 @@ def slim_fs_proxy() -> context.DeviceProxy:
     return context.DeviceProxy(device_name="mid_csp_cbf/slim/slim-fs")
 
 
-@pytest.fixture(name="slim_vis", scope="module", autouse=True)
+@pytest.fixture(name="slim_vis", scope="session", autouse=True)
 def slim_vis_proxy() -> context.DeviceProxy:
     """
     Fixture that returns a proxy to the visibility SLIM device.
@@ -141,7 +142,7 @@ def slim_vis_proxy() -> context.DeviceProxy:
     return context.DeviceProxy(device_name="mid_csp_cbf/slim/slim-vis")
 
 
-@pytest.fixture(name="slim_link_fs", scope="module", autouse=True)
+@pytest.fixture(name="slim_link_fs", scope="session", autouse=True)
 def slim_link_fs_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to frequency slice SLIM link devices.
@@ -154,7 +155,7 @@ def slim_link_fs_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="slim_link_vis", scope="module", autouse=True)
+@pytest.fixture(name="slim_link_vis", scope="session", autouse=True)
 def slim_link_vis_proxies() -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to visibility SLIM link devices.
