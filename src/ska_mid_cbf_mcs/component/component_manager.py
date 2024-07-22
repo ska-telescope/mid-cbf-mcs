@@ -497,7 +497,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         SKA Mid.CBF MCS uses the more expressive :py:attr:`communication_status`
         for this, but this is still needed as a base classes hook.
 
-        :return: True if communication with the component is established. False otherwise.
+        :return: True if communication with the component is established, else False.
         """
         return self.communication_state == CommunicationStatus.ESTABLISHED
 
