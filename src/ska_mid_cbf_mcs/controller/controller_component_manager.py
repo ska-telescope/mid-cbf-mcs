@@ -457,7 +457,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Configure the SLIM devices
 
-        :param task_abort_event: Event to signal task abort
+        :param task_abort_event: Event to signal task abort.
         :return: True if the SLIM devices were successfully configured, False otherwise
         """
         try:
