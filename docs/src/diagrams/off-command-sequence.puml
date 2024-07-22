@@ -25,6 +25,7 @@ participant "Mid.CBF\nSubarray" as subarray
 collections "VCC" as vcc
 collections "FSP" as fsp
 collections "FSP\nCorr\nSubarray" as fspsubarray
+participant "Talon\nBoard" as talon_board
 participant "Talon\nLRU" as lru
 participant "Power\nSwitch" as switch
 participant "SLIM\nFS" as slim_fs
@@ -79,6 +80,7 @@ group SLIM Vis Link
 slimlink   ->  hpsdevices    : DisconnectTxRx
 end loop
 
+controller ->  talon_board   : Off
 note over subarray       : Subarray\nObsState EMPTY
 controller ->  hpsmaster     : Shutdown(3)
 group no Tango exception on Shutdown
