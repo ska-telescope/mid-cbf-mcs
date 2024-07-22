@@ -70,11 +70,12 @@ class TalonDxComponentManager:
     # --- Configure Talons --- #
 
     def _configure_hps_master(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> ResultCode:
         """
         Send the configure command to all the DsHpsMaster devices.
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if all configure commands were sent successfully,
                  otherwise ResultCode.FAILED
         """
@@ -119,11 +120,12 @@ class TalonDxComponentManager:
         return ret
 
     def _create_hps_master_device_proxies(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> ResultCode:
         """
         Attempt to create a device proxy to each DsHpsMaster device.
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if all proxies were created successfully,
                  otherwise ResultCode.FAILED
         """
@@ -163,11 +165,12 @@ class TalonDxComponentManager:
             scp_client.put(src, remote_path=dest)
 
     def _start_hps_master(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> ResultCode:
         """
         Start the DsHpsMaster on each Talon board.
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if all HPS masters were started successfully,
                  otherwise ResultCode.FAILED
         """
@@ -208,12 +211,13 @@ class TalonDxComponentManager:
         return ret
 
     def _copy_binaries_and_bitstream(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> ResultCode:
         """
         Copy the relevant device server binaries and FPGA bitstream to each
         Talon board.
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if all artifacts were copied successfully,
                  otherwise ResultCode.FAILED
         """
@@ -321,38 +325,35 @@ class TalonDxComponentManager:
                 )
 
         except NoValidConnectionsError as e:
-            self.logger.error(f"{e}")
             self.logger.error(
-                f"NoValidConnectionsError while connecting to {target}"
+                f"NoValidConnectionsError while connecting to {target}: {e}"
             )
             ret = ResultCode.FAILED
         except SSHException as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"SSHException while talking to {target}")
+            self.logger.error(f"SSHException while talking to {target}: {e}")
             ret = ResultCode.FAILED
         except SCPException as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"Failed to copy file to {target}")
+            self.logger.error(f"Failed to copy file to {target}: {e}")
             ret = ResultCode.FAILED
         except FileNotFoundError as e:
-            self.logger.error(f"{e}")
             self.logger.error(
-                f"Failed to copy file {e.filename}, file does not exist"
+                f"Failed to copy file {e.filename}, file does not exist: {e}"
             )
             ret = ResultCode.FAILED
         except yaml.YAMLError as e:
-            self.logger.error(f"YAMLError with target {target}; {e}")
+            self.logger.error(f"YAMLError with target {target}: {e}")
             ret = ResultCode.FAILED
 
         return ret
 
     def _configure_talon_networking(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> ResultCode:
         """
         Configure the networking of the boards including DNS nameserver
         and ifconfig for default gateway
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if all artifacts were copied successfully,
                  otherwise ResultCode.FAILED
         """
@@ -405,26 +406,26 @@ class TalonDxComponentManager:
                         ret = ResultCode.FAILED
 
         except NoValidConnectionsError as e:
-            self.logger.error(f"{e}")
             self.logger.error(
-                f"NoValidConnectionsError while connecting to {target}"
+                f"NoValidConnectionsError while connecting to {target}: {e}"
             )
             ret = ResultCode.FAILED
         except SSHException as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"SSHException while talking to {target}")
+            self.logger.error(f"SSHException while talking to {target}: {e}")
             ret = ResultCode.FAILED
         except yaml.YAMLError as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"YAMLError with target {target}")
+            self.logger.error(f"YAMLError with target {target}: {e}")
             ret = ResultCode.FAILED
 
         return ret
 
-    def _generate_kill_script(self: TalonDxComponentManager, talon_cfg) -> str:
+    def _generate_kill_script(
+        self: TalonDxComponentManager, talon_cfg: dict
+    ) -> str:
         """
         Generate a script to kill all device processes on the Talon board
 
+        :param talon_cfg: the configuration for the Talon board
         :return: the script to kill all device processes
         """
         talon_devices = talon_cfg["devices"] + ["dshpsmaster"]
@@ -440,11 +441,14 @@ class TalonDxComponentManager:
 
         return kill_script
 
-    def _clear_talon(self: TalonDxComponentManager, talon_cfg) -> ResultCode:
+    def _clear_talon(
+        self: TalonDxComponentManager, talon_cfg: dict
+    ) -> ResultCode:
         """
         Clear the Talon board by sending a script to the Talon
         that kills all device processes
 
+        :param talon_cfg: the configuration for the Talon board
         :return: ResultCode.OK if script was sent successfully,
                  otherwise ResultCode.FAILED
         """
@@ -482,21 +486,27 @@ class TalonDxComponentManager:
                 time.sleep(const.DEFAULT_TIMEOUT)
 
         except NoValidConnectionsError as e:
-            self.logger.error(f"{e}")
             self.logger.error(
-                f"NoValidConnectionsError while initially connecting to {target}"
+                f"NoValidConnectionsError while initially connecting to {target}: {e}"
             )
             ret = ResultCode.FAILED
         except SSHException as e:
-            self.logger.error(f"{e}")
-            self.logger.error(f"SSHException while talking to {target}")
+            self.logger.error(f"SSHException while talking to {target}: {e}")
             ret = ResultCode.FAILED
 
         return ret
 
     def _configure_talon_thread(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> tuple[ResultCode, str]:
+        """
+        A thread to configure a single Talon board. This includes clearing the
+        board, configuring the networking, copying the binaries and bitstream,
+        starting the HPS master and sending the configure command to the DsHpsMaster.
+
+        :param talon_cfg: the configuration for the Talon board
+        :return: a tuple containing the result code and a message
+        """
         if self._clear_talon(talon_cfg) == ResultCode.FAILED:
             return (ResultCode.FAILED, "_clear_talon FAILED")
 
@@ -621,8 +631,15 @@ class TalonDxComponentManager:
     # --- Shutdown Talons --- #
 
     def _shutdown_talon_thread(
-        self: TalonDxComponentManager, talon_cfg
+        self: TalonDxComponentManager, talon_cfg: dict
     ) -> tuple[ResultCode, str]:
+        """
+        A thread to shutdown a single Talon board. This includes sending the
+        shutdown command to the DsHpsMaster.
+
+        :param talon_cfg: the configuration for the Talon board
+        :return: a tuple containing the result code and a message
+        """
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]

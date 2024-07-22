@@ -81,7 +81,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         Check if ConfigureScan is allowed.
 
-        :return: True if allowed, else False. 
+        :return: True if allowed, else False.
         """
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if self.obs_state not in [
