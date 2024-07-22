@@ -296,7 +296,7 @@ class CbfController(CbfDevice):
             "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
 
-        # Initialize _max_capabilities variable that's needed for the component manager.
+        # Initialize the _max_capabilities variable for the component manager.
         self._max_capabilities = self._get_max_capabilities()
 
         return ControllerComponentManager(
