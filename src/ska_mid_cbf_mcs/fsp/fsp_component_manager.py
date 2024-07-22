@@ -155,7 +155,7 @@ class FspComponentManager(CbfComponentManager):
 
         :param subarray_id: ID of subarray for which to power on function mode proxy
         :return: False if unsuccessful in powering on FSP function mode subarray proxy,
-            True otherwise
+                 else True.
         """
         match self.function_mode:
             case FspModes.IDLE.value:

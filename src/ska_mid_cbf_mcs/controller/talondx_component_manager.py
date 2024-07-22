@@ -561,7 +561,7 @@ class TalonDxComponentManager:
         Copy the hps_master_mcs.sh file from mnt into mnt/talondx-config
 
         :return: ResultCode.OK if all artifacts were copied successfully,
-                 otherwise ResultCode.FAILED
+                 else ResultCode.FAILED
         """
         with open("hps_master_mcs_tmp.sh") as hps_master_file_tmp:
             namespace = os.getenv("NAMESPACE")
@@ -597,10 +597,9 @@ class TalonDxComponentManager:
 
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
-        Performs all actions to configure the Talon boards after power on and
-        start the HPS device servers. This includes: copying the device server
+        Performs all actions to configure the Talon boards after power on. This includes: copying the device server
         binaries and FPGA bitstream to the Talon boards, starting the HPS master
-        device server and sending the configure command to each DsHpsMaster.
+        device server, and sending the configure command to each DsHpsMaster, which starts the HPS device servers.
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
@@ -674,7 +673,7 @@ class TalonDxComponentManager:
             1. Child and HPS Master Tango DSs
             2. Child and HPS Master Tango DSs, reboot Talon DX board
             3. Child and HPS Master Tango DSs, shut down Talon DX board
-        :return: ResultCode.OK if all configure commands were sent successfully,
+        :return: ResultCode.OK if all shutdown commands were sent successfully,
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
