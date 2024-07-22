@@ -404,7 +404,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on all of the Talon LRUs
 
-        :param task_abort_event: Event to signal task abort
+        :param task_abort_event: Event to signal task abort.
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
