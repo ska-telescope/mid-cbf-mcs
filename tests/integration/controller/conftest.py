@@ -58,7 +58,8 @@ def sub_device_proxies(
 
 @pytest.fixture(name="event_tracer", scope="module", autouse=True)
 def tango_event_tracer(
-    controller: context.DeviceProxy, sub_devices: list[context.DeviceProxy]
+    controller: context.DeviceProxy,
+    sub_devices: list[context.DeviceProxy],
 ) -> Generator[TangoEventTracer, None, None]:
     """
     Fixture that returns a TangoEventTracer for pertinent devices.

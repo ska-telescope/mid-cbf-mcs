@@ -99,6 +99,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=str,
+        memorized=True,
+        hw_memorized=True,
         label="Dish ID",
         doc="The Dish ID assigned to the board. This attribute is only used for labelling.",
     )
@@ -119,6 +121,10 @@ class TalonBoard(CbfDevice):
         :param value: the Dish ID
         """
         self._dishID = value
+        if self._dishID != value:
+            self._dishID = value
+            self.push_change_event("dishID", value)
+            self.push_archive_event("dishID", value)
 
     @attribute(
         dtype=str,
@@ -830,11 +836,6 @@ class TalonBoard(CbfDevice):
     # ---------------
     # General methods
     # ---------------
-    def always_executed_hook(self: TalonBoard) -> None:
-        pass
-
-    def delete_device(self: TalonBoard) -> None:
-        pass
 
     def init_command_objects(self: TalonBoard) -> None:
         """
@@ -906,6 +907,9 @@ class TalonBoard(CbfDevice):
             self._device._subarrayID = ""
             self._device._dishID = ""
             self._device._vccID = ""
+
+            self._device.set_change_event("dishID", True)
+            self._device.set_archive_event("dishID", True)
 
             return super().do()
 

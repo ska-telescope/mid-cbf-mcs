@@ -79,7 +79,10 @@ class Vcc(CbfObsDevice):
         :param value: the dishID value.
         """
         self.logger.debug(f"Writing dishID to {value}")
-        self.component_manager.dish_id = value
+        if self.component_manager.dish_id != value:
+            self.component_manager.dish_id = value
+            self.push_change_event("dishID", value)
+            self.push_archive_event("dishID", value)
 
     @attribute(
         abs_change=1,
@@ -197,6 +200,8 @@ class Vcc(CbfObsDevice):
             # initialize attribute values
             self._device._subarray_membership = 0
 
+            self._device.set_change_event("dishID", True)
+            self._device.set_archive_event("dishID", True)
             self._device.set_change_event("frequencyBand", True)
             self._device.set_archive_event("frequencyBand", True)
             self._device.set_change_event("subarrayMembership", True)

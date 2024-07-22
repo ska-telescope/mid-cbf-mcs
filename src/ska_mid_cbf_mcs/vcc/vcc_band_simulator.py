@@ -22,7 +22,6 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-import time
 
 from ska_control_model import ObsState
 from tango import DevState

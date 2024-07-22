@@ -36,6 +36,8 @@ from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from ska_telmodel.data import TMData
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+
 from ... import test_utils
 
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -56,8 +58,8 @@ class TestCbfController:
         Test the initial states and verify the component manager
         can start communicating
         """
-        controller.adminMode = AdminMode.OFFLINE
-        time.sleep(3)
+        # controller.adminMode = AdminMode.OFFLINE
+        # time.sleep(3)
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
@@ -90,25 +92,61 @@ class TestCbfController:
                     attribute_value=DevState.OFF,
                 )
 
-    # def test_InitSysParam(self, device_under_test, change_event_callbacks):
-    #     """
-    #     Test the "InitSysParam" command
-    #     """
-    #     # Get the system parameters
-    #     data_file_path = (
-    #         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-    #     )
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
+    def test_InitSysParam(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
+        vcc: list[context.DeviceProxy],
+        talon_board: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the "InitSysParam" command
+        """
+        # Get the system parameters
+        data_file_path = (
+            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        )
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
 
-    #     # Initialize the system parameters
-    #     result_code, command_id = device_under_test.InitSysParam(sp)
-    #     assert result_code == [ResultCode.QUEUED]
+        dish_utils = DISHUtils(json.loads(sp))
 
-    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
-    #         (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
-    #     )
-    #     change_event_callbacks.assert_not_called()
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sp)
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
+        )
+
+        for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
+            event_tracer.subscribe_event(vcc[vcc_id - 1], "dishID")
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=vcc[vcc_id - 1],
+                attribute_name="dishID",
+                attribute_value=dish_id,
+            )
+
+            # TODO: indexing talon boards by VCC ID here; may need a better way
+            # to grab talon IDs associated with each VCC
+            event_tracer.subscribe_event(talon_board[vcc_id - 1], "dishID")
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=talon_board[vcc_id - 1],
+                attribute_name="dishID",
+                attribute_value=dish_id,
+            )
 
     # def test_On(self, device_under_test, subdevices_under_test, change_event_callbacks):
     #     """

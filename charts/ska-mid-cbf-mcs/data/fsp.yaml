@@ -8,10 +8,6 @@ depends_on:
   - device: mid_csp_cbf/vcc/002
   - device: mid_csp_cbf/vcc/003
   - device: mid_csp_cbf/vcc/004
-  - device: mid_csp_cbf/vcc/005
-  - device: mid_csp_cbf/vcc/006
-  - device: mid_csp_cbf/vcc/007
-  - device: mid_csp_cbf/vcc/008
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10

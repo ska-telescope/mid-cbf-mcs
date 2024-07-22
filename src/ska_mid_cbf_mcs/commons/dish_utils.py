@@ -39,10 +39,10 @@ class DISHUtils:
         self.dish_id_to_k = {}
 
         dish_dict = mapping["dish_parameters"]
-        for r, v in dish_dict.items():
-            self.dish_id_to_vcc_id[r] = v["vcc"]
-            self.vcc_id_to_dish_id[v["vcc"]] = r
-            self.dish_id_to_k[r] = v["k"]
+        for dish_id, dish_params in dish_dict.items():
+            self.dish_id_to_vcc_id[dish_id] = dish_params["vcc"]
+            self.vcc_id_to_dish_id[dish_params["vcc"]] = dish_id
+            self.dish_id_to_k[dish_id] = dish_params["k"]
 
     @staticmethod
     def are_Valid_DISH_Ids(argin: list[str]) -> tuple[bool, str]:
