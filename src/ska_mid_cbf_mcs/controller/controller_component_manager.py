@@ -544,7 +544,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on the controller and its subordinate devices
 
-        :param task_callback: Callback function to update task status
+        :param task_callback: Callback function to update task status.
         :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
