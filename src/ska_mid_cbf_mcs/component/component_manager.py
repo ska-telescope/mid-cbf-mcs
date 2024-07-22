@@ -142,7 +142,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, dp: context.DeviceProxy
     ) -> None:
         if dp in self._event_ids.values():
-            self.logger.warn(
+            self.logger.warning(
                 f"Skipping repeated longRunningCommandResult event subscription: {dp.dev_name()}"
             )
         else:

@@ -372,7 +372,7 @@ class TalonDxComponentManager:
             with SSHClient() as ssh_client:
 
                 @backoff.on_exception(
-                    backoff.expo,
+                    backoff.constant,
                     NoValidConnectionsError,
                     max_value=3,
                     max_time=talon_first_connect_timeout,
@@ -533,9 +533,10 @@ class TalonDxComponentManager:
 
         target = talon_cfg["target"]
 
-        # Talon Board DS defaults to SimulationMode.TRUE so that some attributes has default values when starting up
-        # Since we only need configure a physical Talon Board if SimulationMode.FALSE, the only time we need to set
-        # simulation mode of the Talon Board is to SimulationMode.FALSE
+        # TalonBoard devices default to SimulationMode.TRUE, simulating hardware monitoring.
+        # Now we set TalonBoard devices to SimulationMode.FALSE if they have been assigned a
+        # live hardware target to monitor by the deployment configuration JSON.
+
         if self.simulation_mode == SimulationMode.FALSE:
             target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
             try:
@@ -603,8 +604,6 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-
-        # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 

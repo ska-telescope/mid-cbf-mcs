@@ -260,18 +260,6 @@ class SlimLink(CbfDevice):
             ),
         )
 
-    def always_executed_hook(self: SlimLink) -> None:
-        """
-        Hook to be executed before any commands.
-        """
-        pass
-
-    def delete_device(self: SlimLink) -> None:
-        """
-        Hook to delete device.
-        """
-        pass
-
     # -------------
     # Fast Commands
     # -------------
