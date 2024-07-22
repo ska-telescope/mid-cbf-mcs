@@ -330,10 +330,10 @@ class Fsp(CbfDevice):
     ) -> DevVarLongStringArrayType:
         """
         Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise,
-        turn one of them ON according to argin, and all others DISABLE.
+        If IDLE: Set the PSS, PST, CORR and VLBI devices to DISABLE.
+        Else: Turn one of them ON according to function_mode, and all others DISABLE.
 
-        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param function_mode: one of 'IDLE', 'CORR', 'PSS-BF', 'PST-BF', or 'VLBI'
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
