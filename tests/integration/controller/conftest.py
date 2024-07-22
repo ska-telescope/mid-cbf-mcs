@@ -66,13 +66,22 @@ def tango_event_tracer(
 
     :return: TangoEventTracer
     """
-    print("\n\n\n H I \n\n\n")
+    print("\nInitializing TangoEventTracer\n")
     tracer = TangoEventTracer()
 
     tracer.subscribe_event(controller, "longRunningCommandResult")
+    obs_devices = [
+        "mid_csp_cbf/vcc",
+        "mid_csp_cbf/sub_elt/subarray",
+        "mid_csp_cbf/fspCorrSubarray",
+    ]
 
     for proxy in [controller] + sub_devices:
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
+
+        for obs_device in obs_devices:
+            if obs_device in proxy.dev_name():
+                tracer.subscribe_event(proxy, "obsState")
 
     return tracer
