@@ -108,6 +108,12 @@ vcc_oversampling_factor = 10 / 9
 
 mhz_to_hz = 1000000
 
+
+class ScanConfiguration:
+    ADR99_VERSIONS = {"4.0"}
+    PRE_ADR99_VERSIONS = {"2.4"}
+
+
 """
 NOTES:
 
