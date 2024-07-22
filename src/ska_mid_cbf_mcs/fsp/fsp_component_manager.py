@@ -372,7 +372,7 @@ class FspComponentManager(CbfComponentManager):
         self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
         if self.power_state != PowerState.ON:
             self.logger.warning(
-                f"FSP SetFunctionMode not allowed in current state:\
+                f"FSP SetFunctionMode not allowed in current power state:\
                     {self._component_state['power']}"
             )
             return False

@@ -385,6 +385,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         # If Tx's IdleCtrlWord reads as None, regenerate.
         if idle_ctrl_word is None:
+            # 56-bit mask to match register length.
             idle_ctrl_word = hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
             self.logger.warning(
                 f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."

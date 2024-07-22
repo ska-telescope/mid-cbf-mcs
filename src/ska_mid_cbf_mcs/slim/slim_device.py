@@ -240,7 +240,7 @@ class Slim(CbfDevice):
 
         def is_allowed(self: Slim.SlimTestCommand) -> bool:
             """
-            Check if the command is allowed to be executed.
+            Check if the Init command is allowed to be executed.
 
             :return: True if the command is allowed to be executed, False otherwise.
             """

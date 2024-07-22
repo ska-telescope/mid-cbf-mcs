@@ -131,6 +131,6 @@ class HpsFspCorrControllerSimulator:
 
     def SetState(self, argin):
         """
-        Set state to argin(DevState).
+        Set state to argin (a DevState enum value).
         """
         self._state = argin
