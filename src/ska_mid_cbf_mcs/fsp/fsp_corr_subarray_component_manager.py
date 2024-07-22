@@ -503,6 +503,10 @@ class FspCorrSubarrayComponentManager(
         # construct HPS ConfigureScan input
         sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
+
+        # Workaround - set zoom_factor to 0
+        hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
+
         hps_fsp_configuration.update(internal_params_obj)
         # append the fs_sample_rates to the configuration
         hps_fsp_configuration["fs_sample_rates"] = sample_rates
