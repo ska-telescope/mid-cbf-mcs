@@ -226,7 +226,7 @@ class CbfController(CbfDevice):
 
     def _get_max_capabilities(self: CbfController) -> dict[str, int]:
         """
-        Get maximum number of capabilities for VCC, FSP and Subarray. If property not found in db, then assign a default amount
+        Get maximum number of capabilities for VCC, FSP and Subarray. If property not found in db, then assign a default amount.
 
         :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
         """
