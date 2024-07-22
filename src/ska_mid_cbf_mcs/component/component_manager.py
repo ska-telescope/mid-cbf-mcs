@@ -506,7 +506,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Return the power state of this component manager.
 
-        :return: the power state of this component manager if known.
+        :return: the power state of this component manager, if known.
         """
         return self._component_state["power"]
 
