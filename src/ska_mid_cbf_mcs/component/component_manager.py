@@ -515,6 +515,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Return whether this component manager is currently experiencing a fault.
 
-        :return: True if this component manager is currently experiencing a fault. False otherwise.
+        :return: True if this component manager is currently experiencing a fault, else False.
         """
         return cast(bool, self._component_state["fault"])
