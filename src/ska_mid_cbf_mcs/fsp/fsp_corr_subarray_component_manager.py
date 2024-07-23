@@ -504,7 +504,9 @@ class FspCorrSubarrayComponentManager(
         sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        # Workaround - set zoom_factor to 0
+        # zoom-factor removed from configurescan, but required by HPS, to be 
+        # determined later by channel_width introduced in ADR-99 when ready to 
+        # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
         hps_fsp_configuration.update(internal_params_obj)
