@@ -32,6 +32,7 @@ from ska_control_model import (
 # Tango imports
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from ska_telmodel.data import TMData
 from tango import DevState
@@ -48,7 +49,7 @@ class TestCbfController:
     Test class for CbfController device class integration testing.
     """
 
-    def test_Connect(
+    def test_Online(
         self: TestCbfController,
         controller: context.DeviceProxy,
         sub_devices: list[context.DeviceProxy],
@@ -92,91 +93,100 @@ class TestCbfController:
                     attribute_value=DevState.OFF,
                 )
 
-    def test_InitSysParam(
-        self: TestCbfController,
-        controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
-        vcc: list[context.DeviceProxy],
-        talon_board: list[context.DeviceProxy],
+    # def test_InitSysParam(
+    #     self: TestCbfController,
+    #     controller: context.DeviceProxy,
+    #     sub_devices: list[context.DeviceProxy],
+    #     vcc: list[context.DeviceProxy],
+    #     talon_board: list[context.DeviceProxy],
+    #     event_tracer: TangoEventTracer,
+    # ) -> None:
+    #     """
+    #     Test the "InitSysParam" command
+    #     """
+    #     # Get the system parameters
+    #     data_file_path = (
+    #         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    #     )
+    #     with open(data_file_path + "sys_param_4_boards.json") as f:
+    #         sp = f.read()
+
+    #     dish_utils = DISHUtils(json.loads(sp))
+
+    #     # Initialize the system parameters
+    #     result_code, command_id = controller.InitSysParam(sp)
+    #     assert result_code == [ResultCode.QUEUED]
+
+    #     assert_that(event_tracer).within_timeout(
+    #         test_utils.EVENT_TIMEOUT
+    #     ).has_change_event_occurred(
+    #         device_name=controller,
+    #         attribute_name="longRunningCommandResult",
+    #         attribute_value=(
+    #             f"{command_id[0]}",
+    #             f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+    #         ),
+    #     )
+
+    #     for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
+    #         event_tracer.subscribe_event(vcc[vcc_id - 1], "dishID")
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=vcc[vcc_id - 1],
+    #             attribute_name="dishID",
+    #             attribute_value=dish_id,
+    #         )
+
+    #         # TODO: indexing talon boards by VCC ID here; may need a better way
+    #         # to grab talon IDs associated with each VCC
+    #         event_tracer.subscribe_event(talon_board[vcc_id - 1], "dishID")
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=talon_board[vcc_id - 1],
+    #             attribute_name="dishID",
+    #             attribute_value=dish_id,
+    #         )
+
+    def test_On(
+        self: TestCbfController, 
+        controller: context.DeviceProxy, 
+        sub_devices: list[context.DeviceProxy], 
         event_tracer: TangoEventTracer,
-    ) -> None:
+    ):
         """
-        Test the "InitSysParam" command
+        Test the "On" command
         """
-        # Get the system parameters
-        data_file_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-        )
-        with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
-
-        dish_utils = DISHUtils(json.loads(sp))
-
-        # Initialize the system parameters
-        result_code, command_id = controller.InitSysParam(sp)
+        # Send the On command
+        result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
+        
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=controller,
             attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
-            ),
+            attribute_value=(f"{command_id[0]}", '[0, "On completed OK"]'),
         )
 
-        for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
-            event_tracer.subscribe_event(vcc[vcc_id - 1], "dishID")
+        # Validate subelements are in the correct state
+        for device in sub_devices:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=vcc[vcc_id - 1],
-                attribute_name="dishID",
-                attribute_value=dish_id,
+                device_name=device,
+                attribute_name="adminMode",
+                attribute_value=AdminMode.ONLINE,
             )
-
-            # TODO: indexing talon boards by VCC ID here; may need a better way
-            # to grab talon IDs associated with each VCC
-            event_tracer.subscribe_event(talon_board[vcc_id - 1], "dishID")
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=talon_board[vcc_id - 1],
-                attribute_name="dishID",
-                attribute_value=dish_id,
-            )
-
-    # def test_On(self, device_under_test, subdevices_under_test, change_event_callbacks):
-    #     """
-    #     Test the "On" command
-    #     """
-    #     # Send the On command
-    #     result_code, command_id = device_under_test.On()
-    #     assert result_code == [ResultCode.QUEUED]
-
-    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
-    #         (f"{command_id[0]}", '[0, "On completed OK"]')
-    #     )
-    #     change_event_callbacks["state"].assert_change_event(DevState.ON)
-
-    #     # Validate subelements are in the correct state
-    #     # for i in range(1, subdevices_under_test.num_sub + 1):
-    #     #     assert subdevices_under_test.subarray[i].adminMode == AdminMode.ONLINE
-    #     # for i in range(1, subdevices_under_test.num_vcc + 1):
-    #     #     assert subdevices_under_test.vcc[i].adminMode == AdminMode.ONLINE
-    #     # for i in range(1, subdevices_under_test.num_fsp + 1):
-    #     #     assert subdevices_under_test.fsp[i].adminMode == AdminMode.ONLINE
-    #     # for mesh in subdevices_under_test.slim:
-    #     #     assert mesh.adminMode == AdminMode.ONLINE
-    #     # for i in ["CORR", "PSS-BF", "PST-BF"]:
-    #     #     for j in range(1, subdevices_under_test.num_sub + 1):
-    #     #         for k in range(1, subdevices_under_test.num_fsp + 1):
-    #     #             assert (
-    #     #                 subdevices_under_test.fspSubarray[i][j][k].adminMode
-    #     #                 == AdminMode.ONLINE
-    #     #             )
 
     # def test_InitSysParam_Condition(self, subdevices_under_test):
     #     """
@@ -220,27 +230,79 @@ class TestCbfController:
     #         retrieved_init_sys_param_file
     #     )
 
-    # def test_Off(
-    #     self, device_under_test, subdevices_under_test, change_event_callbacks
-    # ):
-    #     """
-    #     Test the "Off" command
-    #     """
+    def test_Off(
+        self,
+        controller: context.DeviceProxy,
+        talon_board: list[context.DeviceProxy],
+        talon_lru: list[context.DeviceProxy],
+        subarray: list[context.DeviceProxy],
+        slim_fs: list[context.DeviceProxy],
+        slim_vis: list[context.DeviceProxy],
+        fsp: list[context.DeviceProxy],
+        vcc: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ):
+        """
+        Test the "Off" command
+        """
 
-    #     # if controller is already off, we must turn it On before turning off.
-    #     if device_under_test.State() == DevState.OFF:
-    #         self.test_On(
-    #             device_under_test, subdevices_under_test, change_event_callbacks
-    #         )
+        # # if controller is already off, we must turn it On before turning off.
+        # if controller.State() == DevState.OFF:
+        #     self.test_On(
+        #         controller, subdevices, change_event_callbacks
+        #     )
 
-    #     # Send the Off command
-    #     result_code, command_id = device_under_test.Off()
-    #     assert result_code == [ResultCode.QUEUED]
+        assert controller.State() == DevState.ON
 
-    #     change_event_callbacks["longRunningCommandResult"].assert_change_event(
-    #         (f"{command_id[0]}", '[0, "Off completed OK"]')
-    #     )
-    #     change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        # Send the Off command
+        result_code, command_id = controller.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        for device in subarray:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="obsState",
+                attribute_value=ObsState.EMPTY,
+            )
+
+        for device in (
+            slim_fs + slim_vis + vcc + fsp + subarray + talon_board + talon_lru
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="state",
+                attribute_value=DevState.OFF,
+            )
+            if "mid_csp_cbf/vcc" in device:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name="obsState",
+                    attribute_value=ObsState.IDLE,
+                )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
+        )
+
+        # Assert that no change events went uncaught.
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
