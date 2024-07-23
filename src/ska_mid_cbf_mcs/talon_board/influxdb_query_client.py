@@ -68,32 +68,7 @@ class InfluxdbQueryClient:
             )
             return False
 
-    async def do_queries(self):
-        """
-        The main query function that asynchronously queries
-        the Influxdb for all the monitored devices. The results
-        are saved to in the dict self._telemetry.
-
-        :return: 2D array of tuples of (field, time, value)
-        """
-        async with InfluxDBClientAsync(
-            url=f"http://{self._hostname}:{self._influx_port}",
-            token=self._influx_auth_token,
-            org=self._influx_org,
-            timeout=2000,
-        ) as client:
-            res = await asyncio.gather(
-                self._query_temperatures(client),
-                self._query_mbo_temperatures(client),
-                self._query_mbo_voltages(client),
-                self._query_fans_pwm(client),
-                self._query_fans_fault(client),
-                self._query_ltm_voltages(client),
-                self._query_ltm_currents(client),
-                self._query_ltm_temperatures(client),
-                self._query_fpga_die_voltages(client),
-            )
-        return res
+    # --- InfluxDB Query Methods --- #
 
     async def _query_common(self, client, query: str):
         query_api = client.query_api()
@@ -192,3 +167,30 @@ class InfluxdbQueryClient:
         |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_temperature.*?/)\
         |>last()'
         return await self._query_common(client, query)
+
+    async def do_queries(self):
+        """
+        The main query function that asynchronously queries
+        the Influxdb for all the monitored devices. The results
+        are saved to in the dict self._telemetry.
+
+        :return: 2D array of tuples of (field, time, value)
+        """
+        async with InfluxDBClientAsync(
+            url=f"http://{self._hostname}:{self._influx_port}",
+            token=self._influx_auth_token,
+            org=self._influx_org,
+            timeout=2000,
+        ) as client:
+            res = await asyncio.gather(
+                self._query_temperatures(client),
+                self._query_mbo_temperatures(client),
+                self._query_mbo_voltages(client),
+                self._query_fans_pwm(client),
+                self._query_fans_fault(client),
+                self._query_ltm_voltages(client),
+                self._query_ltm_currents(client),
+                self._query_ltm_temperatures(client),
+                self._query_fpga_die_voltages(client),
+            )
+        return res

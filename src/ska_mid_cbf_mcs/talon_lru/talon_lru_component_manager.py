@@ -25,7 +25,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
 
 
 class TalonLRUComponentManager(CbfComponentManager):
-    """A component manager for the TalonLRU device."""
+    """
+    A component manager for the TalonLRU device.
+    """
 
     def __init__(
         self: TalonLRUComponentManager,
@@ -226,9 +228,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().stop_communicating()
 
-    # ---------------
-    # General methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
 
     def _get_outlet_power_state(
         self: TalonLRUComponentManager, proxy_power_switch, outlet
@@ -293,6 +295,8 @@ class TalonLRUComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- On Command --- #
+
     def _turn_on_pdus(
         self: TalonLRUComponentManager,
         task_abort_event: Optional[threading.Event] = None,
@@ -300,6 +304,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         If not already on, turn on the two PDUs.
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing the 2 return codes of turning on the PDUs
         """
         # Turn on PDU 1
@@ -375,6 +380,9 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> tuple[ResultCode, str]:
         """
         Turn on the two Talon boards.
+
+        :param task_abort_event: Event to signal task abort
+        :return: A tuple containing a return code and a string message indicating status
         """
         self._num_blocking_results = 2
         for i, board in enumerate(
@@ -462,6 +470,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Turn on the TalonLRU and its subordinate devices
 
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -505,6 +515,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Submit on operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -517,6 +528,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- Off Command --- #
+
     def _turn_off_pdus(
         self: TalonLRUComponentManager,
         task_abort_event: Optional[threading.Event] = None,
@@ -524,6 +537,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Turn off the two PDUs.
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing the 2 return codes of turning off the PDUs
         """
         # Power off PDU 1
@@ -632,6 +646,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
+        """
+        Check if the off command is allowed.
+
+        :return: True if the off command is allowed, False otherwise
+        """
         self.logger.debug("Checking if off is allowed")
         if self._component_state["power"] == PowerState.ON:
             return True

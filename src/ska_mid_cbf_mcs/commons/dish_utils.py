@@ -5,9 +5,8 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
 
-"""This module implements utilities for managing DISH identifiers."""
 
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 
 class DISHUtils:
@@ -53,6 +52,7 @@ class DISHUtils:
         are not valid. Returns when the first invalid DISH ID is
         found.
 
+        :param argin: list of DISH IDs to check
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
 
@@ -61,10 +61,8 @@ class DISHUtils:
             if result[0]:
                 continue
             else:
-                # DISH ID is not a valid ID, return immediately
                 msg = result[1]
                 return (False, msg)
-        # All the DISH IDs are valid.
         return (True, "DISH IDs are valid.")
 
     @staticmethod
@@ -75,9 +73,10 @@ class DISHUtils:
         middle of the ID (e.g. "SKA 001", " SKA001", "SKA001 ")
         are not valid.
 
+        :param argin: DISH ID to check
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
-        # The DISH ID must be in the range of SKA[001-133] or MKT[000-063]
+
         fail_msg = (
             f"DISH ID {argin} is not valid. It must be SKA001-SKA133"
             " or MKT000-MKT063. Spaces before, after, or in the middle"

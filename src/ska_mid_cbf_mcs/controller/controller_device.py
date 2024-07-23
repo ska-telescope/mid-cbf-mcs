@@ -9,12 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-"""
-CbfController
-Sub-element controller device for Mid.CBf
-"""
-
-from __future__ import annotations  # Allows forward references in type hints
+from __future__ import annotations
 
 import tango
 from ska_control_model import SimulationMode
@@ -48,7 +43,7 @@ class CbfController(CbfDevice):
     # Device Properties
     # -----------------
 
-    # Subdevice FQDNs
+    # --- Subdevice FQDNs --- #
 
     CbfSubarray = device_property(dtype=("str",))
 
@@ -66,7 +61,7 @@ class CbfController(CbfDevice):
 
     VisSLIM = device_property(dtype=("str"))
 
-    # Configuration file paths
+    # --- Configuration file paths --- #
 
     TalonDxConfigPath = device_property(dtype=("str"))
 
@@ -76,7 +71,7 @@ class CbfController(CbfDevice):
 
     VisSLIMConfigPath = device_property(dtype=("str"))
 
-    # General properties
+    # --- General properties --- #
 
     LruTimeout = device_property(dtype=("str"))
 
@@ -186,15 +181,17 @@ class CbfController(CbfDevice):
         self._simulation_mode = value
         self._talondx_component_manager.simulation_mode = value
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: CbfController) -> None:
         """
         Sets up the command objects
         """
+        # Registers Off and On commands
         super(CbfDevice, self).init_command_objects()
+
         self.register_command_object(
             "InitSysParam",
             SubmittedSlowCommand(
@@ -208,7 +205,7 @@ class CbfController(CbfDevice):
 
     def _get_max_capabilities(self: CbfController) -> dict[str, int]:
         """
-        Get maximum number of capabilities. If property not found in db, then assign a default amount
+        Get maximum number of capabilities for VCC, FSP and Subarray. If property not found in db, then assign a default amount.
 
         :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
         """
@@ -278,7 +275,7 @@ class CbfController(CbfDevice):
             "VisSLIMConfigPath": self.VisSLIMConfigPath,
         }
 
-        # innit _max_capabilities variable needed for the component manager
+        # Initialize the _max_capabilities variable for the component manager.
         self._max_capabilities = self._get_max_capabilities()
 
         return ControllerComponentManager(
@@ -293,9 +290,9 @@ class CbfController(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfDevice.InitCommand):
         """
@@ -309,10 +306,10 @@ class CbfController(CbfDevice):
         ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
-            :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-            :return: (ResultCode, str)
+
+            :return: A tuple containing a return code and a string message indicating status.
+                     The message is for information purpose only.
+            :rtype: (ResultCode, str)
             """
             (result_code, msg) = super().do(*args, **kwargs)
 
@@ -321,9 +318,13 @@ class CbfController(CbfDevice):
 
             return (result_code, msg)
 
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
     def is_On_allowed(self: CbfController) -> bool:
         """
-        Overwrite baseclass's is_On_allowed method.
+        Overwrite base class's is_On_allowed method.
         """
         return True
 
@@ -337,9 +338,8 @@ class CbfController(CbfDevice):
         """
         Turn the device on.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
+        :return: A tuple containing a return code and a string message indicating status.
+                 The message is for information purpose only.
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object(command_name="On")
@@ -362,9 +362,8 @@ class CbfController(CbfDevice):
         """
         Turn the device off.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
+        :return: A tuple containing a return code and a string message indicating status.
+                 The message is for information purpose only.
         :rtype: (ResultCode, str)
         """
         command_handler = self.get_command_object(command_name="Off")

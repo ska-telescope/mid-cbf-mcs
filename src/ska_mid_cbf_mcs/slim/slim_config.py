@@ -11,6 +11,7 @@ class SlimConfig:
         Constructor
 
         :param yaml_str: the string defining the mesh links
+        :param logger: the logger to use for logging
         :raise Tango exception: if the configuration is not valid yaml.
         """
         self.logger = logger

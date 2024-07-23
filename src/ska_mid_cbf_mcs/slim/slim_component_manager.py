@@ -62,15 +62,21 @@ class SlimComponentManager(CbfComponentManager):
         self.mesh_configured = False
         self._config_str = ""
 
-        # a list of [tx_fqdn, rx_fqdn] for active links.
+        # A list of [tx_fqdn, rx_fqdn] for active links.
         self._active_links = []
 
         # SLIM Link Device proxies
         self._link_fqdns = link_fqdns
         self._dp_links = []
 
+    # -------------
+    # Communication
+    # -------------
+
     def start_communicating(self: SlimComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
         self.logger.debug("Entering SlimComponentManager.start_communicating")
 
         if self.is_communicating:
@@ -132,6 +138,10 @@ class SlimComponentManager(CbfComponentManager):
 
         super().stop_communicating()
 
+    # -------------
+    # Fast Commands
+    # -------------
+
     def on(self: SlimComponentManager) -> tuple[ResultCode, str]:
         """
         On command. Currently just returns OK. The device
@@ -147,6 +157,8 @@ class SlimComponentManager(CbfComponentManager):
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
+
+    # --- Getters --- #
 
     def get_configuration_string(self: SlimComponentManager) -> str:
         """
@@ -209,6 +221,8 @@ class SlimComponentManager(CbfComponentManager):
             bers.append(ber)
         return bers
 
+    # --- Slim Test Command --- #
+
     def _calculate_rx_idle_word_rate(
         self: SlimComponentManager,
         rx_idle_word_count: int,
@@ -235,57 +249,6 @@ class SlimComponentManager(CbfComponentManager):
         )
 
         return (rx_idle_word_error_rate, rx_ber_pass_status)
-
-    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
-        """
-        Examines various attributes from active SLIM Links and logs the metrics in a summary table.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: tuple[ResultCode,str]
-        """
-
-        counters: list[list[int]] = []
-        names: list[str] = []
-        occupancy: list[list[float]] = []
-        debug_flags: list[list[bool]] = []
-        rx_error_rate_and_status: list[tuple[str, str]] = []
-
-        try:
-            for idx, txrx in enumerate(self._active_links):
-                dp_link = self._dp_links[idx]
-                counter = dp_link.counters
-                rx_idle_word_count = counter[2]
-                rx_idle_error_count = counter[3]
-                counters.append(counter)
-                names.append(dp_link.linkName)
-                occupancy.append(
-                    [dp_link.txLinkOccupancy, dp_link.rxLinkOccupancy]
-                )
-                debug_flags.append(dp_link.rxDebugAlignmentAndLockStatus)
-                rx_error_rate_and_status.append(
-                    self._calculate_rx_idle_word_rate(
-                        rx_idle_word_count, rx_idle_error_count
-                    )
-                )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(f"Error reading SlimLink attr: {df}")
-
-        # Summary check for SLIM Link Status and Bit Error Rate
-        self._slim_links_ber_check_summary(
-            counters, names, rx_error_rate_and_status
-        )
-
-        # More detailed table describing each SLIM Link
-        self._slim_table(
-            counters, names, occupancy, debug_flags, rx_error_rate_and_status
-        )
-
-        return (ResultCode.OK, "SLIM Test Completed")
 
     def _slim_links_ber_check_summary(
         self: SlimComponentManager,
@@ -400,6 +363,63 @@ class SlimComponentManager(CbfComponentManager):
 
         self.logger.info(f"\nSLIM Health Summary Table\n{table}")
 
+    def slim_test(self: SlimComponentManager) -> tuple[ResultCode, str]:
+        """
+        Examines various attributes from active SLIM Links and logs the metrics in a summary table.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: tuple[ResultCode,str]
+        """
+
+        counters: list[list[int]] = []
+        names: list[str] = []
+        occupancy: list[list[float]] = []
+        debug_flags: list[list[bool]] = []
+        rx_error_rate_and_status: list[tuple[str, str]] = []
+
+        try:
+            for idx, txrx in enumerate(self._active_links):
+                dp_link = self._dp_links[idx]
+                counter = dp_link.counters
+                rx_idle_word_count = counter[2]
+                rx_idle_error_count = counter[3]
+                counters.append(counter)
+                names.append(dp_link.linkName)
+                occupancy.append(
+                    [dp_link.txLinkOccupancy, dp_link.rxLinkOccupancy]
+                )
+                debug_flags.append(dp_link.rxDebugAlignmentAndLockStatus)
+                rx_error_rate_and_status.append(
+                    self._calculate_rx_idle_word_rate(
+                        rx_idle_word_count, rx_idle_error_count
+                    )
+                )
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error(f"Error reading SlimLink attr: {df}")
+
+        # Summary check for SLIM Link Status and Bit Error Rate
+        self._slim_links_ber_check_summary(
+            counters, names, rx_error_rate_and_status
+        )
+
+        # More detailed table describing each SLIM Link
+        self._slim_table(
+            counters, names, occupancy, debug_flags, rx_error_rate_and_status
+        )
+
+        return (ResultCode.OK, "SLIM Test Completed")
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- Configure Command --- #
+
     def _initialize_links(
         self: SlimComponentManager,
         task_abort_event: Optional[threading.Event] = None,
@@ -417,7 +437,7 @@ class SlimComponentManager(CbfComponentManager):
             f"Creating {len(self._active_links)} links: {self._active_links}"
         )
         if len(self._active_links) == 0:
-            self.logger.warn(
+            self.logger.warning(
                 "No active links are defined in the mesh configuration"
             )
             return ResultCode.OK, "_initialize_links completed OK"
@@ -484,154 +504,6 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.info("Successfully initialized SLIM links")
         self.mesh_configured = True
         return ResultCode.OK, "_initialize_links completed OK"
-
-    def _disconnect_links(
-        self: SlimComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
-    ) -> tuple[ResultCode, str]:
-        """
-        Triggers the configured SLIM links to disconnect and cease polling health states.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug(
-            f"Disconnecting {len(self._active_links)} links: {self._active_links}"
-        )
-        if len(self._active_links) == 0:
-            self.logger.info(
-                "No active links are defined in the SlimLink configuration"
-            )
-            return ResultCode.OK, "_disconnect_links completed OK"
-        try:
-            self._num_blocking_results = len(self._active_links)
-            self.logger.debug(
-                f"About to disconnect {self._num_blocking_results} times"
-            )
-            for idx, txrx in enumerate(self._active_links):
-                if self.simulation_mode is False:
-                    self._dp_links[idx].stop_poll_command("VerifyConnection")
-
-                [[result_code], [command_id]] = self._dp_links[
-                    idx
-                ].DisconnectTxRx()
-
-                # Guard incase LRC was rejected.
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
-                    )
-                    return (
-                        ResultCode.FAILED,
-                        "Nested LRC SlimLink.DisconnectTxRx() rejected",
-                    )
-
-            lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
-            )
-
-            if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(
-                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
-                )
-                return (
-                    ResultCode.FAILED,
-                    "Nested LRC SlimLink.DisconnectTxRx() timed out",
-                )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"Failed to disconnect SLIM links: {df.args[0].desc}"
-            )
-            raise df
-
-        self.logger.info("Successfully disconnected SLIM links")
-        self.mesh_configured = False
-        return ResultCode.OK, "_disconnect_links completed OK"
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    def is_off_allowed(self: SlimComponentManager) -> bool:
-        self.logger.debug("Checking if Off is allowed.")
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"Off not allowed; PowerState is {self.power_state}"
-            )
-            return False
-        return True
-
-    def _off(
-        self: SlimComponentManager,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
-    ) -> tuple[ResultCode, str]:
-        """
-        Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug("Entering SlimComponentManager.off")
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        if self.task_abort_event_is_set(
-            "Off", task_callback, task_abort_event
-        ):
-            return
-
-        self._update_component_state(power=PowerState.OFF)
-
-        try:
-            rc, msg = self._disconnect_links(task_abort_event)
-            if rc is not ResultCode.OK:
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(rc, msg),
-                )
-                return
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                exception=df,
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    df.args[0].desc,
-                ),
-            )
-            return
-
-        task_callback(
-            status=TaskStatus.COMPLETED,
-            result=(
-                ResultCode.OK,
-                "Off completed OK",
-            ),
-        )
-
-    @check_communicating
-    def off(
-        self: SlimComponentManager,
-        task_callback: Optional[Callable] = None,
-        **kwargs: any,
-    ) -> tuple[ResultCode, str]:
-        self.logger.debug(f"ComponentState={self._component_state}")
-        return self.submit_task(
-            self._off,
-            is_cmd_allowed=self.is_off_allowed,
-            task_callback=task_callback,
-        )
 
     def is_configure_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
@@ -751,5 +623,151 @@ class SlimComponentManager(CbfComponentManager):
             self._configure,
             args=[config_str],
             is_cmd_allowed=self.is_configure_allowed,
+            task_callback=task_callback,
+        )
+
+    # --- Off Command --- #
+
+    def _disconnect_links(
+        self: SlimComponentManager,
+        task_abort_event: Optional[threading.Event] = None,
+    ) -> tuple[ResultCode, str]:
+        """
+        Triggers the configured SLIM links to disconnect and cease polling health states.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(
+            f"Disconnecting {len(self._active_links)} links: {self._active_links}"
+        )
+        if len(self._active_links) == 0:
+            self.logger.info(
+                "No active links are defined in the SlimLink configuration"
+            )
+            return ResultCode.OK, "_disconnect_links completed OK"
+        try:
+            self._num_blocking_results = len(self._active_links)
+            self.logger.debug(
+                f"About to disconnect {self._num_blocking_results} times"
+            )
+            for idx, txrx in enumerate(self._active_links):
+                if self.simulation_mode is False:
+                    self._dp_links[idx].stop_poll_command("VerifyConnection")
+
+                [[result_code], [command_id]] = self._dp_links[
+                    idx
+                ].DisconnectTxRx()
+
+                # Guard incase LRC was rejected.
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                    )
+                    return (
+                        ResultCode.FAILED,
+                        "Nested LRC SlimLink.DisconnectTxRx() rejected",
+                    )
+
+            lrc_status = self._wait_for_blocking_results(
+                timeout=10.0, task_abort_event=task_abort_event
+            )
+
+            if lrc_status != TaskStatus.COMPLETED:
+                self.logger.error(
+                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Nested LRC SlimLink.DisconnectTxRx() timed out",
+                )
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            self.logger.error(
+                f"Failed to disconnect SLIM links: {df.args[0].desc}"
+            )
+            raise df
+
+        self.logger.info("Successfully disconnected SLIM links")
+        self.mesh_configured = False
+        return ResultCode.OK, "_disconnect_links completed OK"
+
+    def is_off_allowed(self: SlimComponentManager) -> bool:
+        self.logger.debug("Checking if Off is allowed.")
+        if self.power_state != PowerState.ON:
+            self.logger.warning(
+                f"Off not allowed; PowerState is {self.power_state}"
+            )
+            return False
+        return True
+
+    def _off(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> tuple[ResultCode, str]:
+        """
+        Off command. Disconnects SLIM Links if mesh is configured, else returns OK.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering SlimComponentManager.off")
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set(
+            "Off", task_callback, task_abort_event
+        ):
+            return
+
+        self._update_component_state(power=PowerState.OFF)
+
+        try:
+            rc, msg = self._disconnect_links(task_abort_event)
+            if rc is not ResultCode.OK:
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(rc, msg),
+                )
+                return
+        except tango.DevFailed as df:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            task_callback(
+                exception=df,
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    df.args[0].desc,
+                ),
+            )
+            return
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "Off completed OK",
+            ),
+        )
+
+    @check_communicating
+    def off(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._off,
+            is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )

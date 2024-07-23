@@ -9,11 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-"""
-VccComponentManager
-Sub-element VCC component manager for Mid.CBF
-"""
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 import json
 from threading import Event
@@ -43,7 +39,9 @@ VCC_PARAM_PATH = "mnt/vcc_param/"
 
 
 class VccComponentManager(CbfObsComponentManager):
-    """Component manager for Vcc class."""
+    """
+    Component manager for Vcc class.
+    """
 
     def __init__(
         self: VccComponentManager,
@@ -71,7 +69,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
 
-        # Initialize attribute values
+        # --- Attribute Values --- #
         self.dish_id = ""
 
         self.scan_id = 0
@@ -90,7 +88,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._talon_lru_proxy = None
         self._vcc_controller_proxy = None
 
-        # Create simulators
+        # --- Simulators --- #
         self._band_simulators = [
             VccBandSimulator(vcc_band[0]),
             VccBandSimulator(vcc_band[1]),
@@ -105,9 +103,9 @@ class VccComponentManager(CbfObsComponentManager):
             self._band_simulators[3],
         )
 
-    # ---------------
-    # General methods
-    # ---------------
+    # -------------
+    # Communication
+    # -------------
 
     def _get_power_state(self: VccComponentManager) -> PowerState:
         """
@@ -205,9 +203,9 @@ class VccComponentManager(CbfObsComponentManager):
         json_string = json.dumps(args)
         return json_string
 
-    # ---------------
-    # Command methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
 
     def on(self: VccComponentManager) -> tuple[ResultCode, str]:
         """
@@ -737,3 +735,7 @@ class VccComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------

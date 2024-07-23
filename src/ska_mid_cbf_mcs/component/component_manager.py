@@ -9,7 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -34,7 +34,7 @@ from ska_tango_testing import context
 
 __all__ = ["CbfComponentManager"]
 
-# maximum number of group command worker threads
+# Maximum number worker threads for group commands
 MAX_GROUP_WORKERS = 8
 
 
@@ -100,7 +100,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         self._device_attr_change_callback = attr_change_callback
         self._device_attr_archive_callback = attr_archive_callback
-
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
@@ -147,7 +146,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, dp: context.DeviceProxy
     ) -> None:
         if dp in self._event_ids.values():
-            self.logger.warn(
+            self.logger.warning(
                 f"Skipping repeated longRunningCommandResult event subscription: {dp.dev_name()}"
             )
         else:
@@ -366,9 +365,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 results.append(r)
         return all(results)
 
-    ###########
-    # Callbacks
-    ###########
+    # ----------------
+    # Callback Methods
+    # ----------------
 
     def _update_device_health_state(
         self: CbfComponentManager,
@@ -377,8 +376,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Handle a health state change.
         This is a helper method for use by subclasses.
-        :param state: the new health state of the
-            component manager.
+
+        :param health_state: the new health state of the component manager.
         """
         with self._health_state_lock:
             if self._health_state != health_state:
@@ -388,17 +387,26 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _push_health_state_update(
         self: CbfComponentManager, health_state: HealthState
     ) -> None:
+        """
+        Push a health state update to the device.
+
+        :param health_state: the new health state of the component manager.
+        """
         if self._device_health_state_callback is not None:
             self._device_health_state_callback(health_state)
 
     def start_communicating(self: CbfComponentManager) -> None:
-        """Start communicating with the component."""
+        """
+        Start communicating with the component.
+        """
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
 
     def stop_communicating(self: CbfComponentManager) -> None:
-        """Break off communicating with the component."""
+        """
+        Break off communicating with the component.
+        """
         self._update_component_state(power=PowerState.UNKNOWN)
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
@@ -498,13 +506,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
         """
-        Return communication with the component is established.
+        Return whether communication with the component is established.
 
         SKA Mid.CBF MCS uses the more expressive :py:attr:`communication_status`
         for this, but this is still needed as a base classes hook.
 
-        :return: whether communication with the component is
-            established.
+        :return: True if communication with the component is established, else False.
         """
         return self.communication_state == CommunicationStatus.ESTABLISHED
 
@@ -513,7 +520,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Return the power state of this component manager.
 
-        :return: the power state of this component manager.
+        :return: the power state of this component manager, if known.
         """
         return self._component_state["power"]
 
@@ -522,7 +529,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Return whether this component manager is currently experiencing a fault.
 
-        :return: whether this component manager is currently
-            experiencing a fault.
+        :return: True if this component manager is currently experiencing a fault, else False.
         """
         return cast(bool, self._component_state["fault"])

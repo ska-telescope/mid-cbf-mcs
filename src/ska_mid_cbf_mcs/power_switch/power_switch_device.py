@@ -50,19 +50,51 @@ class PowerSwitch(CbfDevice):
     PowerSwitchLogin = device_property(dtype="str")
     PowerSwitchPassword = device_property(dtype="str")
 
-    # ---------------
-    # General methods
-    # ---------------
+    # ----------
+    # Attributes
+    # ----------
 
-    def always_executed_hook(self: PowerSwitch) -> None:
+    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
+    def simulationMode(self: PowerSwitch) -> SimulationMode:
         """
-        Hook to be executed before any attribute access or command.
-        """
+        Read the Simulation Mode of the device.
 
-    def delete_device(self: PowerSwitch) -> None:
+        :return: Simulation Mode of the device.
         """
-        Uninitialize the device.
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
         """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulationMode to {value}")
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
+
+    @attribute(dtype=int)
+    def numOutlets(self: PowerSwitch) -> int:
+        """
+        Get the number of outlets.
+
+        :return: number of outlets
+        """
+        return self.component_manager.num_outlets
+
+    @attribute(dtype=bool)
+    def isCommunicating(self: PowerSwitch) -> bool:
+        """
+        Get whether or not the power switch is communicating.
+
+        :return: True if power switch can be contacted, False if not
+        """
+        return self.component_manager.is_communicating
+
+    # ----------
+    # Initialize
+    # ----------
 
     def create_component_manager(
         self: PowerSwitch,
@@ -115,58 +147,9 @@ class PowerSwitch(CbfDevice):
             ),
         )
 
-    # ---------
-    # Callbacks
-    # ---------
-
-    # None at this time...
-    # We currently rely on the SKABaseDevice implemented callbacks.
-
-    # ------------------
-    # Attributes methods
-    # ------------------
-
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: PowerSwitch) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
-
-    @attribute(dtype=int)
-    def numOutlets(self: PowerSwitch) -> int:
-        """
-        Get the number of outlets.
-
-        :return: number of outlets
-        """
-        return self.component_manager.num_outlets
-
-    @attribute(dtype=bool)
-    def isCommunicating(self: PowerSwitch) -> bool:
-        """
-        Get whether or not the power switch is communicating.
-
-        :return: True if power switch can be contacted, False if not
-        """
-        return self.component_manager.is_communicating
-
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfDevice.InitCommand):
         """
@@ -257,6 +240,13 @@ class PowerSwitch(CbfDevice):
         command_handler = self.get_command_object(command_name="TurnOffOutlet")
         result_code, command_id = command_handler(argin)
         return [[result_code], [command_id]]
+
+    # ---------
+    # Callbacks
+    # ---------
+
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------

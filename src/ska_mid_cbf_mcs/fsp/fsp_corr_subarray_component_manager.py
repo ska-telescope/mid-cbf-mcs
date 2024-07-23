@@ -28,15 +28,14 @@ from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
 
-# Data file path
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
-
-# HPS device timeout in ms
-HPS_FSP_CORR_TIMEOUT = 12000
+HPS_FSP_CORR_TIMEOUT = 12000  # HPS device timeout in ms
 
 
 class FspCorrSubarrayComponentManager(CbfObsComponentManager):
-    """A component manager for the FspCorrSubarray device."""
+    """
+    A component manager for the FspCorrSubarray device.
+    """
 
     def __init__(
         self: FspCorrSubarrayComponentManager,
@@ -77,9 +76,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         self.output_link_map = [[0, 0] for _ in range(40)]
 
-    # ---------------
-    # General methods
-    # ---------------
+    # -------------
+    # Communication
+    # -------------
 
     def start_communicating(
         self: FspCorrSubarrayComponentManager,
@@ -90,6 +89,10 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             return
         super().start_communicating()
         self._update_component_state(power=PowerState.OFF)
+
+    # -------------
+    # Class Helpers
+    # -------------
 
     def _assign_vcc(
         self: FspCorrSubarrayComponentManager, argin: list[int]
@@ -165,9 +168,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # release all assigned VCC to reset to IDLE state
         self._release_vcc(self.vcc_ids.copy())
 
-    # ---------------
-    # Command methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
 
     @check_communicating
     def on(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
@@ -272,14 +275,14 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         :return: None
         """
-        # set task status in progress, check for abort event
+        # Set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
         ):
             return
 
-        # load configuration JSON, store key read attribute parameters
+        # Load configuration JSON, store key read attribute parameters
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
         self.frequency_band = freq_band_dict()[

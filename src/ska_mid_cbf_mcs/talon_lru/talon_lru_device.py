@@ -23,10 +23,7 @@ from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode
 from tango.server import attribute, command, device_property
 
-# tango imports
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
-
-# Additional import
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
     TalonLRUComponentManager,
 )
@@ -94,9 +91,9 @@ class TalonLRU(CbfDevice):
         """
         return self.component_manager.get_lru_power_state()
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def init_command_objects(self: TalonLRU) -> None:
         """
@@ -121,9 +118,9 @@ class TalonLRU(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
@@ -150,6 +147,10 @@ class TalonLRU(CbfDevice):
             # Setting initial simulation mode to True
             self._device._simulation_mode = SimulationMode.TRUE
             return (result_code, msg)
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def is_On_allowed(
         self: TalonLRU,
@@ -203,12 +204,10 @@ class TalonLRU(CbfDevice):
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
 
+    # ----------
+    # Callbacks
+    # ----------
 
-# ----------
-# Callbacks
-# ----------
-
-# No callbacks in this device
 
 # ----------
 # Run server
