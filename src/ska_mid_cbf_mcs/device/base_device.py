@@ -86,10 +86,12 @@ class CbfDevice(SKABaseDevice):
     # ---------------
 
     def init_command_objects(self: CbfDevice) -> None:
-        """Set up the command objects."""
+        """
+        Set up the command objects."
+        """
         super().init_command_objects()
 
-        # overriding base On/Off SubmittedSlowCommand register with FastCommand objects
+        # Overriding base On/Off SubmittedSlowCommand register with FastCommand objects
         self.register_command_object(
             "On",
             self.OnCommand(
@@ -107,10 +109,8 @@ class CbfDevice(SKABaseDevice):
     # Commands
     # --------
 
-    @command(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
-        dtype_out="DevVarLongStringArray"
-    )
-    @DebugIt()  # type: ignore[misc]  # "Untyped decorator makes function untyped"
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Put the device into standby mode; currently unimplemented in Mid.CBF

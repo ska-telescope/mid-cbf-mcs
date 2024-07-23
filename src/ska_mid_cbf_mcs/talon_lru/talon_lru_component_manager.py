@@ -25,7 +25,9 @@ from ska_mid_cbf_mcs.component.component_manager import (
 
 
 class TalonLRUComponentManager(CbfComponentManager):
-    """A component manager for the TalonLRU device."""
+    """
+    A component manager for the TalonLRU device.
+    """
 
     def __init__(
         self: TalonLRUComponentManager,
@@ -230,9 +232,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().stop_communicating()
 
-    # ---------------
-    # General methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
 
     def _get_outlet_power_state(
         self: TalonLRUComponentManager, proxy_power_switch, outlet
@@ -297,6 +299,8 @@ class TalonLRUComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- On Command --- #
+
     def _turn_on_pdus(
         self: TalonLRUComponentManager,
         task_abort_event: Optional[threading.Event] = None,
@@ -304,6 +308,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         If not already on, turn on the two PDUs.
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing the 2 return codes of turning on the PDUs
         """
         # Turn on PDU 1
@@ -379,6 +384,9 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> tuple[ResultCode, str]:
         """
         Turn on the two Talon boards.
+
+        :param task_abort_event: Event to signal task abort
+        :return: A tuple containing a return code and a string message indicating status
         """
         self._num_blocking_results = 2
         for i, board in enumerate(
@@ -466,6 +474,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Turn on the TalonLRU and its subordinate devices
 
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -512,6 +522,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Submit on operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -524,6 +535,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- Off Command --- #
+
     def _turn_off_pdus(
         self: TalonLRUComponentManager,
         task_abort_event: Optional[threading.Event] = None,
@@ -531,6 +544,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Turn off the two PDUs.
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing the 2 return codes of turning off the PDUs
         """
         # Power off PDU 1
@@ -577,7 +591,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._pdu_outlets[1]
                 )
                 # Guard incase LRC was rejected.
-                if result1 == ResultCode.REJECTED:
+                if result2 == ResultCode.REJECTED:
                     self.logger.error(
                         f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                     )
@@ -597,58 +611,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                     )
                     result2 = ResultCode.OK
         return result1, result2
-
-    def _turn_off_talon(
-        self: TalonLRUComponentManager,
-        talondx_board_proxy: context.DeviceProxy,
-    ) -> tuple[ResultCode, str]:
-        """
-        Turn off the specified Talon board.
-        """
-        try:
-            talondx_board_proxy.Off()
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"_turn_off_talon FAILED on {talondx_board_proxy.dev_name()}: {df}"
-            )
-            return (
-                ResultCode.FAILED,
-                "_turn_off_talon FAILED",
-            )
-        return (ResultCode.OK, "_turn_off_talon completed OK")
-
-    def _turn_off_talons(
-        self: TalonLRUComponentManager,
-    ) -> None | tuple[ResultCode, str]:
-        """
-        Turn off the two Talon boards, threaded.
-
-        :return: ResultCode.FAILED if one of the boards failed to turn off, None otherwise
-        """
-        group_talon_board = [
-            self._proxy_talondx_board1,
-            self._proxy_talondx_board2,
-        ]
-
-        # Turn off all the talons
-        for result_code, msg in self._issue_group_command(
-            command_name="Off", proxies=group_talon_board
-        ):
-            if result_code == ResultCode.FAILED:
-                return (
-                    ResultCode.FAILED,
-                    f"Failed to turn off Talon board: {msg}",
-                )
-            elif result_code == ResultCode.OK:
-                self.logger.info(f"Talon board successfully turned off: {msg}")
-            else:
-                self.logger.warning(
-                    f"Talon board turned off with unexpected result code {result_code}: {msg}"
-                )
-        return None
 
     def _determine_off_result_code(
         self: TalonLRUComponentManager,
@@ -690,6 +652,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
+        """
+        Check if the off command is allowed.
+
+        :return: True if the off command is allowed, False otherwise
+        """
         self.logger.debug("Checking if off is allowed")
         if self._component_state["power"] == PowerState.ON:
             return True
@@ -719,15 +686,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # Power off both outlets
         result1, result2 = self._turn_off_pdus(task_abort_event)
-
-        # Stop monitoring talon board telemetries and fault status
-        talon_off_result = self._turn_off_talons()
-        if talon_off_result:
-            task_callback(
-                result=talon_off_result,
-                status=TaskStatus.FAILED,
-            )
-            return
 
         # _determine_off_result_code will update the component power state
         task_callback(

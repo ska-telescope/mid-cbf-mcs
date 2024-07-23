@@ -45,7 +45,9 @@ from ska_mid_cbf_mcs.controller.talondx_component_manager import (
 
 
 class ControllerComponentManager(CbfComponentManager):
-    """A component manager for the CbfController device."""
+    """
+    A component manager for the CbfController device.
+    """
 
     def __init__(
         self: ControllerComponentManager,
@@ -79,12 +81,12 @@ class ControllerComponentManager(CbfComponentManager):
             self._power_switch_fqdn,
         ) = ([] for i in range(6))
 
-        # init sub-element count
+        # --- Max Capabilities --- #
         self._count_vcc = max_capabilities["VCC"]
         self._count_fsp = max_capabilities["FSP"]
         self._count_subarray = max_capabilities["Subarray"]
 
-        # init sub-element FQDNs to all
+        # --- FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]
         self._fsp_fqdns_all = fqdn_dict["FSP"]
@@ -95,7 +97,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fs_slim_fqdn = fqdn_dict["FsSLIM"][0]
         self._vis_slim_fqdn = fqdn_dict["VisSLIM"][0]
 
-        # init config paths
+        # --- Config Paths --- #
         self._talondx_config_path = config_path_dict["TalonDxConfigPath"]
         self._hw_config_path = config_path_dict["HWConfigPath"]
         self._fs_slim_config_path = config_path_dict["FsSLIMConfigPath"]
@@ -104,7 +106,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.dish_utils = None
         self.last_init_sys_param = ""
         self.source_init_sys_param = ""
-
         self._talondx_component_manager = talondx_component_manager
         self._proxies = {}
 
@@ -112,9 +113,14 @@ class ControllerComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
+    # --- Start Communicating --- #
+
     def _set_fqdns(self: ControllerComponentManager) -> None:
         """
-        Set the list of sub-element FQDNs to be used, limited by max capabilities count
+        Set the list of sub-element FQDNs to be used, limited by max capabilities count.
+
+        :update: self._vcc_fqdn, self._fsp_fqdn, self._subarray_fqdn, self._talon_lru_fqdn,
+                 self._talon_board_fqdn, self._power_switch_fqdn
         """
 
         def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
@@ -224,7 +230,11 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
     ) -> bool:
         """
-        Initialize the device proxy, given the FQDN of the device
+        Initialize the device proxy from its FQDN, store the proxy in the _proxies dictionary,
+        and set the AdminMode to ONLINE
+
+        :param fqdn: FQDN of the device
+        :return: True if the device proxy is successfully initialized, False otherwise.
         """
         if fqdn not in self._proxies:
             try:
@@ -264,6 +274,8 @@ class ControllerComponentManager(CbfComponentManager):
     def _init_proxies(self: ControllerComponentManager) -> bool:
         """
         Init all proxies, return True if all proxies are connected.
+
+        :return: True if all proxies are connected, False otherwise.
         """
 
         # NOTE: order matters here
@@ -349,17 +361,25 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().stop_communicating()
 
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None so far.
+
     # ---------------------
     # Long Running Commands
     # ---------------------
 
+    # --- On Command --- #
+
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
         """
-        Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON
+        Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON.
 
         :return: List of FQDNs of the Talon LRUs
         """
-        # read in list of LRUs from configuration JSON
+        # Read in list of LRUs from configuration JSON
         with open(
             os.path.join(
                 os.getcwd(),
@@ -390,6 +410,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on all of the Talon LRUs
 
+        :param task_abort_event: Event to signal task abort.
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
@@ -442,6 +463,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Configure the SLIM devices
 
+        :param task_abort_event: Event to signal task abort.
         :return: True if the SLIM devices were successfully configured, False otherwise
         """
         try:
@@ -503,6 +525,11 @@ class ControllerComponentManager(CbfComponentManager):
         return (success, message)
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
+        """
+        Check if the On command is allowed.
+
+        :return: True if the On command is allowed, else False.
+        """
         self.logger.debug("Checking if on is allowed")
 
         if self.dish_utils is None:
@@ -523,6 +550,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn on the controller and its subordinate devices
 
+        :param task_callback: Callback function to update task status.
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -642,6 +671,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Submit on operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -654,13 +684,19 @@ class ControllerComponentManager(CbfComponentManager):
             task_callback=task_callback,
         )
 
+    # --- Off Command --- #
+
     def _subarray_to_empty(
-        self: ControllerComponentManager, subarray: context.DeviceProxy
+        self: ControllerComponentManager,
+        subarray: context.DeviceProxy,
     ) -> tuple[bool, str]:
         """
         Restart subarray observing state model to ObsState.EMPTY
+
+        :param subarray: DeviceProxy of the subarray
+        :return: A tuple containing a boolean indicating success and a string message
         """
-        # if subarray is READY go to IDLE
+        # If subarray is READY go to IDLE
         if subarray.obsState == ObsState.READY:
             subarray.GoToIdle()
             if subarray.obsState != ObsState.IDLE:
@@ -671,12 +707,12 @@ class ControllerComponentManager(CbfComponentManager):
                         step=0.5,
                     )
                 except TimeoutException:
-                    # raise exception if timed out waiting to exit RESTARTING
+                    # Raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
                     self.logger.error(log_msg)
                     return (False, log_msg)
 
-        # if subarray is IDLE go to EMPTY by removing all receptors
+        # If subarray is IDLE go to EMPTY by removing all receptors
         if subarray.obsState == ObsState.IDLE:
             subarray.RemoveAllReceptors()
             if subarray.obsState != ObsState.EMPTY:
@@ -687,12 +723,12 @@ class ControllerComponentManager(CbfComponentManager):
                         step=0.5,
                     )
                 except TimeoutException:
-                    # raise exception if timed out waiting to exit RESTARTING
+                    # Raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
                     self.logger.error(log_msg)
                     return (False, log_msg)
 
-        # wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
+        # Wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
         if subarray.obsState in [
             ObsState.RESOURCING,
             ObsState.RESTARTING,
@@ -708,14 +744,14 @@ class ControllerComponentManager(CbfComponentManager):
                     step=0.5,
                 )
             except TimeoutException:
-                # raise exception if timed out waiting to exit RESOURCING/RESTARTING
+                # Raise exception if timed out waiting to exit RESOURCING/RESTARTING
                 log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
                 self.logger.error(log_msg)
                 return (False, log_msg)
 
-        # if subarray not in EMPTY then we need to ABORT and RESTART
+        # If subarray not in EMPTY then we need to ABORT and RESTART
         if subarray.obsState != ObsState.EMPTY:
-            # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
+            # If subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
             if subarray.obsState in [
                 ObsState.ABORTING,
                 ObsState.RESETTING,
@@ -731,12 +767,12 @@ class ControllerComponentManager(CbfComponentManager):
                         step=0.5,
                     )
                 except TimeoutException:
-                    # raise exception if timed out waiting to exit ABORTING/RESETTING
+                    # Raise exception if timed out waiting to exit ABORTING/RESETTING
                     log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
                     self.logger.error(log_msg)
                     return (False, log_msg)
 
-            # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
+            # If subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
             if subarray.obsState not in [
                 ObsState.FAULT,
                 ObsState.ABORTED,
@@ -744,7 +780,7 @@ class ControllerComponentManager(CbfComponentManager):
                 subarray.Abort()
                 if subarray.obsState != ObsState.ABORTED:
                     try:
-                        # TODO: poll causes problem in unit test
+                        # TODO: Poll causes problem in unit test
                         poll(
                             lambda: subarray.obsState == ObsState.ABORTED,
                             timeout=const.DEFAULT_TIMEOUT,
@@ -752,12 +788,12 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         pass
                     except TimeoutException:
-                        # raise exception if timed out waiting to exit ABORTING
+                        # Raise exception if timed out waiting to exit ABORTING
                         log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
                         self.logger.error(log_msg)
                         return (False, log_msg)
 
-            # finally, subarray may be restarted to EMPTY
+            # Finally, subarray may be restarted to EMPTY
             subarray.Restart()
             if subarray.obsState != ObsState.EMPTY:
                 try:
@@ -767,7 +803,7 @@ class ControllerComponentManager(CbfComponentManager):
                         step=0.5,
                     )
                 except TimeoutException:
-                    # raise exception if timed out waiting to exit RESTARTING
+                    # Raise exception if timed out waiting to exit RESTARTING
                     log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
                     self.logger.error(log_msg)
                     return (False, log_msg)
@@ -784,6 +820,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off all subelements of the controller
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a boolean indicating success and a list of messages
         """
         success = True
@@ -838,6 +875,19 @@ class ControllerComponentManager(CbfComponentManager):
                 message.append(msg)
                 success = False
 
+        # Turn off TalonBoard devices.
+        # NOTE: This is separated from the subelements_fast group call because
+        #       a failure shouldn't cause Controller.Off() to fail.
+        try:
+            for fqdn in self._fqdn_talon_board:
+                self._proxies[fqdn].Off()
+        except tango.DevFailed as df:
+            for item in df.args:
+                # Log a warning, but continue when the talon board fails to turn off
+                log_msg = f"Failed to turn off Talon proxy; {item.reason}"
+                self.logger.warning(log_msg)
+                message.append(log_msg)
+
         if success:
             message.append("Successfully issued Off() to all subelements.")
         return (success, message)
@@ -847,6 +897,8 @@ class ControllerComponentManager(CbfComponentManager):
     ) -> tuple[list[str], list[str]]:
         """
         Verify that the subelements are in DevState.OFF, ObsState.EMPTY/IDLE
+
+        :return: A tuple containing a list of subelements that are not in DevState.OFF and a list of subelements that are not in ObsState.EMPTY/IDLE
         """
         op_state_error_list = []
         obs_state_error_list = []
@@ -896,6 +948,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off all of the Talon LRUs
 
+        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
@@ -937,6 +990,11 @@ class ControllerComponentManager(CbfComponentManager):
         return (success, message)
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
+        """
+        Check if the Off command is allowed
+
+        :return: True if the Off command is allowed, False otherwise
+        """
         self.logger.debug("Checking if off is allowed")
         if self.power_state == PowerState.ON:
             return True
@@ -951,6 +1009,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Turn off the controller and its subordinate devices
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1009,7 +1068,7 @@ class ControllerComponentManager(CbfComponentManager):
             message.append(log_msg)
             result_code = ResultCode.FAILED
 
-        # check final device states, log any errors
+        # Check final device states, log any errors
         (
             op_state_error_list,
             obs_state_error_list,
@@ -1052,6 +1111,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Submit off operation method to task executor queue.
 
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1063,6 +1123,8 @@ class ControllerComponentManager(CbfComponentManager):
             is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )
+
+    # --- InitSysParam Command --- #
 
     def _validate_init_sys_param(
         self: ControllerComponentManager,
@@ -1125,11 +1187,11 @@ class ControllerComponentManager(CbfComponentManager):
         :param params: The InitSysParam parameters
         :return: True if the InitSysParam parameters are successfully updated, False otherwise
         """
-        # write the init_sys_param to each of the subarrays
+        # Write the init_sys_param to each of the subarrays
         for fqdn in self._subarray_fqdn:
             self._proxies[fqdn].sysParam = params
 
-        # set VCC values
+        # Set VCC values
         for fqdn in self._vcc_fqdn:
             try:
                 proxy = self._proxies[fqdn]
@@ -1154,7 +1216,7 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     return False
 
-        # update talon boards. The VCC ID to IP address mapping comes
+        # Update talon boards. The VCC ID to IP address mapping comes
         # from hw_config. Then map VCC ID to DISH ID.
         for vcc_id_str, ip in self._hw_config["talon_board"].items():
             for fqdn in self._talon_board_fqdn:
@@ -1187,6 +1249,11 @@ class ControllerComponentManager(CbfComponentManager):
                     return False
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
+        """
+        Check if the InitSysParam command is allowed
+
+        :return: True if the InitSysParam command is allowed, False otherwise
+        """
         self.logger.debug("Checking if init_sys_param is allowed")
         if self._component_state["power"] == PowerState.OFF:
             return True
@@ -1206,6 +1273,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -1283,10 +1351,10 @@ class ControllerComponentManager(CbfComponentManager):
             self.source_init_sys_param = ""
             self.last_init_sys_param = argin
 
-        # store the attribute
+        # Store the attribute
         self.dish_utils = DISHUtils(init_sys_param_json)
 
-        # send init_sys_param to the subarrays, VCCs and talon boards
+        # Send init_sys_param to the subarrays, VCCs and talon boards
         if not self._update_init_sys_param(self.last_init_sys_param):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -1320,6 +1388,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
+        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

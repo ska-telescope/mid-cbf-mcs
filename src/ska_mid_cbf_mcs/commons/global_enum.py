@@ -3,8 +3,6 @@ from enum import IntEnum
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
 
-# TODO - Temporary class. These values should be retrieved
-#        from their respective devices (?)
 class Const:
     def __init__(self):
         self.MIN_INT_TIME = 1  # ADR-35: changed from 140 ms to 1 (factor)
@@ -30,9 +28,6 @@ class Const:
         self.FREQUENCY_BAND_2_RANGE_HZ = (0.95 * 10**9, 1.76 * 10**9)
         self.FREQUENCY_BAND_3_RANGE_HZ = (1.65 * 10**9, 3.05 * 10**9)
         self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10**9, 5.18 * 10**9)
-
-        self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
-        self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
 
         self.MAX_VCC = 4
         self.MAX_SUBARRAY = 16

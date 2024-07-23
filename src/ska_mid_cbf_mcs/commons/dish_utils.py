@@ -5,9 +5,8 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
 
-"""This module implements utilities for managing DISH identifiers."""
 
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 # --- constants for Mid.CBF (197 DISH IDs) --- #
 
@@ -94,6 +93,7 @@ class DISHUtils:
         are not valid. Returns when the first invalid DISH ID is
         found.
 
+        :param argin: list of DISH IDs to check
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
 
@@ -102,8 +102,6 @@ class DISHUtils:
             if result[0]:
                 continue
             else:
-                # DISH ID is not a valid ID, return immediately
                 msg = result[1]
                 return (False, msg)
-        # All the DISH IDs are valid.
         return (True, "DISH IDs are valid.")

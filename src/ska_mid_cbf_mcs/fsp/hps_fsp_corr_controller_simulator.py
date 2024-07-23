@@ -7,12 +7,9 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
-from __future__ import annotations  # allow forward references in type hints
+# Copyright (c) 2019 National Research Council of Canada
+
+from __future__ import annotations
 
 import tango
 
@@ -98,19 +95,27 @@ class HpsFspCorrControllerSimulator:
         self._scan_id = scan_id
 
     def EndScan(self: HpsFspCorrControllerSimulator) -> None:
-        """End the scan."""
+        """
+        End the scan.
+        """
         self._scan_id = 0
 
     def Abort(self: HpsFspCorrControllerSimulator) -> None:
-        """Abort whatever action is currently executing."""
+        """
+        Abort whatever action is currently executing.
+        """
         pass
 
     def GoToIdle(self: HpsFspCorrControllerSimulator) -> None:
-        """Set the device state to IDLE"""
+        """
+        Set the device state to IDLE
+        """
         pass
 
     def ObsReset(self: HpsFspCorrControllerSimulator) -> None:
-        """Set the device state to IDLE from ABORTED"""
+        """
+        Set the device state to IDLE from ABORTED
+        """
         pass
 
     def UpdateDelayModels(
@@ -121,9 +126,11 @@ class HpsFspCorrControllerSimulator:
 
         :param delay_model: Delay Model
         """
-        # Nothing to do for simulation
+        # Nothing to do for simulation.
         pass
 
     def SetState(self, argin):
-        """Set state to argin(DevState)."""
+        """
+        Set state to argin (a DevState enum value).
+        """
         self._state = argin

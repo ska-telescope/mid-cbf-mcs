@@ -8,14 +8,10 @@
 # See LICENSE.txt for more info.
 
 # """
-# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
 # """
 
-# Fsp Tango device prototype
-# Fsp TANGO device class for the prototype
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 from typing import Any
 
@@ -133,9 +129,9 @@ class Fsp(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfDevice.InitCommand):
         """
@@ -382,6 +378,10 @@ class Fsp(CbfDevice):
         )
         result_code, message = command_handler(sub_id)
         return [[result_code], [message]]
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
 
 # ----------

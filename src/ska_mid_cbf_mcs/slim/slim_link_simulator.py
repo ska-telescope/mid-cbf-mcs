@@ -55,6 +55,10 @@ class SlimLinkSimulator:
 
         self._device_health_state_callback = health_state_callback
 
+    # --------------------
+    # Simulated Properties
+    # --------------------
+
     @property
     def link_name(self: SlimLinkSimulator) -> str:
         """
@@ -193,9 +197,9 @@ class SlimLinkSimulator:
         """
         return self._read_counters
 
-    #########
+    # -------
     # Helpers
-    #########
+    # -------
 
     def _update_device_health_state(
         self: SlimLinkSimulator,

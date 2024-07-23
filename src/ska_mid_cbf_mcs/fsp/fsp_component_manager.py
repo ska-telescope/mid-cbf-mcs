@@ -8,6 +8,7 @@
 # See LICENSE.txt for more info.
 
 # Copyright (c) 2019 National Research Council of Canada
+
 from __future__ import annotations
 
 import tango
@@ -27,14 +28,18 @@ from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
 
 
 class FspComponentManager(CbfComponentManager):
-    """A component manager for the Fsp device."""
+    """
+    A component manager for the Fsp device.
+    """
 
     def __init__(
         self: FspComponentManager,
         *args: any,
         fsp_id: int,
         all_fsp_corr_subarray_fqdn: list[str],
-        hps_fsp_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20),
+        # one entry for each Talon board in the FSP_UNIT
+        hps_fsp_controller_fqdn: str,
         **kwargs: any,
     ) -> None:
         """
@@ -53,7 +58,7 @@ class FspComponentManager(CbfComponentManager):
         self._all_fsp_corr_subarray_fqdn = all_fsp_corr_subarray_fqdn
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
 
-        # contains proxies to all FSP CORR devices
+        # Contains proxies to all FSP CORR devices
         self._all_fsp_corr = {}
 
         self._proxy_hps_fsp_controller = None
@@ -61,10 +66,16 @@ class FspComponentManager(CbfComponentManager):
         self.subarray_membership = []
         self.function_mode = FspModes.IDLE.value  # IDLE
 
+    # -------------
+    # Communication
+    # -------------
+
     def start_communicating(
         self: FspComponentManager,
     ) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
         if self.is_communicating:
             self.logger.info("Already communicating.")
             return
@@ -82,9 +93,11 @@ class FspComponentManager(CbfComponentManager):
         super().start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    # ---------------
-    # Command methods
-    # ---------------
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # --- On command --- #
 
     @check_communicating
     def on(self: FspComponentManager) -> tuple[ResultCode, str]:
@@ -96,7 +109,7 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        # Try to connect to HPS devices, which are deployed during the
+        # Try to connect to HPS devices, which are deployed during the 
         # CbfController OnCommand sequence
         if self.simulation_mode == SimulationMode.FALSE:
             if self._proxy_hps_fsp_controller is None:
@@ -122,6 +135,8 @@ class FspComponentManager(CbfComponentManager):
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
+    
+    # --- Off command --- #
 
     @check_communicating
     def off(self: FspComponentManager) -> tuple[ResultCode, str]:
@@ -136,6 +151,8 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_hps_fsp_controller = None
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
+    
+    # --- SetFunctionMode command --- #
 
     def _validate_and_set_function_mode(
         self: FspComponentManager, function_mode: str
@@ -201,6 +218,8 @@ class FspComponentManager(CbfComponentManager):
             )
 
         return (ResultCode.OK, "SetFunctionMode completed OK")
+    
+    # --- RemoveSubarrayMembership command --- #
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
         """
@@ -307,6 +326,8 @@ class FspComponentManager(CbfComponentManager):
             ResultCode.FAILED,
             f"FSP does not belong to subarray {subarray_id}",
         )
+    
+    # --- AddSubarrayMembership command --- #
 
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """

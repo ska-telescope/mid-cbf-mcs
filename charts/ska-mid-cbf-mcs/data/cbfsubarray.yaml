@@ -98,6 +98,9 @@ server:
             - "mid_csp_cbf/talon_board/006"
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
+          - name: "VisSLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-vis"
             
       - name: "mid_csp_cbf/sub_elt/subarray_02"
         attribute_properties:
@@ -173,6 +176,9 @@ server:
             - "mid_csp_cbf/talon_board/006"
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
+          - name: "VisSLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-vis"
 
       - name: "mid_csp_cbf/sub_elt/subarray_03"
         attribute_properties:
@@ -248,6 +254,9 @@ server:
             - "mid_csp_cbf/talon_board/006"
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
+          - name: "VisSLIM"
+            values:
+            - "mid_csp_cbf/slim/slim-vis"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

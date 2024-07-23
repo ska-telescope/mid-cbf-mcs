@@ -47,6 +47,9 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
+from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
+    VisibilityTransport,
+)
 
 
 class CbfSubarrayComponentManager(CbfObsComponentManager):
@@ -74,6 +77,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         fsp: list[str],
         fsp_corr_sub: list[str],
         talon_board: list[str],
+        vis_slim: str,
         **kwargs: any,
     ) -> None:
         """
@@ -85,6 +89,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param fsp: FQDNs of subordinate FSP devices
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
         :param talon_board: FQDNs of talon board devices
+        :param vis_slim: FQDN of the visibility SLIM device
         """
         super().__init__(*args, **kwargs)
 
@@ -98,6 +103,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = fsp
         self._fqdn_fsp_corr = fsp_corr_sub
         self._fqdn_talon_board_device = talon_board
+        self._fqdn_vis_slim_device = vis_slim
 
         # initialize attribute values
         self._sys_param_str = ""
@@ -117,7 +123,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
-        # store max capabilities from controller for easy reference
+        # Controls the visibility transport from FSP outputs to SDP
+        self._vis_transport = VisibilityTransport(
+            logger=self.logger,
+        )
+
+        # Device proxy for easy reference to CBF controller
+        self._proxy_cbf_controller = None
+
+        # Store max capabilities from controller for easy reference
         self._controller_max_capabilities = {}
         self._count_vcc = 0
         self._count_fsp = 0
@@ -132,6 +146,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_corr_proxies = set()
 
         self._all_talon_board_proxies = []
+
+        # subarray does not control the visibility SLIM. It only
+        # queries the config to figure out how to route the visibilities,
+        # and updates the scan configuration accordingly.
+        self._proxy_vis_slim = None
 
     def _get_max_capabilities(self: CbfSubarrayComponentManager) -> bool:
         """
@@ -183,6 +202,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             for fqdn in self._fqdn_talon_board_device:
                 proxy = context.DeviceProxy(device_name=fqdn)
                 self._all_talon_board_proxies.append(proxy)
+
+            if self._proxy_vis_slim is None:
+                self._proxy_vis_slim = context.DeviceProxy(
+                    device_name=self._fqdn_vis_slim_device
+                )
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -1362,6 +1386,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 "One or more calls to FSP ConfigureScan command timed out."
             )
 
+        # TODO
+        # Route visibilities from each FSP to the outputting board
+        if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
+
         return lrc_status
 
     def _subscribe_tm_event(
@@ -1651,6 +1682,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        if not self.simulation_mode:
+            self.logger.info("Visibility transport enable output")
+            self._vis_transport.enable_output(self._subarray_id)
+
         self.scan_id = scan_id
 
         # Update obsState callback
@@ -1703,6 +1738,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        if not self.simulation_mode:
+            self.logger.info("Visibility transport disable output")
+            self._vis_transport.disable_output()
 
         # Update obsState callback
         self._update_component_state(scanning=False)
