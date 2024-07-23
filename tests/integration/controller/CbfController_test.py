@@ -93,61 +93,60 @@ class TestCbfController:
                     attribute_value=DevState.OFF,
                 )
 
-    # def test_InitSysParam(
-    #     self: TestCbfController,
-    #     controller: context.DeviceProxy,
-    #     sub_devices: list[context.DeviceProxy],
-    #     vcc: list[context.DeviceProxy],
-    #     talon_board: list[context.DeviceProxy],
-    #     event_tracer: TangoEventTracer,
-    # ) -> None:
-    #     """
-    #     Test the "InitSysParam" command
-    #     """
-    #     # Get the system parameters
-    #     data_file_path = (
-    #         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-    #     )
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
+    def test_InitSysParam(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
+        vcc: list[context.DeviceProxy],
+        talon_board: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the "InitSysParam" command
+        """
+        # Get the system parameters
+        data_file_path = (
+            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        )
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        dish_utils = DISHUtils(json.loads(sp))
 
-    #     dish_utils = DISHUtils(json.loads(sp))
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sp)
+        assert result_code == [ResultCode.QUEUED]
 
-    #     # Initialize the system parameters
-    #     result_code, command_id = controller.InitSysParam(sp)
-    #     assert result_code == [ResultCode.QUEUED]
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
+        )
 
-    #     assert_that(event_tracer).within_timeout(
-    #         test_utils.EVENT_TIMEOUT
-    #     ).has_change_event_occurred(
-    #         device_name=controller,
-    #         attribute_name="longRunningCommandResult",
-    #         attribute_value=(
-    #             f"{command_id[0]}",
-    #             f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
-    #         ),
-    #     )
+        for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
+            event_tracer.subscribe_event(vcc[vcc_id - 1], "dishID")
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=vcc[vcc_id - 1],
+                attribute_name="dishID",
+                attribute_value=dish_id,
+            )
 
-    #     for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
-    #         event_tracer.subscribe_event(vcc[vcc_id - 1], "dishID")
-    #         assert_that(event_tracer).within_timeout(
-    #             test_utils.EVENT_TIMEOUT
-    #         ).has_change_event_occurred(
-    #             device_name=vcc[vcc_id - 1],
-    #             attribute_name="dishID",
-    #             attribute_value=dish_id,
-    #         )
-
-    #         # TODO: indexing talon boards by VCC ID here; may need a better way
-    #         # to grab talon IDs associated with each VCC
-    #         event_tracer.subscribe_event(talon_board[vcc_id - 1], "dishID")
-    #         assert_that(event_tracer).within_timeout(
-    #             test_utils.EVENT_TIMEOUT
-    #         ).has_change_event_occurred(
-    #             device_name=talon_board[vcc_id - 1],
-    #             attribute_name="dishID",
-    #             attribute_value=dish_id,
-    #         )
+            # TODO: indexing talon boards by VCC ID here; may need a better way
+            # to grab talon IDs associated with each VCC
+            event_tracer.subscribe_event(talon_board[vcc_id - 1], "dishID")
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=talon_board[vcc_id - 1],
+                attribute_name="dishID",
+                attribute_value=dish_id,
+            )
 
     def test_On(
         self: TestCbfController, 
@@ -455,12 +454,33 @@ class TestCbfController:
     #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    # def test_Disconnect(
-    #     self, device_under_test, change_event_callbacks, subdevices_under_test
-    # ):
-    #     """
-    #     Verify the component manager can stop communicating
-    #     """
-    #     # Trigger stop_communicating by setting the AdminMode to OFFLINE
-    #     device_under_test.adminMode = AdminMode.OFFLINE
-    #     change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
+    def test_Offline(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Verify the component manager can stop communicating
+        """
+        # Trigger stop_communicating by setting the AdminMode to OFFLINE
+        controller.adminMode = AdminMode.OFFLINE
+
+        # check adminMode and state changes
+        for device in [controller] + sub_devices:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="adminMode",
+                attribute_value=AdminMode.OFFLINE,
+            )
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="state",
+                attribute_value=DevState.DISABLE,
+            )
+
+        

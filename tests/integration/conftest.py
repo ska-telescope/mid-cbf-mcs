@@ -24,7 +24,6 @@ def controller_proxy() -> context.DeviceProxy:
 
     :return: DeviceProxy to CbfController device
     """
-    print("\n\n\n H I \n\n\n")
     return context.DeviceProxy(device_name="mid_csp_cbf/sub_elt/controller")
 
 

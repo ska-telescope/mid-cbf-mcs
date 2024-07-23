@@ -843,8 +843,8 @@ class ControllerComponentManager(CbfComponentManager):
             self._group_vcc + self._group_fsp + self._group_subarray
         )
         subelements_slow = (
-            self._proxies[self._fs_slim_fqdn]
-            + self._proxies[self._vis_slim_fqdn]
+            [self._proxies[self._fs_slim_fqdn],
+            self._proxies[self._vis_slim_fqdn]]
         )
         self._num_blocking_results = len(subelements_slow)
 
@@ -1255,18 +1255,16 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                             )
                         else:
-                            self.logger.error(
+                            self.logger.warning(
                                 f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                                 f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
-                            return False
                 except tango.DevFailed as df:
                     for item in df.args:
                         self.logger.error(
                             f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         )
                     return False
-
         return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
