@@ -327,21 +327,20 @@ class ControllerComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
-        super().start_communicating()
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
     def _stop_communicating(self: ControllerComponentManager) -> None:
         """
         Thread for stop_communicating operation.
         """
-        with self._admin_mode_lock:
-            self._unsubscribe_command_results()
-            self._num_blocking_results = 0
+        self._unsubscribe_command_results()
+        self._num_blocking_results = 0
 
-            for proxy in self._proxies.values():
-                proxy.adminMode = AdminMode.OFFLINE
+        for proxy in self._proxies.values():
+            proxy.adminMode = AdminMode.OFFLINE
 
-            super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands

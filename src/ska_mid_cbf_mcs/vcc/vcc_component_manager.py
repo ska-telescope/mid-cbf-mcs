@@ -123,11 +123,10 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return PowerState.UNKNOWN
 
-    def start_communicating(self: VccComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-        if self._communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Already communicating.")
-            return
+    def _start_communicating(self: VccComponentManager) -> None:
+        """
+        Establish communication with the component, then start monitoring.
+        """
         try:
             self._talon_lru_proxy = context.DeviceProxy(
                 device_name=self._talon_lru_fqdn
@@ -141,8 +140,12 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        super().start_communicating()
+        super()._start_communicating()
         self._update_component_state(power=self._get_power_state())
+
+    # --------------
+    # Helper Methods
+    # --------------
 
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""

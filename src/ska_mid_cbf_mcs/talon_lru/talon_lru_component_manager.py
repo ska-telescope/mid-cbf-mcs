@@ -176,17 +176,13 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu2_power_state,
             ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
 
-    def start_communicating(self: TalonLRUComponentManager) -> None:
+    def _start_communicating(self: TalonLRUComponentManager) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug(
             "Entering TalonLRUComponentManager.start_communicating"
         )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
 
         # Get and initialize the device proxies of all the devices we care about
         self._init_talon_proxies()
@@ -212,10 +208,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
-        super().start_communicating()
+        super()._start_communicating()
         self.get_lru_power_state()
 
-    def stop_communicating(self: TalonLRUComponentManager) -> None:
+    def _stop_communicating(self: TalonLRUComponentManager) -> None:
         """
         Stop communication with the component.
         """
@@ -226,7 +222,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._unsubscribe_command_results()
         self._num_blocking_results = 0
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands

@@ -122,15 +122,11 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: PowerSwitchComponentManager) -> None:
+    def _start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
         self.logger.debug("Entering PowerSwitch.start_communicating")
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
 
         if self.simulation_mode:
             outlets = self.power_switch_simulator.outlets
@@ -147,20 +143,20 @@ class PowerSwitchComponentManager(CbfComponentManager):
             self.logger.error(
                 "PowerSwitch outlets reported None after initialization. Communication not established."
             )
-        super().start_communicating()
+        super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
         self.logger.info(f'!!! POWERSTATE: {self._component_state["power"]}')
         self.logger.info(f"!!! PowerSwitch Communication state: {self._communication_state}")
 
 
-    def stop_communicating(self: PowerSwitchComponentManager) -> None:
+    def _stop_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Stop communication with the component.
         """
         if not self.simulation_mode:
             self.power_switch_driver.stop()
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # ----------------
     # Helper Functions

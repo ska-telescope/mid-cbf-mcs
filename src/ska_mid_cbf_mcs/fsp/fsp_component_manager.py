@@ -72,16 +72,12 @@ class FspComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(
+    def _start_communicating(
         self: FspComponentManager,
     ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
         for fqdn in self._all_fsp_corr_subarray_fqdn:
             try:
                 self._all_fsp_corr[fqdn] = context.DeviceProxy(fqdn)
@@ -92,7 +88,7 @@ class FspComponentManager(CbfComponentManager):
                 )
                 return
 
-        super().start_communicating()
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
     # -------------

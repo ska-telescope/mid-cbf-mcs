@@ -117,7 +117,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for start_communicating operation.
         """
-        raise NotImplementedError("CbfComponentManager is abstract.")
+        self._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
 
     def start_communicating(
         self: CbfComponentManager,
@@ -144,7 +144,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        raise NotImplementedError("CbfComponentManager is abstract.")
+        self._update_component_state(power=PowerState.UNKNOWN)
+        self._update_communication_state(communication_state=CommunicationStatus.DISABLED)
 
     def stop_communicating(
         self: CbfComponentManager,
@@ -441,23 +442,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         if self._device_health_state_callback is not None:
             self._device_health_state_callback(health_state)
-
-    def start_communicating(self: CbfComponentManager) -> None:
-        """
-        Start communicating with the component.
-        """
-        self._update_communication_state(
-            communication_state=CommunicationStatus.ESTABLISHED
-        )
-
-    def stop_communicating(self: CbfComponentManager) -> None:
-        """
-        Break off communicating with the component.
-        """
-        self._update_component_state(power=PowerState.UNKNOWN)
-        self._update_communication_state(
-            communication_state=CommunicationStatus.DISABLED
-        )
 
     def results_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]

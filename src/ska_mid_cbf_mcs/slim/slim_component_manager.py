@@ -73,15 +73,11 @@ class SlimComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: SlimComponentManager) -> None:
+    def _start_communicating(self: SlimComponentManager) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug("Entering SlimComponentManager.start_communicating")
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
 
         self._dp_links = []
         self.logger.debug(f"Link FQDNs: {self._link_fqdns}")
@@ -122,11 +118,11 @@ class SlimComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
-        super().start_communicating()
+        super()._start_communicating()
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
-    def stop_communicating(self: SlimComponentManager) -> None:
+    def _stop_communicating(self: SlimComponentManager) -> None:
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 
@@ -136,7 +132,7 @@ class SlimComponentManager(CbfComponentManager):
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands

@@ -101,7 +101,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self) -> None:
+    def _start_communicating(self) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -109,11 +109,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
+        super()._start_communicating()
         if not self.simulation_mode:
             try:
                 for fqdn in [
