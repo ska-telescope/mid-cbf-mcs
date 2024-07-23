@@ -122,4 +122,11 @@ volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
+extraVolumes:
+- name: config-map
+  configMap: 
+    name:  hwconfig-configmap
+extraVolumeMounts:
+  - name: config-map
+    mountPath: /app/mnt/hw_config
 
