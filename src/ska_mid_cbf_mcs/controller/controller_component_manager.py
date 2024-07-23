@@ -296,58 +296,41 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
         return True
 
-    def _start_communicating_thread(self: ControllerComponentManager) -> None:
+    def _start_communicating(self: ControllerComponentManager) -> None:
         """
         Thread for start_communicating operation.
         """
-        with self._admin_mode_lock:
-            with open(self._hw_config_path) as yaml_fd:
-                self._hw_config = yaml.safe_load(yaml_fd)
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
 
-            self._set_fqdns()
+        self._set_fqdns()
 
-            group_proxies = {
-                "_group_vcc": self._vcc_fqdn,
-                "_group_fsp": self._fsp_fqdn,
-                "_group_subarray": self._subarray_fqdn,
-            }
+        group_proxies = {
+            "_group_vcc": self._vcc_fqdn,
+            "_group_fsp": self._fsp_fqdn,
+            "_group_subarray": self._subarray_fqdn,
+        }
 
-            if not self._create_group_proxies(group_proxies):
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
-
-            if not self._init_proxies():
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
-
-            self.logger.info(
-                f"event_ids after subscribing = {len(self._event_ids)}"
+        if not self._create_group_proxies(group_proxies):
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-
-            super().start_communicating()
-            self._update_component_state(power=PowerState.OFF)
-
-    def start_communicating(
-        self: ControllerComponentManager,
-    ) -> None:
-        """
-        Establish communication with the component, then start monitoring.
-        """
-        self.logger.debug(
-            "Entering ControllerComponentManager.start_communicating"
-        )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating")
             return
 
-        Thread(target=self._start_communicating_thread).start()
+        if not self._init_proxies():
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
-    def _stop_communicating_thread(self: ControllerComponentManager) -> None:
+        self.logger.info(
+            f"event_ids after subscribing = {len(self._event_ids)}"
+        )
+
+        super().start_communicating()
+        self._update_component_state(power=PowerState.OFF)
+
+    def _stop_communicating(self: ControllerComponentManager) -> None:
         """
         Thread for stop_communicating operation.
         """
@@ -359,15 +342,6 @@ class ControllerComponentManager(CbfComponentManager):
                 proxy.adminMode = AdminMode.OFFLINE
 
             super().stop_communicating()
-
-    def stop_communicating(self: ControllerComponentManager) -> None:
-        """
-        Stop communication with the component
-        """
-        self.logger.debug(
-            "Entering ControllerComponentManager.stop_communicating"
-        )
-        Thread(target=self._stop_communicating_thread).start()
 
     # -------------
     # Fast Commands
