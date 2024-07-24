@@ -189,6 +189,20 @@ class TestPowerSwitch:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+    def device_online_and_on(
+        self: TestPowerSwitch,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> bool:
+        # set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.adminMode = AdminMode.ONLINE
+        change_event_callbacks.assert_change_event("state", DevState.ON)
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+        return device_under_test.adminMode == AdminMode.ONLINE
+
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -210,6 +224,7 @@ class TestPowerSwitch:
     def test_adminModeOnline(
         self: TestPowerSwitch,
         device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test Admin Mode Online
@@ -218,10 +233,7 @@ class TestPowerSwitch:
             :py:class:`context.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
     @pytest.mark.parametrize(
         "test_context",
@@ -242,15 +254,15 @@ class TestPowerSwitch:
         indirect=True,
     )
     def test_isCommunicating(
-        self: TestPowerSwitch, device_under_test: context.DeviceProxy
+        self: TestPowerSwitch,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Tests that the device can respond to requests when the power
         switch is communicating.
         """
-        # Take device out of simulation mode
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         # Check that the device is communicating
         assert device_under_test.isCommunicating
@@ -277,14 +289,14 @@ class TestPowerSwitch:
         indirect=True,
     )
     def test_get_request_failure(
-        self: TestPowerSwitch, device_under_test: context.DeviceProxy
+        self: TestPowerSwitch,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Tests that a GET request failure is appropriately handled.
         """
-        # Take device out of simulation mode
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         # Check that the device is not communicating
         assert device_under_test.isCommunicating is False
@@ -318,10 +330,7 @@ class TestPowerSwitch:
         """
         Tests that a PATCH request failure is appropriately handled.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -376,10 +385,7 @@ class TestPowerSwitch:
         """
         Tests that the outlets can be turned off individually.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -427,7 +433,7 @@ class TestPowerSwitch:
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.OFFLINE
         assert device_under_test.adminMode == AdminMode.OFFLINE
-        assert device_under_test.State() == DevState.DISABLE
+        change_event_callbacks.assert_change_event("state", DevState.DISABLE)
 
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
@@ -463,10 +469,7 @@ class TestPowerSwitch:
         """
         Tests the failure response when outlets are not turned off as instructed.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -514,10 +517,7 @@ class TestPowerSwitch:
         """
         Tests the failure response when an invalid outlet is requested to be turned off.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -560,9 +560,7 @@ class TestPowerSwitch:
         """
         Tests that the outlets can be turned on individually.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -610,7 +608,7 @@ class TestPowerSwitch:
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.OFFLINE
         assert device_under_test.adminMode == AdminMode.OFFLINE
-        assert device_under_test.State() == DevState.DISABLE
+        change_event_callbacks.assert_change_event("state", DevState.DISABLE)
 
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
@@ -646,10 +644,7 @@ class TestPowerSwitch:
         """
         Tests the failure response when outlets are not turned on as instructed.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS
@@ -697,10 +692,7 @@ class TestPowerSwitch:
         """
         Tests the failure response when an invalid outlet is requested to be turned on.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        self.device_online_and_on(device_under_test, change_event_callbacks)
 
         num_outlets = device_under_test.numOutlets
         assert num_outlets == Const.POWER_SWITCH_OUTLETS

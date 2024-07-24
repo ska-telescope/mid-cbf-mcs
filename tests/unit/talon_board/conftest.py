@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+from typing import Generator
 import unittest
 
 import pytest
@@ -21,6 +22,7 @@ import tango
 
 # Tango imports
 from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -31,7 +33,7 @@ from ... import test_utils
 # Local imports
 
 
-@pytest.fixture(name="device_under_test")
+@pytest.fixture(name="device_under_test", scope="module")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -44,23 +46,36 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_board/001")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def talon_board_change_event_callbacks(
+@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+    
     change_event_attr_list = [
         "longRunningCommandResult",
+        "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
-@pytest.fixture()
+@pytest.fixture(name="monkeymodule", scope='module')
+def monkeymodule():
+    from _pytest.monkeypatch import MonkeyPatch
+    mpatch = MonkeyPatch()
+    yield mpatch
+    mpatch.undo()
+
+@pytest.fixture(scope="module")
 def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -69,14 +84,14 @@ def mock_talon_sysid() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_talon_status() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -93,14 +108,14 @@ def mock_talon_status() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_hps_master() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def initial_mocks(
     mock_talon_sysid: unittest.mock.Mock,
     mock_ethernet_100g: unittest.mock.Mock,

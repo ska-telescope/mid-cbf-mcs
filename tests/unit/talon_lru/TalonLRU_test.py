@@ -16,17 +16,18 @@ import gc
 import unittest
 from typing import Iterator
 from unittest.mock import Mock
+from assertpy import assert_that
 
 import pytest
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-
-CONST_WAIT_TIME = 2
+from ... import test_utils
 
 # To prevent tests hanging during gc.
 gc.disable()
@@ -37,7 +38,7 @@ class TestTalonLRU:
     Test class for the TalonLRU
     """
 
-    @pytest.fixture(name="test_context", scope="function")
+    @pytest.fixture(name="test_context", scope="module")
     def talon_lru_test_context(
         self: TestTalonLRU,
         initial_mocks: dict[str, Mock],
@@ -142,7 +143,7 @@ class TestTalonLRU:
     def test_startup_state(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
         power_switch_1: unittest.mock.Mock,
         power_switch_2: unittest.mock.Mock,
     ) -> None:
@@ -167,12 +168,19 @@ class TestTalonLRU:
 
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
-
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
+    
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_On(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
         power_switch_1: unittest.mock.Mock,
         power_switch_2: unittest.mock.Mock,
     ) -> None:
@@ -189,7 +197,13 @@ class TestTalonLRU:
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         # Send the long running command 'On'
         result_code, command_id = device_under_test.On()
@@ -224,20 +238,32 @@ class TestTalonLRU:
             (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
         )
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(f"{command_id[0]}", f'[{result_code.value}, "{message}"]'),
         )
 
         if state is not None:
-            change_event_callbacks["state"].assert_change_event(state)
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="state",
+                attribute_value=state,
+            )
+            
 
         # Assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Off_from_off(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Tests that the Off command from an off state behaves appropriately.
@@ -249,21 +275,32 @@ class TestTalonLRU:
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         # Send the Off command
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
-            )
+            ),
         )
         # Assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_On_Off(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,

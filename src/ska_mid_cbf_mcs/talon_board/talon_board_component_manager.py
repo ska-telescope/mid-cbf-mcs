@@ -1209,7 +1209,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
             if not ping_res:
                 self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-                self._update_component_state(fault=True)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(

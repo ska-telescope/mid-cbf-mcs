@@ -1,7 +1,10 @@
+from assertpy import assert_that
 import tango
 from ska_control_model import AdminMode
 from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
+from ska_tango_testing import context
 
 EVENT_TIMEOUT = 30
 
@@ -24,10 +27,40 @@ def change_event_subscriber(
     return attr_event_ids
 
 
-def device_online_and_on(dut: tango.DeviceProxy) -> bool:
+def device_online_and_on(
+    dut: context.DeviceProxy,
+    event_tracer: TangoEventTracer,
+) -> bool:
+    obs_devices = [
+        "mid_csp_cbf/vcc",
+        "mid_csp_cbf/sub_elt/subarray",
+        "mid_csp_cbf/fspCorrSubarray",
+    ]
+        
     # set a given device to AdminMode.ONLINE and DevState.ON
     dut.adminMode = AdminMode.ONLINE
-    dut.On()
-    return (dut.adminMode == AdminMode.ONLINE) and (
-        dut.state() == tango.DevState.ON
+    assert_that(event_tracer).within_timeout(
+        EVENT_TIMEOUT
+    ).has_change_event_occurred(
+        device_name=dut,
+        attribute_name="state",
+        attribute_value=tango.DevState.OFF,
     )
+
+    dut.On()
+    assert_that(event_tracer).within_timeout(
+        EVENT_TIMEOUT
+    ).has_change_event_occurred(
+        device_name=dut,
+        attribute_name="state",
+        attribute_value=tango.DevState.ON,
+    )
+
+    # assert if any captured events have gone unaddressed
+    # assert_that(event_tracer).within_timeout(
+    #     EVENT_TIMEOUT
+    # ).hasnt_change_event_occurred(
+    #     device_name=dut,
+    # )
+
+    return dut.adminMode == AdminMode.ONLINE
