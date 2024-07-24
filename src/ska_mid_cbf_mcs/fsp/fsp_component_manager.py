@@ -109,7 +109,7 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        # Try to connect to HPS devices, which are deployed during the 
+        # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
         if self.simulation_mode == SimulationMode.FALSE:
             if self._proxy_hps_fsp_controller is None:
@@ -135,7 +135,7 @@ class FspComponentManager(CbfComponentManager):
 
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
-    
+
     # --- Off command --- #
 
     @check_communicating
@@ -151,7 +151,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_hps_fsp_controller = None
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
-    
+
     # --- SetFunctionMode command --- #
 
     def _validate_and_set_function_mode(
@@ -218,7 +218,7 @@ class FspComponentManager(CbfComponentManager):
             )
 
         return (ResultCode.OK, "SetFunctionMode completed OK")
-    
+
     # --- RemoveSubarrayMembership command --- #
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
@@ -326,7 +326,7 @@ class FspComponentManager(CbfComponentManager):
             ResultCode.FAILED,
             f"FSP does not belong to subarray {subarray_id}",
         )
-    
+
     # --- AddSubarrayMembership command --- #
 
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:

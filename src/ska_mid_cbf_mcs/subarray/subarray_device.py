@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the SKA Mid.CBF MCS project
+# This file is part of the Mid.CBF MCS project
+#
+#
 #
 # Distributed under the terms of the GPL license.
-# See LICENSE for more info.
+# See LICENSE.txt for more info.
 
-"""
-CbfSubarray
-Sub-element subarray device for Mid.CBF
-"""
+# Copyright (c) 2019 National Research Council of Canada
+
 from __future__ import annotations
 
 import tango
@@ -27,7 +27,7 @@ __all__ = ["CbfSubarray", "main"]
 
 class CbfSubarray(CbfObsDevice):
     """
-    CBFSubarray TANGO device class for the CBFSubarray prototype
+    CbfSubarray TANGO device class for the prototype
     """
 
     # -----------------
@@ -158,9 +158,9 @@ class CbfSubarray(CbfObsDevice):
         """
         return self.component_manager.last_received_delay_model
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def _init_state_model(self: CbfSubarray) -> None:
         """Set up the state model for the device."""
@@ -237,12 +237,6 @@ class CbfSubarray(CbfObsDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # ---------
-    # Callbacks
-    # ---------
-
-    # None at this time
-
     # --------
     # Commands
     # --------
@@ -275,7 +269,11 @@ class CbfSubarray(CbfObsDevice):
 
             return (result_code, msg)
 
-    #  Resourcing Commands  #
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- Resourcing Commands --- #
 
     @command(
         dtype_in=("str",),
@@ -349,7 +347,7 @@ class CbfSubarray(CbfObsDevice):
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
 
-    #  Scan Commands   #
+    # --- Scan Commands --- #
 
     @command(
         dtype_in="DevString",

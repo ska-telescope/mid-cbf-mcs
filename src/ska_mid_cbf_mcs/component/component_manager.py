@@ -112,6 +112,59 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # SimulationMode.FALSE
         self.simulation_mode = simulation_mode
 
+    def _start_communicating(self: CbfComponentManager) -> None:
+        """
+        Thread for start_communicating operation.
+        """
+        self._update_communication_state(
+            communication_state=CommunicationStatus.ESTABLISHED
+        )
+
+    def start_communicating(
+        self: CbfComponentManager,
+    ) -> None:
+        """
+        Establish communication with the component, then start monitoring.
+        """
+        self.logger.debug("Entering CbfComponentManager.start_communicating")
+
+        if self.is_communicating:
+            self.logger.info("Already communicating")
+            return
+
+        task_status, message = self.submit_task(self._start_communicating)
+        if task_status == TaskStatus.REJECTED:
+            self.logger.error(
+                f"start_communicating thread rejected; {message}"
+            )
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+
+    def _stop_communicating(self: CbfComponentManager) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        self._update_component_state(power=PowerState.UNKNOWN)
+        self._update_communication_state(
+            communication_state=CommunicationStatus.DISABLED
+        )
+
+    def stop_communicating(
+        self: CbfComponentManager,
+    ) -> None:
+        """
+        Stop communication with the component
+        """
+        self.logger.debug("Entering CbfComponentManager.start_communicating")
+
+        task_status, message = self.submit_task(self._stop_communicating)
+        if task_status == TaskStatus.REJECTED:
+            self.logger.error(f"stop_communicating thread rejected; {message}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+
     def task_abort_event_is_set(
         self: CbfComponentManager,
         command_name: str,
@@ -399,23 +452,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         if self._device_health_state_callback is not None:
             self._device_health_state_callback(health_state)
-
-    def start_communicating(self: CbfComponentManager) -> None:
-        """
-        Start communicating with the component.
-        """
-        self._update_communication_state(
-            communication_state=CommunicationStatus.ESTABLISHED
-        )
-
-    def stop_communicating(self: CbfComponentManager) -> None:
-        """
-        Break off communicating with the component.
-        """
-        self._update_component_state(power=PowerState.UNKNOWN)
-        self._update_communication_state(
-            communication_state=CommunicationStatus.DISABLED
-        )
 
     def results_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]

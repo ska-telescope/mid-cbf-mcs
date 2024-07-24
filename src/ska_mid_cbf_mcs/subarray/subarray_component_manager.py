@@ -9,11 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-"""
-CbfSubarray
-Sub-element subarray device for Mid.CBF
-"""
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
 
 import concurrent.futures
 import copy
@@ -22,7 +18,6 @@ import json
 from threading import Event, Lock, Thread
 from typing import Callable, Optional
 
-# Tango imports
 import tango
 from ska_control_model import (
     AdminMode,
@@ -53,20 +48,9 @@ from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
 
 
 class CbfSubarrayComponentManager(CbfObsComponentManager):
-    """A component manager for the CbfSubarray class."""
-
-    @property
-    def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned VCC IDs"""
-        dish_ids = self.dish_ids.copy()
-        if self._dish_utils is not None:
-            return [
-                self._dish_utils.dish_id_to_vcc_id[dish] for dish in dish_ids
-            ]
-        self.logger.error(
-            "Unable to return VCC IDs as system parameters have not yet been provided."
-        )
-        return []
+    """
+    A component manager for the CbfSubarray device.
+    """
 
     def __init__(
         self: CbfSubarrayComponentManager,
@@ -152,6 +136,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # and updates the scan configuration accordingly.
         self._proxy_vis_slim = None
 
+    @property
+    def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
+        """Return the list of assigned VCC IDs"""
+        dish_ids = self.dish_ids.copy()
+        if self._dish_utils is not None:
+            return [
+                self._dish_utils.dish_id_to_vcc_id[dish] for dish in dish_ids
+            ]
+        self.logger.error(
+            "Unable to return VCC IDs as system parameters have not yet been provided."
+        )
+        return []
+
+    # -------------
+    # Communication
+    # -------------
+
     def _get_max_capabilities(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxy to controller device, read MaxCapabilities property
@@ -214,8 +215,32 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
+    def _start_communicating_thread(self: CbfSubarrayComponentManager) -> None:
+        """
+        Thread for start_communicating operation.
+        """
+        with self._admin_mode_lock:
+            controller_success = self._get_max_capabilities()
+            if not controller_success:
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+
+            subelement_success = self._init_subelement_proxies()
+            if not subelement_success:
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+
+            super().start_communicating()
+            self._update_component_state(power=PowerState.OFF)
+
     def start_communicating(self: CbfSubarrayComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
+        """
+        Establish communication with the component, then start monitoring.
+        """
         self.logger.debug(
             "Entering CbfSubarrayComponentManager.start_communicating"
         )
@@ -224,46 +249,44 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Already connected.")
             return
 
-        controller_success = self._get_max_capabilities()
-        if not controller_success:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+        Thread(target=self._start_communicating_thread).start()
 
-        subelement_success = self._init_subelement_proxies()
-        if not subelement_success:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+    def _stop_communicating_thread(self: CbfSubarrayComponentManager) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        with self._admin_mode_lock:
+            try:
+                # TODO: do this here?
+                for proxy in self._all_fsp_corr_proxies.values():
+                    proxy.adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
 
-        super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
+            # delete all device proxies
+            self._all_vcc_proxies = {}
+            self._all_fsp_proxies = {}
+            self._all_fsp_corr_proxies = {}
+            self._all_talon_board_proxies = []
+
+            super().stop_communicating()
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
-        """Stop communication with the component."""
+        """
+        Stop communication with the component.
+        """
         self.logger.debug(
             "Entering CbfSubarrayComponentManager.stop_communicating"
         )
-        try:
-            # TODO: do this here?
-            for proxy in self._all_fsp_corr_proxies.values():
-                proxy.adminMode = AdminMode.OFFLINE
-        except tango.DevFailed as df:
-            self.logger.error(f"{df}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+        Thread(target=self._stop_communicating_thread).start()
 
-        # delete all device proxies
-        self._all_vcc_proxies = {}
-        self._all_fsp_proxies = {}
-        self._all_fsp_corr_proxies = {}
-        self._all_talon_board_proxies = []
-
-        super().stop_communicating()
+    # -------------
+    # Fast Commands
+    # -------------
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
