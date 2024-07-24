@@ -153,7 +153,7 @@ extraVolumes:
   configMap:
     name:  fs-slim-configmap
 {{- end }}
-{{- if .Values.hw_config }}
+{{- if .Values.vis_slim }}
 - name: vis-slim-mount
   configMap:
     name:  vis-slim-configmap
@@ -168,7 +168,7 @@ extraVolumeMounts:
     mountPath: /app/mnt/slim/fs
 {{- end }}
 {{- if .Values.vis_slim }}
-  - name: vis-slim--mount
+  - name: vis-slim-mount
     mountPath: /app/mnt/slim/vis
 {{- end }}
 {{- end }}

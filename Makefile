@@ -87,7 +87,6 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
 	--set ska-tango-base.itango.enabled=$(ITANGO_ENABLED) \
 	--set ska-mid-cbf-mcs.hostInfo.clusterDomain=$(CLUSTER_DOMAIN) \
-	-f charts/ska-mid-cbf-mcs/hw-values.yaml \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
 
