@@ -40,8 +40,8 @@ class Const:
         self.DEFAULT_COUNT_VCC = 4
         self.DEFAULT_COUNT_FSP = 4
         self.DEFAULT_COUNT_SUBARRAY = 1
-        self.DEFAULT_COUNT_LRU = 4
-        self.DEFAULT_COUNT_BOARD = 8
+        self.DEFAULT_COUNT_LRU = 2
+        self.DEFAULT_COUNT_BOARD = 4
         self.DEFAULT_COUNT_PDU = 2
 
         self.DEFAULT_TIMEOUT = 4

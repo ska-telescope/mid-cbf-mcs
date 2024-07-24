@@ -567,12 +567,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: There are two VCCs per LRU. Need to check the number of
         #       VCCs turned on against the number of LRUs powered on
-        if self.simulation_mode == SimulationMode.FALSE:
-            self._talon_lru_fqdn = self._get_talon_lru_fqdns()
-            # TODO: handle subscribed events for missing LRUs
-        else:
-            # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
+
+        self._talon_lru_fqdn = self._get_talon_lru_fqdns()
+        # TODO: handle subscribed events for missing LRUs
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)

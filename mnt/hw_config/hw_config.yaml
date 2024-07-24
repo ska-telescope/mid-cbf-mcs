@@ -1,4 +1,4 @@
-# THIS IS AN EXAMPLE HW CONFIGURATION FILE, IT IS NOT MAINTAINED
+# THIS IS AN EXAMPLE HW CONFIGURATION FILE, HOWEVER IT AFFECTS K8S-TEST
 talon_board:
     "001": 192.168.8.1
     "002": 192.168.8.2
@@ -6,16 +6,16 @@ talon_board:
     "004": 192.168.8.4
 talon_lru:
     "001":
-        PDU1: "004"
+        PDU1: "001"
         PDU1PowerOutlet: "1"
-        PDU2: "004"
+        PDU2: "001"
         PDU2PowerOutlet: "1"
         TalonDxBoard1: "001"
         TalonDxBoard2: "002"
     "002":
-        PDU1: "004"
+        PDU1: "002"
         PDU1PowerOutlet: "2"
-        PDU2: "004"
+        PDU2: "002"
         PDU2PowerOutlet: "2"
         TalonDxBoard1: "003"
         TalonDxBoard2: "004"
