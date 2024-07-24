@@ -106,10 +106,10 @@ server:
             - "mnt/hw_config/hw_config.yaml"
           - name: "FsSLIMConfigPath"
             values:
-            - "mnt/slim/fs_slim_config.yaml"
+            - "mnt/slim/fs/slim_config.yaml"
           - name: "VisSLIMConfigPath"
             values:
-            - "mnt/slim/vis_slim_config.yaml"
+            - "mnt/slim/vis/slim_config.yaml"
           - name: "polled_attr"
             values:
             - "commandprogress"
@@ -140,11 +140,37 @@ volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
+
+{{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) }}
 extraVolumes:
-- name: config-map
+{{- if .Values.hw_config }}
+- name: hw-config-mount
   configMap: 
     name:  hwconfig-configmap
+{{- end }}
+{{- if .Values.fs_slim }}
+- name: fs-slim-mount
+  configMap:
+    name:  fs-slim-configmap
+{{- end }}
+{{- if .Values.hw_config }}
+- name: vis-slim-mount
+  configMap:
+    name:  vis-slim-configmap
+{{- end }}
 extraVolumeMounts:
-  - name: config-map
+{{- if .Values.hw_config }}
+  - name: hw-config-mount
     mountPath: /app/mnt/hw_config
+{{- end }}
+{{- if .Values.fs_slim }}
+  - name: fs-slim-mount
+    mountPath: /app/mnt/slim/fs
+{{- end }}
+{{- if .Values.vis_slim }}
+  - name: vis-slim--mount
+    mountPath: /app/mnt/slim/vis
+{{- end }}
+{{- end }}
+
 
