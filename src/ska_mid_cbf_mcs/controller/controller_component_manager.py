@@ -345,7 +345,7 @@ class ControllerComponentManager(CbfComponentManager):
         Thread for stop_communicating operation.
         """
         self._unsubscribe_command_results()
-        self._num_blocking_results = 0
+        self._blocking_commands = set()
 
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
@@ -405,7 +405,6 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
-        self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
@@ -419,6 +418,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
                 self.logger.error(
@@ -457,7 +458,6 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Setting SLIM simulation mode to {self.simulation_mode}"
             )
             success = True
-            self._num_blocking_results = 2
             slim_config_paths = [
                 self._fs_slim_config_path,
                 self._vis_slim_config_path,
@@ -479,6 +479,8 @@ class ControllerComponentManager(CbfComponentManager):
                     message = f"Nested LRC Slim.Configure() to {self._proxies[fqdn]} rejected"
                     self.logger.error(message)
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -556,9 +558,12 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: There are two VCCs per LRU. Need to check the number of
         #       VCCs turned on against the number of LRUs powered on
-
-        self._talon_lru_fqdn = self._get_talon_lru_fqdns()
-        # TODO: handle subscribed events for missing LRUs
+        if self.simulation_mode == SimulationMode.FALSE:
+            self._talon_lru_fqdn = self._get_talon_lru_fqdns()
+            # TODO: handle subscribed events for missing LRUs
+        else:
+            # Use a hard-coded example fqdn talon lru for simulationMode
+            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001", "mid_csp_cbf/talon_lru/002"]
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)
@@ -808,7 +813,6 @@ class ControllerComponentManager(CbfComponentManager):
             self._proxies[self._fs_slim_fqdn],
             self._proxies[self._vis_slim_fqdn],
         ]
-        self._num_blocking_results = len(subelements_slow)
 
         # Turn off subelements that implement Off() as SlowCommand
         for subelement in subelements_slow:
@@ -825,6 +829,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC Off() to {subelement.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
                 self.logger.error(
@@ -928,7 +934,6 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
-        self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
@@ -942,6 +947,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.Off() failed"
                 self.logger.error(

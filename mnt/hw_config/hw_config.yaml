@@ -13,9 +13,9 @@ talon_lru:
         TalonDxBoard1: "001"
         TalonDxBoard2: "002"
     "002":
-        PDU1: "002"
+        PDU1: "001"
         PDU1PowerOutlet: "2"
-        PDU2: "002"
+        PDU2: "001"
         PDU2PowerOutlet: "2"
         TalonDxBoard1: "003"
         TalonDxBoard2: "004"
