@@ -404,23 +404,12 @@ class ControllerComponentManager(CbfComponentManager):
         :param task_abort_event: Event to signal task abort.
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
-        for fqdn in self._power_switch_fqdn:
-            ps = self._proxies[fqdn]
-            # self.toggle_simulation_mode(
-            #     proxy=ps,
-            #     simulation_mode=self.simulation_mode,
-            # )
-
         success = True
         self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
                 self.logger.info(f"Turning on LRU {lru.dev_name()}")
-                # self.toggle_simulation_mode(
-                #     proxy=lru,
-                #     simulation_mode=self.simulation_mode,
-                # )
 
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
@@ -565,14 +554,7 @@ class ControllerComponentManager(CbfComponentManager):
         # 3. Turn on all the subarrays by writing simulationMode and sending ON command
         # 4. Configure SLIM Mesh devices
 
-        # TODO: There are two VCCs per LRU. Need to check the number of
-        #       VCCs turned on against the number of LRUs powered on
-        if self.simulation_mode == SimulationMode.FALSE:
-            self._talon_lru_fqdn = self._get_talon_lru_fqdns()
-            # TODO: handle subscribed events for missing LRUs
-        else:
-            # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
+        self._talon_lru_fqdn = self._get_talon_lru_fqdns()
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)
