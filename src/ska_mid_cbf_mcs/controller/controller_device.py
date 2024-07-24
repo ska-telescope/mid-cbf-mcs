@@ -168,7 +168,7 @@ class CbfController(CbfDevice):
         """
         :return: the current simulation mode
         """
-        return self._talondx_component_manager.simulation_mode
+        return self._simulation_mode
 
     @simulationMode.write
     def simulationMode(self: CbfController, value: SimulationMode) -> None:
@@ -180,6 +180,7 @@ class CbfController(CbfDevice):
         self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self._talondx_component_manager.simulation_mode = value
+        self.component_manager.simulation_mode = value
 
     # --------------
     # Initialization

@@ -122,7 +122,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _start_communicating(self: PowerSwitchComponentManager) -> None:
+    def _start_communicating(
+        self: PowerSwitchComponentManager, *args, **kwargs
+    ) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
@@ -146,10 +148,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
         self.logger.info(f'!!! POWERSTATE: {self._component_state["power"]}')
-        self.logger.info(f"!!! PowerSwitch Communication state: {self._communication_state}")
+        self.logger.info(
+            f"!!! PowerSwitch Communication state: {self._communication_state}"
+        )
 
-
-    def _stop_communicating(self: PowerSwitchComponentManager) -> None:
+    def _stop_communicating(
+        self: PowerSwitchComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """

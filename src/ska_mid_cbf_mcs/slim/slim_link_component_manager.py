@@ -283,7 +283,9 @@ class SlimLinkComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _start_communicating(self: SlimLinkComponentManager) -> None:
+    def _start_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -295,7 +297,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         # This moves the op state model
         self._update_component_state(power=PowerState.ON)
 
-    def _stop_communicating(self: SlimLinkComponentManager) -> None:
+    def _stop_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """

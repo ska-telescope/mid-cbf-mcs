@@ -101,7 +101,9 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _start_communicating(self) -> None:
+    def _start_communicating(
+        self: TalonBoardComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -109,7 +111,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        super()._start_communicating()
         if not self.simulation_mode:
             try:
                 for fqdn in [
@@ -139,7 +140,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self.logger.error(df.args[0].desc)
                 return
 
-        # This moves the op state model.
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
     # -------------

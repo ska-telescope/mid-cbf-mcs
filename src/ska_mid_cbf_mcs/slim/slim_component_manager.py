@@ -73,7 +73,9 @@ class SlimComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _start_communicating(self: SlimComponentManager) -> None:
+    def _start_communicating(
+        self: SlimComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -122,7 +124,9 @@ class SlimComponentManager(CbfComponentManager):
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
-    def _stop_communicating(self: SlimComponentManager) -> None:
+    def _stop_communicating(
+        self: SlimComponentManager, *args, **kwargs
+    ) -> None:
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
 

@@ -81,7 +81,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # -------------
 
     def _start_communicating(
-        self: FspCorrSubarrayComponentManager,
+        self: FspCorrSubarrayComponentManager, *args, **kwargs
     ) -> None:
         """
         Establish communication with the component, then start monitoring.

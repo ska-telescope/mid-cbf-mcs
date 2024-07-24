@@ -221,7 +221,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
-    def _start_communicating(self: CbfSubarrayComponentManager) -> None:
+    def _start_communicating(
+        self: CbfSubarrayComponentManager, *args, **kwargs
+    ) -> None:
         """
         Start communication with the component.
         """
@@ -246,15 +248,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-
-    def _stop_communicating(self: CbfSubarrayComponentManager) -> None:
+    def _stop_communicating(
+        self: CbfSubarrayComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for stop_communicating operation.
         """
         self.logger.debug(
             "Entering CbfSubarrayComponentManager._stop_communicating"
         )
-        
+
         try:
             for proxy in self._all_fsp_corr_proxies:
                 proxy.adminMode = AdminMode.OFFLINE

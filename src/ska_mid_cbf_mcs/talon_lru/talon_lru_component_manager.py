@@ -47,7 +47,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param pdu_cmd_timeout: timeout for PDU commands in seconds
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = SimulationMode.TRUE
 
         # Get the device proxies of all the devices we care about
         self._talons = talons
@@ -176,7 +175,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu2_power_state,
             ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
 
-    def _start_communicating(self: TalonLRUComponentManager) -> None:
+    def _start_communicating(
+        self: TalonLRUComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -211,7 +212,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         super()._start_communicating()
         self.get_lru_power_state()
 
-    def _stop_communicating(self: TalonLRUComponentManager) -> None:
+    def _stop_communicating(
+        self: TalonLRUComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """

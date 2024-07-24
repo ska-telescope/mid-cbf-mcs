@@ -216,6 +216,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+            if "mid_csp_cbf/power_switch" in fqdn:
+                self._proxies[fqdn].simulationMode = self.simulation_mode
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             for item in df.args:
@@ -296,10 +298,16 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
         return True
 
-    def _start_communicating(self: ControllerComponentManager) -> None:
+    def _start_communicating(
+        self: ControllerComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for start_communicating operation.
         """
+        self.logger.info(
+            "Entering ControllerComponentManager._start_communicating"
+        )
+
         with open(self._hw_config_path) as yaml_fd:
             self._hw_config = yaml.safe_load(yaml_fd)
 
@@ -330,7 +338,9 @@ class ControllerComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def _stop_communicating(self: ControllerComponentManager) -> None:
+    def _stop_communicating(
+        self: ControllerComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for stop_communicating operation.
         """
@@ -396,10 +406,10 @@ class ControllerComponentManager(CbfComponentManager):
         """
         for fqdn in self._power_switch_fqdn:
             ps = self._proxies[fqdn]
-            self.toggle_simulation_mode(
-                proxy=ps,
-                simulation_mode=self._talondx_component_manager.simulation_mode,
-            )
+            # self.toggle_simulation_mode(
+            #     proxy=ps,
+            #     simulation_mode=self.simulation_mode,
+            # )
 
         success = True
         self._num_blocking_results = len(self._talon_lru_fqdn)
@@ -407,10 +417,10 @@ class ControllerComponentManager(CbfComponentManager):
             lru = self._proxies[fqdn]
             try:
                 self.logger.info(f"Turning on LRU {lru.dev_name()}")
-                self.toggle_simulation_mode(
-                    proxy=lru,
-                    simulation_mode=self._talondx_component_manager.simulation_mode,
-                )
+                # self.toggle_simulation_mode(
+                #     proxy=lru,
+                #     simulation_mode=self.simulation_mode,
+                # )
 
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
@@ -455,7 +465,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(
-                f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
+                f"Setting SLIM simulation mode to {self.simulation_mode}"
             )
             success = True
             self._num_blocking_results = 2
@@ -466,11 +476,7 @@ class ControllerComponentManager(CbfComponentManager):
             for i, fqdn in enumerate(
                 [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
-                self._proxies[
-                    fqdn
-                ].simulationMode = (
-                    self._talondx_component_manager.simulation_mode
-                )
+                self._proxies[fqdn].simulationMode = self.simulation_mode
                 self._proxies[fqdn].On()
 
                 with open(slim_config_paths[i]) as f:
@@ -561,10 +567,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: There are two VCCs per LRU. Need to check the number of
         #       VCCs turned on against the number of LRUs powered on
-        if (
-            self._talondx_component_manager.simulation_mode
-            == SimulationMode.FALSE
-        ):
+        if self.simulation_mode == SimulationMode.FALSE:
             self._talon_lru_fqdn = self._get_talon_lru_fqdns()
             # TODO: handle subscribed events for missing LRUs
         else:
@@ -601,7 +604,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Write simulation mode to subarrays
         if not self._write_group_attribute(
             attr_name="simulationMode",
-            value=self._talondx_component_manager.simulation_mode,
+            value=self.simulation_mode,
             proxies=self._group_subarray,
         ):
             task_callback(
@@ -815,10 +818,10 @@ class ControllerComponentManager(CbfComponentManager):
         subelements_fast = (
             self._group_vcc + self._group_fsp + self._group_subarray
         )
-        subelements_slow = (
-            [self._proxies[self._fs_slim_fqdn],
-            self._proxies[self._vis_slim_fqdn]]
-        )
+        subelements_slow = [
+            self._proxies[self._fs_slim_fqdn],
+            self._proxies[self._vis_slim_fqdn],
+        ]
         self._num_blocking_results = len(subelements_slow)
 
         # Turn off subelements that implement Off() as SlowCommand
@@ -1036,10 +1039,7 @@ class ControllerComponentManager(CbfComponentManager):
             message.append(log_msg)
 
         # Turn off all the LRUs currently in use
-        if (
-            self._talondx_component_manager.simulation_mode
-            == SimulationMode.FALSE
-        ):
+        if self.simulation_mode == SimulationMode.FALSE:
             if len(self._talon_lru_fqdn) == 0:
                 self._talon_lru_fqdn = self._get_talon_lru_fqdns()
                 # TODO: handle subscribed events for missing LRUs

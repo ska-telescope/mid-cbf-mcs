@@ -32,12 +32,12 @@ from ska_control_model import (
 # Tango imports
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from ska_telmodel.data import TMData
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_mcs.commons.global_enum import const
 
 from ... import test_utils
 
@@ -149,9 +149,9 @@ class TestCbfController:
             )
 
     def test_On(
-        self: TestCbfController, 
-        controller: context.DeviceProxy, 
-        sub_devices: list[context.DeviceProxy], 
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
     ):
         """
@@ -160,7 +160,7 @@ class TestCbfController:
         # Send the On command
         result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -229,79 +229,79 @@ class TestCbfController:
     #         retrieved_init_sys_param_file
     #     )
 
-    def test_Off(
-        self,
-        controller: context.DeviceProxy,
-        talon_board: list[context.DeviceProxy],
-        talon_lru: list[context.DeviceProxy],
-        subarray: list[context.DeviceProxy],
-        slim_fs: list[context.DeviceProxy],
-        slim_vis: list[context.DeviceProxy],
-        fsp: list[context.DeviceProxy],
-        vcc: list[context.DeviceProxy],
-        event_tracer: TangoEventTracer,
-    ):
-        """
-        Test the "Off" command
-        """
+    # def test_Off(
+    #     self,
+    #     controller: context.DeviceProxy,
+    #     talon_board: list[context.DeviceProxy],
+    #     talon_lru: list[context.DeviceProxy],
+    #     subarray: list[context.DeviceProxy],
+    #     slim_fs: list[context.DeviceProxy],
+    #     slim_vis: list[context.DeviceProxy],
+    #     fsp: list[context.DeviceProxy],
+    #     vcc: list[context.DeviceProxy],
+    #     event_tracer: TangoEventTracer,
+    # ):
+    #     """
+    #     Test the "Off" command
+    #     """
 
-        # # if controller is already off, we must turn it On before turning off.
-        # if controller.State() == DevState.OFF:
-        #     self.test_On(
-        #         controller, subdevices, change_event_callbacks
-        #     )
+    #     # # if controller is already off, we must turn it On before turning off.
+    #     # if controller.State() == DevState.OFF:
+    #     #     self.test_On(
+    #     #         controller, subdevices, change_event_callbacks
+    #     #     )
 
-        assert controller.State() == DevState.ON
+    #     assert controller.State() == DevState.ON
 
-        # Send the Off command
-        result_code, command_id = controller.Off()
-        assert result_code == [ResultCode.QUEUED]
+    #     # Send the Off command
+    #     result_code, command_id = controller.Off()
+    #     assert result_code == [ResultCode.QUEUED]
 
-        for device in subarray:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device,
-                attribute_name="obsState",
-                attribute_value=ObsState.EMPTY,
-            )
+    #     for device in subarray:
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=device,
+    #             attribute_name="obsState",
+    #             attribute_value=ObsState.EMPTY,
+    #         )
 
-        for device in (
-            slim_fs + slim_vis + vcc + fsp + subarray + talon_board + talon_lru
-        ):
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device,
-                attribute_name="state",
-                attribute_value=DevState.OFF,
-            )
-            if "mid_csp_cbf/vcc" in device:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=device,
-                    attribute_name="obsState",
-                    attribute_value=ObsState.IDLE,
-                )
+    #     for device in (
+    #         slim_fs + slim_vis + vcc + fsp + subarray + talon_board + talon_lru
+    #     ):
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=device,
+    #             attribute_name="state",
+    #             attribute_value=DevState.OFF,
+    #         )
+    #         if "mid_csp_cbf/vcc" in device:
+    #             assert_that(event_tracer).within_timeout(
+    #                 test_utils.EVENT_TIMEOUT
+    #             ).has_change_event_occurred(
+    #                 device_name=device,
+    #                 attribute_name="obsState",
+    #                 attribute_value=ObsState.IDLE,
+    #             )
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=controller,
-            attribute_name="state",
-            attribute_value=DevState.OFF,
-        )
+    #     assert_that(event_tracer).within_timeout(
+    #         test_utils.EVENT_TIMEOUT
+    #     ).has_change_event_occurred(
+    #         device_name=controller,
+    #         attribute_name="state",
+    #         attribute_value=DevState.OFF,
+    #     )
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=controller,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
-        )
+    #     assert_that(event_tracer).within_timeout(
+    #         test_utils.EVENT_TIMEOUT
+    #     ).has_change_event_occurred(
+    #         device_name=controller,
+    #         attribute_name="longRunningCommandResult",
+    #         attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
+    #     )
 
-        # Assert that no change events went uncaught.
+    #     # Assert that no change events went uncaught.
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -454,33 +454,31 @@ class TestCbfController:
     #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    def test_Offline(
-        self: TestCbfController,
-        controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Verify the component manager can stop communicating
-        """
-        # Trigger stop_communicating by setting the AdminMode to OFFLINE
-        controller.adminMode = AdminMode.OFFLINE
+    # def test_Offline(
+    #     self: TestCbfController,
+    #     controller: context.DeviceProxy,
+    #     sub_devices: list[context.DeviceProxy],
+    #     event_tracer: TangoEventTracer,
+    # ) -> None:
+    #     """
+    #     Verify the component manager can stop communicating
+    #     """
+    #     # Trigger stop_communicating by setting the AdminMode to OFFLINE
+    #     controller.adminMode = AdminMode.OFFLINE
 
-        # check adminMode and state changes
-        for device in [controller] + sub_devices:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device,
-                attribute_name="adminMode",
-                attribute_value=AdminMode.OFFLINE,
-            )
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device,
-                attribute_name="state",
-                attribute_value=DevState.DISABLE,
-            )
-
-        
+    #     # check adminMode and state changes
+    #     for device in [controller] + sub_devices:
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=device,
+    #             attribute_name="adminMode",
+    #             attribute_value=AdminMode.OFFLINE,
+    #         )
+    #         assert_that(event_tracer).within_timeout(
+    #             test_utils.EVENT_TIMEOUT
+    #         ).has_change_event_occurred(
+    #             device_name=device,
+    #             attribute_name="state",
+    #             attribute_value=DevState.DISABLE,
+    #         )

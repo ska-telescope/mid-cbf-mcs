@@ -73,7 +73,7 @@ class FspComponentManager(CbfComponentManager):
     # -------------
 
     def _start_communicating(
-        self: FspComponentManager,
+        self: FspComponentManager, *args, **kwargs
     ) -> None:
         """
         Establish communication with the component, then start monitoring.

@@ -123,7 +123,9 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return PowerState.UNKNOWN
 
-    def _start_communicating(self: VccComponentManager) -> None:
+    def _start_communicating(
+        self: VccComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
