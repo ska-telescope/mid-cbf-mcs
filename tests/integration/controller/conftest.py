@@ -34,8 +34,8 @@ from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ... import test_utils
 
 
-@pytest.fixture(name="sub_devices", scope="module", autouse=True)
-def sub_device_proxies(
+@pytest.fixture(name="all_sub_devices", scope="module", autouse=True)
+def al_sub_device_proxies(
     power_switch: list[context.DeviceProxy],
     talon_lru: list[context.DeviceProxy],
     talon_board: list[context.DeviceProxy],
@@ -56,10 +56,21 @@ def sub_device_proxies(
     )
 
 
+@pytest.fixture(name="powered_sub_devices", scope="module", autouse=True)
+def powered_sub_device_proxies(
+    talon_lru: list[context.DeviceProxy],
+    talon_board: list[context.DeviceProxy],
+    subarray: list[context.DeviceProxy],
+    slim_fs: context.DeviceProxy,
+    slim_vis: context.DeviceProxy,
+) -> list[context.DeviceProxy]:
+    return talon_lru + talon_board + subarray + [slim_fs, slim_vis]
+
+
 @pytest.fixture(name="event_tracer", scope="module", autouse=True)
 def tango_event_tracer(
     controller: context.DeviceProxy,
-    sub_devices: list[context.DeviceProxy],
+    all_sub_devices: list[context.DeviceProxy],
 ) -> Generator[TangoEventTracer, None, None]:
     """
     Fixture that returns a TangoEventTracer for pertinent devices.
@@ -67,22 +78,19 @@ def tango_event_tracer(
 
     :return: TangoEventTracer
     """
-    print("\nInitializing TangoEventTracer\n")
     tracer = TangoEventTracer()
 
     tracer.subscribe_event(controller, "longRunningCommandResult")
-    obs_devices = [
-        "mid_csp_cbf/vcc",
-        "mid_csp_cbf/sub_elt/subarray",
-        "mid_csp_cbf/fspCorrSubarray",
-    ]
 
-    for proxy in [controller] + sub_devices:
+    for proxy in [controller] + all_sub_devices:
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
 
-        for obs_device in obs_devices:
-            if obs_device in proxy.dev_name():
-                tracer.subscribe_event(proxy, "obsState")
+        if (
+            "mid_csp_cbf/vcc/" in proxy.dev_name()
+            or "mid_csp_cbf/sub_elt/subarray" in proxy.dev_name()
+            or "mid_csp_cbf/fspCorrSubarray" in proxy.dev_name()
+        ):
+            tracer.subscribe_event(proxy, "obsState")
 
     return tracer

@@ -430,8 +430,9 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
+        # TODO: why is this so slow?
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            timeout=20.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
@@ -563,7 +564,10 @@ class ControllerComponentManager(CbfComponentManager):
             # TODO: handle subscribed events for missing LRUs
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001", "mid_csp_cbf/talon_lru/002"]
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)

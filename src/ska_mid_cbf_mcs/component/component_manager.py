@@ -460,6 +460,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Locked callback to decrement number of blocking
         """
+        self.logger.info(f"blocking commands: {self._blocking_commands}")
         try:
             if event_data.attr_value.value != ("", ""):
                 # fetch the result code from the event_data tuple.
@@ -468,9 +469,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 )
                 command_id = event_data.attr_value.value[0]
 
-                if result_code == ResultCode.OK and command_id in self._blocking_commands:
-                    with self._results_lock:
-                        self._blocking_commands.remove(command_id)
+                # if command_id not in monitored blocking commands, ignore it
+                if command_id in self._blocking_commands:
+                    if result_code == ResultCode.OK:
+                        with self._results_lock:
+                            self._blocking_commands.remove(command_id)
+                    else:
+                        self.logger.error(
+                            f"Command ID {command_id} result code: {result_code}"
+                        )
             self.logger.info(
                 f"EventData attr_value:{event_data.attr_value.value}, events remaining={len(self._blocking_commands)}"
             )
@@ -502,7 +509,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             # ...
             # when we can no longer progress without the command results
             # first reset the number of blocking results
-            self.blocking_command.add(command_ids)
+            self._blocking_commands.add(command_ids)
 
             # subscribe to the LRC results of all blocking proxies, providing the
             # locked decrement counter method as the callback
@@ -533,6 +540,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 self.logger.error(
                     f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s."
                 )
+                self._blocking_commands = set()
                 return TaskStatus.FAILED
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
         return TaskStatus.COMPLETED

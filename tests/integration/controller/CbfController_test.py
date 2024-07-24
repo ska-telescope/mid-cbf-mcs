@@ -52,21 +52,19 @@ class TestCbfController:
     def test_Online(
         self: TestCbfController,
         controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
+        all_sub_devices: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
         """
-        # controller.adminMode = AdminMode.OFFLINE
-        # time.sleep(3)
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
 
         # check adminMode and state changes
-        for device in [controller] + sub_devices:
+        for device in [controller] + all_sub_devices:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -96,7 +94,6 @@ class TestCbfController:
     def test_InitSysParam(
         self: TestCbfController,
         controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
         vcc: list[context.DeviceProxy],
         talon_board: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
@@ -151,7 +148,7 @@ class TestCbfController:
     def test_On(
         self: TestCbfController,
         controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
+        powered_sub_devices: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
     ):
         """
@@ -178,13 +175,13 @@ class TestCbfController:
         )
 
         # Validate subelements are in the correct state
-        for device in sub_devices:
+        for device in powered_sub_devices:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device,
-                attribute_name="adminMode",
-                attribute_value=AdminMode.ONLINE,
+                attribute_name="state",
+                attribute_value=DevState.ON,
             )
 
     # def test_InitSysParam_Condition(self, subdevices_under_test):
