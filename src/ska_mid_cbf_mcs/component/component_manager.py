@@ -104,7 +104,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # that an LRC thread may depend on
         self._event_ids = {}
         self._results_lock = Lock()
-        self._num_blocking_results = 0
         self._blocking_commands: set["str"] = set()
 
         # NOTE: using component manager default of SimulationMode.TRUE,
@@ -465,11 +464,19 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 result_code = int(
                     event_data.attr_value.value[1].split(",")[0].split("[")[1]
                 )
-                if result_code == ResultCode.OK:
-                    with self._results_lock:
-                        self._num_blocking_results -= 1
+                command_id = event_data.attr_value.value[0]
+
+                # if command_id not in monitored blocking commands, ignore it
+                if command_id in self._blocking_commands:
+                    if result_code == ResultCode.OK:
+                        with self._results_lock:
+                            self._blocking_commands.remove(command_id)
+                    else:
+                        self.logger.error(
+                            f"Command ID {command_id} result code: {result_code}"
+                        )
             self.logger.info(
-                f"EventData attr_value:{event_data.attr_value.value}, events remaining={self._num_blocking_results}"
+                f"EventData attr_value:{event_data.attr_value.value}, events remaining={len(self._blocking_commands)}"
             )
         except IndexError as ie:
             self.logger.error(f"IndexError caught: {ie}")
@@ -499,7 +506,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             # ...
             # when we can no longer progress without the command results
             # first reset the number of blocking results
-            self._num_blocking_results = len(command_ids)
+            self._blocking_commands.add(command_ids)
 
             # subscribe to the LRC results of all blocking proxies, providing the
             # locked decrement counter method as the callback
@@ -521,15 +528,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :return: completed if status reached, FAILED if timed out, ABORTED if aborted
         """
         ticks = int(timeout / 0.01)  # 10 ms resolution
-        while self._num_blocking_results:
+        while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
                 return TaskStatus.ABORTED
             sleep(0.01)
             ticks -= 1
             if ticks <= 0:
                 self.logger.error(
-                    f"{self._num_blocking_results} blocking result(s) remain after {timeout}s."
+                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s; resetting component manager _blocking_commands variable."
                 )
+                self._blocking_commands = set()
                 return TaskStatus.FAILED
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
         return TaskStatus.COMPLETED

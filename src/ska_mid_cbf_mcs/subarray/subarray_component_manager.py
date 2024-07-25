@@ -869,9 +869,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._assigned_fsp_corr_proxies
         )
 
-        if lrc:
-            self._num_blocking_results = len(assigned_resources)
-
         for [[result_code], [command_id]] in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
         ):
@@ -879,7 +876,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     f"Failed to issue {command_name} command to assigned resources; {result_code}"
                 )
+                self._blocking_commands = set()
                 return TaskStatus.FAILED
+
+            self._blocking_commands.add(command_id)
 
         if lrc:
             lrc_status = self._wait_for_blocking_results(
@@ -1024,7 +1024,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info("Configuring VCC band...")
 
         # Prepare args for ConfigureBand
-        self._num_blocking_results = len(self.dish_ids)
         for dish_id in self.dish_ids:
             vcc_proxy = self._all_vcc_proxies[dish_id]
 
@@ -1054,7 +1053,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self.logger.error(
                         f"{vcc_proxy.dev_name()} ConfigureBand command rejected"
                     )
+                    self._blocking_commands = set()
                     return TaskStatus.FAILED
+
+                self._blocking_commands.add(command_id)
 
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1153,8 +1155,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         config_dict["fsp"] = reduced_fsp
 
         # issue ConfigureScan to assigned VCCs
-        self._num_blocking_results = len(self._assigned_vcc_proxies)
-
         for vcc_proxy in self._assigned_vcc_proxies:
             try:
                 [[result_code], [command_id]] = vcc_proxy.ConfigureScan(
@@ -1164,7 +1164,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self.logger.error(
                         f"{vcc_proxy.dev_name()} ConfigureScan command rejected"
                     )
+                    self._blocking_commands = set()
                     return TaskStatus.FAILED
+
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {vcc_proxy.dev_name()}; {df}"
@@ -1381,8 +1384,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
 
         # Call ConfigureScan for all FSP function mode subarray devices
-        self._num_blocking_results = len(all_fsp_config)
-
         for fsp_config, proxy in all_fsp_config:
             try:
                 # TODO handle fsp corr LRC
@@ -1394,7 +1395,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self.logger.error(
                         f"{proxy.dev_name()} ConfigureScan command rejected"
                     )
+                    self._blocking_commands = set()
                     return TaskStatus.FAILED
+
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {proxy.dev_name()}; {df}"
