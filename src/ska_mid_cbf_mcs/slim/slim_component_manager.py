@@ -459,6 +459,7 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
+                    self._blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.ConnectTxRx() rejected",
@@ -659,6 +660,7 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
+                    self._blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.DisconnectTxRx() rejected",
