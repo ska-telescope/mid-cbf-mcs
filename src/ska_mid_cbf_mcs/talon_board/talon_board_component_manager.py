@@ -101,7 +101,9 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self) -> None:
+    def _start_communicating(
+        self: TalonBoardComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -109,11 +111,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
         if not self.simulation_mode:
             try:
                 for fqdn in [
@@ -143,7 +140,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self.logger.error(df.args[0].desc)
                 return
 
-        # This moves the op state model.
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
     # -------------
@@ -1212,7 +1209,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
             if not ping_res:
                 self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-                self._update_component_state(fault=True)
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=(

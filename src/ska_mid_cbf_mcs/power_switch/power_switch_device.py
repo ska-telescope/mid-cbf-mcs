@@ -96,16 +96,6 @@ class PowerSwitch(CbfDevice):
     # Initialize
     # ----------
 
-    def always_executed_hook(self: PowerSwitch) -> None:
-        """
-        Hook to be executed before any attribute access or command.
-        """
-
-    def delete_device(self: PowerSwitch) -> None:
-        """
-        Uninitialize the device.
-        """
-
     def create_component_manager(
         self: PowerSwitch,
     ) -> PowerSwitchComponentManager:

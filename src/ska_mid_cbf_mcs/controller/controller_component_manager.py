@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-import threading
+from threading import Event, Thread
 from typing import Callable, Optional
 
 import tango
@@ -216,6 +216,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
+            if "mid_csp_cbf/power_switch" in fqdn:
+                self._proxies[fqdn].simulationMode = self.simulation_mode
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             for item in df.args:
@@ -296,19 +298,15 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
         return True
 
-    def start_communicating(
-        self: ControllerComponentManager,
+    def _start_communicating(
+        self: ControllerComponentManager, *args, **kwargs
     ) -> None:
         """
-        Establish communication with the component, then start monitoring.
+        Thread for start_communicating operation.
         """
-        self.logger.debug(
-            "Entering ControllerComponentManager.start_communicating"
+        self.logger.info(
+            "Entering ControllerComponentManager._start_communicating"
         )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating")
-            return
 
         with open(self._hw_config_path) as yaml_fd:
             self._hw_config = yaml.safe_load(yaml_fd)
@@ -337,12 +335,14 @@ class ControllerComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
-        super().start_communicating()
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def stop_communicating(self: ControllerComponentManager) -> None:
+    def _stop_communicating(
+        self: ControllerComponentManager, *args, **kwargs
+    ) -> None:
         """
-        Stop communication with the component
+        Thread for stop_communicating operation.
         """
         self.logger.debug(
             "Entering ControllerComponentManager.stop_communicating"
@@ -354,12 +354,12 @@ class ControllerComponentManager(CbfComponentManager):
                 + [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
                 self._unsubscribe_command_results(proxy)
-        self._num_blocking_results = 0
+        self._blocking_commands = set()
 
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands
@@ -405,7 +405,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
         Turn on all of the Talon LRUs
@@ -414,16 +414,10 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
-        self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
                 self.logger.info(f"Turning on LRU {lru.dev_name()}")
-                lru.adminMode = AdminMode.OFFLINE
-                lru.simulationMode = (
-                    self._talondx_component_manager.simulation_mode
-                )
-                lru.adminMode = AdminMode.ONLINE
 
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
@@ -433,6 +427,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
                 self.logger.error(
@@ -443,8 +439,9 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
+        # TODO: why is this so slow?
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            timeout=20.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
@@ -458,7 +455,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> bool:
         """
         Configure the SLIM devices
@@ -468,10 +465,9 @@ class ControllerComponentManager(CbfComponentManager):
         """
         try:
             self.logger.info(
-                f"Setting SLIM simulation mode to {self._talondx_component_manager.simulation_mode}"
+                f"Setting SLIM simulation mode to {self.simulation_mode}"
             )
             success = True
-            self._num_blocking_results = 2
             slim_config_paths = [
                 self._fs_slim_config_path,
                 self._vis_slim_config_path,
@@ -479,11 +475,7 @@ class ControllerComponentManager(CbfComponentManager):
             for i, fqdn in enumerate(
                 [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
-                self._proxies[
-                    fqdn
-                ].simulationMode = (
-                    self._talondx_component_manager.simulation_mode
-                )
+                self._proxies[fqdn].simulationMode = self.simulation_mode
                 self._proxies[fqdn].On()
 
                 with open(slim_config_paths[i]) as f:
@@ -497,6 +489,8 @@ class ControllerComponentManager(CbfComponentManager):
                     message = f"Nested LRC Slim.Configure() to {self._proxies[fqdn]} rejected"
                     self.logger.error(message)
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -545,7 +539,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _on(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Turn on the controller and its subordinate devices
@@ -564,7 +558,7 @@ class ControllerComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-        # The order of the following operations for is important:
+        # The order of the following operations for ON is important:
         # 1. Power on all the Talon boards by
         #    i.  Get the FQDNs of the LRUs
         #    ii. Sending ON command to all the LRUs
@@ -574,15 +568,15 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: There are two VCCs per LRU. Need to check the number of
         #       VCCs turned on against the number of LRUs powered on
-        if (
-            self._talondx_component_manager.simulation_mode
-            == SimulationMode.FALSE
-        ):
+        if self.simulation_mode == SimulationMode.FALSE:
             self._talon_lru_fqdn = self._get_talon_lru_fqdns()
             # TODO: handle subscribed events for missing LRUs
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)
@@ -614,7 +608,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Write simulation mode to subarrays
         if not self._write_group_attribute(
             attr_name="simulationMode",
-            value=self._talondx_component_manager.simulation_mode,
+            value=self.simulation_mode,
             proxies=self._group_subarray,
         ):
             task_callback(
@@ -815,7 +809,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, list[str]]:
         """
         Turn off all subelements of the controller
@@ -828,11 +822,10 @@ class ControllerComponentManager(CbfComponentManager):
         subelements_fast = (
             self._group_vcc + self._group_fsp + self._group_subarray
         )
-        subelements_slow = (
-            self._proxies[self._fs_slim_fqdn]
-            + self._proxies[self._vis_slim_fqdn]
-        )
-        self._num_blocking_results = len(subelements_slow)
+        subelements_slow = [
+            self._proxies[self._fs_slim_fqdn],
+            self._proxies[self._vis_slim_fqdn],
+        ]
 
         # Turn off subelements that implement Off() as SlowCommand
         for subelement in subelements_slow:
@@ -849,6 +842,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC Off() to {subelement.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
                 self.logger.error(
@@ -943,7 +938,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
         Turn off all of the Talon LRUs
@@ -952,7 +947,6 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
-        self._num_blocking_results = len(self._talon_lru_fqdn)
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
@@ -966,6 +960,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
                     )
                     success = False
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.Off() failed"
                 self.logger.error(
@@ -1004,7 +1000,7 @@ class ControllerComponentManager(CbfComponentManager):
     def _off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Turn off the controller and its subordinate devices
@@ -1049,10 +1045,7 @@ class ControllerComponentManager(CbfComponentManager):
             message.append(log_msg)
 
         # Turn off all the LRUs currently in use
-        if (
-            self._talondx_component_manager.simulation_mode
-            == SimulationMode.FALSE
-        ):
+        if self.simulation_mode == SimulationMode.FALSE:
             if len(self._talon_lru_fqdn) == 0:
                 self._talon_lru_fqdn = self._get_talon_lru_fqdns()
                 # TODO: handle subscribed events for missing LRUs
@@ -1189,7 +1182,14 @@ class ControllerComponentManager(CbfComponentManager):
         """
         # Write the init_sys_param to each of the subarrays
         for fqdn in self._subarray_fqdn:
-            self._proxies[fqdn].sysParam = params
+            try:
+                self._proxies[fqdn].sysParam = params
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self.logger.error(
+                        f"Failure in connection to {fqdn}; {item.reason}"
+                    )
+                    return False
 
         # Set VCC values
         for fqdn in self._vcc_fqdn:
@@ -1202,7 +1202,6 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
-                    return True
                 else:
                     self.logger.error(
                         f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
@@ -1235,18 +1234,17 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                             )
                         else:
-                            log_msg = (
+                            self.logger.warning(
                                 f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
                                 f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                             )
-                            self.logger.warning(log_msg)
-                    return True
                 except tango.DevFailed as df:
                     for item in df.args:
                         self.logger.error(
                             f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
                         )
                     return False
+        return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
         """
@@ -1255,10 +1253,10 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the InitSysParam command is allowed, False otherwise
         """
         self.logger.debug("Checking if init_sys_param is allowed")
-        if self._component_state["power"] == PowerState.OFF:
+        if self.power_state == PowerState.OFF:
             return True
         self.logger.warning(
-            "InitSysParam command cannot be issued because the curremt PowerState is not 'off'."
+            "InitSysParam command cannot be issued because the current PowerState is not 'off'."
         )
         return False
 
@@ -1266,7 +1264,7 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
+        task_abort_event: Optional[Event] = None,
     ) -> None:
         """
         Validate and save the Dish ID - VCC ID mapping and k values.

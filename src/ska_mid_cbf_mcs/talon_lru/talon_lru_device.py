@@ -58,26 +58,6 @@ class TalonLRU(CbfDevice):
     # Attributes
     # ----------
 
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: TalonLRU) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: TalonLRU, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.debug(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
-
     @attribute(
         dtype="uint16",
         label="PowerState of the Talon LRU",
@@ -144,8 +124,6 @@ class TalonLRU(CbfDevice):
 
             self._device._power_switch_lock = Lock()
 
-            # Setting initial simulation mode to True
-            self._device._simulation_mode = SimulationMode.TRUE
             return (result_code, msg)
 
     # ---------------------

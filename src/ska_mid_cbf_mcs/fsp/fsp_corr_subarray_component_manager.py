@@ -80,14 +80,13 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(
-        self: FspCorrSubarrayComponentManager,
+    def _start_communicating(
+        self: FspCorrSubarrayComponentManager, *args, **kwargs
     ) -> None:
-        """Establish communication with the component, then start monitoring."""
-        if self._communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Already communicating.")
-            return
-        super().start_communicating()
+        """
+        Establish communication with the component, then start monitoring.
+        """
+        super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
     # -------------
@@ -535,6 +534,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         # reset configured attributes
         self._deconfigure()
+
+        # Update obsState callback
+        self._update_component_state(configured=False)
 
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),

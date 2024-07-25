@@ -19,6 +19,7 @@ from typing import Any, Callable, Optional, cast
 
 import tango
 from ska_control_model import (
+    AdminMode,
     CommunicationStatus,
     HealthState,
     PowerState,
@@ -26,6 +27,8 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
+from ska_tango_base.base import BaseComponentManager, TaskCallbackType
+from ska_tango_base.executor.executor import TaskExecutor, TaskFunctionType
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
@@ -111,10 +114,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # SimulationMode.FALSE
         self.simulation_mode = simulation_mode
 
-    def _start_communicating(self: CbfComponentManager) -> None:
+    def _start_communicating(
+        self: CbfComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for start_communicating operation.
         """
+        self.logger.info("Entering component_manager._start_communicating")
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
@@ -125,13 +131,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.debug("Entering CbfComponentManager.start_communicating")
+        self.logger.info("Entering CbfComponentManager.start_communicating")
 
         if self.is_communicating:
             self.logger.info("Already communicating")
             return
 
-        task_status, message = self.submit_task(self._start_communicating)
+        task_status, message = self.submit_task(
+            self._start_communicating,
+        )
+
         if task_status == TaskStatus.REJECTED:
             self.logger.error(
                 f"start_communicating thread rejected; {message}"
@@ -140,7 +149,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
 
-    def _stop_communicating(self: CbfComponentManager) -> None:
+    def _stop_communicating(
+        self: CbfComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for stop_communicating operation.
         """
@@ -458,6 +469,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Locked callback to decrement number of blocking
         """
+        self.logger.info(f"blocking commands: {self._blocking_commands}")
         try:
             if event_data.attr_value.value != ("", ""):
                 # fetch the result code from the event_data tuple.
@@ -535,12 +547,22 @@ class CbfComponentManager(TaskExecutorComponentManager):
             ticks -= 1
             if ticks <= 0:
                 self.logger.error(
-                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s; resetting component manager _blocking_commands variable."
+                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s."
                 )
                 self._blocking_commands = set()
                 return TaskStatus.FAILED
         self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
         return TaskStatus.COMPLETED
+
+    def toggle_simulation_mode(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        simulation_mode: SimulationMode,
+    ) -> bool:
+        proxy.adminMode = AdminMode.OFFLINE
+        proxy.simulationMode = simulation_mode
+        proxy.adminMode = AdminMode.ONLINE
+        return proxy.adminMode == simulation_mode
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:

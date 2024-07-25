@@ -8,10 +8,6 @@ depends_on:
   - device: mid_csp_cbf/vcc/002
   - device: mid_csp_cbf/vcc/003
   - device: mid_csp_cbf/vcc/004
-  - device: mid_csp_cbf/vcc/005
-  - device: mid_csp_cbf/vcc/006
-  - device: mid_csp_cbf/vcc/007
-  - device: mid_csp_cbf/vcc/008
   - device: mid_csp_cbf/fsp/01
   - device: mid_csp_cbf/fsp/02
   - device: mid_csp_cbf/fsp/03
@@ -65,10 +61,6 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "TalonLRU"
             values:
             - "mid_csp_cbf/talon_lru/001"
@@ -110,16 +102,6 @@ server:
           - name: "VisSLIMConfigPath"
             values:
             - "mnt/slim/vis_slim_config.yaml"
-          - name: "polled_attr"
-            values:
-            - "commandprogress"
-            - "3000"
-            - "receptortovcc"
-            - "3000"
-            - "vcctoreceptor"
-            - "3000"
-            - "subarrayconfigid"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
@@ -140,4 +122,5 @@ volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
+
 

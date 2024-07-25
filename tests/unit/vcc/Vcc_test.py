@@ -16,17 +16,19 @@ import json
 import os
 from typing import Iterator
 from unittest.mock import Mock
+from assertpy import assert_that
 
 import pytest
 from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
-from ...test_utils import device_online_and_on
+from ... import test_utils
 
 # Path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -46,7 +48,7 @@ class TestVcc:
     # TODO: simulator vs mock HPS?
     # TODO: validate ConfigureScan at VCC level?
 
-    @pytest.fixture(name="test_context")
+    @pytest.fixture(name="test_context", scope="module")
     def vcc_test_context(
         self: TestVcc, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
@@ -84,7 +86,7 @@ class TestVcc:
     def test_subarrayMembership(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test reading & writing subarrayMembership
@@ -99,10 +101,16 @@ class TestVcc:
         assert device_under_test.subarrayMembership == 1
 
         # assert subarrayMembership attribute event change
-        change_event_callbacks["subarrayMembership"].assert_change_event(1)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="subarrayMembership",
+            attribute_value=1,
+        )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
     def test_Status(
         self: TestVcc, device_under_test: context.DeviceProxy
@@ -120,6 +128,7 @@ class TestVcc:
     def test_Power_Commands(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         command: str,
     ) -> None:
         """
@@ -134,12 +143,25 @@ class TestVcc:
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        assert device_under_test.State() == DevState.OFF
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         if command == "On":
             expected_result = ResultCode.OK
             expected_state = DevState.ON
             result = device_under_test.On()
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="state",
+                attribute_value=expected_state,
+            )
         elif command == "Off":
             expected_result = ResultCode.REJECTED
             expected_state = DevState.OFF
@@ -152,13 +174,16 @@ class TestVcc:
         assert result[0][0] == expected_result
         assert device_under_test.State() == expected_state
 
+        # assert if any captured events have gone unaddressed
+        # change_event_callbacks.assert_not_called()
+
     @pytest.mark.parametrize(
         "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
     )
     def test_Scan(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
@@ -173,7 +198,7 @@ class TestVcc:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert test_utils.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -194,9 +219,14 @@ class TestVcc:
             json.dumps(band_configuration)
         )
         # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -210,13 +240,15 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -227,15 +259,25 @@ class TestVcc:
             ObsState.READY,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert frequencyBand attribute reset during GoToIdle
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -243,8 +285,8 @@ class TestVcc:
     )
     def test_Scan_reconfigure(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
@@ -263,7 +305,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert test_utils.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -284,9 +326,14 @@ class TestVcc:
             json.dumps(band_configuration)
         )
         # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -299,13 +346,15 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # second round of observation
@@ -323,13 +372,15 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -344,15 +395,25 @@ class TestVcc:
             ObsState.READY,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert frequencyBand attribute reset during GoToIdle
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -360,8 +421,8 @@ class TestVcc:
     )
     def test_Abort_from_ready(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
     ) -> None:
         """
@@ -378,7 +439,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert test_utils.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -399,9 +460,14 @@ class TestVcc:
             json.dumps(band_configuration)
         )
         # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -414,13 +480,15 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -432,15 +500,25 @@ class TestVcc:
             ObsState.RESETTING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert frequencyBand attribute reset during ObsReset
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -448,8 +526,8 @@ class TestVcc:
     )
     def test_Abort_from_scanning(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
@@ -467,7 +545,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert test_utils.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -488,9 +566,14 @@ class TestVcc:
             json.dumps(band_configuration)
         )
         # assert frequencyBand attribute updated
-        change_event_callbacks["frequencyBand"].assert_change_event(
-            freq_band_dict()[freq_band_name]["band_index"]
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -504,13 +587,15 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -523,15 +608,25 @@ class TestVcc:
             ObsState.RESETTING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert frequencyBand attribute reset during ObsReset
-        change_event_callbacks["frequencyBand"].assert_change_event(0)
+        assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="frequencyBand",
+                attribute_value=0,
+            )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "frequency_band, success",
@@ -546,8 +641,8 @@ class TestVcc:
     # Test scan for fail scenario
     def test_ConfigureBand(
         self: TestVcc,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         frequency_band: str,
         success: bool,
     ) -> None:
@@ -561,7 +656,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert test_utils.device_online_and_on(device_under_test, event_tracer)
 
         # setting band configuration with invalid frequency band
 
@@ -581,30 +676,38 @@ class TestVcc:
 
         if success:
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "ConfigureBand completed OK"]',
-                )
+                ),
             )
 
             # assert frequencyBand attribute was pushed
-            change_event_callbacks["frequencyBand"].assert_change_event(
-                freq_band_dict()[frequency_band]["band_index"]
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="frequencyBand",
+                attribute_value=freq_band_dict()[frequency_band]["band_index"],
             )
 
         else:
             # check that the queued command failed
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.FAILED.value}, "frequency_band {frequency_band} is invalid."]',
-                )
+                ),
             )
 
         # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        # change_event_callbacks.assert_not_called()

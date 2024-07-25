@@ -47,7 +47,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param pdu_cmd_timeout: timeout for PDU commands in seconds
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = SimulationMode.TRUE
 
         # Get the device proxies of all the devices we care about
         self._talons = talons
@@ -134,13 +133,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             "mid_csp_cbf/power_switch/" + pdu
         )
         if power_switch_proxy is not None:
-            # TODO: Refactor proxy simulation mode setting in controller instead.
             try:
-                # Set the power switch's simulation mode and set admin mode to ONLINE
-                power_switch_proxy.adminMode = AdminMode.OFFLINE
-                power_switch_proxy.simulationMode = self.simulation_mode
-                power_switch_proxy.adminMode = AdminMode.ONLINE
-
                 power_state = power_switch_proxy.GetOutletPowerState(
                     pdu_outlet
                 )
@@ -163,28 +156,34 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_power_switch1,
             self.pdu1_power_state,
         ) = self._init_power_switch(self._pdus[0], self._pdu_outlets[0])
+        # If PDU1 and PDU2 match, use same proxy
         if self._pdus[0] == self._pdus[1]:
             self._proxy_power_switch2 = self._proxy_power_switch1
-            self.pdu2_power_state = self.pdu1_power_state
+            # If outlet1 and outlet2 match, use same power state, set single outlet flag
             if self._pdu_outlets[0] == self._pdu_outlets[1]:
+                self.pdu2_power_state = self.pdu1_power_state
                 self._using_single_outlet = True
+            else:
+                self.pdu2_power_state = (
+                    self._proxy_power_switch2.GetOutletPowerState(
+                        self._pdu_outlets[1]
+                    )
+                )
         else:
             (
                 self._proxy_power_switch2,
                 self.pdu2_power_state,
             ) = self._init_power_switch(self._pdus[1], self._pdu_outlets[1])
 
-    def start_communicating(self: TalonLRUComponentManager) -> None:
+    def _start_communicating(
+        self: TalonLRUComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug(
             "Entering TalonLRUComponentManager.start_communicating"
         )
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
 
         # Get and initialize the device proxies of all the devices we care about
         self._init_talon_proxies()
@@ -209,11 +208,19 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
+        self.logger.info(
+            f"POWER SWITCH 1: {self._proxy_power_switch1.dev_name()}"
+        )
+        self.logger.info(
+            f"POWER SWITCH 2: {self._proxy_power_switch2.dev_name()}"
+        )
 
-        super().start_communicating()
+        super()._start_communicating()
         self.get_lru_power_state()
 
-    def stop_communicating(self: TalonLRUComponentManager) -> None:
+    def _stop_communicating(
+        self: TalonLRUComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """
@@ -228,9 +235,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._proxy_talondx_board2,
         ]:
             self._unsubscribe_command_results(proxy)
-        self._num_blocking_results = 0
+        self._blocking_commands = set()
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands
@@ -293,6 +300,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             lru_power_state = PowerState.OFF
 
         self._update_component_state(power=lru_power_state)
+        self.logger.info(f"!!! Power state: {lru_power_state}")
         return lru_power_state
 
     # ---------------------
@@ -312,56 +320,63 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing the 2 return codes of turning on the PDUs
         """
         # Turn on PDU 1
-        result1 = ResultCode.FAILED
+        pdu1_turn_on_result = ResultCode.FAILED
         if self.pdu1_power_state == PowerState.ON:
             self.logger.info("PDU 1 is already on.")
-            result1 = ResultCode.OK
+            pdu1_turn_on_result = ResultCode.OK
         elif self._proxy_power_switch1 is not None:
-            self._num_blocking_results = 1
-            [[result1], [command_id]] = self._proxy_power_switch1.TurnOnOutlet(
-                self._pdu_outlets[0]
-            )
-            # Guard incase LRC was rejected.
-            if result1 == ResultCode.REJECTED:
-                self.logger.error(
-                    f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
-                )
+            [
+                [result_code],
+                [command_id],
+            ] = self._proxy_power_switch1.TurnOnOutlet(self._pdu_outlets[0])
 
+        # Guard incase LRC was rejected.
+        if result_code == ResultCode.REJECTED:
+            self.logger.error(
+                f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
+            )
+
+        else:
+            self._blocking_commands.add(command_id)
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
+
+            self.logger.info(f"!!! lrc_status: {lrc_status}")
+
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
                 )
-                result1 = ResultCode.FAILED
+                pdu1_turn_on_result = ResultCode.FAILED
             else:
                 self.pdu1_power_state = PowerState.ON
                 self.logger.info(
                     f"PDU 1 ({self._pdu_outlets[0]}) successfully turned on."
                 )
-                result1 = ResultCode.OK
+                pdu1_turn_on_result = ResultCode.OK
 
         # Turn on PDU 2
-        result2 = ResultCode.FAILED
+        pdu2_turn_on_result = ResultCode.FAILED
         if self._using_single_outlet:
             self.logger.info("PDU 2 is not used.")
-            result2 = result1
+            pdu2_turn_on_result = pdu1_turn_on_result
         elif self.pdu2_power_state == PowerState.ON:
             self.logger.info("PDU 2 is already on.")
-            result2 = ResultCode.OK
+            pdu2_turn_on_result = ResultCode.OK
         elif self._proxy_power_switch2 is not None:
-            self._num_blocking_results = 1
-            [[result2], [command_id]] = self._proxy_power_switch2.TurnOnOutlet(
-                self._pdu_outlets[1]
+            [
+                [result_code],
+                [command_id],
+            ] = self._proxy_power_switch2.TurnOnOutlet(self._pdu_outlets[1])
+        # Guard incase LRC was rejected.
+        if result_code == ResultCode.REJECTED:
+            self.logger.error(
+                f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
             )
-            # Guard incase LRC was rejected.
-            if result2 == ResultCode.REJECTED:
-                self.logger.error(
-                    f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
-                )
-                return result1, ResultCode.FAILED
-
+            return pdu1_turn_on_result, ResultCode.FAILED
+        else:
+            self._blocking_commands.add(command_id)
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
@@ -369,14 +384,15 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.logger.error(
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} timed out",
                 )
-                result2 = ResultCode.FAILED
+                pdu2_turn_on_result = ResultCode.FAILED
             else:
                 self.pdu2_power_state = PowerState.ON
                 self.logger.info(
                     f"PDU 2 (outlet {self._pdu_outlets[1]}) successfully turned on."
                 )
-                result2 = ResultCode.OK
-        return result1, result2
+                pdu2_turn_on_result = ResultCode.OK
+
+        return pdu1_turn_on_result, pdu2_turn_on_result
 
     def _turn_on_talons(
         self: TalonLRUComponentManager,
@@ -388,10 +404,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string message indicating status
         """
-        self._num_blocking_results = 2
-        for i, board in enumerate(
-            [self._proxy_talondx_board1, self._proxy_talondx_board2]
-        ):
+        for board in [self._proxy_talondx_board1, self._proxy_talondx_board2]:
             try:
                 [[result_code], [command_id]] = board.On()
 
@@ -400,6 +413,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC TalonBoard.On() to {board.dev_name()} rejected"
                     )
+                    continue
+                self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Nested LRC TalonBoard.On() to {board.dev_name()} failed: {df}"
@@ -508,10 +523,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # _determine_on_result_code will update the component power state
         task_callback(
             status=TaskStatus.COMPLETED,
-            result=(
-                self._determine_on_result_code(result1, result2),
-                "On completed OK",
-            ),
+            result=self._determine_on_result_code(result1, result2),
         )
 
     @check_communicating
@@ -550,17 +562,17 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Power off PDU 1
         result1 = ResultCode.FAILED
         if self._proxy_power_switch1 is not None:
-            self._num_blocking_results = 1
             [
                 [result1],
                 [command_id],
             ] = self._proxy_power_switch1.TurnOffOutlet(self._pdu_outlets[0])
-            # Guard incase LRC was rejected.
-            if result1 == ResultCode.REJECTED:
-                self.logger.error(
-                    f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
-                )
-
+        # Guard incase LRC was rejected.
+        if result1 == ResultCode.REJECTED:
+            self.logger.error(
+                f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
+            )
+        else:
+            self._blocking_commands.add(command_id)
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
@@ -583,19 +595,19 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.logger.info("PDU 2 is not used.")
                 result2 = result1
             else:
-                self._num_blocking_results = 1
                 [
                     [result2],
                     [command_id],
                 ] = self._proxy_power_switch2.TurnOffOutlet(
                     self._pdu_outlets[1]
                 )
-                # Guard incase LRC was rejected.
-                if result2 == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
-                    )
-
+            # Guard incase LRC was rejected.
+            if result2 == ResultCode.REJECTED:
+                self.logger.error(
+                    f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
+                )
+            else:
+                self._blocking_commands(command_id)
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
@@ -627,11 +639,13 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            msg = f'Off completed OK: {"single outlet turned off" if self._using_single_outlet else "both outlets turned off"}'
+            self.logger.info(
+                f'Off completed OK: {"single outlet turned off" if self._using_single_outlet else "both outlets turned off"}'
+            )
             self._update_component_state(power=PowerState.OFF)
             return (
                 ResultCode.OK,
-                msg,
+                "Off completed OK",
             )
 
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
@@ -643,12 +657,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
 
         else:
-            self.logger.error(
-                "LRU failed to turn off: one outlet failed to turn off"
-            )
+            msg = "LRU failed to turn off: one outlet failed to turn off"
+            self.logger.error(msg)
             return (
                 ResultCode.FAILED,
-                "LRU failed to turn off: one outlet failed to turn off",
+                msg,
             )
 
     def is_off_allowed(self: TalonLRUComponentManager) -> bool:
@@ -689,8 +702,8 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # _determine_off_result_code will update the component power state
         task_callback(
-            result=self._determine_off_result_code(result1, result2),
             status=TaskStatus.COMPLETED,
+            result=self._determine_off_result_code(result1, result2),
         )
 
     @check_communicating

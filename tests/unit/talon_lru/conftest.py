@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Generator
 import unittest
 
 import pytest
 from ska_control_model import ResultCode
 from ska_tango_base.control_model import PowerState
 from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
@@ -23,7 +25,7 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ... import test_utils
 
 
-@pytest.fixture(name="device_under_test")
+@pytest.fixture(name="device_under_test", scope="module")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -36,7 +38,7 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_lru/001")
 
 
-@pytest.fixture(name="power_switch_1")
+@pytest.fixture(name="power_switch_1", scope="module")
 def power_switch_1_fixture(
     test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
@@ -46,7 +48,7 @@ def power_switch_1_fixture(
     return test_context.get_device("mid_csp_cbf/power_switch/001")
 
 
-@pytest.fixture(name="power_switch_2")
+@pytest.fixture(name="power_switch_2", scope="module")
 def power_switch_2_fixture(
     test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
@@ -56,24 +58,45 @@ def power_switch_2_fixture(
     return test_context.get_device("mid_csp_cbf/power_switch/002")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def lru_change_event_callbacks(
+# @pytest.fixture(name="change_event_callbacks")
+# def lru_change_event_callbacks(
+#     device_under_test: context.DeviceProxy,
+# ) -> MockTangoEventCallbackGroup:
+#     change_event_attr_list = [
+#         "longRunningCommandResult",
+#         "state",
+#     ]
+#     change_event_callbacks = MockTangoEventCallbackGroup(
+#         *change_event_attr_list, timeout=35.0
+#     )
+#     test_utils.change_event_subscriber(
+#         device_under_test, change_event_attr_list, change_event_callbacks
+#     )
+#     return change_event_callbacks
+
+@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+    
     change_event_attr_list = [
         "longRunningCommandResult",
         "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=35.0
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_talon_board() -> unittest.mock.Mock:
     """
     Fixture that builds the talon board mock
@@ -93,7 +116,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(params=["command_success", "command_fail"])
+@pytest.fixture(params=["command_success", "command_fail"], scope="module")
 def mock_power_switch_1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
@@ -106,7 +129,7 @@ def mock_power_switch_1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     return get_mock_power_switch(request.param)
 
 
-@pytest.fixture(params=["command_success", "command_fail"])
+@pytest.fixture(params=["command_success", "command_fail"], scope="module")
 def mock_power_switch_2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
@@ -152,7 +175,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def initial_mocks(
     mock_power_switch_1: unittest.mock.Mock,
     mock_power_switch_2: unittest.mock.Mock,
