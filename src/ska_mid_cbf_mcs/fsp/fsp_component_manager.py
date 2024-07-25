@@ -93,7 +93,7 @@ class FspComponentManager(CbfComponentManager):
     # Fast Commands
     # -------------
 
-    # --- On command --- #
+    # --- On Command --- #
 
     @check_communicating
     def on(self: FspComponentManager) -> tuple[ResultCode, str]:
@@ -132,7 +132,7 @@ class FspComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.ON)
         return (ResultCode.OK, "On completed OK")
 
-    # --- Off command --- #
+    # --- Off Command --- #
 
     @check_communicating
     def off(self: FspComponentManager) -> tuple[ResultCode, str]:
@@ -148,7 +148,7 @@ class FspComponentManager(CbfComponentManager):
         self._update_component_state(power=PowerState.OFF)
         return (ResultCode.OK, "Off completed OK")
 
-    # --- SetFunctionMode command --- #
+    # --- SetFunctionMode Command --- #
 
     def _validate_and_set_function_mode(
         self: FspComponentManager, function_mode: str
@@ -215,7 +215,7 @@ class FspComponentManager(CbfComponentManager):
 
         return (ResultCode.OK, "SetFunctionMode completed OK")
 
-    # --- RemoveSubarrayMembership command --- #
+    # --- RemoveSubarrayMembership Command --- #
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
         """
