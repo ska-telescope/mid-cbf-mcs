@@ -114,8 +114,8 @@ def controller_component_manager(
 
     talondx_config_path = "mnt/talondx-config/"
     hw_config_path = "mnt/hw_config/hw_config.yaml"
-    fs_slim_config_path = "mnt/slim/fs_slim_config.yaml"
-    vis_slim_config_path = "mnt/slim/vis_slim_config.yaml"
+    fs_slim_config_path = "mnt/slim/fs/slim_config.yaml"
+    vis_slim_config_path = "mnt/slim/vis/slim_config.yaml"
 
     component_manager = ControllerComponentManager(
         get_num_capabilities=mock_get_num_capabilities,

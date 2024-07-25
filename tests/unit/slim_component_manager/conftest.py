@@ -190,7 +190,7 @@ def mesh_config() -> unittest.mock.Mock:
 
     :return: a mock slim configuration
     """
-    with open("./mnt/slim/fs_slim_config.yaml", "r") as mesh_config:
+    with open("./mnt/slim/fs/slim_config.yaml", "r") as mesh_config:
         return mesh_config.read()
 
 

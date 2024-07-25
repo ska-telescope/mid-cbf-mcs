@@ -1,0 +1,9 @@
+{{- if .Values.hw_config }}
+apiVersion: v1
+data:
+  hw_config.yaml: | 
+{{ toYaml .Values.hw_config | indent 4 }}
+kind: ConfigMap
+metadata:
+  name: hwconfig-configmap
+{{- end }}

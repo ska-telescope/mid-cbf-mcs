@@ -87,7 +87,7 @@ class TestSlim:
 
     @pytest.mark.parametrize(
         "mesh_config_filename",
-        [("./mnt/slim/fs_slim_config.yaml")],
+        [("./mnt/slim/fs/slim_config.yaml")],
     )
     def test_Configure(
         self: TestSlim,
