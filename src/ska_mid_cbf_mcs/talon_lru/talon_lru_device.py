@@ -17,7 +17,7 @@ from threading import Lock
 from typing import Any
 
 import tango
-from ska_control_model import PowerState, SimulationMode
+from ska_control_model import PowerState
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode

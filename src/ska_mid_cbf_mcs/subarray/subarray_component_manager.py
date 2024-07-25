@@ -215,8 +215,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
-<<<<<<< src/ska_mid_cbf_mcs/subarray/subarray_component_manager.py
-    def _start_communicating(self: CbfSubarrayComponentManager, *args, **kwargs) -> None:
+    def _start_communicating(
+        self: CbfSubarrayComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for start_communicating operation.
         """
@@ -237,7 +238,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def _stop_communicating(self: CbfSubarrayComponentManager, *args, *kwargs) -> None:
+    def _stop_communicating(
+        self: CbfSubarrayComponentManager, *args, **kwargs
+    ) -> None:
         """
         Thread for stop_communicating operation.
         """
@@ -252,13 +255,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-            # delete all device proxies
-            self._all_vcc_proxies = {}
-            self._all_fsp_proxies = {}
-            self._all_fsp_corr_proxies = {}
-            self._all_talon_board_proxies = []
+        # delete all device proxies
+        self._all_vcc_proxies = {}
+        self._all_fsp_proxies = {}
+        self._all_fsp_corr_proxies = {}
+        self._all_talon_board_proxies = []
 
-            super()._stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands

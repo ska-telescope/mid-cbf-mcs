@@ -55,7 +55,7 @@ const = Const()
 
 
 # TODO: use ObsMode
-class FspModes(Enum):
+class FspModes(IntEnum):
     IDLE = 0
     CORR = 1
     PSS_BF = 2
