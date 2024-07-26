@@ -93,8 +93,112 @@ from ska_tango_testing.integration.predicates import (
 )
 from ska_tango_testing.integration.assertions import (
     _get_tracer,
-    _print_passed_event_args,
 )
+
+
+def _print_passed_event_args(
+    device_name: str | None = ANY_VALUE,
+    attribute_name: str | None = ANY_VALUE,
+    attribute_value: Any | None = ANY_VALUE,
+    previous_value: Any | None = ANY_VALUE,
+    target_n_events: int = 1,
+) -> str:
+    """Print the arguments passed to the event query.
+
+    Helper method to print the arguments passed to the event query in a
+    human-readable format.
+
+    :param device_name: The device name to match. If not provided, it will
+        match any device name.
+    :param attribute_name: The attribute name to match. If not provided,
+        it will match any attribute name.
+    :param attribute_value: The current value to match. If not provided,
+        it will match any current value.
+    :param previous_value: The previous value to match. If not provided,
+        it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1.
+
+    :return: The string representation of the passed arguments.
+    """
+    res = ""
+    if device_name is not ANY_VALUE:
+        res += f"device_name='{device_name}', "
+    if attribute_name is not ANY_VALUE:
+        res += f"attribute_name='{attribute_name}', "
+    if attribute_value is not ANY_VALUE:
+        res += f"attribute_value={attribute_value}, "
+    if previous_value is not ANY_VALUE:
+        res += f"previous_value={previous_value}, "
+    if target_n_events != 1:
+        res += f"target_n_events={target_n_events}, "
+
+    return res
+
+
+def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
+    """Add a timeout to an event-based assertion function.
+
+    :py:class:`~ska_tango_testing.integration.TangoEventTracer`
+    allows to query events within a timeout. In other words, you can
+    make assertions about events that will occur in the future within
+    a certain time frame and "await" for them (if they didn't occur yet).
+    This method when called inside an assertion context permits
+    you to specify that timeout.
+
+    **NOTE**: this assertion always passes, its only purpose is to
+    set the timeout for the following assertions.
+
+    Usage example:
+
+    .. code-block:: python
+
+        # (given a subscribed tracer)
+
+        # non-blocking long operation that triggers an event at the end
+        sut.long_operation_that_triggers_an_event()
+
+        # Check that the operation is done within 30 seconds
+        assert_that(tracer).within_timeout(30).has_change_event_occurred(
+            attribute_name="operation_state",
+            attribute_value="DONE",
+        )
+
+    **NOTE**: Using a (small) timeout is a good practice even in not so long
+    operations, because it makes the test more robust and less prone to
+    flakiness and false positives.
+
+    .. code-block:: python
+
+        # (given a subscribed tracer)
+
+        # non-blocking long operation that triggers an event at the end
+        sut.quick_operation()
+
+        # Check that the operation is done within 5 seconds
+        assert_that(tracer).within_timeout(5).has_change_event_occurred(
+            attribute_name="operation_state",
+            attribute_value="DONE",
+        )
+
+    :param assertpy_context: The `assertpy` context object
+        (It is passed automatically)
+    :param timeout: The time in seconds to wait for the event to occur.
+
+    :return: The decorated assertion context.
+
+    :raises ValueError: If the
+        :py:class:`~ska_tango_testing.integration.TangoEventTracer`
+        instance is not found (i.e., the method is called outside
+        an ``assert_that(tracer)`` context).
+    """  # noqa: DAR402
+    # verify the tracer is stored in the assertpy context or raise an error
+    _get_tracer(assertpy_context)
+
+    # add the timeout to the assertion
+    assertpy_context.event_timeout = timeout
+
+    return assertpy_context
 
 
 def cbf_has_change_event_occurred(
@@ -103,7 +207,7 @@ def cbf_has_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    n_events: int = 1,
+    target_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
@@ -132,6 +236,13 @@ def cbf_has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
         )
+        
+        # Perform the same check, but look for 3 events with the value "new_value"
+        assert_that(tracer).has_change_event_occurred(
+            attribute_name="attrname",
+            attribute_value="new_value",
+            target_n_events=3,
+        )
 
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
@@ -143,6 +254,9 @@ def cbf_has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1. If used without a timeout, the assertion will
+        be based only on events received up to the time of calling.
 
     :return: The `assertpy` context object.
 
@@ -180,7 +294,7 @@ def cbf_has_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
-        target_n_events=n_events,
+        target_n_events=target_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
@@ -188,17 +302,16 @@ def cbf_has_change_event_occurred(
     # if no event is found, raise an error
     if len(result) == 0:
         event_list = "\n".join([str(event) for event in tracer.events])
-        #TODO: Added 'CBF' to verify this assertion is the one being used.
-        msg = "CBF Expected to find an event matching the predicate"
+        msg = f"Expected to find {target_n_events} event(s) matching the predicate"
         if hasattr(assertpy_context, "event_timeout"):
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += ", but none was found.\n\n"
+        msg += ", but not all were found.\n\n"
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name, attribute_name, attribute_value, previous_value, target_n_events
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -214,7 +327,7 @@ def cbf_hasnt_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    n_events: int = 1,
+    target_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
@@ -246,6 +359,9 @@ def cbf_hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1. If used without a timeout, the assertion will
+        be based only on events received up to the time of calling.
 
     :return: The assertpy context object.
 
@@ -283,7 +399,7 @@ def cbf_hasnt_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
-        target_n_events=n_events,
+        target_n_events=target_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
@@ -291,7 +407,7 @@ def cbf_hasnt_change_event_occurred(
     # if any event is found, raise an error
     if result:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to NOT find an event matching the predicate"
+        msg = f"Expected to NOT find {target_n_events} event(s) matching the predicate"
         if getattr(assertpy_context, "event_timeout", None) is not None:
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
@@ -300,7 +416,7 @@ def cbf_hasnt_change_event_occurred(
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name, attribute_name, attribute_value, previous_value, target_n_events
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -310,4 +426,3 @@ def cbf_hasnt_change_event_occurred(
         assertpy_context.error(msg)
 
     return assertpy_context
-
