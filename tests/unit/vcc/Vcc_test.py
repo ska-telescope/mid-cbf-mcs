@@ -461,7 +461,7 @@ class TestVcc:
         # assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
+        ).cbf_has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
@@ -489,7 +489,8 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
-
+        previous_state = None
+        
         # check all obsState transitions
         for obs_state in [
             ObsState.CONFIGURING,
@@ -501,11 +502,13 @@ class TestVcc:
         ]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="obsState",
                 attribute_value=obs_state.value,
+                previous_value=previous_state,
             )
+            previous_state = obs_state
 
         # assert frequencyBand attribute reset during ObsReset
         assert_that(event_tracer).within_timeout(
@@ -515,6 +518,58 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=0,
         )
+        
+        #### TEMPORARY TO INVESTIGATE target_n_events ISSUE
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
+        
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # check all obsState transitions
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.EMPTY,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+                n_events=2,
+            )
+            previous_state = obs_state
+            
+        #### TEMPORARY TO INVESTIGATE target_n_events ISSUE
 
         # assert if any captured events have gone unaddressed
         # change_event_callbacks.assert_not_called()
