@@ -16,9 +16,9 @@ import gc
 import os
 from typing import Any, Iterator
 from unittest.mock import Mock
-from assertpy import assert_that
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
@@ -229,8 +229,8 @@ class TestTalonBoard:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        
-        #TODO: Is this the right state? This test used to assert on DevState.UNKNOWN...
+
+        # TODO: Is this the right state? This test used to assert on DevState.UNKNOWN...
         assert device_under_test.State() == DevState.DISABLE
 
     @pytest.mark.parametrize(
@@ -446,7 +446,6 @@ class TestTalonBoard:
         assert device_under_test.dishID == "2"
         assert device_under_test.vccID == "3"
 
-        
         # TalonStatus Attr
         # This values comes from charts
         assert device_under_test.ipAddr == "192.168.8.1"

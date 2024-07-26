@@ -9,15 +9,15 @@
 
 from __future__ import annotations
 
-from typing import Generator
 import unittest
+from typing import Generator
 
 import pytest
 import tango
 from ska_control_model import PowerState
 from ska_tango_testing import context
-from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
@@ -50,7 +50,7 @@ def tango_event_tracer(
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
-    
+
     change_event_attr_list = [
         "longRunningCommandResult",
         "frequencyBand",

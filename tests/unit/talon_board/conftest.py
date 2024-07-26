@@ -14,16 +14,16 @@
 
 from __future__ import annotations
 
-from typing import Generator
 import unittest
+from typing import Generator
 
 import pytest
 import tango
 
 # Tango imports
 from ska_tango_testing import context
-from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
@@ -57,7 +57,7 @@ def tango_event_tracer(
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
-    
+
     change_event_attr_list = [
         "longRunningCommandResult",
         "state",
@@ -68,12 +68,14 @@ def tango_event_tracer(
     return tracer
 
 
-@pytest.fixture(name="monkeymodule", scope='module')
+@pytest.fixture(name="monkeymodule", scope="module")
 def monkeymodule():
     from _pytest.monkeypatch import MonkeyPatch
+
     mpatch = MonkeyPatch()
     yield mpatch
     mpatch.undo()
+
 
 @pytest.fixture(scope="module")
 def mock_talon_sysid() -> unittest.mock.Mock:

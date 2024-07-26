@@ -1,10 +1,10 @@
-from assertpy import assert_that
 import tango
+from assertpy import assert_that
 from ska_control_model import AdminMode
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing import context
 
 EVENT_TIMEOUT = 30
 
@@ -36,7 +36,7 @@ def device_online_and_on(
         "mid_csp_cbf/sub_elt/subarray",
         "mid_csp_cbf/fspCorrSubarray",
     ]
-        
+
     # set a given device to AdminMode.ONLINE and DevState.ON
     dut.adminMode = AdminMode.ONLINE
     assert_that(event_tracer).within_timeout(
