@@ -186,12 +186,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: False if initialization failed, otherwise True
         """
         try:
-            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
-                dish_id = self._dish_utils.dish_id_to_vcc_id[vcc_id]
-                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
-                    device_name=fqdn
-                )
-
             for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
                 zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
             ):
@@ -225,6 +219,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         controller_success = self._get_max_capabilities()
         if not controller_success:
+            self.logger.error(
+                "Failed to initialize max capabilities from controller."
+            )
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -232,6 +229,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         subelement_success = self._init_subelement_proxies()
         if not subelement_success:
+            self.logger.error("Failed to initialize subelement proxies.")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -300,6 +298,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(
             "Updated DISH ID to VCC ID and frequency offset k mapping"
         )
+        for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+            dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
+            try:
+                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
+                    device_name=fqdn
+                )
+            except tango.DevFailed as df:
+                self.logger.error(f"Failed to initialize VCC proxies; {df}")
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+            except KeyError as ke:
+                self.logger.error(f"DISH ID not found for VCC {vcc_id}; {ke}")
 
     def _update_delay_model(
         self: CbfSubarrayComponentManager, model: str

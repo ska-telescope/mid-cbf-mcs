@@ -1185,11 +1185,8 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 self._proxies[fqdn].sysParam = params
             except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Failure in connection to {fqdn}; {item.reason}"
-                    )
-                    return False
+                self.logger.error(f"Failure in connection to {fqdn}; {df}")
+                return False
 
         # Set VCC values
         for fqdn in self._vcc_fqdn:
