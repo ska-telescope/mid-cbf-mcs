@@ -607,7 +607,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                 )
             else:
-                self._blocking_commands(command_id)
+                self._blocking_commands.add(command_id)
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )

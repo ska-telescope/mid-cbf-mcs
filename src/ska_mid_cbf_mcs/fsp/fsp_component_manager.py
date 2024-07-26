@@ -284,46 +284,76 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        if subarray_id in self.subarray_membership:
-            self.logger.info(
-                f"Removing subarray {subarray_id} from subarray membership."
-            )
-
-            off_success = self._subarray_off(subarray_id)
-            if not off_success:
-                return (
-                    ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
-                )
-
-            self.subarray_membership.remove(subarray_id)
-            self._device_attr_change_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-            self._device_attr_archive_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-
-            # if no current subarray membership, reset to function mode IDLE and
-            # power off
-            if len(self.subarray_membership) == 0:
-                self.logger.info(
-                    "No current subarray membership, resetting function mode to IDLE"
-                )
-                self._validate_and_set_function_mode("IDLE")
-                self.off()
-
+        if subarray_id not in self.subarray_membership:
             return (
-                ResultCode.OK,
-                "RemoveSubarrayMembership completed OK",
+                ResultCode.FAILED,
+                f"FSP does not belong to subarray {subarray_id}",
             )
+
+        self.logger.info(
+            f"Removing subarray {subarray_id} from subarray membership."
+        )
+
+        off_success = self._subarray_off(subarray_id)
+        if not off_success:
+            return (
+                ResultCode.FAILED,
+                f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
+            )
+
+        self.subarray_membership.remove(subarray_id)
+        self._device_attr_change_callback(
+            "subarrayMembership", self.subarray_membership
+        )
+        self._device_attr_archive_callback(
+            "subarrayMembership", self.subarray_membership
+        )
+
+        # if no current subarray membership, reset to function mode IDLE and
+        # power off
+        if len(self.subarray_membership) == 0:
+            self.logger.info(
+                "No current subarray membership, resetting function mode to IDLE"
+            )
+            self._validate_and_set_function_mode("IDLE")
+            self.off()
 
         return (
-            ResultCode.FAILED,
-            f"FSP does not belong to subarray {subarray_id}",
+            ResultCode.OK,
+            "RemoveSubarrayMembership completed OK",
         )
 
     # --- AddSubarrayMembership command --- #
+
+    def _validate_subarray_id(
+        self: FspComponentManager, subarray_id: int
+    ) -> bool:
+        """
+        Validate subarray ID to be added to current membership.
+
+        :param subarray_id: an integer representing the subarray affiliation,
+            value in [1, 16]
+
+        :return: True if subarray ID is valid, otherwise False
+        """
+        if len(self.subarray_membership) == const.MAX_SUBARRAY:
+            self.logger.error(
+                f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})"
+            )
+            return False
+        if subarray_id - 1 not in range(const.MAX_SUBARRAY):
+            self.logger.error(
+                f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]"
+            )
+            return False
+        if subarray_id in self.subarray_membership:
+            self.logger.error(f"FSP already belongs to subarray {subarray_id}")
+            return False
+
+        self.logger.info(
+            f"Adding subarray {subarray_id} to subarray membership"
+        )
+        return True
 
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """
@@ -396,42 +426,29 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        if len(self.subarray_membership) == const.MAX_SUBARRAY:
+        validate_success = self._validate_subarray_id(subarray_id)
+        if not validate_success:
             return (
                 ResultCode.FAILED,
-                f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})",
+                f"Unable to add subarray membership for subarray ID {subarray_id}",
             )
-        elif subarray_id - 1 not in range(const.MAX_SUBARRAY):
+
+        on_success = self._subarray_on(subarray_id)
+        if not on_success:
             return (
                 ResultCode.FAILED,
-                f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]",
-            )
-        elif subarray_id not in self.subarray_membership:
-            self.logger.info(
-                f"Adding subarray {subarray_id} to subarray membership"
+                f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
             )
 
-            on_success = self._subarray_on(subarray_id)
-            if not on_success:
-                return (
-                    ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
-                )
-
-            self.subarray_membership.append(subarray_id)
-            self._device_attr_change_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-            self._device_attr_archive_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-
-            return (
-                ResultCode.OK,
-                "AddSubarrayMembership completed OK",
-            )
+        self.subarray_membership.append(subarray_id)
+        self._device_attr_change_callback(
+            "subarrayMembership", self.subarray_membership
+        )
+        self._device_attr_archive_callback(
+            "subarrayMembership", self.subarray_membership
+        )
 
         return (
-            ResultCode.FAILED,
-            f"FSP already belongs to subarray {subarray_id}",
+            ResultCode.OK,
+            "AddSubarrayMembership completed OK",
         )

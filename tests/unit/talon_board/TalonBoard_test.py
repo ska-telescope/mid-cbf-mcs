@@ -24,7 +24,6 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
@@ -35,12 +34,7 @@ from ... import test_utils
 # To prevent tests hanging during gc.
 gc.disable()
 
-# Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-
-# Tango imports
-
-# SKA imports
 
 
 class TestTalonBoard:

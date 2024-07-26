@@ -83,9 +83,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self.subarray_id = subarray_id
         self._fqdn_controller = controller
-        self._fqdn_vcc = vcc
-        self._fqdn_fsp = fsp
-        self._fqdn_fsp_corr = fsp_corr_sub
+
+        self._fqdn_vcc_all = vcc
+        self._fqdn_fsp_all = fsp
+        self._fqdn_fsp_corr_all = fsp_corr_sub
+        self._fqdn_vcc = []
+        self._fqdn_fsp = []
+        self._fqdn_fsp_all = []
+
         self._fqdn_talon_board_device = talon_board
         self._fqdn_vis_slim_device = vis_slim
 
@@ -111,9 +116,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._vis_transport = VisibilityTransport(
             logger=self.logger,
         )
-
-        # Device proxy for easy reference to CBF controller
-        self._proxy_cbf_controller = None
 
         # Store max capabilities from controller for easy reference
         self._controller_max_capabilities = {}
@@ -171,9 +173,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._count_vcc = int(self._controller_max_capabilities["VCC"])
         self._count_fsp = int(self._controller_max_capabilities["FSP"])
 
-        del self._fqdn_vcc[: self._count_vcc]
-        del self._fqdn_fsp[: self._count_fsp]
-        del self._fqdn_fsp_corr[: self._count_fsp]
+        self._fqdn_vcc = self._fqdn_vcc_all[: self._count_vcc]
+        self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
+        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
 
         return True
 

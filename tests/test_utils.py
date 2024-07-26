@@ -31,12 +31,6 @@ def device_online_and_on(
     dut: context.DeviceProxy,
     event_tracer: TangoEventTracer,
 ) -> bool:
-    obs_devices = [
-        "mid_csp_cbf/vcc",
-        "mid_csp_cbf/sub_elt/subarray",
-        "mid_csp_cbf/fspCorrSubarray",
-    ]
-
     # set a given device to AdminMode.ONLINE and DevState.ON
     dut.adminMode = AdminMode.ONLINE
     assert_that(event_tracer).within_timeout(
