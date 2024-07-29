@@ -288,7 +288,7 @@ class TestTalonBoard:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
-        
+
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
         ):
@@ -412,7 +412,7 @@ class TestTalonBoard:
     ) -> None:
         """
         Test the that all attributes can be read/written correctly.
-        
+
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.

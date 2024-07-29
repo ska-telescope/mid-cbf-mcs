@@ -19,7 +19,6 @@ from typing import Generator
 
 import pytest
 import tango
-
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -47,7 +46,7 @@ def tango_event_tracer(
     """
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
-    
+
     :param device_under_test: the device being tested.
     :return: TangoEventTracer
     """

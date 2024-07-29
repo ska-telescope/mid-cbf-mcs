@@ -16,8 +16,8 @@ import os
 from typing import Iterator
 from unittest.mock import Mock
 
-from assertpy import assert_that
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode, HealthState, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
@@ -194,12 +194,11 @@ class TestSlimLink:
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
-        
+
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
         ):
             device_under_test.ConnectTxRx()
-
 
     def test_ConnectTxRx_empty_device_names(
         self: TestSlimLink,
@@ -218,7 +217,7 @@ class TestSlimLink:
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -263,7 +262,7 @@ class TestSlimLink:
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -278,7 +277,7 @@ class TestSlimLink:
         assert device_under_test.txIdleCtrlWord == (
             hash(device_under_test.txDeviceName) & 0x00FFFFFFFFFFFFFF
         )
-        
+
         assert (
             device_under_test.txIdleCtrlWord
             == device_under_test.rxIdleCtrlWord
@@ -312,7 +311,7 @@ class TestSlimLink:
         """
         device_under_test.txDeviceName = tx_device_name
         assert device_under_test.txDeviceName == tx_device_name
-        
+
         device_under_test.rxDeviceName = rx_device_name
         assert device_under_test.rxDeviceName == rx_device_name
 
@@ -322,7 +321,7 @@ class TestSlimLink:
             device_under_test=device_under_test,
             event_tracer=event_tracer,
         )
-        
+
         assert (
             device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
         )
@@ -371,7 +370,7 @@ class TestSlimLink:
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -403,7 +402,7 @@ class TestSlimLink:
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -449,7 +448,7 @@ class TestSlimLink:
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -506,7 +505,6 @@ class TestSlimLink:
         )
         assert device_under_test.linkName == ""
 
-
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
         [
@@ -546,7 +544,6 @@ class TestSlimLink:
         ):
             device_under_test.DisconnectTxRx()
 
-
     def test_DisconnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
@@ -575,7 +572,6 @@ class TestSlimLink:
                 '[3, "Rx proxy is not set. SlimLink must be connected before it can be disconnected."]',
             ),
         )
-
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",

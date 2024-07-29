@@ -14,12 +14,11 @@
 
 from __future__ import annotations
 
-from typing import Generator
 import unittest
+from typing import Generator
 
 import pytest
 import tango
-
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -55,7 +54,7 @@ def tango_event_tracer(
     change_event_attr_list = [
         "longRunningCommandResult",
         "state",
-        "healthState"
+        "healthState",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)

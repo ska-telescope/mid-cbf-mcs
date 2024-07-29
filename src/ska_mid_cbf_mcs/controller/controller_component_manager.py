@@ -1241,7 +1241,7 @@ class ControllerComponentManager(CbfComponentManager):
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
-                
+
                 if lrc_status != TaskStatus.COMPLETED:
                     message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
                     self.logger.error(message)

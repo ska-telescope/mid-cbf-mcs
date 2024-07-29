@@ -22,7 +22,6 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
-
 @pytest.fixture(name="device_under_test", scope="module")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
