@@ -16,9 +16,9 @@ import gc
 import unittest
 from typing import Iterator
 from unittest.mock import Mock
-from assertpy import assert_that
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
@@ -27,6 +27,7 @@ from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
+
 from ... import test_utils
 
 # To prevent tests hanging during gc.
@@ -175,7 +176,7 @@ class TestTalonLRU:
             attribute_name="state",
             attribute_value=DevState.OFF,
         )
-    
+
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_On(
         self: TestTalonLRU,
@@ -243,7 +244,10 @@ class TestTalonLRU:
         ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="longRunningCommandResult",
-            attribute_value=(f"{command_id[0]}", f'[{result_code.value}, "{message}"]'),
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{result_code.value}, "{message}"]',
+            ),
         )
 
         if state is not None:
@@ -254,7 +258,6 @@ class TestTalonLRU:
                 attribute_name="state",
                 attribute_value=state,
             )
-            
 
         # Assert if any captured events have gone unaddressed
         # change_event_callbacks.assert_not_called()

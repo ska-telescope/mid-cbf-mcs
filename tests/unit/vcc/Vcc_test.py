@@ -16,9 +16,9 @@ import json
 import os
 from typing import Iterator
 from unittest.mock import Mock
-from assertpy import assert_that
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
@@ -225,7 +225,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -332,7 +332,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -466,7 +466,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -627,7 +627,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -672,12 +672,12 @@ class TestVcc:
 
         # assert frequencyBand attribute reset during ObsReset
         assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="frequencyBand",
-                attribute_value=0,
-            )
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
         # assert if any captured events have gone unaddressed
         # change_event_callbacks.assert_not_called()
