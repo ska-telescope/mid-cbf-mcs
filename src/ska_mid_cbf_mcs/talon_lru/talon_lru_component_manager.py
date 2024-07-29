@@ -476,13 +476,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             "On completed OK",
         )
 
-    def is_on_allowed(self: TalonLRUComponentManager) -> bool:
-        self.logger.debug("Checking if on is allowed")
-        if self._component_state["power"] == PowerState.OFF:
-            return True
-        self.logger.warning("LRU is already on, do not need to turn on.")
-        return False
-
     def _on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -545,7 +538,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,
-            is_cmd_allowed=self.is_on_allowed,
             task_callback=task_callback,
         )
 
