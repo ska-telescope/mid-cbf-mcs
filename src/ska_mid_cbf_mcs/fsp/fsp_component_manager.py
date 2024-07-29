@@ -375,9 +375,7 @@ class FspComponentManager(CbfComponentManager):
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     # set FSP devices simulationMode attributes
-                    proxy.adminMode = AdminMode.OFFLINE
-                    proxy.simulationMode = self.simulation_mode
-                    proxy.adminMode = AdminMode.ONLINE
+                    self.toggle_simulation_mode(proxy, self.simulation_mode)
                     result = proxy.On()
                     if result[0] == ResultCode.FAILED:
                         self.logger.error(

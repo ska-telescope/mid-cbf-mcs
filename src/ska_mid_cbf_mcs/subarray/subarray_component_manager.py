@@ -1193,9 +1193,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             # TODO handle LRCs
 
             # set FSP devices simulationMode attributes
-            fsp_proxy.adminMode = AdminMode.OFFLINE
-            fsp_proxy.simulationMode = self.simulation_mode
-            fsp_proxy.adminMode = AdminMode.ONLINE
+            self.toggle_simulation_mode(fsp_proxy, self.simulation_mode)
 
             # only set function mode if FSP is both IDLE and not configured for
             # another mode
