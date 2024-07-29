@@ -703,6 +703,19 @@ class ControllerComponentManager(CbfComponentManager):
                     success = False
                     continue
                 self._blocking_commands.add(command_id)
+
+                # TODO: why is this so slow?
+                lrc_status = self._wait_for_blocking_results(
+                    timeout=20.0, task_abort_event=task_abort_event
+                )
+                if lrc_status != TaskStatus.COMPLETED:
+                    message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
+                    self.logger.error(message)
+                    success = False
+                else:
+                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+                    self.logger.info(message)
+
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
                 self.logger.error(
@@ -712,18 +725,6 @@ class ControllerComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-
-        # TODO: why is this so slow?
-        lrc_status = self._wait_for_blocking_results(
-            timeout=20.0, task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-            self.logger.info(message)
 
         return (success, message)
 
@@ -1236,6 +1237,19 @@ class ControllerComponentManager(CbfComponentManager):
                     success = False
                     continue
                 self._blocking_commands.add(command_id)
+
+                lrc_status = self._wait_for_blocking_results(
+                    timeout=10.0, task_abort_event=task_abort_event
+                )
+                
+                if lrc_status != TaskStatus.COMPLETED:
+                    message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
+                    self.logger.error(message)
+                    success = False
+                else:
+                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
+                    self.logger.info(message)
+
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.Off() failed"
                 self.logger.error(
@@ -1245,17 +1259,6 @@ class ControllerComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-
-        lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-            self.logger.info(message)
 
         return (success, message)
 

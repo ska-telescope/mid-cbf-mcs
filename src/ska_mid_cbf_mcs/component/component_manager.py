@@ -460,9 +460,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Locked callback to decrement number of blocking
         """
-        self.logger.info(
-            f"blocking commands: {self._blocking_commands}, event_data: {event_data}"
-        )
         try:
             if event_data.attr_value.value != ("", ""):
                 # fetch the result code from the event_data tuple.
@@ -540,7 +537,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
             ticks -= 1
             if ticks <= 0:
                 self.logger.error(
-                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s."
+                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s.\n"
+                    f"Blocking commands remaining: {self._blocking_commands}"
                 )
                 self._blocking_commands = set()
                 return TaskStatus.FAILED
