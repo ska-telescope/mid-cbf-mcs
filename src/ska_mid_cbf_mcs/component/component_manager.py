@@ -27,8 +27,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base import BaseComponentManager, TaskCallbackType
-from ska_tango_base.executor.executor import TaskExecutor, TaskFunctionType
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )

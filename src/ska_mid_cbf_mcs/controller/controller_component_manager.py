@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from threading import Event, Thread
+from threading import Event
 from typing import Callable, Optional
 
 import tango
