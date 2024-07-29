@@ -38,7 +38,7 @@ gc.disable()
 
 class TestVcc:
     """
-    Test class for Vcc tests.
+    Test class for VCC.
     """
 
     # TODO: check configured parameters in READY and IDLE?
@@ -75,10 +75,11 @@ class TestVcc:
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.state() == DevState.DISABLE
 
@@ -88,11 +89,12 @@ class TestVcc:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test reading & writing subarrayMembership
+        Test reading/writing subarrayMembership while catching the corresponding change events.
 
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
 
         """
         assert device_under_test.subarrayMembership == 0
@@ -108,19 +110,28 @@ class TestVcc:
             attribute_value=1,
         )
 
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
-
     def test_Status(
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
-        device_under_test.simulationMode = SimulationMode.FALSE
+        """
+        Test the Status attribute just after device initialization.
+
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
-        device_under_test.simulationMode = SimulationMode.FALSE
+        """
+        Test the adminMode attribute just after device initialization.
+
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
@@ -131,9 +142,12 @@ class TestVcc:
         command: str,
     ) -> None:
         """
-        Test the On/Off/Standby commands
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        Test the On/Off/Standby commands.
+
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         :param command: the command to test (one of On/Off/Standby)
         """
 
@@ -192,10 +206,13 @@ class TestVcc:
     ) -> None:
         """
         Test ConfigureBand with both failing and passing configurations.
-        :param device_under_test: fixture that provides a
-            :py:class: proxy to the device under test, in a
+
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param config_file_name: JSON file for the configuration
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param frequency_band: The frequency band to configure.
+        :param success: A parameterized value used to test success and failure conditions.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
@@ -253,7 +270,6 @@ class TestVcc:
                 ),
             )
 
-
     @pytest.mark.parametrize(
         "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
     )
@@ -267,12 +283,12 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param config_file_name: JSON file for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
         # prepare device for observation
         assert test_utils.device_online_and_on(device_under_test, event_tracer)
@@ -370,13 +386,12 @@ class TestVcc:
         """
         Test Vcc's ability to reconfigure and run multiple scans.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param config_file_name: JSON file for the configuration
-        :param scan_id: the scan id
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param config_file_name: JSON file for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
 
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -433,7 +448,7 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
-            
+
         # check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
@@ -487,7 +502,7 @@ class TestVcc:
             attribute_value=ObsState.CONFIGURING,
             previous_value=previous_state,
         )
-        
+
         previous_state = ObsState.CONFIGURING
         for obs_state in [
             ObsState.READY,
@@ -504,7 +519,7 @@ class TestVcc:
                 target_n_events=2,
             )
             previous_state = obs_state
-            
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).cbf_has_change_event_occurred(
@@ -536,12 +551,11 @@ class TestVcc:
         """
         Test Abort from ObsState.READY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param config_file_name: JSON file for the configuration.
         """
 
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -598,7 +612,7 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
-        
+
         # check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
@@ -627,7 +641,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=0,
         )
-        
+
         # Finally, ensure configuration works as expected after resetting
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
@@ -640,7 +654,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -691,12 +705,12 @@ class TestVcc:
         """
         Test Abort from ObsState.SCANNING.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param config_file_name: JSON file for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
 
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -797,7 +811,7 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=freq_band_dict()[freq_band_name]["band_index"],
         )
-        
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -833,5 +847,3 @@ class TestVcc:
                 target_n_events=2,
             )
             previous_state = obs_state
-
-    

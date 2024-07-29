@@ -45,7 +45,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 class TestTalonBoard:
     """
-    Test class for TalonBoard tests.
+    Test class for TalonBoard.
     """
 
     @pytest.fixture(name="test_context", scope="module")
@@ -125,11 +125,11 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -146,12 +146,13 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     @pytest.mark.parametrize(
@@ -167,10 +168,10 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
@@ -184,17 +185,18 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_StartupState(
+    def test_Online(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test Admin Mode Online
+        Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
@@ -216,12 +218,12 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_StartupState_missing_property(
+    def test_Online_missing_property(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
     ) -> None:
         """
-        Test Admin Mode Online
+        Test that the State attribute is appropriately set after device startup when there is a device property misisng form charts.
 
         :param device_under_test: fixture that provides a
             :py:class:`context.DeviceProxy` to the device under test, in a
@@ -249,14 +251,14 @@ class TestTalonBoard:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the On() command
+        Tests the On() command's happy path.
 
         :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-
-        self.test_StartupState(device_under_test, event_tracer)
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
@@ -272,9 +274,6 @@ class TestTalonBoard:
             ),
         )
 
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
-
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -288,22 +287,20 @@ class TestTalonBoard:
     def test_On_not_allowed(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the On() command
+        Test the On() command when device has not been started up.
 
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
+        
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
         ):
             device_under_test.On()
-
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "test_context",
@@ -321,14 +318,14 @@ class TestTalonBoard:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the On() command
+        Test the On() command when the device has already been turned on.
 
         :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-
-        self.test_StartupState(device_under_test, event_tracer)
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
@@ -344,9 +341,7 @@ class TestTalonBoard:
             ),
         )
 
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
-
+        # Attempt to turn the device on again.
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
 
@@ -360,9 +355,6 @@ class TestTalonBoard:
                 '[6, "Command is not allowed"]',
             ),
         )
-
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "test_context",
@@ -380,13 +372,14 @@ class TestTalonBoard:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the On() command
+        Test the On() command when the InfuxDB is unreachable.
 
         :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test, event_tracer)
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
@@ -410,9 +403,6 @@ class TestTalonBoard:
             attribute_value=DevState.UNKNOWN,
         )
 
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
-
     @pytest.mark.parametrize(
         "test_context",
         [
@@ -429,7 +419,12 @@ class TestTalonBoard:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the that all attr can be read/written correctly.
+        Test the that all attributes can be read/written correctly.
+        
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB
@@ -507,6 +502,3 @@ class TestTalonBoard:
         assert all(
             not warn for warn in device_under_test.ltmTemperatureWarning
         )
-
-        # assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()

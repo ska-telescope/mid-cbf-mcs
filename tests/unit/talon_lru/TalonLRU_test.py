@@ -36,7 +36,7 @@ gc.disable()
 
 class TestTalonLRU:
     """
-    Test class for the TalonLRU
+    Test class for the TalonLRU.
     """
 
     @pytest.fixture(name="test_context", scope="module")
@@ -69,12 +69,11 @@ class TestTalonLRU:
         power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         if (
             power_switch_1.stimulusMode == "command_success"
@@ -95,12 +94,11 @@ class TestTalonLRU:
         power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         if (
             power_switch_1.stimulusMode == "command_success"
@@ -121,14 +119,12 @@ class TestTalonLRU:
         power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-
         """
-
         if (
             power_switch_1.stimulusMode == "command_success"
             and power_switch_2.stimulusMode == "command_success"
@@ -149,14 +145,15 @@ class TestTalonLRU:
         power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Tests that the state of the TalonLRU device when it starts up is correct.
+        Tests the TalonLRU device's startup state.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param power_switch_1: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
+        :param power_switch_2: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
         """
-        # Trigger the mock start_communicating
         if (
             power_switch_1.stimulusMode == "command_success"
             and power_switch_2.stimulusMode == "command_success"
@@ -186,16 +183,15 @@ class TestTalonLRU:
         power_switch_2: unittest.mock.Mock,
     ) -> None:
         """
-        Tests that the On command behaves appropriately.
+        Tests the On() command's happy path.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :power_switch_1, power_switch2: Used to detect
-            configurations yielding different expected results
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param power_switch_1: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
+        :param power_switch_2: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
         """
-
-        # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
         assert_that(event_tracer).within_timeout(
@@ -259,9 +255,6 @@ class TestTalonLRU:
                 attribute_value=state,
             )
 
-        # Assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
-
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Off_from_off(
         self: TestTalonLRU,
@@ -271,9 +264,10 @@ class TestTalonLRU:
         """
         Tests that the Off command from an off state behaves appropriately.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         # Trigger the mock start_communicating
         device_under_test.adminMode = AdminMode.ONLINE
@@ -300,8 +294,6 @@ class TestTalonLRU:
                 '[6, "Command is not allowed"]',
             ),
         )
-        # Assert if any captured events have gone unaddressed
-        # change_event_callbacks.assert_not_called()
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_On_Off(
@@ -314,11 +306,12 @@ class TestTalonLRU:
         """
         Tests that the On command followed by the Off command works appropriately.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        power_switch_1, power_switch2: Used to detect
-            configurations yielding different expected results
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param power_switch_1: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
+        :param power_switch_2: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
         """
         if (
             power_switch_1.stimulusMode == "command_fail"
