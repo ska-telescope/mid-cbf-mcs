@@ -127,8 +127,6 @@ jive: ## configure TANGO_HOST to enable Jive
 k8s-pre-test:
 	@kubectl exec -n $(KUBE_NAMESPACE) $(CBF_CTRL_POD) -- mkdir -p /app/mnt/talondx-config
 
-PYTHON_LINT_TARGET = src/
-
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
 
