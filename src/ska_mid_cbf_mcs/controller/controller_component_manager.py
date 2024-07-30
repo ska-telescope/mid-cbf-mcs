@@ -371,6 +371,289 @@ class ControllerComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- InitSysParam Command --- #
+
+    def _validate_init_sys_param(
+        self: ControllerComponentManager,
+        params: dict,
+    ) -> bool:
+        """
+        Validate the InitSysParam against the ska-telmodel schema
+
+        :param params: The InitSysParam parameters
+        :return: True if the InitSysParam parameters are valid, False otherwise
+        """
+        try:
+            telmodel_validate(
+                version=params["interface"], config=params, strictness=2
+            )
+            self.logger.info(
+                "InitSysParam validation against ska-telmodel schema was successful!"
+            )
+        except ValueError as e:
+            self.logger.error(
+                f"InitSysParam validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            )
+            return False
+        return True
+
+    def _retrieve_sys_param_file(
+        self: ControllerComponentManager,
+        init_sys_param_json: dict,
+    ) -> tuple[bool, dict]:
+        """
+        Retrieve the sys_param file from the Telescope Model
+
+        :param init_sys_param_json: The InitSysParam parameters
+        """
+        # The uri was provided in the input string, therefore the mapping from Dish ID to
+        # VCC and frequency offset k needs to be retrieved using the Telescope Model
+        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
+        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
+        try:
+            mid_cbf_param_dict = TMData([tm_data_sources])[
+                tm_data_filepath
+            ].get_dict()
+            self.logger.info(
+                f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
+            )
+        except (ValueError, KeyError) as e:
+            self.logger.error(
+                f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
+            )
+            return (False, None)
+        return (True, mid_cbf_param_dict)
+
+    def _update_init_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> bool:
+        """
+        Update the InitSysParam parameters in the subarrays and VCCs as well as the talon boards
+
+        :param params: The InitSysParam parameters
+        :return: True if the InitSysParam parameters are successfully updated, False otherwise
+        """
+        # Write the init_sys_param to each of the subarrays
+        for fqdn in self._subarray_fqdn:
+            try:
+                self._proxies[fqdn].sysParam = params
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self.logger.error(
+                        f"Failure in connection to {fqdn}; {item.reason}"
+                    )
+                    return False
+
+        # Set VCC values
+        for fqdn in self._vcc_fqdn:
+            try:
+                proxy = self._proxies[fqdn]
+                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
+                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                    proxy.dishID = dish_id
+                    self.logger.info(
+                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                    )
+                else:
+                    self.logger.error(
+                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                    )
+                    return False
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self.logger.error(
+                        f"Failure in connection to {fqdn}; {item.reason}"
+                    )
+                    return False
+
+        # Update talon boards. The VCC ID to IP address mapping comes
+        # from hw_config. Then map VCC ID to DISH ID.
+        for vcc_id_str, ip in self._hw_config["talon_board"].items():
+            for fqdn in self._talon_board_fqdn:
+                try:
+                    proxy = self._proxies[fqdn]
+                    board_ip = proxy.get_property("TalonDxBoardAddress")[
+                        "TalonDxBoardAddress"
+                    ][0]
+                    if board_ip == ip:
+                        vcc_id = int(vcc_id_str)
+                        proxy.vccID = str(vcc_id)
+                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                            proxy.dishID = dish_id
+                            self.logger.info(
+                                f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
+                            )
+                        else:
+                            self.logger.warning(
+                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                            )
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        self.logger.error(
+                            f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
+                        )
+                    return False
+        return True
+
+    def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
+        """
+        Check if the InitSysParam command is allowed
+
+        :return: True if the InitSysParam command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if init_sys_param is allowed")
+        if self.power_state == PowerState.OFF:
+            return True
+        self.logger.warning(
+            "InitSysParam command cannot be issued because the current PowerState is not 'off'."
+        )
+        return False
+
+    def _init_sys_param(
+        self: ControllerComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Validate and save the Dish ID - VCC ID mapping and k values.
+
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :param task_callback: Callback function to update task status
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(f"Received sys params {argin}")
+
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "InitSysParam", task_callback, task_abort_event
+        ):
+            return
+
+        def raise_on_duplicate_keys(pairs):
+            data = {}
+            for key, value in pairs:
+                if key in data:
+                    raise ValueError(f"duplicated key: {key}")
+                else:
+                    data[key] = value
+            return data
+
+        try:
+            init_sys_param_json = json.loads(
+                argin, object_pairs_hook=raise_on_duplicate_keys
+            )
+        except ValueError as e:
+            self.logger.error(e)
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    "Duplicated Dish ID in the init_sys_param json",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        if not self._validate_init_sys_param(init_sys_param_json):
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    "Validating init_sys_param file against ska-telmodel schema failed",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        # If tm_data_filepath is provided, then we need to retrieve the
+        # init sys param file from CAR via the telescope model
+        if "tm_data_filepath" in init_sys_param_json:
+            passed, init_sys_param_json = self._retrieve_sys_param_file(
+                init_sys_param_json
+            )
+            if not passed:
+                task_callback(
+                    result=(
+                        ResultCode.FAILED,
+                        "Retrieving the init_sys_param file failed",
+                    ),
+                    status=TaskStatus.FAILED,
+                )
+                return
+            if not self._validate_init_sys_param(init_sys_param_json):
+                task_callback(
+                    result=(
+                        ResultCode.FAILED,
+                        "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed",
+                    ),
+                    status=TaskStatus.FAILED,
+                )
+                return
+            self.source_init_sys_param = argin
+            self.last_init_sys_param = json.dumps(init_sys_param_json)
+        else:
+            self.source_init_sys_param = ""
+            self.last_init_sys_param = argin
+
+        # Store the attribute
+        self.dish_utils = DISHUtils(init_sys_param_json)
+
+        # Send init_sys_param to the subarrays, VCCs and talon boards
+        if not self._update_init_sys_param(self.last_init_sys_param):
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to update subarrays with init_sys_param",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        task_callback(
+            result=(
+                ResultCode.OK,
+                "InitSysParam completed OK",
+            ),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    @check_communicating
+    def init_sys_param(
+        self: ControllerComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[ResultCode, str]:
+        """
+        Submit init_sys_param operation method to task executor queue.
+
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :param task_callback: Callback function to update task status
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.info(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._init_sys_param,
+            args=[argin],
+            is_cmd_allowed=self.is_init_sys_param_allowed,
+            task_callback=task_callback,
+        )
+
     # --- On Command --- #
 
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
@@ -429,6 +712,19 @@ class ControllerComponentManager(CbfComponentManager):
                     success = False
                     continue
                 self._blocking_commands.add(command_id)
+
+                # TODO: why is this so slow?
+                lrc_status = self._wait_for_blocking_results(
+                    timeout=20.0, task_abort_event=task_abort_event
+                )
+                if lrc_status != TaskStatus.COMPLETED:
+                    message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
+                    self.logger.error(message)
+                    success = False
+                else:
+                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+                    self.logger.info(message)
+
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
                 self.logger.error(
@@ -438,18 +734,6 @@ class ControllerComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-
-        # TODO: why is this so slow?
-        lrc_status = self._wait_for_blocking_results(
-            timeout=20.0, task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-            self.logger.info(message)
 
         return (success, message)
 
@@ -874,7 +1158,7 @@ class ControllerComponentManager(CbfComponentManager):
         # NOTE: This is separated from the subelements_fast group call because
         #       a failure shouldn't cause Controller.Off() to fail.
         try:
-            for fqdn in self._fqdn_talon_board:
+            for fqdn in self._talon_board_fqdn:
                 self._proxies[fqdn].Off()
         except tango.DevFailed as df:
             for item in df.args:
@@ -905,7 +1189,7 @@ class ControllerComponentManager(CbfComponentManager):
             # target specific outlets
             if fqdn not in self._power_switch_fqdn:
                 try:
-                    # TODO CIP-1899 The cbfcontroller is sometimes
+                    # TODO: CIP-1899 The cbfcontroller is sometimes
                     # unable to read the State() of the talon_lru
                     # device server due to an error trying to
                     # acquire the serialization monitor. As a temporary
@@ -962,6 +1246,19 @@ class ControllerComponentManager(CbfComponentManager):
                     success = False
                     continue
                 self._blocking_commands.add(command_id)
+
+                lrc_status = self._wait_for_blocking_results(
+                    timeout=10.0, task_abort_event=task_abort_event
+                )
+
+                if lrc_status != TaskStatus.COMPLETED:
+                    message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
+                    self.logger.error(message)
+                    success = False
+                else:
+                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
+                    self.logger.info(message)
+
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.Off() failed"
                 self.logger.error(
@@ -971,17 +1268,6 @@ class ControllerComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
-
-        lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-            self.logger.info(message)
 
         return (success, message)
 
@@ -1044,14 +1330,17 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.warning(log_msg)
             message.append(log_msg)
 
-        # Turn off all the LRUs currently in use
+        # Get all currently in use LRUs and turn them off
         if self.simulation_mode == SimulationMode.FALSE:
             if len(self._talon_lru_fqdn) == 0:
                 self._talon_lru_fqdn = self._get_talon_lru_fqdns()
                 # TODO: handle subscribed events for missing LRUs
         else:
-            # use a hard-coded example fqdn talon lru for simulation mode
-            self._talon_lru_fqdn = ["mid_csp_cbf/talon_lru/001"]
+            # Use a hard-coded example fqdn talon lru for simulationMode
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
 
         lru_off_status, log_msg = self._turn_off_lrus(task_abort_event)
         if not lru_off_status:
@@ -1114,285 +1403,5 @@ class ControllerComponentManager(CbfComponentManager):
         return self.submit_task(
             self._off,
             is_cmd_allowed=self.is_off_allowed,
-            task_callback=task_callback,
-        )
-
-    # --- InitSysParam Command --- #
-
-    def _validate_init_sys_param(
-        self: ControllerComponentManager,
-        params: dict,
-    ) -> bool:
-        """
-        Validate the InitSysParam against the ska-telmodel schema
-
-        :param params: The InitSysParam parameters
-        :return: True if the InitSysParam parameters are valid, False otherwise
-        """
-        try:
-            telmodel_validate(
-                version=params["interface"], config=params, strictness=2
-            )
-            self.logger.info(
-                "InitSysParam validation against ska-telmodel schema was successful!"
-            )
-        except ValueError as e:
-            self.logger.error(
-                f"InitSysParam validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            )
-            return False
-        return True
-
-    def _retrieve_sys_param_file(
-        self: ControllerComponentManager,
-        init_sys_param_json: dict,
-    ) -> tuple[bool, dict]:
-        """
-        Retrieve the sys_param file from the Telescope Model
-
-        :param init_sys_param_json: The InitSysParam parameters
-        """
-        # The uri was provided in the input string, therefore the mapping from Dish ID to
-        # VCC and frequency offset k needs to be retrieved using the Telescope Model
-        tm_data_sources = init_sys_param_json["tm_data_sources"][0]
-        tm_data_filepath = init_sys_param_json["tm_data_filepath"]
-        try:
-            mid_cbf_param_dict = TMData([tm_data_sources])[
-                tm_data_filepath
-            ].get_dict()
-            self.logger.info(
-                f"Successfully retrieved json data from {tm_data_filepath} in {tm_data_sources}"
-            )
-        except (ValueError, KeyError) as e:
-            self.logger.error(
-                f"Retrieving the init_sys_param file failed with exception: \n {str(e)}"
-            )
-            return (False, None)
-        return (True, mid_cbf_param_dict)
-
-    def _update_init_sys_param(
-        self: ControllerComponentManager,
-        params: str,
-    ) -> bool:
-        """
-        Update the InitSysParam parameters in the subarrays and VCCs as well as the talon boards
-
-        :param params: The InitSysParam parameters
-        :return: True if the InitSysParam parameters are successfully updated, False otherwise
-        """
-        # Write the init_sys_param to each of the subarrays
-        for fqdn in self._subarray_fqdn:
-            try:
-                self._proxies[fqdn].sysParam = params
-            except tango.DevFailed as df:
-                self.logger.error(f"Failure in connection to {fqdn}; {df}")
-                return False
-
-        # Set VCC values
-        for fqdn in self._vcc_fqdn:
-            try:
-                proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
-                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    proxy.dishID = dish_id
-                    self.logger.info(
-                        f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
-                    )
-                else:
-                    self.logger.error(
-                        f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                    )
-                    return False
-            except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Failure in connection to {fqdn}; {item.reason}"
-                    )
-                    return False
-
-        # Update talon boards. The VCC ID to IP address mapping comes
-        # from hw_config. Then map VCC ID to DISH ID.
-        for vcc_id_str, ip in self._hw_config["talon_board"].items():
-            for fqdn in self._talon_board_fqdn:
-                try:
-                    proxy = self._proxies[fqdn]
-                    board_ip = proxy.get_property("TalonDxBoardAddress")[
-                        "TalonDxBoardAddress"
-                    ][0]
-                    if board_ip == ip:
-                        vcc_id = int(vcc_id_str)
-                        proxy.vccID = str(vcc_id)
-                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                            proxy.dishID = dish_id
-                            self.logger.info(
-                                f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
-                            )
-                        else:
-                            self.logger.warning(
-                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                            )
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        self.logger.error(
-                            f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
-                        )
-                    return False
-        return True
-
-    def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
-        """
-        Check if the InitSysParam command is allowed
-
-        :return: True if the InitSysParam command is allowed, False otherwise
-        """
-        self.logger.debug("Checking if init_sys_param is allowed")
-        if self.power_state == PowerState.OFF:
-            return True
-        self.logger.warning(
-            "InitSysParam command cannot be issued because the current PowerState is not 'off'."
-        )
-        return False
-
-    def _init_sys_param(
-        self: ControllerComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        """
-        Validate and save the Dish ID - VCC ID mapping and k values.
-
-        :param argin: the Dish ID - VCC ID mapping and k values in a
-                        json string.
-        :param task_callback: Callback function to update task status
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug(f"Received sys params {argin}")
-
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "InitSysParam", task_callback, task_abort_event
-        ):
-            return
-
-        def raise_on_duplicate_keys(pairs):
-            data = {}
-            for key, value in pairs:
-                if key in data:
-                    raise ValueError(f"duplicated key: {key}")
-                else:
-                    data[key] = value
-            return data
-
-        try:
-            init_sys_param_json = json.loads(
-                argin, object_pairs_hook=raise_on_duplicate_keys
-            )
-        except ValueError as e:
-            self.logger.error(e)
-            task_callback(
-                result=(
-                    ResultCode.FAILED,
-                    "Duplicated Dish ID in the init_sys_param json",
-                ),
-                status=TaskStatus.FAILED,
-            )
-            return
-
-        if not self._validate_init_sys_param(init_sys_param_json):
-            task_callback(
-                result=(
-                    ResultCode.FAILED,
-                    "Validating init_sys_param file against ska-telmodel schema failed",
-                ),
-                status=TaskStatus.FAILED,
-            )
-            return
-
-        # If tm_data_filepath is provided, then we need to retrieve the
-        # init sys param file from CAR via the telescope model
-        if "tm_data_filepath" in init_sys_param_json:
-            passed, init_sys_param_json = self._retrieve_sys_param_file(
-                init_sys_param_json
-            )
-            if not passed:
-                task_callback(
-                    result=(
-                        ResultCode.FAILED,
-                        "Retrieving the init_sys_param file failed",
-                    ),
-                    status=TaskStatus.FAILED,
-                )
-                return
-            if not self._validate_init_sys_param(init_sys_param_json):
-                task_callback(
-                    result=(
-                        ResultCode.FAILED,
-                        "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed",
-                    ),
-                    status=TaskStatus.FAILED,
-                )
-                return
-            self.source_init_sys_param = argin
-            self.last_init_sys_param = json.dumps(init_sys_param_json)
-        else:
-            self.source_init_sys_param = ""
-            self.last_init_sys_param = argin
-
-        # Store the attribute
-        self.dish_utils = DISHUtils(init_sys_param_json)
-
-        # Send init_sys_param to the subarrays, VCCs and talon boards
-        if not self._update_init_sys_param(self.last_init_sys_param):
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to update subarrays with init_sys_param",
-                ),
-                status=TaskStatus.FAILED,
-            )
-            return
-
-        task_callback(
-            result=(
-                ResultCode.OK,
-                "InitSysParam completed OK",
-            ),
-            status=TaskStatus.COMPLETED,
-        )
-        return
-
-    @check_communicating
-    def init_sys_param(
-        self: ControllerComponentManager,
-        argin: str,
-        task_callback: Optional[Callable] = None,
-    ) -> tuple[ResultCode, str]:
-        """
-        Submit init_sys_param operation method to task executor queue.
-
-        :param argin: the Dish ID - VCC ID mapping and k values in a
-                        json string.
-        :param task_callback: Callback function to update task status
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.info(f"ComponentState={self._component_state}")
-        return self.submit_task(
-            self._init_sys_param,
-            args=[argin],
-            is_cmd_allowed=self.is_init_sys_param_allowed,
             task_callback=task_callback,
         )

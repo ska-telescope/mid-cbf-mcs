@@ -31,7 +31,7 @@ def device_online_and_on(
     dut: context.DeviceProxy,
     event_tracer: TangoEventTracer,
 ) -> bool:
-    # set a given device to AdminMode.ONLINE and DevState.ON
+    # Set a given device to AdminMode.ONLINE and DevState.ON
     dut.adminMode = AdminMode.ONLINE
     assert_that(event_tracer).within_timeout(
         EVENT_TIMEOUT
@@ -49,12 +49,5 @@ def device_online_and_on(
         attribute_name="state",
         attribute_value=tango.DevState.ON,
     )
-
-    # assert if any captured events have gone unaddressed
-    # assert_that(event_tracer).within_timeout(
-    #     EVENT_TIMEOUT
-    # ).hasnt_change_event_occurred(
-    #     device_name=dut,
-    # )
 
     return dut.adminMode == AdminMode.ONLINE

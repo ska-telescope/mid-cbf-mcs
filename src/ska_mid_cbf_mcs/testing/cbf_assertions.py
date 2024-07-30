@@ -297,7 +297,7 @@ def cbf_has_change_event_occurred(
     )
 
     # if no event is found, raise an error
-    if len(result) == 0:
+    if len(result) < target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = f"Expected to find {target_n_events} event(s) matching the predicate"
         if hasattr(assertpy_context, "event_timeout"):
@@ -406,7 +406,7 @@ def cbf_hasnt_change_event_occurred(
     )
 
     # if any event is found, raise an error
-    if result:
+    if len(result) >= target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = f"Expected to NOT find {target_n_events} event(s) matching the predicate"
         if getattr(assertpy_context, "event_timeout", None) is not None:

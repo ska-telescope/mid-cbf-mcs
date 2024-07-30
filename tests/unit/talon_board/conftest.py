@@ -47,6 +47,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
+    :param device_under_test: the device being tested.
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()

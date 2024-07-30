@@ -740,7 +740,3 @@ class VccComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
