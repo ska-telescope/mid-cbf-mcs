@@ -658,17 +658,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 msg,
             )
 
-    def is_off_allowed(self: TalonLRUComponentManager) -> bool:
-        """
-        Check if the off command is allowed.
-
-        :return: True if the off command is allowed, False otherwise
-        """
-        self.logger.debug("Checking if off is allowed")
-        if self._component_state["power"] == PowerState.ON:
-            return True
-        self.logger.info("LRU is already off, do not need to turn off.")
-        return False
 
     def _off(
         self: TalonLRUComponentManager,
@@ -716,6 +705,5 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._off,
-            is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )
