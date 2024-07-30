@@ -150,7 +150,6 @@ class TestVcc:
         :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         :param command: the command to test (one of On/Off/Standby)
         """
-
         device_under_test.simulationMode = SimulationMode.FALSE
 
         device_under_test.adminMode = AdminMode.ONLINE
