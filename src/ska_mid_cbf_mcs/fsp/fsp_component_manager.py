@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import tango
-from ska_control_model import AdminMode, PowerState, SimulationMode
+from ska_control_model import PowerState, SimulationMode
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context

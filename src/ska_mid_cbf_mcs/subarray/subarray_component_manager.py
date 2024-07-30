@@ -244,17 +244,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        try:
-            # TODO: do this here?
-            for proxy in self._all_fsp_corr_proxies.values():
-                proxy.adminMode = AdminMode.OFFLINE
-        except tango.DevFailed as df:
-            self.logger.error(f"{df}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
-
         # delete all device proxies
         self._all_vcc_proxies = {}
         self._all_fsp_proxies = {}
@@ -837,12 +826,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # Scan Commands
     #####################
 
-    def _issue_command_all_assigned_resources(
+    def _issue_lrc_all_assigned_resources(
         self: CbfSubarrayComponentManager,
         command_name: str,
         argin: Optional[any] = None,
-        lrc: bool = False,
-        task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -850,9 +837,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
-        :param lrc: True if the command to issue is long-running
-        :param task_callback: callback for driving status of task executor's
-            current LRC task
         :param task_abort_event: event indicating AbortCommands has been issued
 
         :return: TaskStatus
@@ -873,18 +857,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             self._blocking_commands.add(command_id)
 
-        if lrc:
-            lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
+        lrc_status = self._wait_for_blocking_results(
+            timeout=10.0, task_abort_event=task_abort_event
+        )
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error("One or more command calls timed out.")
+            return lrc_status
+        if lrc_status == TaskStatus.ABORTED:
+            self.logger.warning(
+                f"{command_name} command aborted by task executor abort event."
             )
-            if lrc_status == TaskStatus.FAILED:
-                self.logger.error("One or more command calls timed out.")
-                return lrc_status
-            if lrc_status == TaskStatus.ABORTED:
-                self.logger.warning(
-                    f"{command_name} command aborted by task executor abort event."
-                )
-                return lrc_status
+            return lrc_status
 
         return TaskStatus.COMPLETED
 
@@ -1674,10 +1657,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # issue Scan to assigned resources
         scan_id = scan["scan_id"]
-        scan_status = self._issue_command_all_assigned_resources(
+        scan_status = self._issue_lrc_all_assigned_resources(
             command_name="Scan",
             argin=scan_id,
-            lrc=True,
             task_abort_event=task_abort_event,
         )
         if scan_status == TaskStatus.FAILED:
@@ -1734,8 +1716,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue EndScan to assigned resources
-        end_scan_status = self._issue_command_all_assigned_resources(
-            command_name="EndScan", lrc=True, task_abort_event=task_abort_event
+        end_scan_status = self._issue_lrc_all_assigned_resources(
+            command_name="EndScan", task_abort_event=task_abort_event
         )
         if end_scan_status == TaskStatus.FAILED:
             task_callback(
@@ -1789,9 +1771,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue GoToIdle to assigned resources
-        go_to_idle_status = self._issue_command_all_assigned_resources(
+        go_to_idle_status = self._issue_lrc_all_assigned_resources(
             command_name="GoToIdle",
-            lrc=True,
             task_abort_event=task_abort_event,
         )
         if go_to_idle_status == TaskStatus.FAILED:
@@ -1854,8 +1835,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # issue Abort to assigned resources
-        abort_status = self._issue_command_all_assigned_resources(
-            command_name="Abort", lrc=True, task_abort_event=task_abort_event
+        abort_status = self._issue_lrc_all_assigned_resources(
+            command_name="Abort", task_abort_event=task_abort_event
         )
         if abort_status == TaskStatus.FAILED:
             task_callback(
@@ -1904,9 +1885,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_status = self._issue_command_all_assigned_resources(
+            abort_status = self._issue_lrc_all_assigned_resources(
                 command_name="Abort",
-                lrc=True,
                 task_abort_event=task_abort_event,
             )
             if abort_status == TaskStatus.FAILED:
@@ -1928,9 +1908,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        obs_reset_status = self._issue_command_all_assigned_resources(
+        obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
-            lrc=True,
             task_abort_event=task_abort_event,
         )
         if obs_reset_status == TaskStatus.FAILED:
@@ -1965,6 +1944,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # Update obsState callback
+        self._update_component_state(configured=False)
 
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),
@@ -2005,9 +1987,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # if subarray is in FAULT, we must first abort VCC and FSP operation
         # this will allow us to call ObsReset on them even if they are not in FAULT
         if self._component_state["obsfault"]:
-            abort_status = self._issue_command_all_assigned_resources(
+            abort_status = self._issue_lrc_all_assigned_resources(
                 command_name="Abort",
-                lrc=True,
                 task_abort_event=task_abort_event,
             )
             if abort_status == TaskStatus.FAILED:
@@ -2029,9 +2010,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return
 
-        obs_reset_status = self._issue_command_all_assigned_resources(
+        obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
-            lrc=True,
             task_abort_event=task_abort_event,
         )
         if obs_reset_status == TaskStatus.FAILED:
@@ -2067,6 +2047,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Update obsState callback
+        self._update_component_state(configured=False)
+
         # remove all assigned VCCs to return to EMPTY
         release_success = self._release_vcc_loop(dish_ids=self.dish_ids.copy())
         if not release_success:
@@ -2078,6 +2061,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # Update obsState callback
+        self._update_component_state(resourced=False)
 
         task_callback(
             result=(ResultCode.OK, "Restart completed OK"),
