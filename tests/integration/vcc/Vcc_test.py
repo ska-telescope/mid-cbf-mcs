@@ -23,15 +23,7 @@ from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
-# Standard imports
-
-# Path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-
-# Tango imports
-
-# SKA specific imports
 
 
 class TestVcc:

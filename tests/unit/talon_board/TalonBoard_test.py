@@ -33,7 +33,6 @@ from ... import test_utils
 # Disable garbage collection to prevent tests hanging
 gc.disable()
 
-# Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 

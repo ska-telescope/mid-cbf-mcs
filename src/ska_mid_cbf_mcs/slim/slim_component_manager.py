@@ -129,8 +129,8 @@ class SlimComponentManager(CbfComponentManager):
     ) -> None:
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
-
-        self._unsubscribe_command_results()
+        for proxy in self._dp_links:
+            self._unsubscribe_command_results(proxy)
         self._blocking_commands = set()
 
         for dp in self._dp_links:
