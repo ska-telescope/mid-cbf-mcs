@@ -147,7 +147,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param command: the command to test (one of On/Off/Standby)
         """
         device_under_test.simulationMode = SimulationMode.FALSE

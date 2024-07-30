@@ -12,18 +12,18 @@ import copy
 import json
 import logging
 import os
-from assertpy import assert_that
 import random
 import time
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode, ObsState, ResultCode
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
-from ska_tango_testing import context
-from ska_tango_testing.integration import TangoEventTracer
 
 from ... import test_utils
 
@@ -32,7 +32,6 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-
     @pytest.mark.parametrize("sub_id", [1])
     def test_Connect(
         self: TestCbfSubarray,
@@ -111,7 +110,7 @@ class TestCbfSubarray:
             device_name=subarray[sub_id],
             attribute_name="state",
             attribute_value=DevState.ON,
-            previous_value=DevState.OFF
+            previous_value=DevState.OFF,
         )
 
     # @pytest.mark.parametrize(
@@ -1558,9 +1557,7 @@ class TestCbfSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(
-            receptors
-        )
+        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(receptors)
         command_dict["ConfigureScan"] = subarray[sub_id].ConfigureScan(
             json.dumps(configuration)
         )
@@ -1581,16 +1578,16 @@ class TestCbfSubarray:
             device_name=subarray[sub_id],
             attribute_name="receptors",
             attribute_value=receptors,
-            previous_value=()
+            previous_value=(),
         )
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=subarray[sub_id],
             attribute_name="receptors",
             attribute_value=(),
-            previous_value=receptors
+            previous_value=receptors,
         )
 
         # assertions for all issued LRC
@@ -1607,7 +1604,7 @@ class TestCbfSubarray:
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -1627,13 +1624,15 @@ class TestCbfSubarray:
             ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name="obsState",
-                attribute_value=obs_state
+                attribute_value=obs_state,
             )
 
         # --- VCC checks --- #
 
         vcc_ids = [dish_utils.dish_id_to_vcc_id[r] for r in receptors]
-        frequency_band = freq_band_dict()[configuration["common"]["frequency_band"]]["band_index"]
+        frequency_band = freq_band_dict()[
+            configuration["common"]["frequency_band"]
+        ]["band_index"]
         assert_list = [
             ("subarrayMembership", sub_id),
             ("frequencyBand", frequency_band),
@@ -1652,7 +1651,7 @@ class TestCbfSubarray:
                 ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_value=attr_value,
                 )
 
         # --- FSP checks --- #
@@ -1673,7 +1672,7 @@ class TestCbfSubarray:
                 ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
                     attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_value=attr_value,
                 )
 
             assert_list = [
@@ -1691,7 +1690,7 @@ class TestCbfSubarray:
                 ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_value=attr_value,
                 )
 
     # TODO config ID, scan ID

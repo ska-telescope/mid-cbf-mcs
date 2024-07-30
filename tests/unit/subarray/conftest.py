@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import unittest
+from typing import Generator
 
 import pytest
 import tango
@@ -22,14 +23,12 @@ from ska_control_model import (
 )
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
-from ... import test_utils
 
-
-@pytest.fixture(name="device_under_test")
+@pytest.fixture(name="device_under_test", scope="module")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -43,32 +42,52 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def vcc_change_event_callbacks(
+@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
     change_event_attr_list = [
         "longRunningCommandResult",
         "obsState",
         "receptors",
+        "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_tm() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_attribute("delayModel", "")
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
+def mock_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
+    builder.add_attribute("maxCapabilities", ["VCC:4", "FSP:4", "Subarray:1"])
+    builder.add_property(
+        "MaxCapabilities",
+        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
+    )
+    return builder()
+
+
+@pytest.fixture(scope="module")
 def mock_vcc_builder() -> unittest.mock.Mock:
     """Subarray requires unique Vcc mocks, so we return the mock builder"""
     builder = MockDeviceBuilder()
@@ -91,7 +110,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     return builder
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -109,7 +128,7 @@ def mock_fsp() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_fsp_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -130,7 +149,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -142,7 +161,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_vis_mesh() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -152,7 +171,7 @@ def mock_vis_mesh() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_host_lut_s1() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -165,7 +184,7 @@ def mock_host_lut_s1() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_host_lut_s2() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -176,7 +195,7 @@ def mock_host_lut_s2() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_spead_desc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -186,7 +205,7 @@ def mock_spead_desc() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def initial_mocks(
     mock_tm: unittest.mock.Mock,
     mock_controller: unittest.mock.Mock,
