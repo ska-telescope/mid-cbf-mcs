@@ -146,7 +146,6 @@ class TestCbfController:
         """
         Test the "On" command
         """
-        assert False
         # Send the On command
         result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
@@ -190,7 +189,7 @@ class TestCbfController:
 
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        
+
         # Initialize the system parameters
         result_code, command_id = controller.InitSysParam(sp)
         assert result_code == [ResultCode.QUEUED]

@@ -112,6 +112,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # SimulationMode.FALSE
         self.simulation_mode = simulation_mode
 
+    # -------------
+    # Communication
+    # -------------
+
     def _start_communicating(
         self: CbfComponentManager, *args, **kwargs
     ) -> None:
@@ -223,17 +227,17 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         dev_name = proxy.dev_name()
-        name, event_id = self._event_ids.pop(dev_name, None)
+        event_id = self._event_ids.pop(dev_name, None)
         if event_id is None:
             self.logger.warning(
-                f"No longRunningCommandResult event subscription for {name}"
+                f"No longRunningCommandResult event subscription for {dev_name}"
             )
             return
         proxy.unsubscribe_event(event_id)
 
-    #######################
-    # Group-related methods
-    #######################
+    # -------------
+    # Group Methods
+    # -------------
 
     def _create_group_proxies(
         self: CbfComponentManager, group_proxies: dict

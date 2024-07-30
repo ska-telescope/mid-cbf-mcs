@@ -1,53 +1,42 @@
 import tango
 from assertpy import assert_that
-from ska_control_model import AdminMode
+from ska_control_model import AdminMode, SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing.mock.placeholders import Anything
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 EVENT_TIMEOUT = 30
 
 
-def change_event_subscriber(
-    dut: tango.DeviceProxy,
-    change_event_attr_list: list,
-    change_event_callbacks: MockTangoEventCallbackGroup,
-) -> dict:
-    # subscribe to and provide event IDs for all specified attributes
-    attr_event_ids = {}
-    for attr_name in change_event_attr_list:
-        attr_event_ids[attr_name] = dut.subscribe_event(
-            attr_name,
-            tango.EventType.CHANGE_EVENT,
-            change_event_callbacks[attr_name],
-        )
-        # assert against first empty change event received
-        change_event_callbacks.assert_change_event(attr_name, Anything)
-    return attr_event_ids
-
-
 def device_online_and_on(
-    dut: context.DeviceProxy,
+    device_under_test: context.DeviceProxy,
     event_tracer: TangoEventTracer,
 ) -> bool:
+    """
+    Helper function to start up and turn on the DUT.
+
+    :param device_under_test: A fixture that provides a
+        :py:class:`CbfDeviceProxy` to the device under test, in a
+        :py:class:`tango.test_context.DeviceTestContext`.
+    :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+    """
     # Set a given device to AdminMode.ONLINE and DevState.ON
-    dut.adminMode = AdminMode.ONLINE
+    device_under_test.simulationMode == SimulationMode.FALSE
+    device_under_test.adminMode = AdminMode.ONLINE
     assert_that(event_tracer).within_timeout(
         EVENT_TIMEOUT
     ).has_change_event_occurred(
-        device_name=dut,
+        device_name=device_under_test,
         attribute_name="state",
         attribute_value=tango.DevState.OFF,
     )
 
-    dut.On()
+    device_under_test.On()
     assert_that(event_tracer).within_timeout(
         EVENT_TIMEOUT
     ).has_change_event_occurred(
-        device_name=dut,
+        device_name=device_under_test,
         attribute_name="state",
         attribute_value=tango.DevState.ON,
     )
 
-    return dut.adminMode == AdminMode.ONLINE
+    return device_under_test.adminMode == AdminMode.ONLINE

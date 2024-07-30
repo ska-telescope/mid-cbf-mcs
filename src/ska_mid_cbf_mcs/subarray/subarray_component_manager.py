@@ -89,7 +89,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp_corr_all = fsp_corr_sub
         self._fqdn_vcc = []
         self._fqdn_fsp = []
-        self._fqdn_fsp_all = []
+        self._fqdn_fsp_corr = []
 
         self._fqdn_talon_board_device = talon_board
         self._fqdn_vis_slim_device = vis_slim
@@ -192,18 +192,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_fqdn
                 )
+                self.logger.error("1.")
                 self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_corr_fqdn
                 )
+                self.logger.error("2.")
 
             for fqdn in self._fqdn_talon_board_device:
                 proxy = context.DeviceProxy(device_name=fqdn)
                 self._all_talon_board_proxies.append(proxy)
+                self.logger.error("3.")
 
             if self._proxy_vis_slim is None:
                 self._proxy_vis_slim = context.DeviceProxy(
                     device_name=self._fqdn_vis_slim_device
                 )
+                self.logger.error("4.")
 
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
