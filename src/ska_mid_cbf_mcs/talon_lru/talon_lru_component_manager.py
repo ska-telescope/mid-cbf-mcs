@@ -13,7 +13,7 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, PowerState, SimulationMode, TaskStatus
+from ska_control_model import AdminMode, PowerState, TaskStatus
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
@@ -238,7 +238,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             "Entering TalonLRUComponentManager.stop_communicating"
         )
 
-        self._unsubscribe_command_results()
+        for proxy in [
+            self._proxy_power_switch1,
+            self._proxy_power_switch2,
+            self._proxy_talondx_board1,
+            self._proxy_talondx_board2,
+        ]:
+            self._unsubscribe_command_results(proxy)
         self._blocking_commands = set()
 
         super()._stop_communicating()
@@ -476,13 +482,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             "On completed OK",
         )
 
-    def is_on_allowed(self: TalonLRUComponentManager) -> bool:
-        self.logger.debug("Checking if on is allowed")
-        if self._component_state["power"] == PowerState.OFF:
-            return True
-        self.logger.warning("LRU is already on, do not need to turn on.")
-        return False
-
     def _on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -545,7 +544,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,
-            is_cmd_allowed=self.is_on_allowed,
             task_callback=task_callback,
         )
 
@@ -666,18 +664,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 msg,
             )
 
-    def is_off_allowed(self: TalonLRUComponentManager) -> bool:
-        """
-        Check if the off command is allowed.
-
-        :return: True if the off command is allowed, False otherwise
-        """
-        self.logger.debug("Checking if off is allowed")
-        if self._component_state["power"] == PowerState.ON:
-            return True
-        self.logger.info("LRU is already off, do not need to turn off.")
-        return False
-
     def _off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -724,6 +710,5 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._off,
-            is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )

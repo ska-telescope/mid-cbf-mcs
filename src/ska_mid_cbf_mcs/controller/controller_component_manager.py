@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from threading import Event, Thread
+from threading import Event
 from typing import Callable, Optional
 
 import tango
@@ -344,7 +344,16 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self._unsubscribe_command_results()
+        self.logger.debug(
+            "Entering ControllerComponentManager.stop_communicating"
+        )
+        for fqdn, proxy in self._proxies:
+            if fqdn in (
+                self._talon_lru_fqdn
+                + self._fsp_fqdn
+                + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+            ):
+                self._unsubscribe_command_results(proxy)
         self._blocking_commands = set()
 
         for proxy in self._proxies.values():
@@ -1241,7 +1250,7 @@ class ControllerComponentManager(CbfComponentManager):
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
-                
+
                 if lrc_status != TaskStatus.COMPLETED:
                     message = "One or more calls to nested LRC TalonLru.Off() timed out. Check TalonLru logs."
                     self.logger.error(message)

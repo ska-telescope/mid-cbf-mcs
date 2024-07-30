@@ -19,19 +19,11 @@ from ska_control_model import ResultCode, SimulationMode
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DeviceData, DevLong, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
-# Standard imports
-
-# Path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-
-# Tango imports
-
-# SKA specific imports
 
 
 class TestVcc:

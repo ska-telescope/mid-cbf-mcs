@@ -11,20 +11,22 @@
 
 from __future__ import annotations
 
-# Standard imports
 import gc
 import os
 from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode, HealthState, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
+
+from ... import test_utils
 
 # Disable garbage collection to prevent tests hanging
 gc.disable()
@@ -32,17 +34,13 @@ gc.disable()
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-# Tango imports
-
-# SKA imports
-
 
 class TestSlimLink:
     """
-    Test class for SlimLink tests.
+    Test class for SlimLink.
     """
 
-    @pytest.fixture(name="test_context")
+    @pytest.fixture(name="test_context", scope="module")
     def slim_link_test_context(
         self: TestSlimLink, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
@@ -61,11 +59,11 @@ class TestSlimLink:
         self: TestSlimLink, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -73,11 +71,11 @@ class TestSlimLink:
         self: TestSlimLink, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -85,29 +83,37 @@ class TestSlimLink:
         self: TestSlimLink, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def test_StartupState(
+    def test_Online(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test Admin Mode Online
+        Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.ON
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -123,41 +129,42 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the ConnectTxRx() command
+        Test the ConnectTxRx() command's happy path.
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
+        self.test_Online(device_under_test, event_tracer)
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
-        device_under_test.simulationMode = SimulationMode.FALSE
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[0, "ConnectTxRx completed OK"]',
-            )
+            ),
         )
 
-        # DUT attr values set in mocks in conftest.py
+        # Attr values are set in mocks in conftest.py
         assert device_under_test.txIdleCtrlWord == 123456
         assert (
             device_under_test.txIdleCtrlWord
             == device_under_test.rxIdleCtrlWord
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -173,34 +180,29 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
-        Test the ConnectTxRx() command
+        Test the ConnectTxRx() command before the device has been started up.
 
-        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
-        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a (mocked) SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a (mocked) SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
-        # self.test_StartupState(device_under_test)
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
-        device_under_test.simulationMode = SimulationMode.FALSE
 
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
         ):
             device_under_test.ConnectTxRx()
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
     def test_ConnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the ConnectTxRx() command when no Tx or Rx device names have been set.
@@ -208,22 +210,23 @@ class TestSlimLink:
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
-        device_under_test.simulationMode = SimulationMode.FALSE
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[3, "DsSlimTxRx device names have not been set."]',
-            )
+            ),
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -239,43 +242,45 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the ConnectTxRx() command using a Tx mock that has no idle_ctrl_word
-        attr set in order to trigger ICW regeneration in the DUT
+        Test the ConnectTxRx() command using a Tx mock that ommits the idle_ctrl_word
+        attr to trigger ICW regeneration in the DUT.
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
+        self.test_Online(device_under_test, event_tracer)
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
-        device_under_test.simulationMode = SimulationMode.FALSE
 
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[0, "ConnectTxRx completed OK"]',
-            )
+            ),
         )
 
         assert device_under_test.txIdleCtrlWord == (
             hash(device_under_test.txDeviceName) & 0x00FFFFFFFFFFFFFF
         )
+
         assert (
             device_under_test.txIdleCtrlWord
             == device_under_test.rxIdleCtrlWord
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -291,16 +296,17 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test all attributes in the tango interface for readability/writability.
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         device_under_test.txDeviceName = tx_device_name
         assert device_under_test.txDeviceName == tx_device_name
@@ -309,15 +315,16 @@ class TestSlimLink:
         assert device_under_test.rxDeviceName == rx_device_name
 
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
+
         assert (
             device_under_test.linkName == f"{tx_device_name}->{rx_device_name}"
         )
-        # DUT attr values set in mocks in conftest.py
+        # Attr values are set in mocks in conftest.py
         assert device_under_test.txIdleCtrlWord == 123456
         assert device_under_test.rxIdleCtrlWord == 123456
         assert device_under_test.bitErrorRate == 8e-12
@@ -339,49 +346,69 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the VerifyConnection() command
+        Test the VerifyConnection() command's happy path.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
         result, msg = device_under_test.VerifyConnection()
         assert [result, msg[0]] == [
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        assert device_under_test.healthState == HealthState.OK
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="healthState",
+            attribute_value=HealthState.OK,
+        )
 
     def test_VerifyConnection_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the VerifyConnection() command without assigning Tx/Rx device names (proxies will be None).
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx_empty_device_names(
-            device_under_test, change_event_callbacks
+            device_under_test, event_tracer
         )
         result, msg = device_under_test.VerifyConnection()
         assert [result, msg[0]] == [
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        assert device_under_test.healthState == HealthState.UNKNOWN
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="healthState",
+            attribute_value=HealthState.UNKNOWN,
+        )
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -397,27 +424,37 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the VerifyConnection() command with a mock set to fail health checks.
+        Test the VerifyConnection() command with a mock that is set to fail health checks.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
         result, msg = device_under_test.VerifyConnection()
         assert [result, msg[0]] == [
             ResultCode.OK,
             "VerifyConnection completed OK",
         ]
-        assert device_under_test.healthState == HealthState.FAILED
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="healthState",
+            attribute_value=HealthState.FAILED,
+        )
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -433,35 +470,39 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the DisconnectTxRx() command
+        Test the DisconnectTxRx() command's happy path.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
 
         result_code, command_id = device_under_test.DisconnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[0, "DisconnectTxRx completed OK"]',
-            )
+            ),
         )
         assert device_under_test.linkName == ""
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -477,20 +518,23 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the DisconnectTxRx() command
+        Test the DisconnectTxRx() command when the device was abruptly set offline after connecting.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
 
         device_under_test.adminMode = AdminMode.OFFLINE
@@ -499,36 +543,34 @@ class TestSlimLink:
         ):
             device_under_test.DisconnectTxRx()
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
     def test_DisconnectTxRx_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the DisconnectTxRx() command
+        Test the DisconnectTxRx() command without connecting first.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
-        device_under_test.simulationMode = SimulationMode.FALSE
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.DisconnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[3, "Rx proxy is not set. SlimLink must be connected before it can be disconnected."]',
-            )
+            ),
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "tx_device_name, rx_device_name",
@@ -544,20 +586,23 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the ClearCounters() command
+        Test the ClearCounters() command's happy path.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
+        :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
-            device_under_test=device_under_test,
             tx_device_name=tx_device_name,
             rx_device_name=rx_device_name,
-            change_event_callbacks=change_event_callbacks,
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
         )
         counters = device_under_test.counters
         for ind, val in enumerate([0, 1, 2, 3, 0, 0, 6, 7, 8]):
@@ -571,16 +616,17 @@ class TestSlimLink:
     def test_ClearCounters_empty_device_names(
         self: TestSlimLink,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the ClearCounters() command
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
-        device_under_test.simulationMode = SimulationMode.FALSE
+        self.test_Online(device_under_test, event_tracer)
         result, msg = device_under_test.ClearCounters()
         assert [result, msg[0]] == [
             ResultCode.OK,

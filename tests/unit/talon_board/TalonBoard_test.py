@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-# Standard imports
 import gc
 import os
 from typing import Any, Iterator
@@ -24,7 +23,6 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
@@ -32,15 +30,10 @@ from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 from ... import test_utils
 
-# To prevent tests hanging during gc.
+# Disable garbage collection to prevent tests hanging
 gc.disable()
 
-# Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-
-# Tango imports
-
-# SKA imports
 
 
 class TestTalonBoard:
@@ -152,7 +145,6 @@ class TestTalonBoard:
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     @pytest.mark.parametrize(
@@ -232,7 +224,6 @@ class TestTalonBoard:
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        # TODO: Is this the right state? This test used to assert on DevState.UNKNOWN...
         assert device_under_test.State() == DevState.DISABLE
 
     @pytest.mark.parametrize(
@@ -296,7 +287,7 @@ class TestTalonBoard:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
-        
+
         with pytest.raises(
             DevFailed, match="Communication with component is not established"
         ):
@@ -420,7 +411,7 @@ class TestTalonBoard:
     ) -> None:
         """
         Test the that all attributes can be read/written correctly.
-        
+
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.

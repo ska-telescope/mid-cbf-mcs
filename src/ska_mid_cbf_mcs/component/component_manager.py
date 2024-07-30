@@ -27,8 +27,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base import BaseComponentManager, TaskCallbackType
-from ska_tango_base.executor.executor import TaskExecutor, TaskFunctionType
 from ska_tango_base.executor.executor_component_manager import (
     TaskExecutorComponentManager,
 )
@@ -202,27 +200,36 @@ class CbfComponentManager(TaskExecutorComponentManager):
         return False
 
     def _subscribe_command_results(
-        self: CbfComponentManager, dp: context.DeviceProxy
+        self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
-        if dp in self._event_ids.values():
+        dev_name = proxy.dev_name()
+        if dev_name in self._event_ids:
             self.logger.warning(
-                f"Skipping repeated longRunningCommandResult event subscription: {dp.dev_name()}"
+                f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
             )
-        else:
-            self._event_ids.update(
-                {
-                    dp.subscribe_event(
-                        attr_name="longRunningCommandResult",
-                        event_type=tango.EventType.CHANGE_EVENT,
-                        cb_or_queuesize=self.results_callback,
-                    ): dp
-                }
-            )
+            return
 
-    def _unsubscribe_command_results(self: CbfComponentManager) -> None:
-        while len(self._event_ids):
-            event_id, dp = self._event_ids.popitem()
-            dp.unsubscribe_event(event_id)
+        self._event_ids.update(
+            {
+                dev_name: proxy.subscribe_event(
+                    attr_name="longRunningCommandResult",
+                    event_type=tango.EventType.CHANGE_EVENT,
+                    cb_or_queuesize=self.results_callback,
+                )
+            }
+        )
+
+    def _unsubscribe_command_results(
+        self: CbfComponentManager, proxy: context.DeviceProxy
+    ) -> None:
+        dev_name = proxy.dev_name()
+        name, event_id = self._event_ids.pop(dev_name, None)
+        if event_id is None:
+            self.logger.warning(
+                f"No longRunningCommandResult event subscription for {name}"
+            )
+            return
+        proxy.unsubscribe_event(event_id)
 
     #######################
     # Group-related methods
@@ -284,7 +291,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         proxies: list[context.DeviceProxy],
         argin: Any = None,
         max_workers: int = MAX_GROUP_WORKERS,
-    ) -> list[tuple[ResultCode, str]]:
+    ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
         Returns list of command results in the same order as the input proxies list.

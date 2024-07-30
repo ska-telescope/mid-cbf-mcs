@@ -85,14 +85,11 @@ from datetime import datetime
 from typing import Any
 
 import tango
-
+from ska_tango_testing.integration.assertions import _get_tracer
 from ska_tango_testing.integration.predicates import (
     ANY_VALUE,
     event_has_previous_value,
     event_matches_parameters,
-)
-from ska_tango_testing.integration.assertions import (
-    _get_tracer,
 )
 
 
