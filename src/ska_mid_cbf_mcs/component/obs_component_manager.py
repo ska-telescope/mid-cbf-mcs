@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import functools
+from functools import partial
 from threading import Event
 from typing import Any, Callable, Optional
 
@@ -126,7 +126,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="configure",
                 command_thread=self._configure_scan,
@@ -326,7 +326,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="abort",
                 command_thread=self._abort,
@@ -377,7 +377,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="obsreset",
                 command_thread=self._obs_reset,

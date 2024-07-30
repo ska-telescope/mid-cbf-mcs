@@ -706,7 +706,6 @@ class TestCbfSubarray:
             )
 
         # assert receptors attribute updated
-        receptors.sort()
         change_event_callbacks["receptors"].assert_change_event(
             attribute_value=()
         )

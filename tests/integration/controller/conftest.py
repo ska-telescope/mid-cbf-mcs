@@ -19,7 +19,7 @@ from ska_tango_testing.integration import TangoEventTracer
 
 
 @pytest.fixture(name="all_sub_devices", scope="module", autouse=True)
-def al_sub_device_proxies(
+def all_sub_device_proxies(
     power_switch: list[context.DeviceProxy],
     talon_lru: list[context.DeviceProxy],
     talon_board: list[context.DeviceProxy],
