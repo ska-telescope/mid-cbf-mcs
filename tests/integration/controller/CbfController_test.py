@@ -184,47 +184,67 @@ class TestCbfController:
                 attribute_value=DevState.ON,
             )
 
-    # def test_InitSysParam_Condition(self, subdevices_under_test):
-    #     """
-    #     Test that InitSysParam can only be used when
-    #     the controller op state is OFF
-    #     """
-    #     if subdevices_under_test.controller.State() == DevState.OFF:
-    #         subdevices_under_test.controller.On()
-    #     with open(data_file_path + "sys_param_4_boards.json") as f:
-    #         sp = f.read()
-    #     result = subdevices_under_test.controller.InitSysParam(sp)
-    #     assert result[0] == ResultCode.FAILED
+    def test_OnState_InitSysParam_NotAllowed(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ):
+        """
+        Test that InitSysParam command is not allowed when the controller is in ON state
+        """
+        assert controller.State() == DevState.ON
 
-    # @pytest.mark.parametrize(
-    #     "config_file_name",
-    #     [
-    #         "source_init_sys_param.json",
-    #         "source_init_sys_param_retrieve_from_car.json",
-    #     ],
-    # )
-    # def test_SourceInitSysParam(self, subdevices_under_test, config_file_name: str):
-    #     """
-    #     Test that InitSysParam file can be retrieved from CAR
-    #     """
-    #     if subdevices_under_test.controller.State() == DevState.ON:
-    #         subdevices_under_test.controller.Off()
-    #     with open(data_file_path + config_file_name) as f:
-    #         sp = f.read()
-    #     result = subdevices_under_test.controller.InitSysParam(sp)
+        # Get the system parameters
+        data_file_path = (
+            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        )
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sp)
+        assert result_code == [ResultCode.QUEUED]
 
-    #     assert subdevices_under_test.controller.State() == DevState.OFF
-    #     assert result[0] == ResultCode.OK
-    #     assert subdevices_under_test.controller.sourceSysParam == sp
-    #     sp_json = json.loads(sp)
-    #     tm_data_sources = sp_json["tm_data_sources"][0]
-    #     tm_data_filepath = sp_json["tm_data_filepath"]
-    #     retrieved_init_sys_param_file = TMData([tm_data_sources])[
-    #         tm_data_filepath
-    #     ].get_dict()
-    #     assert subdevices_under_test.controller.sysParam == json.dumps(
-    #         retrieved_init_sys_param_file
-    #     )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            ),
+        )
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "source_init_sys_param.json",
+            "source_init_sys_param_retrieve_from_car.json",
+        ],
+    )
+    def test_SourceInitSysParam(self, subdevices_under_test, config_file_name: str):
+        """
+        Test that InitSysParam file can be retrieved from CAR
+        """
+        if subdevices_under_test.controller.State() == DevState.ON:
+            subdevices_under_test.controller.Off()
+        with open(data_file_path + config_file_name) as f:
+            sp = f.read()
+        result = subdevices_under_test.controller.InitSysParam(sp)
+
+        assert subdevices_under_test.controller.State() == DevState.OFF
+        assert result[0] == ResultCode.OK
+        assert subdevices_under_test.controller.sourceSysParam == sp
+        sp_json = json.loads(sp)
+        tm_data_sources = sp_json["tm_data_sources"][0]
+        tm_data_filepath = sp_json["tm_data_filepath"]
+        retrieved_init_sys_param_file = TMData([tm_data_sources])[
+            tm_data_filepath
+        ].get_dict()
+        assert subdevices_under_test.controller.sysParam == json.dumps(
+            retrieved_init_sys_param_file
+        )
 
     def test_Off(
         self,
@@ -241,12 +261,6 @@ class TestCbfController:
         """
         Test the "Off" command
         """
-
-        # # if controller is already off, we must turn it on before turning off.
-        # if controller.State() == DevState.OFF:
-        #     self.test_On(
-        #         controller, subdevices, change_event_callbacks
-        #     )
 
         assert controller.State() == DevState.ON
 
@@ -303,7 +317,6 @@ class TestCbfController:
             attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
         )
 
-        # Assert that no change events went uncaught.
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -456,31 +469,31 @@ class TestCbfController:
     #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
     #     )
 
-    # def test_Offline(
-    #     self: TestCbfController,
-    #     controller: context.DeviceProxy,
-    #     sub_devices: list[context.DeviceProxy],
-    #     event_tracer: TangoEventTracer,
-    # ) -> None:
-    #     """
-    #     Verify the component manager can stop communicating
-    #     """
-    #     # Trigger stop_communicating by setting the AdminMode to OFFLINE
-    #     controller.adminMode = AdminMode.OFFLINE
+    def test_Offline(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        sub_devices: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Verify the component manager can stop communicating
+        """
+        # Trigger stop_communicating by setting the AdminMode to OFFLINE
+        controller.adminMode = AdminMode.OFFLINE
 
-    #     # check adminMode and state changes
-    #     for device in [controller] + sub_devices:
-    #         assert_that(event_tracer).within_timeout(
-    #             test_utils.EVENT_TIMEOUT
-    #         ).has_change_event_occurred(
-    #             device_name=device,
-    #             attribute_name="adminMode",
-    #             attribute_value=AdminMode.OFFLINE,
-    #         )
-    #         assert_that(event_tracer).within_timeout(
-    #             test_utils.EVENT_TIMEOUT
-    #         ).has_change_event_occurred(
-    #             device_name=device,
-    #             attribute_name="state",
-    #             attribute_value=DevState.DISABLE,
-    #         )
+        # check adminMode and state changes
+        for device in [controller] + sub_devices:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="adminMode",
+                attribute_value=AdminMode.OFFLINE,
+            )
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="state",
+                attribute_value=DevState.DISABLE,
+            )
