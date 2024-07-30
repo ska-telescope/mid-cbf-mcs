@@ -13,31 +13,18 @@ from __future__ import annotations
 
 import json
 import os
-import socket
-import time
-from typing import Iterator
 
-import pytest
 from assertpy import assert_that
 
 # Tango imports
-from ska_control_model import (
-    AdminMode,
-    LoggingLevel,
-    ObsState,
-    ResultCode,
-    SimulationMode,
-)
+from ska_control_model import AdminMode, ObsState, ResultCode
 
 # Tango imports
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from ska_telmodel.data import TMData
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import const
 
 from ... import test_utils
 

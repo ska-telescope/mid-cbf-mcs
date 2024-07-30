@@ -658,7 +658,6 @@ class TalonLRUComponentManager(CbfComponentManager):
                 msg,
             )
 
-
     def _off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
