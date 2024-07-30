@@ -79,7 +79,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._talon_lru_fqdn,
             self._talon_board_fqdn,
             self._power_switch_fqdn,
-        ) = ([] for i in range(6))
+        ) = ([] for _ in range(6))
 
         # --- Max Capabilities --- #
         self._count_vcc = max_capabilities["VCC"]
@@ -215,9 +215,10 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the AdminMode of the device is successfully set to ONLINE, False otherwise.
         """
         try:
-            self.logger.info(f"Setting {fqdn} to AdminMode.ONLINE")
-            if "mid_csp_cbf/power_switch" in fqdn:
-                self._proxies[fqdn].simulationMode = self.simulation_mode
+            self.logger.info(
+                f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
+            )
+            self._proxies[fqdn].simulationMode = self.simulation_mode
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             for item in df.args:
@@ -252,7 +253,6 @@ class ControllerComponentManager(CbfComponentManager):
 
             if fqdn in (
                 self._talon_lru_fqdn
-                + self._fsp_fqdn
                 + [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
                 self._subscribe_command_results(proxy)
@@ -290,8 +290,6 @@ class ControllerComponentManager(CbfComponentManager):
             + self._talon_lru_fqdn
             + self._talon_board_fqdn
             + self._subarray_fqdn
-            + self._fsp_fqdn
-            + self._vcc_fqdn
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
             if not self._init_device_proxy(fqdn):
@@ -350,7 +348,6 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn, proxy in self._proxies:
             if fqdn in (
                 self._talon_lru_fqdn
-                + self._fsp_fqdn
                 + [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
                 self._unsubscribe_command_results(proxy)
@@ -526,10 +523,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
         :param task_callback: Callback function to update task status
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :param task_abort_event: Event to signal task abort.
         """
         self.logger.debug(f"Received sys params {argin}")
 
@@ -889,37 +883,6 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # Write simulation mode to subarrays
-        if not self._write_group_attribute(
-            attr_name="simulationMode",
-            value=self.simulation_mode,
-            proxies=self._group_subarray,
-        ):
-            task_callback(
-                result=(
-                    ResultCode.FAILED,
-                    "Failed writing simulationMode to subarrays",
-                ),
-                status=TaskStatus.FAILED,
-            )
-            return
-
-        # Turn on all the subarrays
-        group_subarray_on_failed = False
-        for result_code, msg in self._issue_group_command(
-            command_name="On", proxies=self._group_subarray
-        ):
-            if result_code == ResultCode.FAILED:
-                self.logger.error(msg)
-                group_subarray_on_failed = True
-
-        if group_subarray_on_failed:
-            task_callback(
-                result=(ResultCode.FAILED, "Failed to turn on subarrays"),
-                status=TaskStatus.FAILED,
-            )
-            return
-
         # Configure SLIM Mesh devices
         slim_configure_status, msg = self._configure_slim_devices(
             task_abort_event
@@ -1103,36 +1066,26 @@ class ControllerComponentManager(CbfComponentManager):
         """
         success = True
         message = []
-        subelements_fast = (
-            self._group_vcc + self._group_fsp + self._group_subarray
-        )
-        subelements_slow = [
-            self._proxies[self._fs_slim_fqdn],
-            self._proxies[self._vis_slim_fqdn],
-        ]
 
-        # Turn off subelements that implement Off() as SlowCommand
-        for subelement in subelements_slow:
+        # Turn off Slim devices
+        for fqdn, slim in [
+            (self._fs_slim_fqdn, self._proxies[self._fs_slim_fqdn]),
+            (self._vis_slim_fqdn, self._proxies[self._vis_slim_fqdn]),
+        ]:
             try:
-                self.logger.info(
-                    f"Turning off subelement {subelement.dev_name()}"
-                )
+                self.logger.info(f"Turning off SLIM controller {fqdn}")
 
-                [[result_code], [command_id]] = subelement.Off()
+                [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC Off() rejected"
-                    self.logger.error(
-                        f"Nested LRC Off() to {subelement.dev_name()} rejected"
-                    )
+                    self.logger.error(f"Nested LRC Off() to {fqdn} rejected")
                     success = False
                     continue
                 self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
-                self.logger.error(
-                    f"Nested LRC Off() to {subelement.dev_name()} failed: {df}"
-                )
+                self.logger.error(f"Nested LRC Off() to {fqdn} failed: {df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -1142,17 +1095,9 @@ class ControllerComponentManager(CbfComponentManager):
             timeout=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC Off() timed out. Check Fsp and/or Slim logs."
+            message = "One or more calls to nested LRC Off() timed out. Check Slim logs."
             self.logger.error(message)
             success = False
-
-        # Turn off subelements that implement Off() as FastCommand
-        for result_code, msg in self._issue_group_command(
-            "Off", subelements_fast
-        ):
-            if result_code == ResultCode.FAILED:
-                message.append(msg)
-                success = False
 
         # Turn off TalonBoard devices.
         # NOTE: This is separated from the subelements_fast group call because

@@ -61,7 +61,10 @@ class TestCbfController:
             )
 
             # PowerSwitch device starts up in ON state when turned ONLINE
-            if "mid_csp_cbf/power_switch/" in device.dev_name():
+            if (
+                "mid_csp_cbf/power_switch/" in device.dev_name()
+                or "mid_csp_cbf/sub_elt/subarray" in device.dev_name()
+            ):
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -187,7 +190,7 @@ class TestCbfController:
         )
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        
+
         # Initialize the system parameters
         result_code, command_id = controller.InitSysParam(sp)
         assert result_code == [ResultCode.QUEUED]
@@ -210,7 +213,9 @@ class TestCbfController:
             "source_init_sys_param_retrieve_from_car.json",
         ],
     )
-    def test_SourceInitSysParam(self, subdevices_under_test, config_file_name: str):
+    def test_SourceInitSysParam(
+        self, subdevices_under_test, config_file_name: str
+    ):
         """
         Test that InitSysParam file can be retrieved from CAR
         """
@@ -303,7 +308,6 @@ class TestCbfController:
             attribute_name="longRunningCommandResult",
             attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
         )
-
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \

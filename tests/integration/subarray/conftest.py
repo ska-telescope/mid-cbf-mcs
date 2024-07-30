@@ -18,7 +18,6 @@ from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 
-
 # @pytest.fixture(name="all_sub_devices", scope="module", autouse=True)
 # def all_sub_device_proxies(
 #     fsp: list[context.DeviceProxy],
@@ -33,6 +32,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
 #         + slim_vis
 #     )
 
+
 @pytest.fixture(name="subarray", scope="session", autouse=True)
 def subarray_proxies() -> list[context.DeviceProxy]:
     """
@@ -43,8 +43,10 @@ def subarray_proxies() -> list[context.DeviceProxy]:
     return {
         sub_id: context.DeviceProxy(
             device_name=f"mid_csp_cbf/sub_elt/subarray_{sub_id:02}"
-        ) for sub_id in range(1, const.DEFAULT_COUNT_SUBARRAY + 1)
+        )
+        for sub_id in range(1, const.DEFAULT_COUNT_SUBARRAY + 1)
     }
+
 
 # TODO: upgrade fsp corr fixture for multiple subarrays
 @pytest.fixture(name="fsp_corr", scope="session", autouse=True)
@@ -57,8 +59,10 @@ def fsp_corr_proxies() -> dict[int, context.DeviceProxy]:
     return {
         fsp_id: context.DeviceProxy(
             device_name=f"mid_csp_cbf/fspCorrSubarray/{fsp_id:02}_01"
-        ) for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
+        )
+        for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
     }
+
 
 @pytest.fixture(name="fsp", scope="session", autouse=True)
 def fsp_proxies() -> dict[int, context.DeviceProxy]:
@@ -68,10 +72,10 @@ def fsp_proxies() -> dict[int, context.DeviceProxy]:
     :return: dict of DeviceProxy to Fsp devices
     """
     return {
-        fsp_id: context.DeviceProxy(
-            device_name=f"mid_csp_cbf/fsp/{fsp_id:02}"
-        ) for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
+        fsp_id: context.DeviceProxy(device_name=f"mid_csp_cbf/fsp/{fsp_id:02}")
+        for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
     }
+
 
 @pytest.fixture(name="vcc", scope="session", autouse=True)
 def vcc_proxies() -> dict[int, context.DeviceProxy]:
@@ -81,10 +85,10 @@ def vcc_proxies() -> dict[int, context.DeviceProxy]:
     :return: dict of DeviceProxy to Vcc devices
     """
     return {
-        vcc_id: context.DeviceProxy(
-            device_name=f"mid_csp_cbf/vcc/{vcc_id:03}"
-        ) for vcc_id in range(1, const.DEFAULT_COUNT_VCC + 1)
+        vcc_id: context.DeviceProxy(device_name=f"mid_csp_cbf/vcc/{vcc_id:03}")
+        for vcc_id in range(1, const.DEFAULT_COUNT_VCC + 1)
     }
+
 
 # TODO: scope=test?
 @pytest.fixture(name="event_tracer", scope="module", autouse=True)
@@ -108,8 +112,11 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "obsState")
         tracer.subscribe_event(proxy, "longRunningCommandResult")
         tracer.subscribe_event(proxy, "receptors")
+        tracer.subscribe_event(proxy, "sysParam")
 
-    for proxy in list(vcc.values()) + list(fsp.values()) + list(fsp_corr.values()):
+    for proxy in (
+        list(vcc.values()) + list(fsp.values()) + list(fsp_corr.values())
+    ):
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
 

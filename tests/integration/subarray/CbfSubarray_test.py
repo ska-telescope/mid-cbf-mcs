@@ -8,22 +8,18 @@
 """Contain the tests for the CbfSubarray."""
 from __future__ import annotations  # allow forward references in type hints
 
-import copy
 import json
-import logging
 import os
-from assertpy import assert_that
-import random
-import time
 
 import pytest
+from assertpy import assert_that
 from ska_control_model import AdminMode, ObsState, ResultCode
-from tango import DevFailed, DevState
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
-from ska_tango_testing import context
-from ska_tango_testing.integration import TangoEventTracer
 
 from ... import test_utils
 
@@ -32,7 +28,6 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-
     @pytest.mark.parametrize("sub_id", [1])
     def test_Connect(
         self: TestCbfSubarray,
@@ -50,7 +45,6 @@ class TestCbfSubarray:
         :param all_sub_devices: list of proxies to subarray subordinate devices
         :param event_tracer: TangoEventTracer
         """
-
         # trigger start_communicating by setting the AdminMode to ONLINE
         subarray[sub_id].adminMode = AdminMode.ONLINE
 
@@ -67,7 +61,7 @@ class TestCbfSubarray:
         ).has_change_event_occurred(
             device_name=subarray[sub_id],
             attribute_name="state",
-            attribute_value=DevState.OFF,
+            attribute_value=DevState.ON,
         )
 
     @pytest.mark.parametrize("sub_id", [1])
@@ -75,43 +69,25 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         sub_id: int,
         subarray: dict[int, context.DeviceProxy],
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test writing the sysParam attribute
 
         :param sub_id: the subarray id
         :param subarray: list of proxies to subarray devices
+        :param event_tracer: TangoEventTracer
         """
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param = f.read()
         subarray[sub_id].sysParam = sys_param
-        assert subarray[sub_id].sysParam == sys_param
-        assert subarray[sub_id].obsState == ObsState.EMPTY
-
-    @pytest.mark.parametrize("sub_id", [1])
-    def test_On(
-        self: TestCbfSubarray,
-        sub_id: int,
-        subarray: dict[int, context.DeviceProxy],
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test the On command
-
-        :param sub_id: the subarray id
-        :param subarray: list of proxies to subarray devices
-        :param event_tracer: TangoEventTracer
-        """
-        [[result_code], [message]] = subarray[sub_id].On()
-        assert result_code == ResultCode.OK
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=subarray[sub_id],
-            attribute_name="state",
-            attribute_value=DevState.ON,
-            previous_value=DevState.OFF
+            attribute_name="sysParam",
+            attribute_value=sys_param,
         )
 
     # @pytest.mark.parametrize(
@@ -1558,9 +1534,7 @@ class TestCbfSubarray:
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(
-            receptors
-        )
+        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(receptors)
         command_dict["ConfigureScan"] = subarray[sub_id].ConfigureScan(
             json.dumps(configuration)
         )
@@ -1573,68 +1547,46 @@ class TestCbfSubarray:
 
         # --- Subarray checks --- #
 
-        # assert receptors attribute updated
-        receptors.sort()
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=subarray[sub_id],
-            attribute_name="receptors",
-            attribute_value=receptors,
-            previous_value=()
-        )
-        
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=subarray[sub_id],
-            attribute_name="receptors",
-            attribute_value=(),
-            previous_value=receptors
-        )
-
-        # assertions for all issued LRC
+        attr_values = [
+            ("receptors", tuple(receptors)),
+            ("receptors", ()),
+            ("obsState", ObsState.RESOURCING),
+            ("obsState", ObsState.IDLE),
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.SCANNING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.IDLE),
+            ("obsState", ObsState.RESOURCING),
+            ("obsState", ObsState.EMPTY),
+        ]
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
-            assert return_value[0] == ResultCode.QUEUED
-
-            # check that the queued command succeeded
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.IDLE,
-            ObsState.RESOURCING,
-            ObsState.EMPTY,
-        ]:
+        for name, value in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=subarray[sub_id],
-                attribute_name="obsState",
-                attribute_value=obs_state
+                attribute_name=name,
+                attribute_value=value,
             )
 
         # --- VCC checks --- #
 
         vcc_ids = [dish_utils.dish_id_to_vcc_id[r] for r in receptors]
-        frequency_band = freq_band_dict()[configuration["common"]["frequency_band"]]["band_index"]
-        assert_list = [
+        frequency_band = freq_band_dict()[
+            configuration["common"]["frequency_band"]
+        ]["band_index"]
+        attr_values = [
             ("subarrayMembership", sub_id),
             ("frequencyBand", frequency_band),
             ("adminMode", AdminMode.ONLINE),
@@ -1646,13 +1598,13 @@ class TestCbfSubarray:
             ("obsState", ObsState.IDLE),
         ]
         for vcc_id in vcc_ids:
-            for attr_name, attr_value in assert_list:
+            for name, value in attr_values:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
-                    attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_name=name,
+                    attribute_value=value,
                 )
 
         # --- FSP checks --- #
@@ -1661,22 +1613,22 @@ class TestCbfSubarray:
             fsp_id = fsp["fsp_id"]
             function_mode = FspModes[fsp["function_mode"]].value
 
-            assert_list = [
+            attr_values = [
                 ("subarrayMembership", (sub_id)),
                 ("functionMode", function_mode),
                 ("adminMode", AdminMode.ONLINE),
                 ("state", DevState.ON),
             ]
-            for attr_name, attr_value in assert_list:
+            for name, value in attr_values:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
-                    attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_name=name,
+                    attribute_value=value,
                 )
 
-            assert_list = [
+            attr_values = [
                 ("adminMode", AdminMode.ONLINE),
                 ("state", DevState.ON),
                 ("obsState", ObsState.CONFIGURING),
@@ -1685,13 +1637,13 @@ class TestCbfSubarray:
                 ("obsState", ObsState.READY),
                 ("obsState", ObsState.IDLE),
             ]
-            for attr_name, attr_value in assert_list:
+            for name, value in attr_values:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
-                    attribute_name=attr_name,
-                    attribute_value=attr_value
+                    attribute_name=name,
+                    attribute_value=value,
                 )
 
     # TODO config ID, scan ID

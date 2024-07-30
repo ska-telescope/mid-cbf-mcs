@@ -85,7 +85,6 @@ class VccComponentManager(CbfObsComponentManager):
             zip(freq_band_dict().keys(), [0, 0, 1, 2, 3, 3])
         )
 
-        self._talon_lru_proxy = None
         self._vcc_controller_proxy = None
 
         # --- Simulators --- #
@@ -107,43 +106,38 @@ class VccComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
-    def _get_power_state(self: VccComponentManager) -> PowerState:
-        """
-        Get the power state of this VCC based on the current power
-        mode of the LRU this VCC belongs to.
-
-        :return: VCC power mode
-        """
-        try:
-            return self._talon_lru_proxy.LRUPowerState
-        except tango.DevFailed:
-            self.logger.error("Could not connect to Talon LRU device")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return PowerState.UNKNOWN
-
     def _start_communicating(
         self: VccComponentManager, *args, **kwargs
     ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
-        try:
-            self._talon_lru_proxy = context.DeviceProxy(
-                device_name=self._talon_lru_fqdn
+        # Try to connect to HPS devices, which are deployed during the
+        # CbfController OnCommand sequence
+        if not self.simulation_mode:
+            self.logger.info(
+                "Connecting to HPS VCC controller and band devices"
             )
-        except tango.DevFailed:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"Error in Talon LRU {self._talon_lru_fqdn} proxy connection"
-            )
-            return
+            try:
+                self._vcc_controller_proxy = context.DeviceProxy(
+                    device_name=self._vcc_controller_fqdn
+                )
+                self._band_proxies = [
+                    context.DeviceProxy(device_name=fqdn)
+                    for fqdn in self._vcc_band_fqdn
+                ]
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Failed to establish proxies to HPS VCC devices.",
+                )
 
         super()._start_communicating()
-        self._update_component_state(power=self._get_power_state())
+        self._update_component_state(power=PowerState.ON)
 
     # --------------
     # Helper Methods
@@ -212,60 +206,7 @@ class VccComponentManager(CbfObsComponentManager):
     # Fast Commands
     # -------------
 
-    def on(self: VccComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn on VCC component. This attempts to establish communication
-        with the VCC devices on the HPS.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-
-        :raise ConnectionError: if unable to connect to HPS VCC devices
-        """
-        self.logger.debug("Entering VccComponentManager.on")
-        try:
-            # Try to connect to HPS devices, which are deployed during the
-            # CbfController OnCommand sequence
-            if not self.simulation_mode:
-                self.logger.info(
-                    "Connecting to HPS VCC controller and band devices"
-                )
-
-                self._vcc_controller_proxy = context.DeviceProxy(
-                    device_name=self._vcc_controller_fqdn
-                )
-
-                self._band_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._vcc_band_fqdn
-                ]
-
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return (
-                ResultCode.FAILED,
-                "Failed to establish proxies to HPS VCC devices.",
-            )
-
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
-
-    def off(self: VccComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn off VCC component; currently unimplemented.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._update_component_state(power=PowerState.OFF)
-        return (ResultCode.OK, "Off completed OK")
+    # None at this time
 
     # ---------------------
     # Long Running Commands

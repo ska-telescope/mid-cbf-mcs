@@ -124,6 +124,8 @@ class CbfSubarray(CbfObsDevice):
 
     @attribute(
         dtype="str",
+        memorized=True,
+        hw_memorized=True,
         doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
     )
     def sysParam(self: CbfSubarray) -> str:
@@ -266,6 +268,8 @@ class CbfSubarray(CbfObsDevice):
 
             self._device.set_change_event("receptors", True)
             self._device.set_archive_event("receptors", True)
+            self._device.set_change_event("sysParam", True)
+            self._device.set_archive_event("sysParam", True)
 
             return (result_code, msg)
 
