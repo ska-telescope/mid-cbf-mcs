@@ -112,6 +112,7 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "obsState")
         tracer.subscribe_event(proxy, "longRunningCommandResult")
         tracer.subscribe_event(proxy, "receptors")
+        tracer.subscribe_event(proxy, "sysParam")
 
     for proxy in (
         list(vcc.values()) + list(fsp.values()) + list(fsp_corr.values())

@@ -17,25 +17,18 @@ import pytest
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
+
 @pytest.fixture(name="all_sub_devices", scope="module", autouse=True)
 def all_sub_device_proxies(
     power_switch: list[context.DeviceProxy],
     talon_lru: list[context.DeviceProxy],
     talon_board: list[context.DeviceProxy],
     subarray: list[context.DeviceProxy],
-    fsp: list[context.DeviceProxy],
-    vcc: list[context.DeviceProxy],
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
 ) -> list[context.DeviceProxy]:
     return (
-        power_switch
-        + talon_lru
-        + talon_board
-        + subarray
-        + fsp
-        + vcc
-        + [slim_fs, slim_vis]
+        power_switch + talon_lru + talon_board + subarray + [slim_fs, slim_vis]
     )
 
 
@@ -47,7 +40,7 @@ def powered_sub_device_proxies(
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
 ) -> list[context.DeviceProxy]:
-    return talon_lru + talon_board + subarray + [slim_fs, slim_vis]
+    return talon_lru + talon_board + [slim_fs, slim_vis]
 
 
 @pytest.fixture(name="event_tracer", scope="module", autouse=True)

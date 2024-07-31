@@ -14,9 +14,8 @@ from __future__ import annotations
 import json
 import os
 
-from assertpy import assert_that
-
 import pytest
+from assertpy import assert_that
 
 # Tango imports
 from ska_control_model import AdminMode, ObsState, ResultCode
@@ -65,7 +64,10 @@ class TestCbfController:
             )
 
             # PowerSwitch device starts up in ON state when turned ONLINE
-            if "mid_csp_cbf/power_switch/" in device.dev_name():
+            if (
+                "mid_csp_cbf/power_switch/" in device.dev_name()
+                or "mid_csp_cbf/sub_elt/subarray" in device.dev_name()
+            ):
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -286,7 +288,7 @@ class TestCbfController:
         ],
     )
     @pytest.mark.dependency(depends=["TestCbfController::test_Off"])
-    def test_SourceInitSysParam(        
+    def test_SourceInitSysParam(
         self: TestCbfController,
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
@@ -303,7 +305,7 @@ class TestCbfController:
         # Initialize the system parameters
         result_code, command_id = controller.InitSysParam(sp)
         assert result_code == [ResultCode.QUEUED]
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -314,7 +316,7 @@ class TestCbfController:
                 f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
             ),
         )
-        
+
     # @pytest.mark.parametrize(
     #     "config_file_name, \
     #     receptors, \

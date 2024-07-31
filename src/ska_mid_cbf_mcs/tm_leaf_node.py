@@ -6,15 +6,10 @@
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
 
-TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
-"""
 from __future__ import annotations
 
+from ska_tango_base.base.base_component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
     SKABaseDevice,
@@ -26,7 +21,7 @@ __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
 
 class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     """
-    TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
+    TmCspSubarrayLeafNodeTest TANGO device class
     """
 
     # ------------------
@@ -55,16 +50,28 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
         :param value: the delay model value
         """
+        self.logger.info(f"New delay model received: {value}")
         self._delay_model = value
         self.push_change_event("delayModel", value)
+        self.push_archive_event("delayModel", value)
 
-    # --------
-    # Commands
-    # --------
+    # --------------
+    # Initialization
+    # --------------
+
+    def create_component_manager(
+        self: TmCspSubarrayLeafNodeTest,
+    ) -> BaseComponentManager:
+        """
+        Create and return a component manager.
+
+        :return: a component manager
+        """
+        return BaseComponentManager(logger=self.logger)
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
-        A class for the Fsp's init_device() "command".
+        A class for the TmCspSubarrayLeafNodeTest's init_device() "command".
         """
 
         def do(
@@ -84,7 +91,8 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             (result_code, message) = super().do(*args, **kwargs)
 
             self._delay_model = ""
-            self.set_change_event("delayModel", True, True)
+            self.set_change_event("delayModel", True)
+            self.set_archive_event("delayModel", True)
 
             return (result_code, message)
 
