@@ -10,17 +10,14 @@
 
 """This module contains pytest-specific test harness for MCS unit tests."""
 
-import unittest
 from typing import Callable
 
 import pytest
-import tango
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
     MockChangeEventCallback,
 )
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
 def pytest_itemcollected(item: pytest.Item) -> None:
