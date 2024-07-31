@@ -100,6 +100,8 @@ K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 						$(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
 						| tee pytest.stdout
 
+PYTHON_LINT_TARGET = src/
+
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets

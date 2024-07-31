@@ -20,6 +20,7 @@ from assertpy import assert_that
 from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
