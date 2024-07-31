@@ -28,7 +28,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
-@pytest.fixture(name="device_under_test", scope="module")
+@pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -42,7 +42,7 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
 
-@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+@pytest.fixture(name="event_tracer", autouse=True)
 def tango_event_tracer(
     device_under_test: context.DeviceProxy,
 ) -> Generator[TangoEventTracer, None, None]:
@@ -59,6 +59,7 @@ def tango_event_tracer(
         "longRunningCommandResult",
         "obsState",
         "receptors",
+        "sysParam",
         "state",
     ]
     for attr in change_event_attr_list:
@@ -67,14 +68,14 @@ def tango_event_tracer(
     return tracer
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_tm() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_attribute("delayModel", "")
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -87,7 +88,7 @@ def mock_controller() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_vcc_builder() -> unittest.mock.Mock:
     """Subarray requires unique Vcc mocks, so we return the mock builder"""
     builder = MockDeviceBuilder()
@@ -96,6 +97,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_result_command("UpdateDelayModel", ResultCode.OK)
@@ -110,7 +112,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     return builder
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -128,7 +130,7 @@ def mock_fsp() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_fsp_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -149,7 +151,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -161,7 +163,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_vis_mesh() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -171,7 +173,7 @@ def mock_vis_mesh() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_host_lut_s1() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -184,7 +186,7 @@ def mock_host_lut_s1() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_host_lut_s2() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -195,7 +197,7 @@ def mock_host_lut_s2() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_spead_desc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -205,7 +207,7 @@ def mock_spead_desc() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def initial_mocks(
     mock_tm: unittest.mock.Mock,
     mock_controller: unittest.mock.Mock,

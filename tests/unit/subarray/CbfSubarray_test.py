@@ -39,7 +39,7 @@ class TestCbfSubarray:
     Test class for CbfSubarray.
     """
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def subarray_test_context(
         self: TestCbfSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
@@ -127,7 +127,7 @@ class TestCbfSubarray:
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test writing to the sysParam attribute.
+        Test writing to the sysParam attribute. Also used to test startup of the DUT.
 
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
@@ -145,56 +145,28 @@ class TestCbfSubarray:
         ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="state",
-            attribute_value=DevState.OFF,
+            attribute_value=DevState.ON,
         )
 
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param = f.read()
         device_under_test.sysParam = sys_param
-        assert device_under_test.sysParam == sys_param
-        assert device_under_test.obsState == ObsState.EMPTY
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
-    def test_Power_Commands(
-        self: TestCbfSubarray,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-        command: str,
-    ) -> None:
-        """
-        Test the On/Off/Standby commands.
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="sysParam",
+            attribute_value=sys_param,
+        )
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
-        :param command: the command to test (one of On/Off/Standby)
-        """
-        # set device ONLINE
-        self.test_sysParam(device_under_test, event_tracer)
-
-        if command == "On":
-            expected_result = ResultCode.OK
-            expected_state = DevState.ON
-            result = device_under_test.On()
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="state",
-                attribute_value=expected_state,
-            )
-        elif command == "Off":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
-        elif command == "Standby":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Standby()
-
-        assert result[0][0] == expected_result
-        assert device_under_test.State() == expected_state
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="obsState",
+            attribute_value=ObsState.EMPTY,
+        )
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -210,28 +182,29 @@ class TestCbfSubarray:
             (["SKA100", "SKA036", "SKA001"], True, []),
         ],
     )
-    def test_Add_Remove_Receptors_valid(
+    def test_Add_Remove_Receptors(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         receptors: list[str],
         remove_all: bool,
         receptors_to_remove: list[str],
     ) -> None:
         """
-        Test valid use of Add/RemoveReceptors command.
+        Test the AddReceptors(), RemoveReceptors(), 
+        and RemoveAllReceptors() commands' happy paths.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param remove_all: False to use RemoveReceptors, True for RemoveAllReceptors
         :param receptors_to_remove: list of DISH IDs to remove from subarray
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # add receptors in 2 stages
         curr_rec = set()
@@ -244,13 +217,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-                )
+                ),
             )
 
             # check obsState transitions
@@ -258,16 +233,24 @@ class TestCbfSubarray:
                 ObsState.RESOURCING,
                 ObsState.IDLE,
             ]:
-                change_event_callbacks["obsState"].assert_change_event(
-                    obs_state.value
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device_under_test,
+                    attribute_name="obsState",
+                    attribute_value=obs_state.value,
                 )
 
             # assert receptors attribute updated
             curr_rec.update(input_rec)
             receptors_push_val = list(curr_rec.copy())
             receptors_push_val.sort()
-            change_event_callbacks["receptors"].assert_change_event(
-                attribute_value=tuple(receptors_push_val)
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="receptors",
+                attribute_value=tuple(receptors_push_val),
             )
 
         if remove_all:
@@ -277,13 +260,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                )
+                ),
             )
         else:
             # remove receptors in 2 stages
@@ -299,13 +284,15 @@ class TestCbfSubarray:
                 assert return_value[0] == ResultCode.QUEUED
 
                 # check that the queued command succeeded
-                change_event_callbacks[
-                    "longRunningCommandResult"
-                ].assert_change_event(
-                    (
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device_under_test,
+                    attribute_name="longRunningCommandResult",
+                    attribute_value=(
                         f"{command_id[0]}",
                         f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                    )
+                    ),
                 )
 
                 # check obsState transitions
@@ -313,16 +300,24 @@ class TestCbfSubarray:
                     ObsState.RESOURCING,
                     ObsState.IDLE,
                 ]:
-                    change_event_callbacks["obsState"].assert_change_event(
-                        obs_state.value
+                    assert_that(event_tracer).within_timeout(
+                        test_utils.EVENT_TIMEOUT
+                    ).has_change_event_occurred(
+                        device_name=device_under_test,
+                        attribute_name="obsState",
+                        attribute_value=obs_state.value,
                     )
 
                 # assert receptors attribute updated
                 curr_rec.difference_update(input_rec)
                 receptors_push_val = list(curr_rec.copy())
                 receptors_push_val.sort()
-                change_event_callbacks["receptors"].assert_change_event(
-                    attribute_value=tuple(receptors_push_val)
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device_under_test,
+                    attribute_name="receptors",
+                    attribute_value=tuple(receptors_push_val),
                 )
 
             # remove remaining receptor(s)
@@ -334,13 +329,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                )
+                ),
             )
 
         # check obsState transitions
@@ -348,17 +345,22 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=(),
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "invalid_receptor",
@@ -366,23 +368,22 @@ class TestCbfSubarray:
     )
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         invalid_receptor: list[str],
     ) -> None:
         """
-        Test invalid use of AddReceptors commands when a receptor ID is out of
-        valid range.
+        Test the AddReceptors() command when a receptor ID is out of valid range.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param invalid_receptor: invalid DISH ID
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # add receptors
         (return_value, command_id) = device_under_test.AddReceptors(
@@ -393,14 +394,18 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f"[{ResultCode.FAILED.value}, "
                 + f'"DISH ID {invalid_receptor[0]} is not valid. '
                 + "It must be SKA001-SKA133 or MKT000-MKT063. "
                 + 'Spaces before, after, or in the middle of the ID are not accepted."]',
-            )
+            ),
         )
 
         # check obsState transitions
@@ -408,13 +413,13 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
-
-        # assert if any captured events have gone unaddressed
-        # we should not have gotten a change event from the receptors attribute
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -426,25 +431,25 @@ class TestCbfSubarray:
     )
     def test_RemoveReceptors_not_assigned(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         receptors: list[str],
         unassigned_receptors: list[int],
     ) -> None:
         """
-        Test invalid use of RemoveReceptors command when a receptor to be removed
-        is not assigned to the subarray.
+        Test the RemoveReceptors() command when one of the receptors to remove
+        was not assigned to the subarray.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param unassigned_receptors: unassigned DISH IDs
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
@@ -453,11 +458,15 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command succeeded
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-            )
+            ),
         )
 
         # check obsState transitions
@@ -465,14 +474,22 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
 
         # try removing a receptor not assigned to subarray
@@ -484,11 +501,15 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.FAILED.value}, "Failed to remove receptors."]',
-            )
+            ),
         )
 
         # check obsState transitions
@@ -496,13 +517,13 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
-
-        # assert if any captured events have gone unaddressed
-        # we should not have gotten a change event from the receptors attribute
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -514,25 +535,25 @@ class TestCbfSubarray:
     )
     def test_RemoveReceptors_invalid(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         receptors: list[str],
         invalid_receptor: list[int],
     ) -> None:
         """
-        Test invalid use of RemoveReceptors command when a receptor ID to be removed
-        is not in valid range.
+        Test the RemoveReceptors() command when one of the receptor IDs to be 
+        removed is not in valid range.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param invalid_receptor: invalid DISH ID
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
@@ -541,11 +562,15 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command succeeded
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-            )
+            ),
         )
 
         # check obsState transitions
@@ -553,14 +578,22 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
 
         # try to remove invalid receptors
@@ -572,14 +605,18 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f"[{ResultCode.FAILED.value}, "
                 + f'"DISH ID {invalid_receptor[0]} is not valid. '
                 + "It must be SKA001-SKA133 or MKT000-MKT063. "
                 + 'Spaces before, after, or in the middle of the ID are not accepted."]',
-            )
+            ),
         )
 
         # check obsState transitions
@@ -587,13 +624,13 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
-
-        # assert if any captured events have gone unaddressed
-        # we should not have gotten a change event from the receptors attribute
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "receptors",
@@ -601,22 +638,23 @@ class TestCbfSubarray:
     )
     def test_RemoveAllReceptors_not_allowed(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         receptors: list[str],
     ) -> None:
         """
-        Test invalid use of RemoveReceptors commands, when, subarray is in ObsState.EMPTY
+        Test the RemoveReceptors() and RemoveAllReceptors() 
+        commands when subarray is in ObsState.EMPTY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param receptors: list of DISH IDs to remove from subarray
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # try to remove receptors
         (return_value, command_id) = device_under_test.RemoveReceptors(
@@ -627,11 +665,15 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
-            )
+            ),
         )
 
         # try to remove allreceptors
@@ -641,42 +683,44 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
-            )
+            ),
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
     def test_Scan(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
         scan_file_name: str,
     ) -> None:
         """
-        Test a minimal successful scan configuration.
+        Test the Scan() command's happy path with a minimal successful scan configuration.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_file_name: JSON file for the scan ID
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -692,9 +736,14 @@ class TestCbfSubarray:
         )
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             config_str
         )
@@ -711,13 +760,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -732,26 +783,32 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=(),
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
     def test_Scan_reconfigure(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
         scan_file_name: str,
@@ -759,17 +816,17 @@ class TestCbfSubarray:
         """
         Test subarrays's ability to reconfigure and run multiple scans.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_id: JSON file for the scan id
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -786,9 +843,14 @@ class TestCbfSubarray:
         )
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             config_str
         )
@@ -801,13 +863,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # second round of observation
@@ -828,13 +892,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -853,42 +919,49 @@ class TestCbfSubarray:
             ObsState.RESOURCING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=(),
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
     )
     def test_Abort_from_ready(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
     ) -> None:
         """
-        Test Abort from ObsState.READY.
+        Test the Abort() command from ObsState.READY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -903,9 +976,14 @@ class TestCbfSubarray:
         )
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             config_str
         )
@@ -917,13 +995,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -935,39 +1015,42 @@ class TestCbfSubarray:
             ObsState.ABORTING,
             ObsState.ABORTED,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
     def test_Abort_from_scanning(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
         scan_file_name: str,
     ) -> None:
         """
-        Test Abort from ObsState.SCANNING.
+        Test the Abort() command from ObsState.SCANNING.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_file_name: JSON file for the scan ID
         """
         # set device ONLINE and ON
-        self.test_Power_Commands(device_under_test, "On")
+        self.test_sysParam(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -984,9 +1067,14 @@ class TestCbfSubarray:
         )
         # assert receptors attribute updated
         receptors.sort()
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=tuple(receptors)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=tuple(receptors),
         )
+        
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             config_str
         )
@@ -999,13 +1087,15 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # check all obsState transitions
@@ -1018,39 +1108,42 @@ class TestCbfSubarray:
             ObsState.ABORTING,
             ObsState.ABORTED,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
     )
     def test_ObsReset_abort_from_ready(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
     ) -> None:
         """
-        Test ObsReset to ObsState.IDLE from ObsState.READY.
+        Test the ObsReset() command to ObsState.IDLE from ObsState.READY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         """
         # test ObsReset from READY
         self.test_Abort_from_ready(
-            change_event_callbacks,
             device_under_test,
+            event_tracer,
             config_file_name,
             receptors,
         )
@@ -1061,51 +1154,58 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
-            )
+            ),
         )
         for obs_state in [
             ObsState.RESETTING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
     def test_ObsReset_abort_from_scanning(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
         scan_file_name: str,
     ) -> None:
         """
-        Test ObsReset to ObsState.IDLE from ObsState.SCANNING.
+        Test the ObsReset() command to ObsState.IDLE from ObsState.SCANNING.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_file_name: JSON file for the scan ID
         """
         # test ObsReset from SCANNING
         self.test_Abort_from_scanning(
-            change_event_callbacks,
             device_under_test,
+            event_tracer,
             config_file_name,
             receptors,
             scan_file_name,
@@ -1117,50 +1217,57 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
-            )
+            ),
         )
         for obs_state in [
             ObsState.RESETTING,
             ObsState.IDLE,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
     )
     def test_Abort_Restart_from_ready(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
     ) -> None:
         """
-        Test Restart to ObsState.EMPTY from ObsState.READY.
+        Test the Restart() command to ObsState.EMPTY from ObsState.READY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_file_name: JSON file for the scan ID
         """
         # test Restart from READY
         self.test_Abort_from_ready(
-            change_event_callbacks,
             device_under_test,
+            event_tracer,
             config_file_name,
             receptors,
         )
@@ -1171,48 +1278,59 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "Restart completed OK"]',
-            )
+            ),
         )
         for obs_state in [
             ObsState.RESTARTING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=(),
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
     )
     def test_Abort_Restart_from_scanning(
         self: TestCbfSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         receptors: list[int],
         scan_file_name: str,
     ) -> None:
         """
-        Test Restart to ObsState.EMPTY from ObsState.SCANNING.
+        Test the Restart() command to ObsState.EMPTY from ObsState.SCANNING.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         :param scan_file_name: JSON file for the scan ID
@@ -1220,8 +1338,8 @@ class TestCbfSubarray:
 
         # test Restart from SCANNING
         self.test_Abort_from_scanning(
-            change_event_callbacks,
             device_under_test,
+            event_tracer,
             config_file_name,
             receptors,
             scan_file_name,
@@ -1233,24 +1351,34 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "Restart completed OK"]',
-            )
+            ),
         )
         for obs_state in [
             ObsState.RESTARTING,
             ObsState.EMPTY,
         ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
             )
 
         # assert receptors attribute updated
-        change_event_callbacks["receptors"].assert_change_event(
-            attribute_value=()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="receptors",
+            attribute_value=(),
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()

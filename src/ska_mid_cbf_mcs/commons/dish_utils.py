@@ -52,36 +52,30 @@ class DISHUtils:
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
 
-        dish_prefix = argin[0:DISH_TYPE_STR_LEN]
-        dish_id = int(argin[DISH_TYPE_STR_LEN:])
-
-        # check prefix and range
-        if (
-            dish_prefix == "SKA"
-            and (
-                dish_id < SKA_DISH_INSTANCE_MIN
-                or dish_id > SKA_DISH_INSTANCE_MAX
-            )
-        ) or (
-            dish_prefix == "MKT"
-            and (
-                dish_id < MKT_DISH_INSTANCE_MIN
-                or dish_id > MKT_DISH_INSTANCE_MAX
-            )
-        ):
-            return (
-                False,
-                (
-                    f"DISH ID {argin} is not valid. It must be SKA001-SKA133"
-                    " or MKT000-MKT063. Spaces before, after, or in the middle"
-                    " of the ID are not accepted."
-                ),
-            )
-
-        if argin not in self.dish_id_to_k:
-            return (False, "DISH ID is outside of Mid.CBF max capabilities.")
-
+        # The DISH ID must be in the range of SKA[001-133] or MKT[000-063]
+        fail_msg = (
+            f"DISH ID {argin} is not valid. It must be SKA001-SKA133"
+            " or MKT000-MKT063. Spaces before, after, or in the middle"
+            " of the ID are not accepted."
+        )
+        if argin[:DISH_TYPE_STR_LEN] == "SKA":
+            id = int(argin[DISH_TYPE_STR_LEN:])
+            if (
+                id < SKA_DISH_INSTANCE_MIN
+                or id > SKA_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
+        elif argin[:DISH_TYPE_STR_LEN] == "MKT":
+            id = int(argin[DISH_TYPE_STR_LEN:])
+            if (
+                id < MKT_DISH_INSTANCE_MIN
+                or id > MKT_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
+        else:
+            return (False, fail_msg)
         return (True, "DISH ID is valid")
+
 
     def are_Valid_DISH_Ids(
         self: DISHUtils, dish_ids: list[str]
