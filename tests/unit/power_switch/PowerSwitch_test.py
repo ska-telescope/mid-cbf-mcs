@@ -39,10 +39,7 @@ class TestPowerSwitch:
 
     power_switch_driver_model = None
 
-    @pytest.fixture(
-        name="test_context",
-        scope="module",
-    )
+    @pytest.fixture(name="test_context")
     def power_switch_test_context(
         self: TestPowerSwitch,
         request: pytest.FixtureRequest,

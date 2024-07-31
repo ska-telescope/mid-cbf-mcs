@@ -40,7 +40,7 @@ class TestSlimLink:
     Test class for SlimLink.
     """
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def slim_link_test_context(
         self: TestSlimLink, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:

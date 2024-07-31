@@ -41,7 +41,7 @@ class TestSlim:
     Test class for SLIM.
     """
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def slim_test_context(
         self: TestSlim,
         initial_mocks: dict[str, Mock],

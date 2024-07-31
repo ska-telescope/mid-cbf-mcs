@@ -26,7 +26,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
-@pytest.fixture(name="device_under_test", scope="module")
+@pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -39,7 +39,7 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/talon_board/001")
 
 
-@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+@pytest.fixture(name="event_tracer", autouse=True)
 def tango_event_tracer(
     device_under_test: context.DeviceProxy,
 ) -> Generator[TangoEventTracer, None, None]:
@@ -62,7 +62,7 @@ def tango_event_tracer(
     return tracer
 
 
-@pytest.fixture(name="monkeymodule", scope="module")
+@pytest.fixture()
 def monkeymodule():
     from _pytest.monkeypatch import MonkeyPatch
 
@@ -71,7 +71,7 @@ def monkeymodule():
     mpatch.undo()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -80,14 +80,14 @@ def mock_talon_sysid() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_talon_status() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -104,14 +104,14 @@ def mock_talon_status() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_hps_master() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def initial_mocks(
     mock_talon_sysid: unittest.mock.Mock,
     mock_ethernet_100g: unittest.mock.Mock,

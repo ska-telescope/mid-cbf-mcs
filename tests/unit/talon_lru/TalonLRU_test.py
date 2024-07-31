@@ -39,7 +39,7 @@ class TestTalonLRU:
     Test class for the TalonLRU.
     """
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def talon_lru_test_context(
         self: TestTalonLRU,
         initial_mocks: dict[str, Mock],

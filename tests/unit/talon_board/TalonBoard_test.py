@@ -41,7 +41,7 @@ class TestTalonBoard:
     Test class for TalonBoard.
     """
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def talon_board_test_context(
         self: TestTalonBoard,
         request: pytest.FixtureRequest,

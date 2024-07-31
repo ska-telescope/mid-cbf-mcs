@@ -26,7 +26,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
-@pytest.fixture(name="device_under_test", scope="module")
+@pytest.fixture(name="device_under_test")
 def device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
@@ -39,7 +39,7 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/fs_links/001")
 
 
-@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+@pytest.fixture(name="event_tracer", autouse=True)
 def tango_event_tracer(
     device_under_test: context.DeviceProxy,
 ) -> Generator[TangoEventTracer, None, None]:
@@ -62,7 +62,7 @@ def tango_event_tracer(
     return tracer
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_slim_tx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -74,7 +74,7 @@ def mock_slim_tx() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_slim_rx() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -88,7 +88,7 @@ def mock_slim_rx() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_slim_tx_regenerate() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -100,7 +100,7 @@ def mock_slim_tx_regenerate() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def mock_slim_rx_unhealthy() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -114,7 +114,7 @@ def mock_slim_rx_unhealthy() -> unittest.mock.Mock:
     return builder()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def initial_mocks(
     mock_slim_tx: unittest.mock.Mock,
     mock_slim_rx: unittest.mock.Mock,

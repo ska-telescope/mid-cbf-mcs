@@ -10,15 +10,14 @@
 from __future__ import annotations
 
 import unittest
+from typing import Generator
 
 import pytest
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")

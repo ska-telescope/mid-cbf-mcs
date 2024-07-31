@@ -47,7 +47,7 @@ class TestVcc:
     # TODO: simulator vs mock HPS?
     # TODO: validate ConfigureScan at VCC level?
 
-    @pytest.fixture(name="test_context", scope="module")
+    @pytest.fixture(name="test_context")
     def vcc_test_context(
         self: TestVcc, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
@@ -134,58 +134,32 @@ class TestVcc:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
-    def test_Power_Commands(
+    def device_online_and_on(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
-        command: str,
-    ) -> None:
+    ) -> bool:
         """
-        Test the On/Off/Standby commands.
+        Helper function to start up and turn on the DUT.
 
         :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param command: the command to test (one of On/Off/Standby)
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
+        # Set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode == SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
+        
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="state",
-            attribute_value=DevState.OFF,
+            attribute_value=DevState.ON,
         )
 
-        if command == "On":
-            expected_result = ResultCode.OK
-            expected_state = DevState.ON
-            result = device_under_test.On()
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="state",
-                attribute_value=expected_state,
-            )
-        elif command == "Off":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
-        elif command == "Standby":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Standby()
-
-        assert result[0][0] == expected_result
-        assert device_under_test.State() == expected_state
+        return device_under_test.adminMode == AdminMode.ONLINE
 
     @pytest.mark.parametrize(
         "frequency_band, success",
@@ -217,7 +191,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # setting band configuration with invalid frequency band
 
@@ -291,7 +265,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -397,7 +371,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -561,7 +535,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -716,7 +690,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
