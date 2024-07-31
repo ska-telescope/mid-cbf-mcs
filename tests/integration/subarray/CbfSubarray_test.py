@@ -90,6 +90,172 @@ class TestCbfSubarray:
             attribute_value=sys_param,
         )
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors",
+        [
+            (
+                "ConfigureScan_basic_CORR.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+            )
+        ],
+    )
+    def test_Scan(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        # all_sub_devices: list[context.DeviceProxy],
+        config_file_name: str,
+        scan_file_name: str,
+        receptors: list[str],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's EndScan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :fsp: dict of DeviceProxy to Fsp devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param all_sub_devices: list of proxies to subarray subordinate devices
+        :param config_file_name: JSON file for the configuration
+        :param scan_file_name: JSON file for the scan configuration
+        :param receptors: list of receptor ids
+        :param event_tracer: TangoEventTracer
+        """
+        # Prepare test data
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param = json.load(f)
+        dish_utils = DISHUtils(sys_param)
+
+        with open(test_data_path + config_file_name) as f:
+            configuration = json.load(f)
+        sub_id = int(configuration["common"]["subarray_id"])
+
+        with open(test_data_path + scan_file_name) as f:
+            scan = json.load(f)
+
+        # dict to store return code and unique IDs of queued commands
+        command_dict = {}
+
+        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(receptors)
+        command_dict["ConfigureScan"] = subarray[sub_id].ConfigureScan(
+            json.dumps(configuration)
+        )
+        command_dict["Scan"] = subarray[sub_id].Scan(json.dumps(scan))
+        command_dict["EndScan"] = subarray[sub_id].EndScan()
+        command_dict["GoToIdle"] = subarray[sub_id].GoToIdle()
+        command_dict["RemoveReceptors"] = subarray[sub_id].RemoveReceptors(
+            receptors
+        )
+
+        # --- Subarray checks --- #
+
+        attr_values = [
+            ("receptors", tuple(receptors)),
+            ("receptors", ()),
+            ("obsState", ObsState.RESOURCING),
+            ("obsState", ObsState.IDLE),
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.SCANNING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.IDLE),
+            ("obsState", ObsState.RESOURCING),
+            ("obsState", ObsState.EMPTY),
+        ]
+        for command_name, return_value in command_dict.items():
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                )
+            )
+
+        for name, value in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+
+        # --- VCC checks --- #
+
+        vcc_ids = [dish_utils.dish_id_to_vcc_id[r] for r in receptors]
+        frequency_band = freq_band_dict()[
+            configuration["common"]["frequency_band"]
+        ]["band_index"]
+        attr_values = [
+            ("subarrayMembership", sub_id),
+            ("frequencyBand", frequency_band),
+            ("adminMode", AdminMode.ONLINE),
+            ("state", DevState.ON),
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.SCANNING),
+            ("obsState", ObsState.READY),
+            ("obsState", ObsState.IDLE),
+        ]
+        for vcc_id in vcc_ids:
+            for name, value in attr_values:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
+        # --- FSP checks --- #
+
+        for fsp_config in configuration["cbf"]["fsp"]:
+            fsp_id = fsp_config["fsp_id"]
+            function_mode = FspModes[fsp_config["function_mode"]].value
+
+            attr_values = [
+                ("subarrayMembership", (sub_id)),
+                ("functionMode", function_mode),
+                ("adminMode", AdminMode.ONLINE),
+                ("state", DevState.ON),
+            ]
+            for name, value in attr_values:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
+            attr_values = [
+                ("adminMode", AdminMode.ONLINE),
+                ("state", DevState.ON),
+                ("obsState", ObsState.CONFIGURING),
+                ("obsState", ObsState.READY),
+                ("obsState", ObsState.SCANNING),
+                ("obsState", ObsState.READY),
+                ("obsState", ObsState.IDLE),
+            ]
+            for name, value in attr_values:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
+    # TODO config ID, scan ID
+
     # @pytest.mark.parametrize(
     #     "receptors, \
     #     receptors_to_remove, \
@@ -1481,172 +1647,6 @@ class TestCbfSubarray:
     #         test_proxies.clean_test_proxies()
     #         time.sleep(2)
     #         raise e
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_file_name, \
-        receptors",
-        [
-            (
-                "ConfigureScan_basic_CORR.json",
-                "Scan1_basic.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-            )
-        ],
-    )
-    def test_Scan(
-        self: TestCbfSubarray,
-        subarray: dict[int, context.DeviceProxy],
-        vcc: dict[int, context.DeviceProxy],
-        fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
-        # all_sub_devices: list[context.DeviceProxy],
-        config_file_name: str,
-        scan_file_name: str,
-        receptors: list[str],
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test CbfSubarrays's EndScan command
-
-        :param subarray: list of proxies to subarray devices
-        :vcc: dict of DeviceProxy to Vcc devices
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
-        :param all_sub_devices: list of proxies to subarray subordinate devices
-        :param config_file_name: JSON file for the configuration
-        :param scan_file_name: JSON file for the scan configuration
-        :param receptors: list of receptor ids
-        :param event_tracer: TangoEventTracer
-        """
-        # Prepare test data
-        with open(test_data_path + "sys_param_4_boards.json") as f:
-            sys_param = json.load(f)
-        dish_utils = DISHUtils(sys_param)
-
-        with open(test_data_path + config_file_name) as f:
-            configuration = json.load(f)
-        sub_id = int(configuration["common"]["subarray_id"])
-
-        with open(test_data_path + scan_file_name) as f:
-            scan = json.load(f)
-
-        # dict to store return code and unique IDs of queued commands
-        command_dict = {}
-
-        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(receptors)
-        command_dict["ConfigureScan"] = subarray[sub_id].ConfigureScan(
-            json.dumps(configuration)
-        )
-        command_dict["Scan"] = subarray[sub_id].Scan(json.dumps(scan))
-        command_dict["EndScan"] = subarray[sub_id].EndScan()
-        command_dict["GoToIdle"] = subarray[sub_id].GoToIdle()
-        command_dict["RemoveReceptors"] = subarray[sub_id].RemoveReceptors(
-            receptors
-        )
-
-        # --- Subarray checks --- #
-
-        attr_values = [
-            ("receptors", tuple(receptors)),
-            ("receptors", ()),
-            ("obsState", ObsState.RESOURCING),
-            ("obsState", ObsState.IDLE),
-            ("obsState", ObsState.CONFIGURING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.SCANNING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.IDLE),
-            ("obsState", ObsState.RESOURCING),
-            ("obsState", ObsState.EMPTY),
-        ]
-        for command_name, return_value in command_dict.items():
-            attr_values.append(
-                (
-                    "longRunningCommandResult",
-                    (
-                        f"{return_value[1][0]}",
-                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                    ),
-                )
-            )
-
-        for name, value in attr_values:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-            )
-
-        # --- VCC checks --- #
-
-        vcc_ids = [dish_utils.dish_id_to_vcc_id[r] for r in receptors]
-        frequency_band = freq_band_dict()[
-            configuration["common"]["frequency_band"]
-        ]["band_index"]
-        attr_values = [
-            ("subarrayMembership", sub_id),
-            ("frequencyBand", frequency_band),
-            ("adminMode", AdminMode.ONLINE),
-            ("state", DevState.ON),
-            ("obsState", ObsState.CONFIGURING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.SCANNING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.IDLE),
-        ]
-        for vcc_id in vcc_ids:
-            for name, value in attr_values:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=vcc[vcc_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                )
-
-        # --- FSP checks --- #
-
-        for fsp in configuration["cbf"]["fsp"]:
-            fsp_id = fsp["fsp_id"]
-            function_mode = FspModes[fsp["function_mode"]].value
-
-            attr_values = [
-                ("subarrayMembership", (sub_id)),
-                ("functionMode", function_mode),
-                ("adminMode", AdminMode.ONLINE),
-                ("state", DevState.ON),
-            ]
-            for name, value in attr_values:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=fsp[fsp_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                )
-
-            attr_values = [
-                ("adminMode", AdminMode.ONLINE),
-                ("state", DevState.ON),
-                ("obsState", ObsState.CONFIGURING),
-                ("obsState", ObsState.READY),
-                ("obsState", ObsState.SCANNING),
-                ("obsState", ObsState.READY),
-                ("obsState", ObsState.IDLE),
-            ]
-            for name, value in attr_values:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                )
-
-    # TODO config ID, scan ID
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \

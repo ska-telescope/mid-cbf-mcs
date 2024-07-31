@@ -27,7 +27,6 @@ from ska_control_model import (
     ResultCode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_testing import context
 from ska_telmodel.schema import validate as telmodel_validate
 
@@ -376,7 +375,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             self.last_received_delay_model = model
 
-    @check_communicating
     def _delay_model_event_callback(
         self: CbfSubarrayComponentManager, event_data: tango.EventData
     ) -> None:
@@ -386,6 +384,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param event_data: the received change event data
         """
         self.logger.debug("Entering _delay_model_event_callback()")
+        if not self.is_communicating:
+            self.logger.error(
+                f"Unable to update delay model, communication_state: {self.communication_state}"
+            )
+            return
 
         value = event_data.attr_value.value
 
@@ -401,9 +404,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         Thread(target=self._update_delay_model, args=(value,)).start()
 
-    #####################
+    # -------------------
     # Resourcing Commands
-    #####################
+    # -------------------
+
+    # --- AddReceptors Command --- #
 
     def _get_talon_proxy_from_dish_id(
         self: CbfSubarrayComponentManager,
@@ -431,6 +436,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
         """Check if AddReceptors command is allowed in current state"""
         self.logger.debug("Checking if AddReceptors is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
                 f"AddReceptors not allowed in ObsState {self.obs_state}; "
@@ -577,7 +584,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    @check_communicating
     def assign_vcc(
         self: CbfSubarrayComponentManager,
         argin: list[str],
@@ -606,9 +612,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
+    # --- RemoveReceptors Command --- #
+
     def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
         """Check if RemoveReceptors command is allowed in current state"""
         self.logger.debug("Checking if RemoveReceptors is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
                 f"RemoveReceptors not allowed in ObsState {self.obs_state}; "
@@ -772,7 +782,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    @check_communicating
     def release_vcc(
         self: CbfSubarrayComponentManager,
         argin: list[str],
@@ -801,7 +810,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    @check_communicating
     def release_all_vcc(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
@@ -828,9 +836,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    #####################
+    # -------------
     # Scan Commands
-    #####################
+    # -------------
+
+    # --- ConfigureScan Command --- #
 
     def _issue_lrc_all_assigned_resources(
         self: CbfSubarrayComponentManager,
@@ -864,7 +874,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._blocking_commands.add(command_id)
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
             self.logger.error("One or more command calls timed out.")
@@ -1046,7 +1056,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 return TaskStatus.FAILED
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
@@ -1156,7 +1166,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 return TaskStatus.FAILED
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
@@ -1178,6 +1188,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
 
         fsp_proxy = self._all_fsp_proxies[fsp_id]
+
+        # subscribe to LRC results for FSP scan operation
+        self._subscribe_command_results(fsp_proxy)
+        self._assigned_fsp_proxies.add(fsp_proxy)
+
         try:
             # only set function mode if FSP is both IDLE and not configured for
             # another mode
@@ -1222,17 +1237,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(f"{df}")
             return False
 
-        lrc_status = self._wait_for_blocking_results(timeout=10.0)
+        lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
                 "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands timed out."
             )
             return False
-
-        self._assigned_fsp_proxies.add(fsp_proxy)
-
-        # subscribe to LRC results for FSP scan operation
-        self._subscribe_command_results(fsp_proxy)
 
         return True
 
@@ -1257,7 +1267,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 return False
             self._blocking_commands.add(command_id)
 
-        lrc_status = self._wait_for_blocking_results(timeout=10.0)
+        lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
                 "One or more calls to FSP RemoveSubarrayMembership command timed out."
@@ -1340,7 +1350,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for config in configuration["fsp"]:
             fsp_config = self._build_fsp_config(
                 fsp_config=copy.deepcopy(config),
-                common_configuration=common_configuration,
+                common_configuration=copy.deepcopy(common_configuration),
             )
 
             fsp_id = fsp_config["fsp_id"]
@@ -1371,6 +1381,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         fsp_id=fsp_id, function_mode="CORR"
                     )
                     if not fsp_success:
+                        for fsp_proxy in self._assigned_fsp_proxies:
+                            self._unsubscribe_command_results(fsp_proxy)
                         return TaskStatus.FAILED
 
                     fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
@@ -1379,7 +1391,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self._subscribe_command_results(fsp_corr_proxy)
 
                     all_fsp_config.append(
-                        json.dumps(fsp_config), fsp_corr_proxy
+                        (json.dumps(fsp_config), fsp_corr_proxy)
                     )
                 case _:
                     self.logger.error(
@@ -1387,12 +1399,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
 
         # Call ConfigureScan for all FSP function mode subarray devices
-        for fsp_config, proxy in all_fsp_config:
+        for fsp_config_str, proxy in all_fsp_config:
             try:
                 # TODO handle fsp corr LRC
-                self.logger.debug(f"fsp_config: {fsp_config}")
+                self.logger.debug(f"fsp_config: {fsp_config_str}")
                 [[result_code], [command_id]] = proxy.ConfigureScan(
-                    json.dumps(fsp_config)
+                    fsp_config_str
                 )
                 if result_code == ResultCode.REJECTED:
                     self.logger.error(
@@ -1409,7 +1421,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 return TaskStatus.FAILED
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
@@ -1645,6 +1657,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
+    # --- Scan Command --- #
+
     def _scan(
         self: CbfSubarrayComponentManager,
         argin: str,
@@ -1728,6 +1742,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
+    # --- EndScan Command --- #
+
     def _end_scan(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
@@ -1782,6 +1798,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
+
+    # --- GoToIdle Command --- #
 
     def _go_to_idle(
         self: CbfSubarrayComponentManager,
@@ -1847,6 +1865,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
+    # --------------
+    # Abort Commands
+    # --------------
+
+    # --- Abort Command --- #
+
     def _abort(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
@@ -1894,6 +1918,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
+
+    # --- ObsReset Command --- #
 
     def _obs_reset(
         self: CbfSubarrayComponentManager,
@@ -1986,9 +2012,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
+    # --- Restart Command --- #
+
     def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
         """Check if Restart command is allowed in current state"""
         self.logger.debug("Checking if Restart is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
             self.logger.warning(
                 f"Restart not allowed in ObsState {self.obs_state}; "
@@ -2103,7 +2133,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         return
 
-    @check_communicating
     def restart(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,

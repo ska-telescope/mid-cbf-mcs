@@ -159,6 +159,10 @@ class Fsp(CbfDevice):
 
             return (result_code, message)
 
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
     @command(
         dtype_in="str",
         dtype_out="DevVarLongStringArray",
@@ -202,8 +206,8 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="AddSubarrayMembership"
         )
-        result_code, message = command_handler(sub_id)
-        return [[result_code], [message]]
+        result_code, command_id = command_handler(sub_id)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="uint16",
@@ -223,12 +227,8 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="RemoveSubarrayMembership"
         )
-        result_code, message = command_handler(sub_id)
-        return [[result_code], [message]]
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
+        result_code, command_id = command_handler(sub_id)
+        return [[result_code], [command_id]]
 
 
 # ----------

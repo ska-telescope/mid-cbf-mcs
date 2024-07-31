@@ -116,6 +116,12 @@ class FspComponentManager(CbfComponentManager):
     # Fast Commands
     # -------------
 
+    # None at this time
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
     # --- SetFunctionMode Command --- #
 
     def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
@@ -125,6 +131,8 @@ class FspComponentManager(CbfComponentManager):
         :return: True if the SetFunctionMode command is allowed, False otherwise
         """
         self.logger.debug("Checking if SetFunctionMode is allowed")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"SetFunctionMode command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
@@ -184,6 +192,7 @@ class FspComponentManager(CbfComponentManager):
         self.logger.info(
             f"FSP set to function mode {FspModes(function_mode).name}"
         )
+        return True
 
     def _set_function_mode(
         self: FspComponentManager,
@@ -238,7 +247,6 @@ class FspComponentManager(CbfComponentManager):
         )
         return
 
-    @check_communicating
     def set_function_mode(
         self: FspComponentManager,
         argin: str,
@@ -351,6 +359,8 @@ class FspComponentManager(CbfComponentManager):
         :return: True if the AddSubarrayMembership command is allowed, False otherwise
         """
         self.logger.debug("Checking if AddSubarrayMembership is allowed")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"AddSubarrayMembership command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
@@ -399,7 +409,7 @@ class FspComponentManager(CbfComponentManager):
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {argin}",
+                    f"Unsuccessful in powering on function mode device for subarray {argin}",
                 ),
                 status=TaskStatus.FAILED,
             )
@@ -503,6 +513,8 @@ class FspComponentManager(CbfComponentManager):
         :return: True if the RemoveSubarrayMembership command is allowed, False otherwise
         """
         self.logger.debug("Checking if RemoveSubarrayMembership is allowed")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"RemoveSubarrayMembership command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
@@ -585,7 +597,6 @@ class FspComponentManager(CbfComponentManager):
         )
         return
 
-    @check_communicating
     def remove_subarray_membership(
         self: FspComponentManager,
         argin: int,

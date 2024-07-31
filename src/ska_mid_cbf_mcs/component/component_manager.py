@@ -496,7 +496,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _wait_for_blocking_results(
         self: CbfComponentManager,
-        timeout: float,
+        timeout: float = 0.0,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -535,11 +535,14 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
             # now we can continue
 
-        :param timeout: Time to wait, in seconds.
+        :param timeout: Time to wait, in seconds. If default value of 0.0 is set,
+            timeout = current number of blocking commands * 5
         :param task_abort_event: Check for abort, defaults to None
 
         :return: completed if status reached, FAILED if timed out, ABORTED if aborted
         """
+        if timeout == 0.0:
+            timeout = float(len(self._blocking_commands) * 5)
         ticks = int(timeout / 0.01)  # 10 ms resolution
         while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
@@ -576,7 +579,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :return: True if communication with the component is established, else False.
         """
-        return self.communication_state == CommunicationStatus.ESTABLISHED
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
+            return True
+        self.logger.warning(
+            f"is_communicating() check failed; current communication_state: {self.communication_state}"
+        )
+        return False
 
     @property
     def power_state(self: CbfComponentManager) -> Optional[PowerState]:
