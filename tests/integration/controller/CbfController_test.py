@@ -20,8 +20,6 @@ import pytest
 
 # Tango imports
 from ska_control_model import AdminMode, ObsState, ResultCode
-
-# Tango imports
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
@@ -36,6 +34,9 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 class TestCbfController:
     """
     Test class for CbfController device class integration testing.
+
+    As teardown and setup are expensive operations, tests are interdependent. 
+    This is handled by the pytest.mark.dependency decorator. 
     """
 
     @pytest.mark.dependency()
