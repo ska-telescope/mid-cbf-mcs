@@ -154,16 +154,3 @@ def device_health_state_changed_callback(
         test.)
     """
     return mock_change_event_callback_factory("healthState")
-
-
-@pytest.fixture()
-def mock_controller() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
-    builder.add_attribute("maxCapabilities", ["VCC:4", "FSP:4", "Subarray:1"])
-    builder.add_property(
-        "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
-    )
-    return builder()

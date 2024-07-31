@@ -16,12 +16,15 @@ from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_control_model import AdminMode, ObsState, ResultCode
+from assertpy import assert_that
+from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
+
+from ... import test_utils
 
 # Data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -32,10 +35,10 @@ gc.disable()
 
 class TestCbfSubarray:
     """
-    Test class for TestCbfSubarray tests.
+    Test class for CbfSubarray.
     """
 
-    @pytest.fixture(name="test_context")
+    @pytest.fixture(name="test_context", scope="module")
     def subarray_test_context(
         self: TestCbfSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
@@ -68,6 +71,7 @@ class TestCbfSubarray:
                 "mid_csp_cbf/talon_board/003",
                 "mid_csp_cbf/talon_board/004",
             ],
+            VisSLIM=["mid_csp_cbf/slim/slim-vis"],
             DeviceID="1",
         )
         for name, mock in initial_mocks.items():
@@ -84,10 +88,11 @@ class TestCbfSubarray:
         self: TestCbfSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -95,10 +100,11 @@ class TestCbfSubarray:
         self: TestCbfSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -106,27 +112,40 @@ class TestCbfSubarray:
         self: TestCbfSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_sysParam(
         self: TestCbfSubarray,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test writing the sysParam attribute
+        Test writing to the sysParam attribute.
 
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
-        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.FALSE
+
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param = f.read()
@@ -138,21 +157,32 @@ class TestCbfSubarray:
     def test_Power_Commands(
         self: TestCbfSubarray,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         command: str,
     ) -> None:
         """
-        Test the On/Off/Standby commands
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        Test the On/Off/Standby commands.
+
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         :param command: the command to test (one of On/Off/Standby)
         """
         # set device ONLINE
-        self.test_sysParam(device_under_test)
+        self.test_sysParam(device_under_test, event_tracer)
 
         if command == "On":
             expected_result = ResultCode.OK
             expected_state = DevState.ON
             result = device_under_test.On()
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="state",
+                attribute_value=expected_state,
+            )
         elif command == "Off":
             expected_result = ResultCode.REJECTED
             expected_state = DevState.OFF

@@ -86,8 +86,14 @@ class TestCbfSubarray:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=subarray[sub_id],
+<<<<<<< HEAD
             attribute_name="sysParam",
             attribute_value=sys_param,
+=======
+            attribute_name="state",
+            attribute_value=DevState.ON,
+            previous_value=DevState.OFF,
+>>>>>>> cd7a58752145643fb34d28f711d16d5203e3aa03
         )
 
     # @pytest.mark.parametrize(

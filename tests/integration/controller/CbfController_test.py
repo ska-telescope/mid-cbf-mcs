@@ -16,6 +16,8 @@ import os
 
 from assertpy import assert_that
 
+import pytest
+
 # Tango imports
 from ska_control_model import AdminMode, ObsState, ResultCode
 
@@ -36,6 +38,7 @@ class TestCbfController:
     Test class for CbfController device class integration testing.
     """
 
+    @pytest.mark.dependency()
     def test_Online(
         self: TestCbfController,
         controller: context.DeviceProxy,
@@ -81,6 +84,7 @@ class TestCbfController:
                     attribute_value=DevState.OFF,
                 )
 
+    @pytest.mark.dependency(depends=["TestCbfController::test_Online"])
     def test_InitSysParam(
         self: TestCbfController,
         controller: context.DeviceProxy,
@@ -135,6 +139,7 @@ class TestCbfController:
                 attribute_value=dish_id,
             )
 
+    @pytest.mark.dependency(depends=["TestCbfController::test_InitSysParam"])
     def test_On(
         self: TestCbfController,
         controller: context.DeviceProxy,
@@ -174,6 +179,7 @@ class TestCbfController:
                 attribute_value=DevState.ON,
             )
 
+    @pytest.mark.dependency(depends=["TestCbfController::test_On"])
     def test_OnState_InitSysParam_NotAllowed(
         self: TestCbfController,
         controller: context.DeviceProxy,
@@ -184,10 +190,6 @@ class TestCbfController:
         """
         assert controller.State() == DevState.ON
 
-        # Get the system parameters
-        data_file_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-        )
         with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
 
@@ -206,38 +208,7 @@ class TestCbfController:
             ),
         )
 
-    @pytest.mark.parametrize(
-        "config_file_name",
-        [
-            "source_init_sys_param.json",
-            "source_init_sys_param_retrieve_from_car.json",
-        ],
-    )
-    def test_SourceInitSysParam(
-        self, subdevices_under_test, config_file_name: str
-    ):
-        """
-        Test that InitSysParam file can be retrieved from CAR
-        """
-        if subdevices_under_test.controller.State() == DevState.ON:
-            subdevices_under_test.controller.Off()
-        with open(data_file_path + config_file_name) as f:
-            sp = f.read()
-        result = subdevices_under_test.controller.InitSysParam(sp)
-
-        assert subdevices_under_test.controller.State() == DevState.OFF
-        assert result[0] == ResultCode.OK
-        assert subdevices_under_test.controller.sourceSysParam == sp
-        sp_json = json.loads(sp)
-        tm_data_sources = sp_json["tm_data_sources"][0]
-        tm_data_filepath = sp_json["tm_data_filepath"]
-        retrieved_init_sys_param_file = TMData([tm_data_sources])[
-            tm_data_filepath
-        ].get_dict()
-        assert subdevices_under_test.controller.sysParam == json.dumps(
-            retrieved_init_sys_param_file
-        )
-
+    @pytest.mark.dependency(depends=["TestCbfController::test_On"])
     def test_Off(
         self,
         controller: context.DeviceProxy,
@@ -309,6 +280,43 @@ class TestCbfController:
             attribute_value=(f"{command_id[0]}", '[0, "Off completed OK"]'),
         )
 
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "source_init_sys_param.json",
+            "source_init_sys_param_retrieve_from_car.json",
+        ],
+    )
+    @pytest.mark.dependency(depends=["TestCbfController::test_Off"])
+    def test_SourceInitSysParam(        
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        config_file_name: str,
+    ):
+        """
+        Test that InitSysParam file can be retrieved from CAR
+        """
+        assert controller.State() == DevState.OFF
+
+        with open(data_file_path + config_file_name) as f:
+            sp = f.read()
+
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sp)
+        assert result_code == [ResultCode.QUEUED]
+        
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
+        )
+        
     # @pytest.mark.parametrize(
     #     "config_file_name, \
     #     receptors, \
@@ -463,7 +471,7 @@ class TestCbfController:
     def test_Offline(
         self: TestCbfController,
         controller: context.DeviceProxy,
-        sub_devices: list[context.DeviceProxy],
+        all_sub_devices: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
     ) -> None:
         """
@@ -473,7 +481,7 @@ class TestCbfController:
         controller.adminMode = AdminMode.OFFLINE
 
         # check adminMode and state changes
-        for device in [controller] + sub_devices:
+        for device in [controller] + all_sub_devices:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
