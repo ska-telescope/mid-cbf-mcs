@@ -196,16 +196,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_fqdn
                 )
-                self.logger.error("1.")
                 self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_corr_fqdn
                 )
-                self.logger.error("2.")
 
             for fqdn in self._fqdn_talon_board_device:
                 proxy = context.DeviceProxy(device_name=fqdn)
                 self._all_talon_board_proxies.append(proxy)
-                self.logger.error("3.")
 
             self._proxy_vis_slim = context.DeviceProxy(
                 device_name=self._fqdn_vis_slim_device
