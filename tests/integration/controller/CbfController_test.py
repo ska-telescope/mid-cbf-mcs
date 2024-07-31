@@ -34,8 +34,8 @@ class TestCbfController:
     """
     Test class for CbfController device class integration testing.
 
-    As teardown and setup are expensive operations, tests are interdependent. 
-    This is handled by the pytest.mark.dependency decorator. 
+    As teardown and setup are expensive operations, tests are interdependent.
+    This is handled by the pytest.mark.dependency decorator.
     """
 
     @pytest.mark.dependency()
