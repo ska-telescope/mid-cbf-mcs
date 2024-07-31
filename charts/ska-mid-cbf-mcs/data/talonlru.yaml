@@ -4,10 +4,7 @@ domain: mid-csp-cbf
 command: "TalonLRU"
 instances: ["01"]
 depends_on:
-  - device: mid_csp_cbf/power_switch/001
-  - device: mid_csp_cbf/power_switch/002
-  - device: mid_csp_cbf/power_switch/003
-  - device: mid_csp_cbf/power_switch/004
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10

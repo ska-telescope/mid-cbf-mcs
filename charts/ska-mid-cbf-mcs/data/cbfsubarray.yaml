@@ -4,7 +4,7 @@ domain: subarray
 command: "CbfSubarray"
 instances: ["cbfsubarray"]
 depends_on:
-  - device: mid_csp_cbf/sub_elt/controller
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -25,13 +25,6 @@ server:
     - name: "CbfSubarray"
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_01"
-        attribute_properties:
-        - attribute: "scanID"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "CbfControllerAddress"
             values:
