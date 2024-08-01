@@ -184,7 +184,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param frequency_band: The frequency band to configure.
         :param success: A parameterized value used to test success and failure conditions.
         """
@@ -260,7 +261,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
@@ -363,7 +365,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
@@ -528,7 +531,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration.
         """
 
@@ -682,7 +686,8 @@ class TestVcc:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
