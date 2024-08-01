@@ -81,7 +81,7 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of receptor IDs
         :rtype: list[str]
         """
-        receptors = self.component_manager.dish_ids.copy()
+        receptors = list(self.component_manager.dish_ids)
         receptors.sort()
         return receptors
 
@@ -91,6 +91,20 @@ class CbfSubarray(CbfObsDevice):
         doc="list of VCC integer IDs assigned to subarray",
     )
     def assignedVCCs(self: CbfSubarray) -> list[int]:
+        """
+        Return list of VCCs assigned to subarray
+
+        :return: the list of VCC IDs
+        :rtype: list[int]
+        """
+        return self.component_manager.vcc_ids
+
+    @attribute(
+        dtype=("int",),
+        max_dim_x=197,
+        doc="list of VCC integer IDs assigned to subarray",
+    )
+    def assignedFSPs(self: CbfSubarray) -> list[int]:
         """
         Return list of VCCs assigned to subarray
 

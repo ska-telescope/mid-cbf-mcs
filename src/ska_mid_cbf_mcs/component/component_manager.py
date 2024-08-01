@@ -546,6 +546,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         ticks = int(timeout / 0.01)  # 10 ms resolution
         while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
+                self.logger.warning(
+                    "Task aborted while waiting for blocking results."
+                )
                 return TaskStatus.ABORTED
             sleep(0.01)
             ticks -= 1

@@ -197,61 +197,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # -------------
 
     @check_communicating
-    def on(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn on FSP Corr component. This attempts to establish communication
-        with the FSP Corr controller device on the HPS.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.info("Entering FspCorrSubarrayComponentManager.on")
-
-        # Try to connect to HPS devices, which are deployed during the
-        # CbfController OnCommand sequence
-        if not self.simulation_mode:
-            if self._proxy_hps_fsp_corr_controller is None:
-                try:
-                    self._proxy_hps_fsp_corr_controller = context.DeviceProxy(
-                        device_name=self._hps_fsp_corr_controller_fqdn
-                    )
-                except tango.DevFailed as df:
-                    self.logger.error(
-                        f"Failed to connect to {self._hps_fsp_corr_controller_fqdn}; {df}"
-                    )
-                    self._update_communication_state(
-                        communication_state=CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    return (
-                        ResultCode.FAILED,
-                        "Failed to establish proxy to HPS FSP Corr controller device.",
-                    )
-        else:
-            self._proxy_hps_fsp_corr_controller = (
-                HpsFspCorrControllerSimulator(
-                    self._hps_fsp_corr_controller_fqdn
-                )
-            )
-
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
-
-    @check_communicating
-    def off(self: FspCorrSubarrayComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn off FSP component; currently unimplemented.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._update_component_state(power=PowerState.OFF)
-        return (ResultCode.OK, "Off completed OK")
-
-    @check_communicating
     def update_delay_model(
         self: FspCorrSubarrayComponentManager, argin: str
     ) -> tuple[ResultCode, str]:
@@ -285,6 +230,10 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             )
 
         return (ResultCode.OK, "UpdateDelayModel completed OK")
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def _configure_scan(
         self: FspCorrSubarrayComponentManager,

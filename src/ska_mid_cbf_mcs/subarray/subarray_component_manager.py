@@ -95,7 +95,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # initialize attribute values
         self._sys_param_str = ""
-        self.dish_ids = []
+        self.dish_ids = set()
         self.frequency_band = 0
 
         self.last_received_delay_model = ""
@@ -125,6 +125,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._all_vcc_proxies = {}
         self._assigned_vcc_proxies = set()
 
+        self._fsp_ids = set()
         self._all_fsp_proxies = {}
         self._all_fsp_corr_proxies = {}
         self._assigned_fsp_proxies = set()
@@ -140,15 +141,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     @property
     def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
         """Return the list of assigned VCC IDs"""
-        dish_ids = self.dish_ids.copy()
         if self._dish_utils is not None:
             return [
-                self._dish_utils.dish_id_to_vcc_id[dish] for dish in dish_ids
+                self._dish_utils.dish_id_to_vcc_id[dish]
+                for dish in self.dish_ids
             ]
         self.logger.error(
             "Unable to return VCC IDs as system parameters have not yet been provided."
         )
         return []
+
+    @property
+    def fsp_ids(self: CbfSubarrayComponentManager) -> list[int]:
+        """Return the list of assigned FSP IDs"""
+        return list(self._fsp_ids)
 
     # -------------
     # Communication
@@ -564,8 +570,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if len(self.dish_ids) == 0:
             self._update_component_state(resourced=True)
 
-        self.dish_ids.extend(dish_ids_to_add)
-        receptors_push_val = self.dish_ids.copy()
+        self.dish_ids.update(dish_ids_to_add)
+        receptors_push_val = list(self.dish_ids)
         receptors_push_val.sort()
         self._device_attr_change_callback("receptors", receptors_push_val)
         self._device_attr_archive_callback("receptors", receptors_push_val)
@@ -702,11 +708,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if not all(successes):
             return False
 
-        updated_dish_ids = [
-            dish for dish in self.dish_ids if dish not in dish_ids_to_remove
-        ]
-        self.dish_ids = updated_dish_ids
-        receptors_push_val = self.dish_ids.copy()
+        self.dish_ids.difference_update(dish_ids_to_remove)
+        receptors_push_val = list(self.dish_ids)
         receptors_push_val.sort()
         self._device_attr_change_callback("receptors", receptors_push_val)
         self._device_attr_archive_callback("receptors", receptors_push_val)
@@ -747,17 +750,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(ResultCode.FAILED, msg),
-            )
-            return
-
-        # TODO: shouldn't happen
-        if len(self.dish_ids) == 0:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Subarray does not currently have any assigned receptors.",
-                ),
             )
             return
 
@@ -809,7 +801,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             is_cmd_allowed=self.is_release_vcc_allowed,
             task_callback=task_callback,
         )
-        
+
     def is_release_all_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
         """Check if RemoveAllReceptors command is allowed in current state"""
         self.logger.debug("Checking if RemoveAllReceptors is allowed.")
@@ -822,7 +814,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return False
         return True
-        
+
     def _release_all_vcc(
         self: CbfSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
@@ -842,18 +834,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        # TODO: shouldn't happen
-        if len(self.dish_ids) == 0:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Subarray does not currently have any assigned receptors.",
-                ),
-            )
-            return
-
-        release_success = self._release_vcc_loop(dish_ids=self.dish_ids.copy())
+        release_success = self._release_vcc_loop(dish_ids=list(self.dish_ids))
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
@@ -920,6 +901,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :return: TaskStatus
         """
+        # TODO: support more function modes
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
@@ -1065,15 +1047,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def _vcc_configure_band(
         self: CbfSubarrayComponentManager,
         configuration: dict[any],
-        task_abort_event: Optional[Event] = None,
-    ) -> TaskStatus:
+    ) -> bool:
         """
         Issue Vcc ConfigureBand command
 
         :param configuration: scan configuration dict
-        :param task_abort_event: event indicating AbortCommands has been issued
 
-        :return: VCC ConfigureBand command TaskStatus
+        :return: True if VCC ConfigureBand was successful, otherwise False
         """
         self.logger.info("Configuring VCC band...")
 
@@ -1108,7 +1088,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{vcc_proxy.dev_name()} ConfigureBand command rejected"
                     )
                     self._blocking_commands = set()
-                    return TaskStatus.FAILED
+                    return False
 
                 self._blocking_commands.add(command_id)
 
@@ -1116,24 +1096,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     f"Failed to issue ConfigureBand to {vcc_proxy.dev_name()}; {df}"
                 )
-                return TaskStatus.FAILED
+                return False
 
-        lrc_status = self._wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
+        lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
                 "One or more calls to VCC ConfigureBand command timed out."
             )
+            return False
 
-        return lrc_status
+        return True
 
     def _vcc_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
-        task_abort_event: Optional[Event] = None,
-    ) -> TaskStatus:
+    ) -> bool:
         """
         Issue Vcc ConfigureScan command
 
@@ -1141,7 +1119,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param configuration: Mid.CBF scan configuration dict
         :param task_abort_event: event indicating AbortCommands has been issued
 
-        :return: VCC ConfigureScan command TaskStatus
+        :return: True if VCC ConfigureScan was successful, otherwise False
         """
         self.logger.info("Configuring VCC for scan...")
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
@@ -1219,129 +1197,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{vcc_proxy.dev_name()} ConfigureScan command rejected"
                     )
                     self._blocking_commands = set()
-                    return TaskStatus.FAILED
+                    return False
 
                 self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {vcc_proxy.dev_name()}; {df}"
                 )
-                return TaskStatus.FAILED
+                return False
 
-        lrc_status = self._wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
+        lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
                 "One or more calls to VCC ConfigureScan command timed out."
             )
-
-        return lrc_status
-
-    def _assign_fsp(
-        self: CbfSubarrayComponentManager, fsp_id: int, function_mode: str
-    ) -> bool:
-        """
-        Set FSP function mode and add subarray membership
-
-        :param fsp_id: ID of FSP to assign
-        :param function_mode: target FSP function mode
-        :return: False if failed to configure FSP device, True otherwise
-        """
-        self.logger.info(f"Assigning FSP {fsp_id} to subarray...")
-
-        fsp_proxy = self._all_fsp_proxies[fsp_id]
-
-        # subscribe to LRC results for FSP scan operation
-        self._subscribe_command_results(fsp_proxy)
-        self._assigned_fsp_proxies.add(fsp_proxy)
-
-        try:
-            # only set function mode if FSP is both IDLE and not configured for
-            # another mode
-            current_function_mode = fsp_proxy.functionMode
-            if current_function_mode != FspModes[function_mode].value:
-                if current_function_mode != FspModes.IDLE.value:
-                    self.logger.error(
-                        f"Unable to configure FSP {fsp_id} for function mode {function_mode}, as it is currently configured for function mode {current_function_mode}"
-                    )
-                    return False
-
-                # if FSP function mode is IDLE, turn on FSP and set function mode
-                fsp_proxy.simulationMode = self.simulation_mode
-                fsp_proxy.adminMode = AdminMode.ONLINE
-
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    function_mode
-                )
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
-                    )
-                    self._blocking_commands = set()
-                    return False
-
-                self._blocking_commands.add(command_id)
-
-            # finally, add subarray membership, which powers on this subarray's
-            # FSP function mode devices
-            [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
-                self.subarray_id
-            )
-            if result_code == ResultCode.REJECTED:
-                self.logger.error(
-                    f"{fsp_proxy.dev_name()} AddSubarrayMembership command rejected"
-                )
-                self._blocking_commands = set()
-                return False
-
-            self._blocking_commands.add(command_id)
-        except tango.DevFailed as df:
-            self.logger.error(f"{df}")
             return False
 
-        lrc_status = self._wait_for_blocking_results()
-        if lrc_status == TaskStatus.FAILED:
-            self.logger.error(
-                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands timed out."
-            )
-            return False
-
-        return True
-
-    def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
-        """
-        Remove subarray membership and return FSP to IDLE state if possible
-
-        :return: False if failed to release FSP device, True otherwise
-        """
-        self.logger.info("Releasing all FSP from subarray...")
-        # remove subarray membership from assigned FSP
-        for [[result_code], [command_id]] in self._issue_group_command(
-            command_name="RemoveSubarrayMembership",
-            proxies=list(self._assigned_fsp_proxies),
-            argin=self.subarray_id,
-        ):
-            if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
-                self.logger.error(
-                    "FSP RemoveSubarrayMembership command failed"
-                )
-                self._blocking_commands = set()
-                return False
-            self._blocking_commands.add(command_id)
-
-        lrc_status = self._wait_for_blocking_results()
-        if lrc_status == TaskStatus.FAILED:
-            self.logger.error(
-                "One or more calls to FSP RemoveSubarrayMembership command timed out."
-            )
-            return False
-
-        for fsp_proxy in self._assigned_fsp_proxies:
-            self._unsubscribe_command_results(fsp_proxy)
-
-        self._assigned_fsp_proxies = set()
-        self._assigned_fsp_corr_proxies = set()
         return True
 
     def _build_fsp_config(
@@ -1391,22 +1262,79 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return fsp_config
 
+    def _assign_fsp(
+        self: CbfSubarrayComponentManager,
+        fsp_proxy: context.DeviceProxy,
+        function_mode: str,
+    ) -> bool:
+        """
+        Set FSP function mode and add subarray membership
+
+        :param fsp_id: ID of FSP to assign
+        :param function_mode: target FSP function mode
+        :return: True if successfully assigned FSP device, otherwise False
+        """
+        self.logger.info(
+            f"Assigning FSP {fsp_proxy.dev_name()} to subarray..."
+        )
+
+        try:
+            # Only set function mode if FSP is both IDLE and not configured for
+            # another mode
+            current_function_mode = fsp_proxy.functionMode
+            if current_function_mode != FspModes[function_mode].value:
+                if current_function_mode != FspModes.IDLE.value:
+                    self.logger.error(
+                        f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {function_mode}, as it is currently configured for function mode {current_function_mode}"
+                    )
+                    return False
+
+                # If FSP function mode is IDLE, turn on FSP and set function mode
+                fsp_proxy.simulationMode = self.simulation_mode
+                fsp_proxy.adminMode = AdminMode.ONLINE
+
+                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
+                    function_mode
+                )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
+                    )
+                    return False
+
+                self._blocking_commands.add(command_id)
+
+            # Add subarray membership, which powers on this FSP's function mode devices
+            [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
+                self.subarray_id
+            )
+            if result_code == ResultCode.REJECTED:
+                self.logger.error(
+                    f"{fsp_proxy.dev_name()} AddSubarrayMembership command rejected"
+                )
+                return False
+
+            self._blocking_commands.add(command_id)
+        except tango.DevFailed as df:
+            self.logger.error(f"{df}")
+            return False
+
+        return True
+
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
-        task_abort_event: Optional[Event] = None,
-    ) -> TaskStatus:
+    ) -> bool:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :param task_abort_event: event indicating AbortCommands has been issued
 
-        :return: FSP ConfigureScan command TaskStatus
+        :return: True if successfully configured all FSP devices, otherwise False
         """
-        self.logger.info("Configuring FSP for scan...")
+        self.logger.info("Configuring FSPs for scan...")
 
         # build FSP configuration JSONs, add FSP
         all_fsp_config = []
@@ -1419,6 +1347,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             fsp_id = fsp_config["fsp_id"]
             match fsp_config["function_mode"]:
                 case "CORR":
+                    # set function mode and add subarray membership
+                    fsp_proxy = self._all_fsp_proxies[fsp_id]
+                    self._subscribe_command_results(fsp_proxy)
+                    self._assigned_fsp_proxies.add(fsp_proxy)
+                    self._fsp_ids.add(fsp_id)
+
+                    fsp_success = self._assign_fsp(fsp_proxy, "CORR")
+                    if not fsp_success:
+                        return False
+
                     # Parameter named "corr_vcc_ids" used by HPS contains the
                     # subset of the subarray VCCs for which the correlation results
                     # are requested to be used in Mid.CBF output products (visibilities);
@@ -1439,66 +1377,55 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
 
-                    # set function mode and add subarray membership
-                    fsp_success = self._assign_fsp(
-                        fsp_id=fsp_id, function_mode="CORR"
-                    )
-                    if not fsp_success:
-                        for fsp_proxy in self._assigned_fsp_proxies:
-                            self._unsubscribe_command_results(fsp_proxy)
-                        return TaskStatus.FAILED
-
+                    # Prepare CORR proxy and its configuration
                     fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
-                    self._assigned_fsp_corr_proxies.add(fsp_corr_proxy)
-                    # subscribe to LRC results for FSP scan operation
-                    self._subscribe_command_results(fsp_corr_proxy)
-
                     all_fsp_config.append(
-                        (json.dumps(fsp_config), fsp_corr_proxy)
+                        (fsp_corr_proxy, json.dumps(fsp_config))
                     )
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
                     )
 
+        lrc_status = self._wait_for_blocking_results()
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands timed out."
+            )
+            return False
+
         # Call ConfigureScan for all FSP function mode subarray devices
-        for fsp_config_str, proxy in all_fsp_config:
+        # TODO: refactor for other function modes
+        for fsp_mode_proxy, fsp_config_str in all_fsp_config:
             try:
-                # TODO handle fsp corr LRC
+                self._subscribe_command_results(fsp_mode_proxy)
+
                 self.logger.debug(f"fsp_config: {fsp_config_str}")
-                [[result_code], [command_id]] = proxy.ConfigureScan(
+                [[result_code], [command_id]] = fsp_mode_proxy.ConfigureScan(
                     fsp_config_str
                 )
                 if result_code == ResultCode.REJECTED:
                     self.logger.error(
-                        f"{proxy.dev_name()} ConfigureScan command rejected"
+                        f"{fsp_mode_proxy.dev_name()} ConfigureScan command rejected"
                     )
-                    self._blocking_commands = set()
-                    return TaskStatus.FAILED
+                    return False
 
                 self._blocking_commands.add(command_id)
+                self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failed to issue ConfigureScan to {proxy.dev_name()}; {df}"
+                    f"Failed to issue ConfigureScan to {fsp_mode_proxy.dev_name()}; {df}"
                 )
-                return TaskStatus.FAILED
+                return False
 
-        lrc_status = self._wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
+        lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
                 "One or more calls to FSP ConfigureScan command timed out."
             )
+            return False
 
-        # TODO
-        # Route visibilities from each FSP to the outputting board
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
-
-        return lrc_status
+        return True
 
     def _subscribe_tm_event(
         self: CbfSubarrayComponentManager,
@@ -1536,6 +1463,41 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Subscribed to {subscription_point}; event ID: {event_id}"
         )
         self._events_telstate[event_id] = proxy
+        return True
+
+    def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
+        """
+        Remove subarray membership and return FSP to IDLE state if possible
+
+        :return: False if failed to release FSP device, True otherwise
+        """
+        self.logger.info("Releasing all FSP from subarray...")
+        # remove subarray membership from assigned FSP
+        for [[result_code], [command_id]] in self._issue_group_command(
+            command_name="RemoveSubarrayMembership",
+            proxies=list(self._assigned_fsp_proxies),
+            argin=self.subarray_id,
+        ):
+            if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
+                self.logger.error(
+                    "FSP RemoveSubarrayMembership command failed"
+                )
+                self._blocking_commands = set()
+                return False
+            self._blocking_commands.add(command_id)
+
+        lrc_status = self._wait_for_blocking_results()
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to FSP RemoveSubarrayMembership command timed out."
+            )
+            return False
+
+        for fsp_proxy in self._assigned_fsp_proxies:
+            self._unsubscribe_command_results(fsp_proxy)
+
+        self._assigned_fsp_proxies = set()
+        self._assigned_fsp_corr_proxies = set()
         return True
 
     def _deconfigure(
@@ -1623,53 +1585,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # store configID
         self.config_id = str(common_configuration["config_id"])
 
-        vcc_configure_band_status = self._vcc_configure_band(
-            configuration=common_configuration,
-            task_abort_event=task_abort_event,
-        )
-        if vcc_configure_band_status == TaskStatus.FAILED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ConfigureBand command to VCC",
-                ),
-            )
-            return
-        elif vcc_configure_band_status == TaskStatus.ABORTED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ConfigureBand command to VCC",
-                ),
-            )
-            return
-
-        vcc_configure_scan_status = self._vcc_configure_scan(
-            common_configuration=common_configuration,
-            configuration=configuration,
-            task_abort_event=task_abort_event,
-        )
-        if vcc_configure_scan_status == TaskStatus.FAILED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ConfigureScan command to VCC",
-                ),
-            )
-            return
-        elif vcc_configure_band_status == TaskStatus.ABORTED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ConfigureScan command to VCC",
-                ),
-            )
-            return
-
         # Configure delayModel subscription point
         delay_model_success = self._subscribe_tm_event(
             subscription_point=configuration["delay_model_subscription_point"],
@@ -1687,12 +1602,52 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             # )
             # return
 
-        fsp_configure_scan_status = self._fsp_configure_scan(
+        # --- Configure VCC --- #
+
+        # TODO: think about what to do about abort events here
+        vcc_configure_band_success = self._vcc_configure_band(
+            configuration=common_configuration,
+        )
+        if not vcc_configure_band_success:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ConfigureBand command to VCC",
+                ),
+            )
+            return
+
+        vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
-            task_abort_event=task_abort_event,
         )
-        if fsp_configure_scan_status == TaskStatus.FAILED:
+        if not vcc_configure_scan_success:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue ConfigureScan command to VCC",
+                ),
+            )
+            return
+
+        # --- Configure FSP --- #
+
+        fsp_configure_scan_success = self._fsp_configure_scan(
+            common_configuration=common_configuration,
+            configuration=configuration,
+        )
+        if not fsp_configure_scan_success:
+            # If unsuccessful, reset all assigned FSP devices
+            for proxy in list(self._assigned_fsp_corr_proxies) + list(
+                self._assigned_fsp_proxies
+            ):
+                self._unsubscribe_command_results(proxy)
+            self._fsp_ids = set()
+            self._assigned_fsp_corr_proxies = set()
+            self._assigned_fsp_proxies = set()
+            self._blocking_commands = set()
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1701,15 +1656,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-        elif fsp_configure_scan_status == TaskStatus.ABORTED:
-            task_callback(
-                status=TaskStatus.ABORTED,
-                result=(
-                    ResultCode.ABORTED,
-                    "ConfigureScan command aborted by task executor abort event.",
-                ),
-            )
-            return
+
+        # --- Configure Visibility Transport --- #
+
+        # TODO
+        # Route visibilities from each FSP to the outputting board
+        if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
 
         # Update obsState callback
         self._update_component_state(configured=True)
@@ -2176,7 +2131,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._update_component_state(configured=False)
 
         # remove all assigned VCCs to return to EMPTY
-        release_success = self._release_vcc_loop(dish_ids=self.dish_ids.copy())
+        release_success = self._release_vcc_loop(dish_ids=list(self.dish_ids))
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,

@@ -60,22 +60,15 @@ class DISHUtils:
         )
         if argin[:DISH_TYPE_STR_LEN] == "SKA":
             id = int(argin[DISH_TYPE_STR_LEN:])
-            if (
-                id < SKA_DISH_INSTANCE_MIN
-                or id > SKA_DISH_INSTANCE_MAX
-            ):
+            if id < SKA_DISH_INSTANCE_MIN or id > SKA_DISH_INSTANCE_MAX:
                 return (False, fail_msg)
         elif argin[:DISH_TYPE_STR_LEN] == "MKT":
             id = int(argin[DISH_TYPE_STR_LEN:])
-            if (
-                id < MKT_DISH_INSTANCE_MIN
-                or id > MKT_DISH_INSTANCE_MAX
-            ):
+            if id < MKT_DISH_INSTANCE_MIN or id > MKT_DISH_INSTANCE_MAX:
                 return (False, fail_msg)
         else:
             return (False, fail_msg)
         return (True, "DISH ID is valid")
-
 
     def are_Valid_DISH_Ids(
         self: DISHUtils, dish_ids: list[str]
