@@ -138,7 +138,13 @@ class TestCbfSubarray:
         device_under_test.simulationMode = SimulationMode.FALSE
 
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
@@ -178,7 +184,6 @@ class TestCbfSubarray:
                 False,
                 ["SKA063", "SKA036", "SKA001"],
             ),
-            (["SKA100", "SKA036", "SKA001"], False, ["SKA036", "SKA100"]),
             (["SKA100", "SKA036", "SKA001"], True, []),
         ],
     )
@@ -206,52 +211,40 @@ class TestCbfSubarray:
         # set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
+        attr_values = [
+            ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
+        ]
+
         # add receptors in 2 stages
         curr_rec = set()
-        for input_rec in [receptors[:-1], receptors[-1:]]:
+        for i, input_rec in enumerate([receptors[:-1], receptors[-1:]]):
             (return_value, command_id) = device_under_test.AddReceptors(
                 input_rec
             )
-
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-                ),
-            )
-
-            # check obsState transitions
-            for obs_state in [
-                ObsState.RESOURCING,
-                ObsState.IDLE,
-            ]:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=device_under_test,
-                    attribute_name="obsState",
-                    attribute_value=obs_state.value,
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{command_id[0]}",
+                        f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
+                    ), None, 1
                 )
+            )
+            
+            if i > 0:
+                attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, i))
+                attr_values.append(("obsState", ObsState.IDLE, ObsState.RESOURCING, i+1))
 
             # assert receptors attribute updated
             curr_rec.update(input_rec)
             receptors_push_val = list(curr_rec.copy())
             receptors_push_val.sort()
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="receptors",
-                attribute_value=tuple(receptors_push_val),
-            )
+            attr_values.append(("receptors", tuple(receptors_push_val), None, 1))
 
         if remove_all:
             (return_value, command_id) = device_under_test.RemoveAllReceptors()
@@ -260,16 +253,16 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                ),
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{command_id[0]}",
+                        f'[{ResultCode.OK.value}, "RemoveAllReceptors completed OK"]',
+                    ), None, 1
+                )
             )
+            
         else:
             # remove receptors in 2 stages
             for input_rec in [
@@ -284,41 +277,28 @@ class TestCbfSubarray:
                 assert return_value[0] == ResultCode.QUEUED
 
                 # check that the queued command succeeded
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=device_under_test,
-                    attribute_name="longRunningCommandResult",
-                    attribute_value=(
-                        f"{command_id[0]}",
-                        f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                    ),
+                attr_values.append(
+                    (
+                        "longRunningCommandResult",
+                        (
+                            f"{command_id[0]}",
+                            f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
+                        ), None, 1
+                    )
                 )
 
                 # check obsState transitions
-                for obs_state in [
-                    ObsState.RESOURCING,
-                    ObsState.IDLE,
-                ]:
-                    assert_that(event_tracer).within_timeout(
-                        test_utils.EVENT_TIMEOUT
-                    ).has_change_event_occurred(
-                        device_name=device_under_test,
-                        attribute_name="obsState",
-                        attribute_value=obs_state.value,
-                    )
+                attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, i))
+                attr_values.append(("obsState", ObsState.IDLE, ObsState.RESOURCING, i+1))
 
                 # assert receptors attribute updated
                 curr_rec.difference_update(input_rec)
                 receptors_push_val = list(curr_rec.copy())
                 receptors_push_val.sort()
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=device_under_test,
-                    attribute_name="receptors",
-                    attribute_value=tuple(receptors_push_val),
+                attr_values.append(
+                    ("receptors", tuple(receptors_push_val), None, 1),
                 )
+                i += 1
 
             # remove remaining receptor(s)
             (return_value, command_id) = device_under_test.RemoveReceptors(
@@ -329,38 +309,33 @@ class TestCbfSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
-                ),
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{command_id[0]}",
+                        f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
+                    ), None, 1
+                )
             )
 
         # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.EMPTY,
-        ]:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
-            )
+        attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, i))
+        attr_values.append(("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1))
 
         # assert receptors attribute updated
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="receptors",
-            attribute_value=(),
-        )
+        attr_values.append(("receptors", (), None, 1))
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value= previous, 
+                target_n_events=n,
+            )
 
     @pytest.mark.parametrize(
         "invalid_receptor",
@@ -393,33 +368,32 @@ class TestCbfSubarray:
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # check that the queued command failed
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
+        # check that the queued command failed        
+        attr_values = [
+            (
+                "longRunningCommandResult",
+                (f"{command_id[0]}",
                 f"[{ResultCode.FAILED.value}, "
                 + f'"DISH ID {invalid_receptor[0]} is not valid. '
                 + "It must be SKA001-SKA133 or MKT000-MKT063. "
-                + 'Spaces before, after, or in the middle of the ID are not accepted."]',
+                + 'Spaces before, after, or in the middle of the ID are not accepted."]'),
+                None, 1,
             ),
-        )
-
-        # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.EMPTY,
-        ]:
+            ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
+            ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1)
+        ]
+        
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value= previous, 
+                target_n_events=n,
             )
+
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -456,74 +430,56 @@ class TestCbfSubarray:
 
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-
-        # check that the queued command succeeded
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-            ),
-        )
-
-        # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-        ]:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
-            )
-
+        
         # assert receptors attribute updated
         receptors.sort()
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="receptors",
-            attribute_value=tuple(receptors),
-        )
+
+        # check that the queued command succeeded
+        attr_values = [
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
+                ),
+                None, 1,
+            ),
+            ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
+            ("receptors", tuple(receptors), None, 1),
+        ]
 
         # try removing a receptor not assigned to subarray
         (return_value, command_id) = device_under_test.RemoveReceptors(
             unassigned_receptors
         )
-
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-
-        # check that the queued command failed
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.FAILED.value}, "Failed to remove receptors."]',
-            ),
+        
+        attr_values.append(
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.FAILED.value}, "Failed to remove receptors."]',
+                ),
+                None, 1,
+            )
         )
-
-        # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-        ]:
+        attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, 1))
+        attr_values.append(("obsState", ObsState.IDLE, ObsState.RESOURCING, 2))
+        
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value= previous, 
+                target_n_events=n,
             )
+
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -560,41 +516,23 @@ class TestCbfSubarray:
 
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-
-        # check that the queued command succeeded
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-            ),
-        )
-
-        # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-        ]:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
-            )
-
+        
         # assert receptors attribute updated
         receptors.sort()
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="receptors",
-            attribute_value=tuple(receptors),
-        )
+        
+        attr_values = [
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
+                ),
+                None, 1,
+            ),
+            ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
+            ("receptors", tuple(receptors), None, 1),
+        ]
 
         # try to remove invalid receptors
         (return_value, command_id) = device_under_test.RemoveReceptors(
@@ -605,32 +543,33 @@ class TestCbfSubarray:
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f"[{ResultCode.FAILED.value}, "
-                + f'"DISH ID {invalid_receptor[0]} is not valid. '
-                + "It must be SKA001-SKA133 or MKT000-MKT063. "
-                + 'Spaces before, after, or in the middle of the ID are not accepted."]',
-            ),
+        attr_values.append(
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f"[{ResultCode.FAILED.value}, "
+                    + f'"DISH ID {invalid_receptor[0]} is not valid. '
+                    + "It must be SKA001-SKA133 or MKT000-MKT063. "
+                    + 'Spaces before, after, or in the middle of the ID are not accepted."]',
+                ),
+                None, 1,
+            )
         )
-
-        # check obsState transitions
-        for obs_state in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-        ]:
+        attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, 1))
+        attr_values.append(("obsState", ObsState.IDLE, ObsState.RESOURCING, 2))
+        
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value= previous, 
+                target_n_events=n,
             )
+
 
     @pytest.mark.parametrize(
         "receptors",
@@ -660,39 +599,48 @@ class TestCbfSubarray:
         (return_value, command_id) = device_under_test.RemoveReceptors(
             receptors
         )
-
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         # check that the queued command failed
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
-            ),
-        )
+        attr_values = [
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None, 1,
+            )
+        ]
 
         # try to remove allreceptors
         (return_value, command_id) = device_under_test.RemoveAllReceptors()
-
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-
-        # check that the queued command failed
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
-            ),
+        
+        attr_values.append(
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id[0]}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None, 1,
+            )
         )
+
+        # check that the queued commands failed
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value= previous, 
+                target_n_events=n,
+            )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(

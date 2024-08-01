@@ -60,6 +60,7 @@ def tango_event_tracer(
         "obsState",
         "receptors",
         "sysParam",
+        "adminMode",
         "state",
     ]
     for attr in change_event_attr_list:

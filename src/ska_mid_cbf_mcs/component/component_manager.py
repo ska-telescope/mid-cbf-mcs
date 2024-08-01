@@ -135,7 +135,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         self.logger.info("Entering CbfComponentManager.start_communicating")
 
-        if self.is_communicating:
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
             self.logger.info("Already communicating")
             return
 
