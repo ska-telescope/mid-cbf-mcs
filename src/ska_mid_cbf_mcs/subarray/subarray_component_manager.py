@@ -809,6 +809,70 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             is_cmd_allowed=self.is_release_vcc_allowed,
             task_callback=task_callback,
         )
+        
+    def is_release_all_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
+        """Check if RemoveAllReceptors command is allowed in current state"""
+        self.logger.debug("Checking if RemoveAllReceptors is allowed.")
+        if not self.is_communicating:
+            return False
+        if self.obs_state not in [ObsState.IDLE]:
+            self.logger.warning(
+                f"RemoveAllReceptors not allowed in ObsState {self.obs_state}; "
+                + "must be in ObsState.IDLE"
+            )
+            return False
+        return True
+        
+    def _release_all_vcc(
+        self: CbfSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Remove all receptors/dishes from subarray.
+
+        :param task_callback: callback for driving status of task executor's
+            current LRC task
+        :param task_abort_event: event indicating AbortCommands has been issued
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "RemoveReceptors", task_callback, task_abort_event
+        ):
+            return
+
+        # TODO: shouldn't happen
+        if len(self.dish_ids) == 0:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Subarray does not currently have any assigned receptors.",
+                ),
+            )
+            return
+
+        release_success = self._release_vcc_loop(dish_ids=self.dish_ids.copy())
+        if not release_success:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to remove receptors.",
+                ),
+            )
+            return
+
+        # Update obsState callback if now unresourced
+        if len(self.dish_ids) == 0:
+            self._update_component_state(resourced=False)
+
+        task_callback(
+            result=(ResultCode.OK, "RemoveAllReceptors completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
 
     def release_all_vcc(
         self: CbfSubarrayComponentManager,
@@ -829,10 +893,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             func=partial(
                 self._obs_command_with_callback,
                 hook="release",
-                command_thread=self._release_vcc,
+                command_thread=self._release_all_vcc,
             ),
-            args=[self.dish_ids.copy()],
-            is_cmd_allowed=self.is_release_vcc_allowed,
+            is_cmd_allowed=self.is_release_all_vcc_allowed,
             task_callback=task_callback,
         )
 
