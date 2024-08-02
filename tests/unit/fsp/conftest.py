@@ -10,18 +10,17 @@
 from __future__ import annotations
 
 import unittest
+from typing import Generator
 
 import pytest
 import tango
 from ska_control_model import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")
@@ -38,22 +37,30 @@ def fsp_device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/fsp/01")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def fsp_change_event_callbacks(
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
     change_event_attr_list = [
         "longRunningCommandResult",
         "functionMode",
         "subarrayMembership",
+        "adminMode",
+        "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
 @pytest.fixture()
