@@ -13,6 +13,7 @@ def device_online_and_on(
 ) -> bool:
     """
     Helper function to start up and turn on the DUT.
+    On is assumed to be a FastCommand.
 
     :param device_under_test: A fixture that provides a
         :py:class:`CbfDeviceProxy` to the device under test, in a
@@ -22,6 +23,15 @@ def device_online_and_on(
     # Set a given device to AdminMode.ONLINE and DevState.ON
     device_under_test.simulationMode == SimulationMode.FALSE
     device_under_test.adminMode = AdminMode.ONLINE
+
+    assert_that(event_tracer).within_timeout(
+        EVENT_TIMEOUT
+    ).has_change_event_occurred(
+        device_name=device_under_test,
+        attribute_name="adminMode",
+        attribute_value=AdminMode.ONLINE,
+    )
+
     assert_that(event_tracer).within_timeout(
         EVENT_TIMEOUT
     ).has_change_event_occurred(

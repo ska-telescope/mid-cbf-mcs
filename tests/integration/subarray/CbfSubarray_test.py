@@ -28,8 +28,8 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # TODO: previous attr value, num values, config ID, scan ID
 
-class TestCbfSubarray:
 
+class TestCbfSubarray:
     @pytest.mark.dependency()
     @pytest.mark.parametrize("sub_id", [1])
     def test_Online(
@@ -65,8 +65,7 @@ class TestCbfSubarray:
 
     @pytest.mark.dependency(depends=["TestCbfSubarray::test_Online"])
     @pytest.mark.parametrize(
-        "sub_id, sys_param_file",
-        [(1, "sys_param_4_boards.json")]
+        "sub_id, sys_param_file", [(1, "sys_param_4_boards.json")]
     )
     def test_sysParam(
         self: TestCbfSubarray,
@@ -134,8 +133,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -145,9 +144,9 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
-        
+
         with open(test_data_path + sys_param_file) as f:
             sys_param = json.load(f)
         dish_utils = DISHUtils(sys_param)
@@ -217,8 +216,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -228,7 +227,7 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
 
         vcc_ids = subarray[sub_id].assignedVCCs
@@ -250,7 +249,7 @@ class TestCbfSubarray:
                     attribute_name=name,
                     attribute_value=value,
                 )
-        
+
         # --- FSP checks --- #
 
         for fsp_config in configuration["cbf"]["fsp"]:
@@ -330,8 +329,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -341,9 +340,9 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
-        
+
         vcc_ids = subarray[sub_id].assignedVCCs
 
         for vcc_id in vcc_ids:
@@ -354,7 +353,7 @@ class TestCbfSubarray:
                 attribute_name="obsState",
                 attribute_value=ObsState.SCANNING,
             )
-        
+
         # --- FSP checks --- #
 
         fsp_ids = subarray[sub_id].assignedFSPs
@@ -402,8 +401,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "EndScan completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -413,9 +412,9 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
-        
+
         vcc_ids = subarray[sub_id].assignedVCCs
 
         for vcc_id in vcc_ids:
@@ -426,7 +425,7 @@ class TestCbfSubarray:
                 attribute_name="obsState",
                 attribute_value=ObsState.READY,
             )
-        
+
         # --- FSP checks --- #
 
         fsp_ids = subarray[sub_id].assignedFSPs
@@ -479,8 +478,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -490,9 +489,9 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
-        
+
         vcc_ids = subarray[sub_id].assignedVCCs
 
         expected_events = [
@@ -509,7 +508,7 @@ class TestCbfSubarray:
                     attribute_name=name,
                     attribute_value=value,
                 )
-        
+
         # --- FSP checks --- #
 
         for fsp_id in fsp_ids:
@@ -578,8 +577,8 @@ class TestCbfSubarray:
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "RemoveAllReceptors completed OK"]',
-                )
-            )
+                ),
+            ),
         ]
         for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
@@ -589,7 +588,7 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-        
+
         # --- VCC checks --- #
 
         expected_events = [
@@ -606,7 +605,6 @@ class TestCbfSubarray:
                     attribute_name=name,
                     attribute_value=value,
                 )
-
 
     # @pytest.mark.parametrize(
     #     "receptors, \

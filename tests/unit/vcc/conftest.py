@@ -54,6 +54,7 @@ def tango_event_tracer(
         "frequencyBand",
         "obsState",
         "subarrayMembership",
+        "adminMode",
         "state",
     ]
     for attr in change_event_attr_list:

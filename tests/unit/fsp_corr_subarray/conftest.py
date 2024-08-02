@@ -51,12 +51,14 @@ def tango_event_tracer(
     change_event_attr_list = [
         "longRunningCommandResult",
         "obsState",
+        "adminMode",
         "state",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)
 
     return tracer
+
 
 @pytest.fixture()
 def mock_controller() -> unittest.mock.Mock:

@@ -45,6 +45,7 @@ def tango_event_tracer(
 
     change_event_attr_list = [
         "longRunningCommandResult",
+        "adminMode",
         "state",
     ]
     for attr in change_event_attr_list:
@@ -62,9 +63,6 @@ def monkeymodule():
     mpatch.undo()
 
 
-@pytest.fixture(
-    name="power_switch_model", 
-    params=["DLI_PRO", "APC_SNMP"]
-)
+@pytest.fixture(name="power_switch_model", params=["DLI_PRO", "APC_SNMP"])
 def ps_model(request: pytest.FixtureRequest):
     return request.param

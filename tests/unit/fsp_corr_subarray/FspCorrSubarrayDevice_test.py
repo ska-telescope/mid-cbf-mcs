@@ -106,10 +106,17 @@ class TestFspCorrSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        # Set a given device to AdminMode.ONLINE and DevState.ON
+        # Set the DUT to AdminMode.ONLINE and DevState.ON
         device_under_test.simulationMode == SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -119,7 +126,6 @@ class TestFspCorrSubarray:
         )
 
         return device_under_test.adminMode == AdminMode.ONLINE
-    
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -195,7 +201,6 @@ class TestFspCorrSubarray:
                 previous_value=previous_state,
             )
             previous_state = obs_state
-
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",

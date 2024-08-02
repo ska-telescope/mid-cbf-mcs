@@ -188,11 +188,19 @@ class TestTalonBoard:
         :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -213,6 +221,7 @@ class TestTalonBoard:
     def test_Online_missing_property(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test that the State attribute is appropriately set after device startup when there is a device property misisng form charts.
@@ -220,11 +229,25 @@ class TestTalonBoard:
         :param device_under_test: fixture that provides a
             :py:class:`context.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
 
-        assert device_under_test.State() == DevState.DISABLE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.DISABLE,
+        )
 
     @pytest.mark.parametrize(
         "test_context",
@@ -263,6 +286,13 @@ class TestTalonBoard:
                 f"{command_id[0]}",
                 '[0, "On completed OK"]',
             ),
+        )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
         )
 
     @pytest.mark.parametrize(
@@ -330,6 +360,13 @@ class TestTalonBoard:
                 f"{command_id[0]}",
                 '[0, "On completed OK"]',
             ),
+        )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
         )
 
         # Attempt to turn the device on again.
@@ -419,7 +456,7 @@ class TestTalonBoard:
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB
-        test_utils.device_online_and_on(device_under_test, event_tracer)
+        self.test_On(device_under_test, event_tracer)
 
         # Private Attr
         assert device_under_test.subarrayID == ""

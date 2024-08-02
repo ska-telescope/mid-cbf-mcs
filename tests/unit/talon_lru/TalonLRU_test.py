@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 import pytest
 from assertpy import assert_that
-from ska_control_model import AdminMode
+from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
@@ -137,6 +137,37 @@ class TestTalonLRU:
 
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+    def device_online_and_off(
+        self: TestTalonLRU,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Helper function to start up the DUT.
+
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
+        """
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
+
     def test_startup_state(
         self: TestTalonLRU,
         device_under_test: context.DeviceProxy,
@@ -164,15 +195,7 @@ class TestTalonLRU:
                 "Redundant test case: Parameters do not affect this test"
             )
 
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.OFF,
-        )
+        self.device_online_and_off(device_under_test, event_tracer)
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_On(
@@ -192,15 +215,7 @@ class TestTalonLRU:
         :param power_switch_1: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
         :param power_switch_2: A :py:class`unittest.mock.Mock` used to emulate a physical power distribution unit (PDU).
         """
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.OFF,
-        )
+        self.device_online_and_off(device_under_test, event_tracer)
 
         # Send the long running command 'On'
         result_code, command_id = device_under_test.On()
@@ -270,15 +285,7 @@ class TestTalonLRU:
         :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         # Trigger the mock start_communicating
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.OFF,
-        )
+        self.device_online_and_off(device_under_test, event_tracer)
 
         # Send the Off command
         result_code, command_id = device_under_test.Off()

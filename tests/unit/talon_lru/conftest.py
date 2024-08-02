@@ -70,6 +70,7 @@ def tango_event_tracer(
 
     change_event_attr_list = [
         "longRunningCommandResult",
+        "adminMode",
         "state",
     ]
     for attr in change_event_attr_list:

@@ -114,32 +114,6 @@ class TestSlim:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def test_Online(
-        self: TestSlim,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test that the devState is appropriately set after device startup.
-
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
-        """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.OFF,
-        )
-
     def test_On(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
