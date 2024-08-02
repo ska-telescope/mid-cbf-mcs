@@ -1494,8 +1494,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         for fsp_proxy in self._assigned_fsp_proxies:
-            self._unsubscribe_command_results(fsp_proxy)
+            try:
+                self._unsubscribe_command_results(fsp_proxy)
+                fsp_proxy.adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                return False
 
+        self._fsp_ids = set()
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
         return True

@@ -18,21 +18,6 @@ from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 
-# @pytest.fixture(name="all_sub_devices", scope="module", autouse=True)
-# def all_sub_device_proxies(
-#     fsp: list[context.DeviceProxy],
-#     fsp_corr: list[context.DeviceProxy],
-#     vcc: list[context.DeviceProxy],
-#     slim_vis: context.DeviceProxy,
-# ) -> list[context.DeviceProxy]:
-#     return (
-#         + fsp
-#         + fsp_corr
-#         + vcc
-#         + slim_vis
-#     )
-
-
 @pytest.fixture(name="subarray", scope="session", autouse=True)
 def subarray_proxies() -> list[context.DeviceProxy]:
     """

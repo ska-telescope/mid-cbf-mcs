@@ -26,14 +26,16 @@ from ... import test_utils
 # Data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
+# TODO: previous attr value, num values, config ID, scan ID
 
 class TestCbfSubarray:
+
+    @pytest.mark.dependency()
     @pytest.mark.parametrize("sub_id", [1])
-    def test_Connect(
+    def test_Online(
         self: TestCbfSubarray,
         sub_id: int,
         subarray: dict[int, context.DeviceProxy],
-        # all_sub_devices: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
     ) -> None:
         """
@@ -42,33 +44,35 @@ class TestCbfSubarray:
 
         :param sub_id: the subarray id
         :param subarray: list of proxies to subarray devices
-        :param all_sub_devices: list of proxies to subarray subordinate devices
         :param event_tracer: TangoEventTracer
         """
         # trigger start_communicating by setting the AdminMode to ONLINE
         subarray[sub_id].adminMode = AdminMode.ONLINE
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=subarray[sub_id],
-            attribute_name="adminMode",
-            attribute_value=AdminMode.ONLINE,
-        )
+        expected_events = [
+            ("adminMode", AdminMode.ONLINE),
+            ("state", DevState.ON),
+        ]
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=subarray[sub_id],
-            attribute_name="state",
-            attribute_value=DevState.ON,
-        )
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
 
-    @pytest.mark.parametrize("sub_id", [1])
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_Online"])
+    @pytest.mark.parametrize(
+        "sub_id, sys_param_file",
+        [(1, "sys_param_4_boards.json")]
+    )
     def test_sysParam(
         self: TestCbfSubarray,
         sub_id: int,
         subarray: dict[int, context.DeviceProxy],
+        sys_param_file: str,
         event_tracer: TangoEventTracer,
     ) -> None:
         """
@@ -76,9 +80,10 @@ class TestCbfSubarray:
 
         :param sub_id: the subarray id
         :param subarray: list of proxies to subarray devices
+        :param sys_param_file: JSON file name containing sysParam values
         :param event_tracer: TangoEventTracer
         """
-        with open(test_data_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + sys_param_file) as f:
             sys_param = f.read()
         subarray[sub_id].sysParam = sys_param
 
@@ -90,96 +95,49 @@ class TestCbfSubarray:
             attribute_value=sys_param,
         )
 
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_sysParam"])
     @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_file_name, \
-        receptors",
-        [
-            (
-                "ConfigureScan_basic_CORR.json",
-                "Scan1_basic.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-            )
-        ],
+        "sub_id, dish_ids, sys_param_file",
+        [(1, ["SKA001"], "sys_param_4_boards.json")],
     )
-    def test_Scan(
+    def test_AddReceptors(
         self: TestCbfSubarray,
         subarray: dict[int, context.DeviceProxy],
         vcc: dict[int, context.DeviceProxy],
-        fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
-        # all_sub_devices: list[context.DeviceProxy],
-        config_file_name: str,
-        scan_file_name: str,
-        receptors: list[str],
+        sub_id: int,
+        dish_ids: list[str],
+        sys_param_file: str,
         event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command
+        Test CbfSubarrays's AddReceptors command
 
         :param subarray: list of proxies to subarray devices
         :vcc: dict of DeviceProxy to Vcc devices
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
-        :param all_sub_devices: list of proxies to subarray subordinate devices
-        :param config_file_name: JSON file for the configuration
-        :param scan_file_name: JSON file for the scan configuration
-        :param receptors: list of receptor ids
+        :param sub_id: the subarray id
+        :param dish_ids: list of DISH IDs
+        :param sys_param_file: JSON file name containing sysParam values
         :param event_tracer: TangoEventTracer
         """
-        # Prepare test data
-        with open(test_data_path + "sys_param_4_boards.json") as f:
-            sys_param = json.load(f)
-        dish_utils = DISHUtils(sys_param)
-
-        with open(test_data_path + config_file_name) as f:
-            configuration = json.load(f)
-        sub_id = int(configuration["common"]["subarray_id"])
-
-        with open(test_data_path + scan_file_name) as f:
-            scan = json.load(f)
-
-        # dict to store return code and unique IDs of queued commands
-        command_dict = {}
-
-        command_dict["AddReceptors"] = subarray[sub_id].AddReceptors(receptors)
-        command_dict["ConfigureScan"] = subarray[sub_id].ConfigureScan(
-            json.dumps(configuration)
-        )
-        command_dict["Scan"] = subarray[sub_id].Scan(json.dumps(scan))
-        command_dict["EndScan"] = subarray[sub_id].EndScan()
-        command_dict["GoToIdle"] = subarray[sub_id].GoToIdle()
-        command_dict["RemoveReceptors"] = subarray[sub_id].RemoveReceptors(
-            receptors
-        )
+        # Issue AddReceptors command
+        [[result_code], [command_id]] = subarray[sub_id].AddReceptors(dish_ids)
+        assert result_code == ResultCode.QUEUED
 
         # --- Subarray checks --- #
 
-        attr_values = [
-            ("receptors", tuple(receptors)),
-            ("receptors", ()),
+        expected_events = [
+            ("receptors", tuple(dish_ids)),
             ("obsState", ObsState.RESOURCING),
             ("obsState", ObsState.IDLE),
-            ("obsState", ObsState.CONFIGURING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.SCANNING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.IDLE),
-            ("obsState", ObsState.RESOURCING),
-            ("obsState", ObsState.EMPTY),
-        ]
-        for command_name, return_value in command_dict.items():
-            attr_values.append(
+            (
+                "longRunningCommandResult",
                 (
-                    "longRunningCommandResult",
-                    (
-                        f"{return_value[1][0]}",
-                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                    ),
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
                 )
             )
-
-        for name, value in attr_values:
+        ]
+        for name, value in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -187,26 +145,23 @@ class TestCbfSubarray:
                 attribute_name=name,
                 attribute_value=value,
             )
-
+        
         # --- VCC checks --- #
+        
+        with open(test_data_path + sys_param_file) as f:
+            sys_param = json.load(f)
+        dish_utils = DISHUtils(sys_param)
+        vcc_ids = [
+            dish_utils.dish_id_to_vcc_id[dish_id] for dish_id in dish_ids
+        ]
 
-        vcc_ids = [dish_utils.dish_id_to_vcc_id[r] for r in receptors]
-        frequency_band = freq_band_dict()[
-            configuration["common"]["frequency_band"]
-        ]["band_index"]
-        attr_values = [
+        expected_events = [
             ("subarrayMembership", sub_id),
-            ("frequencyBand", frequency_band),
             ("adminMode", AdminMode.ONLINE),
             ("state", DevState.ON),
-            ("obsState", ObsState.CONFIGURING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.SCANNING),
-            ("obsState", ObsState.READY),
-            ("obsState", ObsState.IDLE),
         ]
         for vcc_id in vcc_ids:
-            for name, value in attr_values:
+            for name, value in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -215,19 +170,100 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_AddReceptors"])
+    @pytest.mark.parametrize(
+        "sub_id, config_file_name",
+        [(1, "ConfigureScan_basic_CORR.json")],
+    )
+    def test_ConfigureScan(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        sub_id: int,
+        config_file_name: str,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's ConfigureScan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :fsp: dict of DeviceProxy to Fsp devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param sub_id: the subarray id
+        :param config_file_name: JSON file name for the scan configuration
+        :param event_tracer: TangoEventTracer
+        """
+        # Prepare test data
+        with open(test_data_path + config_file_name) as f:
+            configuration = json.load(f)
+
+        # Issue ConfigureScan command
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.READY),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
+                )
+            )
+        ]
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+        
+        # --- VCC checks --- #
+
+        vcc_ids = subarray[sub_id].assignedVCCs
+        frequency_band = freq_band_dict()[
+            configuration["common"]["frequency_band"]
+        ]["band_index"]
+
+        expected_events = [
+            ("frequencyBand", frequency_band),
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.READY),
+        ]
+        for vcc_id in vcc_ids:
+            for name, value in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+        
         # --- FSP checks --- #
 
         for fsp_config in configuration["cbf"]["fsp"]:
             fsp_id = fsp_config["fsp_id"]
             function_mode = FspModes[fsp_config["function_mode"]].value
 
-            attr_values = [
+            expected_events = [
                 ("subarrayMembership", (sub_id)),
                 ("functionMode", function_mode),
                 ("adminMode", AdminMode.ONLINE),
                 ("state", DevState.ON),
             ]
-            for name, value in attr_values:
+            for name, value in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -236,16 +272,13 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
-            attr_values = [
+            expected_events = [
                 ("adminMode", AdminMode.ONLINE),
                 ("state", DevState.ON),
                 ("obsState", ObsState.CONFIGURING),
                 ("obsState", ObsState.READY),
-                ("obsState", ObsState.SCANNING),
-                ("obsState", ObsState.READY),
-                ("obsState", ObsState.IDLE),
             ]
-            for name, value in attr_values:
+            for name, value in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -254,7 +287,326 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
-    # TODO config ID, scan ID
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_ConfigureScan"])
+    @pytest.mark.parametrize(
+        "sub_id, scan_file_name",
+        [(1, "Scan1_basic.json")],
+    )
+    def test_Scan(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        sub_id: int,
+        scan_file_name: str,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's Scan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param sub_id: the subarray id
+        :param scan_file_name: JSON file name for the scan configuration
+        :param sys_param_file: JSON file name containing sysParam values
+        :param event_tracer: TangoEventTracer
+        """
+        # Prepare test data
+        with open(test_data_path + scan_file_name) as f:
+            scan = json.load(f)
+
+        # Issue Scan command
+        [[result_code], [command_id]] = subarray[sub_id].Scan(json.dumps(scan))
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.SCANNING),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "Scan completed OK"]',
+                )
+            )
+        ]
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+        
+        # --- VCC checks --- #
+        
+        vcc_ids = subarray[sub_id].assignedVCCs
+
+        for vcc_id in vcc_ids:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=vcc[vcc_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.SCANNING,
+            )
+        
+        # --- FSP checks --- #
+
+        fsp_ids = subarray[sub_id].assignedFSPs
+
+        for fsp_id in fsp_ids:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp_corr[fsp_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.SCANNING,
+            )
+
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_Scan"])
+    @pytest.mark.parametrize("sub_id", [1])
+    def test_EndScan(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        sub_id: int,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's EndScan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param sub_id: the subarray id
+        :param sys_param_file: JSON file name containing sysParam values
+        :param event_tracer: TangoEventTracer
+        """
+        # Issue EndScan command
+        [[result_code], [command_id]] = subarray[sub_id].EndScan()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.READY),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "EndScan completed OK"]',
+                )
+            )
+        ]
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+        
+        # --- VCC checks --- #
+        
+        vcc_ids = subarray[sub_id].assignedVCCs
+
+        for vcc_id in vcc_ids:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=vcc[vcc_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.READY,
+            )
+        
+        # --- FSP checks --- #
+
+        fsp_ids = subarray[sub_id].assignedFSPs
+
+        for fsp_id in fsp_ids:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp_corr[fsp_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.READY,
+            )
+
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_EndScan"])
+    @pytest.mark.parametrize("sub_id", [1])
+    def test_GoToIdle(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        sub_id: int,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's EndScan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :fsp_corr: dict of DeviceProxy to Fsp devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param sub_id: the subarray id
+        :param event_tracer: TangoEventTracer
+        """
+        # Grab list of assigned FSPs before releasing them
+        fsp_ids = subarray[sub_id].assignedFSPs
+
+        # Issue GoToIdle command
+        [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.IDLE),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
+                )
+            )
+        ]
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+        
+        # --- VCC checks --- #
+        
+        vcc_ids = subarray[sub_id].assignedVCCs
+
+        expected_events = [
+            ("frequencyBand", 0),
+            ("obsState", ObsState.CONFIGURING),
+            ("obsState", ObsState.IDLE),
+        ]
+        for vcc_id in vcc_ids:
+            for name, value in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+        
+        # --- FSP checks --- #
+
+        for fsp_id in fsp_ids:
+            expected_events = [
+                ("subarrayMembership", ()),
+                ("functionMode", FspModes.IDLE.value),
+                ("adminMode", AdminMode.OFFLINE),
+                ("state", DevState.DISABLE),
+            ]
+            for name, value in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
+            expected_events = [
+                ("obsState", ObsState.CONFIGURING),
+                ("obsState", ObsState.IDLE),
+                ("adminMode", AdminMode.OFFLINE),
+                ("state", DevState.DISABLE),
+            ]
+            for name, value in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
+    @pytest.mark.dependency(depends=["TestCbfSubarray::test_GoToIdle"])
+    @pytest.mark.parametrize("sub_id", [1])
+    def test_RemoveAllReceptors(
+        self: TestCbfSubarray,
+        subarray: dict[int, context.DeviceProxy],
+        vcc: dict[int, context.DeviceProxy],
+        sub_id: int,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test CbfSubarrays's EndScan command
+
+        :param subarray: list of proxies to subarray devices
+        :vcc: dict of DeviceProxy to Vcc devices
+        :param sub_id: the subarray id
+        :param event_tracer: TangoEventTracer
+        """
+        # Grab list of assigned VCCs before releasing them
+        vcc_ids = subarray[sub_id].assignedVCCs
+
+        # Issue RemoveAllReceptors command
+        [[result_code], [command_id]] = subarray[sub_id].RemoveAllReceptors()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("receptors", ()),
+            ("obsState", ObsState.RESOURCING),
+            ("obsState", ObsState.EMPTY),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "RemoveAllReceptors completed OK"]',
+                )
+            )
+        ]
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
+        
+        # --- VCC checks --- #
+
+        expected_events = [
+            ("subarrayMembership", 0),
+            ("adminMode", AdminMode.OFFLINE),
+            ("state", DevState.DISABLE),
+        ]
+        for vcc_id in vcc_ids:
+            for name, value in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                )
+
 
     # @pytest.mark.parametrize(
     #     "receptors, \
