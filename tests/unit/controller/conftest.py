@@ -11,22 +11,19 @@ from __future__ import annotations
 
 import os
 import unittest
+from typing import Generator
 
-# Standard imports
 import pytest
 import tango
 
-# Tango imports
 from ska_control_model import ObsState
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")
@@ -43,21 +40,28 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/cbf_controller/001")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def controller_change_event_callbacks(
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
     change_event_attr_list = [
         "longRunningCommandResult",
+        "adminMode",
         "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=35.0
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
 @pytest.fixture()
@@ -180,10 +184,6 @@ def initial_device_mocks(
         "mid_csp_cbf/vcc/002": mock_vcc,
         "mid_csp_cbf/vcc/003": mock_vcc,
         "mid_csp_cbf/vcc/004": mock_vcc,
-        "mid_csp_cbf/vcc/005": mock_vcc,
-        "mid_csp_cbf/vcc/006": mock_vcc,
-        "mid_csp_cbf/vcc/007": mock_vcc,
-        "mid_csp_cbf/vcc/008": mock_vcc,
         "mid_csp_cbf/fsp/01": mock_fsp,
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,

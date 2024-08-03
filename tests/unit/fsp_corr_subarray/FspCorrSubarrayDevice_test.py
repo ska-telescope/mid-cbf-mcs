@@ -165,42 +165,42 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
+        
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+        ]
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                ),
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
+                )
             )
 
-        # check all obsState transitions
-        previous_state = ObsState.IDLE
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.IDLE,
-        ]:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="obsState",
-                attribute_value=obs_state.value,
-                previous_value=previous_state,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-            previous_state = obs_state
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -225,7 +225,7 @@ class TestFspCorrSubarray:
         :param scan_id: the scan id
         """
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -247,13 +247,15 @@ class TestFspCorrSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # second round of observation
@@ -264,40 +266,45 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
+        
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+            ("obsState", ObsState.CONFIGURING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 2),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 2),
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+        ]
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ), None, 1
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -320,7 +327,7 @@ class TestFspCorrSubarray:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -336,36 +343,41 @@ class TestFspCorrSubarray:
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+        ]
+        
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ), None, 1
                 )
             )
-
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.ABORTING,
-            ObsState.ABORTED,
-            ObsState.RESETTING,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+            
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -389,7 +401,7 @@ class TestFspCorrSubarray:
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert test_utils.device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -405,38 +417,42 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
+        
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+        ]
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ), None, 1
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.ABORTING,
-            ObsState.ABORTED,
-            ObsState.RESETTING,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "delay_model_file_name",
@@ -459,7 +475,7 @@ class TestFspCorrSubarray:
         :param delay_model_file_name: JSON file for the delay model
         :param sub_id: the subarray id
         """
-        self.test_Power_Commands(device_under_test, "On")
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(file_path + delay_model_file_name) as f:

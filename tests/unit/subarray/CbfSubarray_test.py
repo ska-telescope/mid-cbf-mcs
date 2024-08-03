@@ -20,7 +20,6 @@ from assertpy import assert_that
 from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
@@ -251,7 +250,7 @@ class TestCbfSubarray:
             receptors_push_val = list(curr_rec.copy())
             receptors_push_val.sort()
             attr_values.append(
-                ("receptors", tuple(receptors_push_val), None, 1)
+                ("receptors", tuple(receptors_push_val), None, 2)
             )
 
         if remove_all:
@@ -749,13 +748,15 @@ class TestCbfSubarray:
                 )
             )
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -872,13 +873,15 @@ class TestCbfSubarray:
                 )
             )
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -953,13 +956,15 @@ class TestCbfSubarray:
                 )
             )
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1040,13 +1045,15 @@ class TestCbfSubarray:
                 )
             )
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1099,13 +1106,15 @@ class TestCbfSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
         ]
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1161,13 +1170,15 @@ class TestCbfSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
         ]
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1222,13 +1233,15 @@ class TestCbfSubarray:
             ("receptors", (), None, 1),
         ]
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1286,11 +1299,13 @@ class TestCbfSubarray:
             ("receptors", (), None, 1),
         ]
 
-        for name, value in attr_values:
+        for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
+            ).cbf_has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )

@@ -442,9 +442,13 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     return False
 
+        self.logger.error(f"PROXIES: {self._proxies}, VCCs: {self._vcc_fqdn}")
         # Set VCC values
         for fqdn in self._vcc_fqdn:
             try:
+                self.logger.debug(f"Trying connection to {fqdn}")
+                self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
+                
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:

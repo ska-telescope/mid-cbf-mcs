@@ -309,31 +309,57 @@ class TestFsp:
 
         # set device ONLINE, ON, function mode to CORR and add subarray membership
         self.test_AddSubarrayMembership(
-            change_event_callbacks, device_under_test, sub_ids
+            device_under_test, event_tracer, sub_ids
         )
 
         # test invalid subarray ID
-        assert device_under_test.RemoveSubarrayMembership(0) == [
-            [ResultCode.FAILED],
-            ["FSP does not belong to subarray 0"],
-        ]
+        (return_value, command_id) = device_under_test.RemoveSubarrayMembership(0)
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+        
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.FAILED.value}, "FSP does not belong to subarray 0"]',
+            ),
+        )
 
         # test valid subarray IDs, assert subarrayMembership attribute updated
         sub_ids_remaining = sub_ids.copy()
         for sub_id in sub_ids:
             sub_ids_remaining.pop(0)
-            result = device_under_test.RemoveSubarrayMembership(sub_id)
-            assert result == [
-                [ResultCode.OK],
-                ["RemoveSubarrayMembership completed OK"],
-            ]
+            (return_value, command_id) = device_under_test.RemoveSubarrayMembership(sub_id)
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
 
-            change_event_callbacks["subarrayMembership"].assert_change_event(
-                sub_ids_remaining
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    f'[{ResultCode.OK.value}, "RemoveSubarrayMembership completed OK"]',
+                ),
+            )
+
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="subarrayMembership",
+                attribute_value=sub_ids_remaining,
             )
 
         # assert functionMode attribute updated to IDLE
-        change_event_callbacks["functionMode"].assert_change_event(0)
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="functionMode",
+            attribute_value=0,
+        )

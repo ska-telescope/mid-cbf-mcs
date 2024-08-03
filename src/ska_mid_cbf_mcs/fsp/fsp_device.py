@@ -61,7 +61,7 @@ class Fsp(CbfDevice):
 
     @attribute(
         abs_change=1,
-        dtype=("uint16",),
+        dtype=[int],
         max_dim_x=16,
         doc="Subarray membership",
     )

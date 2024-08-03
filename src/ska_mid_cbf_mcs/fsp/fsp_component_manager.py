@@ -416,10 +416,10 @@ class FspComponentManager(CbfComponentManager):
 
         self.subarray_membership.append(argin)
         self._device_attr_change_callback(
-            "subarrayMembership", self.subarray_membership
+            "subarrayMembership", list(self.subarray_membership)
         )
         self._device_attr_archive_callback(
-            "subarrayMembership", self.subarray_membership
+            "subarrayMembership", list(self.subarray_membership)
         )
 
         task_callback(
