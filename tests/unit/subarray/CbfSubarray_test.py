@@ -250,7 +250,7 @@ class TestCbfSubarray:
             receptors_push_val = list(curr_rec.copy())
             receptors_push_val.sort()
             attr_values.append(
-                ("receptors", tuple(receptors_push_val), None, 2)
+                ("receptors", tuple(receptors_push_val), None, 1)
             )
 
         if remove_all:
