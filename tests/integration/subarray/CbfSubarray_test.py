@@ -30,8 +30,14 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-    @pytest.mark.dependency()
-    @pytest.mark.parametrize("sub_id", [1])
+    @pytest.mark.parametrize(
+        "sub_id",
+        [
+            pytest.param(
+                1, marks=pytest.mark.dependency(name="CbfSubarray_Online_1")
+            )
+        ],
+    )
     def test_Online(
         self: TestCbfSubarray,
         sub_id: int,
@@ -63,9 +69,18 @@ class TestCbfSubarray:
                 attribute_value=value,
             )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_Online"])
     @pytest.mark.parametrize(
-        "sub_id, sys_param_file", [(1, "sys_param_4_boards.json")]
+        "sub_id, sys_param_file",
+        [
+            pytest.param(
+                1,
+                "sys_param_4_boards.json",
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_Online_1"],
+                    name="CbfSubarray_sysParam_1",
+                ),
+            )
+        ],
     )
     def test_sysParam(
         self: TestCbfSubarray,
@@ -94,10 +109,19 @@ class TestCbfSubarray:
             attribute_value=sys_param,
         )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_sysParam"])
     @pytest.mark.parametrize(
         "sub_id, dish_ids, sys_param_file",
-        [(1, ["SKA001"], "sys_param_4_boards.json")],
+        [
+            pytest.param(
+                1,
+                ["SKA001"],
+                "sys_param_4_boards.json",
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_sysParam_1"],
+                    name="CbfSubarray_AddReceptors_1",
+                ),
+            )
+        ],
     )
     def test_AddReceptors(
         self: TestCbfSubarray,
@@ -169,10 +193,18 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_AddReceptors"])
     @pytest.mark.parametrize(
         "sub_id, config_file_name",
-        [(1, "ConfigureScan_basic_CORR.json")],
+        [
+            pytest.param(
+                1,
+                "ConfigureScan_basic_CORR.json",
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_AddReceptors_1"],
+                    name="CbfSubarray_ConfigureScan_1",
+                ),
+            )
+        ],
     )
     def test_ConfigureScan(
         self: TestCbfSubarray,
@@ -257,7 +289,7 @@ class TestCbfSubarray:
             function_mode = FspModes[fsp_config["function_mode"]].value
 
             expected_events = [
-                ("subarrayMembership", (sub_id)),
+                ("subarrayMembership", [sub_id]),
                 ("functionMode", function_mode),
                 ("adminMode", AdminMode.ONLINE),
                 ("state", DevState.ON),
@@ -286,10 +318,18 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_ConfigureScan"])
     @pytest.mark.parametrize(
         "sub_id, scan_file_name",
-        [(1, "Scan1_basic.json")],
+        [
+            pytest.param(
+                1,
+                "Scan1_basic.json",
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_ConfigureScan_1"],
+                    name="CbfSubarray_Scan_1",
+                ),
+            )
+        ],
     )
     def test_Scan(
         self: TestCbfSubarray,
@@ -367,8 +407,18 @@ class TestCbfSubarray:
                 attribute_value=ObsState.SCANNING,
             )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_Scan"])
-    @pytest.mark.parametrize("sub_id", [1])
+    @pytest.mark.parametrize(
+        "sub_id",
+        [
+            pytest.param(
+                1,
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_Scan_1"],
+                    name="CbfSubarray_EndScan_1",
+                ),
+            )
+        ],
+    )
     def test_EndScan(
         self: TestCbfSubarray,
         subarray: dict[int, context.DeviceProxy],
@@ -439,8 +489,18 @@ class TestCbfSubarray:
                 attribute_value=ObsState.READY,
             )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_EndScan"])
-    @pytest.mark.parametrize("sub_id", [1])
+    @pytest.mark.parametrize(
+        "sub_id",
+        [
+            pytest.param(
+                1,
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_EndScan_1"],
+                    name="CbfSubarray_GoToIdle_1",
+                ),
+            )
+        ],
+    )
     def test_GoToIdle(
         self: TestCbfSubarray,
         subarray: dict[int, context.DeviceProxy],
@@ -513,7 +573,7 @@ class TestCbfSubarray:
 
         for fsp_id in fsp_ids:
             expected_events = [
-                ("subarrayMembership", ()),
+                ("subarrayMembership", []),
                 ("functionMode", FspModes.IDLE.value),
                 ("adminMode", AdminMode.OFFLINE),
                 ("state", DevState.DISABLE),
@@ -542,8 +602,18 @@ class TestCbfSubarray:
                     attribute_value=value,
                 )
 
-    @pytest.mark.dependency(depends=["TestCbfSubarray::test_GoToIdle"])
-    @pytest.mark.parametrize("sub_id", [1])
+    @pytest.mark.parametrize(
+        "sub_id",
+        [
+            pytest.param(
+                1,
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_GoToIdle_1"],
+                    name="CbfSubarray_RemoveAllReceptors_1",
+                ),
+            )
+        ],
+    )
     def test_RemoveAllReceptors(
         self: TestCbfSubarray,
         subarray: dict[int, context.DeviceProxy],
@@ -605,6 +675,49 @@ class TestCbfSubarray:
                     attribute_name=name,
                     attribute_value=value,
                 )
+
+    @pytest.mark.parametrize(
+        "sub_id",
+        [
+            pytest.param(
+                1,
+                marks=pytest.mark.dependency(
+                    depends=["CbfSubarray_Online_1"],
+                    name="CbfSubarray_Offline_1",
+                ),
+            )
+        ],
+    )
+    def test_Offline(
+        self: TestCbfSubarray,
+        sub_id: int,
+        subarray: dict[int, context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the communication states and verify the component manager
+        can stop communicating
+
+        :param sub_id: the subarray id
+        :param subarray: list of proxies to subarray devices
+        :param event_tracer: TangoEventTracer
+        """
+        # trigger stop_communicating by setting the AdminMode to OFFLINE
+        subarray[sub_id].adminMode = AdminMode.OFFLINE
+
+        expected_events = [
+            ("adminMode", AdminMode.OFFLINE),
+            ("state", DevState.DISABLE),
+        ]
+
+        for name, value in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+            )
 
     # @pytest.mark.parametrize(
     #     "receptors, \

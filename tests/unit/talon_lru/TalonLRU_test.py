@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 import pytest
 from assertpy import assert_that
-from ska_control_model import AdminMode, SimulationMode
+from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
