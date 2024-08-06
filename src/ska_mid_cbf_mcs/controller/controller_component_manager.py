@@ -355,6 +355,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
+            # TODO: VCC?
 
         super()._stop_communicating()
 

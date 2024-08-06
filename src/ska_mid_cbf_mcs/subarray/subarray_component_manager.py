@@ -246,21 +246,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
-    def _stop_communicating(
-        self: CbfSubarrayComponentManager, *args, **kwargs
-    ) -> None:
-        """
-        Thread for stop_communicating operation.
-        """
-        # delete all device proxies
-        self._all_vcc_proxies = {}
-        self._all_fsp_proxies = {}
-        self._all_fsp_corr_proxies = {}
-        self._all_talon_board_proxies = []
-        self._proxy_vis_slim = None
-
-        super()._stop_communicating()
-
     def _update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str, *args, **kwargs
     ) -> None:

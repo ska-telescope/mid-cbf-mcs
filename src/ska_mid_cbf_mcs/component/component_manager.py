@@ -37,6 +37,9 @@ __all__ = ["CbfComponentManager"]
 # Maximum number worker threads for group commands
 MAX_GROUP_WORKERS = 8
 
+# Default timeout per blocking command during _wait_for_blocking_results
+DEFAULT_TIMEOUT_PER_COMMAND = 10
+
 
 class CbfComponentManager(TaskExecutorComponentManager):
     """
@@ -542,7 +545,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :return: completed if status reached, FAILED if timed out, ABORTED if aborted
         """
         if timeout == 0.0:
-            timeout = float(len(self._blocking_commands) * 5)
+            timeout = float(
+                len(self._blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND
+            )
         ticks = int(timeout / 0.01)  # 10 ms resolution
         while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
