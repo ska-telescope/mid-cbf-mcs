@@ -165,7 +165,7 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
-        
+
         attr_values = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
@@ -266,7 +266,7 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
-        
+
         attr_values = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
@@ -290,7 +290,9 @@ class TestFspCorrSubarray:
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                    ), None, 1
+                    ),
+                    None,
+                    1,
                 )
             )
 
@@ -304,7 +306,6 @@ class TestFspCorrSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
-
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -351,7 +352,7 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
             ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
         ]
-        
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
@@ -363,10 +364,12 @@ class TestFspCorrSubarray:
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                    ), None, 1
+                    ),
+                    None,
+                    1,
                 )
             )
-            
+
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
@@ -377,7 +380,6 @@ class TestFspCorrSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
-
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -417,7 +419,7 @@ class TestFspCorrSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
-        
+
         attr_values = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
@@ -439,7 +441,9 @@ class TestFspCorrSubarray:
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                    ), None, 1
+                    ),
+                    None,
+                    1,
                 )
             )
 

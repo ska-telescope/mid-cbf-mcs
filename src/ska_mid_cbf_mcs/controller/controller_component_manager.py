@@ -448,7 +448,7 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 self.logger.debug(f"Trying connection to {fqdn}")
                 self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
-                
+
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:

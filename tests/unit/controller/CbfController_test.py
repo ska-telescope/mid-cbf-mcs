@@ -139,7 +139,7 @@ class TestCbfController:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-        
+
     def test_Online(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -211,7 +211,10 @@ class TestCbfController:
             ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
-                attribute_value=(f"{command_id[0]}", '[0, "InitSysParam completed OK"]'),
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[0, "InitSysParam completed OK"]',
+                ),
             )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_source.json"
@@ -222,7 +225,10 @@ class TestCbfController:
             ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
-                attribute_value=(f"{command_id[0]}", '[3, "Retrieving the init_sys_param file failed"]'),
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Retrieving the init_sys_param file failed"]',
+                ),
             )
         elif sys_param_file_path == "sys_param_dup_dishid.json":
             assert_that(event_tracer).within_timeout(
@@ -230,7 +236,10 @@ class TestCbfController:
             ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
-                attribute_value=(f"{command_id[0]}", '[3, "Duplicated Dish ID in the init_sys_param json"]'),
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Duplicated Dish ID in the init_sys_param json"]',
+                ),
             )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_schema.json"
@@ -240,7 +249,10 @@ class TestCbfController:
             ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
-                attribute_value=(f"{command_id[0]}", '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]'),
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
+                ),
             )
         else:
             assert_that(event_tracer).within_timeout(
@@ -248,7 +260,10 @@ class TestCbfController:
             ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
-                attribute_value=(f"{command_id[0]}", '[3, "Validating init_sys_param file against ska-telmodel schema failed"]'),
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
+                ),
             )
 
     def test_On_without_init_sys_param(
@@ -260,7 +275,7 @@ class TestCbfController:
         Test On without InitSysParam.
         """
         self.test_Online(device_under_test, event_tracer)
-        
+
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
 
@@ -293,10 +308,10 @@ class TestCbfController:
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-            
+
         # dict to store return code and unique IDs of queued commands
         command_dict = {}
-        
+
         command_dict["InitSysParam"] = device_under_test.InitSysParam(sp)
         command_dict["On"] = device_under_test.On()
         command_dict["Off"] = device_under_test.Off()
@@ -305,7 +320,7 @@ class TestCbfController:
             ("state", DevState.ON, DevState.OFF, 1),
             ("state", DevState.OFF, DevState.ON, 1),
         ]
-        
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
@@ -320,7 +335,7 @@ class TestCbfController:
                     ),
                 )
             )
-            
+
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT

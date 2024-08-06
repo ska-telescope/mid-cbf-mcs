@@ -15,7 +15,6 @@ from typing import Generator
 
 import pytest
 import tango
-
 from ska_control_model import ObsState
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState

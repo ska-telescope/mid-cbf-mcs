@@ -19,8 +19,8 @@ import pytest
 from assertpy import assert_that
 from ska_control_model import AdminMode, ResultCode, SimulationMode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from ska_tango_testing.integration import TangoEventTracer
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
@@ -92,7 +92,6 @@ class TestFsp:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-
     def device_online_and_on(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -149,20 +148,24 @@ class TestFsp:
         self.device_online_and_on(device_under_test, event_tracer)
 
         # test issuing SetFunctionMode from ON
-        (return_value, command_id) = device_under_test.SetFunctionMode(function_mode.name)
+        (return_value, command_id) = device_under_test.SetFunctionMode(
+            function_mode.name
+        )
 
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-        
+
         attr_values = [
-            ("longRunningCommandResult", 
+            (
+                "longRunningCommandResult",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "SetFunctionMode completed OK"]',
-                ), None, 1
+                ),
+                None,
+                1,
             ),
             ("functionMode", function_mode.value, None, 1),
-
         ]
 
         for name, value, previous, n in attr_values:
@@ -175,7 +178,7 @@ class TestFsp:
                 previous_value=previous,
                 target_n_events=n,
             )
-    
+
     @pytest.mark.parametrize("function_mode", [FspModes.CORR])
     def test_SetFunctionMode_not_allowed(
         self: TestFsp,
@@ -194,8 +197,10 @@ class TestFsp:
         :param function_mode: the function mode to be set
         """
         # SetFunctionMode not allowed if state is not ON
-        (return_value, command_id) = device_under_test.SetFunctionMode(function_mode.name)
-        
+        (return_value, command_id) = device_under_test.SetFunctionMode(
+            function_mode.name
+        )
+
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
@@ -205,9 +210,9 @@ class TestFsp:
             device_name=device_under_test,
             attribute_name="longRunningCommandResult",
             attribute_value=(
-                    f"{command_id[0]}",
-                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
-                ),
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            ),
         )
 
     # parameterized with all possible subarray IDs, a duplicate ID and IDs below and above range
@@ -237,20 +242,28 @@ class TestFsp:
         """
 
         # set device ONLINE, ON and set function mode to CORR
-        self.test_SetFunctionMode(device_under_test, event_tracer, FspModes.CORR)
+        self.test_SetFunctionMode(
+            device_under_test, event_tracer, FspModes.CORR
+        )
 
         sub_ids_added = []
         print(f"All SUB IDs: {sub_ids}")
         for sub_id in sub_ids:
-            if ( 
-                (len(device_under_test.subarrayMembership) == const.MAX_SUBARRAY) or
-                (sub_id - 1 not in range(const.MAX_SUBARRAY)) or
-                (sub_id in device_under_test.subarrayMembership)
+            if (
+                (
+                    len(device_under_test.subarrayMembership)
+                    == const.MAX_SUBARRAY
+                )
+                or (sub_id - 1 not in range(const.MAX_SUBARRAY))
+                or (sub_id in device_under_test.subarrayMembership)
             ):
-                (return_value, command_id) = device_under_test.AddSubarrayMembership(sub_id)
+                (
+                    return_value,
+                    command_id,
+                ) = device_under_test.AddSubarrayMembership(sub_id)
                 # check that the command was successfully queued
                 assert return_value[0] == ResultCode.QUEUED
-                
+
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -262,10 +275,13 @@ class TestFsp:
                     ),
                 )
             else:
-                (return_value, command_id) = device_under_test.AddSubarrayMembership(sub_id)
+                (
+                    return_value,
+                    command_id,
+                ) = device_under_test.AddSubarrayMembership(sub_id)
                 # check that the command was successfully queued
                 assert return_value[0] == ResultCode.QUEUED
-                
+
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
@@ -276,7 +292,7 @@ class TestFsp:
                         f'[{ResultCode.OK.value}, "AddSubarrayMembership completed OK"]',
                     ),
                 )
-                
+
                 # assert subarrayMembership attribute updated
                 sub_ids_added.append(sub_id)
                 print(f"SUB IDs: {sub_ids_added}")
@@ -287,7 +303,6 @@ class TestFsp:
                     attribute_name="subarrayMembership",
                     attribute_value=sub_ids_added,
                 )
-
 
     @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
     def test_RemoveSubarrayMembership(
@@ -313,10 +328,13 @@ class TestFsp:
         )
 
         # test invalid subarray ID
-        (return_value, command_id) = device_under_test.RemoveSubarrayMembership(0)
+        (
+            return_value,
+            command_id,
+        ) = device_under_test.RemoveSubarrayMembership(0)
         # check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
-        
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -332,7 +350,10 @@ class TestFsp:
         sub_ids_remaining = sub_ids.copy()
         for sub_id in sub_ids:
             sub_ids_remaining.pop(0)
-            (return_value, command_id) = device_under_test.RemoveSubarrayMembership(sub_id)
+            (
+                return_value,
+                command_id,
+            ) = device_under_test.RemoveSubarrayMembership(sub_id)
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
