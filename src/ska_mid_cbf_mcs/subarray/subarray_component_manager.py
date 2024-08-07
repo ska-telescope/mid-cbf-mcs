@@ -34,6 +34,10 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
+from ska_telmodel.csp.common_schema import (
+    MAX_CHANNELS_PER_STREAM,
+    MAX_STREAMS_PER_FSP,
+)
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
 
@@ -877,43 +881,22 @@ class CbfSubarrayComponentManager(
             msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
             return (False, msg)
 
-        # Validate dopplerPhaseCorrSubscriptionPoint.
-        if "doppler_phase_corr_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration[
-                        "doppler_phase_corr_subscription_point"
-                    ],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['doppler_phase_corr_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
-
-        # Validate delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["delay_model_subscription_point"],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['delay_model_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'delayModelSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
+        # Validate delay_model_subscription_point.
+        try:
+            attribute_proxy = CbfAttributeProxy(
+                fqdn=configuration["delay_model_subscription_point"],
+                logger=self._logger,
+            )
+            attribute_proxy.ping()
+        except (
+            tango.DevFailed
+        ):  # attribute doesn't exist or is not set up correctly
+            msg = (
+                f"Attribute {configuration['delay_model_subscription_point']}"
+                " not found or not set up correctly for "
+                "'delayModelSubscriptionPoint'. Aborting configuration."
+            )
+            return (False, msg)
 
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
@@ -967,16 +950,6 @@ class CbfSubarrayComponentManager(
                     "Aborting configuration."
                 )
                 return (False, msg)
-            for sw in configuration["search_window"]:
-                if sw["tdc_enable"]:
-                    for receptor in sw["tdc_destination_address"]:
-                        dish = receptor["receptor_id"]
-                        if dish not in self._dish_ids:
-                            msg = (
-                                f"'searchWindow' DISH ID {dish} "
-                                + "not assigned to subarray. Aborting configuration."
-                            )
-                            return (False, msg)
         else:
             pass
 
@@ -1037,6 +1010,34 @@ class CbfSubarrayComponentManager(
                         "band_5_tuning"
                     ]
 
+                # Validate output_port
+                # At most one stream (20 channels) per port per output_host
+                if "output_port" in fsp:
+                    if "output_host" in fsp:
+                        for index, host_mapping in enumerate(
+                            fsp["output_host"]
+                        ):
+                            start_channel = host_mapping[0]
+                            if (index + 1) == len(fsp["output_host"]):
+                                end_channel = (
+                                    MAX_STREAMS_PER_FSP
+                                    * MAX_CHANNELS_PER_STREAM
+                                )
+                            else:
+                                end_channel = fsp["output_host"][index + 1][0]
+
+                            ports_for_host = [
+                                entry[1]
+                                for entry in fsp["output_port"]
+                                if entry[0] >= start_channel
+                                and entry[0] < end_channel
+                            ]
+                            # Ensure all ports are unique for the given host
+                            if len(ports_for_host) != len(set(ports_for_host)):
+                                msg = "'output_port' port mappings must be unique per host "
+                                self._logger.error(msg)
+                                return (False, msg)
+
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
@@ -1080,138 +1081,6 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.error(msg)
                         return (False, msg)
-
-                    # Validate zoom_factor.
-                    if int(fsp["zoom_factor"]) in list(range(7)):
-                        pass
-                    else:
-                        msg = "'zoom_factor' must be an integer in the range [0, 6]."
-                        # this is a fatal error
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # Validate zoomWindowTuning.
-                    if (
-                        int(fsp["zoom_factor"]) > 0
-                    ):  # zoomWindowTuning is required
-                        if "zoom_window_tuning" in fsp:
-                            if fsp["frequency_band"] not in [
-                                "5a",
-                                "5b",
-                            ]:  # frequency band is not band 5
-                                frequencyBand = [
-                                    "1",
-                                    "2",
-                                    "3",
-                                    "4",
-                                    "5a",
-                                    "5b",
-                                ].index(fsp["frequency_band"])
-                                frequency_band_start = [
-                                    *map(
-                                        lambda j: j[0] * 10**9,
-                                        [
-                                            const.FREQUENCY_BAND_1_RANGE,
-                                            const.FREQUENCY_BAND_2_RANGE,
-                                            const.FREQUENCY_BAND_3_RANGE,
-                                            const.FREQUENCY_BAND_4_RANGE,
-                                        ],
-                                    )
-                                ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream1"
-                                ]
-
-                                frequency_slice_range = (
-                                    frequency_band_start
-                                    + (fsp["frequency_slice_id"] - 1)
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                    frequency_band_start
-                                    + fsp["frequency_slice_id"]
-                                    * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
-                                )
-
-                                if (
-                                    frequency_slice_range[0]
-                                    <= int(fsp["zoom_window_tuning"]) * 10**3
-                                    <= frequency_slice_range[1]
-                                ):
-                                    pass
-                                else:
-                                    msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                    self._logger.error(msg)
-                                    return (False, msg)
-                            # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                            else:
-                                if common_configuration["band_5_tuning"] == [
-                                    0,
-                                    0,
-                                ]:  # band5Tuning not specified
-                                    pass
-                                else:
-                                    # TODO: these validations of BW range are done many times
-                                    # in many places - use a common function; also may be possible
-                                    # to do them only once (ex. for band5Tuning)
-
-                                    frequency_slice_range_1 = (
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream1"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    frequency_slice_range_2 = (
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + (fsp["frequency_slice_id"] - 1)
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream2"]
-                                        - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
-                                        / 2
-                                        + fsp["frequency_slice_id"]
-                                        * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                    )
-
-                                    if (
-                                        frequency_slice_range_1[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_1[1]
-                                    ) or (
-                                        frequency_slice_range_2[0]
-                                        <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
-                                        <= frequency_slice_range_2[1]
-                                    ):
-                                        pass
-                                    else:
-                                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                        self._logger.error(msg)
-                                        return (False, msg)
-                        else:
-                            msg = "FSP specified, but 'zoomWindowTuning' not given."
-                            self._logger.error(msg)
-                            return (False, msg)
 
                     # Validate integrationTime.
                     if int(fsp["integration_factor"]) in list(
@@ -1626,34 +1495,19 @@ class CbfSubarrayComponentManager(
         data.insert(tango.DevString, json_str)
         self._group_vcc.command_inout("ConfigureScan", data)
 
-        # Configure dopplerPhaseCorrSubscriptionPoint.
-        if "doppler_phase_corr_subscription_point" in configuration:
-            attribute_proxy = CbfAttributeProxy(
-                fqdn=configuration["doppler_phase_corr_subscription_point"],
-                logger=self._logger,
-            )
-            event_id = attribute_proxy.add_change_event_callback(
-                self._doppler_phase_correction_event_callback
-            )
-            self._logger.info(
-                f"Subscribing to doppler phase correction event of id: {event_id}"
-            )
-            self._events_telstate[event_id] = attribute_proxy
-
         # Configure delayModelSubscriptionPoint.
-        if "delay_model_subscription_point" in configuration:
-            self._last_received_delay_model = "{}"
-            attribute_proxy = CbfAttributeProxy(
-                fqdn=configuration["delay_model_subscription_point"],
-                logger=self._logger,
-            )
-            event_id = attribute_proxy.add_change_event_callback(
-                self._delay_model_event_callback
-            )
-            self._logger.info(
-                f"Subscribing to delay model event of id: {event_id}"
-            )
-            self._events_telstate[event_id] = attribute_proxy
+        self._last_received_delay_model = "{}"
+        attribute_proxy = CbfAttributeProxy(
+            fqdn=configuration["delay_model_subscription_point"],
+            logger=self._logger,
+        )
+        event_id = attribute_proxy.add_change_event_callback(
+            self._delay_model_event_callback
+        )
+        self._logger.info(
+            f"Subscribing to delay model event of id: {event_id}"
+        )
+        self._events_telstate[event_id] = attribute_proxy
 
         # Configure jonesMatrixSubscriptionPoint
         if "jones_matrix_subscription_point" in configuration:
@@ -1701,14 +1555,7 @@ class CbfSubarrayComponentManager(
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
                     ]
-                # pass DISH ID as VCC ID integer to VCCs
-                if search_window["tdc_enable"]:
-                    for tdc_dest in search_window["tdc_destination_address"]:
-                        tdc_dest[
-                            "receptor_id"
-                        ] = self._dish_utils.dish_id_to_vcc_id[
-                            tdc_dest["receptor_id"]
-                        ]
+
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
