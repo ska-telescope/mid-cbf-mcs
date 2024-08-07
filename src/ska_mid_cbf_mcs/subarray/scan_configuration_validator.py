@@ -5,11 +5,7 @@ import json
 import logging
 import math
 from collections import defaultdict
-from re import sub
-from statistics import correlation
 import sys
-from threading import Lock, Thread
-from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Tango imports
 import tango
@@ -17,11 +13,7 @@ from ska_tango_base.control_model import (
     ObsState,
 )
 
-from ska_telmodel.schema import validate as telmodel_validate
-from tango import AttrQuality
-
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
-from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
     const,
@@ -29,11 +21,8 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     ScanConfiguration,
 )
 
-from ska_mid_cbf_mcs.component.util import check_communicating
-
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayComponentManager
 
 
@@ -51,7 +40,6 @@ class ScanConfigurationValidator:
         FspModes.CORR:{1,2,3,4},
         FspModes.PST_BF:{5,6,7,8}
     }
-
 
     adr_99_function_mode_match = {
             "idle":"IDLE",
@@ -143,15 +131,15 @@ class ScanConfigurationValidator:
 
         """
 
-        result_code, msg = self.validate_subscription_point(configuration) 
+        result_code, msg = self._validate_subscription_point(configuration) 
         if result_code == False:
             return (False, msg)
         
-        result_code, msg = self.validate_vcc()
+        result_code, msg = self._validate_vcc()
         if result_code == False:
             return (False, msg)
         
-        result_code, msg = self.validate_search_window(configuration)
+        result_code, msg = self._validate_search_window(configuration)
         if result_code == False:
             return (False, msg)
         
@@ -202,13 +190,13 @@ class ScanConfigurationValidator:
                     f"{fsp['function_mode']} is not a valid FSP function mode.",
                 )
             
-            self.validate_cbf_configuration(fsp, 
+            self._validate_cbf_configuration(fsp, 
                                             configuration,
                                             common_configuration)
             # Configure FSP
             try:
                 # FYI, Will also modify the fsp dict
-                result_code, msg = self.validate_fsp_in_correct_mode(fsp,
+                result_code, msg = self._validate_fsp_in_correct_mode(fsp,
                                                             fsp_id,
                                                             function_mode_value,
                                                             fsp_proxy)
@@ -217,13 +205,13 @@ class ScanConfigurationValidator:
 
                 match function_mode_value:
                     case 1:
-                        result_code, msg = self.validate_corr_function_mode(fsp,common_configuration)
+                        result_code, msg = self._validate_corr_function_mode(fsp,common_configuration)
 
                     case 2:
-                        result_code, msg = self.validate_pss_function_mode(fsp)
+                        result_code, msg = self._validate_pss_function_mode(fsp)
                     
                     case 3:
-                        result_code, msg = self.validate_pst_function_mode(fsp)
+                        result_code, msg = self._validate_pst_function_mode(fsp)
 
                     case _:
                         return (False, f"{self.valid_function_modes[function_mode_value]} is not a valid function mode for MCS")
@@ -283,7 +271,7 @@ class ScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
     
-    def validate_fsp_in_correct_mode(self: ScanConfigurationValidator,
+    def _validate_fsp_in_correct_mode(self: ScanConfigurationValidator,
                                  fsp: dict,
                                  fsp_id:int,
                                  function_mode_value: int,
@@ -316,7 +304,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
     
-    def validate_cbf_configuration(self: ScanConfigurationValidator,
+    def _validate_cbf_configuration(self: ScanConfigurationValidator,
                                     fsp: dict,
                                     configuration: dict,
                                     common_configuration: dict) -> tuple[bool, str]:
@@ -359,7 +347,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def validate_corr_function_mode(self: ScanConfigurationValidator,
+    def _validate_corr_function_mode(self: ScanConfigurationValidator,
                                         fsp: dict,
                                         common_configuration: dict)-> tuple[bool, str]:
         """
@@ -374,7 +362,7 @@ class ScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
             
-        result_code, msg = self.validate_receptors(fsp)
+        result_code, msg = self._validate_receptors(fsp)
         if result_code == False:
             return (False, msg)
 
@@ -528,7 +516,7 @@ class ScanConfigurationValidator:
                 self.logger.error(msg)
                 return (False, msg)
 
-        result_code, msg = self.valdiate_integration_time(fsp)
+        result_code, msg = self._valdiate_integration_time(fsp)
         if result_code == False:
             return (False, msg)
 
@@ -549,7 +537,7 @@ class ScanConfigurationValidator:
 
         # validate outputlink
         # check the format
-        result_code, msg = self.validate_output_link_map(fsp["output_link_map"])
+        result_code, msg = self._validate_output_link_map(fsp["output_link_map"])
         if result_code == False:
             return (False, msg)
         
@@ -618,7 +606,7 @@ class ScanConfigurationValidator:
 
         # TODO: validate destination addresses: outputHost, outputPort
 
-    def validate_pss_function_mode(self: ScanConfigurationValidator,
+    def _validate_pss_function_mode(self: ScanConfigurationValidator,
                                     fsp: dict)-> tuple[bool, str]:
         """
         Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
@@ -721,7 +709,7 @@ class ScanConfigurationValidator:
                     self.logger.info(msg)
                     return (False, msg)
 
-                if self.validate_ip(
+                if self._validate_ip(
                     searchBeam["search_beam_destination_address"]
                 ):
                     pass
@@ -739,7 +727,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def validate_pst_function_mode(self: ScanConfigurationValidator,
+    def _validate_pst_function_mode(self: ScanConfigurationValidator,
                                     fsp: dict)-> tuple[bool, str]:
         """
         Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
@@ -816,7 +804,7 @@ class ScanConfigurationValidator:
                     msg = "'outputEnabled' is not a valid boolean"
                     return (False, msg)
 
-                if self.validate_ip(
+                if self._validate_ip(
                     timingBeam["timing_beam_destination_address"]
                 ):
                     pass
@@ -828,7 +816,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def validate_subscription_point(self:ScanConfigurationValidator,
+    def _validate_subscription_point(self:ScanConfigurationValidator,
                                     configuration: dict)-> tuple[bool, str]:
         """
         Checks if subscription points are requested in the Scan Configuration and validates that the requested subscription points's device server are reachable  
@@ -872,7 +860,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def validate_vcc(self: ScanConfigurationValidator)-> tuple[bool, str]:
+    def _validate_vcc(self: ScanConfigurationValidator)-> tuple[bool, str]:
         """
         Validats that the assigned VCC proxies found in the Subarray Devices are on
 
@@ -889,7 +877,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
     
-    def validate_search_window(self: ScanConfigurationValidator,
+    def _validate_search_window(self: ScanConfigurationValidator,
                                configuration: dict) -> tuple[bool, str]:
         """
         Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
@@ -931,7 +919,7 @@ class ScanConfigurationValidator:
             self.logger.info(msg)
             return (True, msg) 
 
-    def validate_receptors(self: ScanConfigurationValidator,
+    def _validate_receptors(self: ScanConfigurationValidator,
                            fsp:dict) -> tuple[bool, str]:
         """
         Validates that the "receptors" value found in fsp/processing_region is within specification
@@ -968,7 +956,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
     
-    def valdiate_integration_time(self: ScanConfigurationValidator,
+    def _valdiate_integration_time(self: ScanConfigurationValidator,
                                   fsp:dict) -> tuple[bool, str]:
         """
         Validates that the integration_factor value found in fsp/processing_region is within specification
@@ -999,7 +987,7 @@ class ScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-    def validate_output_link_map(self:ScanConfigurationValidator,
+    def _validate_output_link_map(self:ScanConfigurationValidator,
                                  output_link_map: dict) -> tuple[bool, str]:
         """
         Validates that the channel/values Output Link Map pair contains int, int
@@ -1023,7 +1011,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
+    def _validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
         """
         Validate IP address format.
 
@@ -1063,7 +1051,7 @@ class ScanConfigurationValidator:
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["midcbf"])
         
-        result_code, msg = self.validate_vcc()
+        result_code, msg = self._validate_vcc()
         if result_code == False:
             return (False, msg)
         
@@ -1149,7 +1137,7 @@ class ScanConfigurationValidator:
                 self.logger.error(msg)
                 return(False, msg)
             
-            result_code, msg = self.validate_processing_region_frequency(processing_region) 
+            result_code, msg = self._validate_processing_region_frequency(processing_region) 
             if result_code == False:
                 return (False, msg)            
                         
@@ -1195,7 +1183,7 @@ class ScanConfigurationValidator:
                     # FYI, Will also modify the fsp dict
                     # TODO: Run Full Test to see if removing below will affect System Tests
                     # processing_regions["frequency_band"] = common_configuration["frequency_band"]
-                    result_code, msg = self.validate_fsp_in_correct_mode(processing_region,
+                    result_code, msg = self._validate_fsp_in_correct_mode(processing_region,
                                                                 fsp_id,
                                                                 function_mode_value,
                                                                 fsp_proxy)
@@ -1234,15 +1222,15 @@ class ScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        result_code, msg = self.validate_receptors(processing_region)
+        result_code, msg = self._validate_receptors(processing_region)
         if result_code == False:
             return (False, msg)
         
-        result_code, msg = self.valdiate_integration_time(processing_region)
+        result_code, msg = self._valdiate_integration_time(processing_region)
         if result_code == False:
             return (False, msg)
 
-        result_code, msg = self.validate_output_link_map(processing_region["output_link_map"])
+        result_code, msg = self._validate_output_link_map(processing_region["output_link_map"])
         if result_code == False:
             return (False, msg)
 
@@ -1258,7 +1246,7 @@ class ScanConfigurationValidator:
                                            pss_configuration: dict)->tuple[bool, str]:
         return (True, "Place Holder Function")    
 
-    def validate_processing_region_frequency(self: ScanConfigurationValidator,
+    def _validate_processing_region_frequency(self: ScanConfigurationValidator,
                                              processing_region: dict)-> tuple[bool, str]:
         """
         Validates that the values found in a Processing Region is within the range specified in ADR 99 and that there are enough FSP to cover the range
@@ -1595,11 +1583,11 @@ class ScanConfigurationValidator:
 
         # Create helper functions for below when MCS being support it
         
-        result_code, msg = self.validate_subscription_point(configuration) 
+        result_code, msg = self._validate_subscription_point(configuration) 
         if result_code == False:
             return (False, msg)
 
-        result_code, msg = self.validate_search_window(configuration)
+        result_code, msg = self._validate_search_window(configuration)
         if result_code == False:
             return (False, msg)
 

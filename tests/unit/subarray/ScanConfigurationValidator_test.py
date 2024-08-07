@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 from logging import getLogger
@@ -144,6 +145,28 @@ class TestScanConfigurationValidator:
             expected_msg =(f"AA 0.5 Requirment: {(FspModes.CORR).name} Supports only FSP {{1, 2, 3, 4}}.")
             print(msg)
             assert(expected_msg in msg)
+            assert(result_code == False)
+    
+    @pytest.mark.parametrize(
+           "fsp_id",
+           [1,2,3,4]
+    )
+    def test_Invalid_Duplicate_FSP_IDs_in_single_subarray(
+            self:TestScanConfigurationValidator,
+            subarray_component_manager: CbfSubarrayComponentManager,
+            fsp_id: int):
+            
+            self.full_configuration["midcbf"]["correlation"]["processing_regions"].append(
+                 copy.deepcopy(self.full_configuration["midcbf"]["correlation"]["processing_regions"][0])
+            )
+            # The FSP provided are all dups, but I want to check that it recognized more than one different values as duplciates
+            self.full_configuration["midcbf"]["correlation"]["processing_regions"][1]["fsp_ids"] = [fsp_id,2,3,4]
+            json_str = json.dumps(self.full_configuration)
+
+            validator:ScanConfigurationValidator = ScanConfigurationValidator(json_str, subarray_component_manager,self.logger)
+            result_code, msg = validator.validate_input()
+            print(msg)
+            assert(f"FSP ID {fsp_id} already assigned to another Processing Region" in msg)
             assert(result_code == False)
     
     @pytest.mark.parametrize(
