@@ -11,7 +11,7 @@
     },
     "ddr4_corner_turner":{
         "min_integration_time_num_samps": 1904,
-        "read_threshold" : 3808,
+        "read_threshold" : 7616,
         "read_timeout_threshold": 450000000
     },
     "correlator":{
