@@ -81,7 +81,7 @@ server:
             - "talondx-002/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-002/ska-talondx-status/status"
@@ -113,7 +113,7 @@ server:
             - "talondx-003/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-003/ska-talondx-status/status"
@@ -145,7 +145,7 @@ server:
             - "talondx-004/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-004/ska-talondx-status/status"
@@ -177,7 +177,7 @@ server:
             - "talondx-005/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-005/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-005/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-005/ska-talondx-status/status"
@@ -209,7 +209,7 @@ server:
             - "talondx-006/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-006/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-006/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-006/ska-talondx-status/status"
@@ -241,7 +241,7 @@ server:
             - "talondx-007/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-007/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-007/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-007/ska-talondx-status/status"
@@ -273,7 +273,7 @@ server:
             - "talondx-008/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-008/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-008/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-008/ska-talondx-status/status"
