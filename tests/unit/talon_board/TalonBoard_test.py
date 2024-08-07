@@ -270,7 +270,8 @@ class TestTalonBoard:
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -308,6 +309,7 @@ class TestTalonBoard:
     def test_On_not_allowed(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the On() command when device has not been started up.
@@ -315,13 +317,24 @@ class TestTalonBoard:
         :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.On()
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     @pytest.mark.parametrize(
         "test_context",

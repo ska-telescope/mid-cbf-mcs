@@ -102,7 +102,8 @@ class TestSlimLink:
         :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
@@ -145,7 +146,8 @@ class TestSlimLink:
         :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
         device_under_test.txDeviceName = tx_device_name
@@ -186,6 +188,7 @@ class TestSlimLink:
         tx_device_name: str,
         rx_device_name: str,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test the ConnectTxRx() command before the device has been started up.
@@ -195,15 +198,26 @@ class TestSlimLink:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.txDeviceName = tx_device_name
         device_under_test.rxDeviceName = rx_device_name
 
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.ConnectTxRx()
+        result_code, command_id = device_under_test.ConnectTxRx()
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     def test_ConnectTxRx_empty_device_names(
         self: TestSlimLink,
@@ -534,7 +548,8 @@ class TestSlimLink:
         :param device_under_test: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -544,10 +559,20 @@ class TestSlimLink:
         )
 
         device_under_test.adminMode = AdminMode.OFFLINE
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.DisconnectTxRx()
+
+        result_code, command_id = device_under_test.DisconnectTxRx()
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     def test_DisconnectTxRx_empty_device_names(
         self: TestSlimLink,

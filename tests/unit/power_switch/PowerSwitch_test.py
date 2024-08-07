@@ -444,10 +444,19 @@ class TestPowerSwitch:
             attribute_value=DevState.DISABLE,
         )
 
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.TurnOffOutlet("0")
+        result_code, command_id = device_under_test.TurnOffOutlet("0")
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     @pytest.mark.parametrize(
         "test_context",
@@ -625,10 +634,20 @@ class TestPowerSwitch:
             attribute_value=DevState.DISABLE,
         )
 
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.TurnOnOutlet("0")
+        result_code, command_id = device_under_test.TurnOnOutlet("0")
+
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     @pytest.mark.parametrize(
         "test_context",

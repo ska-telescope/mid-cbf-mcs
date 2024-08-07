@@ -262,6 +262,7 @@ class TestSlim:
     def test_Configure_not_allowed(
         self: TestSlim,
         device_under_test_fail: context.DeviceProxy,
+        event_tracer_fail: TangoEventTracer,
         mesh_config_filename: str,
     ) -> None:
         """
@@ -270,15 +271,28 @@ class TestSlim:
         :param device_under_test_fail: A fixture that provides a
             :py:class: `CbfDeviceProxy` to the device under test, in a
             :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            with open(mesh_config_filename, "r") as mesh_config:
-                result_code, command_id = device_under_test_fail.Configure(
-                    mesh_config.read()
-                )
+        device_under_test_fail.adminMode = AdminMode.OFFLINE
+
+        with open(mesh_config_filename, "r") as mesh_config:
+            result_code, command_id = device_under_test_fail.Configure(
+                mesh_config.read()
+            )
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer_fail).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test_fail,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(

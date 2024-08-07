@@ -338,28 +338,28 @@ class TalonLRUComponentManager(CbfComponentManager):
                 [command_id],
             ] = self._proxy_power_switch1.TurnOnOutlet(self._pdu_outlets[0])
 
-        # Guard incase LRC was rejected.
-        if result_code == ResultCode.REJECTED:
-            self.logger.error(
-                f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
-            )
-        else:
-            self._blocking_commands.add(command_id)
-            lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
-            )
-
-            if lrc_status != TaskStatus.COMPLETED:
+            # Guard incase LRC was rejected.
+            if result_code == ResultCode.REJECTED:
                 self.logger.error(
-                    f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
+                    f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
-                pdu1_result = ResultCode.FAILED
             else:
-                self.pdu1_power_state = PowerState.ON
-                self.logger.info(
-                    f"PDU 1 ({self._pdu_outlets[0]}) successfully turned on."
+                self._blocking_commands.add(command_id)
+                lrc_status = self._wait_for_blocking_results(
+                    timeout=10.0, task_abort_event=task_abort_event
                 )
-                pdu1_result = ResultCode.OK
+
+                if lrc_status != TaskStatus.COMPLETED:
+                    self.logger.error(
+                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
+                    )
+                    pdu1_result = ResultCode.FAILED
+                else:
+                    self.pdu1_power_state = PowerState.ON
+                    self.logger.info(
+                        f"PDU 1 ({self._pdu_outlets[0]}) successfully turned on."
+                    )
+                    pdu1_result = ResultCode.OK
 
         # Turn on PDU 2
         pdu2_result = ResultCode.FAILED
