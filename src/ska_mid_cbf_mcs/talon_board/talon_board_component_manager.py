@@ -110,36 +110,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if not self.simulation_mode:
-            try:
-                for fqdn in [
-                    self._talon_sysid_fqdn,
-                    self._eth_100g_0_fqdn,
-                    self._eth_100g_1_fqdn,
-                    self._talon_status_fqdn,
-                    self._hps_master_fqdn,
-                ]:
-                    if fqdn is not None:
-                        self._proxies[fqdn] = context.DeviceProxy(
-                            device_name=fqdn
-                        )
-                        # TODO: back to debug
-                        self.logger.info(f"Created device proxy for {fqdn}")
-                    else:
-                        self._update_communication_state(
-                            CommunicationStatus.NOT_ESTABLISHED
-                        )
-                        self.logger.error(
-                            "Failed to establish proxies to devices in properties. Check charts."
-                        )
-                        return
-            except tango.DevFailed as df:
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-                self.logger.error(df.args[0].desc)
-                return
-
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
@@ -1208,6 +1178,49 @@ class TalonBoardComponentManager(CbfComponentManager):
             return
 
         if not self.simulation_mode:
+            try:
+                for fqdn in [
+                    self._talon_sysid_fqdn,
+                    self._eth_100g_0_fqdn,
+                    self._eth_100g_1_fqdn,
+                    self._talon_status_fqdn,
+                    self._hps_master_fqdn,
+                ]:
+                    if fqdn is not None:
+                        self._proxies[fqdn] = context.DeviceProxy(
+                            device_name=fqdn
+                        )
+                        # TODO: back to debug
+                        self.logger.info(f"Created device proxy for {fqdn}")
+                    else:
+                        self._update_communication_state(
+                            CommunicationStatus.NOT_ESTABLISHED
+                        )
+                        self.logger.error(
+                            "Failed to establish proxies to devices in properties. Check charts."
+                        )
+                        task_callback(
+                            status=TaskStatus.FAILED,
+                            result=(
+                                ResultCode.FAILED,
+                                "Failed to connect to HPS devices",
+                            ),
+                        )
+                        return
+            except tango.DevFailed as df:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                self.logger.error(df.args[0].desc)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to connect to HPS devices",
+                    ),
+                )
+                return
+
             self._subscribe_change_events()
             ping_res = asyncio.run(self._db_client.ping())
 
