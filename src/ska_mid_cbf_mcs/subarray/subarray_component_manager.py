@@ -19,9 +19,9 @@ import copy
 import json
 import logging
 import math
+import sys
 from re import sub
 from statistics import correlation
-import sys
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -44,10 +44,10 @@ from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
+    ScanConfiguration,
     const,
     freq_band_dict,
     mhz_to_hz,
-    ScanConfiguration,
     vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -1070,9 +1070,13 @@ class CbfSubarrayComponentManager(
                     ]
                     # Validate frequencySliceID.
                     # See for ex. Fig 8-2 in the Mid.CBF DDD
-                    
+
                     if int(fsp["frequency_slice_id"]) in list(
-                        range(1, const.NUM_FREQUENCY_SLICES_BY_BAND [frequencyBand] + 1)
+                        range(
+                            1,
+                            const.NUM_FREQUENCY_SLICES_BY_BAND[frequencyBand]
+                            + 1,
+                        )
                     ):
                         pass
                     else:

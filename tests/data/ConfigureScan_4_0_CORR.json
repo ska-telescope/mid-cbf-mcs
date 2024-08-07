@@ -14,7 +14,7 @@
                 "receptors": ["SKA063", "SKA001", "SKA100"],
                 "start_freq" : 350013440,
                 "channel_width" : 13440,
-                "channel_count" : 52100,
+                "channel_count" : 52080,
                 "sdp_start_channel_id": 0,
                 "integration_factor": 1,
                 "output_host": [
@@ -2625,8 +2625,7 @@
                     [52000, 12600],
                     [52020, 12601],
                     [52040, 12602],
-                    [52060, 12603],
-                    [52080, 12604]  
+                    [52060, 12603] 
                 ],
                 "output_link_map": [
                     [0, 1]

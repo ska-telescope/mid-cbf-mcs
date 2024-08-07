@@ -46,7 +46,7 @@ class Const:
 
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING = 10 / 9
-        self.FS_BW =  int(self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING)
+        self.FS_BW = int(self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING)
 
 
 const = Const()
@@ -115,7 +115,7 @@ mhz_to_hz = 1000000
 
 
 class ScanConfiguration:
-    ADR99_VERSIONS = {"4.0","4.1"}
+    ADR99_VERSIONS = {"4.0", "4.1"}
     PRE_ADR99_VERSIONS = {"2.4"}
 
 
