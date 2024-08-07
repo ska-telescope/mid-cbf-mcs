@@ -23,7 +23,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from tango import DevFailed, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency

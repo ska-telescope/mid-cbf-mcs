@@ -22,7 +22,7 @@ from ska_control_model import AdminMode, HealthState, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from tango import DevFailed, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.slim.slim_link_device import SlimLink
 
