@@ -13,7 +13,7 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, PowerState, TaskStatus
+from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -98,24 +98,18 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.logger.error("Expected two Talon board FQDNs")
             return False
 
-        try:
-            self._proxy_talondx_board1 = self._get_device_proxy(
-                "mid_csp_cbf/talon_board/" + self._talons[0]
-            )
-            self._proxy_talondx_board2 = self._get_device_proxy(
-                "mid_csp_cbf/talon_board/" + self._talons[1]
-            )
+        self._proxy_talondx_board1 = self._get_device_proxy(
+            "mid_csp_cbf/talon_board/" + self._talons[0]
+        )
+        self._proxy_talondx_board2 = self._get_device_proxy(
+            "mid_csp_cbf/talon_board/" + self._talons[1]
+        )
 
-            # Needs Admin mode == ONLINE to run ON command
-            if self._proxy_talondx_board1:
-                self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
-            if self._proxy_talondx_board2:
-                self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
-        except tango.DevFailed as df:
-            self.logger.error(
-                f"Failed to set AdminMode to ONLINE on Talon boards: {df}"
-            )
+        if (self._proxy_talondx_board1 is None) or (
+            self._proxy_talondx_board2 is None
+        ):
             return False
+
         return True
 
     def _init_power_switch(
@@ -421,27 +415,27 @@ class TalonLRUComponentManager(CbfComponentManager):
                         f"Nested LRC TalonBoard.On() to {board.dev_name()} rejected"
                     )
                     continue
-                self._blocking_commands.add(command_id)
+                # self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Nested LRC TalonBoard.On() to {board.dev_name()} failed: {df}"
                 )
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return (
-                    ResultCode.FAILED,
-                    "Nested LRC TalonBoard.On() failed",
-                )
+                # self._update_communication_state(
+                #     communication_state=CommunicationStatus.NOT_ESTABLISHED
+                # )
+                # return (
+                #     ResultCode.FAILED,
+                #     "Nested LRC TalonBoard.On() failed",
+                # )
 
-        lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            self.logger.error(
-                "One or more calls to nested LRC TalonBoard.On() timed out. Check TalonBoard logs."
-            )
-            return ResultCode.FAILED, "Nested LRC TalonBoard.On() timed out"
+        # lrc_status = self._wait_for_blocking_results(
+        #     timeout=10.0, task_abort_event=task_abort_event
+        # )
+        # if lrc_status != TaskStatus.COMPLETED:
+        #     self.logger.error(
+        #         "One or more calls to nested LRC TalonBoard.On() timed out. Check TalonBoard logs."
+        #     )
+        #     return ResultCode.FAILED, "Nested LRC TalonBoard.On() timed out"
         return ResultCode.OK, "_turn_on_talons completed OK"
 
     def _determine_on_result_code(
