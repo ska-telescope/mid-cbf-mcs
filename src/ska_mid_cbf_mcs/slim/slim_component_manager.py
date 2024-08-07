@@ -24,7 +24,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -505,6 +504,8 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_configure_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"Configure not allowed; PowerState is {self.power_state}"
@@ -609,7 +610,6 @@ class SlimComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def configure(
         self: SlimComponentManager,
         config_str: str,
@@ -694,6 +694,8 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Off is allowed.")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"Off not allowed; PowerState is {self.power_state}"
@@ -755,7 +757,6 @@ class SlimComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def off(
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,

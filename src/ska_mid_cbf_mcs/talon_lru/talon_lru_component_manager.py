@@ -14,7 +14,6 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import AdminMode, PowerState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -482,6 +481,16 @@ class TalonLRUComponentManager(CbfComponentManager):
             "On completed OK",
         )
 
+    def is_on_allowed(self: TalonLRUComponentManager) -> bool:
+        """
+        Check if On operation is allowed.
+
+        :return: True if allowed, False otherwise
+        """
+        if not self.is_communicating:
+            return False
+        return True
+
     def _on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -527,7 +536,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             result=self._determine_on_result_code(result1, result2),
         )
 
-    @check_communicating
     def on(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -544,6 +552,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,
+            is_cmd_allowed=self.is_on_allowed,
             task_callback=task_callback,
         )
 
@@ -664,6 +673,16 @@ class TalonLRUComponentManager(CbfComponentManager):
                 msg,
             )
 
+    def is_off_allowed(self: TalonLRUComponentManager) -> bool:
+        """
+        Check if Off operation is allowed.
+
+        :return: True if allowed, False otherwise
+        """
+        if not self.is_communicating:
+            return False
+        return True
+
     def _off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -694,7 +713,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             result=self._determine_off_result_code(result1, result2),
         )
 
-    @check_communicating
     def off(
         self: TalonLRUComponentManager,
         task_callback: Optional[Callable] = None,
@@ -710,5 +728,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._off,
+            is_cmd_allowed=self.is_off_allowed,
             task_callback=task_callback,
         )

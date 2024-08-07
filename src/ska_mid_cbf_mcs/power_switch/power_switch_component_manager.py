@@ -23,7 +23,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -271,6 +270,17 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     # --- Turn On Outlet --- #
 
+    def is_turn_on_outlet_allowed(self: PowerSwitchComponentManager) -> bool:
+        """
+        Check if the TurnOnOutlet command is allowed
+
+        :return: True if the TurnOnOutlet command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if turn_on_outlet is allowed")
+        if not self.is_communicating:
+            return False
+        return True
+
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
         outlet: str,
@@ -333,7 +343,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOnOutlet completed OK"),
         )
 
-    @check_communicating
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -353,10 +362,22 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_on_outlet,
             args=[argin],
+            is_cmd_allowed=self.is_turn_on_outlet_allowed,
             task_callback=task_callback,
         )
 
     # --- Turn Off Outlet --- #
+
+    def is_turn_off_outlet_allowed(self: PowerSwitchComponentManager) -> bool:
+        """
+        Check if the TurnOffOutlet command is allowed
+
+        :return: True if the TurnOffOutlet command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if turn_off_outlet is allowed")
+        if not self.is_communicating:
+            return False
+        return True
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -420,7 +441,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOffOutlet completed OK"),
         )
 
-    @check_communicating
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -440,5 +460,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_off_outlet,
             args=[argin],
+            is_cmd_allowed=self.is_turn_off_outlet_allowed,
             task_callback=task_callback,
         )

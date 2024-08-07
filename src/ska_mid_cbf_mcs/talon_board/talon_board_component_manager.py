@@ -16,7 +16,6 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import PowerState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from tango import AttrQuality
@@ -1176,6 +1175,8 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :return: True if allowed, False otherwise
         """
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.OFF:
             self.logger.warning(
                 f"On not allowed; PowerState is {self.power_state}"
@@ -1231,7 +1232,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def on(
         self: TalonBoardComponentManager,
         task_callback: Optional[Callable] = None,

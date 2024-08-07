@@ -27,7 +27,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_telmodel.data import TMData
@@ -508,6 +507,8 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the InitSysParam command is allowed, False otherwise
         """
         self.logger.debug("Checking if init_sys_param is allowed")
+        if not self.is_communicating:
+            return False
         if self.power_state == PowerState.OFF:
             return True
         self.logger.warning(
@@ -627,7 +628,6 @@ class ControllerComponentManager(CbfComponentManager):
         )
         return
 
-    @check_communicating
     def init_sys_param(
         self: ControllerComponentManager,
         argin: str,
@@ -808,10 +808,11 @@ class ControllerComponentManager(CbfComponentManager):
         """
         self.logger.debug("Checking if on is allowed")
 
+        if not self.is_communicating:
+            return False
         if self.dish_utils is None:
             self.logger.warning("Dish-VCC mapping has not been provided.")
             return False
-
         if self.power_state == PowerState.OFF:
             return True
 
@@ -908,7 +909,6 @@ class ControllerComponentManager(CbfComponentManager):
         )
         return
 
-    @check_communicating
     def on(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
@@ -1227,6 +1227,8 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the Off command is allowed, False otherwise
         """
         self.logger.debug("Checking if off is allowed")
+        if not self.is_communicating:
+            return False
         if self.power_state == PowerState.ON:
             return True
         self.logger.info("Already off, do not need to turn off.")
@@ -1334,7 +1336,6 @@ class ControllerComponentManager(CbfComponentManager):
             )
         return
 
-    @check_communicating
     def off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
