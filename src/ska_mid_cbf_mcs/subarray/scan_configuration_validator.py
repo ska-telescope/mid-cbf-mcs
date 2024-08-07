@@ -267,8 +267,8 @@ class ScanConfigurationValidator:
         # AA 0.5 Requirment: Supports only FSP 1-8
         if fsp_id > 4:
             msg = (
-                f"AA 0.5 Requirment: Supports only FSP 1-4."
-                " FSP ID given: {fsp_id}"
+                "AA 0.5 Requirment: Supports only FSP 1-4."
+                f" FSP ID given: {fsp_id}"
             )
             self.logger.error(msg)
             return (False, msg)
@@ -1632,7 +1632,7 @@ class ScanConfigurationValidator:
             return (False, msg)
 
         if "band_5_tunning" in common_configuration:
-            msg = f"band_5_tunning is currently not supportd in MCS, Rejecting Scan Coniguration"
+            msg = "band_5_tunning is currently not supportd in MCS, Rejecting Scan Coniguration"
             self.logger.error(msg)
             return (False, msg)
 

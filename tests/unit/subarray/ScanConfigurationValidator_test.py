@@ -71,7 +71,7 @@ class TestScanConfigurationValidator:
             "The version defined in the Scan Configuration is not supported by MCS:"
             in msg
         )
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "config_file_name,\
@@ -111,7 +111,7 @@ class TestScanConfigurationValidator:
         result_code, msg = validator.validate_input()
         print(msg)
         assert "Scan configuration is valid." in msg
-        assert result_code == True
+        assert result_code is True
 
     @pytest.mark.parametrize("subarray_id", [(2), (3), (16)])
     def test_Invalid_Subarray_ID(
@@ -131,7 +131,7 @@ class TestScanConfigurationValidator:
             f"subarray_id {subarray_id} not supported. MCS currently only supports [{1}]"
             in msg
         )
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5]])
     def test_Invalid_FSP_IDs(
@@ -153,7 +153,7 @@ class TestScanConfigurationValidator:
             f"AA 0.5 only support 1-4 fsp_id with a single fsp_ids in a processing region, fsp_id given: {len(fsp_ids)}"
             in msg
         )
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize("fsp_ids", [[5, 6, 7, 8], [15, 19, 23, 27]])
     def test_Invalid_FSP_IDs_CORR_ADR99(
@@ -173,7 +173,7 @@ class TestScanConfigurationValidator:
         expected_msg = f"AA 0.5 Requirment: {(FspModes.CORR).name} Supports only FSP {{1, 2, 3, 4}}."
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize("fsp_id", [1, 2, 3, 4])
     def test_Invalid_Duplicate_FSP_IDs_in_single_subarray(
@@ -205,7 +205,7 @@ class TestScanConfigurationValidator:
             f"FSP ID {fsp_id} already assigned to another Processing Region"
             in msg
         )
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "common_key, common_key_value",
@@ -231,7 +231,7 @@ class TestScanConfigurationValidator:
         )
         result_code, msg = validator.validate_input()
         print(msg)
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "midcbf_key, midcbf_value",
@@ -257,7 +257,7 @@ class TestScanConfigurationValidator:
         expected_msg = f"{midcbf_key} Currently Not Supported In AA 0.5/AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "start_freq_value", [0, 6719, 1981815360, 1281860161]
@@ -279,7 +279,7 @@ class TestScanConfigurationValidator:
         expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is acepted by MCS"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "start_freq_value,channel_count_value",
@@ -319,7 +319,7 @@ class TestScanConfigurationValidator:
         expected_msg = "Scan configuration is valid."
         print(msg)
         assert expected_msg in msg
-        assert result_code == True
+        assert result_code is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
     def test_Invalid_fsp_ids_amount_for_requested_bandwidth_ADR99(
@@ -339,7 +339,7 @@ class TestScanConfigurationValidator:
         expected_msg = "Not enought FSP Given in the Processing Region for the Frequency Band Specified in the Common"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "channel_width",
@@ -383,7 +383,7 @@ class TestScanConfigurationValidator:
         expected_msg = f"Invalid value for channel_width:{channel_width}"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30, 58982, 59000])
     def test_Invalid_channel_count_ADR99(
@@ -404,7 +404,7 @@ class TestScanConfigurationValidator:
         expected_msg = "Invalid value for channel_count"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     def test_Invalid_sdp_start_channel_id_ADR99(
         self: TestScanConfigurationValidator,
@@ -425,10 +425,10 @@ class TestScanConfigurationValidator:
             json_str, subarray_component_manager, self.logger
         )
         result_code, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID (0) must be the same must match the first channel entry of output_host"
+        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_host"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -442,10 +442,10 @@ class TestScanConfigurationValidator:
             json_str, subarray_component_manager, self.logger
         )
         result_code, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID (0) must be the same must match the first channel entry of output_port"
+        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_port"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -459,10 +459,10 @@ class TestScanConfigurationValidator:
             json_str, subarray_component_manager, self.logger
         )
         result_code, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID (0) must be the same must match the first channel entry of output_link_map"
+        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_link_map"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "output_host",
@@ -507,7 +507,7 @@ class TestScanConfigurationValidator:
         expected_msg = "channel must be in increments of 20"
         print(msg)
         assert expected_msg in msg[1]
-        assert result_code == False
+        assert result_code is False
 
     @pytest.mark.parametrize(
         "output_port",
@@ -537,7 +537,7 @@ class TestScanConfigurationValidator:
         expected_msg = "channel must be in increments of 20"
         print(msg)
         assert expected_msg in msg[1]
-        assert result_code == False
+        assert result_code is False
 
     def test_Valid_channel_map_increment_ADR99(
         self: TestScanConfigurationValidator,
@@ -567,7 +567,7 @@ class TestScanConfigurationValidator:
         expected_msg = "Scan configuration is valid."
         print(msg)
         assert expected_msg in msg
-        assert result_code == True
+        assert result_code is True
 
     def test_invalid_channel_map_count_to_single_host_ADR99(
         self: TestScanConfigurationValidator,
@@ -590,7 +590,7 @@ class TestScanConfigurationValidator:
         expected_msg = "There are over 20 channels assigned to a specific port within a single host "
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     def test_invalid_more_channel_in_channel_maps_than_channel_count(
         self: TestScanConfigurationValidator,
@@ -611,7 +611,7 @@ class TestScanConfigurationValidator:
         expected_msg = "output_port exceeds the max allowable channel "
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     # To be removed when MCS supports search window
     def test_reject_search_window(
@@ -628,7 +628,7 @@ class TestScanConfigurationValidator:
         expected_msg = "search_window Not Supported in AA 0.5 and AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
 
     # To be removed when MCS supports vlbi
     def test_reject_vlbi(
@@ -645,4 +645,4 @@ class TestScanConfigurationValidator:
         expected_msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code == False
+        assert result_code is False
