@@ -512,17 +512,18 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Start monitoring talon board telemetries and fault status
         # This can fail if HPS devices are not deployed to the
         # board, but it's okay to continue.
-        talon_on_result, message = self._turn_on_talons(task_abort_event)
+        # FIXME: Commented out temporarily to test power sequence on HW.
+        # talon_on_result, message = self._turn_on_talons(task_abort_event)
 
-        if talon_on_result != ResultCode.OK:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    talon_on_result,
-                    message,
-                ),
-            )
-            return
+        # if talon_on_result != ResultCode.OK:
+        #     task_callback(
+        #         status=TaskStatus.FAILED,
+        #         result=(
+        #             talon_on_result,
+        #             message,
+        #         ),
+        #     )
+        #     return
 
         # _determine_on_result_code will update the component power state
         task_callback(
