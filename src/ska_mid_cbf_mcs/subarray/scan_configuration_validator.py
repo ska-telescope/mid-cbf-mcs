@@ -137,21 +137,21 @@ class ScanConfigurationValidator:
         """
 
         result_code, msg = self._validate_subscription_point(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_vcc()
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_search_window(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_fsp_pre_adr_99(
             configuration, common_configuration
         )
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         return (True, "Scan configuration is valid.")
@@ -180,7 +180,7 @@ class ScanConfigurationValidator:
                 fsp_id = int(fsp["fsp_id"])
                 result_code, msg = self._validate_fsp_id(fsp_id)
                 self.seen_fsp_id.add(fsp_id)
-                if result_code == False:
+                if result_code is False:
                     return (False, msg)
                 count += 1
             except KeyError:
@@ -208,7 +208,7 @@ class ScanConfigurationValidator:
                 result_code, msg = self._validate_fsp_in_correct_mode(
                     fsp, fsp_id, function_mode_value, fsp_proxy
                 )
-                if result_code == False:
+                if result_code is False:
                     return (False, msg)
 
                 match function_mode_value:
@@ -233,7 +233,7 @@ class ScanConfigurationValidator:
                             f"{self.valid_function_modes[function_mode_value]} is not a valid function mode for MCS",
                         )
 
-                if result_code == False:
+                if result_code is False:
                     return (False, msg)
 
             except tango.DevFailed:  # exception in ConfigureScan
@@ -383,7 +383,7 @@ class ScanConfigurationValidator:
         """
 
         result_code, msg = self._validate_receptors(fsp)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         frequencyBand = freq_band_dict()[fsp["frequency_band"]]["band_index"]
@@ -521,7 +521,7 @@ class ScanConfigurationValidator:
                 return (False, msg)
 
         result_code, msg = self._valdiate_integration_time(fsp)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         # Validate fspChannelOffset
@@ -544,7 +544,7 @@ class ScanConfigurationValidator:
         result_code, msg = self._validate_output_link_map(
             fsp["output_link_map"]
         )
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         # Validate channelAveragingMap.
@@ -1045,29 +1045,29 @@ class ScanConfigurationValidator:
         configuration = copy.deepcopy(full_configuration["midcbf"])
 
         result_code, msg = self._validate_vcc()
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         if "pss" in full_configuration:
             result_code, msg = self._validate_pss_function_mode_adr_99(
                 full_configuration["pss"]
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
         if "pst" in full_configuration:
             result_code, msg = self._validate_pst_function_mode_adr_99(
                 full_configuration["pst"]
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
         result_code, msg = self._validate_common(common_configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_midcbf(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         return (True, "Scan configuration is valid.")
@@ -1087,7 +1087,7 @@ class ScanConfigurationValidator:
         """
 
         result_code, msg = self._validate_midcbf_keys(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         at_least_one_mode_flag = False
@@ -1099,7 +1099,7 @@ class ScanConfigurationValidator:
             result_code, msg = self._validate_processing_regions(
                 "correlation", function_mode_value, configuration
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
             at_least_one_mode_flag = True
 
@@ -1147,7 +1147,7 @@ class ScanConfigurationValidator:
             result_code, msg = self._validate_processing_region_frequency(
                 processing_region
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
             sdp_start_channel_id = int(
@@ -1159,14 +1159,14 @@ class ScanConfigurationValidator:
             result_code, msg = self._validate_channels_maps(
                 output_host, "output_host", sdp_start_channel_id, channel_count
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
             output_port = processing_region["output_port"]
             result_code, msg = self._validate_channels_maps(
                 output_port, "output_port", sdp_start_channel_id, channel_count
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
             output_link_map = processing_region["output_link_map"]
@@ -1176,7 +1176,7 @@ class ScanConfigurationValidator:
                 sdp_start_channel_id,
                 channel_count,
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
             (
@@ -1185,7 +1185,7 @@ class ScanConfigurationValidator:
             ) = self._validate_max_20_channel_to_same_port_per_host(
                 output_host, output_port, sdp_start_channel_id, channel_count
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
             count = 0
@@ -1195,7 +1195,7 @@ class ScanConfigurationValidator:
                     result_code, msg = self._validate_fsp_id_adr_99(
                         fsp_id, FspModes(function_mode_value), seen_fsp_id
                     )
-                    if result_code == False:
+                    if result_code is False:
                         return (False, msg)
                     count += 1
                 except KeyError:
@@ -1215,7 +1215,7 @@ class ScanConfigurationValidator:
                         function_mode_value,
                         fsp_proxy,
                     )
-                    if result_code == False:
+                    if result_code is False:
                         return (False, msg)
 
                 except tango.DevFailed:  # exception in ConfigureScan
@@ -1231,7 +1231,7 @@ class ScanConfigurationValidator:
             result_code, msg = self._validate_corr_function_mode_adr_99(
                 processing_region
             )
-            if result_code == False:
+            if result_code is False:
                 return (False, msg)
 
         msg = f"FSP Validation: Complete for {function_mode} function mode"
@@ -1254,17 +1254,17 @@ class ScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
         result_code, msg = self._validate_receptors(processing_region)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._valdiate_integration_time(processing_region)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_output_link_map(
             processing_region["output_link_map"]
         )
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         msg = "FSP CORR Validation Complete"
@@ -1335,14 +1335,14 @@ class ScanConfigurationValidator:
         result_code, msg = self._validate_processing_region_within_bandwidth(
             processing_region
         )
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         # Check that we have enough FSP to cover the required Bandwidth requested
         result_code, msg = self._validate_fsp_requirement_by_given_bandwidth(
             processing_region
         )
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         msg = "Validate Processing Region Frequency Options Complete"
@@ -1659,11 +1659,11 @@ class ScanConfigurationValidator:
         # Create helper functions for below when MCS being support it
 
         result_code, msg = self._validate_subscription_point(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         result_code, msg = self._validate_search_window(configuration)
-        if result_code == False:
+        if result_code is False:
             return (False, msg)
 
         # Not Supported Currently in AA 0.5/AA 1.0
