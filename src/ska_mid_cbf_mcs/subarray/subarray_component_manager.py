@@ -18,10 +18,7 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
-import math
 import sys
-from re import sub
-from statistics import correlation
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -44,7 +41,6 @@ from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
-    ScanConfiguration,
     const,
     freq_band_dict,
     mhz_to_hz,
