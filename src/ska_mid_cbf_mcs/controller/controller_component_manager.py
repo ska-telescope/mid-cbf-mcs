@@ -442,7 +442,6 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     return False
 
-        self.logger.error(f"PROXIES: {self._proxies}, VCCs: {self._vcc_fqdn}")
         # Set VCC values
         for fqdn in self._vcc_fqdn:
             try:

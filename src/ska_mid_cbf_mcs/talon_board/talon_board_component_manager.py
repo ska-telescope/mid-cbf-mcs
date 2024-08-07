@@ -123,7 +123,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._proxies[fqdn] = context.DeviceProxy(
                             device_name=fqdn
                         )
-                        self.logger.debug(f"Created device proxy for {fqdn}")
+                        # TODO: back to debug
+                        self.logger.info(f"Created device proxy for {fqdn}")
                     else:
                         self._update_communication_state(
                             CommunicationStatus.NOT_ESTABLISHED
@@ -1040,6 +1041,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         # Talon System ID attributes
         self._talon_sysid_events = []
+
+        self.logger.error(f"PROXIES: {self._proxies}")
 
         if self._talon_sysid_fqdn is not None:
             e = {
