@@ -19,6 +19,63 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_mid_cbf_mcs.commons.global_enum import const
 
 
+@pytest.fixture(
+    name="subarray_params",
+    scope="module",
+    params=[
+        {
+            "sys_param_file": "sys_param_4_boards.json",
+            "configure_scan_file": "ConfigureScan_basic_CORR.json",
+            "scan_file": "Scan1_basic.json",
+            "sub_id": 1,
+            "dish_ids": ["SKA001"],
+            "vcc_ids": [1],  # must be VCC IDs equivalent to assigned DISH IDs
+            "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
+        },
+        {
+            "sys_param_file": "sys_param_4_boards.json",
+            "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
+            "scan_file": "Scan1_basic.json",
+            "sub_id": 1,
+            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+            "vcc_ids": [
+                1,
+                2,
+                3,
+                4,
+            ],  # must be VCC IDs equivalent to assigned DISH IDs
+            "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
+        },
+        {
+            "sys_param_file": "sys_param_4_boards.json",
+            "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
+            "scan_file": "Scan1_basic.json",
+            "sub_id": 1,
+            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+            "vcc_ids": [
+                1,
+                2,
+                3,
+                4,
+            ],  # must be VCC IDs equivalent to assigned DISH IDs
+            "fsp_ids": [
+                1,
+                2,
+                3,
+                4,
+            ],  # must be FSP IDs provided in ConfigureScan JSON
+        },
+    ],
+)
+def subarray_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
+    """
+    Fixture that subarray test input parameters.
+
+    :return: dict containing all subarray test input parameters
+    """
+    return request.param
+
+
 @pytest.fixture(name="subarray", scope="session", autouse=True)
 def subarray_proxies() -> list[context.DeviceProxy]:
     """
@@ -77,7 +134,7 @@ def vcc_proxies() -> dict[int, context.DeviceProxy]:
 
 
 # TODO: scope=test?
-@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+@pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
     subarray: dict[int, context.DeviceProxy],
     vcc: dict[int, context.DeviceProxy],

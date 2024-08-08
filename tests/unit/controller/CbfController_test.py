@@ -92,8 +92,8 @@ class TestCbfController:
             VisSLIM="mid_csp_cbf/slim/slim-vis",
             TalonDxConfigPath="mnt/talondx-config",
             HWConfigPath="mnt/hw_config/hw_config.yaml",
-            FsSLIMConfigPath="mnt/slim/fs_slim_config.yaml",
-            VisSLIMConfigPath="mnt/slim/vis_slim_config.yaml",
+            FsSLIMConfigPath="mnt/slim/fs/slim_config.yaml",
+            VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
             LruTimeout="30",
             MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
         )

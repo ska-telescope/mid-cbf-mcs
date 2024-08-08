@@ -1,7 +1,7 @@
 {
     "interface": "https://schema.skao.int/ska-csp-configurescan/3.0",
     "common": {
-        "config_id": "1 receptor, band 1, 1 FSP, no options",
+        "config_id": "4 receptor, band 1, 1 FSP, no options",
         "frequency_band": "1",
         "subarray_id": 1
     },
@@ -12,7 +12,7 @@
             {
                 "fsp_id": 1,
                 "function_mode": "CORR",
-                "receptors": ["SKA001"],
+                "receptors": ["SKA001", "SKA036", "SKA063", "SKA100"],
                 "frequency_slice_id": 1,
                 "integration_factor": 10,
                 "channel_offset": 14880,

@@ -28,6 +28,12 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_testing import context
+
+# TODO
+# from ska_telmodel.csp.common_schema import (
+#     MAX_CHANNELS_PER_STREAM,
+#     MAX_STREAMS_PER_FSP,
+# )
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -102,8 +108,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._delay_model_lock = Lock()
 
-        # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
-        self._events_telstate = {}
+        # store the subscribed TM event IDs and device proxies
+        self._tm_events = {}
 
         # for easy device-reference
         self._rfi_flagging_mask = {}
@@ -948,6 +954,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         # TODO: return additional validation as needed
+        # include new output_port validation
 
         return True
 
@@ -1447,7 +1454,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(
             f"Subscribed to {subscription_point}; event ID: {event_id}"
         )
-        self._events_telstate[event_id] = proxy
+        self._tm_events[event_id] = proxy
         return True
 
     def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
@@ -1486,6 +1493,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(f"{df}")
                 return False
 
+        for fsp_corr_proxy in self._assigned_fsp_corr_proxies:
+            try:
+                self._unsubscribe_command_results(fsp_corr_proxy)
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                return False
+
         self._fsp_ids = set()
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
@@ -1511,13 +1525,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         try:
             # unsubscribe from TMC events
-            for event_id in list(self._events_telstate.keys()):
-                self._events_telstate[event_id].remove_event(event_id)
-                del self._events_telstate[event_id]
+            for event_id, proxy in self._tm_events.items():
+                proxy.unsubscribe_event(event_id)
         except tango.DevFailed as df:
             self.logger.error(f"Error in unsubscribing from TM events; {df}")
             return False
 
+        self._tm_events = {}
         self.scan_id = 0
         self.config_id = ""
         self.frequency_band = 0
@@ -1583,15 +1597,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         if not delay_model_success:
             self.logger.error("Failed to subscribe to TM events.")
-            # TODO
-            # task_callback(
-            #     status=TaskStatus.FAILED,
-            #     result=(
-            #         ResultCode.FAILED,
-            #         "Failed to subscribe to delayModel attribute",
-            #     ),
-            # )
-            # return
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to subscribe to delayModel attribute",
+                ),
+            )
+            return
 
         # --- Configure VCC --- #
 

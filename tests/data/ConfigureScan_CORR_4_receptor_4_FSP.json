@@ -1,7 +1,7 @@
 {
     "interface": "https://schema.skao.int/ska-csp-configurescan/3.0",
     "common": {
-        "config_id": "1 receptor, band 1, 1 FSP, no options",
+        "config_id": "4 receptor, band 1, 1 FSP, no options",
         "frequency_band": "1",
         "subarray_id": 1
     },
@@ -14,6 +14,18 @@
                 "function_mode": "CORR",
                 "receptors": ["SKA001"],
                 "frequency_slice_id": 1,
+                "integration_factor": 10,
+                "channel_offset": 14880,
+                "output_link_map": [[0, 1]],
+                "output_host": [[0, "0.0.0.0"]],
+                "output_port": [[0, 14000, 1]]
+            },
+            {
+                "fsp_id": 2,
+                "function_mode": "CORR",
+                "receptors": ["SKA036"],
+                "frequency_slice_id": 2,
+                "zoom_factor": 0,
                 "integration_factor": 10,
                 "channel_offset": 14880,
                 "output_link_map": [[0, 1]],
@@ -227,6 +239,72 @@
                     [14800, 14740], [14820, 14741], [14840, 14742], 
                     [14860, 14743]
                 ]
+            },
+            {
+                "fsp_id": 3,
+                "function_mode": "CORR",
+                "receptors": ["SKA063"],
+                "frequency_slice_id": 3,
+                "zoom_factor": 0,
+                "integration_factor": 10,
+                "channel_offset": 14880,
+                "output_link_map": [ 
+                    [0, 4],
+                    [744, 8],
+                    [1488, 12],
+                    [2232, 16],
+                    [2976, 20],
+                    [3720, 24],
+                    [4464, 28],
+                    [5206, 32],
+                    [5952, 36],
+                    [6696, 40],
+                    [7440, 44],
+                    [8184, 48],
+                    [8928, 52],
+                    [9672, 56],
+                    [10416, 60],
+                    [11160, 64],
+                    [11904, 68],
+                    [12648, 72],
+                    [13392, 76],
+                    [14136, 80]
+                ],
+                "output_host": [[0, "0.0.0.0"]],
+                "output_port": [[0, 14000, 1]]
+            },
+            {
+                "fsp_id": 4,
+                "function_mode": "CORR",
+                "receptors": ["SKA100"],
+                "frequency_slice_id": 4,
+                "zoom_factor": 0,
+                "integration_factor": 10,
+                "channel_offset": 14880,
+                "output_link_map": [ 
+                    [0, 4],
+                    [744, 8],
+                    [1488, 12],
+                    [2232, 16],
+                    [2976, 20],
+                    [3720, 24],
+                    [4464, 28],
+                    [5206, 32],
+                    [5952, 36],
+                    [6696, 40],
+                    [7440, 44],
+                    [8184, 48],
+                    [8928, 52],
+                    [9672, 56],
+                    [10416, 60],
+                    [11160, 64],
+                    [11904, 68],
+                    [12648, 72],
+                    [13392, 76],
+                    [14136, 80]
+                ],
+                "output_host": [[0, "0.0.0.0"]],
+                "output_port": [[0, 14000, 1]]
             }
         ]
     }
