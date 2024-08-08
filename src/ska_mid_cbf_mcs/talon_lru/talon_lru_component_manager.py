@@ -397,12 +397,10 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _turn_on_talons(
         self: TalonLRUComponentManager,
-        task_abort_event: Optional[threading.Event] = None,
     ) -> tuple[ResultCode, str]:
         """
         Turn on the two Talon boards.
 
-        :param task_abort_event: Event to signal task abort
         :return: A tuple containing a return code and a string message indicating status
         """
         for board in [self._proxy_talondx_board1, self._proxy_talondx_board2]:
@@ -415,27 +413,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                         f"Nested LRC TalonBoard.On() to {board.dev_name()} rejected"
                     )
                     continue
-                # self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Nested LRC TalonBoard.On() to {board.dev_name()} failed: {df}"
                 )
-                # self._update_communication_state(
-                #     communication_state=CommunicationStatus.NOT_ESTABLISHED
-                # )
-                # return (
-                #     ResultCode.FAILED,
-                #     "Nested LRC TalonBoard.On() failed",
-                # )
 
-        # lrc_status = self._wait_for_blocking_results(
-        #     timeout=10.0, task_abort_event=task_abort_event
-        # )
-        # if lrc_status != TaskStatus.COMPLETED:
-        #     self.logger.error(
-        #         "One or more calls to nested LRC TalonBoard.On() timed out. Check TalonBoard logs."
-        #     )
-        #     return ResultCode.FAILED, "Nested LRC TalonBoard.On() timed out"
         return ResultCode.OK, "_turn_on_talons completed OK"
 
     def _determine_on_result_code(
