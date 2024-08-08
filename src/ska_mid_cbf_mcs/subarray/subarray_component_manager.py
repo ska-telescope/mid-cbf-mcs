@@ -505,7 +505,7 @@ class CbfSubarrayComponentManager(
                 self._last_received_delay_model = value
 
                 (valid, msg) = validate_interface(value)
-                if not valid: 
+                if not valid:
                     return (ResultCode.FAILED, msg)
                 delay_model_json = json.loads(value)
 
@@ -1395,7 +1395,7 @@ class CbfSubarrayComponentManager(
         self._deconfigure()
 
         (valid, msg) = validate_interface(argin)
-        if not valid: 
+        if not valid:
             return (ResultCode.FAILED, msg)
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
@@ -1968,7 +1968,7 @@ class CbfSubarrayComponentManager(
         """
 
         (valid, msg) = validate_interface(argin)
-        if not valid: 
+        if not valid:
             return (ResultCode.FAILED, msg)
         # Validate scan_json against the telescope model
         try:

@@ -1101,8 +1101,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.debug(f"Received sys params {params}")
 
         (valid, msg) = validate_interface(params)
-        if not valid: 
+        if not valid:
             return (ResultCode.FAILED, msg)
+
         def raise_on_duplicate_keys(pairs):
             d = {}
             for k, v in pairs:

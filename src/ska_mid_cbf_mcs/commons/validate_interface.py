@@ -30,9 +30,9 @@ CSP_RELEASERESOURCES_VER3_0 = CSP_RELEASERESOURCES_PREFIX + "3.0"
 
 # Dependent on which stories have been merged into main
 SUPPORTED_INTERFACES = [
-    CSP_CONFIG_VER3_0,                  # If only CIP-2504 has been merged
-    CSP_CONFIG_VER4_1,                  # If CIP-2253 and CIP-2616 have been merged
-    CSP_CONFIG_VER2_5,                  # If none of the above have been merged
+    CSP_CONFIG_VER3_0,  # If only CIP-2504 has been merged
+    CSP_CONFIG_VER4_1,  # If CIP-2253 and CIP-2616 have been merged
+    CSP_CONFIG_VER2_5,  # If none of the above have been merged
     CSP_DELAYMODEL_VER3_0,
     CSP_SCAN_VER2_3,
     CSP_INITSYSPARAM_VER1_0,
@@ -40,6 +40,7 @@ SUPPORTED_INTERFACES = [
     CSP_ENDSCAN_VER2_3,
     CSP_RELEASERESOURCES_VER3_0,
 ]
+
 
 def validate_interface(argin: str) -> tuple[bool, str]:
     # Check valid JSON
@@ -50,8 +51,10 @@ def validate_interface(argin: str) -> tuple[bool, str]:
 
     # Check interface existence
     if "interface" not in input:
-        return [False, "The command is missing the required interface parameter"]
-
+        return [
+            False,
+            "The command is missing the required interface parameter",
+        ]
 
     # Check supported interface
     if input["interface"] not in SUPPORTED_INTERFACES:
