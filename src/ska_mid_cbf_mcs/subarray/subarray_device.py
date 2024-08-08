@@ -694,7 +694,11 @@ class CbfSubarray(CspSubElementSubarray):
 
             # Configure components
             full_configuration["common"] = copy.deepcopy(common_configuration)
-            full_configuration["cbf"] = copy.deepcopy(configuration)
+            if "cbf" in full_configuration:
+                full_configuration["cbf"] = copy.deepcopy(configuration)
+            else:
+                full_configuration["midcbf"] = copy.deepcopy(configuration)
+            
             (result_code, message) = component_manager.configure_scan(
                 json.dumps(full_configuration)
             )
@@ -720,7 +724,15 @@ class CbfSubarray(CspSubElementSubarray):
                 common_configuration = copy.deepcopy(
                     full_configuration["common"]
                 )
-                configuration = copy.deepcopy(full_configuration["cbf"])
+                # Pre 4.0
+                if "cbf" in full_configuration:
+                    configuration = copy.deepcopy(full_configuration["cbf"])
+                # Post .0
+                elif "midcbf"in full_configuration:
+                    configuration = copy.deepcopy(full_configuration["midcbf"])
+                else:
+                    msg = "cbf/midcbf configuration not find in the given Scan Configuration"
+                    return (False, msg)
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 return (False, msg)
@@ -829,7 +841,10 @@ class CbfSubarray(CspSubElementSubarray):
 
             # At this point, validate FSP, VCC, subscription parameters
             full_configuration["common"] = copy.deepcopy(common_configuration)
-            full_configuration["cbf"] = copy.deepcopy(configuration)
+            if "cbf" in full_configuration:
+                full_configuration["cbf"] = copy.deepcopy(configuration)
+            else:
+                full_configuration["midcbf"] = copy.deepcopy(configuration)
             component_manager = self.target
             return component_manager.validate_input(
                 json.dumps(full_configuration)
