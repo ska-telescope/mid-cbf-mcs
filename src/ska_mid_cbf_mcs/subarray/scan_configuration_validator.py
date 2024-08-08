@@ -900,6 +900,9 @@ class ScanConfigurationValidator:
                             )
                             self.logger.error(msg)
                             return (False, msg)
+            msg = "Validate Search Window: Complete"
+            self.logger.info(msg)
+            return (True, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
             self.logger.info(msg)
@@ -1696,46 +1699,45 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-
     def _validate_search_window_adr99(
-            self: ScanConfigurationValidator, configuration: dict
-        ) -> tuple[bool, str]:
-            """
-            Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
+        self: ScanConfigurationValidator, configuration: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
 
-            :param configuration: The ["cbf"]/["midcbf"] portion of the full Scan Configuration as a Dictionary
+        :param configuration: The ["cbf"]/["midcbf"] portion of the full Scan Configuration as a Dictionary
 
-            :return: tuple with:
-                        bool to indicate if the scan configuration is valid or not
-                        str message about the configuration
-            :rtype: tuple[bool, str]
-            """
-            # Validate searchWindow.
-            if "search_window" in configuration:
-                msg = "search_window Not Supported in AA 0.5 and AA 1.0"
-                self.logger.error(msg)
-                return (False, msg)
-                # not supported in AA 0.5 and AA 1.0
-                # check if searchWindow is an array of maximum length 2
-                # if len(configuration["search_window"]) > 2:
-                #     msg = (
-                #         "'searchWindow' must be an array of maximum length 2. "
-                #         "Aborting configuration."
-                #     )
-                #     self.logger.error(msg)
-                #     return (False, msg)
-                # for sw in configuration["search_window"]:
-                #     if sw["tdc_enable"]:
-                #         for receptor in sw["tdc_destination_address"]:
-                #             dish = receptor["receptor_id"]
-                #             if dish not in self._dish_ids:
-                #                 msg = (
-                #                     f"'searchWindow' DISH ID {dish} "
-                #                     + "not assigned to subarray. Aborting configuration."
-                #                 )
-                #                 self.logger.error(msg)
-                #                 return (False, msg)
-            else:
-                msg = "Validate Search Window: Search Window not in Configuration: Complete"
-                self.logger.info(msg)
-                return (True, msg)
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        # Validate searchWindow.
+        if "search_window" in configuration:
+            msg = "search_window Not Supported in AA 0.5 and AA 1.0"
+            self.logger.error(msg)
+            return (False, msg)
+            # not supported in AA 0.5 and AA 1.0
+            # check if searchWindow is an array of maximum length 2
+            # if len(configuration["search_window"]) > 2:
+            #     msg = (
+            #         "'searchWindow' must be an array of maximum length 2. "
+            #         "Aborting configuration."
+            #     )
+            #     self.logger.error(msg)
+            #     return (False, msg)
+            # for sw in configuration["search_window"]:
+            #     if sw["tdc_enable"]:
+            #         for receptor in sw["tdc_destination_address"]:
+            #             dish = receptor["receptor_id"]
+            #             if dish not in self._dish_ids:
+            #                 msg = (
+            #                     f"'searchWindow' DISH ID {dish} "
+            #                     + "not assigned to subarray. Aborting configuration."
+            #                 )
+            #                 self.logger.error(msg)
+            #                 return (False, msg)
+        else:
+            msg = "Validate Search Window: Search Window not in Configuration: Complete"
+            self.logger.info(msg)
+            return (True, msg)
