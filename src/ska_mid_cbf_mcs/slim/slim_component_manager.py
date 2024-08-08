@@ -469,8 +469,8 @@ class SlimComponentManager(CbfComponentManager):
             msg = "No active links are defined in the mesh configuration"
             self._logger.warn(msg)
             return (ResultCode.OK, msg)
-        try:
-            for idx, txrx in enumerate(self._active_links):
+        for idx, txrx in enumerate(self._active_links):
+            try:
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
 
@@ -482,10 +482,10 @@ class SlimComponentManager(CbfComponentManager):
                 # poll link health every 20 seconds
                 if self._simulation_mode is False:
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
-        except tango.DevFailed as df:
-            msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
-            self._logger.error(msg)
-            return (ResultCode.FAILED, msg)
+            except tango.DevFailed as df:
+                msg = f"Failed to initialize SLIM links: {df.args[0].desc}"
+                self._logger.error(msg)
+                return (ResultCode.FAILED, msg)
         msg = "Successfully set up SLIM links"
         self._logger.info(msg)
         self.mesh_configured = True
