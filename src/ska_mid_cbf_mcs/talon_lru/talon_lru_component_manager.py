@@ -202,8 +202,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.debug(
-            "Entering TalonLRUComponentManager.start_communicating"
+        self.logger.info(
+            "Entering TalonLRUComponentManager._start_communicating"
         )
 
         # Get and initialize the device proxies of the talon boards and power switches
