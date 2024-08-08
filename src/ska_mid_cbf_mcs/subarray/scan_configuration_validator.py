@@ -11,6 +11,7 @@ from collections import defaultdict
 import tango
 from ska_tango_base.control_model import ObsState
 
+import ska_mid_cbf_mcs.subarray.subarray_component_manager as scm
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
@@ -21,9 +22,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
-    CbfSubarrayComponentManager,
-)
 
 """
 ScanConfigurationValidator: Contains functions that validates a given Scan Configuration
@@ -51,7 +49,7 @@ class ScanConfigurationValidator:
     def __init__(
         self: ScanConfigurationValidator,
         scan_configuration: str,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        subarray_component_manager: scm.CbfSubarrayComponentManager,
         logger: logging.Logger,
     ) -> None:
         """
@@ -883,29 +881,25 @@ class ScanConfigurationValidator:
         """
         # Validate searchWindow.
         if "search_window" in configuration:
-            msg = "search_window Not Supported in AA 0.5 and AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
-            # not supported in AA 0.5 and AA 1.0
             # check if searchWindow is an array of maximum length 2
-            # if len(configuration["search_window"]) > 2:
-            #     msg = (
-            #         "'searchWindow' must be an array of maximum length 2. "
-            #         "Aborting configuration."
-            #     )
-            #     self.logger.error(msg)
-            #     return (False, msg)
-            # for sw in configuration["search_window"]:
-            #     if sw["tdc_enable"]:
-            #         for receptor in sw["tdc_destination_address"]:
-            #             dish = receptor["receptor_id"]
-            #             if dish not in self._dish_ids:
-            #                 msg = (
-            #                     f"'searchWindow' DISH ID {dish} "
-            #                     + "not assigned to subarray. Aborting configuration."
-            #                 )
-            #                 self.logger.error(msg)
-            #                 return (False, msg)
+            if len(configuration["search_window"]) > 2:
+                msg = (
+                    "'searchWindow' must be an array of maximum length 2. "
+                    "Aborting configuration."
+                )
+                self.logger.error(msg)
+                return (False, msg)
+            for sw in configuration["search_window"]:
+                if sw["tdc_enable"]:
+                    for receptor in sw["tdc_destination_address"]:
+                        dish = receptor["receptor_id"]
+                        if dish not in self._dish_ids:
+                            msg = (
+                                f"'searchWindow' DISH ID {dish} "
+                                + "not assigned to subarray. Aborting configuration."
+                            )
+                            self.logger.error(msg)
+                            return (False, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
             self.logger.info(msg)
@@ -1004,7 +998,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
+    def _validate_ip(self: scm.CbfSubarrayComponentManager, ip: str) -> bool:
         """
         Validate IP address format.
 
@@ -1662,7 +1656,7 @@ class ScanConfigurationValidator:
         if result_code is False:
             return (False, msg)
 
-        result_code, msg = self._validate_search_window(configuration)
+        result_code, msg = self._validate_search_window_adr99(configuration)
         if result_code is False:
             return (False, msg)
 
@@ -1701,3 +1695,47 @@ class ScanConfigurationValidator:
         msg = "Validate CBF Configuration: Complete"
         self.logger.info(msg)
         return (True, msg)
+
+
+    def _validate_search_window_adr99(
+            self: ScanConfigurationValidator, configuration: dict
+        ) -> tuple[bool, str]:
+            """
+            Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
+
+            :param configuration: The ["cbf"]/["midcbf"] portion of the full Scan Configuration as a Dictionary
+
+            :return: tuple with:
+                        bool to indicate if the scan configuration is valid or not
+                        str message about the configuration
+            :rtype: tuple[bool, str]
+            """
+            # Validate searchWindow.
+            if "search_window" in configuration:
+                msg = "search_window Not Supported in AA 0.5 and AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+                # not supported in AA 0.5 and AA 1.0
+                # check if searchWindow is an array of maximum length 2
+                # if len(configuration["search_window"]) > 2:
+                #     msg = (
+                #         "'searchWindow' must be an array of maximum length 2. "
+                #         "Aborting configuration."
+                #     )
+                #     self.logger.error(msg)
+                #     return (False, msg)
+                # for sw in configuration["search_window"]:
+                #     if sw["tdc_enable"]:
+                #         for receptor in sw["tdc_destination_address"]:
+                #             dish = receptor["receptor_id"]
+                #             if dish not in self._dish_ids:
+                #                 msg = (
+                #                     f"'searchWindow' DISH ID {dish} "
+                #                     + "not assigned to subarray. Aborting configuration."
+                #                 )
+                #                 self.logger.error(msg)
+                #                 return (False, msg)
+            else:
+                msg = "Validate Search Window: Search Window not in Configuration: Complete"
+                self.logger.info(msg)
+                return (True, msg)
