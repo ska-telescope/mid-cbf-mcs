@@ -154,6 +154,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
 
+        # TODO: zoom-factor removed from configurescan, but required by HPS, to
+        # be inferred from channel_width introduced in ADR-99 when ready to
+        # implement zoom
+        hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
+
         return json.dumps(hps_fsp_configuration)
 
     def _deconfigure(
