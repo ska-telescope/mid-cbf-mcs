@@ -18,19 +18,13 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
-import sys
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    ObsState,
-    PowerMode,
-    SimulationMode,
-)
+from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
