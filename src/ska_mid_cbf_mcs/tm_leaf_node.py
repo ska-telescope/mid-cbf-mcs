@@ -10,10 +10,7 @@
 from __future__ import annotations
 
 from ska_tango_base.base.base_component_manager import BaseComponentManager
-from ska_tango_base.base.base_device import (
-    DevVarLongStringArrayType,
-    SKABaseDevice,
-)
+from ska_tango_base.base.base_device import SKABaseDevice
 from tango.server import attribute
 
 __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
@@ -59,6 +56,16 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # Initialization
     # --------------
 
+    def init_device(self: TmCspSubarrayLeafNodeTest) -> None:
+        """
+        Override of init_device simply to setup attribute change events.
+        """
+        super().init_device()
+
+        self._delay_model = ""
+        self.set_change_event("delayModel", True)
+        self.set_archive_event("delayModel", True)
+
     def create_component_manager(
         self: TmCspSubarrayLeafNodeTest,
     ) -> BaseComponentManager:
@@ -68,33 +75,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         :return: a component manager
         """
         return BaseComponentManager(logger=self.logger)
-
-    class InitCommand(SKABaseDevice.InitCommand):
-        """
-        A class for the TmCspSubarrayLeafNodeTest's init_device() "command".
-        """
-
-        def do(
-            self: TmCspSubarrayLeafNodeTest.InitCommand,
-            *args: any,
-            **kwargs: any,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-
-            (result_code, message) = super().do(*args, **kwargs)
-
-            self._delay_model = ""
-            self.set_change_event("delayModel", True)
-            self.set_archive_event("delayModel", True)
-
-            return (result_code, message)
 
 
 # ----------
