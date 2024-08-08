@@ -10,7 +10,7 @@
       "fpga_rbf_name": "vcc3_2ch4.core.rbf",
       "fpga_label": "base",
       "ds_path": "/lib/firmware/hps_software/vcc_test",
-      "server_instance": "talon1_tesT",
+      "server_instance": "talon1_test",
       "devices": [
         "dscircuitswitch",
         "dsdct",
