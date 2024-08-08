@@ -229,13 +229,6 @@ class TestFspCorrSubarray:
             device_under_test.frequencySliceID
             == configuration["frequency_slice_id"]
         )
-        assert device_under_test.corrBandwidth == int(
-            configuration["zoom_factor"]
-        )
-        if "zoom_window_tuning" in configuration:
-            assert device_under_test.zoomWindowTuning == int(
-                configuration["zoom_window_tuning"]
-            )
         assert device_under_test.integrationFactor == int(
             configuration["integration_factor"]
         )

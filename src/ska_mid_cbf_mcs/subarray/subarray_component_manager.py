@@ -28,6 +28,10 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_testing import context
+from ska_telmodel.csp.common_schema import (
+    MAX_CHANNELS_PER_STREAM,
+    MAX_STREAMS_PER_FSP,
+)
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -948,6 +952,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         # TODO: return additional validation as needed
+        # include new output_port validation
 
         return True
 
