@@ -698,7 +698,7 @@ class CbfSubarray(CspSubElementSubarray):
                 full_configuration["cbf"] = copy.deepcopy(configuration)
             else:
                 full_configuration["midcbf"] = copy.deepcopy(configuration)
-            
+
             (result_code, message) = component_manager.configure_scan(
                 json.dumps(full_configuration)
             )
@@ -728,7 +728,7 @@ class CbfSubarray(CspSubElementSubarray):
                 if "cbf" in full_configuration:
                     configuration = copy.deepcopy(full_configuration["cbf"])
                 # Post .0
-                elif "midcbf"in full_configuration:
+                elif "midcbf" in full_configuration:
                     configuration = copy.deepcopy(full_configuration["midcbf"])
                 else:
                     msg = "cbf/midcbf configuration not find in the given Scan Configuration"

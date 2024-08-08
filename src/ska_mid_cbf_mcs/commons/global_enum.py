@@ -116,7 +116,7 @@ mhz_to_hz = 1000000
 
 class ScanConfiguration:
     ADR99_VERSIONS = {"4.0", "4.1"}
-    PRE_ADR99_VERSIONS = {"2.4"}
+    PRE_ADR99_VERSIONS = {"2.4", "3.0"}
 
 
 """

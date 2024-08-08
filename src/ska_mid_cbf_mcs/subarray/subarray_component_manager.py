@@ -59,7 +59,9 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-from ska_mid_cbf_mcs.subarray.scan_configuration_validator import ScanConfigurationValidator
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
+    ScanConfigurationValidator,
+)
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
 )
@@ -874,9 +876,7 @@ class CbfSubarrayComponentManager(
         :rtype: (bool, str)
         """
 
-        validator = ScanConfigurationValidator(
-            argin, self, self._logger
-        )
+        validator = ScanConfigurationValidator(argin, self, self._logger)
 
         return validator.validate_input()
 
