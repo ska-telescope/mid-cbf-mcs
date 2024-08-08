@@ -10,7 +10,7 @@
             "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
             "fpga_label": "base",
             "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
-            "server_instance": "talon1_test",
+            "server_instance": "talon1_tesT",
             "devices": [
                 "ska-mid-cbf-vcc-app"
             ]

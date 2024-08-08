@@ -43,7 +43,7 @@ server:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
           - name: "Instance"
             values:
-            - "talon1_test"          
+            - "talon1_tesT"          
           - name: "TalonDxSysIdServer"
             values:
             - "ska-talondx-sysid-ds"

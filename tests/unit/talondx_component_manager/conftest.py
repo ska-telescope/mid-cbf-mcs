@@ -82,7 +82,7 @@ def talon_dx_component_manager(
             or (args[1] == "mkdir -p /lib/firmware")
             or (
                 args[1]
-                == "sh /lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
+                == "sh /lib/firmware/hps_software/hps_master_mcs.sh talon1_tesT"
             )
             or (args[1] == "rm -f /lib/firmware/hps_software/vcc_test/*")
             or (
