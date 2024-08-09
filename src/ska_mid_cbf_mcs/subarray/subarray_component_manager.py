@@ -28,10 +28,6 @@ from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from ska_telmodel.csp.common_schema import (
-    MAX_CHANNELS_PER_STREAM,
-    MAX_STREAMS_PER_FSP,
-)
 from ska_telmodel.schema import validate as telmodel_validate
 from tango import AttrQuality
 

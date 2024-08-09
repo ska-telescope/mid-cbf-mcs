@@ -10,7 +10,12 @@ from collections import defaultdict
 # Tango imports
 import tango
 from ska_tango_base.control_model import ObsState
+from ska_telmodel.csp.common_schema import (
+    MAX_CHANNELS_PER_STREAM,
+    MAX_STREAMS_PER_FSP,
+)
 
+# SKA imports
 import ska_mid_cbf_mcs.subarray.subarray_component_manager as scm
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
@@ -19,8 +24,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
 )
-
-# SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 """
@@ -200,6 +203,9 @@ class ScanConfigurationValidator:
             self._validate_cbf_configuration(
                 fsp, configuration, common_configuration
             )
+
+            self._validate_max_20_channel_to_same_port_per_host_pre_adr_99(fsp)
+
             # Configure FSP
             try:
                 # FYI, Will also modify the fsp dict
@@ -399,124 +405,6 @@ class ScanConfigurationValidator:
             )
             self.logger.error(msg)
             return (False, msg)
-
-        # Validate zoom_factor.
-        if int(fsp["zoom_factor"]) in list(range(7)):
-            pass
-        else:
-            msg = "'zoom_factor' must be an integer in the range [0, 6]."
-            # this is a fatal error
-            self.logger.error(msg)
-            return (False, msg)
-
-        # Validate zoomWindowTuning.
-        if int(fsp["zoom_factor"]) > 0:  # zoomWindowTuning is required
-            if "zoom_window_tuning" in fsp:
-                if fsp["frequency_band"] not in [
-                    "5a",
-                    "5b",
-                ]:  # frequency band is not band 5
-                    frequencyBand = [
-                        "1",
-                        "2",
-                        "3",
-                        "4",
-                        "5a",
-                        "5b",
-                    ].index(fsp["frequency_band"])
-                    frequency_band_start = [
-                        *map(
-                            lambda j: j[0] * 10**9,
-                            [
-                                const.FREQUENCY_BAND_1_RANGE,
-                                const.FREQUENCY_BAND_2_RANGE,
-                                const.FREQUENCY_BAND_3_RANGE,
-                                const.FREQUENCY_BAND_4_RANGE,
-                            ],
-                        )
-                    ][frequencyBand] + fsp["frequency_band_offset_stream1"]
-
-                    frequency_slice_range = (
-                        frequency_band_start
-                        + (fsp["frequency_slice_id"] - 1)
-                        * const.FREQUENCY_SLICE_BW
-                        * 10**6,
-                        frequency_band_start
-                        + fsp["frequency_slice_id"]
-                        * const.FREQUENCY_SLICE_BW
-                        * 10**6,
-                    )
-
-                    if (
-                        frequency_slice_range[0]
-                        <= int(fsp["zoom_window_tuning"]) * 10**3
-                        <= frequency_slice_range[1]
-                    ):
-                        pass
-                    else:
-                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                        self.logger.error(msg)
-                        return (False, msg)
-                # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                else:
-                    if common_configuration["band_5_tuning"] == [
-                        0,
-                        0,
-                    ]:  # band5Tuning not specified
-                        pass
-                    else:
-                        # TODO: these validations of BW range are done many times
-                        # in many places - use a common function; also may be possible
-                        # to do them only once (ex. for band5Tuning)
-
-                        frequency_slice_range_1 = (
-                            fsp["band_5_tuning"][0] * 10**9
-                            + fsp["frequency_band_offset_stream1"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                            + (fsp["frequency_slice_id"] - 1)
-                            * const.FREQUENCY_SLICE_BW
-                            * 10**6,
-                            fsp["band_5_tuning"][0] * 10**9
-                            + fsp["frequency_band_offset_stream1"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                            + fsp["frequency_slice_id"]
-                            * const.FREQUENCY_SLICE_BW
-                            * 10**6,
-                        )
-
-                        frequency_slice_range_2 = (
-                            fsp["band_5_tuning"][1] * 10**9
-                            + fsp["frequency_band_offset_stream2"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                            + (fsp["frequency_slice_id"] - 1)
-                            * const.FREQUENCY_SLICE_BW
-                            * 10**6,
-                            fsp["band_5_tuning"][1] * 10**9
-                            + fsp["frequency_band_offset_stream2"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                            + fsp["frequency_slice_id"]
-                            * const.FREQUENCY_SLICE_BW
-                            * 10**6,
-                        )
-
-                        if (
-                            frequency_slice_range_1[0]
-                            <= int(fsp["zoom_window_tuning"]) * 10**3
-                            <= frequency_slice_range_1[1]
-                        ) or (
-                            frequency_slice_range_2[0]
-                            <= int(fsp["zoom_window_tuning"]) * 10**3
-                            <= frequency_slice_range_2[1]
-                        ):
-                            pass
-                        else:
-                            msg = "'zoomWindowTuning' must be within observed frequency slice."
-                            self.logger.error(msg)
-                            return (False, msg)
-            else:
-                msg = "FSP specified, but 'zoomWindowTuning' not given."
-                self.logger.error(msg)
-                return (False, msg)
 
         result_code, msg = self._valdiate_integration_time(fsp)
         if result_code is False:
@@ -818,7 +706,6 @@ class ScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
         subscription_points = [
-            "doppler_phase_corr_subscription_point",
             "delay_model_subscription_point",
             "jones_matrix_subscription_point",
             "timing_beam_weights_subscription_point",
@@ -889,17 +776,6 @@ class ScanConfigurationValidator:
                 )
                 self.logger.error(msg)
                 return (False, msg)
-            for sw in configuration["search_window"]:
-                if sw["tdc_enable"]:
-                    for receptor in sw["tdc_destination_address"]:
-                        dish = receptor["receptor_id"]
-                        if dish not in self._dish_ids:
-                            msg = (
-                                f"'searchWindow' DISH ID {dish} "
-                                + "not assigned to subarray. Aborting configuration."
-                            )
-                            self.logger.error(msg)
-                            return (False, msg)
             msg = "Validate Search Window: Complete"
             self.logger.info(msg)
             return (True, msg)
@@ -1020,6 +896,35 @@ class ScanConfigurationValidator:
             if ipval < 0 or ipval > 255:
                 return False
         return True
+
+    def _validate_max_20_channel_to_same_port_per_host_pre_adr_99(
+        self: ScanConfigurationValidator, fsp: dict
+    ):
+        if "output_port" in fsp:
+            if "output_host" in fsp:
+                for index, host_mapping in enumerate(fsp["output_host"]):
+                    start_channel = host_mapping[0]
+                    if (index + 1) == len(fsp["output_host"]):
+                        end_channel = (
+                            MAX_STREAMS_PER_FSP * MAX_CHANNELS_PER_STREAM
+                        )
+                    else:
+                        end_channel = fsp["output_host"][index + 1][0]
+
+                    ports_for_host = [
+                        entry[1]
+                        for entry in fsp["output_port"]
+                        if entry[0] >= start_channel and entry[0] < end_channel
+                    ]
+                    # Ensure all ports are unique for the given host
+                    if len(ports_for_host) != len(set(ports_for_host)):
+                        msg = "'output_port' port mappings must be unique per host "
+                        self.logger.error(msg)
+                        return (False, msg)
+                    else:
+                        msg = "Validate At most one stream (20 channels) per port per output_host: complete"
+                        self.logger.info(msg)
+                        return (True, msg)
 
     # Below: new validation required by / specific to Post ADR 99
 
@@ -1179,7 +1084,7 @@ class ScanConfigurationValidator:
             (
                 result_code,
                 msg,
-            ) = self._validate_max_20_channel_to_same_port_per_host(
+            ) = self._validate_max_20_channel_to_same_port_per_host_adr_99(
                 output_host, output_port, sdp_start_channel_id, channel_count
             )
             if result_code is False:
@@ -1504,7 +1409,7 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_max_20_channel_to_same_port_per_host(
+    def _validate_max_20_channel_to_same_port_per_host_adr_99(
         self: ScanConfigurationValidator,
         output_host_map: dict,
         output_port_map: dict,
@@ -1628,8 +1533,8 @@ class ScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        if "band_5_tunning" in common_configuration:
-            msg = "band_5_tunning is currently not supportd in MCS, Rejecting Scan Coniguration"
+        if "band_5_tuning" in common_configuration:
+            msg = "band_5_tuning is currently not supportd in MCS, Rejecting Scan Coniguration"
             self.logger.error(msg)
             return (False, msg)
 
@@ -1726,17 +1631,9 @@ class ScanConfigurationValidator:
             #     )
             #     self.logger.error(msg)
             #     return (False, msg)
-            # for sw in configuration["search_window"]:
-            #     if sw["tdc_enable"]:
-            #         for receptor in sw["tdc_destination_address"]:
-            #             dish = receptor["receptor_id"]
-            #             if dish not in self._dish_ids:
-            #                 msg = (
-            #                     f"'searchWindow' DISH ID {dish} "
-            #                     + "not assigned to subarray. Aborting configuration."
-            #                 )
-            #                 self.logger.error(msg)
-            #                 return (False, msg)
+            # msg = "Validate Search Window: Complete"
+            # self.logger.info(msg)
+            # return (True, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
             self.logger.info(msg)

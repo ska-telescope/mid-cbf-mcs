@@ -210,7 +210,7 @@ class TestScanConfigurationValidator:
     @pytest.mark.parametrize(
         "common_key, common_key_value",
         [
-            ("band_5_tunning", [5.85, 7.25]),
+            ("band_5_tuning", [5.85, 7.25]),
             ("frequency_band", "3"),
             ("frequency_band", "4"),
             ("frequency_band", "5a"),
