@@ -183,7 +183,9 @@ class ApcSnmpDriver:
             else:
                 power_state = PowerState.UNKNOWN
 
-            self.logger.error(f"Checking outlet {outlet}, idx={int(outlet) - 1}")
+            self.logger.error(
+                f"Checking outlet {outlet}, idx={int(outlet) - 1}"
+            )
             if power_state != self.outlets[int(outlet) - 1].power_state:
                 self.logger.warning(
                     f"power state of outlet ID {outlet} is {power_state} ({PowerState(power_state).name}), "
