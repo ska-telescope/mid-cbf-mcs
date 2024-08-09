@@ -393,11 +393,9 @@ class ScanConfigurationValidator:
         frequencyBand = freq_band_dict()[fsp["frequency_band"]]["band_index"]
         # Validate frequencySliceID.
         # See for ex. Fig 8-2 in the Mid.CBF DDD
-        if int(fsp["frequency_slice_id"]) in list(
+        if int(fsp["frequency_slice_id"]) not in list(
             range(1, const.NUM_FREQUENCY_SLICES_BY_BAND[frequencyBand] + 1)
         ):
-            pass
-        else:
             msg = (
                 "'frequencySliceID' must be an integer in the range "
                 f"[1, {const.NUM_FREQUENCY_SLICES_BY_BAND[frequencyBand]}] "
@@ -413,10 +411,8 @@ class ScanConfigurationValidator:
         # Validate fspChannelOffset
         try:
             if "channel_offset" in fsp:
-                if int(fsp["channel_offset"]) >= 0:
-                    pass
-                # TODO has to be a multiple of 14880
-                else:
+                if int(fsp["channel_offset"]) < 0:
+                    # TODO has to be a multiple of 14880
                     msg = "fspChannelOffset must be greater than or equal to zero"
                     self.logger.error(msg)
                     return (False, msg)
@@ -445,12 +441,10 @@ class ScanConfigurationValidator:
                     # validate channel ID of first channel in group
                     if (
                         int(fsp["channel_averaging_map"][i][0])
-                        == i
+                        != i
                         * const.NUM_FINE_CHANNELS
                         / const.NUM_CHANNEL_GROUPS
                     ):
-                        pass  # the default value is already correct
-                    else:
                         msg = (
                             f"'channelAveragingMap'[{i}][0] is not the channel ID of the "
                             f"first channel in a group (received {fsp['channel_averaging_map'][i][0]})."
@@ -459,7 +453,7 @@ class ScanConfigurationValidator:
                         return (False, msg)
 
                     # validate averaging factor
-                    if int(fsp["channel_averaging_map"][i][1]) in [
+                    if int(fsp["channel_averaging_map"][i][1]) not in [
                         0,
                         1,
                         2,
@@ -468,8 +462,6 @@ class ScanConfigurationValidator:
                         6,
                         8,
                     ]:
-                        pass
-                    else:
                         msg = (
                             f"'channelAveragingMap'[{i}][1] must be one of "
                             f"[0, 1, 2, 3, 4, 6, 8] (received {fsp['channel_averaging_map'][i][1]})."
@@ -488,7 +480,6 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-        # TODO: validate destination addresses: outputHost, outputPort
 
     def _validate_pss_function_mode(
         self: ScanConfigurationValidator, fsp: dict
@@ -506,15 +497,15 @@ class ScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        if int(fsp["search_window_id"]) in [1, 2]:
-            pass
-        else:  # searchWindowID not in valid range
+        # searchWindowID not in valid range
+        if int(fsp["search_window_id"]) not in [1, 2]: 
             msg = (
                 "'searchWindowID' must be one of [1, 2] "
                 f"(received {fsp['search_window_id']})."
             )
             self.logger.info(msg)
             return (False, msg)
+        
         if len(fsp["search_beam"]) <= 192:
             for searchBeam in fsp["search_beam"]:
                 if 1 > int(searchBeam["search_beam_id"]) > 1500:
@@ -533,21 +524,17 @@ class ScanConfigurationValidator:
                     fsp_id = fsp_pss_subarray_proxy.get_property("FspID")[
                         "FspID"
                     ][0]
-                    if searchBeamID is None:
-                        pass
-                    else:
+                    if searchBeamID is not None:
                         for search_beam_ID in searchBeamID:
+                            # If: We have duplicate searchBeamID 
+                            # and (second check) if the proxy is not in ObsState.IDLE
                             if (
                                 int(searchBeam["search_beam_id"])
-                                != search_beam_ID
-                            ):
-                                pass
-                            elif (
+                                == search_beam_ID
+                                and 
                                 fsp_pss_subarray_proxy.obsState
-                                == ObsState.IDLE
+                                != ObsState.IDLE
                             ):
-                                pass
-                            else:
                                 msg = (
                                     f"'searchBeamID' {search_beam_ID} is already "
                                     f"being used in another subarray by FSP {fsp_id}"
@@ -570,29 +557,25 @@ class ScanConfigurationValidator:
                         )
                         self.logger.error(msg)
                         return (False, msg)
-
-                if (
-                    searchBeam["enable_output"] is False
-                    or searchBeam["enable_output"] is True
+                # If searchBeam["enable_output"] is not a bool
+                if not isinstance(
+                    searchBeam["enable_output"],
+                    bool
                 ):
-                    pass
-                else:
                     msg = "'outputEnabled' is not a valid boolean"
                     self.logger.info(msg)
                     return (False, msg)
 
-                if isinstance(searchBeam["averaging_interval"], int):
-                    pass
-                else:
+                # If searchBeam["averaging_interval"] is not a int
+                if not isinstance(searchBeam["averaging_interval"], int):
                     msg = "'averagingInterval' is not a valid integer"
                     self.logger.info(msg)
                     return (False, msg)
 
-                if self._validate_ip(
+                # If searchBeam["search_beam_destination_address"] is not a valid ip
+                if not self._validate_ip(
                     searchBeam["search_beam_destination_address"]
                 ):
-                    pass
-                else:
                     msg = "'searchBeamDestinationAddress' is not a valid IP address"
                     self.logger.info(msg)
                     return (False, msg)
@@ -637,21 +620,15 @@ class ScanConfigurationValidator:
                     fsp_id = fsp_pst_subarray_proxy.get_property("FspID")[
                         "FspID"
                     ][0]
-                    if timingBeamID is None:
-                        pass
-                    else:
+                    if timingBeamID is not None:
                         for timing_beam_ID in timingBeamID:
                             if (
                                 int(timingBeam["timing_beam_id"])
-                                != timing_beam_ID
-                            ):
-                                pass
-                            elif (
+                                == timing_beam_ID
+                                and
                                 fsp_pst_subarray_proxy.obsState
-                                == ObsState.IDLE
+                                != ObsState.IDLE
                             ):
-                                pass
-                            else:
                                 msg = (
                                     f"'timingBeamID' {timing_beam_ID} is already "
                                     f"being used in another subarray by FSP {fsp_id}"
@@ -671,20 +648,17 @@ class ScanConfigurationValidator:
                         )
                         self.logger.error(msg)
                         return (False, msg)
-                if (
-                    timingBeam["enable_output"] is False
-                    or timingBeam["enable_output"] is True
+                
+                if not isinstance()(
+                    timingBeam["enable_output"],
+                    bool
                 ):
-                    pass
-                else:
                     msg = "'outputEnabled' is not a valid boolean"
                     return (False, msg)
 
-                if self._validate_ip(
+                if not self._validate_ip(
                     timingBeam["timing_beam_destination_address"]
                 ):
-                    pass
-                else:
                     msg = "'timingBeamDestinationAddress' is not a valid IP address"
                     return (False, msg)
 
