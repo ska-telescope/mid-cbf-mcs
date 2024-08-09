@@ -480,7 +480,6 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-
     def _validate_pss_function_mode(
         self: ScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
@@ -498,14 +497,14 @@ class ScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
         # searchWindowID not in valid range
-        if int(fsp["search_window_id"]) not in [1, 2]: 
+        if int(fsp["search_window_id"]) not in [1, 2]:
             msg = (
                 "'searchWindowID' must be one of [1, 2] "
                 f"(received {fsp['search_window_id']})."
             )
             self.logger.info(msg)
             return (False, msg)
-        
+
         if len(fsp["search_beam"]) <= 192:
             for searchBeam in fsp["search_beam"]:
                 if 1 > int(searchBeam["search_beam_id"]) > 1500:
@@ -526,13 +525,12 @@ class ScanConfigurationValidator:
                     ][0]
                     if searchBeamID is not None:
                         for search_beam_ID in searchBeamID:
-                            # If: We have duplicate searchBeamID 
+                            # If: We have duplicate searchBeamID
                             # and (second check) if the proxy is not in ObsState.IDLE
                             if (
                                 int(searchBeam["search_beam_id"])
                                 == search_beam_ID
-                                and 
-                                fsp_pss_subarray_proxy.obsState
+                                and fsp_pss_subarray_proxy.obsState
                                 != ObsState.IDLE
                             ):
                                 msg = (
@@ -558,10 +556,7 @@ class ScanConfigurationValidator:
                         self.logger.error(msg)
                         return (False, msg)
                 # If searchBeam["enable_output"] is not a bool
-                if not isinstance(
-                    searchBeam["enable_output"],
-                    bool
-                ):
+                if not isinstance(searchBeam["enable_output"], bool):
                     msg = "'outputEnabled' is not a valid boolean"
                     self.logger.info(msg)
                     return (False, msg)
@@ -625,8 +620,7 @@ class ScanConfigurationValidator:
                             if (
                                 int(timingBeam["timing_beam_id"])
                                 == timing_beam_ID
-                                and
-                                fsp_pst_subarray_proxy.obsState
+                                and fsp_pst_subarray_proxy.obsState
                                 != ObsState.IDLE
                             ):
                                 msg = (
@@ -648,11 +642,8 @@ class ScanConfigurationValidator:
                         )
                         self.logger.error(msg)
                         return (False, msg)
-                
-                if not isinstance()(
-                    timingBeam["enable_output"],
-                    bool
-                ):
+
+                if not isinstance()(timingBeam["enable_output"], bool):
                     msg = "'outputEnabled' is not a valid boolean"
                     return (False, msg)
 
