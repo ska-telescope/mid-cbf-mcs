@@ -96,6 +96,7 @@ class ApcSnmpDriver:
         power switch. Should be called once before any of the other methods.
         """
         self.outlets = self.get_outlet_list()
+        self.logger.error(f"SNMP OUTLETS: {self.outlets}")
 
     def stop(self: ApcSnmpDriver) -> None:
         """
@@ -182,6 +183,7 @@ class ApcSnmpDriver:
             else:
                 power_state = PowerState.UNKNOWN
 
+            self.logger.error(f"Checking outlet {outlet}, idx={int(outlet) - 1}")
             if power_state != self.outlets[int(outlet) - 1].power_state:
                 self.logger.warning(
                     f"power state of outlet ID {outlet} is {power_state} ({PowerState(power_state).name}), "

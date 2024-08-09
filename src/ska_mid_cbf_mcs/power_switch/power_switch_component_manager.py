@@ -144,6 +144,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             self.logger.error(
                 "PowerSwitch outlets reported None after initialization. Communication not established."
             )
+            return
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
         self.logger.info(f'!!! POWERSTATE: {self._component_state["power"]}')
