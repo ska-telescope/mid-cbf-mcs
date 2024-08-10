@@ -1211,9 +1211,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # build FSP configuration JSONs, add FSP
         fsp_success = True
         corr_config = []
-        
-        #TODO: build fsp configs from CPR's here
-        
+
+        # TODO: build fsp configs from CPR's here
+
         for config in configuration["fsp"]:
             fsp_config = copy.deepcopy(config)
 
@@ -1433,7 +1433,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-        
+
         # Do abort check after deconfigure
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
@@ -1460,10 +1460,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Forward transaction_id to 
+        # Forward transaction_id to
         if "transaction_id" in full_configuration:
-            configuration["transaction_id"] = full_configuration["transaction_id"]
-        
+            configuration["transaction_id"] = full_configuration[
+                "transaction_id"
+            ]
+
         vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
