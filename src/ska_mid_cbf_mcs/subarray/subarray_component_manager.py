@@ -1211,6 +1211,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # build FSP configuration JSONs, add FSP
         fsp_success = True
         corr_config = []
+        
+        #TODO: build fsp configs from CPR's here
+        
         for config in configuration["fsp"]:
             fsp_config = copy.deepcopy(config)
 
@@ -1430,10 +1433,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+        
+        # Do abort check after deconfigure
+        if self.task_abort_event_is_set(
+            "ConfigureScan", task_callback, task_abort_event
+        ):
+            return
 
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
+        configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # store configID
         self.config_id = str(common_configuration["config_id"])
@@ -1451,6 +1460,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Forward transaction_id to 
+        if "transaction_id" in full_configuration:
+            configuration["transaction_id"] = full_configuration["transaction_id"]
+        
         vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
@@ -1463,6 +1476,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     "Failed to issue ConfigureScan command to VCC",
                 ),
             )
+            return
+
+        # Do abort event after vcc configure
+        if self.task_abort_event_is_set(
+            "ConfigureScan", task_callback, task_abort_event
+        ):
             return
 
         # Configure delayModel subscription point
@@ -1478,6 +1497,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     "Failed to subscribe to delayModel attribute",
                 ),
             )
+            return
+
+        # Do abort event after delay model subscription
+        if self.task_abort_event_is_set(
+            "ConfigureScan", task_callback, task_abort_event
+        ):
             return
 
         fsp_configure_scan_success = self._fsp_configure_scan(
