@@ -34,10 +34,6 @@ from ska_control_model import (
 )
 from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_testing import context
-from ska_telmodel.csp.common_schema import (
-    MAX_CHANNELS_PER_STREAM,
-    MAX_STREAMS_PER_FSP,
-)
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
