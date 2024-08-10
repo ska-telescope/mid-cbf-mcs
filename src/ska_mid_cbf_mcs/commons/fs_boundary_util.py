@@ -217,8 +217,7 @@ def calculate_fs_info(
     :param channel_width: the width (Hz) of a fine channel
     :param num_channels: the number of channels in the processing region
     :param k_value: the channelization coefficient value
-    :param wideband_shift: the wideband shift (Hz) to apply to the processing
-                           region
+    :param wideband_shift: the wideband shift (Hz) to apply to the processing region
     :return: structure
 
     """
