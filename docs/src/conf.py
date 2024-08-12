@@ -67,7 +67,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'myst_parser',
     'sphinxcontrib.mermaid',
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    'ska_mcs_sphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
