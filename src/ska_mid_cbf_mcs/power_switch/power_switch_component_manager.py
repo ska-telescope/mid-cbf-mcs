@@ -121,7 +121,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def _start_communicating(
+    def start_communicating(
         self: PowerSwitchComponentManager, *args, **kwargs
     ) -> None:
         """
