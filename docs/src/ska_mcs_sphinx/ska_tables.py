@@ -65,7 +65,7 @@ class SkaTables(Directive):
         tgroup.append(header)
         tgroup.append(table_body)
 
-        return table
+        return [table]
 
 
 
