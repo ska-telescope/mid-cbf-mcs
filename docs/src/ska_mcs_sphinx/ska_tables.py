@@ -89,25 +89,20 @@ class HelloDirective(Directive):
         r2_c1 = nodes.entry(nodes.paragraph("butter"))
         r2_c2 = nodes.entry(nodes.paragraph("E30"))
 
-        row_2.append(r2_c1)
-        row_2.append(r2_c2)
+        row_2 += r2_c1
+        row_2 += r2_c2
 
-        row_1.append(r1_c1)
-        row_1.append(r1_c2)
+        row_1 += r1_c1
+        row_1 += r1_c2
 
-        body.append(row_1)
-        body.append(row_2)
+        body += row_1
+        body += row_2
 
-        groups.append(colspec_1)
-        groups.append(colspec_2)
-        groups.append(body)
+        groups += colspec_1
+        groups += colspec_2
+        groups += body
 
-        table.append(groups)
-        return [table]
-
+        table += groups
         
-
-
-
-
-
+        return [table]
+ 
