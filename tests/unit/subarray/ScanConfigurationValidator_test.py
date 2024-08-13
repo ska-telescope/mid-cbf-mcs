@@ -9,7 +9,7 @@ import pytest
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
-    ScanConfigurationValidator,
+    SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
@@ -62,8 +62,10 @@ class TestScanConfigurationValidator:
         path_to_test_json = os.path.join(file_path, config_file_name)
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
@@ -105,8 +107,10 @@ class TestScanConfigurationValidator:
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
@@ -122,15 +126,14 @@ class TestScanConfigurationValidator:
         self.full_configuration["common"]["subarray_id"] = subarray_id
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
-        assert (
-            f"subarray_id {subarray_id} not supported. MCS currently only supports [{1}]"
-            in msg
-        )
+        assert f"subarray_id {subarray_id} not supported." in msg
         assert result_code is False
 
     @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5]])
@@ -144,8 +147,10 @@ class TestScanConfigurationValidator:
         ]["fsp_ids"] = fsp_ids
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
@@ -166,11 +171,13 @@ class TestScanConfigurationValidator:
         ]["fsp_ids"] = fsp_ids
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
-        expected_msg = f"AA 0.5 Requirment: {(FspModes.CORR).name} Supports only FSP {{1, 2, 3, 4}}."
+        expected_msg = f"AA 0.5 Requirment: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
         print(msg)
         assert expected_msg in msg
         assert result_code is False
@@ -196,8 +203,10 @@ class TestScanConfigurationValidator:
         ]["fsp_ids"] = [fsp_id, 2, 3, 4]
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
@@ -226,8 +235,10 @@ class TestScanConfigurationValidator:
         self.full_configuration["common"][common_key] = common_key_value
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         print(msg)
@@ -250,8 +261,10 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"][midcbf_key] = midcbf_value
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = f"{midcbf_key} Currently Not Supported In AA 0.5/AA 1.0"
@@ -272,8 +285,10 @@ class TestScanConfigurationValidator:
         ]["start_freq"] = start_freq_value
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is acepted by MCS"
@@ -312,8 +327,10 @@ class TestScanConfigurationValidator:
                 "processing_regions"
             ][0]["output_port"]
         )
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
@@ -332,8 +349,10 @@ class TestScanConfigurationValidator:
         ]["fsp_ids"] = fsp_ids
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Not enought FSP Given in the Processing Region for the Frequency Band Specified in the Common"
@@ -376,8 +395,10 @@ class TestScanConfigurationValidator:
         ]["channel_width"] = channel_width
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = f"Invalid value for channel_width:{channel_width}"
@@ -397,8 +418,10 @@ class TestScanConfigurationValidator:
         ]["channel_count"] = channel_count
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Invalid value for channel_count"
@@ -421,8 +444,10 @@ class TestScanConfigurationValidator:
 
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_host"
@@ -438,8 +463,10 @@ class TestScanConfigurationValidator:
         ]["output_port"][0][0] = 20
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_port"
@@ -455,8 +482,10 @@ class TestScanConfigurationValidator:
         ]["output_link_map"][0][0] = 20
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_link_map"
@@ -500,8 +529,10 @@ class TestScanConfigurationValidator:
         ]["output_host"] = output_host
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "channel must be in increments of 20"
@@ -530,8 +561,10 @@ class TestScanConfigurationValidator:
         ]["output_host"] = output_port
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "channel must be in increments of 20"
@@ -557,11 +590,13 @@ class TestScanConfigurationValidator:
         ]["output_host"] = [[1, 10000], [21, 10001], [41, 1650], [61, 40000]]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["output_link_map"] = [[1, 10000]]
+        ]["output_link_map"] = [[1, 1]]
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
@@ -583,8 +618,10 @@ class TestScanConfigurationValidator:
         ]["output_port"] = test_output_port_map
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "There are over 20 channels assigned to a specific port within a single host "
@@ -604,8 +641,10 @@ class TestScanConfigurationValidator:
         ]["channel_count"] = (channel_count - 20)
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "output_port exceeds the max allowable channel "
@@ -621,8 +660,10 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["search_window"] = {}
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "search_window Not Supported in AA 0.5 and AA 1.0"
@@ -638,8 +679,10 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["vlbi"] = {}
         json_str = json.dumps(self.full_configuration)
 
-        validator: ScanConfigurationValidator = ScanConfigurationValidator(
-            json_str, subarray_component_manager, self.logger
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str, subarray_component_manager, self.logger
+            )
         )
         result_code, msg = validator.validate_input()
         expected_msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"

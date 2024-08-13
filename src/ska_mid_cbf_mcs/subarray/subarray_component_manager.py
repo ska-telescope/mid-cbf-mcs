@@ -38,7 +38,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
     mhz_to_hz,
-    vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -50,7 +49,7 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
-    ScanConfigurationValidator,
+    SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
@@ -866,7 +865,9 @@ class CbfSubarrayComponentManager(
         :rtype: (bool, str)
         """
 
-        validator = ScanConfigurationValidator(argin, self, self._logger)
+        validator = SubarrayScanConfigurationValidator(
+            argin, self, self._logger
+        )
 
         return validator.validate_input()
 
@@ -1651,7 +1652,7 @@ class CbfSubarrayComponentManager(
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)
         fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+            dish_sample_rate * const.VCC_OVERSAMPLING_FACTOR / total_num_fs
         )
         fs_sample_rate_for_band = {
             "vcc_id": vcc_id,

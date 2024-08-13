@@ -23,25 +23,30 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     ScanConfiguration,
     const,
     freq_band_dict,
+    scan_configuration_supported_value,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 """
-ScanConfigurationValidator: Contains functions that validates a given Scan Configuration
+SubarrayScanConfigurationValidator: Contains functions that validates a given Scan Configuration
 """
 
 
-class ScanConfigurationValidator:
+class SubarrayScanConfigurationValidator:
     # To get a list of Fuction Mode names from the FspModes Enum in gloval_enum.py
-    valid_function_modes = [function_modes.name for function_modes in FspModes]
+    valid_function_modes = [
+        function_modes.name
+        for function_modes in scan_configuration_supported_value(
+            "function_modes"
+        )
+    ]
 
     # Valid FSP IDs for specific FSP Modes
-    supported_fsp_ids = {
-        FspModes.CORR: {1, 2, 3, 4},
-        FspModes.PST_BF: {5, 6, 7, 8},
-    }
+    supported_fsp_id_per_mode = scan_configuration_supported_value("fsp_id")
 
-    adr_99_function_mode_match = {
+    # Matches the value given by Scan Configuration for function mode (post v4.0)
+    # to the enum value of the function mode in MCS
+    function_mode_value_enum_match = {
         "idle": "IDLE",
         "correlation": "CORR",
         "pss": "PSS-BF",
@@ -50,13 +55,13 @@ class ScanConfigurationValidator:
     }
 
     def __init__(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         scan_configuration: str,
         subarray_component_manager: scm.CbfSubarrayComponentManager,
         logger: logging.Logger,
     ) -> None:
         """
-        Constructor for ScanConfigurationValidator
+        Constructor for SubarrayScanConfigurationValidator
 
         :param scan_configuration: A Scan Configuration json string
         :param subarray_component_manager: a CbfSubarrayComponentManager object that is requesting the validation
@@ -76,7 +81,9 @@ class ScanConfigurationValidator:
         self._subarray_id = subarray_component_manager._subarray_id
         self.logger = logger
 
-    def validate_input(self: ScanConfigurationValidator) -> tuple[bool, str]:
+    def validate_input(
+        self: SubarrayScanConfigurationValidator,
+    ) -> tuple[bool, str]:
         """
         Validates if the Scan Configuration in self.scan_configuration is valid
 
@@ -120,7 +127,7 @@ class ScanConfigurationValidator:
         return (result_code, msg)
 
     def _validate_input_pre_adr_99(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         configuration: dict,
         common_configuration: dict,
     ) -> tuple[bool, str]:
@@ -158,7 +165,7 @@ class ScanConfigurationValidator:
         return (True, "Scan configuration is valid.")
 
     def _validate_fsp_pre_adr_99(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         configuration: dict,
         common_configuration: dict,
     ) -> tuple[bool, str]:
@@ -180,7 +187,6 @@ class ScanConfigurationValidator:
             try:
                 fsp_id = int(fsp["fsp_id"])
                 result_code, msg = self._validate_fsp_id(fsp_id)
-                self.seen_fsp_id.add(fsp_id)
                 if result_code is False:
                     return (False, msg)
                 count += 1
@@ -191,9 +197,7 @@ class ScanConfigurationValidator:
 
             # Validate functionMode.
             try:
-                function_mode_value = self.valid_function_modes.index(
-                    fsp["function_mode"]
-                )
+                function_mode_value = FspModes[fsp["function_mode"]]
             except ValueError:
                 return (
                     False,
@@ -216,17 +220,17 @@ class ScanConfigurationValidator:
                     return (False, msg)
 
                 match function_mode_value:
-                    case 1:
+                    case FspModes.CORR:
                         result_code, msg = self._validate_corr_function_mode(
-                            fsp, common_configuration
+                            fsp
                         )
 
-                    case 2:
+                    case FspModes.PSS_BF:
                         result_code, msg = self._validate_pss_function_mode(
                             fsp
                         )
 
-                    case 3:
+                    case FspModes.PST_BF:
                         result_code, msg = self._validate_pst_function_mode(
                             fsp
                         )
@@ -254,7 +258,7 @@ class ScanConfigurationValidator:
             return (True, msg)
 
     def _validate_fsp_id(
-        self: ScanConfigurationValidator, fsp_id: int
+        self: SubarrayScanConfigurationValidator, fsp_id: int
     ) -> tuple[bool, str]:
         """
         Validates the FSP ID given matches the criteria setup for the Scan Configuration
@@ -295,7 +299,7 @@ class ScanConfigurationValidator:
             return (False, msg)
 
     def _validate_fsp_in_correct_mode(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         fsp: dict,
         fsp_id: int,
         function_mode_value: int,
@@ -330,7 +334,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_cbf_configuration(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         fsp: dict,
         configuration: dict,
         common_configuration: dict,
@@ -372,7 +376,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_corr_function_mode(
-        self: ScanConfigurationValidator, fsp: dict, common_configuration: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
         Validates the configuration parameters given for CORR Function Mode.  This function is for backwards compatibility with Scan Configuration Pre-ADR 99/pre v4.0
@@ -393,8 +397,11 @@ class ScanConfigurationValidator:
         frequencyBand = freq_band_dict()[fsp["frequency_band"]]["band_index"]
         # Validate frequencySliceID.
         # See for ex. Fig 8-2 in the Mid.CBF DDD
+        num_frequency_slice = freq_band_dict()[fsp["frequency_band"]][
+            "num_frequency_slices"
+        ]
         if int(fsp["frequency_slice_id"]) not in list(
-            range(1, const.NUM_FREQUENCY_SLICES_BY_BAND[frequencyBand] + 1)
+            range(1, num_frequency_slice + 1)
         ):
             msg = (
                 "'frequencySliceID' must be an integer in the range "
@@ -481,7 +488,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_pss_function_mode(
-        self: ScanConfigurationValidator, fsp: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
         Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
@@ -585,7 +592,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_pst_function_mode(
-        self: ScanConfigurationValidator, fsp: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
         Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
@@ -658,7 +665,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_subscription_point(
-        self: ScanConfigurationValidator, configuration: dict
+        self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
         Checks if subscription points are requested in the Scan Configuration and validates that the requested subscription points's device server are reachable
@@ -701,7 +708,9 @@ class ScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_vcc(self: ScanConfigurationValidator) -> tuple[bool, str]:
+    def _validate_vcc(
+        self: SubarrayScanConfigurationValidator,
+    ) -> tuple[bool, str]:
         """
         Validats that the assigned VCC proxies found in the Subarray Devices are on
 
@@ -719,7 +728,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_search_window(
-        self: ScanConfigurationValidator, configuration: dict
+        self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
         Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
@@ -750,7 +759,7 @@ class ScanConfigurationValidator:
             return (True, msg)
 
     def _validate_receptors(
-        self: ScanConfigurationValidator, fsp: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
         Validates that the "receptors" value found in fsp/processing_region is within specification
@@ -786,7 +795,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _valdiate_integration_time(
-        self: ScanConfigurationValidator, fsp: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
         Validates that the integration_factor value found in fsp/processing_region is within specification
@@ -818,7 +827,7 @@ class ScanConfigurationValidator:
             return (False, msg)
 
     def _validate_output_link_map(
-        self: ScanConfigurationValidator, output_link_map: dict
+        self: SubarrayScanConfigurationValidator, output_link_map: dict
     ) -> tuple[bool, str]:
         """
         Validates that the channel/values Output Link Map pair contains int, int
@@ -863,7 +872,7 @@ class ScanConfigurationValidator:
         return True
 
     def _validate_max_20_channel_to_same_port_per_host_pre_adr_99(
-        self: ScanConfigurationValidator, fsp: dict
+        self: SubarrayScanConfigurationValidator, fsp: dict
     ):
         if "output_port" in fsp:
             if "output_host" in fsp:
@@ -894,7 +903,7 @@ class ScanConfigurationValidator:
     # Below: new validation required by / specific to Post ADR 99
 
     def _validate_input_adr_99(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         full_configuration: dict,
     ) -> tuple[bool, str]:
         """
@@ -940,7 +949,7 @@ class ScanConfigurationValidator:
         return (True, "Scan configuration is valid.")
 
     def _validate_midcbf(
-        self: ScanConfigurationValidator, configuration: dict
+        self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
         Validates the ["midcbf"] portion of the Scan Configuration (Post-ADR 99/Post-v4.0)
@@ -961,7 +970,7 @@ class ScanConfigurationValidator:
         if "correlation" in configuration:
             # fsp = group of processing regions.  Variable was named fsp for compatibility with abstracted functions for 2.4 validations
             function_mode_value = FspModes[
-                self.adr_99_function_mode_match["correlation"]
+                self.function_mode_value_enum_match["correlation"]
             ]
             result_code, msg = self._validate_processing_regions(
                 "correlation", function_mode_value, configuration
@@ -980,7 +989,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_processing_regions(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         function_mode: str,
         function_mode_value: int,
         configuration: dict,
@@ -1002,10 +1011,10 @@ class ScanConfigurationValidator:
             "processing_regions"
         ]:
             processing_region = copy.deepcopy(processing_region)
-
+            fsp_ids_range = scan_configuration_supported_value("fsp_ids")
             if (
-                len(processing_region["fsp_ids"]) > 4
-                or len(processing_region["fsp_ids"]) < 1
+                len(processing_region["fsp_ids"]) > fsp_ids_range[1]
+                or len(processing_region["fsp_ids"]) < fsp_ids_range[0]
             ):
                 msg = f"AA 0.5 only support 1-4 fsp_id with a single fsp_ids in a processing region, fsp_id given: {len(processing_region['fsp_ids'])}"
                 self.logger.error(msg)
@@ -1055,18 +1064,12 @@ class ScanConfigurationValidator:
             if result_code is False:
                 return (False, msg)
 
-            count = 0
             for fsp_id_str in processing_region["fsp_ids"]:
-                try:
-                    fsp_id = int(fsp_id_str)
-                    result_code, msg = self._validate_fsp_id_adr_99(
-                        fsp_id, FspModes(function_mode_value), seen_fsp_id
-                    )
-                    if result_code is False:
-                        return (False, msg)
-                    count += 1
-                except KeyError:
-                    msg = f"Invalid Scan Configuration; FSP ID not found for the #{count} FSP"
+                fsp_id = int(fsp_id_str)
+                result_code, msg = self._validate_fsp_id_adr_99(
+                    fsp_id, FspModes(function_mode_value), seen_fsp_id
+                )
+                if result_code is False:
                     return (False, msg)
 
                 fsp_proxy = self._proxies_fsp[fsp_id - 1]
@@ -1074,8 +1077,6 @@ class ScanConfigurationValidator:
                 # Configure processing_regions
                 try:
                     # FYI, Will also modify the fsp dict
-                    # TODO: Run Full Test to see if removing below will affect System Tests
-                    # processing_regions["frequency_band"] = common_configuration["frequency_band"]
                     result_code, msg = self._validate_fsp_in_correct_mode(
                         processing_region,
                         fsp_id,
@@ -1106,7 +1107,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_corr_function_mode_adr_99(
-        self: ScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
         Validates that the Correlation Processing Region is within ADR 99's Scan Configuration specification
@@ -1139,21 +1140,21 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_pst_function_mode_adr_99(
-        self: ScanConfigurationValidator, pst_configuration: dict
+        self: SubarrayScanConfigurationValidator, pst_configuration: dict
     ) -> tuple[bool, str]:
         msg = "MCS Current Does not Support PST Configurations, Skipping"
         self.logger.warning(msg)
         return (True, msg)
 
     def _validate_pss_function_mode_adr_99(
-        self: ScanConfigurationValidator, pss_configuration: dict
+        self: SubarrayScanConfigurationValidator, pss_configuration: dict
     ) -> tuple[bool, str]:
         msg = "MCS Current Does not Support PSS Configurations, Skipping"
         self.logger.warning(msg)
         return (True, msg)
 
     def _validate_processing_region_frequency(
-        self: ScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
         Validates that the values found in a Processing Region is within the range specified in ADR 99 and that there are enough FSP to cover the range
@@ -1170,26 +1171,32 @@ class ScanConfigurationValidator:
         channel_count = int(processing_region["channel_count"])
         sdp_start_channel_id = int(processing_region["sdp_start_channel_id"])
 
-        # valid_channel_width = {
-        #     210,420,840,1680,3360,6720,13440,26880,40320,53760,80640,
-        #     107520,161280,215040,322560,416640,430080,645120,}
-
-        # For AA 0.5, only width of 13440 is acepted
-        valid_channel_width = {13440}
+        valid_channel_width = scan_configuration_supported_value(
+            "channel_width"
+        )
 
         # Edit the Error message once more valid channel width are added
         if channel_width not in valid_channel_width:
-            msg = f"Invalid value for channel_width:{channel_width}.  AA 0.5 supports only 13440Hz"
+            msg = f"Invalid value for channel_width:{channel_width}. \
+                    MCS supports only {valid_channel_width} (Values in hertz)"
             self.logger.error(msg)
             return (False, msg)
 
-        if channel_count % 20 != 0:
+        valid_channel_count_values = scan_configuration_supported_value(
+            "channel_count"
+        )
+
+        channel_count_multiple = valid_channel_count_values["multiple"]
+        if channel_count % channel_count_multiple != 0:
             msg = f"Invalid value for channel_count, not a multiple of 20: {channel_count}"
             self.logger.error(msg)
             return (False, msg)
-
-        if channel_count < 1 or channel_count > 58982:
-            msg = f"Invalid value for channel_count, outside of range [1,58982]:{channel_count}"
+        channel_count_range = valid_channel_count_values["range"]
+        if (
+            channel_count < channel_count_range[0]
+            or channel_count > channel_count_range[1]
+        ):
+            msg = f"Invalid value for channel_count, outside of range {channel_count_range}:{channel_count}"
             self.logger.error(msg)
             return (False, msg)
 
@@ -1217,12 +1224,14 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_fsp_requirement_by_given_bandwidth(
-        self: ScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the Processing Region contains enough FSP to process the Bandwidth that was specified from start_freq, channel_width, and channel_count
+        Validates that the Processing Region contains enough FSP to process the
+        Bandwidth that was specified from start_freq, channel_width, and channel_count
 
-        :param processing_region: A section of the Scan Configuration (Dictionary) that contains a group of FSP and their configurations
+        :param processing_region: A section of the Scan Configuration (Dictionary)
+                            that contains a group of FSP and their configurations
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -1262,11 +1271,15 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_processing_region_within_bandwidth(
-        self: ScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the Processing Region's frequency range falls within 0 Hz to 1,981,808,640 Hz
-        Gives a warning if the range given as calucalted from the start_freq, channel_width and channel_count is outside the range for Bands 1 & 2 (350MHz to 1760MHz)
+        Validates that the Processing Region's frequency range falls
+        within 0 Hz to 1,981,808,640 Hz
+
+        Gives a warning if the range given as calucalted from the start_freq,
+        channel_width and channel_count is outside the range for
+        Bands 1 & 2 (350MHz to 1760MHz)
 
         :param processing_region: A section of the Scan Configuration (Dictionary) that contains a group of FSP and their configurations
         :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
@@ -1289,7 +1302,7 @@ class ScanConfigurationValidator:
         upper_freq = lower_freq + (channel_width * channel_count)
 
         # First Check: check that it is within the acceptable range that MCS will take in [0-1981808640]
-        lower, upper = 0, 1981808640
+        lower, upper = scan_configuration_supported_value("frequency")
         if (lower_freq < lower) or (upper_freq > upper):
             msg = (
                 "The Processing Region is not within the range for the [0-1981808640] that is acepted by MCS",
@@ -1305,8 +1318,10 @@ class ScanConfigurationValidator:
         )
         if (lower_freq < lower) or (upper_freq > upper):
             msg = (
-                f"The Processing Region is not within the range for [Band1.lower-Band2.upper]: [{lower}-{upper}]",
-                f"\nProcessing Region range: {lower_freq} - {upper_freq} with starting center at {start_freq}",
+                f"The Processing Region is not within the range for \
+                     [Band1.lower-Band2.upper]: [{lower}-{upper}]",
+                f"\nProcessing Region range: {lower_freq} - {upper_freq}\
+                      with starting center at {start_freq}",
             )
             self.logger.warning(msg)
 
@@ -1315,7 +1330,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_channels_maps(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         map_pairs: list[list[int, int]],
         map_type: str,
         sdp_start_channel_id: int,
@@ -1338,11 +1353,17 @@ class ScanConfigurationValidator:
         # AA 0.5 + AA 1.0: channel idea must be in increments of 20
 
         # channel_count = len(map_pairs*20) for ADR
-        map_channel_count = len(map_pairs * 20)
+        channel_count_valid_values = scan_configuration_supported_value(
+            "channel_count"
+        )
+        channel_count_multiple = channel_count_valid_values["multiple"]
+        map_channel_count = len(map_pairs * channel_count_multiple)
         if map_channel_count > channel_count:
             msg = (
                 f"{map_type} exceeds the max allowable channel "
-                f"as there are more channels specified in {map_type}({map_channel_count}) then given in channel_count({channel_count})."
+                f"as there are more channels specified in\
+                {map_type}({map_channel_count}) then given in\
+                 channel_count({channel_count})."
             )
             self.logger.error(msg)
             return (False, msg)
@@ -1356,11 +1377,22 @@ class ScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        prev = map_pairs[0][0] - 20
+        valid_map_type_value = scan_configuration_supported_value(map_type)
+        map_type_increment = valid_map_type_value["increment"]
+        prev = map_pairs[0][0] - map_type_increment
+
+        # specific check for output_link_map. Remove if the restriction is changed
+        if map_type == "output_link_map":
+            valid_output_link_map_value = valid_map_type_value["values"]
+            if map_pairs[0][1] not in valid_output_link_map_value:
+                msg = f"{map_pairs[0]} is not a supportted pair for MCS \
+                        valid output link(s): {valid_output_link_map_value}"
+                self.logger.error(msg)
+                return (False, msg)
 
         # check that channels are in increment of 20
         for channel, value in map_pairs:
-            if channel - prev != 20:
+            if channel - prev != map_type_increment:
                 msg = (
                     f"{map_type} channel map pair [{channel},{value}]:",
                     f"channel must be in increments of 20 (Previous Channel: {prev})",
@@ -1375,7 +1407,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_max_20_channel_to_same_port_per_host_adr_99(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         output_host_map: dict,
         output_port_map: dict,
         sdp_start_channel_id: int,
@@ -1425,7 +1457,7 @@ class ScanConfigurationValidator:
         return (True, msg)
 
     def _validate_fsp_id_adr_99(
-        self: ScanConfigurationValidator,
+        self: SubarrayScanConfigurationValidator,
         fsp_id: int,
         fsp_mode: FspModes,
         seen_fsp_id: set[int],
@@ -1446,8 +1478,8 @@ class ScanConfigurationValidator:
         # TODO for AA 1.0: Add check so that PST is on 5-8
         # AA 0.5 Requirment: Supports only FSP 1-8
 
-        if fsp_id not in self.supported_fsp_ids[fsp_mode]:
-            msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {self.supported_fsp_ids[fsp_mode]}."
+        if fsp_id not in self.supported_fsp_id_per_mode[fsp_mode]:
+            msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {self.supported_fsp_id_per_mode[fsp_mode]}."
             self.logger.error(msg)
             return (False, msg)
 
@@ -1456,6 +1488,7 @@ class ScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
+        # Check if the fsp_id is a valid FSP in the Subarray
         if fsp_id in list(range(1, self._count_fsp + 1)):
             seen_fsp_id.add(fsp_id)
             msg = f"fsp_id {fsp_id} is valid"
@@ -1464,13 +1497,13 @@ class ScanConfigurationValidator:
         else:
             msg = (
                 f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
-                " Aborting configuration."
+                f" {fsp_id} is not a valid FSP in the Subarray Device. Aborting configuration."
             )
             self.logger.error(msg)
             return (False, msg)
 
     def _validate_common(
-        self: ScanConfigurationValidator, common_configuration: dict
+        self: SubarrayScanConfigurationValidator, common_configuration: dict
     ) -> tuple[bool, str]:
         """
         Validates the value in the ["common"] portion of the full Scan Configuration of a Post ADR 99 Scan Configuration
@@ -1485,30 +1518,46 @@ class ScanConfigurationValidator:
         frequency_band = common_configuration["frequency_band"]
         subarray_id = common_configuration["subarray_id"]
 
-        supported_frequency_band = {"1", "2"}
-        # Currently MCS Supported Value for frequency_band: [1,2]
+        supported_frequency_band = scan_configuration_supported_value(
+            "frequency_band"
+        )
+
         if frequency_band not in supported_frequency_band:
-            msg = f"frequency_band {frequency_band} not supported. MCS currently only supports {supported_frequency_band}, Rejecting Scan Coniguration"
+            msg = f"frequency_band {frequency_band} not supported. \
+                    MCS currently only supports {supported_frequency_band}, \
+                    Rejecting Scan Coniguration"
             self.logger.error(msg)
             return (False, msg)
 
-        # Current MCS Supported Values for subarray_id : [1]
-        if int(subarray_id) != 1:
-            msg = f"subarray_id {subarray_id} not supported. MCS currently only supports [{1}]"
+        # Checks Subarray ID Against Current MCS Supported Values
+        if int(subarray_id) not in scan_configuration_supported_value(
+            "subarray_id"
+        ):
+            msg = (
+                f"subarray_id {subarray_id} not supported. "
+                f"MCS currently only supports [{1}]"
+            )
             self.logger.error(msg)
             return (False, msg)
 
         if "band_5_tuning" in common_configuration:
-            msg = "band_5_tuning is currently not supportd in MCS, Rejecting Scan Coniguration"
-            self.logger.error(msg)
-            return (False, msg)
+            if scan_configuration_supported_value("band_5_tuning") is False:
+                msg = "band_5_tuning is currently not supportd in MCS, \
+                      Rejecting Scan Coniguration"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "band_5_tuning is indicated as supported, but validation \
+                        has not been implemented"
+                self.logger.error(msg)
+                return (False, msg)
 
         msg = "Validate Common: Completed"
         self.logger.info(msg)
         return (True, msg)
 
     def _validate_midcbf_keys(
-        self: ScanConfigurationValidator, configuration: dict
+        self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
         Validates the keys for the ["midcbf"] portion of the Scan Configuration (Post-ADR 99/Post-v4.0)
@@ -1535,42 +1584,75 @@ class ScanConfigurationValidator:
 
         # Not Supported Currently in AA 0.5/AA 1.0
         if "frequency_band_offset_stream1" in configuration:
-            msg = "frequency_band_offset_stream1 Currently Not Supported In AA 0.5/AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
-            # Not Supported Currently in AA 0.5/AA 1.0
-            # fsp["frequency_band_offset_stream1"] = configuration[
-            #     "frequency_band_offset_stream1"
-            # ]
+            if (
+                scan_configuration_supported_value(
+                    "frequency_band_offset_stream1"
+                )
+                is False
+            ):
+                msg = "frequency_band_offset_stream1 Currently Not Supported In AA 0.5/AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "frequency_band_offset_stream1 is indicated as supported but validation has not been implemented for it"
+                self.logger.error(msg)
+                return (False, msg)
+                # Not Supported Currently in AA 0.5/AA 1.0
+                # fsp["frequency_band_offset_stream1"] = configuration[
+                #     "frequency_band_offset_stream1"
+                # ]
 
         # Not Supported Currently in AA 0.5/AA 1.0
         if "frequency_band_offset_stream2" in configuration:
-            msg = "frequency_band_offset_stream2 Currently Not Supported In AA 0.5/AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
-            # Not Supported Currently in AA 0.5/AA 1.0
-            # fsp["frequency_band_offset_stream2"] = configuration[
-            #     "frequency_band_offset_stream2"
-            # ]
+            if (
+                scan_configuration_supported_value(
+                    "frequency_band_offset_stream2"
+                )
+                is False
+            ):
+                msg = "frequency_band_offset_stream2 Currently Not Supported In AA 0.5/AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "frequency_band_offset_stream2 is indicated as supported but validation has not been implemented for it"
+                self.logger.error(msg)
+                return (False, msg)
+                # Not Supported Currently in AA 0.5/AA 1.0
+                # fsp["frequency_band_offset_stream2"] = configuration[
+                #     "frequency_band_offset_stream2"
+                # ]
 
         # Not Supported Currently in AA 0.5/AA 1.0
         if "rfi_flagging_mask" in configuration:
-            msg = "rfi_flagging_mask Currently Not Supported In AA 0.5/AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
+            if (
+                scan_configuration_supported_value("rfi_flagging_mask")
+                is False
+            ):
+                msg = "rfi_flagging_mask Currently Not Supported In AA 0.5/AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "rfi_flagging_mask is indicated as supported but validation has not been implemented for it"
+                self.logger.error(msg)
+                return (False, msg)
 
         # Not Supported Currently in AA 0.5/AA 1.0
         if "vlbi" in configuration:
-            msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
+            if scan_configuration_supported_value("vlbi") is False:
+                msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "vlbi is indicated as supported but validation has not been implemented for it"
+                self.logger.error(msg)
+                return (False, msg)
 
         msg = "Validate CBF Configuration: Complete"
         self.logger.info(msg)
         return (True, msg)
 
     def _validate_search_window_adr99(
-        self: ScanConfigurationValidator, configuration: dict
+        self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
         Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
@@ -1584,21 +1666,27 @@ class ScanConfigurationValidator:
         """
         # Validate searchWindow.
         if "search_window" in configuration:
-            msg = "search_window Not Supported in AA 0.5 and AA 1.0"
-            self.logger.error(msg)
-            return (False, msg)
-            # not supported in AA 0.5 and AA 1.0
-            # check if searchWindow is an array of maximum length 2
-            # if len(configuration["search_window"]) > 2:
-            #     msg = (
-            #         "'searchWindow' must be an array of maximum length 2. "
-            #         "Aborting configuration."
-            #     )
-            #     self.logger.error(msg)
-            #     return (False, msg)
-            # msg = "Validate Search Window: Complete"
-            # self.logger.info(msg)
-            # return (True, msg)
+            if scan_configuration_supported_value("search_window") is False:
+                msg = "search_window Not Supported in AA 0.5 and AA 1.0"
+                self.logger.error(msg)
+                return (False, msg)
+            else:
+                msg = "search_window is indicated as supported \
+                but validation has not been implemented for it"
+                self.logger.error(msg)
+                return (False, msg)
+                # not supported in AA 0.5 and AA 1.0
+                # check if searchWindow is an array of maximum length 2
+                # if len(configuration["search_window"]) > 2:
+                #     msg = (
+                #         "'searchWindow' must be an array of maximum length 2. "
+                #         "Aborting configuration."
+                #     )
+                #     self.logger.error(msg)
+                #     return (False, msg)
+                # msg = "Validate Search Window: Complete"
+                # self.logger.info(msg)
+                # return (True, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
             self.logger.info(msg)
