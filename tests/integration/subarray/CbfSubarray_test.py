@@ -22,7 +22,7 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 
 from ... import test_utils
 
-# Data file path
+# Test data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # TODO: previous attr value, num values, config ID, scan ID, delay models
