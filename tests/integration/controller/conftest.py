@@ -34,11 +34,13 @@ from ska_mid_cbf_mcs.commons.global_enum import const
             "sys_param_from_file": False,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
         },
-        {
-            "sys_param_file": "source_init_sys_param_retrieve_from_car.json",
-            "sys_param_from_file": False,
-            "hw_config_file": "mnt/hw_config/hw_config.yaml",
-        },
+        # TODO: this JSON causes the following exception:
+        # "urllib.error.URLError: <urlopen error [Errno -5] No address associated with hostname>""
+        # {
+        #     "sys_param_file": "source_init_sys_param_retrieve_from_car.json",
+        #     "sys_param_from_file": False,
+        #     "hw_config_file": "mnt/hw_config/hw_config.yaml",
+        # },
     ],
 )
 def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
