@@ -130,7 +130,7 @@ class SubarrayScanConfigurationValidator:
 
         return (result_code, msg)
 
-    ###NOTE Below: Refactored Functions From Pre 4.0 Validations ###
+    # NOTE Below: Refactored Functions From Pre 4.0 Validations
     def _validate_input_legacy(
         self: SubarrayScanConfigurationValidator,
         configuration: dict,
@@ -695,9 +695,9 @@ class SubarrayScanConfigurationValidator:
                         self.logger.info(msg)
                         return (True, msg)
 
-    ###NOTE Above: Refactored Functions From Pre 4.0 Validations ###
+    # NOTE Above: Refactored Functions From Pre 4.0 Validations
 
-    ###NOTE Below: Refactored Functions From Pre 4.0 Validations used in v4.0###
+    # NOTE Below: Refactored Functions From Pre 4.0 Validations used in v4.0
     def _validate_fsp_in_correct_mode(
         self: SubarrayScanConfigurationValidator,
         fsp: dict,
@@ -913,9 +913,9 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    ###NOTE Above: Refactored Functions From Pre 4.0 Validations used in v4.0###
+    # NOTE Above: Refactored Functions From Pre 4.0 Validations used in v4.0
 
-    ###NOTE Below: new validation used by v4.0###
+    # NOTE Below: new validation used by v4.0
     def _validate_input(
         self: SubarrayScanConfigurationValidator,
         full_configuration: dict,
@@ -1711,4 +1711,4 @@ class SubarrayScanConfigurationValidator:
             self.logger.info(msg)
             return (True, msg)
 
-    ###NOTE Above: new validation used by v4.0###
+    # NOTE Above: new validation used by v4.0
