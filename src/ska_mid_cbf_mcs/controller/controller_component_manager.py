@@ -1149,9 +1149,10 @@ class ControllerComponentManager(CbfComponentManager):
             # On/Off commands, rather TurnOn/OffOutlet commands to
             # target specific outlets
             if (
-                fqdn not in self._power_switch_fqdn
-                and fqdn not in self._subarray_fqdn
-                and fqdn not in self._vcc_fqdn
+                fqdn
+                not in self._power_switch_fqdn
+                + self._subarray_fqdn
+                + self._vcc_fqdn
             ):
                 try:
                     # TODO: CIP-1899 The cbfcontroller is sometimes
