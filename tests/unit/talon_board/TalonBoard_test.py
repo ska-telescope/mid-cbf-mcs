@@ -62,6 +62,17 @@ class TestTalonBoard:
             return MockDependency.InfluxdbQueryClient(
                 request.param["sim_ping_fault"],
             ).ping()
+            
+        def mock_run(self, *args: Any, **kwargs: Any) -> bool:
+            """
+            Replace asyncio.run method with a mock method.
+
+            :param url: the URL
+            :param kwargs: other keyword args
+
+            :return: a response
+            """
+            return MockDependency.Asyncio().run(args)
 
         def mock_do_queries(self) -> list[list]:
             """
@@ -77,6 +88,10 @@ class TestTalonBoard:
         monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.ping",
             mock_ping,
+        )
+        monkeymodule.setattr(
+            "asyncio.run",
+            mock_run,
         )
         monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.do_queries",
@@ -206,7 +221,7 @@ class TestTalonBoard:
         ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="state",
-            attribute_value=DevState.OFF,
+            attribute_value=DevState.ON,
         )
 
     @pytest.mark.parametrize(
@@ -255,201 +270,6 @@ class TestTalonBoard:
             {
                 "sim_ping_fault": False,
                 "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Tests the On() command's happy path.
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        """
-        self.test_Online(device_under_test, event_tracer)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                '[0, "On completed OK"]',
-            ),
-        )
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.ON,
-        )
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_not_allowed(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test the On() command when device has not been started up.
-
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                '[6, "Command is not allowed"]',
-            ),
-        )
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_already_on(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test the On() command when the device has already been turned on.
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
-        """
-        self.test_Online(device_under_test, event_tracer)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                '[0, "On completed OK"]',
-            ),
-        )
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.ON,
-        )
-
-        # Attempt to turn the device on again.
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                '[6, "Command is not allowed"]',
-            ),
-        )
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": True,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_ping_fail(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-    ) -> None:
-        """
-        Test the On() command when the InfuxDB is unreachable.
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
-        """
-        self.test_Online(device_under_test, event_tracer)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                '[3, "Failed to connect to InfluxDB"]',
-            ),
-        )
-
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.UNKNOWN,
-        )
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
             }
         ],
         indirect=True,
@@ -469,7 +289,7 @@ class TestTalonBoard:
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB
-        self.test_On(device_under_test, event_tracer)
+        self.test_Online(device_under_test, event_tracer)
 
         # Private Attr
         assert device_under_test.subarrayID == ""

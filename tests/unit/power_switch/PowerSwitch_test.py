@@ -291,7 +291,25 @@ class TestPowerSwitch:
         :param event_tracer: A :py:class:`TangoEventTracer` used to
             recieve subscribed change events from the device under test.
         """
-        self.test_Online(device_under_test, event_tracer)
+        device_under_test.simulationMode = SimulationMode.FALSE
+
+        # Set device to AdminMode.ONLINE and DevState.ON
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.UNKNOWN,
+        )
 
         # Check that the device is not communicating
         assert device_under_test.isCommunicating is False
