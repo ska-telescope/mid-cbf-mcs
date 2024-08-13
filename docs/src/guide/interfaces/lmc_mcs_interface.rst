@@ -21,21 +21,6 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Tango Commands
 ------------------------------
 .. ska-tables::
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| Command      | Parameters    | Return type        | Action                                                 |
-+==============+===============+====================+========================================================+
-| Off          | None          | (ResultCode, str)  | | Set power state to OFF for controller and            |
-|              |               |                    | | subordinate devices (subarrays, VCCs, FSPs)          |
-|              |               |                    | | Turn off power to all hardware                       |
-|              |               |                    | | See also :ref:`Off Sequence`                         |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| InitSysParam | JSON str*     | (ResultCode, str)  | | Initialize Dish ID to VCC ID mapping and k values    |
-|              |               |                    | | See also :ref:`InitSysParam Sequence`                |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| Standby      | None          | (ResultCode, str)  | None                                                   |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| On           | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
-+--------------+---------------+--------------------+--------------------------------------------------------+
 
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
