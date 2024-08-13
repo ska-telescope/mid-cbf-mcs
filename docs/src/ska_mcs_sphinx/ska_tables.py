@@ -73,36 +73,41 @@ class SkaTables(Directive):
 
 
 class HelloDirective(Directive):
-    """A directive to say hello!"""
-
+    """A directive to say hello and create a table!"""
 
     def run(self) -> list[nodes.Node]:
+        # Create the main table node
         table = nodes.table()
-        groups = nodes.table(cols = 2)
-        colspec_1 = nodes.colspec(colwidth = 8)
-        colspec_2 = nodes.colspec(colwidth = 4)
-        body = nodes.tbody()
+        
+        # Create the tgroup (table group) node
+        tgroup = nodes.tgroup(cols=2)
+        table += tgroup
+        
+        # Add column specifications
+        tgroup += nodes.colspec(colwidth=8)
+        tgroup += nodes.colspec(colwidth=4)
+        
+        # Add table header
+        thead = nodes.thead()
+        tgroup += thead
+        header_row = nodes.row()
+        thead += header_row
+        header_row += nodes.entry('', nodes.paragraph(text='Item'))
+        header_row += nodes.entry('', nodes.paragraph(text='Code'))
+        
+        # Add table body
+        tbody = nodes.tbody()
+        tgroup += tbody
+        
+        # Add rows to the body
         row_1 = nodes.row()
-        r1_c1 = nodes.entry(nodes.paragraph("bread"))
-        r1_c2 = nodes.entry(nodes.paragraph("E2"))
+        row_1 += nodes.entry('', nodes.paragraph(text='bread'))
+        row_1 += nodes.entry('', nodes.paragraph(text='E2'))
+        tbody += row_1
+        
         row_2 = nodes.row()
-        r2_c1 = nodes.entry(nodes.paragraph("butter"))
-        r2_c2 = nodes.entry(nodes.paragraph("E30"))
-
-        row_2 += r2_c1
-        row_2 += r2_c2
-
-        row_1 += r1_c1
-        row_1 += r1_c2
-
-        body += row_1
-        body += row_2
-
-        groups += colspec_1
-        groups += colspec_2
-        groups += body
-
-        table += groups
+        row_2 += nodes.entry('', nodes.paragraph(text='butter'))
+        row_2 += nodes.entry('', nodes.paragraph(text='E30'))
+        tbody += row_2
         
         return [table]
- 
