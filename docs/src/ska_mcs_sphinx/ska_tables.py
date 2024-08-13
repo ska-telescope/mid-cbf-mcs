@@ -67,6 +67,7 @@ class SkaTables(Directive):
         tgroup.append(colspec)
         tgroup.append(header)
         tgroup.append(table_body)
+        table.append(tgroup)
 
         return [table]
 
@@ -74,11 +75,10 @@ class SkaTables(Directive):
 class HelloDirective(Directive):
     """A directive to say hello!"""
 
-    required_arguments = 1
 
     def run(self) -> list[nodes.Node]:
-        paragraph_node = nodes.paragraph(text=f'hello {self.arguments[0]}!')
-        return [paragraph_node]
+        table = nodes.table()
+        return [table]
 
         
 
