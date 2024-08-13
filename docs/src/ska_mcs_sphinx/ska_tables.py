@@ -78,11 +78,14 @@ class HelloDirective(Directive):
 
     def run(self) -> list[nodes.Node]:
         table = nodes.table()
+        group = nodes.tgroup(cols=1)
         header = nodes.thead()
         header_row = nodes.row()
         header_row_entry_1 = nodes.entry("Test")
         header_row.append(header_row_entry_1)
-        table.append(header)
+        header.append(header_row)
+        group.append(header)
+        table.append(group)
 
         return [table]
 
