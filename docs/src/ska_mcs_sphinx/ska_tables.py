@@ -78,14 +78,41 @@ class HelloDirective(Directive):
 
     def run(self) -> list[nodes.Node]:
         table = nodes.table()
-        group = nodes.tgroup(cols=1)
+        tgroup = nodes.tgroup(cols=3)
+        colspec = nodes.colspec()
         header = nodes.thead()
         header_row = nodes.row()
-        header_row_entry_1 = nodes.entry("Test")
-        header_row.append(header_row_entry_1)
-        header.append(header_row)
-        group.append(header)
-        table.append(group)
+        header_1 = nodes.entry("Header 1")
+        header_2 = nodes.entry("Header 2")
+        header_3 = nodes.entry("Header 3")
+        header_row.append(header_1)
+        header_row.append(header_2)
+        header_row.append(header_3)
+
+        table_body = nodes.tbody()
+        row1 = nodes.row()
+        r1_c1_entry = nodes.entry("row 1, col1")
+        r1_c2_entry = nodes.entry("row 1, col2")
+        r1_c3_entry = nodes.entry("row 1, col3")
+        row1.append(r1_c1_entry)
+        row1.append(r1_c2_entry)
+        row1.append(r1_c3_entry)
+
+        row2 = nodes.row()
+        r2_c1_entry = nodes.entry("row 2, col1")
+        r2_c2_entry = nodes.entry("row 2, col2")
+        r2_c3_entry = nodes.entry("row 2, col3")
+        row2.append(r2_c1_entry)
+        row2.append(r2_c2_entry)
+        row2.append(r2_c3_entry)
+
+        table_body.append(row1)
+        table_body.append(row2)
+
+        table.append(tgroup)
+        tgroup.append(colspec)
+        tgroup.append(header_row) 
+        tgroup.append(table_body)
 
         return [table]
 
