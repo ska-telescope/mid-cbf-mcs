@@ -240,19 +240,18 @@ class ControllerComponentManager(CbfComponentManager):
         if fqdn not in self._proxies:
             try:
                 self.logger.debug(f"Trying connection to {fqdn}")
-                proxy = context.DeviceProxy(device_name=fqdn)
+                dp = context.DeviceProxy(device_name=fqdn)
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}: {df}")
                 return False
-            self._proxies[fqdn] = proxy
+            self._proxies[fqdn] = dp
 
-            if fqdn in (
-                self._talon_lru_fqdn
-                + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-            ):
-                self._subscribe_command_results(proxy)
-        else:
-            proxy = self._proxies[fqdn]
+        proxy = self._proxies[fqdn]
+
+        if fqdn in (
+            self._talon_lru_fqdn + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        ):
+            self._subscribe_command_results(proxy)
 
         # If the fqdn is of a power switch or talon LRU, write hw config
         device_types = {
@@ -327,16 +326,23 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self.logger.debug(
-            "Entering ControllerComponentManager.stop_communicating"
+        self.logger.info(
+            "Entering ControllerComponentManager._stop_communicating"
         )
-        for fqdn, proxy in self._proxies:
-            if fqdn in (
-                self._talon_lru_fqdn
-                + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-            ):
-                self._unsubscribe_command_results(proxy)
-            proxy.adminMode = AdminMode.OFFLINE
+        for fqdn, proxy in self._proxies.items():
+            try:
+                if fqdn in (
+                    self._talon_lru_fqdn
+                    + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+                ):
+                    self._unsubscribe_command_results(proxy)
+                self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
+                proxy.adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to stop communications with {fqdn}; {df}"
+                )
+                continue
         self._blocking_commands = set()
 
         super()._stop_communicating()

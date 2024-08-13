@@ -125,7 +125,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.info("Entering component_manager._start_communicating")
+        self.logger.info("Entering CbfComponentManager._start_communicating")
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
@@ -160,6 +160,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for stop_communicating operation.
         """
+        self.logger.info("Entering CbfComponentManager._stop_communicating")
         self._update_component_state(power=PowerState.UNKNOWN)
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
@@ -171,7 +172,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Stop communication with the component
         """
-        self.logger.debug("Entering CbfComponentManager.start_communicating")
+        self.logger.info("Entering CbfComponentManager.stop_communicating")
 
         task_status, message = self.submit_task(self._stop_communicating)
         if task_status == TaskStatus.REJECTED:
@@ -236,6 +237,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 f"No longRunningCommandResult event subscription for {dev_name}"
             )
             return
+        self.logger.info(f"Unsubscribing from {dev_name} event ID {event_id}.")
         proxy.unsubscribe_event(event_id)
 
     # -------------

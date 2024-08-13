@@ -507,6 +507,7 @@ class TestCbfController:
         slim_vis: context.DeviceProxy,
         subarray: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
+        controller_params: dict[any],
     ) -> None:
         """
         Verify the component manager can stop communicating
