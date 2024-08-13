@@ -27,47 +27,54 @@ class SkaTables(Directive):
         table = nodes.table()
 
         tgroup = nodes.tgroup(cols = 5)
-        colspec = nodes.colspec()           # Why needed?
+        colspec_1 = nodes.colspec(colwidth=10)           # Spec for each column needed
+        colspec_2 = nodes.colspec(colwidth=10)
+        colspec_3 = nodes.colspec(colwidth=10)
+        colspec_4 = nodes.colspec(colwidth=10)
+        colspec_5 = nodes.colspec(colwidth=10)
         header = nodes.thead()              # Need variable or can just call?
         header_row = nodes.row()
-        header_1 = nodes.entry("Command")
-        header_2 = nodes.entry("Parameters")
-        header_3 = nodes.entry("Return type")
-        header_4 = nodes.entry("Action")
-        header_5 = nodes.entry("Supported versions")
-        header_row.append(header_1)
-        header_row.append(header_2)
-        header_row.append(header_3)
-        header_row.append(header_4)
-        header_row.append(header_5)
+        header_1 = nodes.entry('', nodes.paragraph(text='Command'))
+        header_2 = nodes.entry('', nodes.paragraph(text='Parameters'))
+        header_3 = nodes.entry('', nodes.paragraph(text='Return type'))
+        header_4 = nodes.entry('', nodes.paragraph(text='Action'))
+        header_5 = nodes.entry('', nodes.paragraph(text='Supported versions'))
+        header_row  +=  (header_1)
+        header_row  +=  (header_2)
+        header_row  +=  (header_3)
+        header_row  +=  (header_4)
+        header_row  +=  (header_5)
 
-        header.append(header_row)       # Assume this is right
+        header  +=  (header_row)       # Assume this is right
 
 
         table_body = nodes.tbody()
 
         row1 = nodes.row()
-        r1_c1_entry = nodes.entry("Off")
-        r1_c2_entry = nodes.entry("None")
-        r1_c3_entry = nodes.entry("None")
-        r1_c4_entry = nodes.entry("(ResultCode, str)")
-        r1_c5_entry = nodes.entry("Set power state to OFF for controller and \
+        r1_c1_entry = nodes.entry('', nodes.paragraph(text='Off'))
+        r1_c2_entry = nodes.entry('', nodes.paragraph(text='None'))
+        r1_c3_entry = nodes.entry('', nodes.paragraph(text='None'))
+        r1_c4_entry = nodes.entry('', nodes.paragraph(text='(ResultCode, str)'))
+        r1_c5_entry = nodes.entry('', nodes.paragraph(text='Set power state to OFF for controller and \
                                     subordinate devices (subarrays, VCCs, FSPs)\
                                     Turn off power to all hardware\
-                                    See also :ref:'Off Sequence'")          # Test if this works in rst
-        row1.append(r1_c1_entry)
-        row1.append(r1_c2_entry)
-        row1.append(r1_c3_entry)
-        row1.append(r1_c4_entry)
-        row1.append(r1_c5_entry)
+                                    See also :ref:\'Off Sequence\''))          # Test if this works in rst
+        row1  +=  (r1_c1_entry)
+        row1  +=  (r1_c2_entry)
+        row1  +=  (r1_c3_entry)
+        row1  +=  (r1_c4_entry)
+        row1  +=  (r1_c5_entry)
 
-        table_body.append(row1)
+        table_body  +=  (row1)
 
-        table.append(tgroup)
-        tgroup.append(colspec)
-        tgroup.append(header)
-        tgroup.append(table_body)
-        table.append(tgroup)
+        table  +=  (tgroup)
+        tgroup  +=  (colspec_1)
+        tgroup  +=  (colspec_2)
+        tgroup  +=  (colspec_3)
+        tgroup  +=  (colspec_4)
+        tgroup  +=  (colspec_5)
+        tgroup  +=  (header)
+        tgroup  +=  (table_body)
 
         return [table]
 
