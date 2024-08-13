@@ -13,9 +13,12 @@ from docutils.utils import SystemMessagePropagation
 import importlib
 
 
-# Variables: num_rows, command_list, param_list, return_list, action_list
+# Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
+# TODO: For supported versions we can read param list and if json is found we can
+#       look for command with matching prefix as supported versions
 
 class SkaTables(Directive):
+    # required_arguments = 5
     has_content = True
 
 
@@ -68,6 +71,14 @@ class SkaTables(Directive):
         return [table]
 
 
+class HelloDirective(Directive):
+    """A directive to say hello!"""
+
+    required_arguments = 1
+
+    def run(self) -> list[nodes.Node]:
+        paragraph_node = nodes.paragraph(text=f'hello {self.arguments[0]}!')
+        return [paragraph_node]
 
         
 
