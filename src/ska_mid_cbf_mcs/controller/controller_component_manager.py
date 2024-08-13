@@ -107,6 +107,7 @@ class ControllerComponentManager(CbfComponentManager):
         self.source_init_sys_param = ""
         self._talondx_component_manager = talondx_component_manager
         self._proxies = {}
+        self._talon_board_proxies = {}
 
     # -------------
     # Communication
@@ -174,7 +175,7 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the hardware configuration properties are successfully written to the device, False otherwise.
         """
         try:
-            self.logger.debug(
+            self.logger.info(
                 f"Writing hardware configuration properties to {fqdn}"
             )
 
@@ -196,10 +197,9 @@ class ControllerComponentManager(CbfComponentManager):
                 proxy.set_timeout_millis(self._lru_timeout * 1000)
 
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.error(
-                    f"Failed to write {fqdn} HW config properties: {item.reason}"
-                )
+            self.logger.error(
+                f"Failed to write {fqdn} HW config properties: {df}"
+            )
             return False
         return True
 
@@ -220,10 +220,9 @@ class ControllerComponentManager(CbfComponentManager):
             self._proxies[fqdn].simulationMode = self.simulation_mode
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.error(
-                    f"Failed to set AdminMode of {fqdn} to ONLINE: {item.reason}"
-                )
+            self.logger.error(
+                f"Failed to set AdminMode of {fqdn} to ONLINE: {df}"
+            )
             return False
         return True
 
@@ -243,10 +242,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.debug(f"Trying connection to {fqdn}")
                 proxy = context.DeviceProxy(device_name=fqdn)
             except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Failure in connection to {fqdn}: {item.reason}"
-                    )
+                self.logger.error(f"Failure in connection to {fqdn}: {df}")
                 return False
             self._proxies[fqdn] = proxy
 
@@ -258,11 +254,10 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             proxy = self._proxies[fqdn]
 
-        # If the fqdn is of a power switch, talon LRU, or talon board, write hw config
+        # If the fqdn is of a power switch or talon LRU, write hw config
         device_types = {
             "power_switch": self._power_switch_fqdn,
             "talon_lru": self._talon_lru_fqdn,
-            "talon_board": self._talon_board_fqdn,
         }
         for device_type, device_fqdns in device_types.items():
             if fqdn in device_fqdns:
@@ -271,29 +266,6 @@ class ControllerComponentManager(CbfComponentManager):
                 break
 
         return self._set_proxy_online(fqdn)
-
-    def _init_proxies(self: ControllerComponentManager) -> bool:
-        """
-        Init all proxies, return True if all proxies are connected.
-
-        :return: True if all proxies are connected, False otherwise.
-        """
-
-        # NOTE: order matters here
-        # - must set PDU online before LRU to establish outlet power states
-        # - must set VCC online after LRU to establish LRU power state
-        # TODO: evaluate ordering and add further comments
-
-        for fqdn in (
-            self._power_switch_fqdn
-            + self._talon_lru_fqdn
-            + self._talon_board_fqdn
-            + self._subarray_fqdn
-            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-        ):
-            if not self._init_device_proxy(fqdn):
-                return False
-        return True
 
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
@@ -322,7 +294,21 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        if not self._init_proxies():
+        # NOTE: order matters here
+        # - must set PDU online before LRU to establish outlet power states
+        # - must set VCC online after LRU to establish LRU power state
+        # TODO: evaluate ordering and add further comments
+        init_fault = False
+        for fqdn in (
+            self._power_switch_fqdn
+            + self._talon_lru_fqdn
+            + self._subarray_fqdn
+            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        ):
+            if not self._init_device_proxy(fqdn):
+                init_fault = True
+
+        if init_fault:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -350,11 +336,8 @@ class ControllerComponentManager(CbfComponentManager):
                 + [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
                 self._unsubscribe_command_results(proxy)
-        self._blocking_commands = set()
-
-        for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
-            # TODO: VCC?
+        self._blocking_commands = set()
 
         super()._stop_communicating()
 
@@ -436,11 +419,8 @@ class ControllerComponentManager(CbfComponentManager):
             try:
                 self._proxies[fqdn].sysParam = params
             except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Failure in connection to {fqdn}; {item.reason}"
-                    )
-                    return False
+                self.logger.error(f"Failure in connection to {fqdn}; {df}")
+                return False
 
         # Set VCC values
         for fqdn in self._vcc_fqdn:
@@ -463,41 +443,9 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     return False
             except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Failure in connection to {fqdn}; {item.reason}"
-                    )
-                    return False
+                self.logger.error(f"Failure in connection to {fqdn}; {df}")
+                return False
 
-        # Update talon boards. The VCC ID to IP address mapping comes
-        # from hw_config. Then map VCC ID to DISH ID.
-        for vcc_id_str, ip in self._hw_config["talon_board"].items():
-            for fqdn in self._talon_board_fqdn:
-                try:
-                    proxy = self._proxies[fqdn]
-                    board_ip = proxy.get_property("TalonDxBoardAddress")[
-                        "TalonDxBoardAddress"
-                    ][0]
-                    if board_ip == ip:
-                        vcc_id = int(vcc_id_str)
-                        proxy.vccID = str(vcc_id)
-                        if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                            dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                            proxy.dishID = dish_id
-                            self.logger.info(
-                                f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
-                            )
-                        else:
-                            self.logger.warning(
-                                f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                                f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                            )
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        self.logger.error(
-                            f"Failed to update {fqdn} with VCC ID and DISH ID; {item.reason}"
-                        )
-                    return False
         return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
@@ -654,6 +602,64 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- On Command --- #
 
+    def _init_talon_boards(self: ControllerComponentManager):
+        """
+        Initialize TalonBoard devices.
+        """
+        for fqdn in self._talon_board_fqdn:
+            if fqdn not in self._talon_board_proxies:
+                try:
+                    self.logger.debug(f"Trying connection to {fqdn}")
+                    proxy = context.DeviceProxy(device_name=fqdn)
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failure in connection to {fqdn}: {df}")
+                    continue
+                self._talon_board_proxies[fqdn] = proxy
+            else:
+                proxy = self._talon_board_proxies[fqdn]
+
+            if not self._write_hw_config(fqdn, proxy, "talon_board"):
+                self.logger.error(f"Failed to update HW config for {fqdn}")
+                continue
+
+            self.logger.info(
+                f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
+            )
+            try:
+                proxy.simulationMode = self.simulation_mode
+                proxy.adminMode = AdminMode.ONLINE
+
+                board_ip = proxy.get_property("TalonDxBoardAddress")[
+                    "TalonDxBoardAddress"
+                ][0]
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to set AdminMode of {fqdn} to ONLINE: {df}"
+                )
+
+            # Update talon board HW config. The VCC ID to IP address mapping comes
+            # from hw_config.yaml
+            for vcc_id_str, ip in self._hw_config["talon_board"].items():
+                if board_ip == ip:
+                    vcc_id = int(vcc_id_str)
+                    if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                        dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                        try:
+                            proxy.vccID = vcc_id_str
+                            proxy.dishID = dish_id
+                            self.logger.info(
+                                f"Assigned DISH ID {dish_id} and VCC ID {vcc_id} to {fqdn}"
+                            )
+                        except tango.DevFailed as df:
+                            self.logger.error(
+                                f"Failed to update {fqdn} with VCC ID and DISH ID; {df}"
+                            )
+                    else:
+                        self.logger.warning(
+                            f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
+                            f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                        )
+
     def _get_talon_lru_fqdns(self: ControllerComponentManager) -> list[str]:
         """
         Get the FQDNs of the Talon LRUs that are connected to the controller from the configuration JSON.
@@ -777,14 +783,11 @@ class ControllerComponentManager(CbfComponentManager):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
-            for item in df.args:
-                message = f"Failed to configure SLIM: {item.reason}"
-                self.logger.error(message)
+            self.logger.error(f"Failed to configure SLIM: {df}")
             success = False
         except (OSError, FileNotFoundError) as e:
             self._update_component_state(fault=True)
-            message = f"Failed to read SLIM configuration file: {e}"
-            self.logger.error(message)
+            self.logger.error(f"Failed to read SLIM configuration file: {e}")
             success = False
 
         lrc_status = self._wait_for_blocking_results(
@@ -846,7 +849,7 @@ class ControllerComponentManager(CbfComponentManager):
         #    i.  Get the FQDNs of the LRUs
         #    ii. Sending ON command to all the LRUs
         # 2. Configure all the Talon boards
-        # 3. Turn on all the subarrays by writing simulationMode and sending ON command
+        # 3. Turn TalonBoard devices ONLINE
         # 4. Configure SLIM Mesh devices
 
         # TODO: There are two VCCs per LRU. Need to check the number of
@@ -887,6 +890,10 @@ class ControllerComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
             )
             return
+
+        # Start monitoring talon board telemetries and fault status
+        # Failure here won't cause On command failure
+        self._init_talon_boards()
 
         # Configure SLIM Mesh devices
         slim_configure_status, msg = self._configure_slim_devices(
@@ -1106,16 +1113,14 @@ class ControllerComponentManager(CbfComponentManager):
         # Turn off TalonBoard devices.
         # NOTE: This is separated from the subelements_fast group call because
         #       a failure shouldn't cause Controller.Off() to fail.
-        # FIXME: Commented out temporarily to test power sequence on HW.
-        # try:
-        #     for fqdn in self._talon_board_fqdn:
-        #         self._proxies[fqdn].Off()
-        # except tango.DevFailed as df:
-        #     for item in df.args:
-        #         # Log a warning, but continue when the talon board fails to turn off
-        #         log_msg = f"Failed to turn off Talon proxy; {item.reason}"
-        #         self.logger.warning(log_msg)
-        #         message.append(log_msg)
+        try:
+            for proxy in self._talon_board_proxies.values():
+                proxy.adminMode = AdminMode.OFFLINE
+        except tango.DevFailed as df:
+            # Log a warning, but continue when the talon board fails to turn off
+            log_msg = f"Failed to turn off Talon proxy; {df}"
+            self.logger.warning(log_msg)
+            message.append(log_msg)
 
         if success:
             message.append("Successfully issued Off() to all subelements.")

@@ -118,11 +118,11 @@ class TalonBoard(CbfDevice):
 
         :param value: the Dish ID
         """
-        self._dishID = value
         if self._dishID != value:
             self._dishID = value
             self.push_change_event("dishID", value)
             self.push_archive_event("dishID", value)
+            self.logger.info(f"New value for dishID: {value}")
 
     @attribute(
         dtype=str,
