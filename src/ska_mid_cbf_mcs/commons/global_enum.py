@@ -168,9 +168,10 @@ def scan_configuration_supported_value(parameter: str) -> any:
 mhz_to_hz = 1000000
 
 
-class ScanConfiguration:
-    ADR99_VERSIONS = {"4.0", "4.1"}
-    PRE_ADR99_VERSIONS = {"2.4", "3.0"}
+class AcceptedScanConfigurationVersion:
+    # {major verions : {minor versions...}}
+    # For Interface Versions with Correlator Processing Regions Configuration
+    versions = {3: {0}, 4: {0, 1}}
 
 
 """

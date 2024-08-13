@@ -19,8 +19,8 @@ from ska_telmodel.csp.common_schema import (
 import ska_mid_cbf_mcs.subarray.subarray_component_manager as scm
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
+    AcceptedScanConfigurationVersion,
     FspModes,
-    ScanConfiguration,
     const,
     freq_band_dict,
     scan_configuration_supported_value,
@@ -102,20 +102,24 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         scan_configuration_version = (
-            (full_configuration["interface"]).split("/")
-        )[-1]
+            ((full_configuration["interface"]).split("/"))[-1]
+        ).split(".")
 
-        # Post ADR99 Scan Configuration Changes
-        if scan_configuration_version in ScanConfiguration.ADR99_VERSIONS:
-            result_code, msg = self._validate_input_adr_99(full_configuration)
+        major = int(scan_configuration_version[0])
+        minor = int(scan_configuration_version[1])
 
-        # Pre ADR99 Scan Configuration Changes
-        elif (
-            scan_configuration_version in ScanConfiguration.PRE_ADR99_VERSIONS
-        ):
+        versions = AcceptedScanConfigurationVersion.versions
+
+        # Post 4.0 Interface Validations
+        if major >= 4 and major in versions and minor in versions[major]:
+            result_code, msg = self._validate_input(full_configuration)
+
+        # Legacy Scan Configuration Validation
+        # TODO Remove once the 4.0 Changes are in
+        elif major == 3 and minor == 0:
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
-            result_code, msg = self._validate_input_pre_adr_99(
+            result_code, msg = self._validate_input_legacy(
                 configuration, common_configuration
             )
 
@@ -126,13 +130,14 @@ class SubarrayScanConfigurationValidator:
 
         return (result_code, msg)
 
-    def _validate_input_pre_adr_99(
+    ###NOTE Below: Refactored Functions From Pre 4.0 Validations ###
+    def _validate_input_legacy(
         self: SubarrayScanConfigurationValidator,
         configuration: dict,
         common_configuration: dict,
     ) -> tuple[bool, str]:
         """
-        Validates a pre ADR 99/pre v4.0 Scan Configuration
+        Validates a pre v4.0 Scan Configuration
 
         :param configuration: The ["cbf"] portion of the full Scan Configuration as a Dictionary
         :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
@@ -152,11 +157,11 @@ class SubarrayScanConfigurationValidator:
         if result_code is False:
             return (False, msg)
 
-        result_code, msg = self._validate_search_window(configuration)
+        result_code, msg = self._validate_search_window_legacy(configuration)
         if result_code is False:
             return (False, msg)
 
-        result_code, msg = self._validate_fsp_pre_adr_99(
+        result_code, msg = self._validate_fsp_legacy(
             configuration, common_configuration
         )
         if result_code is False:
@@ -164,13 +169,13 @@ class SubarrayScanConfigurationValidator:
 
         return (True, "Scan configuration is valid.")
 
-    def _validate_fsp_pre_adr_99(
+    def _validate_fsp_legacy(
         self: SubarrayScanConfigurationValidator,
         configuration: dict,
         common_configuration: dict,
     ) -> tuple[bool, str]:
         """
-        Validates the FSP Configuration for a pre ADR 99/pre v4.0 Scan Configuration
+        Validates the FSP Configuration for a pre v4.0 Scan Configuration
 
         :param configuration: The ["cbf"] portion of the full Scan Configuration as a Dictionary
         :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
@@ -186,7 +191,7 @@ class SubarrayScanConfigurationValidator:
             fsp = copy.deepcopy(fsp)
             try:
                 fsp_id = int(fsp["fsp_id"])
-                result_code, msg = self._validate_fsp_id(fsp_id)
+                result_code, msg = self._validate_fsp_id_legacy(fsp_id)
                 if result_code is False:
                     return (False, msg)
                 count += 1
@@ -204,11 +209,11 @@ class SubarrayScanConfigurationValidator:
                     f"{fsp['function_mode']} is not a valid FSP function mode.",
                 )
 
-            self._validate_cbf_configuration(
+            self._validate_cbf_configuration_legacy(
                 fsp, configuration, common_configuration
             )
 
-            self._validate_max_20_channel_to_same_port_per_host_pre_adr_99(fsp)
+            self._validate_max_20_channel_to_same_port_per_host_legacy(fsp)
 
             # Configure FSP
             try:
@@ -221,19 +226,22 @@ class SubarrayScanConfigurationValidator:
 
                 match function_mode_value:
                     case FspModes.CORR:
-                        result_code, msg = self._validate_corr_function_mode(
-                            fsp
-                        )
+                        (
+                            result_code,
+                            msg,
+                        ) = self._validate_corr_function_mode_legacy(fsp)
 
                     case FspModes.PSS_BF:
-                        result_code, msg = self._validate_pss_function_mode(
-                            fsp
-                        )
+                        (
+                            result_code,
+                            msg,
+                        ) = self._validate_pss_function_mode_legacy(fsp)
 
                     case FspModes.PST_BF:
-                        result_code, msg = self._validate_pst_function_mode(
-                            fsp
-                        )
+                        (
+                            result_code,
+                            msg,
+                        ) = self._validate_pst_function_mode_legacy(fsp)
 
                     case _:
                         return (
@@ -257,7 +265,7 @@ class SubarrayScanConfigurationValidator:
             self.logger.info(msg)
             return (True, msg)
 
-    def _validate_fsp_id(
+    def _validate_fsp_id_legacy(
         self: SubarrayScanConfigurationValidator, fsp_id: int
     ) -> tuple[bool, str]:
         """
@@ -298,53 +306,18 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-    def _validate_fsp_in_correct_mode(
-        self: SubarrayScanConfigurationValidator,
-        fsp: dict,
-        fsp_id: int,
-        function_mode_value: int,
-        fsp_proxy: CbfDeviceProxy,
-    ):
-        """
-        Validates that the given FSP Proxy is in the correct mode
-
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param fsp_id:  The ID value assigned to the FSP we are validating
-        :param function_mode_value: the int value of the FspMode enum that represent the function mode of the FSP
-        :param fsp_proxy: Device Proxy of the FSP that is being validated
-
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-
-        fsp_function_mode = fsp_proxy.functionMode
-        if fsp_function_mode not in [
-            FspModes.IDLE.value,
-            function_mode_value,
-        ]:
-            msg = f"FSP {fsp_id} currently set to function mode {self.valid_function_modes.index(fsp_function_mode)}, \
-                    cannot be used for {fsp['function_mode']} \
-                    until it is returned to IDLE."
-            return (False, msg)
-
-        msg = "Validate FSP in Correct Mode: Complete"
-        self.logger.info(msg)
-        return (True, msg)
-
-    def _validate_cbf_configuration(
+    def _validate_cbf_configuration_legacy(
         self: SubarrayScanConfigurationValidator,
         fsp: dict,
         configuration: dict,
         common_configuration: dict,
     ) -> tuple[bool, str]:
         """
-        Validates the ["cbf"] portion of the Scan Configuration (Pre-ADR 99/Pre-v4.0)
+        Validates the CBF Configuration of a Scan Configuration
 
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param configuration: The ["midcbf"] portion of the full Scan Configuration as a Dictionary
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param fsp: A FSP Configuration as a Dictionary
+        :param configuration: A CBF Configuration as a Dictionary
+        :param common_configuration: A Common Configuration as a Dictionary
 
         :return: tuple with:
             bool to indicate if the scan configuration is valid or not
@@ -375,14 +348,14 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_corr_function_mode(
+    def _validate_corr_function_mode_legacy(
         self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
-        Validates the configuration parameters given for CORR Function Mode.  This function is for backwards compatibility with Scan Configuration Pre-ADR 99/pre v4.0
+        Validates the configuration parameters given for CORR Function Mode
+        with pre v4.0 Scan Configurations.
 
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param fsp: A FSP Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -487,16 +460,14 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_pss_function_mode(
+    def _validate_pss_function_mode_legacy(
         self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
-        Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
-        Note common_configuration is not used, but requried in function definition to be consistent with the other function when passed as a function pointer
+        Validates the configuration parameters given for PST Function Mode
+        for pre v4.0 Scan Configurations
 
-
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param fsp: A FSP Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -591,21 +562,21 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_pst_function_mode(
+    def _validate_pst_function_mode_legacy(
         self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
-        Validates the configuration parameters given for PST Function Mode.  To be used (at this time) to validate Scan Configuration Pre-ADR 99/pre v4.0
-        Note common_configuration is not used, but requried in function definition to be consistent with the other function when passed as a function pointer
+        Validates the configuration parameters given for PST Function Mode
+        for v4.0 Scan Configurations
 
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param fsp: A FSP Configurations as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
+
         if len(fsp["timing_beam"]) <= 16:
             for timingBeam in fsp["timing_beam"]:
                 if 1 > int(timingBeam["timing_beam_id"]) > 16:
@@ -664,6 +635,240 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
+    def _validate_search_window_legacy(
+        self: SubarrayScanConfigurationValidator, configuration: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
+
+        :param configuration: The ["cbf"]/["midcbf"] portion of the full Scan Configuration as a Dictionary
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        # Validate searchWindow.
+        if "search_window" in configuration:
+            # check if searchWindow is an array of maximum length 2
+            if len(configuration["search_window"]) > 2:
+                msg = (
+                    "'searchWindow' must be an array of maximum length 2. "
+                    "Aborting configuration."
+                )
+                self.logger.error(msg)
+                return (False, msg)
+            msg = "Validate Search Window: Complete"
+            self.logger.info(msg)
+            return (True, msg)
+        else:
+            msg = "Validate Search Window: Search Window not in Configuration: Complete"
+            self.logger.info(msg)
+            return (True, msg)
+
+    def _validate_max_20_channel_to_same_port_per_host_legacy(
+        self: SubarrayScanConfigurationValidator, fsp: dict
+    ):
+        if "output_port" in fsp:
+            if "output_host" in fsp:
+                for index, host_mapping in enumerate(fsp["output_host"]):
+                    start_channel = host_mapping[0]
+                    if (index + 1) == len(fsp["output_host"]):
+                        end_channel = (
+                            MAX_STREAMS_PER_FSP * MAX_CHANNELS_PER_STREAM
+                        )
+                    else:
+                        end_channel = fsp["output_host"][index + 1][0]
+
+                    ports_for_host = [
+                        entry[1]
+                        for entry in fsp["output_port"]
+                        if entry[0] >= start_channel and entry[0] < end_channel
+                    ]
+                    # Ensure all ports are unique for the given host
+                    if len(ports_for_host) != len(set(ports_for_host)):
+                        msg = "'output_port' port mappings must be unique per host "
+                        self.logger.error(msg)
+                        return (False, msg)
+                    else:
+                        msg = "Validate At most one stream (20 channels) per port per output_host: complete"
+                        self.logger.info(msg)
+                        return (True, msg)
+
+    ###NOTE Above: Refactored Functions From Pre 4.0 Validations ###
+
+    ###NOTE Below: Refactored Functions From Pre 4.0 Validations used in v4.0###
+    def _validate_fsp_in_correct_mode(
+        self: SubarrayScanConfigurationValidator,
+        fsp: dict,
+        fsp_id: int,
+        function_mode_value: int,
+        fsp_proxy: CbfDeviceProxy,
+    ):
+        """
+        Validates that the given FSP Proxy is in the correct mode
+
+        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
+        :param fsp_id:  The ID value assigned to the FSP we are validating
+        :param function_mode_value: the int value of the FspMode enum that represent the function mode of the FSP
+        :param fsp_proxy: Device Proxy of the FSP that is being validated
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+
+        fsp_function_mode = fsp_proxy.functionMode
+        if fsp_function_mode not in [
+            FspModes.IDLE.value,
+            function_mode_value,
+        ]:
+            msg = f"FSP {fsp_id} currently set to function mode {self.valid_function_modes.index(fsp_function_mode)}, \
+                    cannot be used for {fsp['function_mode']} \
+                    until it is returned to IDLE."
+            return (False, msg)
+
+        msg = "Validate FSP in Correct Mode: Complete"
+        self.logger.info(msg)
+        return (True, msg)
+
+    # Was refactored out from pre 4.0 validations check for PST and PSS,
+    # but might be used when post 4.0 PST and PSS validations are in
+    def _validate_ip(self: scm.CbfSubarrayComponentManager, ip: str) -> bool:
+        """
+        Validate IP address format.
+
+        :param ip: IP address to be evaluated
+
+        :return: whether or not the IP address format is valid
+        :rtype: bool
+        """
+        splitip = ip.split(".")
+        if len(splitip) != 4:
+            return False
+        for ipparts in splitip:
+            if not ipparts.isdigit():
+                return False
+            ipval = int(ipparts)
+            if ipval < 0 or ipval > 255:
+                return False
+        return True
+
+    def _validate_output_link_map(
+        self: SubarrayScanConfigurationValidator, output_link_map: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates that the channel/values Output Link Map pair contains int, int
+
+        :param output_link_map: A Channel/Value pair of ints
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        try:
+            for element in output_link_map:
+                (int(element[0]), int(element[1]))
+        except (TypeError, ValueError, IndexError):
+            msg = "'outputLinkMap' format not correct."
+            self.logger.error(msg)
+            return (False, msg)
+
+        msg = "Validate Output Link Map: Complete"
+        self.logger.info(msg)
+        return (True, msg)
+
+    def _valdiate_integration_time(
+        self: SubarrayScanConfigurationValidator, fsp: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates that the integration_factor value found in fsp/processing_region is within specification
+
+        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        # Validate integrationTime.
+        if int(fsp["integration_factor"]) in list(
+            range(
+                const.MIN_INT_TIME,
+                10 * const.MIN_INT_TIME + 1,
+                const.MIN_INT_TIME,
+            )
+        ):
+            msg = "Balidate Integration Time: Complete"
+            self.logger.info(msg)
+            return (True, msg)
+        else:
+            msg = (
+                "'integrationTime' must be an integer in the range"
+                f" [1, 10] multiplied by {const.MIN_INT_TIME}."
+            )
+            self.logger.error(msg)
+            return (False, msg)
+
+    # NOTE: When 3.0 valdiations are removed, consider changing the arg fsp to cpr/processing_region
+    def _validate_receptors(
+        self: SubarrayScanConfigurationValidator, fsp: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates that the "receptors" value found in fsp/processing_region is within specification
+
+        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"]
+                    portion of the full Scan Configuration as a Dictionary
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        # dishes may not be specified in the
+        # configuration at all, or the list may be empty
+        if "receptors" in fsp and len(fsp["receptors"]) > 0:
+            self.logger.debug(f"List of receptors: {self._dish_ids}")
+            for dish in fsp["receptors"]:
+                if dish not in self._dish_ids:
+                    msg = (
+                        f"Receptor {dish} does not belong to "
+                        f"subarray {self._subarray_id}."
+                    )
+                    self.logger.error(msg)
+                    return (False, msg)
+        else:
+            msg = (
+                "'receptors' not specified for Fsp CORR config."
+                "Per ICD all receptors allocated to subarray are used"
+            )
+            self.logger.info(msg)
+
+        msg = "Validate Receptor: Complete"
+        self.logger.info(msg)
+        return (True, msg)
+
+    def _validate_vcc(
+        self: SubarrayScanConfigurationValidator,
+    ) -> tuple[bool, str]:
+        """
+        Validats that the assigned VCC proxies found in the Subarray Devices are on
+
+        :return: tuple with:
+                    bool to indicate if the scan configuration is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        for dish_id, proxy in self._proxies_assigned_vcc.items():
+            if proxy.State() != tango.DevState.ON:
+                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
+                return (False, msg)
+        msg = "Validate VCC: Compelte"
+        self.logger.info(msg)
+        return (True, msg)
+
     def _validate_subscription_point(
         self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
@@ -708,208 +913,17 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_vcc(
-        self: SubarrayScanConfigurationValidator,
-    ) -> tuple[bool, str]:
-        """
-        Validats that the assigned VCC proxies found in the Subarray Devices are on
+    ###NOTE Above: Refactored Functions From Pre 4.0 Validations used in v4.0###
 
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        for dish_id, proxy in self._proxies_assigned_vcc.items():
-            if proxy.State() != tango.DevState.ON:
-                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
-                return (False, msg)
-        msg = "Validate VCC: Compelte"
-        self.logger.info(msg)
-        return (True, msg)
-
-    def _validate_search_window(
-        self: SubarrayScanConfigurationValidator, configuration: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates the Search Window specified in the The ["cbf"]/["midcbf"] portion of the full Scan Configuration
-
-        :param configuration: The ["cbf"]/["midcbf"] portion of the full Scan Configuration as a Dictionary
-
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        # Validate searchWindow.
-        if "search_window" in configuration:
-            # check if searchWindow is an array of maximum length 2
-            if len(configuration["search_window"]) > 2:
-                msg = (
-                    "'searchWindow' must be an array of maximum length 2. "
-                    "Aborting configuration."
-                )
-                self.logger.error(msg)
-                return (False, msg)
-            msg = "Validate Search Window: Complete"
-            self.logger.info(msg)
-            return (True, msg)
-        else:
-            msg = "Validate Search Window: Search Window not in Configuration: Complete"
-            self.logger.info(msg)
-            return (True, msg)
-
-    def _validate_receptors(
-        self: SubarrayScanConfigurationValidator, fsp: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates that the "receptors" value found in fsp/processing_region is within specification
-
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        # dishes may not be specified in the
-        # configuration at all, or the list may be empty
-        if "receptors" in fsp and len(fsp["receptors"]) > 0:
-            self.logger.debug(f"List of receptors: {self._dish_ids}")
-            for dish in fsp["receptors"]:
-                if dish not in self._dish_ids:
-                    msg = (
-                        f"Receptor {dish} does not belong to "
-                        f"subarray {self._subarray_id}."
-                    )
-                    self.logger.error(msg)
-                    return (False, msg)
-        else:
-            msg = (
-                "'receptors' not specified for Fsp CORR config."
-                "Per ICD all receptors allocated to subarray are used"
-            )
-            self.logger.info(msg)
-
-        msg = "Validate Receptor: Complete"
-        self.logger.info(msg)
-        return (True, msg)
-
-    def _valdiate_integration_time(
-        self: SubarrayScanConfigurationValidator, fsp: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates that the integration_factor value found in fsp/processing_region is within specification
-
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        # Validate integrationTime.
-        if int(fsp["integration_factor"]) in list(
-            range(
-                const.MIN_INT_TIME,
-                10 * const.MIN_INT_TIME + 1,
-                const.MIN_INT_TIME,
-            )
-        ):
-            msg = "Balidate Integration Time: Complete"
-            self.logger.info(msg)
-            return (True, msg)
-        else:
-            msg = (
-                "'integrationTime' must be an integer in the range"
-                f" [1, 10] multiplied by {const.MIN_INT_TIME}."
-            )
-            self.logger.error(msg)
-            return (False, msg)
-
-    def _validate_output_link_map(
-        self: SubarrayScanConfigurationValidator, output_link_map: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates that the channel/values Output Link Map pair contains int, int
-
-        :param output_link_map: A Channel/Value pair of ints
-
-        :return: tuple with:
-                    bool to indicate if the scan configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        try:
-            for element in output_link_map:
-                (int(element[0]), int(element[1]))
-        except (TypeError, ValueError, IndexError):
-            msg = "'outputLinkMap' format not correct."
-            self.logger.error(msg)
-            return (False, msg)
-
-        msg = "Validate Output Link Map: Complete"
-        self.logger.info(msg)
-        return (True, msg)
-
-    def _validate_ip(self: scm.CbfSubarrayComponentManager, ip: str) -> bool:
-        """
-        Validate IP address format.
-
-        :param ip: IP address to be evaluated
-
-        :return: whether or not the IP address format is valid
-        :rtype: bool
-        """
-        splitip = ip.split(".")
-        if len(splitip) != 4:
-            return False
-        for ipparts in splitip:
-            if not ipparts.isdigit():
-                return False
-            ipval = int(ipparts)
-            if ipval < 0 or ipval > 255:
-                return False
-        return True
-
-    def _validate_max_20_channel_to_same_port_per_host_pre_adr_99(
-        self: SubarrayScanConfigurationValidator, fsp: dict
-    ):
-        if "output_port" in fsp:
-            if "output_host" in fsp:
-                for index, host_mapping in enumerate(fsp["output_host"]):
-                    start_channel = host_mapping[0]
-                    if (index + 1) == len(fsp["output_host"]):
-                        end_channel = (
-                            MAX_STREAMS_PER_FSP * MAX_CHANNELS_PER_STREAM
-                        )
-                    else:
-                        end_channel = fsp["output_host"][index + 1][0]
-
-                    ports_for_host = [
-                        entry[1]
-                        for entry in fsp["output_port"]
-                        if entry[0] >= start_channel and entry[0] < end_channel
-                    ]
-                    # Ensure all ports are unique for the given host
-                    if len(ports_for_host) != len(set(ports_for_host)):
-                        msg = "'output_port' port mappings must be unique per host "
-                        self.logger.error(msg)
-                        return (False, msg)
-                    else:
-                        msg = "Validate At most one stream (20 channels) per port per output_host: complete"
-                        self.logger.info(msg)
-                        return (True, msg)
-
-    # Below: new validation required by / specific to Post ADR 99
-
-    def _validate_input_adr_99(
+    ###NOTE Below: new validation used by v4.0###
+    def _validate_input(
         self: SubarrayScanConfigurationValidator,
         full_configuration: dict,
     ) -> tuple[bool, str]:
         """
-        Validates a post ADR 99/v4.0 or greater Scan Configuration
+        Validates a Scan Configuration
 
-        :param full_configuration: The Scan Configuration as a JSOn Dictionary
+        :param full_configuration: The Scan Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -925,14 +939,14 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         if "pss" in full_configuration:
-            result_code, msg = self._validate_pss_function_mode_adr_99(
+            result_code, msg = self._validate_pss_function_mode(
                 full_configuration["pss"]
             )
             if result_code is False:
                 return (False, msg)
 
         if "pst" in full_configuration:
-            result_code, msg = self._validate_pst_function_mode_adr_99(
+            result_code, msg = self._validate_pst_function_mode(
                 full_configuration["pst"]
             )
             if result_code is False:
@@ -952,9 +966,9 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
-        Validates the ["midcbf"] portion of the Scan Configuration (Post-ADR 99/Post-v4.0)
+        Validates a MidCBF Configuration
 
-        :param configuration: The ["midcbf"] portion of the full Scan Configuration as a Dictionary
+        :param configuration: A MidCBF Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -1058,7 +1072,7 @@ class SubarrayScanConfigurationValidator:
             (
                 result_code,
                 msg,
-            ) = self._validate_max_20_channel_to_same_port_per_host_adr_99(
+            ) = self._validate_max_20_channel_to_same_port_per_host(
                 output_host, output_port, sdp_start_channel_id, channel_count
             )
             if result_code is False:
@@ -1066,7 +1080,7 @@ class SubarrayScanConfigurationValidator:
 
             for fsp_id_str in processing_region["fsp_ids"]:
                 fsp_id = int(fsp_id_str)
-                result_code, msg = self._validate_fsp_id_adr_99(
+                result_code, msg = self._validate_fsp_id(
                     fsp_id, FspModes(function_mode_value), seen_fsp_id
                 )
                 if result_code is False:
@@ -1096,7 +1110,7 @@ class SubarrayScanConfigurationValidator:
                     return (False, msg)
 
             # validate The Function Mode for each processing regions
-            result_code, msg = self._validate_corr_function_mode_adr_99(
+            result_code, msg = self._validate_corr_function_mode(
                 processing_region
             )
             if result_code is False:
@@ -1106,15 +1120,21 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_corr_function_mode_adr_99(
+    def _validate_corr_function_mode(
         self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the Correlation Processing Region is within ADR 99's Scan Configuration specification
-        Note common_configuration is not used, but requried in function definition to be consistent with the other function when passed as a function pointer
+        Validates that the Correlation Processing Region is within
+        Scan Configuration specification (post 4.0)
 
-        :param processing_region: A section of the Scan Configuration (Dictionary) that contains a group of FSP and their configurations
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        Note common_configuration is not used, but requried in function
+        definition to be consistent with the other function when
+        passed as a function pointer
+
+        :param processing_region: A section of the Scan Configuration (Dictionary)
+                that contains a group of FSP and their configurations
+        :param common_configuration: The ["common"] portion of the full
+                Scan Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -1139,14 +1159,14 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_pst_function_mode_adr_99(
+    def _validate_pst_function_mode(
         self: SubarrayScanConfigurationValidator, pst_configuration: dict
     ) -> tuple[bool, str]:
         msg = "MCS Current Does not Support PST Configurations, Skipping"
         self.logger.warning(msg)
         return (True, msg)
 
-    def _validate_pss_function_mode_adr_99(
+    def _validate_pss_function_mode(
         self: SubarrayScanConfigurationValidator, pss_configuration: dict
     ) -> tuple[bool, str]:
         msg = "MCS Current Does not Support PSS Configurations, Skipping"
@@ -1157,10 +1177,11 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the values found in a Processing Region is within the range specified in ADR 99 and that there are enough FSP to cover the range
+        Validates that the values found in a Processing Region is within the
+        range specified and that there are enough FSP to cover the range
 
-        :param processing_region: A processing region in ["processing_region"] portion of the full Scan Configuration as a Dictionary
-
+        :param processing_region: A processing region in ["processing_region"]
+                    portion of the full Scan Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -1305,7 +1326,7 @@ class SubarrayScanConfigurationValidator:
         lower, upper = scan_configuration_supported_value("frequency")
         if (lower_freq < lower) or (upper_freq > upper):
             msg = (
-                "The Processing Region is not within the range for the [0-1981808640] that is acepted by MCS",
+                f"The Processing Region is not within the range for the [{lower}-{upper}] that is acepted by MCS",
                 f"\nProcessing Region range: {lower_freq} - {upper_freq} with starting center at {start_freq}",
             )
             self.logger.error(msg)
@@ -1406,7 +1427,7 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_max_20_channel_to_same_port_per_host_adr_99(
+    def _validate_max_20_channel_to_same_port_per_host(
         self: SubarrayScanConfigurationValidator,
         output_host_map: dict,
         output_port_map: dict,
@@ -1456,28 +1477,27 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_fsp_id_adr_99(
+    def _validate_fsp_id(
         self: SubarrayScanConfigurationValidator,
         fsp_id: int,
         fsp_mode: FspModes,
         seen_fsp_id: set[int],
     ) -> tuple[bool, str]:
         """
-        Validates the FSP ID given matches the criteria setup for the Scan Configuration.  Used for Post ADR 99/ AA 1.0 to restrict which FSP for CORR and PST
+        Validates the FSP ID given matches the criteria setup for the Scan Configuration.
 
-        :param fsp_id: A int value representing the FSP that we want to validate from the ["midcbf"] section of the Scan Configuration
+        :param fsp_id: A int value representing the FSP that we want to validate
+                        from the MidCBF Configuration
         :param fsp_mode: A FspModes Enum that indicates thee FSP Mode for the given fsp_id
-        :param seen_fsp_id: a Hashset of intergers that keeps track of FSP IDs already seen in the subarray
+        :param seen_fsp_id: a Hashset of intergers that keeps track of FSP IDs
+                        already seen in the subarray
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        # TODO for AA 1.0: Add check so that CORR is on 1-4
-        # TODO for AA 1.0: Add check so that PST is on 5-8
-        # AA 0.5 Requirment: Supports only FSP 1-8
-
+        # check in global_enum.py for the supported fsp id per fsp mode dictionary
         if fsp_id not in self.supported_fsp_id_per_mode[fsp_mode]:
             msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {self.supported_fsp_id_per_mode[fsp_mode]}."
             self.logger.error(msg)
@@ -1506,9 +1526,10 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator, common_configuration: dict
     ) -> tuple[bool, str]:
         """
-        Validates the value in the ["common"] portion of the full Scan Configuration of a Post ADR 99 Scan Configuration
+        Validates the values in the Common Configuration of a Scan Configuration
 
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param common_configuration: A Common Configuration of
+                                    a Scan Configuration as a Dictionary
 
         :return: tuple with:
                     bool to indicate if the scan configuration is valid or not
@@ -1560,11 +1581,9 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
-        Validates the keys for the ["midcbf"] portion of the Scan Configuration (Post-ADR 99/Post-v4.0)
+        Validates the keys for the MidCBF Configurations of a Scan Configuration
 
-        :param fsp: The ["fsp"] or a processing_region in the ["processing_regions"] portion of the full Scan Configuration as a Dictionary
-        :param configuration: The ["midcbf"] portion of the full Scan Configuration as a Dictionary
-        :param common_configuration: The ["common"] portion of the full Scan Configuration as a Dictionary
+        :param configuration: A MidCBF Configuration of the a Scan Configuration
 
         :return: tuple with:
             bool to indicate if the scan configuration is valid or not
@@ -1578,11 +1597,11 @@ class SubarrayScanConfigurationValidator:
         if result_code is False:
             return (False, msg)
 
-        result_code, msg = self._validate_search_window_adr99(configuration)
+        result_code, msg = self._validate_search_window(configuration)
         if result_code is False:
             return (False, msg)
 
-        # Not Supported Currently in AA 0.5/AA 1.0
+        # Not Supported in AA 0.5/AA 1.0
         if "frequency_band_offset_stream1" in configuration:
             if (
                 scan_configuration_supported_value(
@@ -1602,7 +1621,7 @@ class SubarrayScanConfigurationValidator:
                 #     "frequency_band_offset_stream1"
                 # ]
 
-        # Not Supported Currently in AA 0.5/AA 1.0
+        # Not Supported in AA 0.5/AA 1.0
         if "frequency_band_offset_stream2" in configuration:
             if (
                 scan_configuration_supported_value(
@@ -1622,7 +1641,7 @@ class SubarrayScanConfigurationValidator:
                 #     "frequency_band_offset_stream2"
                 # ]
 
-        # Not Supported Currently in AA 0.5/AA 1.0
+        # Not Supported in AA 0.5/AA 1.0
         if "rfi_flagging_mask" in configuration:
             if (
                 scan_configuration_supported_value("rfi_flagging_mask")
@@ -1636,7 +1655,7 @@ class SubarrayScanConfigurationValidator:
                 self.logger.error(msg)
                 return (False, msg)
 
-        # Not Supported Currently in AA 0.5/AA 1.0
+        # Not Supported in AA 0.5/AA 1.0
         if "vlbi" in configuration:
             if scan_configuration_supported_value("vlbi") is False:
                 msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
@@ -1651,7 +1670,7 @@ class SubarrayScanConfigurationValidator:
         self.logger.info(msg)
         return (True, msg)
 
-    def _validate_search_window_adr99(
+    def _validate_search_window(
         self: SubarrayScanConfigurationValidator, configuration: dict
     ) -> tuple[bool, str]:
         """
@@ -1691,3 +1710,5 @@ class SubarrayScanConfigurationValidator:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
             self.logger.info(msg)
             return (True, msg)
+
+    ###NOTE Above: new validation used by v4.0###
