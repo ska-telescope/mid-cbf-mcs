@@ -78,6 +78,9 @@ class HelloDirective(Directive):
 
     def run(self) -> list[nodes.Node]:
         table = nodes.table()
+        header = nodes.thead()
+        table.append(header)
+
         return [table]
 
         
