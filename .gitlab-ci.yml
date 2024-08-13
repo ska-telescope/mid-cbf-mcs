@@ -11,12 +11,12 @@ variables:
 stages:
   - lint
   - build
-  # - test
+  - pages
+  - test
   - deploy
   - integration
   - staging
   - join-reports
-  - pages
   - publish
   - scan
 
