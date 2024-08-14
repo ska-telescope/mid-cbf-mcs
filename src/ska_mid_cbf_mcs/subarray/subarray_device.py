@@ -727,7 +727,7 @@ class CbfSubarray(CspSubElementSubarray):
                 # Pre 4.0
                 if "cbf" in full_configuration:
                     configuration = copy.deepcopy(full_configuration["cbf"])
-                # Post .0
+                # Post 4.0
                 elif "midcbf" in full_configuration:
                     configuration = copy.deepcopy(full_configuration["midcbf"])
                 else:

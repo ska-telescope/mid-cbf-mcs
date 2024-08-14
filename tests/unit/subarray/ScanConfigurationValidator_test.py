@@ -155,7 +155,7 @@ class TestScanConfigurationValidator:
         result_code, msg = validator.validate_input()
         print(msg)
         assert (
-            f"AA 0.5 only support 1-4 fsp_id with a single fsp_ids in a processing region, fsp_id given: {len(fsp_ids)}"
+            f"AA 0.5 only support fsp_ids with array length of 1-4,size of the fsp_ids given: {len(fsp_ids)}"
             in msg
         )
         assert result_code is False
@@ -355,7 +355,7 @@ class TestScanConfigurationValidator:
             )
         )
         result_code, msg = validator.validate_input()
-        expected_msg = "Not enought FSP Given in the Processing Region for the Frequency Band Specified in the Common"
+        expected_msg = "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
         print(msg)
         assert expected_msg in msg
         assert result_code is False
