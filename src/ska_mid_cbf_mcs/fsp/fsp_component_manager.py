@@ -570,6 +570,7 @@ class FspComponentManager(CbfComponentManager):
                 ),
                 status=TaskStatus.FAILED,
             )
+            return
 
         self.subarray_membership.remove(argin)
         self._device_attr_change_callback(
@@ -579,8 +580,7 @@ class FspComponentManager(CbfComponentManager):
             "subarrayMembership", self.subarray_membership
         )
 
-        # if no current subarray membership, reset to function mode IDLE and
-        # power off
+        # If no current subarray membership, reset function mode to IDLE
         if len(self.subarray_membership) == 0:
             self.logger.info(
                 "No current subarray membership, resetting function mode to IDLE"

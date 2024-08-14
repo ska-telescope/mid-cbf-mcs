@@ -893,14 +893,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: TaskStatus
         """
         # TODO: support more function modes
-        assigned_resources = list(self._assigned_vcc_proxies) + list(
-            self._assigned_fsp_corr_proxies
+        assigned_resources = (
+            self._assigned_vcc_proxies | self._assigned_fsp_corr_proxies
         )
         if len(assigned_resources) == 0:
             return TaskStatus.COMPLETED
 
         for [[result_code], [command_id]] in self._issue_group_command(
-            command_name=command_name, proxies=assigned_resources, argin=argin
+            command_name=command_name,
+            proxies=list(assigned_resources),
+            argin=argin,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error(
@@ -1487,17 +1489,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return False
 
-        for fsp_proxy in self._assigned_fsp_proxies:
+        for proxy in self._assigned_fsp_corr_proxies:
             try:
-                self._unsubscribe_command_results(fsp_proxy)
-                fsp_proxy.adminMode = AdminMode.OFFLINE
+                self._unsubscribe_command_results(proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 return False
 
-        for fsp_corr_proxy in self._assigned_fsp_corr_proxies:
+        for proxy in self._assigned_fsp_proxies:
             try:
-                self._unsubscribe_command_results(fsp_corr_proxy)
+                self._unsubscribe_command_results(proxy)
+                # If FSP subarrayMembership is empty, set it OFFLINE
+                if len(proxy.subarrayMembership) == 0:
+                    proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 return False
@@ -1646,8 +1650,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
         if not fsp_configure_scan_success:
             # If unsuccessful, reset all assigned FSP devices
-            for proxy in list(self._assigned_fsp_corr_proxies) + list(
-                self._assigned_fsp_proxies
+            for proxy in (
+                self._assigned_fsp_corr_proxies | self._assigned_fsp_proxies
             ):
                 self._unsubscribe_command_results(proxy)
             self._fsp_ids = set()
