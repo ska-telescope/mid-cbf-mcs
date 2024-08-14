@@ -106,6 +106,7 @@ def mock_subarray() -> unittest.mock.Mock:
     with open(json_file_path + "source_init_sys_param.json") as f:
         sp = f.read()
     builder.add_attribute("sourceSysParam", sp)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()

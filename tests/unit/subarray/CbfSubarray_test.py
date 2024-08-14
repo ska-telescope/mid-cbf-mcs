@@ -483,7 +483,7 @@ class TestCbfSubarray:
                 "longRunningCommandResult",
                 (
                     f"{command_id[0]}",
-                    f'[{ResultCode.FAILED.value}, "Failed to remove receptors."]',
+                    f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
                 ),
                 None,
                 1,
@@ -502,6 +502,8 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
+
+        assert device_under_test.receptors == tuple(receptors)
 
     @pytest.mark.parametrize(
         "receptors, \
