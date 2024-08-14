@@ -33,16 +33,24 @@ SubarrayScanConfigurationValidator: Contains functions that validates a given Sc
 
 
 class SubarrayScanConfigurationValidator:
-    # To get a list of Fuction Mode names from the FspModes Enum in gloval_enum.py
+    # To get a list of Fuction Mode names from the FspModes Enum in global_enum.py
     valid_function_modes = [
-        function_modes.name
-        for function_modes in scan_configuration_supported_value(
+        function_mode.name
+        for function_mode in scan_configuration_supported_value(
             "function_modes"
         )
     ]
 
+    # Valid FSP IDs for a CPR
+    (
+        supported_fsp_id_lower,
+        supported_fsp_id_upper,
+    ) = scan_configuration_supported_value("fsp_id")
+
     # Valid FSP IDs for specific FSP Modes
-    supported_fsp_id_per_mode = scan_configuration_supported_value("fsp_id")
+    supported_fsp_id_per_mode = scan_configuration_supported_value(
+        "fsp_id_by_mode"
+    )
 
     # Matches the value given by Scan Configuration for function mode (post v4.0)
     # to the enum value of the function mode in MCS
@@ -77,6 +85,11 @@ class SubarrayScanConfigurationValidator:
         self._proxies_fsp_pss_subarray_device = (
             subarray_component_manager._proxies_fsp_pss_subarray_device
         )
+
+        self._proxies_fsp_pst_subarray_device = (
+            subarray_component_manager._proxies_fsp_pst_subarray_device
+        )
+
         self._dish_ids = subarray_component_manager._dish_ids
         self._subarray_id = subarray_component_manager._subarray_id
         self.logger = logger
@@ -219,7 +232,7 @@ class SubarrayScanConfigurationValidator:
             try:
                 # FYI, Will also modify the fsp dict
                 result_code, msg = self._validate_fsp_in_correct_mode(
-                    fsp, fsp_id, function_mode_value, fsp_proxy
+                    fsp, fsp_id, function_mode_value.value, fsp_proxy
                 )
                 if result_code is False:
                     return (False, msg)
@@ -367,7 +380,6 @@ class SubarrayScanConfigurationValidator:
         if result_code is False:
             return (False, msg)
 
-        frequencyBand = freq_band_dict()[fsp["frequency_band"]]["band_index"]
         # Validate frequencySliceID.
         # See for ex. Fig 8-2 in the Mid.CBF DDD
         num_frequency_slice = freq_band_dict()[fsp["frequency_band"]][
@@ -378,7 +390,7 @@ class SubarrayScanConfigurationValidator:
         ):
             msg = (
                 "'frequencySliceID' must be an integer in the range "
-                f"[1, {const.NUM_FREQUENCY_SLICES_BY_BAND[frequencyBand]}] "
+                f"[1, {num_frequency_slice}] "
                 f"for a 'frequencyBand' of {fsp['frequency_band']}."
             )
             self.logger.error(msg)
@@ -724,7 +736,7 @@ class SubarrayScanConfigurationValidator:
             FspModes.IDLE.value,
             function_mode_value,
         ]:
-            msg = f"FSP {fsp_id} currently set to function mode {self.valid_function_modes.index(fsp_function_mode)}, \
+            msg = f"FSP {fsp_id} currently set to function mode {fsp_function_mode.name}, \
                     cannot be used for {fsp['function_mode']} \
                     until it is returned to IDLE."
             return (False, msg)
@@ -1025,6 +1037,9 @@ class SubarrayScanConfigurationValidator:
             "processing_regions"
         ]:
             processing_region = copy.deepcopy(processing_region)
+
+            # Validations that the fps_id inside the the fsp_ids are valid values
+            # is done in _validate_fsp_id below
             fsp_ids_range = scan_configuration_supported_value("fsp_ids")
             if (
                 len(processing_region["fsp_ids"]) > fsp_ids_range[1]
@@ -1316,32 +1331,40 @@ class SubarrayScanConfigurationValidator:
         channel_width = processing_region["channel_width"]
         channel_count = processing_region["channel_count"]
 
-        # TODO double check that correct math is done here
         # The actual start of the band is at start_freq - (channel_width/2) because start_freq the the center of the first fine channel
-        lower_freq = start_freq - (channel_width / 2)
-        # the upper freq is at lower_freq + (channel_width * channel_count)
-        upper_freq = lower_freq + (channel_width * channel_count)
+        processing_region_lower_freq = start_freq - (channel_width / 2)
+        processing_region_upper_freq = processing_region_lower_freq + (
+            channel_width * channel_count
+        )
 
         # First Check: check that it is within the acceptable range that MCS will take in [0-1981808640]
-        lower, upper = scan_configuration_supported_value("frequency")
-        if (lower_freq < lower) or (upper_freq > upper):
+        (
+            lower_freq_bound,
+            upper_freq_bound,
+        ) = scan_configuration_supported_value("frequency")
+        if (processing_region_lower_freq < lower_freq_bound) or (
+            processing_region_upper_freq > upper_freq_bound
+        ):
             msg = (
-                f"The Processing Region is not within the range for the [{lower}-{upper}] that is acepted by MCS",
-                f"\nProcessing Region range: {lower_freq} - {upper_freq} with starting center at {start_freq}",
+                "The Processing Region is not within the range for the "
+                f"[{lower_freq_bound}-{upper_freq_bound}] that is acepted by MCS"
+                f"\nProcessing Region range: {processing_region_lower_freq} - {processing_region_upper_freq} with starting center at {start_freq}"
             )
             self.logger.error(msg)
             return (False, msg)
 
         # Second Check: Gives a warning if the given range is outside of [Band1.lower-Band2.upper]'s range
-        lower, upper = (
+        band1_lower_freq_bound, band2_upper_freq_bound = (
             const.FREQUENCY_BAND_1_RANGE_HZ[0],
             const.FREQUENCY_BAND_2_RANGE_HZ[1],
         )
-        if (lower_freq < lower) or (upper_freq > upper):
+        if (processing_region_lower_freq < band1_lower_freq_bound) or (
+            processing_region_upper_freq > band2_upper_freq_bound
+        ):
             msg = (
                 f"The Processing Region is not within the range for \
-                     [Band1.lower-Band2.upper]: [{lower}-{upper}]",
-                f"\nProcessing Region range: {lower_freq} - {upper_freq}\
+                     [Band1.lower-Band2.upper]: [{band1_lower_freq_bound}-{band2_upper_freq_bound}]",
+                f"\nProcessing Region range: {processing_region_lower_freq} - {processing_region_upper_freq}\
                       with starting center at {start_freq}",
             )
             self.logger.warning(msg)
@@ -1497,6 +1520,20 @@ class SubarrayScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
+
+        # first check that the fsp_id is a valid value
+        if fsp_id not in range(
+            self.supported_fsp_id_lower, self.supported_fsp_id_upper + 1
+        ):
+            msg = (
+                "Current MCS only support FSP ID in range "
+                f"[{self.supported_fsp_id_lower}-{self.supported_fsp_id_upper}] "
+                f"FSP ID Given: {fsp_id}"
+            )
+
+        # next check that the fsp_id is valid for the FSP Mode
+        # NOTE: When we remove the restrictions of FSP to specific mode, we can remove
+        # the validation below
         # check in global_enum.py for the supported fsp id per fsp mode dictionary
         if fsp_id not in self.supported_fsp_id_per_mode[fsp_mode]:
             msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {self.supported_fsp_id_per_mode[fsp_mode]}."

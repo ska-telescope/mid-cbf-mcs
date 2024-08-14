@@ -42,7 +42,6 @@ class Const:
 
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
-        self.NUM_FREQUENCY_SLICES_BY_BAND = [4, 5, 7, 12, 26, 26]
 
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING_FACTOR = 10 / 9
@@ -140,7 +139,11 @@ def scan_configuration_supported_value(parameter: str) -> any:
         "function_modes": {FspModes.IDLE, FspModes.CORR},
         "subarray_id": [1],
         "fsp_ids": (1, 4),
-        "fsp_id": {FspModes.CORR: [1, 2, 3, 4], FspModes.PST_BF: [5, 6, 7, 8]},
+        "fsp_id": (1, 4),
+        "fsp_id_by_mode": {
+            FspModes.CORR: [1, 2, 3, 4],
+            FspModes.PST_BF: [5, 6, 7, 8],
+        },
         "band_5_tuning": False,
         "frequency_band": {"1", "2"},
         "frequency_band_offset_stream1": False,
