@@ -166,7 +166,7 @@ class CbfSubarray(CbfObsDevice):
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
         dtype="str", doc="The last valid delay model received."
     )
-    def lastDelayModel(self: CbfObsDevice) -> str:
+    def lastDelayModel(self: CbfSubarray) -> str:
         """
         Read the last valid delay model received.
 
@@ -182,7 +182,7 @@ class CbfSubarray(CbfObsDevice):
         """Set up the state model for the device."""
         super(CbfObsDevice, self)._init_state_model()
 
-        # subarray instantiates full observing state model
+        # CbfSubarray uses the full observing state model
         self.obs_state_model = ObsStateModel(
             logger=self.logger,
             callback=self._update_obs_state,

@@ -684,10 +684,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             dish_ids_to_remove.append(dish_id)
 
         if len(dish_ids_to_remove) == 0:
-            self.logger.error(
-                "Subarray does not currently have any assigned receptors."
+            self.logger.info(
+                f"Did not find any receptors to remove; argin: {dish_ids}"
             )
-            return False
+            return True
 
         successes = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -896,6 +896,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         assigned_resources = list(self._assigned_vcc_proxies) + list(
             self._assigned_fsp_corr_proxies
         )
+        if len(assigned_resources) == 0:
+            return TaskStatus.COMPLETED
 
         for [[result_code], [command_id]] in self._issue_group_command(
             command_name=command_name, proxies=assigned_resources, argin=argin
@@ -2041,10 +2043,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.debug("Checking if Restart is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
+        if self.obs_state not in [
+            ObsState.ABORTED,
+            ObsState.FAULT,
+            ObsState.EMPTY,
+        ]:
             self.logger.warning(
                 f"Restart not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.ABORTED or FAULT"
+                + "must be in ObsState.ABORTED, FAULT or EMPTY"
             )
             return False
         return True
@@ -2093,6 +2099,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
+            self._update_component_state(obsfault=False)
 
         obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",

@@ -19,7 +19,6 @@ from unittest.mock import Mock
 import pytest
 from assertpy import assert_that
 from ska_control_model import SimulationMode
-from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
@@ -62,7 +61,7 @@ class TestTalonBoard:
             return MockDependency.InfluxdbQueryClient(
                 request.param["sim_ping_fault"],
             ).ping()
-            
+
         def mock_run(self, *args: Any, **kwargs: Any) -> bool:
             """
             Replace asyncio.run method with a mock method.
@@ -72,7 +71,7 @@ class TestTalonBoard:
 
             :return: a response
             """
-            return MockDependency.Asyncio().run(args)
+            return MockDependency.Asyncio().run
 
         def mock_do_queries(self) -> list[list]:
             """

@@ -96,16 +96,16 @@ class MockDependency:
             """
 
             return self._json
-        
+
     class Asyncio:
         """A mock class to replace Asyncio"""
-        
+
         def __init__(
             self: MockDependency.Asyncio,
         ) -> None:
             return
-        
-        def run(result: bool) -> bool:
+
+        def run(self: MockDependency.Asyncio, result: bool) -> bool:
             return result
 
     class InfluxdbQueryClient:

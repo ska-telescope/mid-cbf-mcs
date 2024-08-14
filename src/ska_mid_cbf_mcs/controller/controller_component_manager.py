@@ -249,7 +249,9 @@ class ControllerComponentManager(CbfComponentManager):
         proxy = self._proxies[fqdn]
 
         if fqdn in (
-            self._talon_lru_fqdn + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+            self._subarray_fqdn
+            + self._talon_lru_fqdn
+            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
             self._subscribe_command_results(proxy)
 
@@ -332,7 +334,8 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn, proxy in self._proxies.items():
             try:
                 if fqdn in (
-                    self._talon_lru_fqdn
+                    self._subarray_fqdn
+                    + self._talon_lru_fqdn
                     + [self._fs_slim_fqdn, self._vis_slim_fqdn]
                 ):
                     self._unsubscribe_command_results(proxy)
@@ -954,122 +957,44 @@ class ControllerComponentManager(CbfComponentManager):
         :param subarray: DeviceProxy of the subarray
         :return: A tuple containing a boolean indicating success and a string message
         """
-        # If subarray is READY go to IDLE
-        if subarray.obsState == ObsState.READY:
-            subarray.GoToIdle()
-            if subarray.obsState != ObsState.IDLE:
-                try:
-                    poll(
-                        lambda: subarray.obsState == ObsState.IDLE,
-                        timeout=const.DEFAULT_TIMEOUT,
-                        step=0.5,
-                    )
-                except TimeoutException:
-                    # Raise exception if timed out waiting to exit RESTARTING
-                    log_msg = f"Failed to send subarray {subarray} to idle, currently in {subarray.obsState}"
-                    self.logger.error(log_msg)
-                    return (False, log_msg)
+        success, message = (
+            True,
+            f"{subarray.dev_name()} successfully set to ObsState.EMPTY",
+        )
 
-        # If subarray is IDLE go to EMPTY by removing all receptors
-        if subarray.obsState == ObsState.IDLE:
-            subarray.RemoveAllReceptors()
-            if subarray.obsState != ObsState.EMPTY:
-                try:
-                    poll(
-                        lambda: subarray.obsState == ObsState.EMPTY,
-                        timeout=const.DEFAULT_TIMEOUT,
-                        step=0.5,
-                    )
-                except TimeoutException:
-                    # Raise exception if timed out waiting to exit RESTARTING
-                    log_msg = f"Failed to remove all receptors from subarray {subarray}, currently in {subarray.obsState}"
-                    self.logger.error(log_msg)
-                    return (False, log_msg)
-
-        # Wait if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
+        # Can issue Abort if subarray is in any of the following states:
         if subarray.obsState in [
             ObsState.RESOURCING,
-            ObsState.RESTARTING,
+            ObsState.IDLE,
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.RESETTING,
         ]:
-            try:
-                poll(
-                    lambda: subarray.obsState
-                    not in [
-                        ObsState.RESOURCING,
-                        ObsState.RESTARTING,
-                    ],
-                    timeout=const.DEFAULT_TIMEOUT,
-                    step=0.5,
-                )
-            except TimeoutException:
-                # Raise exception if timed out waiting to exit RESOURCING/RESTARTING
-                log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                self.logger.error(log_msg)
-                return (False, log_msg)
+            [[result_code], [command_id]] = subarray.Abort()
+            if result_code == ResultCode.REJECTED:
+                success = False
+                message = f"{subarray.dev_name()} Abort command rejected."
+                self.logger.error(message)
+            else:
+                self._blocking_commands.add(command_id)
 
-        # If subarray not in EMPTY then we need to ABORT and RESTART
-        if subarray.obsState != ObsState.EMPTY:
-            # If subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
-            if subarray.obsState in [
-                ObsState.ABORTING,
-                ObsState.RESETTING,
-            ]:
-                try:
-                    poll(
-                        lambda: subarray.obsState
-                        not in [
-                            ObsState.ABORTING,
-                            ObsState.RESETTING,
-                        ],
-                        timeout=const.DEFAULT_TIMEOUT,
-                        step=0.5,
-                    )
-                except TimeoutException:
-                    # Raise exception if timed out waiting to exit ABORTING/RESETTING
-                    log_msg = f"Timed out waiting for {subarray} to exit {subarray.obsState}"
-                    self.logger.error(log_msg)
-                    return (False, log_msg)
+        # Restart subarray to send to EMPTY
+        [[result_code], [command_id]] = subarray.Restart()
+        if result_code == ResultCode.REJECTED:
+            success = False
+            message = f"{subarray.dev_name()} Restart command rejected."
+            self.logger.error(message)
+        else:
+            self._blocking_commands.add(command_id)
 
-            # If subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
-            if subarray.obsState not in [
-                ObsState.FAULT,
-                ObsState.ABORTED,
-            ]:
-                subarray.Abort()
-                if subarray.obsState != ObsState.ABORTED:
-                    try:
-                        # TODO: Poll causes problem in unit test
-                        poll(
-                            lambda: subarray.obsState == ObsState.ABORTED,
-                            timeout=const.DEFAULT_TIMEOUT,
-                            step=0.5,
-                        )
-                        pass
-                    except TimeoutException:
-                        # Raise exception if timed out waiting to exit ABORTING
-                        log_msg = f"Failed to send {subarray} to ObsState.ABORTED, currently in {subarray.obsState}"
-                        self.logger.error(log_msg)
-                        return (False, log_msg)
+        lrc_status = self._wait_for_blocking_results()
+        if lrc_status != TaskStatus.COMPLETED:
+            success = False
+            message = "One or more calls to subarray LRC timed out; check subarray logs."
+            self.logger.error(message)
 
-            # Finally, subarray may be restarted to EMPTY
-            subarray.Restart()
-            if subarray.obsState != ObsState.EMPTY:
-                try:
-                    poll(
-                        lambda: subarray.obsState == ObsState.EMPTY,
-                        timeout=const.DEFAULT_TIMEOUT,
-                        step=0.5,
-                    )
-                except TimeoutException:
-                    # Raise exception if timed out waiting to exit RESTARTING
-                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
-                    self.logger.error(log_msg)
-                    return (False, log_msg)
-
-        return (
-            True,
-            f"Subarray {subarray} succesfully set to ObsState.EMPTY; subarray.obsState = {subarray.obsState}",
-        )
+        return success, message
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
