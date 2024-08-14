@@ -1069,6 +1069,12 @@ class SubarrayScanConfigurationValidator:
                 self.logger.error(msg)
                 return (False, msg)
 
+            result_code, msg = self._validate_processing_region_channel_values(
+                processing_region
+            )
+            if result_code is False:
+                return (False, msg)
+
             result_code, msg = self._validate_processing_region_frequency(
                 processing_region
             )
@@ -1235,21 +1241,22 @@ class SubarrayScanConfigurationValidator:
         self.logger.warning(msg)
         return (True, msg)
 
-    def _validate_processing_region_frequency(
+    def _validate_processing_region_channel_values(
         self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the values found in a Processing Region is within the
-        range specified and that there are enough FSP to cover the range
+        Validates that the channels values requested in a single processing region
+        are valid
 
         :param processing_region: A Single Processing Region within
-                                    a Processing Regions Configuration
+                                a Processing Regions Configuration
 
         :return: tuple with:
-                    bool to indicate if the frequenct requested is valid or not
+                    bool to indicate if the channel values are valid or not
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
+
         channel_width = int(processing_region["channel_width"])
         channel_count = int(processing_region["channel_count"])
         sdp_start_channel_id = int(processing_region["sdp_start_channel_id"])
@@ -1288,16 +1295,40 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
+        msg = "Validate Processing Region Channel Option Values: Complete"
+        self.logger.info(msg)
+        return (True, msg)
+
+    def _validate_processing_region_frequency(
+        self: SubarrayScanConfigurationValidator, processing_region: dict
+    ) -> tuple[bool, str]:
+        """
+        Validates that the values found in a Processing Region is within the
+        range specified and that there are enough FSP to cover the range
+
+        :param processing_region: A Single Processing Region within
+                                    a Processing Regions Configuration
+
+        :return: tuple with:
+                    bool to indicate if the frequenct requested is valid or not
+                    str message about the configuration
+        :rtype: tuple[bool, str]
+        """
+        channel_width = int(processing_region["channel_width"])
+        channel_count = int(processing_region["channel_count"])
+        fsp_given = processing_region["fsp_ids"]
+        start_freq = int(processing_region["start_freq"])
+
         # Check that the Bandwidth specified is within the alloweable range
         result_code, msg = self._validate_processing_region_within_bandwidth(
-            processing_region
+            start_freq, channel_width, channel_count
         )
         if result_code is False:
             return (False, msg)
 
         # Check that we have enough FSP to cover the required Bandwidth requested
         result_code, msg = self._validate_fsp_requirement_by_given_bandwidth(
-            processing_region
+            fsp_given, start_freq, channel_width, channel_count
         )
         if result_code is False:
             return (False, msg)
@@ -1307,14 +1338,20 @@ class SubarrayScanConfigurationValidator:
         return (True, msg)
 
     def _validate_fsp_requirement_by_given_bandwidth(
-        self: SubarrayScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator,
+        fsp_given: list[str],
+        start_freq: int,
+        channel_width: int,
+        channel_count: int,
     ) -> tuple[bool, str]:
         """
         Validates that the Processing Region contains enough FSP to process the
         Bandwidth that was specified from start_freq, channel_width, and channel_count
 
-        :param processing_region: A section of the Scan Configuration (Dictionary)
-                            that contains a group of FSP and their configurations
+        :param fsp_given: A list of FSP ID given for a Processing Region
+        :param start_freq: The center start frequency given for Processing Region
+        :param channel_width: The channel width given for the Processing Region
+        :param channle_count: The channel count request for the Process Reigion
 
         :return: tuple with:
                     bool to indicate if the there is enough fsp or not
@@ -1322,11 +1359,6 @@ class SubarrayScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
         # check if we have enough FSP for the given Frequency Band
-        fsp_given = processing_region["fsp_ids"]
-        start_freq = processing_region["start_freq"]
-        channel_width = processing_region["channel_width"]
-        channel_count = processing_region["channel_count"]
-
         end_freq = start_freq + ((channel_count - 1) * channel_width)
         coarse_channel_low = math.floor(
             (start_freq + const.FS_BW // 2) / const.FS_BW
@@ -1354,7 +1386,10 @@ class SubarrayScanConfigurationValidator:
         return (True, msg)
 
     def _validate_processing_region_within_bandwidth(
-        self: SubarrayScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator,
+        start_freq: int,
+        channel_width: int,
+        channel_count: int,
     ) -> tuple[bool, str]:
         """
         Validates that the Processing Region's frequency range falls
@@ -1364,23 +1399,15 @@ class SubarrayScanConfigurationValidator:
         channel_width and channel_count is outside the range for
         Bands 1 & 2 (350MHz to 1760MHz)
 
-        :param processing_region: A section of the Scan Configuration (Dictionary)
-                that contains a group of FSP and their configurations
-        :param common_configuration: The ["common"] portion of the full
-                Scan Configuration as a Dictionary
+        :param start_freq: The center start frequency given for Processing Region
+        :param channel_width: The channel width given for the Processing Region
+        :param channle_count: The channel count request for the Process Reigion
 
         :return: tuple with:
                     bool to indicate if the frequency range is valid or not
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        # Entire processing region must fit within the specified band
-        # - reject if not completely within band
-
-        start_freq = processing_region["start_freq"]
-        channel_width = processing_region["channel_width"]
-        channel_count = processing_region["channel_count"]
-
         # The actual start of the band is at start_freq - (channel_width/2)
         # because start_freq the the center of the first fine channel
         processing_region_lower_freq = start_freq - (channel_width / 2)
