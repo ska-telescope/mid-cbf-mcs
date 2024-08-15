@@ -16,7 +16,6 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
-from re import T
 from typing import List, Optional, Tuple
 
 import tango
