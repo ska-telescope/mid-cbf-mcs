@@ -17,15 +17,13 @@ import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
 
-test_reference_string =  cleandoc(
-    """
+test_reference_string = """
     Text
     
     Some values
     
     See also :ref:`Abort Sequence`
     """
-)
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
