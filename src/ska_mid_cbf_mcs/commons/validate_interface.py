@@ -28,6 +28,14 @@ CSP_RELEASERESOURCES_VER3_0 = CSP_RELEASERESOURCES_PREFIX + "3.0"
 
 # List of supported interfaces
 
+CSP_CONFIG_VERSIONS = CSP_CONFIG_VER2_5, CSP_CONFIG_VER3_0, CSP_CONFIG_VER4_1
+CSP_DELAYMODEL_VERSIONS = [CSP_DELAYMODEL_VER3_0]
+CSP_SCAN_VERSIONS = [CSP_SCAN_VER2_3]
+CSP_INITSYSPARAM_VERSIONS = [CSP_INITSYSPARAM_VER1_0]
+CSP_ASSIGNRESOURCES_VERSIONS = [CSP_ASSIGNRESOURCES_VER3_0]
+CSP_ENDSCAN_VERSIONS = [CSP_ENDSCAN_VER2_3]
+CSP_RELEASERESOURCES_VERSIONS = [CSP_RELEASERESOURCES_VER3_0]
+
 # Dependent on which stories have been merged into main
 SUPPORTED_INTERFACES = [
     CSP_CONFIG_VER3_0,  # If only CIP-2504 has been merged
@@ -40,6 +48,16 @@ SUPPORTED_INTERFACES = [
     CSP_ENDSCAN_VER2_3,
     CSP_RELEASERESOURCES_VER3_0,
 ]
+
+supported_interfaces = {
+    "config": CSP_CONFIG_VERSIONS,
+    "delaymodel": CSP_DELAYMODEL_VERSIONS,
+    "scan": CSP_SCAN_VERSIONS,
+    "initsysparam": CSP_INITSYSPARAM_VERSIONS,
+    "assignresources": CSP_ASSIGNRESOURCES_VERSIONS,
+    "endscan": CSP_ENDSCAN_VERSIONS,
+    "releaseresources": CSP_RELEASERESOURCES_VERSIONS
+}
 
 
 def validate_interface(argin: str) -> tuple[bool, str]:
@@ -57,7 +75,8 @@ def validate_interface(argin: str) -> tuple[bool, str]:
         ]
 
     # Check supported interface
-    if input["interface"] not in SUPPORTED_INTERFACES:
+    # if input["interface"] not in SUPPORTED_INTERFACES:
+    if not any(input["interface"] in val for val in supported_interfaces.values()):
         print(SUPPORTED_INTERFACES)
         return [False, "The command interface is not supported"]
 

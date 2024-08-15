@@ -10,6 +10,8 @@ from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
 from docutils.utils import SystemMessagePropagation
 
+from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
+
 import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
@@ -18,6 +20,15 @@ CONTROLLER_OFF_COMMAND = ['Off', 'None', '(ResultCode, str)', 'Set power state t
 
 COMMANDS_LIST = ['Off', 'On', 'Config']
 
+cbf_controller_table = {
+    "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
+    "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', None],
+    "row2": ['InitSysParam', 'JSON str*', '(ResultCode, str)', 'Initialize Dish ID to VCC ID mapping and k values\n:ref:\'See also InitSysParam Sequence\'', f'{supported_interfaces["config"]}'],
+    "row3": ['Standby', 'None', '(ResultCode, str)', 'None', None],
+    "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', None],
+}
+
+num_cols = cbf_controller_table['header'].size()
 
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
@@ -25,8 +36,6 @@ COMMANDS_LIST = ['Off', 'On', 'Config']
 #       look for command with matching prefix as supported versions
 
 class SkaTables(Directive):
-    # required_arguments = 5
-    optional_arguments = 5
     has_content = True
 
 
@@ -35,12 +44,12 @@ class SkaTables(Directive):
         table = nodes.table()
 
         tgroup = nodes.tgroup(cols = 5)
-        colspec_1 = nodes.colspec(colwidth=10)           # Spec for each column needed
+        colspec_1 = nodes.colspec(colwidth=10)
         colspec_2 = nodes.colspec(colwidth=10)
         colspec_3 = nodes.colspec(colwidth=10)
         colspec_4 = nodes.colspec(colwidth=10)
         colspec_5 = nodes.colspec(colwidth=10)
-        header = nodes.thead()              # Need variable or can just call?
+        header = nodes.thead()
         header_row = nodes.row()
         header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
         header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
@@ -59,23 +68,45 @@ class SkaTables(Directive):
         table_body = nodes.tbody()
 
         row1 = nodes.row()
-        r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
+        row2 = nodes.row()
+        row3 = nodes.row()
+        row4 = nodes.row()
+ 
+        for i in range(num_cols):
+            r1_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row1'][i]))
+            r2_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row2'][i]))
+            r3_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row3'][i]))
+            r4_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row4'][i]))
 
-        r1_c5_entry = nodes.entry('', nodes.paragraph(text="""Set power state to OFF for controller and \
-                                    subordinate devices (subarrays, VCCs, FSPs)\
-                                    Turn off power to all hardware\
-                                    See also :ref:'Off Sequence'"""))          # Test if this works in rst
-        row1  +=  (r1_c1_entry)
-        row1  +=  (r1_c2_entry)
-        row1  +=  (r1_c3_entry)
-        row1  +=  (r1_c4_entry)
-        row1  +=  (r1_c5_entry)
+            row1 += r1_entry
+            row2 += r2_entry
+            row3 += r3_entry
+            row4 += r4_entry
 
-        table_body  +=  (row1)
+        table_body += row1
+        table_body += row2
+        table_body += row3
+        table_body += row4
+
+
+        # row1 = nodes.row()
+        # r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
+
+        # r1_c5_entry = nodes.entry('', nodes.paragraph(text="""Set power state to OFF for controller and \
+        #                             subordinate devices (subarrays, VCCs, FSPs)\
+        #                             Turn off power to all hardware\
+        #                             See also :ref:'Off Sequence'"""))          # Test if this works in rst
+        # row1  +=  (r1_c1_entry)
+        # row1  +=  (r1_c2_entry)
+        # row1  +=  (r1_c3_entry)
+        # row1  +=  (r1_c4_entry)
+        # row1  +=  (r1_c5_entry)
+
+        # table_body  +=  (row1)
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
@@ -129,3 +160,10 @@ class HelloDirective(Directive):
         tbody += row_2
         
         return [table]
+
+def main():
+    print(cbf_controller_table['row2'][4])
+    print(cbf_controller_table['row1'])
+
+if __name__ == "__main__":
+    main()
