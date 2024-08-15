@@ -72,8 +72,8 @@ class SkaTables(Directive):
         r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
         
-        r1_c5_entry = nodes.entry('', self._parse_text(test_reference_string))          # Test if this works in rst
-        
+        r1_c5_entry = nodes.entry('')          # Test if this works in rst
+        r1_c5_entry.children = self._parse_text(test_reference_string)
         
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
@@ -95,13 +95,13 @@ class SkaTables(Directive):
         return [table]
 
 
-    def _parse_text(self, text: str):
-        p_node = nodes.paragraph(text=text)
+    def _parse_text(self, text_to_parse: str):
+        p_node = nodes.paragraph(text=text_to_parse)
         # Create a node.
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, p_node, node)
-        return node
+        return node.children
 
 
 class HelloDirective(Directive):
