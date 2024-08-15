@@ -19,9 +19,11 @@ HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Inte
 
 test_reference_string =  cleandoc(
     """
-    | Text
-    | Some values
-    | See also :ref:`Abort Sequence`
+    Text
+    
+    Some values
+    
+    See also :ref:`Abort Sequence`
     """
 )
 
