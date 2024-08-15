@@ -192,7 +192,7 @@ class CbfSubarrayTable(Directive):
             row8 += r8_entry
             row9 += r9_entry
             row10 += r10_entry
-            row10 += r11_entry
+            row11 += r11_entry
 
         table_body += row1
         table_body += row2
@@ -214,7 +214,6 @@ class CbfSubarrayTable(Directive):
         tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
-
 
         return [table]
 
