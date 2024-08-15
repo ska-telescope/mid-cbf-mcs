@@ -21,7 +21,7 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Tango Commands
 ------------------------------
 
-.. ska-command-table::'Command Parameters Return type Action Supported Parameters'
+.. ska-command-table:: Command Parameters Return Action Supported
 
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
