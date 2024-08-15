@@ -28,7 +28,7 @@ cbf_controller_table = {
     "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', None],
 }
 
-num_cols = cbf_controller_table['header'].size()
+num_cols = len(cbf_controller_table['header'])
 
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
