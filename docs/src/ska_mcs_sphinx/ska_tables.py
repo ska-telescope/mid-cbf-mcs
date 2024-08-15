@@ -19,6 +19,7 @@ import importlib
 
 class SkaTables(Directive):
     # required_arguments = 5
+    optional_arguments = 5
     has_content = True
 
 
@@ -34,11 +35,11 @@ class SkaTables(Directive):
         colspec_5 = nodes.colspec(colwidth=10)
         header = nodes.thead()              # Need variable or can just call?
         header_row = nodes.row()
-        header_1 = nodes.entry('', nodes.paragraph(text='Command'))
-        header_2 = nodes.entry('', nodes.paragraph(text='Parameters'))
-        header_3 = nodes.entry('', nodes.paragraph(text='Return type'))
-        header_4 = nodes.entry('', nodes.paragraph(text='Action'))
-        header_5 = nodes.entry('', nodes.paragraph(text='Supported versions'))
+        header_1 = nodes.entry('', nodes.paragraph(text=self.arguments[0]))
+        header_2 = nodes.entry('', nodes.paragraph(text=self.arguments[1]))
+        header_3 = nodes.entry('', nodes.paragraph(text=self.arguments[2]))
+        header_4 = nodes.entry('', nodes.paragraph(text=self.arguments[3]))
+        header_5 = nodes.entry('', nodes.paragraph(text=self.arguments[4]))
         header_row  +=  (header_1)
         header_row  +=  (header_2)
         header_row  +=  (header_3)
