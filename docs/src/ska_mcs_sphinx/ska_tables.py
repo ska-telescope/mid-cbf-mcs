@@ -108,9 +108,9 @@ class SkaTables(Directive):
         line_block = nodes.line_block()
         for line_entry in lines:
             line = nodes.line()
+            line.append(line_entry)
             node = nodes.section()
-            raw = nodes.raw(text=line_entry)
-            self.state.nested_parse(raw, 0, node)
+            self.state.nested_parse(line, 0, node)
             line.children = node.children
             line_block.append(line)
         return line_block
