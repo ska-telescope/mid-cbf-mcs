@@ -11,7 +11,7 @@ from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
 from docutils.utils import SystemMessagePropagation
 
-from sphinx import addnodes
+from sphinx import addnodes, util
 
 import importlib
 
@@ -69,7 +69,7 @@ class SkaTables(Directive):
         r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
-
+        
         r1_c5_entry = nodes.entry('', nodes.paragraph(text=test_reference_string))          # Test if this works in rst
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
@@ -88,6 +88,8 @@ class SkaTables(Directive):
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
+
+        self.state.nested_parse(self.content, self.content_offset, table)
         return [table]
 
 
