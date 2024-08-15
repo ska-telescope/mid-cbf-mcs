@@ -26,6 +26,21 @@ test_reference_string = cleandoc(
     """
 )
 
+test_non_block = cleandoc(
+    """
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecena
+    ullamcorper sed dui id vestibulum. Quisque finibus risus vitae rutrum
+    malesuada. Ut orci lorem, volutpat vel purus a, auctor condimentum elit.
+    Nullam accumsan libero vel enim facilisis, ut vestibulum diam tincidunt.
+    Sed aliquet cursus imperdiet. Duis ut ex efficitur, placerat libero sit
+    amet, fringilla est. :ref:`Abort Sequence` Cras nulla tellus, ultrices nec 
+    sollicitudin vitae, scelerisque tempor nisl. Curabitur urna nunc, mattis ac 
+    libero quis, congue suscipit nibh. Nullam fermentum leo leo, vitae 
+    consectetur sem molestie a.
+    """
+)
+
+
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
 #       look for command with matching prefix as supported versions
@@ -70,11 +85,12 @@ class SkaTables(Directive):
         r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
+        
+        r1_c4_entry = nodes.entry('')
+        r1_c4_entry.append(self._parse_line_block(test_reference_string))
         
         r1_c5_entry = nodes.entry()          # Test if this works in rst
-        r1_c5_entry.append(self._parse_line_block(test_reference_string))
+        r1_c5_entry.append(self._parse_text(test_non_block))
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
@@ -108,11 +124,7 @@ class SkaTables(Directive):
         line_block = nodes.line_block()
         for line_entry in lines:
             line = nodes.line()
-            text = nodes.Text(line_entry)
-            line.append(text)
-            node = nodes.section()
-            self.state.nested_parse(line, 0, node)
-            line.children = node.children
+            line.children = self._parse_text(line_entry)
             line_block.append(line)
         return line_block
         
