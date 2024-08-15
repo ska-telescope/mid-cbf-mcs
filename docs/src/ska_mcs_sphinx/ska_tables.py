@@ -39,6 +39,48 @@ test_interfaces = [
     "https://schema.skao.int/ska-csp-configurescan/4.1"
 ]
 
+commands = [
+    { 
+        "Command": "ConfigureScan",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Change observing state to READY"
+            Configure attributes from input JSON"
+            Subscribe events"
+            Configure VCC, VCC subarray, FSP, FSP Subarray
+            Publish output links.
+            See also :ref:`Configure Scan Sequence`
+            """),   
+        "Supported Interface(s)": [
+            "https://schema.skao.int/ska-csp-configurescan/4.3",
+            "https://schema.skao.int/ska-csp-configurescan/4.2",
+            "https://schema.skao.int/ska-csp-configurescan/4.1"
+        ],
+    },
+    { 
+        "Command": "ConfigureScan",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Change observing state to READY
+            Configure attributes from input JSON
+            Subscribe events
+            Configure VCC, VCC subarray, FSP, FSP Subarray
+            Publish output links.
+            See also :ref:`Configure Scan Sequence`
+            """    
+        ),
+        "Supported Interface(s)": [
+            "https://schema.skao.int/ska-csp-configurescan/4.3",
+            "https://schema.skao.int/ska-csp-configurescan/4.2",
+            "https://schema.skao.int/ska-csp-configurescan/4.1"
+        ],
+    }
+]
+
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
@@ -77,38 +119,52 @@ class SkaTables(Directive):
 
         table_body = nodes.tbody()
 
-        row1 = nodes.row("", classes=["row-even"])
-        r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
-        r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
-        
-        
-        r1_c4_entry = nodes.entry('')
-        r1_c4_entry.append(self._parse_line_block(test_reference_string))
-        
-        r1_c5_entry = nodes.entry('')          # Test if this works in rst
-        r1_c5_entry.append(self._create_unordered_list(test_interfaces))
-        row1  +=  (r1_c1_entry)
-        row1  +=  (r1_c2_entry)
-        row1  +=  (r1_c3_entry)
-        row1  +=  (r1_c4_entry)
-        row1  +=  (r1_c5_entry)
-        
-        row2 = nodes.row("",classes=["row-odd"])
-        row2 += nodes.entry('', nodes.paragraph(text= "1"))
-        row2 += nodes.entry('', nodes.paragraph(text= "2"))
-        row2 += nodes.entry('', nodes.paragraph(text= "3"))
-        
-        entry1 = nodes.entry('')
-        entry1.append(self._parse_line_block(test_reference_string))
-        row2 += entry1
-        
-        entry2 = nodes.entry('')
-        entry2.append(self._create_line_block_from_list(test_interfaces))
-        row2 += entry2
+        for index, command in enumerate(commands):
+            row_class = 'row-even' if index % 2 == 0 else 'row-odd'
+            row = nodes.row("", classes=[row_class])
+            row.append(nodes.entry('', nodes.paragraph(text=command['command'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
+            action_entry = nodes.entry('')
+            action_entry.append(self._parse_line_block(command['Action']))
+            row.append(action_entry)
+            supported_entry = nodes.entry('')
+            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
+            row.append(supported_entry)
+            table_body.append(row)
 
-        table_body  +=  (row1)
-        table_body += (row2)
+        # row1 = nodes.row("", classes=["row-even"])
+        # r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
+        # r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
+        
+        
+        # r1_c4_entry = nodes.entry('')
+        # r1_c4_entry.append(self._parse_line_block(test_reference_string))
+        
+        # r1_c5_entry = nodes.entry('')          # Test if this works in rst
+        # r1_c5_entry.append(self._create_unordered_list(test_interfaces))
+        # row1  +=  (r1_c1_entry)
+        # row1  +=  (r1_c2_entry)
+        # row1  +=  (r1_c3_entry)
+        # row1  +=  (r1_c4_entry)
+        # row1  +=  (r1_c5_entry)
+        
+        # row2 = nodes.row("",classes=["row-odd"])
+        # row2 += nodes.entry('', nodes.paragraph(text= "1"))
+        # row2 += nodes.entry('', nodes.paragraph(text= "2"))
+        # row2 += nodes.entry('', nodes.paragraph(text= "3"))
+        
+        # entry1 = nodes.entry('')
+        # entry1.append(self._parse_line_block(test_reference_string))
+        # row2 += entry1
+        
+        # entry2 = nodes.entry('')
+        # entry2.append(self._create_line_block_from_list(test_interfaces))
+        # row2 += entry2
+
+        # table_body  +=  (row1)
+        # table_body += (row2)
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
