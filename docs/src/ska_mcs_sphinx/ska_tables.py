@@ -33,6 +33,12 @@ test_non_block = cleandoc(
     """
 )
 
+test_interfaces = [
+    "https://schema.skao.int/ska-csp-configurescan/4.3"
+    "https://schema.skao.int/ska-csp-configurescan/4.2"
+    "https://schema.skao.int/ska-csp-configurescan/4.1"
+]
+
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
@@ -45,9 +51,6 @@ class SkaTables(Directive):
 
 
     def run(self):
-
-        
-
         table = nodes.table()
 
         tgroup = nodes.tgroup(cols = 5)
@@ -79,18 +82,27 @@ class SkaTables(Directive):
         r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
         
+        
         r1_c4_entry = nodes.entry('')
         r1_c4_entry.append(self._parse_line_block(test_reference_string))
         
-        r1_c5_entry = nodes.entry()          # Test if this works in rst
-        r1_c5_entry.append(self._parse_paragraph(test_non_block))
+        r1_c5_entry = nodes.entry('')          # Test if this works in rst
+        r1_c5_entry.append(self._create_unordered_list(test_interfaces))
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
         row1  +=  (r1_c4_entry)
         row1  +=  (r1_c5_entry)
+        
+        row2 = nodes.row
+        row2 += nodes.entry('', nodes.paragraph(text= "1"))
+        row2 += nodes.entry('', nodes.paragraph(text= "2"))
+        row2 += nodes.entry('', nodes.paragraph(text= "3"))
+        row2 += nodes.entry('', self._parse_line_block(test_reference_string))
+        row2 += nodes.entry('', self._create_line_block_from_list(test_interfaces))
 
         table_body  +=  (row1)
+        table_body += (row2)
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
@@ -125,6 +137,23 @@ class SkaTables(Directive):
             line.children = self._parse_text(line_entry)
             line_block.append(line)
         return line_block
+
+    def _create_unordered_list(self, list_items: list[str]):
+        unordered_list = nodes.bullet_list()
+        for item in list_items:
+            list_item = nodes.list_item()
+            list_item += nodes.paragraph(text=item)
+            unordered_list += list_item
+        return unordered_list
+    
+    def _create_line_block_from_list(self, list_items: list[str]):
+        line_block = nodes.line_block()
+        for item in list_items:
+            line = nodes.line(text=item)
+            line_block += line
+        return line_block
+            
+        
 
 
 class HelloDirective(Directive):
