@@ -125,6 +125,25 @@ class TestCbfSubarray:
         [[result_code], [command_id]] = subarray[sub_id].AddReceptors(dish_ids)
         assert result_code == ResultCode.QUEUED
 
+        # --- VCC checks --- #
+
+        expected_events = [
+            ("subarrayMembership", subarray_params["sub_id"], 0, 1),
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
+        ]
+        for vcc_id in subarray_params["vcc_ids"]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
         # --- Subarray checks --- #
 
         expected_events = [
@@ -151,25 +170,6 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
-
-        # --- VCC checks --- #
-
-        expected_events = [
-            ("subarrayMembership", subarray_params["sub_id"], 0, 1),
-            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
-        ]
-        for vcc_id in subarray_params["vcc_ids"]:
-            for name, value, previous, n in expected_events:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
-                    device_name=vcc[vcc_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                    previous_value=previous,
-                    target_n_events=n,
-                )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_AddReceptors_1"],
@@ -207,32 +207,6 @@ class TestCbfSubarray:
             json.dumps(configuration)
         )
         assert result_code == ResultCode.QUEUED
-
-        # --- Subarray checks --- #
-
-        expected_events = [
-            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
-            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
-            (
-                "longRunningCommandResult",
-                (
-                    f"{command_id}",
-                    f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
-                ),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
 
         # --- VCC checks --- #
 
@@ -297,6 +271,32 @@ class TestCbfSubarray:
                     target_n_events=n,
                 )
 
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
     @pytest.mark.dependency(
         depends=["CbfSubarray_ConfigureScan_1"],
         name="CbfSubarray_Scan_1",
@@ -328,31 +328,6 @@ class TestCbfSubarray:
         [[result_code], [command_id]] = subarray[sub_id].Scan(json.dumps(scan))
         assert result_code == ResultCode.QUEUED
 
-        # --- Subarray checks --- #
-
-        expected_events = [
-            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
-            (
-                "longRunningCommandResult",
-                (
-                    f"{command_id}",
-                    f'[{ResultCode.OK.value}, "Scan completed OK"]',
-                ),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
-
         # --- VCC checks --- #
 
         for vcc_id in subarray_params["vcc_ids"]:
@@ -377,6 +352,31 @@ class TestCbfSubarray:
                 attribute_value=ObsState.SCANNING,
                 previous_value=ObsState.READY,
                 target_n_events=1,
+            )
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "Scan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -406,31 +406,6 @@ class TestCbfSubarray:
         [[result_code], [command_id]] = subarray[sub_id].EndScan()
         assert result_code == ResultCode.QUEUED
 
-        # --- Subarray checks --- #
-
-        expected_events = [
-            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
-            (
-                "longRunningCommandResult",
-                (
-                    f"{command_id}",
-                    f'[{ResultCode.OK.value}, "EndScan completed OK"]',
-                ),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
-
         # --- VCC checks --- #
 
         for vcc_id in subarray_params["vcc_ids"]:
@@ -455,6 +430,31 @@ class TestCbfSubarray:
                 attribute_value=ObsState.READY,
                 previous_value=ObsState.SCANNING,
                 target_n_events=1,
+            )
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "EndScan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -485,31 +485,6 @@ class TestCbfSubarray:
         # Issue GoToIdle command
         [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
         assert result_code == ResultCode.QUEUED
-
-        # --- Subarray checks --- #
-
-        expected_events = [
-            ("obsState", ObsState.IDLE, ObsState.READY, 1),
-            (
-                "longRunningCommandResult",
-                (
-                    f"{command_id}",
-                    f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
-                ),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
 
         # --- VCC checks --- #
 
@@ -570,6 +545,31 @@ class TestCbfSubarray:
                     target_n_events=n,
                 )
 
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
     @pytest.mark.dependency(
         depends=["CbfSubarray_GoToIdle_1"],
         name="CbfSubarray_RemoveAllReceptors_1",
@@ -594,6 +594,25 @@ class TestCbfSubarray:
         # Issue RemoveAllReceptors command
         [[result_code], [command_id]] = subarray[sub_id].RemoveAllReceptors()
         assert result_code == ResultCode.QUEUED
+
+        # --- VCC checks --- #
+
+        expected_events = [
+            ("subarrayMembership", 0, sub_id, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+        for vcc_id in subarray_params["vcc_ids"]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
 
         # --- Subarray checks --- #
 
@@ -621,25 +640,6 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
-
-        # --- VCC checks --- #
-
-        expected_events = [
-            ("subarrayMembership", 0, sub_id, 1),
-            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-            ("state", DevState.DISABLE, DevState.ON, 1),
-        ]
-        for vcc_id in subarray_params["vcc_ids"]:
-            for name, value, previous, n in expected_events:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
-                    device_name=vcc[vcc_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                    previous_value=previous,
-                    target_n_events=n,
-                )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_RemoveAllReceptors_1"],

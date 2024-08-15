@@ -287,7 +287,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
             else:
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
@@ -325,7 +326,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
                 return pdu1_result, ResultCode.FAILED
             else:
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
                 )
@@ -466,7 +468,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                 f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
             )
         else:
-            self._blocking_commands.add(command_id)
+            with self._results_lock:
+                self._blocking_commands.add(command_id)
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
             )
@@ -501,7 +504,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                         f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                     )
                 else:
-                    self._blocking_commands.add(command_id)
+                    with self._results_lock:
+                        self._blocking_commands.add(command_id)
                     lrc_status = self._wait_for_blocking_results(
                         timeout=10.0, task_abort_event=task_abort_event
                     )

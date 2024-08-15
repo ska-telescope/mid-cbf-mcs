@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from threading import Event, Lock
+from threading import Event, Lock, Thread
 from time import sleep
 from typing import Any, Callable, Optional, cast
 
@@ -39,6 +39,9 @@ MAX_GROUP_WORKERS = 8
 
 # Default timeout per blocking command during _wait_for_blocking_results
 DEFAULT_TIMEOUT_PER_COMMAND = 10
+
+# 10 ms resolution
+TIMEOUT_RESOLUTION = 0.01
 
 
 class CbfComponentManager(TaskExecutorComponentManager):
@@ -471,34 +474,64 @@ class CbfComponentManager(TaskExecutorComponentManager):
         if self._device_health_state_callback is not None:
             self._device_health_state_callback(health_state)
 
-    def results_callback(
+    def _results_callback_thread(
         self: CbfComponentManager, event_data: Optional[tango.EventData]
-    ):
+    ) -> None:
         """
-        Locked callback to decrement number of blocking
+        Thread to decrement blocking LRC command results for change event callback.
+
+        :param event_data: Tango attribute change event data
         """
-        try:
-            if event_data.attr_value.value != ("", ""):
-                # fetch the result code from the event_data tuple.
+        if (
+            event_data.attr_value is not None
+            and event_data.attr_value.value != ("", "")
+        ):
+            self.logger.info(
+                f"EventData attr_value: {event_data.attr_value.value}"
+            )
+            # fetch the result code from the event_data tuple.
+            try:
                 result_code = int(
                     event_data.attr_value.value[1].split(",")[0].split("[")[1]
                 )
                 command_id = event_data.attr_value.value[0]
+            except IndexError as ie:
+                self.logger.error(f"{ie}")
+                return
 
-                # if command_id not in monitored blocking commands, ignore it
-                if command_id in self._blocking_commands:
-                    if result_code == ResultCode.OK:
-                        with self._results_lock:
-                            self._blocking_commands.remove(command_id)
-                    else:
-                        self.logger.error(
-                            f"Command ID {command_id} result code: {result_code}"
-                        )
+            # If the command ID not in blocking commands, we should wait a bit,
+            # as the event may have occurred before we had the chance to add
+            # it in the component manager
+            ticks = int(DEFAULT_TIMEOUT_PER_COMMAND / TIMEOUT_RESOLUTION)
+            while command_id not in self._blocking_commands:
+                sleep(TIMEOUT_RESOLUTION)
+                ticks -= 1
+                if ticks <= 0:
+                    return
+
+            if result_code == ResultCode.OK:
+                with self._results_lock:
+                    self._blocking_commands.remove(command_id)
+            else:
+                self.logger.error(
+                    f"Command ID {command_id} result code: {result_code}"
+                )
+
             self.logger.info(
-                f"EventData attr_value:{event_data.attr_value.value}, events remaining={len(self._blocking_commands)}"
+                f"Blocking commands remaining: {self._blocking_commands}"
             )
-        except IndexError as ie:
-            self.logger.error(f"IndexError caught: {ie}")
+
+    def results_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Callback for LRC command result events
+
+        :param event_data: Tango attribute change event data
+        """
+        Thread(
+            target=self._results_callback_thread, args=(event_data,)
+        ).start()
 
     def _wait_for_blocking_results(
         self: CbfComponentManager,
@@ -507,39 +540,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
     ) -> TaskStatus:
         """
         Wait for the number of anticipated results to be pushed by subordinate devices.
-
-        Example for submitted command method
-        ------------------------------------
-        def _command_thread(
-            self: CbfComponentManager,
-            task_callback: Optional[Callable] = None,
-            task_abort_event: Optional[threading.Event] = None,
-            **kwargs,
-        ):
-            # thread begins
-            # ...
-            # call a bunch of commands, get back a list of command_ids
-            command_ids = []
-            # ...
-            # continue until it the results of those commands are needed
-            # ...
-            # when we can no longer progress without the command results
-            # first reset the number of blocking results
-            self._blocking_commands.add(command_ids)
-
-            # subscribe to the LRC results of all blocking proxies, providing the
-            # locked decrement counter method as the callback
-            for proxy in proxies_to_wait_on:
-            proxy.subscribe_event(
-                attr_name="longRunningCommandResult",
-                event_type=EventType.CHANGE_EVENT,
-                callback=self.results_callback
-            )
-
-            # call wait method
-            self._wait_for_blocking(timeout=10.0, task_abort_event=task_abort_event)
-
-            # now we can continue
 
         :param timeout: Time to wait, in seconds. If default value of 0.0 is set,
             timeout = current number of blocking commands * 5
@@ -551,23 +551,26 @@ class CbfComponentManager(TaskExecutorComponentManager):
             timeout = float(
                 len(self._blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND
             )
-        ticks = int(timeout / 0.01)  # 10 ms resolution
+        ticks = int(timeout / TIMEOUT_RESOLUTION)
         while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
                 self.logger.warning(
                     "Task aborted while waiting for blocking results."
                 )
                 return TaskStatus.ABORTED
-            sleep(0.01)
+            sleep(TIMEOUT_RESOLUTION)
             ticks -= 1
             if ticks <= 0:
                 self.logger.error(
                     f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s.\n"
                     f"Blocking commands remaining: {self._blocking_commands}"
                 )
-                self._blocking_commands = set()
+                with self._results_lock:
+                    self._blocking_commands = set()
                 return TaskStatus.FAILED
-        self.logger.info(f"Waited for {timeout - ticks * 0.01} seconds")
+        self.logger.info(
+            f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION} seconds"
+        )
         return TaskStatus.COMPLETED
 
     def toggle_simulation_mode(

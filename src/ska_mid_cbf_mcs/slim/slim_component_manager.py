@@ -463,7 +463,8 @@ class SlimComponentManager(CbfComponentManager):
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.ConnectTxRx() rejected",
                     )
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -665,7 +666,8 @@ class SlimComponentManager(CbfComponentManager):
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.DisconnectTxRx() rejected",
                     )
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event

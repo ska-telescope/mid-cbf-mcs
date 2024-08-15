@@ -192,6 +192,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
         self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
 
+        self.logger.info(f"Active VCC FQDNs: {self._fqdn_vcc}")
+        self.logger.info(f"Active FSP FQDNs: {self._fqdn_fsp}")
+        self.logger.info(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+
         return True
 
     def _init_subelement_proxies(self: CbfSubarrayComponentManager) -> bool:
@@ -892,11 +896,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :return: TaskStatus
         """
+        self.logger.info(
+            f"Issuing {command_name} command to all assigned resources..."
+        )
         # TODO: support more function modes
         assigned_resources = (
             self._assigned_vcc_proxies | self._assigned_fsp_corr_proxies
         )
         if len(assigned_resources) == 0:
+            self.logger.info("No resources currently assigned.")
             return TaskStatus.COMPLETED
 
         for [[result_code], [command_id]] in self._issue_group_command(
@@ -910,8 +918,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 self._blocking_commands = set()
                 return TaskStatus.FAILED
-
-            self._blocking_commands.add(command_id)
+            with self._results_lock:
+                self._blocking_commands.add(command_id)
 
         lrc_status = self._wait_for_blocking_results(
             task_abort_event=task_abort_event
@@ -1085,8 +1093,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     self._blocking_commands = set()
                     return False
-
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1194,8 +1202,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     self._blocking_commands = set()
                     return False
-
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {vcc_proxy.dev_name()}; {df}"
@@ -1297,8 +1305,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
                     )
                     return False
-
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
@@ -1309,8 +1317,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     f"{fsp_proxy.dev_name()} AddSubarrayMembership command rejected"
                 )
                 return False
-
-            self._blocking_commands.add(command_id)
+            with self._results_lock:
+                self._blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -1405,8 +1413,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{fsp_mode_proxy.dev_name()} ConfigureScan command rejected"
                     )
                     return False
-
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
                 self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1480,7 +1488,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 self._blocking_commands = set()
                 return False
-            self._blocking_commands.add(command_id)
+            with self._results_lock:
+                self._blocking_commands.add(command_id)
 
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:

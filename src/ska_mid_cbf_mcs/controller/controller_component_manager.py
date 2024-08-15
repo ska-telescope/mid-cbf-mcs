@@ -724,7 +724,8 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     success = False
                     continue
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
                 # TODO: why is this so slow?
                 lrc_status = self._wait_for_blocking_results(
@@ -787,7 +788,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(message)
                     success = False
                     continue
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -977,7 +979,8 @@ class ControllerComponentManager(CbfComponentManager):
                 message = f"{subarray.dev_name()} Abort command rejected."
                 self.logger.error(message)
             else:
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
         # Restart subarray to send to EMPTY
         [[result_code], [command_id]] = subarray.Restart()
@@ -986,7 +989,8 @@ class ControllerComponentManager(CbfComponentManager):
             message = f"{subarray.dev_name()} Restart command rejected."
             self.logger.error(message)
         else:
-            self._blocking_commands.add(command_id)
+            with self._results_lock:
+                self._blocking_commands.add(command_id)
 
         lrc_status = self._wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
@@ -1024,7 +1028,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(f"Nested LRC Off() to {fqdn} rejected")
                     success = False
                     continue
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
                 self.logger.error(f"Nested LRC Off() to {fqdn} failed: {df}")
@@ -1136,7 +1141,8 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     success = False
                     continue
-                self._blocking_commands.add(command_id)
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
                 lrc_status = self._wait_for_blocking_results(
                     timeout=10.0, task_abort_event=task_abort_event
