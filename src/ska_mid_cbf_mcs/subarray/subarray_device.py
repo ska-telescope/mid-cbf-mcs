@@ -749,96 +749,6 @@ class CbfSubarray(CspSubElementSubarray):
                 msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
                 self.logger.error(msg)
 
-            # Validate frequencyBandOffsetStream1.
-            if "frequency_band_offset_stream1" not in configuration:
-                configuration["frequency_band_offset_stream1"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
-                pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream1' must be at most half "
-                    "of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
-
-            # Validate frequencyBandOffsetStream2.
-            if "frequency_band_offset_stream2" not in configuration:
-                configuration["frequency_band_offset_stream2"] = 0
-            if (
-                abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
-            ):
-                pass
-            else:
-                msg = (
-                    "Absolute value of 'frequencyBandOffsetStream2' must be at most "
-                    "half of the frequency slice bandwidth. Aborting configuration."
-                )
-                return (False, msg)
-
-            # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
-            if common_configuration["frequency_band"] in ["5a", "5b"]:
-                # band5Tuning is optional
-                if "band_5_tuning" in common_configuration:
-                    pass
-                    # check if streamTuning is an array of length 2
-                    try:
-                        assert len(common_configuration["band_5_tuning"]) == 2
-                    except (TypeError, AssertionError):
-                        msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
-                        return (False, msg)
-
-                    stream_tuning = [
-                        *map(float, common_configuration["band_5_tuning"])
-                    ]
-                    if common_configuration["frequency_band"] == "5a":
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band5Tuning must be floats between"
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                " for a 'frequencyBand' of 5a. "
-                                "Aborting configuration."
-                            )
-                            return (False, msg)
-                    else:  # configuration["frequency_band"] == "5b"
-                        if all(
-                            [
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
-                                <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
-                                for i in [0, 1]
-                            ]
-                        ):
-                            pass
-                        else:
-                            msg = (
-                                "Elements in 'band5Tuning must be floats between"
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                                " for a 'frequencyBand' of 5b. "
-                                "Aborting configuration."
-                            )
-                            return (False, msg)
-                else:
-                    # set band5Tuning to zero for the rest of the test. This won't
-                    # change the argin in function "configureScan(argin)"
-                    common_configuration["band_5_tuning"] = [0, 0]
-
             # At this point, validate FSP, VCC, subscription parameters
             full_configuration["common"] = copy.deepcopy(common_configuration)
             if "cbf" in full_configuration:
@@ -846,10 +756,19 @@ class CbfSubarray(CspSubElementSubarray):
             else:
                 full_configuration["midcbf"] = copy.deepcopy(configuration)
             component_manager = self.target
-            return component_manager.validate_input(
+            
+            result_code, msg =  component_manager.validate_input(
                 json.dumps(full_configuration)
             )
 
+            if result_code is True:
+                return (True, msg)
+            else:
+                msg = ("Error when validating the Scan Configuration"
+                        "Aborting configuration.")
+                self.logger.error(msg)
+                return (False, msg)
+                
     def is_ConfigureScan_allowed(self):
         """
         Check if command `ConfigureScan` is allowed in the current device state.

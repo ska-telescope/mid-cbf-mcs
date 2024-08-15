@@ -315,7 +315,7 @@ class SubarrayScanConfigurationValidator:
         common_configuration: dict,
     ) -> tuple[bool, str]:
         """
-        Validates the CBF Configuration of a Scan Configuration
+        Checks if the freqency bands given in the CBF Configuration are valid
 
         :param fsp: A FSP Configuration as a Dictionary
         :param configuration: A CBF Configuration as a Dictionary
@@ -332,15 +332,48 @@ class SubarrayScanConfigurationValidator:
         # TODO - Updated so that is assumes fsp has been deep copied higher in the stack
         fsp["frequency_band"] = common_configuration["frequency_band"]
         if "frequency_band_offset_stream1" in configuration:
+            result_code, msg = self._validates_frequency_band_offset_value(
+                        int(configuration["frequency_band_offset_stream1"]),
+                        "frequency_band_offset_stream1"
+                        )
+            
+            if result_code is False:
+                return (False, msg)
+            
             fsp["frequency_band_offset_stream1"] = configuration[
                 "frequency_band_offset_stream1"
             ]
+        
         if "frequency_band_offset_stream2" in configuration:
+            result_code, msg = self._validates_frequency_band_offset_value(
+                    int(configuration["frequency_band_offset_stream2"]),
+                    "frequency_band_offset_stream2"
+                    )
+            
+            if result_code is False:
+                return (False, msg)
+            
             fsp["frequency_band_offset_stream2"] = configuration[
                 "frequency_band_offset_stream2"
             ]
+
         if fsp["frequency_band"] in ["5a", "5b"]:
+            freqency_band = fsp["frequency_band"]
+            if "band_5_tuning" in common_configuration:
+                band_5_tuning_array = [
+                                *map(float, common_configuration["band_5_tuning"])
+                                ]
+                result_code, msg  = self._validate_band_5_tuning(
+                                            band_5_tuning_array,
+                                            freqency_band
+                                            )
+                if result_code is False:
+                    self.logger.error(msg)
+                    return (False, msg)
+            else:
+                common_configuration["band_5_tuning"] = [0, 0]
             fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+        
         if fsp["frequency_band"] in ["3", "4"]:
             msg = f"invalid frequency_band value of {fsp['frequency_band']}"
             self.logger.error(msg)
@@ -938,6 +971,115 @@ class SubarrayScanConfigurationValidator:
         msg = f"Finish Validating Subscription Points for: {subscribed}"
         self.logger.info(msg)
         return (True, msg)
+    
+    def _validate_band_5_tuning(
+                               self: SubarrayScanConfigurationValidator,
+                               band_5_tuning_array:list[float],
+                               freqency_band: str
+                               ) -> tuple[bool, str]:
+        """
+        Validates that the band_5_tuning value is valid.
+        Assumes that frequency_band in the configuration is either 5a or 5b
+
+        :param band_5_tuning_array: An Array of 2 stream tuning values in float
+        :param freqency_band: A string of the Freqency Band value that should 
+                                be either 5a or 5b
+        
+        :return: tuple with:
+                    bool to indicate if the the band 5 tuning values are valid 
+                    str message about the validation
+        :rtype: tuple[bool, str]
+        """
+        # band5Tuning is optional
+            # check if streamTuning is an array of length 2
+        try:
+            assert len(band_5_tuning_array) == 2
+        except (TypeError, AssertionError):
+            msg = "'band5Tuning' must be an array of length 2."
+            self.logger.error(msg)
+            return (False, msg)
+
+        if freqency_band == "5a":
+            if not all(
+                [
+                    const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
+                    <= band_5_tuning_array[i]
+                    <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
+                    for i in [0, 1]
+                ]
+            ):
+                msg = (
+                    "Elements in 'band5Tuning must be floats between"
+                    f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+                    f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+                    f"(received {band_5_tuning_array[0]} and {band_5_tuning_array[1]})"
+                    " for a 'frequencyBand' of 5a. "
+                    "Aborting configuration."
+                )
+                self.logger.error(msg)
+                return (False, msg)
+        
+        else:  # configuration["frequency_band"] == "5b"
+            if not all(
+                [
+                    const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
+                    <= band_5_tuning_array[i]
+                    <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
+                    for i in [0, 1]
+                ]
+            ):
+                msg = (
+                    "Elements in 'band5Tuning must be floats between"
+                    f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+                    f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+                    f"(received {band_5_tuning_array[0]} and {band_5_tuning_array[1]})"
+                    " for a 'frequencyBand' of 5b. "
+                    "Aborting configuration."
+                )
+                self.logger.error(msg)
+                return (False, msg)
+        
+        msg = "Band 5 Tuning Validation: Complete"
+        self.logger.info(msg)
+        return (True, msg)
+    
+
+    def _validates_frequency_band_offset_value(
+            self: SubarrayScanConfigurationValidator,
+            frequency_band_offset_value:int,
+            frequency_offset_name: str
+        ):
+        """
+        Validates the given Frequency Band Offset Value for 
+        frequencyBandOffsetStream1 or frequencyBandOffsetStream2
+
+        Assumes that the values for frequency_band_offset_value passed into
+        here is from frequency_band_offset_stream1 
+        or frequency_band_offset_stream2
+
+        :param frequency_band_offset_value: The given offset value
+        :param frequency_offset_name: The name of the stream offset that is being
+                                        validated. 
+
+        :return: tuple with:
+                    bool to indicate if the the frequency_band_offset_value are valid 
+                    str message about the validation
+        :rtype: tuple[bool, str]                
+        """
+        if (
+                abs(frequency_band_offset_value)
+                > const.FREQUENCY_SLICE_BW * 10**6 / 2
+            ):
+                msg = (
+                    f"Absolute value of {frequency_offset_name} must be at most "
+                    "half of the frequency slice bandwidth. Aborting configuration."
+                )
+                self.logger.error(msg)
+                return (False, msg)
+        else:
+            msg = "Frequency Band Offset Value Validation: Complete"
+            self.logger.info(msg)
+            return (True, msg)
 
     # NOTE Above: Refactored Functions From Pre 4.0 Validations used in v4.0
 
@@ -1373,7 +1515,7 @@ class SubarrayScanConfigurationValidator:
         if len(fsp_given) < len(coarse_channels):
             msg = (
                 "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
-                f"\nNumber of FSP Required: {len(coarse_channels)}, Number of FSP Given: {len(fsp_given)}"
+                f"\nNumber of FSPs Required: {len(coarse_channels)}, Number of FSPs Given: {len(fsp_given)}"
             )
             self.logger.error(msg)
             return (False, msg)
@@ -1738,6 +1880,19 @@ class SubarrayScanConfigurationValidator:
                 # fsp["frequency_band_offset_stream1"] = configuration[
                 #     "frequency_band_offset_stream1"
                 # ]
+                # if "frequency_band_offset_stream1" not in configuration:
+                #     configuration["frequency_band_offset_stream1"] = 0
+                # if (
+                #     abs(int(configuration["frequency_band_offset_stream1"]))
+                #     <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                # ):
+                #     pass
+                # else:
+                #     msg = (
+                #         "Absolute value of 'frequencyBandOffsetStream1' must be at most half "
+                #         "of the frequency slice bandwidth. Aborting configuration."
+                #     )
+                #     return (False, msg)
 
         # Not Supported in AA 0.5/AA 1.0
         if "frequency_band_offset_stream2" in configuration:
@@ -1758,6 +1913,19 @@ class SubarrayScanConfigurationValidator:
                 # fsp["frequency_band_offset_stream2"] = configuration[
                 #     "frequency_band_offset_stream2"
                 # ]
+                # if "frequency_band_offset_stream2" not in configuration:
+                # configuration["frequency_band_offset_stream2"] = 0
+                # if (
+                #     abs(int(configuration["frequency_band_offset_stream2"]))
+                #     <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                # ):
+                #     pass
+                # else:
+                #     msg = (
+                #         "Absolute value of 'frequencyBandOffsetStream2' must be at most "
+                #         "half of the frequency slice bandwidth. Aborting configuration."
+                #     )
+                #     return (False, msg)
 
         # Not Supported in AA 0.5/AA 1.0
         if "rfi_flagging_mask" in configuration:
