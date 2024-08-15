@@ -35,11 +35,11 @@ class SkaTables(Directive):
         colspec_5 = nodes.colspec(colwidth=10)
         header = nodes.thead()              # Need variable or can just call?
         header_row = nodes.row()
-        header_1 = nodes.entry('', nodes.paragraph(text=self.arguments[0]))
-        header_2 = nodes.entry('', nodes.paragraph(text=self.arguments[1]))
-        header_3 = nodes.entry('', nodes.paragraph(text=self.arguments[2]))
-        header_4 = nodes.entry('', nodes.paragraph(text=self.arguments[3]))
-        header_5 = nodes.entry('', nodes.paragraph(text=self.arguments[4]))
+        header_1 = nodes.entry('', nodes.paragraph(text='Command'))
+        header_2 = nodes.entry('', nodes.paragraph(text='Parameters'))
+        header_3 = nodes.entry('', nodes.paragraph(text='Return type'))
+        header_4 = nodes.entry('', nodes.paragraph(text='Action'))
+        header_5 = nodes.entry('', nodes.paragraph(text='Supported Interfaces'))
         header_row  +=  (header_1)
         header_row  +=  (header_2)
         header_row  +=  (header_3)
@@ -52,10 +52,12 @@ class SkaTables(Directive):
         table_body = nodes.tbody()
 
         row1 = nodes.row()
-        r1_c1_entry = nodes.entry('', nodes.paragraph(text='Off'))
-        r1_c2_entry = nodes.entry('', nodes.paragraph(text='None'))
-        r1_c3_entry = nodes.entry('', nodes.paragraph(text='None'))
-        r1_c4_entry = nodes.entry('', nodes.paragraph(text='(ResultCode, str)'))
+        r1_c1_entry = nodes.entry('', nodes.paragraph(text=self.arguments[0]))
+        r1_c2_entry = nodes.entry('', nodes.paragraph(text=self.arguments[1]))
+        r1_c3_entry = nodes.entry('', nodes.paragraph(text=self.arguments[2]))
+        r1_c4_entry = nodes.entry('', nodes.paragraph(text=self.arguments[3]))
+        r1_c5_entry = nodes.entry('', nodes.paragraph(text=self.arguments[4]))
+
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='Set power state to OFF for controller and \
                                     subordinate devices (subarrays, VCCs, FSPs)\
                                     Turn off power to all hardware\
