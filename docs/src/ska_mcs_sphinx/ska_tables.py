@@ -101,7 +101,7 @@ class SkaTables(Directive):
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, p_node, node)
-        return node.children
+        return node
 
 
 class HelloDirective(Directive):
