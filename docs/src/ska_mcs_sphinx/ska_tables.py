@@ -12,6 +12,7 @@ from docutils.parsers.rst import directives
 from docutils.utils import SystemMessagePropagation
 
 from sphinx import addnodes, util
+from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
@@ -19,12 +20,9 @@ HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Inte
 
 test_reference_string =  cleandoc(
     """
-    Text
-    
-    Some values
-    
-    See also :ref:`Abort Sequence`
-    
+    | Text
+    | Some values
+    | See also :ref:\`abort_sequence_label\`
     """
 )
 
@@ -39,6 +37,8 @@ class SkaTables(Directive):
 
 
     def run(self):
+
+        
 
         table = nodes.table()
 
@@ -74,6 +74,8 @@ class SkaTables(Directive):
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
         
         r1_c5_entry = nodes.entry('', nodes.paragraph(text=test_reference_string))          # Test if this works in rst
+        
+        
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
@@ -92,9 +94,13 @@ class SkaTables(Directive):
         tgroup  +=  (table_body)
 
         contents_node = nodes.container("", classes=[])
-        self.state.nested_parse(self.content, self.content_offset, contents_node)
-        
         contents_node.append(table)
+
+        # Create a node.
+        node = nodes.section()
+        node.document = self.state.document
+
+        nested_parse_with_titles(self.state, contents_node, node)
         return [contents_node]
 
 
