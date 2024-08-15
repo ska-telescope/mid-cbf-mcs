@@ -98,8 +98,14 @@ class SkaTables(Directive):
         row2 += nodes.entry('', nodes.paragraph(text= "1"))
         row2 += nodes.entry('', nodes.paragraph(text= "2"))
         row2 += nodes.entry('', nodes.paragraph(text= "3"))
-        row2 += nodes.entry('', self._parse_line_block(test_reference_string))
-        row2 += nodes.entry('', self._create_line_block_from_list(test_interfaces))
+        
+        entry1 = nodes.entry('')
+        entry1.append(self._parse_line_block(test_reference_string))
+        row2 += entry1
+        
+        entry2 = nodes.entry('')
+        entry2.append(self._create_line_block_from_list(test_interfaces))
+        row2 += entry2
 
         table_body  +=  (row1)
         table_body += (row2)
