@@ -77,7 +77,7 @@ class SkaTables(Directive):
 
         table_body = nodes.tbody()
 
-        row1 = nodes.row()
+        row1 = nodes.row("", classes=["row-even"])
         r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
@@ -94,7 +94,7 @@ class SkaTables(Directive):
         row1  +=  (r1_c4_entry)
         row1  +=  (r1_c5_entry)
         
-        row2 = nodes.row
+        row2 = nodes.row("",classes=["row-odd"])
         row2 += nodes.entry('', nodes.paragraph(text= "1"))
         row2 += nodes.entry('', nodes.paragraph(text= "2"))
         row2 += nodes.entry('', nodes.paragraph(text= "3"))
