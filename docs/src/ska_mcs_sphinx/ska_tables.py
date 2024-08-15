@@ -88,9 +88,11 @@ class SkaTables(Directive):
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
-
-        self.state.nested_parse(self.content, self.content_offset, table)
-        return [table]
+        contents_node = nodes.container("", classes=[])
+        self.state.nested_parse(self.content, self.content_offset, contents_node)
+        
+        contents_node.append(table)
+        return [contents_node]
 
 
 class HelloDirective(Directive):
