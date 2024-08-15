@@ -74,7 +74,7 @@ class SkaTables(Directive):
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
         
         r1_c5_entry = nodes.entry()          # Test if this works in rst
-        r1_c5_entry.children = self._parse_line_block(test_reference_string)
+        r1_c5_entry.append(self._parse_line_block(test_reference_string))
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
@@ -107,13 +107,14 @@ class SkaTables(Directive):
         lines = text_to_parse.split('\n')
         line_block = nodes.line_block()
         for line_entry in lines:
-            line = nodes.line(text=line_entry)
+            line = nodes.line()
+            text_node = nodes.Text(line_entry)
+            parsed_node = nodes.section()
+            parsed_node.document = self.state.document
+            nested_parse_with_titles(self.state, text_node, parsed_node)
+            line.children = parsed_node.children
             line_block.append(line)
-        
-        node = nodes.section()
-        node.document = self.state.document
-        nested_parse_with_titles(self.state, line_block, node)
-        return node.children
+        return line_block
         
         
 
