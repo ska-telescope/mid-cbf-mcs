@@ -9,7 +9,7 @@ from inspect import cleandoc
 from docutils import nodes, utils
 from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
-from docutils.utils import SystemMessagePropagation, cleandoc
+from docutils.utils import SystemMessagePropagation
 
 
 
