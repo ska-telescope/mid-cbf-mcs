@@ -21,7 +21,7 @@ test_reference_string =  cleandoc(
     """
     | Text
     | Some values
-    | See also :ref:`abort_sequence_label`
+    | See also :ref:`Abort Sequence`
     """
 )
 
@@ -72,7 +72,7 @@ class SkaTables(Directive):
         r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
         
-        r1_c5_entry = nodes.entry('', nodes.paragraph(self._parse_text(test_reference_string)))          # Test if this works in rst
+        r1_c5_entry = nodes.entry('', self._parse_text(test_reference_string))          # Test if this works in rst
         
         
         row1  +=  (r1_c1_entry)
@@ -93,16 +93,14 @@ class SkaTables(Directive):
         tgroup  +=  (table_body)
         
         return [table]
-    
+
+
     def _parse_text(self, text: str):
-        
-        text_node = nodes.Text(text)
-        
+        p_node = nodes.paragraph(text=text)
         # Create a node.
         node = nodes.section()
         node.document = self.state.document
-
-        nested_parse_with_titles(self.state, text_node, node)
+        nested_parse_with_titles(self.state, p_node, node)
         return node.children
 
 
