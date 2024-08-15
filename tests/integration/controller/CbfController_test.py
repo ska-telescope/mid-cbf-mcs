@@ -61,9 +61,9 @@ class TestCbfController:
 
         expected_events = [
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.OFF, DevState.DISABLE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
         ]
-        for device in [controller] + talon_lru + [slim_fs, slim_vis]:
+        for device in subarray + power_switch:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
@@ -77,9 +77,9 @@ class TestCbfController:
 
         expected_events = [
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
+            ("state", DevState.OFF, DevState.DISABLE, 1),
         ]
-        for device in subarray + power_switch:
+        for device in talon_lru + [slim_fs, slim_vis] + [controller]:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
@@ -114,17 +114,6 @@ class TestCbfController:
         result_code, command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
-            device_name=controller,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
-            ),
-        )
-
         # TODO: cannot check VCC dishID if sys params downloaded from CAR
         if controller_params["sys_param_from_file"]:
             dish_utils = DISHUtils(json.loads(sys_param_str))
@@ -136,6 +125,17 @@ class TestCbfController:
                     attribute_name="dishID",
                     attribute_value=dish_id,
                 )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
+        )
 
     @pytest.mark.dependency(
         depends=["CbfController_InitSysParam"],
@@ -161,26 +161,6 @@ class TestCbfController:
         # Send the On command
         result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
-
-        expected_events = [
-            ("state", DevState.ON, DevState.OFF, 1),
-            (
-                "longRunningCommandResult",
-                (f"{command_id[0]}", '[0, "On completed OK"]'),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=controller,
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
 
         # Validate subelements are in the correct state
         for device in talon_lru + [slim_fs, slim_vis]:
@@ -217,6 +197,26 @@ class TestCbfController:
                         previous_value=previous,
                         target_n_events=n,
                     )
+
+        expected_events = [
+            ("state", DevState.ON, DevState.OFF, 1),
+            (
+                "longRunningCommandResult",
+                (f"{command_id[0]}", '[0, "On completed OK"]'),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
 
     @pytest.mark.dependency(
         depends=["CbfController_On"],
@@ -276,26 +276,6 @@ class TestCbfController:
         result_code, command_id = controller.Off()
         assert result_code == [ResultCode.QUEUED]
 
-        expected_events = [
-            ("state", DevState.OFF, DevState.ON, 1),
-            (
-                "longRunningCommandResult",
-                (f"{command_id[0]}", '[0, "Off completed OK"]'),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=controller,
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
-
         for device in [slim_fs, slim_vis] + talon_lru:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
@@ -342,6 +322,26 @@ class TestCbfController:
         #         attribute_name="obsState",
         #         attribute_value=ObsState.IDLE,
         #     )
+
+        expected_events = [
+            ("state", DevState.OFF, DevState.ON, 1),
+            (
+                "longRunningCommandResult",
+                (f"{command_id[0]}", '[0, "Off completed OK"]'),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
 
     # @pytest.mark.parametrize(
     #     "config_file_name, \
@@ -515,12 +515,11 @@ class TestCbfController:
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE
 
-        # check adminMode and state changes
         expected_events = [
-            ("state", DevState.DISABLE, DevState.OFF, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
             ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
         ]
-        for device in [controller] + talon_lru + [slim_fs, slim_vis]:
+        for device in subarray + power_switch:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
@@ -532,11 +531,12 @@ class TestCbfController:
                     target_n_events=n,
                 )
 
+        # check adminMode and state changes
         expected_events = [
-            ("state", DevState.DISABLE, DevState.ON, 1),
+            ("state", DevState.DISABLE, DevState.OFF, 1),
             ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
         ]
-        for device in subarray + power_switch:
+        for device in talon_lru + [slim_fs, slim_vis] + [controller]:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
