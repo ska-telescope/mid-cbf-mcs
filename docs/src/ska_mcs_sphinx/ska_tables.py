@@ -11,7 +11,6 @@ from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
 from docutils.utils import SystemMessagePropagation
 
-from sphinx import addnodes, util
 from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
@@ -22,7 +21,7 @@ test_reference_string =  cleandoc(
     """
     | Text
     | Some values
-    | See also :ref:\`abort_sequence_label\`
+    | See also :ref:`abort_sequence_label`
     """
 )
 
@@ -101,7 +100,7 @@ class SkaTables(Directive):
         node.document = self.state.document
 
         nested_parse_with_titles(self.state, contents_node, node)
-        return [contents_node]
+        return node.children
 
 
 class HelloDirective(Directive):
