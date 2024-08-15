@@ -34,8 +34,8 @@ test_non_block = cleandoc(
 )
 
 test_interfaces = [
-    "https://schema.skao.int/ska-csp-configurescan/4.3"
-    "https://schema.skao.int/ska-csp-configurescan/4.2"
+    "https://schema.skao.int/ska-csp-configurescan/4.3",
+    "https://schema.skao.int/ska-csp-configurescan/4.2",
     "https://schema.skao.int/ska-csp-configurescan/4.1"
 ]
 
@@ -148,15 +148,15 @@ class SkaTables(Directive):
         unordered_list = nodes.bullet_list()
         for item in list_items:
             list_item = nodes.list_item()
-            list_item += nodes.paragraph(text=item)
-            unordered_list += list_item
+            list_item.append(nodes.paragraph(text=item))
+            unordered_list.append(list_item)
         return unordered_list
     
     def _create_line_block_from_list(self, list_items: list[str]):
         line_block = nodes.line_block()
         for item in list_items:
             line = nodes.line(text=item)
-            line_block += line
+            line_block.append(line)
         return line_block
             
         
