@@ -274,7 +274,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager._start_communicating"
         )
 
@@ -1024,8 +1024,8 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC Off() rejected"
-                    self.logger.error(f"Nested LRC Off() to {fqdn} rejected")
+                    message = "Nested LRC Slim.Off() rejected"
+                    self.logger.error(f"Nested LRC Slim.Off() to {fqdn} rejected")
                     success = False
                     continue
                 with self._results_lock:

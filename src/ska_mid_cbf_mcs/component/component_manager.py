@@ -37,7 +37,7 @@ __all__ = ["CbfComponentManager"]
 # Maximum number worker threads for group commands
 MAX_GROUP_WORKERS = 8
 
-# Default timeout per blocking command during _wait_for_blocking_results
+# Default timeout per blocking command during _wait_for_blocking_results in seconds
 DEFAULT_TIMEOUT_PER_COMMAND = 10
 
 # 10 ms resolution

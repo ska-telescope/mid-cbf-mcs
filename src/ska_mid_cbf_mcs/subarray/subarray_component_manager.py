@@ -122,7 +122,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             logger=self.logger,
         )
 
-        # Store max capabilities from controller for easy reference
+        # Store maxCapabilities from controller for easy reference
         self._controller_max_capabilities = {}
         self._count_vcc = 0
         self._count_fsp = 0

@@ -122,7 +122,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # If PDU1 and PDU2 match, use same proxy
         if self._pdus[0] == self._pdus[1]:
             self._proxy_power_switch2 = self._proxy_power_switch1
-            # If outlet1 and outlet2 match, use same power state, set single outlet flag
+            # If outlet1 and outlet2 match then use the same PowerState and set using_single_outlet flag
             if self._pdu_outlets[0] == self._pdu_outlets[1]:
                 self._using_single_outlet = True
         else:
@@ -157,7 +157,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering TalonLRUComponentManager._start_communicating"
         )
 

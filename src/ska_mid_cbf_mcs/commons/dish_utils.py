@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-# --- constants for Mid.CBF (197 DISH IDs) --- #
+# --- Constants for Mid.CBF (197 DISH IDs) --- #
 
 # SKA DISH ID range: SKA001 - SKA133
 SKA_DISH_INSTANCE_MIN = 1
