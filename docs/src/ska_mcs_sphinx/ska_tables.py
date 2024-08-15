@@ -122,7 +122,7 @@ class SkaTables(Directive):
         for index, command in enumerate(commands):
             row_class = 'row-even' if index % 2 == 0 else 'row-odd'
             row = nodes.row("", classes=[row_class])
-            row.append(nodes.entry('', nodes.paragraph(text=command['command'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
             action_entry = nodes.entry('')
