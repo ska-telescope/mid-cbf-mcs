@@ -91,16 +91,8 @@ class SkaTables(Directive):
         tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
-
-        contents_node = nodes.container("", classes=[])
-        contents_node.append(table)
-
-        # Create a node.
-        node = nodes.section()
-        node.document = self.state.document
-
-        nested_parse_with_titles(self.state, contents_node, node)
-        return node.children
+        
+        return [table]
     
     def _parse_text(self, text: str):
         
