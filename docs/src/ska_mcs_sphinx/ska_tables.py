@@ -29,14 +29,7 @@ test_reference_string = cleandoc(
 test_non_block = cleandoc(
     """
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecena
-    ullamcorper sed dui id vestibulum. Quisque finibus risus vitae rutrum
-    malesuada. Ut orci lorem, volutpat vel purus a, auctor condimentum elit.
-    Nullam accumsan libero vel enim facilisis, ut vestibulum diam tincidunt.
-    Sed aliquet cursus imperdiet. Duis ut ex efficitur, placerat libero sit
-    amet, fringilla est. :ref:`Abort Sequence` Cras nulla tellus, ultrices nec 
-    sollicitudin vitae, scelerisque tempor nisl. Curabitur urna nunc, mattis ac 
-    libero quis, congue suscipit nibh. Nullam fermentum leo leo, vitae 
-    consectetur sem molestie a.
+    amet, fringilla est. :ref:`Abort Sequence` Cras nulla tellus.
     """
 )
 
@@ -132,8 +125,6 @@ class SkaTables(Directive):
             line.children = self._parse_text(line_entry)
             line_block.append(line)
         return line_block
-        
-        
 
 
 class HelloDirective(Directive):
