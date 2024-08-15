@@ -107,11 +107,12 @@ class SkaTables(Directive):
         lines = text_to_parse.split('\n')
         line_block = nodes.line_block()
         for line_entry in lines:
-            line = nodes.line(text=line_entry)
+            line = nodes.line()
             node = nodes.section()
             node.document = self.state.document
-            nested_parse_with_titles(self.state, line, node)
-            line_block.append([node.children])
+            nested_parse_with_titles(self.state, line_entry, node)
+            line.children = node.children
+            line_block.append(line)
         return line_block
         
         
