@@ -21,10 +21,7 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Tango Commands
 ------------------------------
 
-.. ska-command-table::
-
-
-
+.. cbf-controller-table::
 
 ..
     make comment for table gen reference
@@ -35,6 +32,8 @@ CbfController Tango Commands
 
 CbfSubarray Tango Commands
 ----------------------------
+
+.. cbf-subarray-table::
 
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | Command              | Parameters    | Return type        | Action                                          |

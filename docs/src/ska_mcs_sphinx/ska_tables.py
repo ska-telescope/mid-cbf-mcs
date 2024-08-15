@@ -16,28 +16,54 @@ import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
 
-CONTROLLER_OFF_COMMAND = ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'']
-
-COMMANDS_LIST = ['Off', 'On', 'Config']
-
 cbf_controller_table = {
     "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
-    "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', None],
+    "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', ''],
     "row2": ['InitSysParam', 'JSON str*', '(ResultCode, str)', 'Initialize Dish ID to VCC ID mapping and k values\n:ref:\'See also InitSysParam Sequence\'', f'{supported_interfaces["config"]}'],
-    "row3": ['Standby', 'None', '(ResultCode, str)', 'None', None],
-    "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', None],
+    "row3": ['Standby', 'None', '(ResultCode, str)', 'None', ''],
+    "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', ''],
 }
 
-num_cols = len(cbf_controller_table['header'])
+controller_num_cols = len(cbf_controller_table['header'])
+
+
+cbf_subarray_table = {
+    "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
+    "row1": ['Abort', 'None', '(ResultCode, str)', 'Change observing state to ABORTED\nSend Abort to VCC\n Send Abort to FSP <function mode> Subarrays\nNo action on hardware\nSee also :ref:\'Abort Sequence\'', ''],
+    "row2": ['AddReceptors', 'List[str]', '(ResultCode, str)', 'Assign receptors to this subarray\nTurn subarray to ObsState = IDLE if no\nreceptor was previously assigned', ''],
+    "row3": ['ConfigureScan', 'JSON str*', '(ResultCode, str)', 'Change observing state to READY\nConfigure attributes from input JSON\nSubscribe events\nConfigure VCC,\
+             VCC subarray, FSP, FSP Subarray\nPublish output links.\nSee also :ref:\'Configure Scan Sequence\'', f'{supported_interfaces["config"]}'],
+    "row4": ['EndScan', 'None', '(ResultCode, str)', 'End the scan', ''],
+    "row5": ['ObsReset', 'None', '(ResultCode, str)', 'Reset subarray scan configuration\nKeep assigned receptors\nReset observing state to IDLE\nIf in FAULT, send Abort/ObsReset to VCC\
+             If in FAULT, send Abort/ObsReset to\nFSP <function mode> subarrays\nNo action on hardware\nSee also :ref:\'ObsReset Sequence\'', ''],
+    "row6": ['Off', 'None', '(ResultCode, str)', 'Set subarray power mode to off.\nCommands FSP<function mode> Subarrays\nto turn off\nNo action on hardware power', ''],
+    "row7": ['On', 'None', '(ResultCode, str)', 'Set subarry power mode to on.\nCommand FSP<function mode> Subarrays\nto turn on', ''],
+    "row8": ['RemoveAllReceptrs', 'None', '(ResultCode, str)', 'Remove all receptors\nTurn Subarray off if no receptors are\nassigned', ''],
+    "row9": ['RemoveReceptors', 'List[str]', '(ResultCode, str)', 'Remove receptors in input list\nChange observing state to EMPTY if no\nreceptors assigned', ''],
+    "row10": ['Restart', 'None', '(ResultCode, str)', 'Reset subarray scan configuration\nRemove assigned receptors\nRestart observing state model to EMPTY\
+              If in FAULT, send Abort/ObsReset to VCC\nIf in FAULT, send Abort/ObsReset to\nFSP <function mode> subarrays\nNo action on hardware\nSee also Restart Sequence', ''],
+    "row11": ['Scan', 'JSON str*', '(ResultCode, str)', 'Start scanning', f'{supported_interfaces["scan"]}'],
+}
+
+subarray_num_cols = len(cbf_subarray_table['header'])
+
+# cbf_controller_table = {
+#     "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
+#     "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', ''],
+#     "row2": ['InitSysParam', 'JSON str*', '(ResultCode, str)', 'Initialize Dish ID to VCC ID mapping and k values\n:ref:\'See also InitSysParam Sequence\'', f'{supported_interfaces["config"]}'],
+#     "row3": ['Standby', 'None', '(ResultCode, str)', 'None', ''],
+#     "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', ''],
+# }
+
+# num_cols = len(cbf_controller_table['header'])
 
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
 #       look for command with matching prefix as supported versions
 
-class SkaTables(Directive):
+class CbfControllerTable(Directive):
     has_content = True
-
 
     def run(self):
 
@@ -62,8 +88,7 @@ class SkaTables(Directive):
         header_row  +=  (header_4)
         header_row  +=  (header_5)
 
-        header  +=  (header_row)       # Assume this is right
-
+        header  +=  (header_row)
 
         table_body = nodes.tbody()
 
@@ -72,7 +97,7 @@ class SkaTables(Directive):
         row3 = nodes.row()
         row4 = nodes.row()
  
-        for i in range(num_cols):
+        for i in range(controller_num_cols):
             r1_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row1'][i]))
             r2_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row2'][i]))
             r3_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row3'][i]))
@@ -88,25 +113,98 @@ class SkaTables(Directive):
         table_body += row3
         table_body += row4
 
+        table  +=  (tgroup)
+        tgroup  +=  (colspec_1)
+        tgroup  +=  (colspec_2)
+        tgroup  +=  (colspec_3)
+        tgroup  +=  (colspec_4)
+        tgroup  +=  (colspec_5)
+        tgroup  +=  (header)
+        tgroup  +=  (table_body)
 
-        # row1 = nodes.row()
-        # r1_c1_entry = nodes.entry('', nodes.paragraph(text='no'))
-        # r1_c2_entry = nodes.entry('', nodes.paragraph(text='no'))
-        # r1_c3_entry = nodes.entry('', nodes.paragraph(text='no'))
-        # r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
-        # r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
 
-        # r1_c5_entry = nodes.entry('', nodes.paragraph(text="""Set power state to OFF for controller and \
-        #                             subordinate devices (subarrays, VCCs, FSPs)\
-        #                             Turn off power to all hardware\
-        #                             See also :ref:'Off Sequence'"""))          # Test if this works in rst
-        # row1  +=  (r1_c1_entry)
-        # row1  +=  (r1_c2_entry)
-        # row1  +=  (r1_c3_entry)
-        # row1  +=  (r1_c4_entry)
-        # row1  +=  (r1_c5_entry)
+        return [table]
 
-        # table_body  +=  (row1)
+
+
+class CbfSubarrayTable(Directive):
+    has_content = True
+
+    def run(self):
+
+        table = nodes.table()
+
+        tgroup = nodes.tgroup(cols = 5)
+        colspec_1 = nodes.colspec(colwidth=10)
+        colspec_2 = nodes.colspec(colwidth=10)
+        colspec_3 = nodes.colspec(colwidth=10)
+        colspec_4 = nodes.colspec(colwidth=10)
+        colspec_5 = nodes.colspec(colwidth=10)
+        header = nodes.thead()
+        header_row = nodes.row()
+        header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
+        header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
+        header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
+        header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
+        header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
+        header_row  +=  (header_1)
+        header_row  +=  (header_2)
+        header_row  +=  (header_3)
+        header_row  +=  (header_4)
+        header_row  +=  (header_5)
+
+        header  +=  (header_row)
+
+        table_body = nodes.tbody()
+
+        row1 = nodes.row()
+        row2 = nodes.row()
+        row3 = nodes.row()
+        row4 = nodes.row()
+        row5 = nodes.row()
+        row6 = nodes.row()
+        row7 = nodes.row()
+        row8 = nodes.row()
+        row9 = nodes.row()
+        row10 = nodes.row()
+        row11 = nodes.row()
+ 
+        for i in range(subarray_num_cols):
+            r1_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row1'][i]))
+            r2_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row2'][i]))
+            r3_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row3'][i]))
+            r4_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row4'][i]))
+            r5_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row5'][i]))
+            r6_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row6'][i]))
+            r7_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row7'][i]))
+            r8_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row8'][i]))
+            r9_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row9'][i]))
+            r10_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row10'][i]))
+            r11_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row11'][i]))
+
+            row1 += r1_entry
+            row2 += r2_entry
+            row3 += r3_entry
+            row4 += r4_entry
+            row5 += r5_entry
+            row6 += r6_entry
+            row7 += r7_entry
+            row8 += r8_entry
+            row9 += r9_entry
+            row10 += r10_entry
+            row10 += r11_entry
+
+        table_body += row1
+        table_body += row2
+        table_body += row3
+        table_body += row4
+        table_body += row5
+        table_body += row6
+        table_body += row7
+        table_body += row8
+        table_body += row9
+        table_body += row10
+        table_body += row11
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
@@ -121,49 +219,9 @@ class SkaTables(Directive):
         return [table]
 
 
-class HelloDirective(Directive):
-    """A directive to say hello and create a table!"""
-
-    def run(self) -> list[nodes.Node]:
-        # Create the main table node
-        table = nodes.table()
-        
-        # Create the tgroup (table group) node
-        tgroup = nodes.tgroup(cols=2)
-        table += tgroup
-        
-        # Add column specifications
-        tgroup += nodes.colspec(colwidth=8)
-        tgroup += nodes.colspec(colwidth=4)
-        
-        # Add table header
-        thead = nodes.thead()
-        tgroup += thead
-        header_row = nodes.row()
-        thead += header_row
-        header_row += nodes.entry('', nodes.paragraph(text='Item'))
-        header_row += nodes.entry('', nodes.paragraph(text='Code'))
-        
-        # Add table body
-        tbody = nodes.tbody()
-        tgroup += tbody
-        
-        # Add rows to the body
-        row_1 = nodes.row()
-        row_1 += nodes.entry('', nodes.paragraph(text='bread'))
-        row_1 += nodes.entry('', nodes.paragraph(text='E2'))
-        tbody += row_1
-        
-        row_2 = nodes.row()
-        row_2 += nodes.entry('', nodes.paragraph(text='butter'))
-        row_2 += nodes.entry('', nodes.paragraph(text='E30'))
-        tbody += row_2
-        
-        return [table]
-
 def main():
-    print(cbf_controller_table['row2'][4])
-    print(cbf_controller_table['row1'])
+    print(cbf_subarray_table['row2'][4])
+    print(cbf_subarray_table['row1'])
 
 if __name__ == "__main__":
     main()
