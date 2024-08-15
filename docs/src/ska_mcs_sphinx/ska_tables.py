@@ -14,6 +14,12 @@ import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
 
+CONTROLLER_OFF_COMMAND = ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'']
+
+COMMANDS_LIST = ['Off', 'On', 'Config']
+
+
+
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
 #       look for command with matching prefix as supported versions
@@ -59,10 +65,10 @@ class SkaTables(Directive):
         r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
 
-        r1_c5_entry = nodes.entry('', nodes.paragraph(text='Set power state to OFF for controller and \
+        r1_c5_entry = nodes.entry('', nodes.paragraph(text="""Set power state to OFF for controller and \
                                     subordinate devices (subarrays, VCCs, FSPs)\
                                     Turn off power to all hardware\
-                                    See also :ref:\'Off Sequence\''))          # Test if this works in rst
+                                    See also :ref:'Off Sequence'"""))          # Test if this works in rst
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
@@ -79,6 +85,7 @@ class SkaTables(Directive):
         tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
+
 
         return [table]
 

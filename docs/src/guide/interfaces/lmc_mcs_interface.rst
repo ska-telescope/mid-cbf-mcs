@@ -23,6 +23,14 @@ CbfController Tango Commands
 
 .. ska-command-table::
 
+
+
+
+..
+    make comment for table gen reference
+..
+
+
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 CbfSubarray Tango Commands
