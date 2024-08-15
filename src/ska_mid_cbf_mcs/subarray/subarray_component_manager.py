@@ -908,7 +908,15 @@ class CbfSubarrayComponentManager(
         if self.validateSupportedConfiguration is True:
             json_str = json.dumps(full_configuration)
             validator = SubarrayScanConfigurationValidator(
-                json_str, self, self._logger
+                json_str,
+                self._count_fsp,
+                self._proxies_fsp,
+                self._proxies_assigned_vcc,
+                self._proxies_fsp_pss_subarray_device,
+                self._proxies_fsp_pst_subarray_device,
+                self._dish_ids,
+                self._subarray_id,
+                self._logger,
             )
             return validator.validate_input()
 

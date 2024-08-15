@@ -67,33 +67,39 @@ class SubarrayScanConfigurationValidator:
     def __init__(
         self: SubarrayScanConfigurationValidator,
         scan_configuration: str,
-        subarray_component_manager: scm.CbfSubarrayComponentManager,
+        count_fsp: int,
+        proxies_fsp: list[CbfDeviceProxy],
+        proxies_assigned_vcc: dict[CbfDeviceProxy],
+        proxies_fsp_pss_subarray_device: list[CbfDeviceProxy],
+        proxies_fsp_pst_subarray_device: list[CbfDeviceProxy],
+        dish_ids: list[str],
+        subarray_id: int,
         logger: logging.Logger,
     ) -> None:
         """
         Constructor for SubarrayScanConfigurationValidator
 
         :param scan_configuration: A Scan Configuration json string
-        :param subarray_component_manager: a CbfSubarrayComponentManager object that is requesting the validation
+        :param count_fsp: Count of FSPs in a Subarray Component Manager to be validated
+        :param proxies_fsp: List of FSP Proxy Devices
+        :param proxies_assigned_vcc: Dictionary of VCC Device Proxies,
+                with Dish ID as the key
+        :param proxies_fsp_pss_subarray_device: List of FSP PSS Device Proxies
+        :param proxies_fsp_pst_subarray_device: List of FSP PST Device Proxies
+        :param dish_ids: list of Dish IDs
+        :param subarry_id: The ID of the Subarray's Scan Configuration being validated
         :param logger: A Logger object to handle logging message for the class
         """
 
         self._scan_configuration = scan_configuration
-        self._count_fsp = subarray_component_manager._count_fsp
-        self._proxies_fsp = subarray_component_manager._proxies_fsp
-        self._proxies_assigned_vcc = (
-            subarray_component_manager._proxies_assigned_vcc
-        )
-        self._proxies_fsp_pss_subarray_device = (
-            subarray_component_manager._proxies_fsp_pss_subarray_device
-        )
+        self._count_fsp = count_fsp
+        self._proxies_fsp = proxies_fsp
+        self._proxies_assigned_vcc = proxies_assigned_vcc
+        self._proxies_fsp_pss_subarray_device = proxies_fsp_pss_subarray_device
+        self._proxies_fsp_pst_subarray_device = proxies_fsp_pst_subarray_device
 
-        self._proxies_fsp_pst_subarray_device = (
-            subarray_component_manager._proxies_fsp_pst_subarray_device
-        )
-
-        self._dish_ids = subarray_component_manager._dish_ids
-        self._subarray_id = subarray_component_manager._subarray_id
+        self._dish_ids = dish_ids
+        self._subarray_id = subarray_id
         self.logger = logger
 
     def validate_input(
