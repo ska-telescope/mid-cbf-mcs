@@ -73,6 +73,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
+        :param validateSupportedConfiguration: flag to indicate if more restrictive
+                validation is required for configurations
         :param get_num_capabilities: method that returns the controller device's
                 maxCapabilities attribute (a dictionary specifying the number of each capability)
         :param subarray_fqdns_all: FQDNS of all the Subarray devices
@@ -106,6 +108,8 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         self._logger = logger
+
+        self.validateSupportedConfiguration = True
 
         self._connected = False  # to device proxies
 
@@ -599,6 +603,11 @@ class ControllerComponentManager(CbfComponentManager):
             self._group_subarray.write_attribute(
                 "simulationMode",
                 self._talondx_component_manager.simulation_mode,
+            )
+
+            self._group_subarray.write_attribute(
+                "validateSupportedConfiguration",
+                self.validateSupportedConfiguration,
             )
             self._group_subarray.command_inout("On")
         except tango.DevFailed as df:

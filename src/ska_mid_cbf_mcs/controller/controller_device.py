@@ -16,6 +16,7 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
+from re import T
 from typing import List, Optional, Tuple
 
 import tango
@@ -115,6 +116,24 @@ class CbfController(SKAController):
         "to True while the real devices always set simulationMode to False.",
     )
 
+    @attribute(
+        dtype="DevBoolean",
+        access=AttrWriteType.READ_WRITE,
+        label="Restrictive Validation of Supported Configurations",
+        doc="Flag to indicate if a restrictive validation is requested for "
+        "supported configurations, such as with Scan Configurations. "
+        "Defaults to True",
+    )
+    def validateSupportedConfiguration(self: CbfController) -> bool:
+        """
+        Reads and return the value in the validateSupportedConfiguration
+
+        :return: the value in validateSupportedConfiguration
+        :rtype: bool
+        """
+        res = self.component_manager.validateSupportedConfiguration
+        return res
+
     # ---------------
     # General methods
     # ---------------
@@ -165,6 +184,7 @@ class CbfController(SKAController):
             device = self.target
 
             device.write_simulationMode(True)
+            device.write_validateSupportedConfiguration(True)
 
             if device._max_capabilities:
                 try:
@@ -353,6 +373,27 @@ class CbfController(SKAController):
         """
         super().write_simulationMode(value)
         self._talondx_component_manager.simulation_mode = value
+
+    def write_validateSupportedConfiguration(
+        self: CbfController, value: bool
+    ) -> None:
+        """
+        Sets the validateSupportedConfiguration flag of the device and the
+        component manager.
+
+        A warning level log is created when the flag is set to False.
+
+        :param value: Set the flag to True/False
+        """
+        if value is False:
+            msg = (
+                "Setting validateSupportedConfiguration to False. "
+                "This prevent restrictive checking with Configurations in "
+                "MCS"
+            )
+            self.logger.warning(msg)
+
+        self.component_manager.validateSupportedConfiguration = value
 
     # --------
     # Commands

@@ -180,6 +180,24 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Simulation Mode",
     )
 
+    @attribute(
+        dtype="DevBoolean",
+        access=AttrWriteType.READ_WRITE,
+        label="Restrictive Validation of Supported Configurations",
+        doc="Flag to indicate if a restrictive validation is requested for "
+        "supported configurations, such as with Scan Configurations. "
+        "Defaults to True",
+    )
+    def validateSupportedConfiguration(self: CbfSubarray) -> bool:
+        """
+        Reads and return the value in the validateSupportedConfiguration
+
+        :return: the value in validateSupportedConfiguration
+        :rtype: bool
+        """
+
+        return self.validateSupportedConfiguration
+
     # ---------------
     # General methods
     # ---------------
@@ -465,6 +483,27 @@ class CbfSubarray(CspSubElementSubarray):
         self.component_manager.update_sys_param(value)
         # PROTECTED REGION END #    //  CbfSubarray.sysParam_write
 
+    def write_validateSupportedConfiguration(
+        self: CbfSubarray, value: bool
+    ) -> None:
+        """
+        Sets the validateSupportedConfiguration flag of the device and the
+        component manager.
+
+        A warning level log is created when the flag is set to False.
+
+        :param value: Set the flag to True/False
+        """
+        if value is False:
+            msg = (
+                "Setting validateSupportedConfiguration to False in "
+                "Subarray Device. "
+                "This prevent restrictive checking with Scan Configurations."
+            )
+            self.logger.warning(msg)
+
+        self.component_manager.validateSupportedConfiguration = value
+
     # --------
     # Commands
     # --------
@@ -719,56 +758,21 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (bool, str)
             """
             # try to deserialize input string to a JSON object
-            try:
-                full_configuration = json.loads(argin)
-                common_configuration = copy.deepcopy(
-                    full_configuration["common"]
-                )
-                # Pre 4.0
-                if "cbf" in full_configuration:
-                    configuration = copy.deepcopy(full_configuration["cbf"])
-                # Post 4.0
-                elif "midcbf" in full_configuration:
-                    configuration = copy.deepcopy(full_configuration["midcbf"])
-                else:
-                    msg = "cbf/midcbf configuration not find in the given Scan Configuration"
-                    return (False, msg)
-            except json.JSONDecodeError:  # argument not a valid JSON object
-                msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-                return (False, msg)
 
-            # Validate full_configuration against the telescope model
-            try:
-                telmodel_validate(
-                    version=full_configuration["interface"],
-                    config=full_configuration,
-                    strictness=2,
-                )
-                self.logger.info("Scan configuration is valid!")
-            except ValueError as e:
-                msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
-                self.logger.error(msg)
-
-            # At this point, validate FSP, VCC, subscription parameters
-            full_configuration["common"] = copy.deepcopy(common_configuration)
-            if "cbf" in full_configuration:
-                full_configuration["cbf"] = copy.deepcopy(configuration)
-            else:
-                full_configuration["midcbf"] = copy.deepcopy(configuration)
             component_manager = self.target
-            
-            result_code, msg =  component_manager.validate_input(
-                json.dumps(full_configuration)
-            )
+
+            result_code, msg = component_manager.validate_input(argin)
 
             if result_code is True:
                 return (True, msg)
             else:
-                msg = ("Error when validating the Scan Configuration"
-                        "Aborting configuration.")
+                msg = (
+                    "Error when validating the Scan Configuration"
+                    "Aborting configuration."
+                )
                 self.logger.error(msg)
                 return (False, msg)
-                
+
     def is_ConfigureScan_allowed(self):
         """
         Check if command `ConfigureScan` is allowed in the current device state.

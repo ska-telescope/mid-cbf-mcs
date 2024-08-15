@@ -149,6 +149,8 @@ class CbfSubarrayComponentManager(
 
         self._logger = logger
 
+        self.validateSupportedConfiguration = True
+
         self._simulation_mode = simulation_mode
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
@@ -858,6 +860,8 @@ class CbfSubarrayComponentManager(
         Validate scan configuration.
 
         :param argin: The configuration as JSON formatted string.
+        :param validateSupportedConfiguration: Boolean flag to indicate if
+            MCS Subarray Scan Configuration is required
 
         :return: A tuple containing a boolean indicating if the configuration
             is valid and a string message. The message is for information
@@ -865,11 +869,56 @@ class CbfSubarrayComponentManager(
         :rtype: (bool, str)
         """
 
-        validator = SubarrayScanConfigurationValidator(
-            argin, self, self._logger
-        )
+        try:
+            full_configuration = json.loads(argin)
+            common_configuration = copy.deepcopy(full_configuration["common"])
+            # Pre 4.0
+            if "cbf" in full_configuration:
+                configuration = copy.deepcopy(full_configuration["cbf"])
+            # Post 4.0
+            elif "midcbf" in full_configuration:
+                configuration = copy.deepcopy(full_configuration["midcbf"])
+            else:
+                msg = "cbf/midcbf configuration not find in the given Scan Configuration"
+                return (False, msg)
+        except json.JSONDecodeError:  # argument not a valid JSON object
+            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+            return (False, msg)
 
-        return validator.validate_input()
+        # Validate full_configuration against the telescope model
+        try:
+            telmodel_validate(
+                version=full_configuration["interface"],
+                config=full_configuration,
+                strictness=2,
+            )
+            self._logger.info("Scan configuration is valid!")
+        except ValueError as e:
+            msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
+            self._logger.error(msg)
+
+        # At this point, validate FSP, VCC, subscription parameters
+        full_configuration["common"] = copy.deepcopy(common_configuration)
+        if "cbf" in full_configuration:
+            full_configuration["cbf"] = copy.deepcopy(configuration)
+        else:
+            full_configuration["midcbf"] = copy.deepcopy(configuration)
+
+        # MCS Scan Configuration Validation
+        if self.validateSupportedConfiguration is True:
+            json_str = json.dumps(full_configuration)
+            validator = SubarrayScanConfigurationValidator(
+                json_str, self, self._logger
+            )
+            return validator.validate_input()
+
+        else:
+            msg = (
+                "Skipping MCS Validation of Scan Configuration. "
+                f"validateSupportedConfiguration was set to {self.validateSupportedConfiguration}"
+            )
+            self._logger.info(msg)
+            return (True, msg)
 
     @check_communicating
     def configure_scan(
