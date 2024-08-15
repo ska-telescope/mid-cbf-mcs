@@ -194,7 +194,7 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: bool
         """
 
-        return self.validateSupportedConfiguration
+        return self.component_manager.validateSupportedConfiguration
 
     # ---------------
     # General methods
