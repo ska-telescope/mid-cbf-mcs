@@ -5,14 +5,25 @@ import yaml
 from collections import OrderedDict
 import pathlib
 
+from inspect import cleandoc
 from docutils import nodes, utils
 from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
-from docutils.utils import SystemMessagePropagation
+from docutils.utils import SystemMessagePropagation, cleandoc
+
+
 
 import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
+
+test_reference_string =  cleandoc(
+    """
+    | Text
+    | Some values
+    | See also :ref:`Abort Sequence
+    """
+)
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
 # TODO: For supported versions we can read param list and if json is found we can
@@ -59,10 +70,7 @@ class SkaTables(Directive):
         r1_c4_entry = nodes.entry('', nodes.paragraph(text='no'))
         r1_c5_entry = nodes.entry('', nodes.paragraph(text='no'))
 
-        r1_c5_entry = nodes.entry('', nodes.paragraph(text='Set power state to OFF for controller and \
-                                    subordinate devices (subarrays, VCCs, FSPs)\
-                                    Turn off power to all hardware\
-                                    See also :ref:\'Off Sequence\''))          # Test if this works in rst
+        r1_c5_entry = nodes.entry('', nodes.paragraph(rawsource=test_reference_string))          # Test if this works in rst
         row1  +=  (r1_c1_entry)
         row1  +=  (r1_c2_entry)
         row1  +=  (r1_c3_entry)
