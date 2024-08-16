@@ -17,14 +17,15 @@ from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_control_model import AdminMode, ObsState, ResultCode
+from assertpy import assert_that
+from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
 
-from ...test_utils import device_online_and_on
+from ... import test_utils
 
 # Path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -37,7 +38,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 class TestFspCorrSubarray:
     """
-    Test class for FspCorrSubarray tests.
+    Test class for FspCorrSubarray.
     """
 
     @pytest.fixture(name="test_context")
@@ -61,11 +62,10 @@ class TestFspCorrSubarray:
         self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+        :py:class: `CbfDeviceProxy` to the device under test, in a
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -73,11 +73,11 @@ class TestFspCorrSubarray:
         self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -85,48 +85,47 @@ class TestFspCorrSubarray:
         self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
-    def test_Power_Commands(
+    def device_online_and_on(
         self: TestFspCorrSubarray,
         device_under_test: context.DeviceProxy,
-        command: str,
-    ) -> None:
+        event_tracer: TangoEventTracer,
+    ) -> bool:
         """
-        Test Power commands.
+        Helper function to start up and turn on the DUT.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :param command: the name of the Power command to be tested
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
+        # Set the DUT to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode == SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
 
-        assert device_under_test.State() == DevState.OFF
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
-        if command == "On":
-            expected_result = ResultCode.OK
-            expected_state = DevState.ON
-            result = device_under_test.On()
-        elif command == "Off":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
-        elif command == "Standby":
-            expected_result = ResultCode.REJECTED
-            expected_state = DevState.OFF
-            result = device_under_test.Standby()
-
-        assert result[0][0] == expected_result
-        assert device_under_test.State() == expected_state
+        return device_under_test.adminMode == AdminMode.ONLINE
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -134,23 +133,23 @@ class TestFspCorrSubarray:
     )
     def test_Scan(
         self: TestFspCorrSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
         Test a minimal successful scan configuration.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -167,35 +166,41 @@ class TestFspCorrSubarray:
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+        ]
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -203,24 +208,24 @@ class TestFspCorrSubarray:
     )
     def test_Scan_reconfigure(
         self: TestFspCorrSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
         Test FspCorrSubarray's ability to reconfigure and run multiple scans.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -242,13 +247,15 @@ class TestFspCorrSubarray:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
-                )
+                ),
             )
 
         # second round of observation
@@ -260,39 +267,45 @@ class TestFspCorrSubarray:
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+            ("obsState", ObsState.CONFIGURING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 2),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 2),
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+        ]
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.READY,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -300,22 +313,22 @@ class TestFspCorrSubarray:
     )
     def test_Abort_from_ready(
         self: TestFspCorrSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
     ) -> None:
         """
         Test a Abort from ObsState.READY.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -331,36 +344,42 @@ class TestFspCorrSubarray:
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+        ]
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.ABORTING,
-            ObsState.ABORTED,
-            ObsState.RESETTING,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
@@ -368,23 +387,23 @@ class TestFspCorrSubarray:
     )
     def test_Abort_from_scanning(
         self: TestFspCorrSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
         Test a Abort from ObsState.SCANNING.
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
         # prepare device for observation
-        assert device_online_and_on(device_under_test)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -401,37 +420,43 @@ class TestFspCorrSubarray:
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+        ]
+
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
+            attr_values.append(
                 (
-                    f"{return_value[1][0]}",
-                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
                 )
             )
 
-        # check all obsState transitions
-        for obs_state in [
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.ABORTING,
-            ObsState.ABORTED,
-            ObsState.RESETTING,
-            ObsState.IDLE,
-        ]:
-            change_event_callbacks["obsState"].assert_change_event(
-                obs_state.value
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "delay_model_file_name",
@@ -439,22 +464,22 @@ class TestFspCorrSubarray:
     )
     def test_UpdateDelayModel(
         self: TestFspCorrSubarray,
-        change_event_callbacks: MockTangoEventCallbackGroup,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         delay_model_file_name: str,
     ) -> None:
         """
         Test Fsp's UpdateDelayModel command
 
-        :param change_event_callbacks: fixture that provides a
-            :py:class:`MockTangoEventCallbackGroup` that is subscribed to
-            pertinent attributes
-        :param device_under_test: fixture that provides a proxy to the device
-            under test, in a :py:class:`context.DeviceProxy`
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         :param delay_model_file_name: JSON file for the delay model
         :param sub_id: the subarray id
         """
-        self.test_Power_Commands(device_under_test, "On")
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
         with open(file_path + delay_model_file_name) as f:

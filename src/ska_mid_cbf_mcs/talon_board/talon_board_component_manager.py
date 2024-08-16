@@ -10,14 +10,10 @@
 from __future__ import annotations
 
 import asyncio
-import threading
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import PowerState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
-from ska_tango_base.commands import ResultCode
+from ska_control_model import PowerState
 from ska_tango_testing import context
 from tango import AttrQuality
 
@@ -40,7 +36,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def __init__(
         self: TalonBoardComponentManager,
-        *args: Any,
+        *args: any,
         hostname: str,
         influx_port: int,
         influx_org: str,
@@ -50,7 +46,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         eth_100g_address: str,
         talon_status_address: str,
         hps_master_address: str,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -92,8 +88,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._last_check = datetime.now() - timedelta(hours=1)
         self._telemetry = dict()
         self._proxies = dict()
-        self._talon_sysid_events = []
-        self._talon_status_events = []
+        self._talon_sysid_events = {}
+        self._talon_status_events = {}
 
         self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
@@ -101,7 +97,83 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self) -> None:
+    # TODO: refactor to push change events for TalonBoard attributes?
+    def _attr_change_callback(
+        self, fqdn: str, name: str, value: any, quality: AttrQuality
+    ) -> None:
+        """
+        Callback for attribute change.
+
+        :param fqdn: The FQDN of the device
+        :param name: attribute name
+        :param value: attribute value
+        """
+        if value is None:
+            self.logger.warning(
+                f"None value for attribute {name} of device {fqdn}"
+            )
+        self.logger.debug(f"Attr Change callback: {name} -> {value}")
+        if fqdn == self._talon_sysid_fqdn:
+            self._talon_sysid_attrs[name] = value
+        elif fqdn == self._talon_status_fqdn:
+            self._talon_status_attrs[name] = value
+        else:
+            self.logger.warning(
+                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
+            )
+
+    # TODO: need for list of dicts? or can convert to flat dict, e.g.
+    # {
+    #     "attr_name": event_id
+    # }
+    def _subscribe_change_events(self) -> None:
+        """
+        Subscribe to attribute change events from HPS device proxies
+        """
+        self.logger.info(f"Current proxies: {self._proxies}")
+
+        # Talon System ID attributes
+        self._talon_sysid_events = {}
+
+        if self._talon_sysid_fqdn is not None:
+            for attr_name in ["version", "Bitstream"]:
+                self._talon_sysid_events[attr_name] = self._proxies[
+                    self._talon_sysid_fqdn
+                ].add_change_event_callback(
+                    attribute_name=attr_name,
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+
+        # Talon Status attributes
+        self._talon_status_events = {}
+
+        if self._talon_status_fqdn is not None:
+            for attr_name in [
+                "iopll_locked_fault",
+                "fs_iopll_locked_fault",
+                "comms_iopll_locked_fault",
+                "system_clk_fault",
+                "emif_bl_fault",
+                "emif_br_fault",
+                "emif_tr_fault",
+                "e100g_0_pll_fault",
+                "e100g_1_pll_fault",
+                "slim_pll_fault",
+            ]:
+                self._talon_status_events[attr_name] = self._proxies[
+                    self._talon_status_fqdn
+                ].add_change_event_callback(
+                    attribute_name=attr_name,
+                    callback=self._attr_change_callback,
+                    stateless=True,
+                )
+
+        return
+
+    def _start_communicating(
+        self: TalonBoardComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -109,11 +181,6 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.start_communicating"
         )
 
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
         if not self.simulation_mode:
             try:
                 for fqdn in [
@@ -127,66 +194,92 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._proxies[fqdn] = context.DeviceProxy(
                             device_name=fqdn
                         )
-                        self.logger.debug(f"Created device proxy for {fqdn}")
+                        # TODO: back to debug
+                        self.logger.info(f"Created device proxy for {fqdn}")
                     else:
-                        self._update_communication_state(
-                            CommunicationStatus.NOT_ESTABLISHED
-                        )
                         self.logger.error(
                             "Failed to establish proxies to devices in properties. Check charts."
                         )
+                        self._update_communication_state(
+                            CommunicationStatus.NOT_ESTABLISHED
+                        )
                         return
+
+                self._subscribe_change_events()
             except tango.DevFailed as df:
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self.logger.error(df.args[0].desc)
                 return
 
-        # This moves the op state model.
-        self._update_component_state(power=PowerState.OFF)
+            ping_res = asyncio.run(self._db_client.ping())
+
+            if not ping_res:
+                self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+
+        super()._start_communicating()
+        self._update_component_state(power=PowerState.ON)
+
+    def _stop_communicating(
+        self: TalonBoardComponentManager, *args, **kwargs
+    ) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        self.logger.debug(
+            "Entering TalonBoardComponentManager.stop_communicating"
+        )
+        if not self.simulation_mode:
+            for attr_name, event_id in self._talon_sysid_events.items():
+                self.logger.info(
+                    f"Unsubscribing from {self._talon_sysid_fqdn}/{attr_name} event ID {event_id}"
+                )
+                try:
+                    self._proxies[self._talon_sysid_fqdn].unsubscribe_event(
+                        event_id
+                    )
+                except tango.DevFailed as df:
+                    # Log exception but allow stop_communicating to continue
+                    self.logger.error(f"{df}")
+                    continue
+
+            for attr_name, event_id in self._talon_status_events.items():
+                self.logger.info(
+                    f"Unsubscribing from {self._talon_status_fqdn}/{attr_name} event ID {event_id}"
+                )
+                try:
+                    self._proxies[self._talon_status_fqdn].unsubscribe_event(
+                        event_id
+                    )
+                except tango.DevFailed as df:
+                    # Log exception but allow stop_communicating to continue
+                    self.logger.error(f"{df}")
+                    continue
+
+        self._proxies = {}
+        self._talon_sysid_attrs = {}
+        self._talon_status_attrs = {}
+        self._talon_sysid_events = {}
+        self._talon_status_events = {}
+
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands
     # -------------
 
-    def off(self) -> tuple[ResultCode, str]:
-        """
-        Turn off Talon Board component;
+    # None so far.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        try:
-            if not self.simulation_mode:
-                for ev in self._talon_sysid_events:
-                    for name, id in ev.items():
-                        self.logger.info(
-                            f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
-                        )
-                        self._proxies[self._talon_sysid_fqdn].remove_event(
-                            name, id
-                        )
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
-                for ev in self._talon_status_events:
-                    for name, id in ev.items():
-                        self.logger.info(
-                            f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
-                        )
-                        self._proxies[self._talon_status_fqdn].remove_event(
-                            name, id
-                        )
-        finally:
-            self._proxies = {}
-            self._talon_sysid_attrs = {}
-            self._talon_status_attrs = {}
-            self._talon_sysid_events = []
-            self._talon_status_events = []
-            self._update_component_state(power=PowerState.OFF)
-
-        return (ResultCode.OK, "Off completed OK")
+    # None so far.
 
     # ----------------------------------------------------
     # Talon Board Telemetry and Status from Device Proxies
@@ -1009,243 +1102,3 @@ class TalonBoardComponentManager(CbfComponentManager):
             tango.Except.throw_exception(
                 "No new record available", msg, "validate_time()"
             )
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    def _attr_change_callback(
-        self, fqdn: str, name: str, value: Any, quality: AttrQuality
-    ) -> None:
-        """
-        Callback for attribute change.
-
-        :param fqdn: The FQDN of the device
-        :param name: attribute name
-        :param value: attribute value
-        """
-        if value is None:
-            self.logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-        self.logger.debug(f"Attr Change callback: {name} -> {value}")
-        if fqdn == self._talon_sysid_fqdn:
-            self._talon_sysid_attrs[name] = value
-        elif fqdn == self._talon_status_fqdn:
-            self._talon_status_attrs[name] = value
-        else:
-            self.logger.warning(
-                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
-            )
-
-    def _subscribe_change_events(self) -> None:
-        """
-        Subscribe to attribute change events from HPS device proxies
-        """
-        # Talon System ID attributes
-        self._talon_sysid_events = []
-
-        if self._talon_sysid_fqdn is not None:
-            e = {
-                "version": self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name="version",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_sysid_events.append(e)
-            e = {
-                "Bitstream": self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name="Bitstream",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_sysid_events.append(e)
-
-        # Talon Status attributes
-        self._talon_status_events = []
-
-        if self._talon_status_fqdn is not None:
-            e = {
-                "iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "fs_iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="fs_iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "comms_iopll_locked_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="comms_iopll_locked_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "system_clk_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="system_clk_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_bl_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_bl_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_br_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_br_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "emif_tr_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="emif_tr_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "e100g_0_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="e100g_0_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "e100g_1_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="e100g_1_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-            e = {
-                "slim_pll_fault": self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name="slim_pll_fault",
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-            }
-            self._talon_status_events.append(e)
-        return
-
-    def is_on_allowed(self: TalonBoardComponentManager) -> bool:
-        """
-        Check if On operation is allowed.
-
-        :return: True if allowed, False otherwise
-        """
-        if self.power_state != PowerState.OFF:
-            self.logger.warning(
-                f"On not allowed; PowerState is {self.power_state}"
-            )
-            return False
-        return True
-
-    def _on(
-        self: TalonBoardComponentManager,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[threading.Event] = None,
-        **kwargs,
-    ) -> None:
-        """
-        Turn on Talon Board component. This attempts to establish communication
-        with the devices on the HPS, and subscribe to attribute changes.
-
-        :param task_callback: Callback function to report task status
-        :param task_abort_event: Event to abort the task
-        :raise ConnectionError: if unable to connect to HPS VCC devices
-        """
-        self.logger.debug("Entering TalonBoardComponentManager.on")
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
-            return
-
-        if not self.simulation_mode:
-            self._subscribe_change_events()
-            ping_res = asyncio.run(self._db_client.ping())
-
-            if not ping_res:
-                self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-                self._update_component_state(fault=True)
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        "Failed to connect to InfluxDB",
-                    ),
-                )
-                return
-
-        self._update_component_state(power=PowerState.ON)
-
-        task_callback(
-            status=TaskStatus.COMPLETED,
-            result=(
-                ResultCode.OK,
-                "On completed OK",
-            ),
-        )
-
-    @check_communicating
-    def on(
-        self: TalonBoardComponentManager,
-        task_callback: Optional[Callable] = None,
-        **kwargs: Any,
-    ) -> tuple[ResultCode, str]:
-        """
-        Submit on operation method to task executor queue.
-
-        :param task_callback: Callback function to report task status
-        """
-        self.logger.debug(f"ComponentState={self._component_state}")
-        return self.submit_task(
-            self._on,
-            is_cmd_allowed=self.is_on_allowed,
-            task_callback=task_callback,
-        )

@@ -18,7 +18,7 @@ from typing import Any
 import tango
 from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
@@ -61,7 +61,7 @@ class Fsp(CbfDevice):
 
     @attribute(
         abs_change=1,
-        dtype=("uint16",),
+        dtype=[int],
         max_dim_x=16,
         doc="Subarray membership",
     )
@@ -84,30 +84,21 @@ class Fsp(CbfDevice):
         """
         super().init_command_objects()
 
-        self.register_command_object(
-            "SetFunctionMode",
-            SubmittedSlowCommand(
-                command_name="SetFunctionMode",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="set_function_mode",
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "AddSubarrayMembership",
-            self.AddSubarrayMembershipCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
-        self.register_command_object(
-            "RemoveSubarrayMembership",
-            self.RemoveSubarrayMembershipCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
+        for command_name, method_name in [
+            ("SetFunctionMode", "set_function_mode"),
+            ("AddSubarrayMembership", "add_subarray_membership"),
+            ("RemoveSubarrayMembership", "remove_subarray_membership"),
+        ]:
+            self.register_command_object(
+                command_name,
+                SubmittedSlowCommand(
+                    command_name=command_name,
+                    command_tracker=self._command_tracker,
+                    component_manager=self.component_manager,
+                    method_name=method_name,
+                    logger=self.logger,
+                ),
+            )
 
     def create_component_manager(self: Fsp) -> FspComponentManager:
         """
@@ -168,60 +159,36 @@ class Fsp(CbfDevice):
 
             return (result_code, message)
 
-    def is_On_allowed(self: Fsp) -> bool:
-        """
-        Overriding the base class is_On_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
-        """
-        return True
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
-    def is_Off_allowed(self: Fsp) -> bool:
+    @command(
+        dtype_in="str",
+        dtype_out="DevVarLongStringArray",
+        doc_in="FSP function mode",
+    )
+    def SetFunctionMode(
+        self: Fsp, function_mode: str
+    ) -> DevVarLongStringArrayType:
         """
-        Overriding the base class is_Off_allowed so that the command may be queued,
-        relying on the component manager equivalent method instead.
+        Set the FSP function mode to either IDLE, CORR, PSS-BF, PST-BF, or VLBI.
+        If IDLE, set the PSS, PST, CORR, and VLBI devices to DISABLE. Else,
+        turn ON the target function_mode, and DISABLE all others.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: DevVarLongStringArrayType
+
         """
-        return True
-
-    def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
-        """
-        Determine if AddSubarrayMembership is allowed
-        (allowed if FSP state is ON).
-
-        :return: if AddSubarrayMembership is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    class AddSubarrayMembershipCommand(FastCommand):
-        """
-        A class for the Fsp's AddSubarrayMembership command.
-        """
-
-        def __init__(
-            self: Fsp.AddSubarrayMembershipCommand,
-            *args,
-            component_manager: FspComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
-
-        def do(
-            self: Fsp.AddSubarrayMembershipCommand, sub_id: int
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for AddSubarrayMembership command functionality.
-
-            :param sub_id: an integer representing the subarray affiliation
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.add_subarray_membership(sub_id)
+        command_handler = self.get_command_object(
+            command_name="SetFunctionMode"
+        )
+        result_code, command_id = command_handler(function_mode)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="uint16",
@@ -239,49 +206,8 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="AddSubarrayMembership"
         )
-        result_code, message = command_handler(sub_id)
-        return [[result_code], [message]]
-
-    def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
-        """
-        Determine if RemoveSubarrayMembership is allowed
-        (allowed if FSP state is ON).
-
-        :return: if RemoveSubarrayMembership is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    class RemoveSubarrayMembershipCommand(FastCommand):
-        """
-        A class for the Fsp's RemoveSubarrayMembership command.
-        """
-
-        def __init__(
-            self: Fsp.RemoveSubarrayMembershipCommand,
-            *args,
-            component_manager: FspComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
-
-        def do(
-            self: Fsp.RemoveSubarrayMembershipCommand, sub_id: int
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for RemoveSubarrayMembership command functionality.
-
-            :param sub_id: an integer representing the subarray affiliation
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.remove_subarray_membership(sub_id)
+        result_code, command_id = command_handler(sub_id)
+        return [[result_code], [command_id]]
 
     @command(
         dtype_in="uint16",
@@ -301,50 +227,7 @@ class Fsp(CbfDevice):
         command_handler = self.get_command_object(
             command_name="RemoveSubarrayMembership"
         )
-        result_code, message = command_handler(sub_id)
-        return [[result_code], [message]]
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
-        """
-        Determine if SetFunctionMode is allowed
-        (allowed if FSP state is ON).
-
-        :return: if SetFunctionMode is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="FSP function mode",
-    )
-    def SetFunctionMode(
-        self: Fsp, function_mode: str
-    ) -> DevVarLongStringArrayType:
-        """
-        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-        If IDLE: Set the PSS, PST, CORR and VLBI devices to DISABLE.
-        Else: Turn one of them ON according to function_mode, and all others DISABLE.
-
-        :param function_mode: one of 'IDLE', 'CORR', 'PSS-BF', 'PST-BF', or 'VLBI'
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: DevVarLongStringArrayType
-
-        """
-        command_handler = self.get_command_object(
-            command_name="SetFunctionMode"
-        )
-        result_code, command_id = command_handler(function_mode)
+        result_code, command_id = command_handler(sub_id)
         return [[result_code], [command_id]]
 
 

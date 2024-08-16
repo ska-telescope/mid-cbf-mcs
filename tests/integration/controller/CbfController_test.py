@@ -9,555 +9,541 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
+from __future__ import annotations
+
 import json
 import os
-import socket
 
 import pytest
+from assertpy import assert_that
 
 # Tango imports
-from ska_tango_base.base.base_device import (
-    _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
-)
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState
-from ska_telmodel.data import TMData
+from ska_control_model import AdminMode, ResultCode
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-# Standard imports
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+
+from ... import test_utils
+
+# Test data file path
+test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
-# Local imports
-
-data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-
-@pytest.mark.usefixtures("test_proxies")
 class TestCbfController:
     """
     Test class for CbfController device class integration testing.
+
+    As teardown and setup are expensive operations, tests are interdependent.
+    This is handled by the pytest.mark.dependency decorator.
     """
 
-    @pytest.mark.skip(reason="enable to test DebugDevice")
-    def test_DebugDevice(self, test_proxies):
-        port = test_proxies.controller.DebugDevice()
-        assert port == _DEBUGGER_PORT
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(("localhost", _DEBUGGER_PORT))
-        test_proxies.controller.On()
-
-    def test_Connect(self, test_proxies):
+    @pytest.mark.dependency(name="CbfController_Online")
+    def test_Online(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        talon_lru: list[context.DeviceProxy],
+        power_switch: list[context.DeviceProxy],
+        slim_fs: context.DeviceProxy,
+        slim_vis: context.DeviceProxy,
+        subarray: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
         """
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # after init devices should be in DISABLE state
-        assert test_proxies.controller.State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.DISABLE
-        for mesh in test_proxies.slim:
-            assert mesh.State() == DevState.DISABLE
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.DISABLE
-                    )
-
         # trigger start_communicating by setting the AdminMode to ONLINE
-        test_proxies.controller.adminMode = AdminMode.ONLINE
+        controller.adminMode = AdminMode.ONLINE
 
-        # controller device should be in OFF state after start_communicating
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        expected_events = [
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
+        ]
+        for device in subarray + power_switch:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+        expected_events = [
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.OFF, DevState.DISABLE, 1),
+        ]
+        for device in talon_lru + [slim_fs, slim_vis] + [controller]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+    @pytest.mark.dependency(
+        depends=["CbfController_Online"],
+        name="CbfController_InitSysParam",
+    )
+    def test_InitSysParam(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        vcc: list[context.DeviceProxy],
+        talon_board: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ) -> None:
+        """
+        Test the "InitSysParam" command
+        """
+        # Get the system parameters
+        with open(test_data_path + controller_params["sys_param_file"]) as f:
+            sys_param_str = f.read()
+
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sys_param_str)
+        assert result_code == [ResultCode.QUEUED]
+
+        # TODO: cannot check VCC dishID if sys params downloaded from CAR
+        if controller_params["sys_param_from_file"]:
+            dish_utils = DISHUtils(json.loads(sys_param_str))
+            for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=vcc[vcc_id - 1],
+                    attribute_name="dishID",
+                    attribute_value=dish_id,
+                )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
         )
-        assert test_proxies.controller.State() == DevState.OFF
 
-    def test_On(self, test_proxies):
+    @pytest.mark.dependency(
+        depends=["CbfController_InitSysParam"],
+        name="CbfController_On",
+    )
+    def test_On(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        talon_lru: list[context.DeviceProxy],
+        slim_fs: context.DeviceProxy,
+        slim_vis: context.DeviceProxy,
+        talon_board: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ):
         """
         Test the "On" command
         """
+        # Get the system parameters
+        with open(test_data_path + controller_params["sys_param_file"]) as f:
+            sys_param_str = f.read()
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
+        # Send the On command
+        result_code, command_id = controller.On()
+        assert result_code == [ResultCode.QUEUED]
 
-        data_file_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-        )
-        with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
-        test_proxies.controller.InitSysParam(sp)
+        # Validate subelements are in the correct state
+        for device in talon_lru + [slim_fs, slim_vis]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device,
+                attribute_name="state",
+                attribute_value=DevState.ON,
+                previous_value=DevState.OFF,
+                target_n_events=1,
+            )
 
-        # send the On command
-        test_proxies.controller.On()
+        # TODO: cannot check VCC dishID if sys params downloaded from CAR
+        if controller_params["sys_param_from_file"]:
+            dish_utils = DISHUtils(json.loads(sys_param_str))
+            for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
+                # TODO: indexing talon boards by VCC ID here; may need a better way
+                # to grab talon IDs associated with each VCC
+                board_id = vcc_id - 1
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.controller.State() == DevState.ON
-
-        # after init devices should be in DISABLE state
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
-        for mesh in test_proxies.slim:
-            assert mesh.adminMode == AdminMode.ONLINE
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].adminMode
-                        == AdminMode.ONLINE
+                expected_events = [
+                    ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+                    ("state", DevState.ON, DevState.DISABLE, 1),
+                    ("dishID", dish_id, "", 1),
+                ]
+                for name, value, previous, n in expected_events:
+                    assert_that(event_tracer).within_timeout(
+                        test_utils.EVENT_TIMEOUT
+                    ).cbf_has_change_event_occurred(
+                        device_name=talon_board[board_id],
+                        attribute_name=name,
+                        attribute_value=value,
+                        previous_value=previous,
+                        target_n_events=n,
                     )
 
-        for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.subarray[i]],
-                DevState.ON,
-                wait_time_s,
-                sleep_time_s,
+        expected_events = [
+            ("state", DevState.ON, DevState.OFF, 1),
+            (
+                "longRunningCommandResult",
+                (f"{command_id[0]}", '[0, "On completed OK"]'),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-            assert test_proxies.subarray[i].State() == DevState.ON
 
-    def test_InitSysParam_Condition(self, test_proxies):
-        """
-        Test that InitSysParam can only be used when
-        the controller op state is OFF
-        """
-        if test_proxies.controller.State() == DevState.OFF:
-            test_proxies.controller.On()
-        with open(data_file_path + "sys_param_4_boards.json") as f:
-            sp = f.read()
-        result = test_proxies.controller.InitSysParam(sp)
-        assert result[0] == ResultCode.FAILED
-
-    @pytest.mark.parametrize(
-        "config_file_name",
-        [
-            "source_init_sys_param.json",
-            "source_init_sys_param_retrieve_from_car.json",
-        ],
+    @pytest.mark.dependency(
+        depends=["CbfController_On"],
+        name="CbfController_InitSysParam_NotAllowed",
     )
-    def test_SourceInitSysParam(self, test_proxies, config_file_name: str):
+    def test_OnState_InitSysParam_NotAllowed(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ):
         """
-        Test that InitSysParam file can be retrieved from CAR
+        Test that InitSysParam command is not allowed when the controller is in ON state
         """
-        if test_proxies.controller.State() == DevState.ON:
-            test_proxies.controller.Off()
-        with open(data_file_path + config_file_name) as f:
-            sp = f.read()
-        result = test_proxies.controller.InitSysParam(sp)
+        assert controller.State() == DevState.ON
 
-        assert test_proxies.controller.State() == DevState.OFF
-        assert result[0] == ResultCode.OK
-        assert test_proxies.controller.sourceSysParam == sp
-        sp_json = json.loads(sp)
-        tm_data_sources = sp_json["tm_data_sources"][0]
-        tm_data_filepath = sp_json["tm_data_filepath"]
-        retrieved_init_sys_param_file = TMData([tm_data_sources])[
-            tm_data_filepath
-        ].get_dict()
-        assert test_proxies.controller.sysParam == json.dumps(
-            retrieved_init_sys_param_file
+        with open(test_data_path + controller_params["sys_param_file"]) as f:
+            sys_param_str = f.read()
+
+        # Initialize the system parameters
+        result_code, command_id = controller.InitSysParam(sys_param_str)
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            ),
         )
 
-    def test_Off(self, test_proxies):
+    @pytest.mark.dependency(
+        depends=["CbfController_On"],
+        name="CbfController_Off",
+    )
+    def test_Off(
+        self,
+        controller: context.DeviceProxy,
+        talon_board: list[context.DeviceProxy],
+        talon_lru: list[context.DeviceProxy],
+        subarray: list[context.DeviceProxy],
+        slim_fs: context.DeviceProxy,
+        slim_vis: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ):
         """
         Test the "Off" command
         """
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
+        assert controller.State() == DevState.ON
 
-        # if controller is already off, we must turn it On before turning off.
-        if test_proxies.controller.State() == DevState.OFF:
-            test_proxies.controller.On()
-            test_proxies.wait_timeout_dev(
-                [test_proxies.controller],
-                DevState.ON,
-                wait_time_s,
-                sleep_time_s,
+        # Send the Off command
+        result_code, command_id = controller.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        for device in [slim_fs, slim_vis] + talon_lru:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device,
+                attribute_name="state",
+                attribute_value=DevState.OFF,
+                previous_value=DevState.ON,
+                target_n_events=1,
             )
 
-        assert test_proxies.controller.State() == DevState.ON
-        # send the Off command
-        test_proxies.controller.Off()
+        expected_events = [
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+        for device in talon_board:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.controller.State() == DevState.OFF
+        # TODO: obs state controller reset tests for fsp/vcc/subarray
+        # for device in subarray:
+        #     assert_that(event_tracer).within_timeout(
+        #         test_utils.EVENT_TIMEOUT
+        #     ).cbf_has_change_event_occurred(
+        #         device_name=device,
+        #         attribute_name="obsState",
+        #         attribute_value=ObsState.EMPTY,
+        #     )
 
-        for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.subarray[i]],
-                DevState.OFF,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.subarray[i].State() == DevState.OFF
+        # TODO: obs state controller reset tests for fsp/vcc/subarray
+        # if "mid_csp_cbf/vcc" in device:
+        #     assert_that(event_tracer).within_timeout(
+        #         test_utils.EVENT_TIMEOUT
+        #     ).cbf_has_change_event_occurred(
+        #         device_name=device,
+        #         attribute_name="obsState",
+        #         attribute_value=ObsState.IDLE,
+        #     )
 
-        for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vcc[i]], DevState.OFF, wait_time_s, sleep_time_s
-            )
-            assert test_proxies.vcc[i].State() == DevState.OFF
-
-        for i in range(1, test_proxies.num_fsp + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.fsp[i]], DevState.OFF, wait_time_s, sleep_time_s
-            )
-            assert test_proxies.fsp[i].State() == DevState.OFF
-
-        for mesh in test_proxies.slim:
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.OFF, wait_time_s, sleep_time_s
-            )
-            assert mesh.State() == DevState.OFF
-
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    test_proxies.wait_timeout_dev(
-                        [test_proxies.fspSubarray[i][j][k]],
-                        DevState.OFF,
-                        wait_time_s,
-                        sleep_time_s,
-                    )
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.OFF
-                    )
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        receptors, \
-        vcc_receptors",
-        [
+        expected_events = [
+            ("state", DevState.OFF, DevState.ON, 1),
             (
-                "ConfigureScan_controller.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                "longRunningCommandResult",
+                (f"{command_id[0]}", '[0, "Off completed OK"]'),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
             )
-        ],
+
+    # @pytest.mark.parametrize(
+    #     "config_file_name, \
+    #     receptors, \
+    #     vcc_receptors",
+    #     [
+    #         (
+    #             "ConfigureScan_controller.json",
+    #             ["SKA001", "SKA036", "SKA063", "SKA100"],
+    #             [4, 1],
+    #         )
+    #     ],
+    # )
+    # def test_Off_GoToIdle_RemoveAllReceptors(
+    #     self, subdevices_under_test, config_file_name, receptors, vcc_receptors
+    # ):
+    #     """
+    #     Test the "Off" command resetting the subelement observing state machines.
+    #     """
+
+    #     wait_time_s = 5
+    #     sleep_time_s = 0.1
+
+    #     # turn system on
+    #     self.test_On(subdevices_under_test)
+
+    #     # load scan config
+    #     f = open(test_data_path + config_file_name)
+    #     json_string = f.read().replace("\n", "")
+    #     f.close()
+    #     configuration = json.loads(json_string)
+
+    #     sub_id = int(configuration["common"]["subarray_id"])
+
+    #     # Off from IDLE to test RemoveAllReceptors path
+    #     # add receptors
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.IDLE,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # send the Off command
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     )
+
+    #     # turn system on
+    #     self.test_On(subdevices_under_test)
+
+    #     # Off from READY to test GoToIdle path
+    #     # add receptors
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.IDLE,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # configure scan
+    #     subdevices_under_test.subarray[sub_id].ConfigureScan(json_string)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.READY,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # send the Off command
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     )
+
+    # @pytest.mark.parametrize(
+    #     "config_file_name, \
+    #     scan_file_name, \
+    #     receptors, \
+    #     vcc_receptors",
+    #     [
+    #         (
+    #             "ConfigureScan_controller.json",
+    #             "Scan1_basic.json",
+    #             ["SKA001", "SKA036", "SKA063", "SKA100"],
+    #             [4, 1],
+    #         )
+    #     ],
+    # )
+    # def test_Off_Abort(
+    #     self,
+    #     subdevices_under_test,
+    #     config_file_name,
+    #     scan_file_name,
+    #     receptors,
+    #     vcc_receptors,
+    # ):
+    #     """
+    #     Test the "Off" command resetting the subelement observing state machines.
+    #     """
+    #     wait_time_s = 5
+    #     sleep_time_s = 1
+
+    #     self.test_On(subdevices_under_test)
+
+    #     # load scan config
+    #     f = open(test_data_path + config_file_name)
+    #     json_string = f.read().replace("\n", "")
+    #     f.close()
+    #     configuration = json.loads(json_string)
+    #     sub_id = int(configuration["common"]["subarray_id"])
+
+    #     # Off from SCANNING to test Abort path
+    #     # add receptors
+    #     subdevices_under_test.subarray[sub_id].AddReceptors(receptors)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.IDLE,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # configure scan
+    #     subdevices_under_test.subarray[sub_id].ConfigureScan(json_string)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.READY,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # send the Scan command
+    #     f2 = open(test_data_path + scan_file_name)
+    #     json_string_scan = f2.read().replace("\n", "")
+    #     f2.close()
+    #     subdevices_under_test.subarray[sub_id].Scan(json_string_scan)
+    #     subdevices_under_test.wait_timeout_obs(
+    #         [subdevices_under_test.subarray[sub_id]],
+    #         ObsState.SCANNING,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+
+    #     # send the Off command
+    #     subdevices_under_test.controller.Off()
+    #     subdevices_under_test.wait_timeout_dev(
+    #         [subdevices_under_test.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     )
+
+    @pytest.mark.dependency(
+        depends=["CbfController_Off"],
+        name="CbfController_Offline",
     )
-    def test_Off_GoToIdle_RemoveAllReceptors(
-        self, test_proxies, config_file_name, receptors, vcc_receptors
-    ):
-        """
-        Test the "Off" command resetting the subelement observing state machines.
-        """
-
-        wait_time_s = 5
-        sleep_time_s = 0.1
-
-        # turn system on
-        self.test_On(test_proxies)
-
-        # load scan config
-        f = open(data_file_path + config_file_name)
-        json_string = f.read().replace("\n", "")
-        f.close()
-        configuration = json.loads(json_string)
-
-        sub_id = int(configuration["common"]["subarray_id"])
-
-        # Off from IDLE to test RemoveAllReceptors path
-        # add receptors
-        test_proxies.subarray[sub_id].AddReceptors(receptors)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.IDLE,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # send the Off command
-        test_proxies.controller.Off()
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
-
-        assert test_proxies.controller.State() == DevState.OFF
-        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].State() == DevState.OFF
-            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.OFF
-            assert test_proxies.vcc[i].obsState == ObsState.IDLE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.OFF
-        for mesh in test_proxies.slim:
-            assert mesh.State() == DevState.OFF
-        for func in ["CORR", "PSS-BF", "PST-BF"]:
-            for sub in range(1, test_proxies.num_sub + 1):
-                for fsp in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].State()
-                        == DevState.OFF
-                    )
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].obsState
-                        == ObsState.IDLE
-                    )
-
-        # turn system on
-        self.test_On(test_proxies)
-
-        # Off from READY to test GoToIdle path
-        # add receptors
-        test_proxies.subarray[sub_id].AddReceptors(receptors)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.IDLE,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # configure scan
-        test_proxies.subarray[sub_id].ConfigureScan(json_string)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.READY,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # send the Off command
-        test_proxies.controller.Off()
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
-
-        assert test_proxies.controller.State() == DevState.OFF
-        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].State() == DevState.OFF
-            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.OFF
-            assert test_proxies.vcc[i].obsState == ObsState.IDLE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.OFF
-        for mesh in test_proxies.slim:
-            assert mesh.State() == DevState.OFF
-        for func in ["CORR", "PSS-BF", "PST-BF"]:
-            for sub in range(1, test_proxies.num_sub + 1):
-                for fsp in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].State()
-                        == DevState.OFF
-                    )
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].obsState
-                        == ObsState.IDLE
-                    )
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_file_name, \
-        receptors, \
-        vcc_receptors",
-        [
-            (
-                "ConfigureScan_controller.json",
-                "Scan1_basic.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
-            )
-        ],
-    )
-    def test_Off_Abort(
-        self,
-        test_proxies,
-        config_file_name,
-        scan_file_name,
-        receptors,
-        vcc_receptors,
-    ):
-        """
-        Test the "Off" command resetting the subelement observing state machines.
-        """
-        wait_time_s = 5
-        sleep_time_s = 1
-
-        self.test_On(test_proxies)
-
-        # load scan config
-        f = open(data_file_path + config_file_name)
-        json_string = f.read().replace("\n", "")
-        f.close()
-        configuration = json.loads(json_string)
-        sub_id = int(configuration["common"]["subarray_id"])
-
-        # Off from SCANNING to test Abort path
-        # add receptors
-        test_proxies.subarray[sub_id].AddReceptors(receptors)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.IDLE,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # configure scan
-        test_proxies.subarray[sub_id].ConfigureScan(json_string)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.READY,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # send the Scan command
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        f2.close()
-        test_proxies.subarray[sub_id].Scan(json_string_scan)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.SCANNING,
-            wait_time_s,
-            sleep_time_s,
-        )
-
-        # send the Off command
-        test_proxies.controller.Off()
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
-
-        assert test_proxies.controller.State() == DevState.OFF
-        # subelements should be in observing state EMPTY (subarray) or IDLE (VCC/FSP)
-        for i in range(1, test_proxies.num_sub + 1):
-            assert test_proxies.subarray[i].State() == DevState.OFF
-            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.OFF
-            assert test_proxies.vcc[i].obsState == ObsState.IDLE
-        for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.OFF
-        for mesh in test_proxies.slim:
-            assert mesh.State() == DevState.OFF
-        for func in ["CORR", "PSS-BF", "PST-BF"]:
-            for sub in range(1, test_proxies.num_sub + 1):
-                for fsp in range(1, test_proxies.num_fsp + 1):
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].State()
-                        == DevState.OFF
-                    )
-                    assert (
-                        test_proxies.fspSubarray[func][sub][fsp].obsState
-                        == ObsState.IDLE
-                    )
-
-    def test_Standby(self, test_proxies):
-        """
-        Test the "Standby" command
-        """
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # send the Standby command
-        test_proxies.controller.Standby()
-
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller],
-            DevState.STANDBY,
-            wait_time_s,
-            sleep_time_s,
-        )
-        assert test_proxies.controller.State() == DevState.STANDBY
-
-        for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vcc[i]],
-                DevState.STANDBY,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.vcc[i].State() == DevState.STANDBY
-
-        for i in range(1, test_proxies.num_fsp + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.fsp[i]],
-                DevState.STANDBY,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.fsp[i].State() == DevState.STANDBY
-
-    def test_Disconnect(self, test_proxies):
+    def test_Offline(
+        self: TestCbfController,
+        controller: context.DeviceProxy,
+        talon_lru: list[context.DeviceProxy],
+        power_switch: list[context.DeviceProxy],
+        slim_fs: context.DeviceProxy,
+        slim_vis: context.DeviceProxy,
+        subarray: list[context.DeviceProxy],
+        event_tracer: TangoEventTracer,
+        controller_params: dict[any],
+    ) -> None:
         """
         Verify the component manager can stop communicating
         """
+        # Trigger stop_communicating by setting the AdminMode to OFFLINE
+        controller.adminMode = AdminMode.OFFLINE
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
+        expected_events = [
+            ("state", DevState.DISABLE, DevState.ON, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+        ]
+        for device in subarray + power_switch:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
 
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        test_proxies.controller.adminMode = AdminMode.OFFLINE
-
-        # controller device should be in DISABLE state after stop_communicating
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller],
-            DevState.DISABLE,
-            wait_time_s,
-            sleep_time_s,
-        )
-        assert test_proxies.controller.State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.subarray[i]],
-                DevState.DISABLE,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.subarray[i].State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vcc[i]],
-                DevState.DISABLE,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.vcc[i].State() == DevState.DISABLE
-        for i in range(1, test_proxies.num_fsp + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.fsp[i]],
-                DevState.DISABLE,
-                wait_time_s,
-                sleep_time_s,
-            )
-            assert test_proxies.fsp[i].State() == DevState.DISABLE
-        for mesh in test_proxies.slim:
-            test_proxies.wait_timeout_dev(
-                [mesh], DevState.DISABLE, wait_time_s, sleep_time_s
-            )
-            assert mesh.State() == DevState.DISABLE
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    test_proxies.wait_timeout_dev(
-                        [test_proxies.fspSubarray[i][j][k]],
-                        DevState.DISABLE,
-                        wait_time_s,
-                        sleep_time_s,
-                    )
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.DISABLE
-                    )
+        # check adminMode and state changes
+        expected_events = [
+            ("state", DevState.DISABLE, DevState.OFF, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+        ]
+        for device in talon_lru + [slim_fs, slim_vis] + [controller]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )

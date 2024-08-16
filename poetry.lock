@@ -366,6 +366,21 @@ url = "https://pypi.org/simple"
 reference = "PyPI-public"
 
 [[package]]
+name = "assertpy"
+version = "1.1"
+description = "Simple assertion library for unit testing in python with a fluent API"
+optional = false
+python-versions = "*"
+files = [
+    {file = "assertpy-1.1.tar.gz", hash = "sha256:acc64329934ad71a3221de185517a43af33e373bb44dc05b5a9b174394ef4833"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "PyPI-public"
+
+[[package]]
 name = "astroid"
 version = "2.13.5"
 description = "An abstract syntax tree for Python with inference support."
@@ -3740,6 +3755,25 @@ url = "https://pypi.org/simple"
 reference = "PyPI-public"
 
 [[package]]
+name = "pytest-dependency"
+version = "0.6.0"
+description = "Manage dependencies of tests"
+optional = false
+python-versions = ">=3.4"
+files = [
+    {file = "pytest-dependency-0.6.0.tar.gz", hash = "sha256:934b0e6a39d95995062c193f7eaeed8a8ffa06ff1bcef4b62b0dc74a708bacc1"},
+]
+
+[package.dependencies]
+pytest = ">=3.7.0"
+setuptools = "*"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "PyPI-public"
+
+[[package]]
 name = "pytest-forked"
 version = "1.6.0"
 description = "run tests in isolated forked subprocesses"
@@ -4773,18 +4807,19 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-testing"
-version = "0.6.1"
+version = "0.7.1"
 description = "Test harness for testing SKA Tango devices"
 optional = false
-python-versions = ">=3.8.1,<4.0.0"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "ska_tango_testing-0.6.1-py3-none-any.whl", hash = "sha256:c8d636719d5aef6499e144b340f007dbee0944c83320db83c8fbcdb941486abe"},
-    {file = "ska_tango_testing-0.6.1.tar.gz", hash = "sha256:defbb84b6dc2bc6675828fd393f8521cc4cc768252ad5d7c786e5dfab2ff381f"},
+    {file = "ska_tango_testing-0.7.1-py3-none-any.whl", hash = "sha256:7bf348cbbcb3e5c188651be532aefdd7e64dee7cfd4e5baef96f6d33111ad3e1"},
+    {file = "ska_tango_testing-0.7.1.tar.gz", hash = "sha256:323f3a054e30053a89e3b9af3a4a89370aa29015377191b9c4bec099ef2d4542"},
 ]
 
 [package.dependencies]
-numpy = ">=1.19.0,<2.0.0"
-pytango = ">=9.3.3,<10.0.0"
+assertpy = ">=1.1,<2.0"
+numpy = ">=1.23.2,<2.0.0"
+pytango = ">=9.4.2,<10.0.0"
 
 [package.source]
 type = "legacy"
@@ -5777,4 +5812,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "f728b06d8392f34aa1dd5ccb82eb6d0a5df5efa093e50b2f2284dbc8bb235b50"
+content-hash = "a0125c2ec67c3dc8d53cedd1550069549d3324ebaaa521b6af184394f21980a4"

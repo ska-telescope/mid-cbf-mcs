@@ -10,6 +10,7 @@
 """Contain the tests for the TalonBoard."""
 from __future__ import annotations
 
+from ska_control_model import LoggingLevel
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, SimulationMode
 
@@ -24,7 +25,7 @@ class TestTalonBoard:
     Test class for TalonBoard device class integration testing.
     """
 
-    def test_Connect(
+    def test_Online(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -33,17 +34,15 @@ class TestTalonBoard:
         Test the initial states and verify the component manager
         can start communicating
         """
-        # Turn on Simulation Mode
-        device_under_test.simulationMode = SimulationMode.TRUE
-        assert device_under_test.simulationMode == SimulationMode.TRUE
-
-        # after init devices should be in DISABLE state
-        assert device_under_test.adminMode == AdminMode.OFFLINE
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
         assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
     def test_On(
         self: TestTalonBoard,
@@ -64,7 +63,7 @@ class TestTalonBoard:
             )
         )
 
-        change_event_callbacks["state"].assert_change_event(DevState.ON)
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
 
     def test_FPGA_Die_Temperature_Read(
         self: TestTalonBoard, device_under_test: context.DeviceProxy
@@ -105,9 +104,9 @@ class TestTalonBoard:
         # send the Off command
         result_code, message = device_under_test.Off()
         assert result_code == [ResultCode.OK]
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-    def test_Disconnect(
+    def test_Offline(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
         change_event_callbacks: MockTangoEventCallbackGroup,
@@ -117,4 +116,4 @@ class TestTalonBoard:
         """
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         device_under_test.adminMode = AdminMode.OFFLINE
-        change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)

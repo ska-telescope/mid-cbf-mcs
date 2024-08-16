@@ -418,7 +418,7 @@ class CbfObsDevice(SKAObsDevice):
         """Set up the state model for the device."""
         super()._init_state_model()
 
-        # supplying the reduced observing state machine defined above
+        # CbfObsDevice uses the reduced observing state machine defined above
         self.obs_state_model = ObsStateModel(
             logger=self.logger,
             callback=self._update_obs_state,

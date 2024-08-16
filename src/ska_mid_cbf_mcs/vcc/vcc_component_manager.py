@@ -46,7 +46,6 @@ class VccComponentManager(CbfObsComponentManager):
     def __init__(
         self: VccComponentManager,
         *args: any,
-        vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
@@ -55,14 +54,12 @@ class VccComponentManager(CbfObsComponentManager):
         """
         Initialize a new instance.
 
-        :param vcc_id: integer ID of this VCC
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
         """
         super().__init__(*args, **kwargs)
 
-        self._vcc_id = vcc_id
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -83,7 +80,6 @@ class VccComponentManager(CbfObsComponentManager):
             zip(freq_band_dict().keys(), [0, 0, 1, 2, 3, 3])
         )
 
-        self._talon_lru_proxy = None
         self._vcc_controller_proxy = None
 
         # --- Simulators --- #
@@ -105,42 +101,42 @@ class VccComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
-    def _get_power_state(self: VccComponentManager) -> PowerState:
+    def _start_communicating(
+        self: VccComponentManager, *args, **kwargs
+    ) -> None:
         """
-        Get the power state of this VCC based on the current power
-        mode of the LRU this VCC belongs to.
-
-        :return: VCC power mode
+        Establish communication with the component, then start monitoring.
         """
-        try:
-            return self._talon_lru_proxy.LRUPowerState
-        except tango.DevFailed:
-            self.logger.error("Could not connect to Talon LRU device")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
+        # Try to connect to HPS devices, which are deployed during the
+        # CbfController OnCommand sequence
+        if not self.simulation_mode:
+            self.logger.info(
+                "Connecting to HPS VCC controller and band devices"
             )
-            return PowerState.UNKNOWN
+            try:
+                self._vcc_controller_proxy = context.DeviceProxy(
+                    device_name=self._vcc_controller_fqdn
+                )
+                self._band_proxies = [
+                    context.DeviceProxy(device_name=fqdn)
+                    for fqdn in self._vcc_band_fqdn
+                ]
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Failed to establish proxies to HPS VCC devices.",
+                )
 
-    def start_communicating(self: VccComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-        if self._communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Already communicating.")
-            return
-        try:
-            self._talon_lru_proxy = context.DeviceProxy(
-                device_name=self._talon_lru_fqdn
-            )
-        except tango.DevFailed:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(
-                f"Error in Talon LRU {self._talon_lru_fqdn} proxy connection"
-            )
-            return
+        super()._start_communicating()
+        self._update_component_state(power=PowerState.ON)
 
-        super().start_communicating()
-        self._update_component_state(power=self._get_power_state())
+    # --------------
+    # Helper Methods
+    # --------------
 
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
@@ -205,60 +201,11 @@ class VccComponentManager(CbfObsComponentManager):
     # Fast Commands
     # -------------
 
-    def on(self: VccComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn on VCC component. This attempts to establish communication
-        with the VCC devices on the HPS.
+    # None at this time
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-
-        :raise ConnectionError: if unable to connect to HPS VCC devices
-        """
-        self.logger.debug("Entering VccComponentManager.on")
-        try:
-            # Try to connect to HPS devices, which are deployed during the
-            # CbfController OnCommand sequence
-            if not self.simulation_mode:
-                self.logger.info(
-                    "Connecting to HPS VCC controller and band devices"
-                )
-
-                self._vcc_controller_proxy = context.DeviceProxy(
-                    device_name=self._vcc_controller_fqdn
-                )
-
-                self._band_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._vcc_band_fqdn
-                ]
-
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return (
-                ResultCode.FAILED,
-                "Failed to establish proxies to HPS VCC devices.",
-            )
-
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
-
-    def off(self: VccComponentManager) -> tuple[ResultCode, str]:
-        """
-        Turn off VCC component; currently unimplemented.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._update_component_state(power=PowerState.OFF)
-        return (ResultCode.OK, "Off completed OK")
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
@@ -309,6 +256,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
+        # TODO: remove?
         self.logger.debug(f"simulation mode: {self.simulation_mode}")
 
         if self.simulation_mode:
@@ -349,6 +297,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         fb_index = self._freq_band_index[freq_band_name]
+
         if self.simulation_mode:
             self._band_simulators[fb_index].SetInternalParameters(json_string)
         else:
@@ -437,6 +386,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the ConfigureScan command to the HPS
         fb_index = self._freq_band_index[self._freq_band_name]
+
         if self.simulation_mode:
             self._band_simulators[fb_index].ConfigureScan(argin)
         else:
@@ -536,6 +486,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         # Send the EndScan command to the HPS
         fb_index = self._freq_band_index[self._freq_band_name]
+
         if self.simulation_mode:
             self._band_simulators[fb_index].EndScan()
         else:
@@ -633,6 +584,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         if self._freq_band_name != "":
             fb_index = self._freq_band_index[self._freq_band_name]
+
             if self.simulation_mode:
                 self._band_simulators[fb_index].Abort()
             else:
@@ -685,6 +637,7 @@ class VccComponentManager(CbfObsComponentManager):
 
         if self._freq_band_name != "":
             fb_index = self._freq_band_index[self._freq_band_name]
+
             if self.simulation_mode:
                 self._band_simulators[fb_index].ObsReset()
             else:
@@ -723,7 +676,3 @@ class VccComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------

@@ -7,7 +7,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for MCS Slim integration tests."""
+"""This module contains pytest-specific test harness for MCS VCC integration tests."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def device_under_test_fixture() -> context.DeviceProxy:
 
     :return: the device under test
     """
-    return context.DeviceProxy(device_name="mid_csp_cbf/slim/slim-fs")
+    return context.DeviceProxy(device_name="mid_csp_cbf/vcc/001")
 
 
 @pytest.fixture(name="test_proxies")
@@ -47,7 +47,6 @@ def test_proxies_fixture() -> pytest.fixture:
             Includes:
             - 4 TalonLru
             - 2 PowerSwitch
-            - 4 SlimLink
             """
 
             # Talon LRU
@@ -68,24 +67,15 @@ def test_proxies_fixture() -> pytest.fixture:
                     )
                 )
 
-            # SlimLink
-            self.slim_link = []
-            for i in range(0, 4):  # 4 SlimLinks
-                self.slim_link.append(
-                    context.DeviceProxy(
-                        device_name=f"mid_csp_cbf/fs_links/{i:03}",
-                    )
-                )
-
             # Set all proxies used in this test suite to simMode.TRUE
-            for proxy in self.talon_lru + self.power_switch + self.slim_link:
+            for proxy in self.talon_lru + self.power_switch:
                 proxy.simulationMode = SimulationMode.TRUE
 
     return TestProxies()
 
 
 @pytest.fixture(name="change_event_callbacks")
-def slim_change_event_callbacks(
+def vcc_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     """
@@ -94,9 +84,9 @@ def slim_change_event_callbacks(
     :param device_under_test: the device whose change events will be subscribed to.
     :return: the change event callback object
     """
-    change_event_attr_list = ["longRunningCommandResult", "State"]
+    change_event_attr_list = ["longRunningCommandResult", "obsState", "State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=15.0
+        *change_event_attr_list, timeout=60.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks

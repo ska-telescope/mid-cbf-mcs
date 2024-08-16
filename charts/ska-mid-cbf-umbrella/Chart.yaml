@@ -18,7 +18,7 @@ dependencies:
   version: 0.15.2
   repository: "file://../ska-mid-cbf-tmleafnode"
 - name: ska-mid-cbf-engineering-console
-  version: 0.10.8
+  version: 0.10.10
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-cbf-engineering-console.enabled
 - name: ska-taranta

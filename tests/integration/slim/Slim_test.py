@@ -15,7 +15,7 @@ import os
 import pytest
 from ska_control_model import SimulationMode
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
+from ska_tango_base.control_model import AdminMode, LoggingLevel
 from ska_tango_testing import context
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
@@ -36,7 +36,7 @@ class TestSlim:
     Test class for Slim device class integration testing.
     """
 
-    def test_Connect(
+    def test_Online(
         self: TestSlim,
         device_under_test: pytest.fixture,
         test_proxies: pytest.fixture,
@@ -48,32 +48,36 @@ class TestSlim:
         Test the initial states and verify the component manager
         can start communicating
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param test_proxies: a test fixture containing all subdevice proxies needed by the device under test.
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
+        :param ps_change_event_callbacks: a mock object that receives PowerSwitch's subscribed change events.
         """
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
+
         # Start monitoring the TalonLRUs and power switch devices
         for ps in test_proxies.power_switch:
-            ps.simulationMode = SimulationMode.TRUE
             ps.adminMode = AdminMode.ONLINE
-            ps_change_event_callbacks["state"].assert_change_event(DevState.ON)
+            ps_change_event_callbacks["State"].assert_change_event(DevState.ON)
 
         for lru in test_proxies.talon_lru:
             lru.adminMode = AdminMode.ONLINE
-            lru_change_event_callbacks["state"].assert_change_event(
+            lru_change_event_callbacks["State"].assert_change_event(
                 DevState.OFF
             )
 
-        device_under_test.simulationMode = SimulationMode.TRUE
-        device_under_test.loggingLevel = LoggingLevel.DEBUG
         device_under_test.adminMode = AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        try:
-            # assert if any captured events have gone unaddressed
-            change_event_callbacks.assert_not_called()
-            lru_change_event_callbacks.assert_not_called()
-            ps_change_event_callbacks.assert_not_called()
-        except AssertionError as ae:
-            print(f"Uncaught change event: {ae}")
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
+        ps_change_event_callbacks.assert_not_called()
 
     def test_On(
         self: TestSlim,
@@ -85,7 +89,10 @@ class TestSlim:
         """
         Test the "On" command
 
+        :param device_under_test: the device under test
         :param test_proxies: the proxies test fixture
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
         """
         # Turn on the LRUs and then the Slim devices
         for lru in test_proxies.talon_lru:
@@ -97,12 +104,12 @@ class TestSlim:
             ].assert_change_event(
                 (f"{command_id[0]}", '[0, "On completed OK"]')
             )
-            lru_change_event_callbacks["state"].assert_change_event(
+            lru_change_event_callbacks["State"].assert_change_event(
                 DevState.ON
             )
 
         device_under_test.On()
-        change_event_callbacks["state"].assert_change_event(DevState.ON)
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
@@ -114,9 +121,9 @@ class TestSlim:
     ) -> None:
         """
         Test the "SlimTest" command before the Mesh has been configured.
-        Expects that a IndexError be caught when trying to read counters.
+        Expects IndexError to be caught when trying to read counters and rejects the command.
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
         """
         rc, message = device_under_test.SlimTest()
 
@@ -132,7 +139,8 @@ class TestSlim:
         """
         Test the "Configure" command
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
         with open(data_file_path + "slim_test_config.yaml", "r") as f:
             result_code, command_id = device_under_test.Configure(f.read())
@@ -143,12 +151,6 @@ class TestSlim:
             (f"{command_id[0]}", '[0, "Configure completed OK"]')
         )
 
-        # TBD what change event calls should happen, would need the SlimLink simulator
-        # to push events if we want it to properly model the real world system.
-        change_event_callbacks["healthState"].assert_change_event(
-            HealthState.UNKNOWN
-        )
-
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
@@ -156,10 +158,10 @@ class TestSlim:
         self: TestSlim, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test the "SlimTest" command after the Mesh has been configured.
+        Test the "SlimTest" command after the Mesh has been properly configured.
         This should return a ResultCode.OK
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
         """
         return_code, message = device_under_test.SlimTest()
         assert return_code == ResultCode.OK
@@ -172,7 +174,8 @@ class TestSlim:
         """
         Test the "Off" command
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
@@ -180,12 +183,12 @@ class TestSlim:
         change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "Off completed OK"]')
         )
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
         # assert if any captured events have gone unaddressed
         change_event_callbacks.assert_not_called()
 
-    def test_Disconnect(
+    def test_Offline(
         self: TestSlim,
         device_under_test: context.DeviceProxy,
         test_proxies: pytest.fixture,
@@ -196,20 +199,18 @@ class TestSlim:
         """
         Verify the component manager can stop communicating
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param test_proxies: a test fixture containing all subdevice proxies needed by the device under test.
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
+        :param ps_change_event_callbacks: a mock object that receives PowerSwitch's subscribed change events.
         """
         assert device_under_test.State() == DevState.OFF
 
         device_under_test.adminMode = AdminMode.OFFLINE
-        change_event_callbacks["state"].assert_change_event(DevState.DISABLE)
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
 
         # Stop monitoring the TalonLRUs and power switch devices
-        for ps in test_proxies.power_switch:
-            ps.adminMode = AdminMode.OFFLINE
-            ps_change_event_callbacks["state"].assert_change_event(
-                DevState.DISABLE
-            )
-
         for lru in test_proxies.talon_lru:
             result_code, command_id = lru.Off()
             assert result_code == [ResultCode.QUEUED]
@@ -219,8 +220,18 @@ class TestSlim:
             ].assert_change_event(
                 (f"{command_id[0]}", '[0, "Off completed OK"]')
             )
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.OFF
+            )
+
             lru.adminMode = AdminMode.OFFLINE
-            lru_change_event_callbacks["state"].assert_change_event(
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.DISABLE
+            )
+
+        for ps in test_proxies.power_switch:
+            ps.adminMode = AdminMode.OFFLINE
+            ps_change_event_callbacks["State"].assert_change_event(
                 DevState.DISABLE
             )
 

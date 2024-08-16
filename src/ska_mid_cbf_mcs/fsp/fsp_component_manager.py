@@ -15,8 +15,7 @@ from threading import Event
 from typing import Callable, Optional
 
 import tango
-from ska_control_model import PowerState, SimulationMode, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
+from ska_control_model import AdminMode, PowerState, SimulationMode, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -40,7 +39,8 @@ class FspComponentManager(CbfComponentManager):
         *args: any,
         fsp_id: int,
         all_fsp_corr_subarray_fqdn: list[str],
-        # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20),
+        # one entry for each Talon board in the FSP_UNIT
         hps_fsp_controller_fqdn: str,
         **kwargs: any,
     ) -> None:
@@ -72,16 +72,12 @@ class FspComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(
-        self: FspComponentManager,
+    def _start_communicating(
+        self: FspComponentManager, *args, **kwargs
     ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
         for fqdn in self._all_fsp_corr_subarray_fqdn:
             try:
                 self._all_fsp_corr[fqdn] = context.DeviceProxy(fqdn)
@@ -92,62 +88,214 @@ class FspComponentManager(CbfComponentManager):
                 )
                 return
 
-        super().start_communicating()
-        self._update_component_state(power=PowerState.OFF)
-
-    # -------------
-    # Fast Commands
-    # -------------
-
-    @check_communicating
-    def on(self: FspComponentManager) -> tuple[ResultCode, str]:
-        """
-        Establish communication with the FSP controller device on the HPS.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        # Try to connect to HPS devices, which are deployed during the CbfController OnCommand sequence
+        # Try to connect to HPS devices, which are deployed during the
+        # CbfController OnCommand sequence
         if self.simulation_mode == SimulationMode.FALSE:
-            if self._proxy_hps_fsp_controller is None:
-                try:
-                    self._proxy_hps_fsp_controller = context.DeviceProxy(
-                        device_name=self._hps_fsp_controller_fqdn
-                    )
-                except tango.DevFailed as df:
-                    self.logger.error(
-                        f"Failure in connection to HPS FSP controller; {df}"
-                    )
-                    self._update_communication_state(
-                        communication_state=CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    return (
-                        ResultCode.FAILED,
-                        "Failed to establish proxy to HPS FSP controller device",
-                    )
+            try:
+                self._proxy_hps_fsp_controller = context.DeviceProxy(
+                    device_name=self._hps_fsp_controller_fqdn
+                )
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failure in connection to HPS FSP controller; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
         else:
             self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
                 self._hps_fsp_controller_fqdn,
             )
 
+        super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
 
-    @check_communicating
-    def off(self: FspComponentManager) -> tuple[ResultCode, str]:
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None at this time
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- SetFunctionMode Command --- #
+
+    def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
         """
-        Cease communication with the FSP controller device on the HPS.
+        Check if the SetFunctionMode command is allowed
+
+        :return: True if the SetFunctionMode command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if SetFunctionMode is allowed")
+        if not self.is_communicating:
+            return False
+        if len(self.subarray_membership) != 0:
+            self.logger.warning(
+                f"SetFunctionMode command cannot be issued because FSP currently has subarray membership: {self.subarray_membership}."
+            )
+            return False
+        return True
+
+    def _validate_function_mode(
+        self: FspComponentManager, function_mode: str
+    ) -> bool:
+        """
+        Check if FSP function mode is valid.
+
+        :param function_mode: function mode string to be evaluated
+        :return: True if validation passes, otherwise False
+        """
+        # TODO: remove these conditions as new function modes are implemented
+        if function_mode not in FspModes._member_names_ or function_mode in [
+            "PSS-BF",
+            "PST-BF",
+            "VLBI",
+        ]:
+            self.logger.error(
+                f"{function_mode} not a valid FSP function mode."
+            )
+            return False
+        return True
+
+    def _set_hps_fsp_function_mode(
+        self: FspComponentManager, function_mode: int
+    ) -> bool:
+        """
+        Set the HPS FSP application function mode.
+
+        :param function_mode: function mode int
+        :return: True if successfully set FSP function mode, otherwise False
+        """
+        try:
+            self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
+            )
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return False
+
+        self.function_mode = function_mode
+        self._device_attr_change_callback("functionMode", self.function_mode)
+        self._device_attr_archive_callback("functionMode", self.function_mode)
+        self.logger.info(
+            f"FSP set to function mode {FspModes(function_mode).name}"
+        )
+        return True
+
+    def _set_function_mode(
+        self: FspComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Switch the function mode of the FSP; can only be done if currently
+        unassigned from any subarray membership.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort.
+        """
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "InitSysParam", task_callback, task_abort_event
+        ):
+            return
+
+        validate_success = self._validate_function_mode(argin)
+        if not validate_success:
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    f"Failed to validate FSP function mode {argin}",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        function_mode_success = self._set_hps_fsp_function_mode(
+            FspModes[argin].value
+        )
+        if not function_mode_success:
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    f"Failed to set FSP function mode to {argin}",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        task_callback(
+            result=(
+                ResultCode.OK,
+                "SetFunctionMode completed OK",
+            ),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def set_function_mode(
+        self: FspComponentManager,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[TaskStatus, str]:
+        """
+        Submit SetFunctionMode command thread to task executor queue.
+
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param task_callback: Callback function to update task status
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
-        :rtype: (ResultCode, str)
+        :rtype: (TaskStatus, str)
         """
-        self._proxy_hps_fsp_controller = None
-        self._update_component_state(power=PowerState.OFF)
-        return (ResultCode.OK, "Off completed OK")
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._set_function_mode,
+            args=[argin],
+            is_cmd_allowed=self.is_set_function_mode_allowed,
+            task_callback=task_callback,
+        )
+
+    # --- AddSubarrayMembership command --- #
+
+    def _validate_subarray_id(
+        self: FspComponentManager, subarray_id: int
+    ) -> bool:
+        """
+        Validate subarray ID to be added to current membership.
+
+        :param subarray_id: an integer representing the subarray affiliation,
+            value in [1, 16]
+
+        :return: True if subarray ID is valid, otherwise False
+        """
+        if len(self.subarray_membership) == const.MAX_SUBARRAY:
+            self.logger.error(
+                f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})"
+            )
+            return False
+        if subarray_id - 1 not in range(const.MAX_SUBARRAY):
+            self.logger.error(
+                f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]"
+            )
+            return False
+        if subarray_id in self.subarray_membership:
+            self.logger.error(f"FSP already belongs to subarray {subarray_id}")
+            return False
+
+        self.logger.info(
+            f"Adding subarray {subarray_id} to subarray membership"
+        )
+        return True
 
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """
@@ -155,7 +303,7 @@ class FspComponentManager(CbfComponentManager):
 
         :param subarray_id: ID of subarray for which to power on function mode proxy
         :return: False if unsuccessful in powering on FSP function mode subarray proxy,
-                 else True.
+            True otherwise
         """
         match self.function_mode:
             case FspModes.IDLE.value:
@@ -168,12 +316,9 @@ class FspComponentManager(CbfComponentManager):
                 fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
                 try:
                     proxy = self._all_fsp_corr[fqdn]
-                    result = proxy.On()
-                    if result[0] == ResultCode.FAILED:
-                        self.logger.error(
-                            f"Failed to turn on {fqdn}; {result}"
-                        )
-                        return False
+                    # set FSP devices simulationMode attributes
+                    proxy.simulationMode = self.simulation_mode
+                    proxy.adminMode = AdminMode.ONLINE
                 except KeyError as ke:
                     self.logger.error(
                         f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties; {ke}"
@@ -201,254 +346,91 @@ class FspComponentManager(CbfComponentManager):
 
         return False
 
-    @check_communicating
-    def add_subarray_membership(
-        self: FspComponentManager, subarray_id: int
-    ) -> tuple[ResultCode, str]:
+    def is_add_subarray_membership_allowed(self: FspComponentManager) -> bool:
         """
-        Add a subarray to the subarrayMembership list.
+        Check if the AddSubarrayMembership command is allowed
 
-        :param subarray_id: an integer representing the subarray affiliation,
-            value in [1, 16]
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
+        :return: True if the AddSubarrayMembership command is allowed, False otherwise
         """
-        if len(self.subarray_membership) == const.MAX_SUBARRAY:
-            return (
-                ResultCode.FAILED,
-                f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})",
-            )
-        elif subarray_id - 1 not in range(const.MAX_SUBARRAY):
-            return (
-                ResultCode.FAILED,
-                f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]",
-            )
-        elif subarray_id not in self.subarray_membership:
-            self.logger.info(
-                f"Adding subarray {subarray_id} to subarray membership"
-            )
-
-            on_success = self._subarray_on(subarray_id)
-            if not on_success:
-                return (
-                    ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
-                )
-
-            self.subarray_membership.append(subarray_id)
-            self._device_attr_change_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-            self._device_attr_archive_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-
-            return (
-                ResultCode.OK,
-                "AddSubarrayMembership completed OK",
-            )
-
-        return (
-            ResultCode.FAILED,
-            f"FSP already belongs to subarray {subarray_id}",
-        )
-
-    @check_communicating
-    def remove_subarray_membership(
-        self: FspComponentManager, subarray_id: int
-    ) -> tuple[ResultCode, str]:
-        """
-        Remove subarray from the subarrayMembership list.
-        If subarrayMembership is empty after removing
-        (no subarray is using this FSP), set function mode to empty.
-
-        :param subarray_id: an integer representing the subarray affiliation
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        if subarray_id in self.subarray_membership:
-            self.logger.info(
-                f"Removing subarray {subarray_id} from subarray membership."
-            )
-
-            off_success = self._subarray_off(subarray_id)
-            if not off_success:
-                return (
-                    ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {subarray_id}",
-                )
-
-            self.subarray_membership.remove(subarray_id)
-            self._device_attr_change_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-            self._device_attr_archive_callback(
-                "subarrayMembership", self.subarray_membership
-            )
-
-            # if no current subarray membership, reset to function mode IDLE and
-            # power off
-            if len(self.subarray_membership) == 0:
-                self.logger.info(
-                    "No current subarray membership, resetting function mode to IDLE"
-                )
-                self._validate_and_set_function_mode("IDLE")
-                self.off()
-
-            return (
-                ResultCode.OK,
-                "RemoveSubarrayMembership completed OK",
-            )
-
-        return (
-            ResultCode.FAILED,
-            f"FSP does not belong to subarray {subarray_id}",
-        )
-
-    # TODO: subarray handle FSP GoToIdle and resetting function mode to IDLE
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    # --- SetFunctionMode command --- #
-
-    def _validate_and_set_function_mode(
-        self: FspComponentManager, function_mode: str
-    ) -> bool:
-        """
-        Sets functionMode attribute and pushes change event if valid, or return
-        an error message if invalid.
-
-        :param function_mode: function mode string to be evaluated
-        :return: True if validation passes, otherwise False
-        """
-        match function_mode:
-            case "IDLE":
-                self.function_mode = FspModes.IDLE.value
-            case "CORR":
-                self.function_mode = FspModes.CORR.value
-            case "PSS-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PSS-BF not currently implemented"
-                )
-                return False
-            case "PST-BF":
-                self.logger.error(
-                    "Error in SetFunctionMode; PST-BF not currently implemented"
-                )
-                return False
-            case "VLBI":
-                self.logger.error(
-                    "Error in SetFunctionMode; VLBI not currently implemented"
-                )
-                return False
-            case _:
-                self.logger.error(
-                    f"{function_mode} not a valid FSP function mode."
-                )
-                return False
-
-        self.logger.info(
-            f"FSP set to function mode {FspModes(self.function_mode).name}"
-        )
-        self._device_attr_change_callback("functionMode", self.function_mode)
-        self._device_attr_archive_callback("functionMode", self.function_mode)
-
-        return True
-
-    def is_set_function_mode_allowed(self: FspComponentManager) -> bool:
-        """
-        Check if the FSP SetFunctionMode command is allowed.
-
-        :return: True if allowed, False otherwise
-        """
-        self.logger.debug("Checking if FSP SetFunctionMode is allowed.")
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"FSP SetFunctionMode not allowed in current power state:\
-                    {self._component_state['power']}"
-            )
+        self.logger.debug("Checking if AddSubarrayMembership is allowed")
+        if not self.is_communicating:
             return False
-        if len(self.subarray_membership) > 0:
+        if self.function_mode == FspModes.IDLE.value:
             self.logger.warning(
-                f"FSP {self._fsp_id} currently belongs to \
-                    subarray(s) {self.subarray_membership}, \
-                    cannot change function mode at this time."
+                "AddSubarrayMembership command cannot be issued because FSP currently in function mode IDLE."
             )
             return False
         return True
 
-    def _set_function_mode(
+    def _add_subarray_membership(
         self: FspComponentManager,
-        function_mode: str,
+        argin: int,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Switch the function mode of the HPS FSP controller
+        Add a subarray to the subarrayMembership list.
 
-        :return: None
+        :param argin: an integer representing the subarray affiliation,
+            value in [1, 16]
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort.
         """
-        # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
-            "SetFunctionMode", task_callback, task_abort_event
+            "AddSubarrayMembership", task_callback, task_abort_event
         ):
             return
 
-        function_mode_success = self._validate_and_set_function_mode(
-            function_mode
-        )
-        if not function_mode_success:
+        validate_success = self._validate_subarray_id(argin)
+        if not validate_success:
             task_callback(
-                status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    f"Failed to set FSP function mode to {function_mode}",
+                    f"Unable to add subarray membership for subarray ID {argin}",
                 ),
+                status=TaskStatus.FAILED,
             )
             return
 
-        try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(self.function_mode)
-        except tango.DevFailed as df:
-            self.logger.error(f"{df.args[0].desc}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
+        on_success = self._subarray_on(argin)
+        if not on_success:
             task_callback(
-                status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    "Failed to issue SetFunctionMode command to HPS FSP controller",
+                    f"Unsuccessful in powering on function mode device for subarray {argin}",
                 ),
+                status=TaskStatus.FAILED,
             )
             return
+
+        self.subarray_membership.append(argin)
+        self._device_attr_change_callback(
+            "subarrayMembership", list(self.subarray_membership)
+        )
+        self._device_attr_archive_callback(
+            "subarrayMembership", list(self.subarray_membership)
+        )
 
         task_callback(
-            result=(ResultCode.OK, "SetFunctionMode completed OK"),
+            result=(
+                ResultCode.OK,
+                "AddSubarrayMembership completed OK",
+            ),
             status=TaskStatus.COMPLETED,
         )
         return
 
-    @check_communicating
-    def set_function_mode(
+    def add_subarray_membership(
         self: FspComponentManager,
-        argin: str,
+        argin: int,
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Switch the function mode of the FSP; can only be done if currently
-        unassigned from any subarray membership.
+        Submit AddSubarrayMembership command thread to task executor queue.
 
-        :param function_mode: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param argin: an integer representing the subarray affiliation
+        :param task_callback: Callback function to update task status
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -457,11 +439,13 @@ class FspComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            self._set_function_mode,
+            self._add_subarray_membership,
             args=[argin],
-            is_cmd_allowed=self.is_set_function_mode_allowed,
+            is_cmd_allowed=self.is_add_subarray_membership_allowed,
             task_callback=task_callback,
         )
+
+    # --- RemoveSubarrayMembership Command --- #
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
         """
@@ -481,12 +465,7 @@ class FspComponentManager(CbfComponentManager):
                 fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
                 try:
                     proxy = self._all_fsp_corr[fqdn]
-                    result = proxy.Off()
-                    if result[0] == ResultCode.FAILED:
-                        self.logger.error(
-                            f"Failed to turn off {fqdn}; {result}"
-                        )
-                        return False
+                    proxy.adminMode = AdminMode.OFFLINE
                 except KeyError as ke:
                     self.logger.error(
                         f"FSP {self._fsp_id} CORR subarray {subarray_id} FQDN not found in properties; {ke}"
@@ -513,3 +492,115 @@ class FspComponentManager(CbfComponentManager):
                 )
 
         return False
+
+    def is_remove_subarray_membership_allowed(
+        self: FspComponentManager,
+    ) -> bool:
+        """
+        Check if the RemoveSubarrayMembership command is allowed
+
+        :return: True if the RemoveSubarrayMembership command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if RemoveSubarrayMembership is allowed")
+        if not self.is_communicating:
+            return False
+        if self.function_mode == FspModes.IDLE.value:
+            self.logger.warning(
+                "RemoveSubarrayMembership command cannot be issued because FSP currently in function mode IDLE."
+            )
+            return False
+        return True
+
+    def _remove_subarray_membership(
+        self: FspComponentManager,
+        argin: int,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Remove subarray from the subarrayMembership list.
+        If subarrayMembership is empty after removing
+        (no subarray is using this FSP), set function mode to empty.
+
+        :param argin: an integer representing the subarray affiliation
+        :param task_callback: Callback function to update task status
+        :param task_abort_event: Event to signal task abort.
+        """
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "RemoveSubarrayMembership", task_callback, task_abort_event
+        ):
+            return
+
+        if argin not in self.subarray_membership:
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    f"FSP does not belong to subarray {argin}",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        self.logger.info(
+            f"Removing subarray {argin} from subarray membership."
+        )
+
+        off_success = self._subarray_off(argin)
+        if not off_success:
+            task_callback(
+                result=(
+                    ResultCode.FAILED,
+                    f"Unsuccessful in powering off function mode device for subarray {argin}",
+                ),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        self.subarray_membership.remove(argin)
+        self._device_attr_change_callback(
+            "subarrayMembership", self.subarray_membership
+        )
+        self._device_attr_archive_callback(
+            "subarrayMembership", self.subarray_membership
+        )
+
+        # If no current subarray membership, reset function mode to IDLE
+        if len(self.subarray_membership) == 0:
+            self.logger.info(
+                "No current subarray membership, resetting function mode to IDLE"
+            )
+            self._set_hps_fsp_function_mode(FspModes.IDLE.value)
+
+        task_callback(
+            result=(
+                ResultCode.OK,
+                "RemoveSubarrayMembership completed OK",
+            ),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def remove_subarray_membership(
+        self: FspComponentManager,
+        argin: int,
+        task_callback: Optional[Callable] = None,
+    ) -> tuple[TaskStatus, str]:
+        """
+        Submit RemoveSubarrayMembership command thread to task executor queue.
+
+        :param argin: an integer representing the subarray affiliation
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
+        self.logger.debug(f"Component state: {self._component_state}")
+        return self.submit_task(
+            self._remove_subarray_membership,
+            args=[argin],
+            is_cmd_allowed=self.is_remove_subarray_membership_allowed,
+            task_callback=task_callback,
+        )

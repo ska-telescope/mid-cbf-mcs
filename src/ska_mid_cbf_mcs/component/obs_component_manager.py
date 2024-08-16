@@ -11,12 +11,11 @@
 
 from __future__ import annotations
 
-import functools
+from functools import partial
 from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ObsState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
 
 from .component_manager import CbfComponentManager
 
@@ -84,6 +83,8 @@ class CbfObsComponentManager(CbfComponentManager):
         :return: True if allowed, else False.
         """
         self.logger.debug("Checking if ConfigureScan is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [
             ObsState.IDLE,
             ObsState.READY,
@@ -108,7 +109,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def configure_scan(
         self: CbfObsComponentManager,
         argin: str,
@@ -126,7 +126,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="configure",
                 command_thread=self._configure_scan,
@@ -143,6 +143,8 @@ class CbfObsComponentManager(CbfComponentManager):
         :return: True if allowed, False otherwise
         """
         self.logger.debug("Checking if Scan is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
                 f"Scan not allowed in ObsState {self.obs_state}; \
@@ -164,7 +166,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def scan(
         self: CbfObsComponentManager,
         argin: int,
@@ -195,6 +196,8 @@ class CbfObsComponentManager(CbfComponentManager):
         :return: True if allowed, False otherwise
         """
         self.logger.debug("Checking if EndScan is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.SCANNING]:
             self.logger.warning(
                 f"EndScan not allowed in ObsState {self.obs_state}; \
@@ -215,7 +218,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def end_scan(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -242,6 +244,8 @@ class CbfObsComponentManager(CbfComponentManager):
         :return: True if allowed, False otherwise
         """
         self.logger.debug("Checking if GoToIdle is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
                 f"GoToIdle not allowed in ObsState {self.obs_state}; \
@@ -262,7 +266,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def go_to_idle(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -284,6 +287,8 @@ class CbfObsComponentManager(CbfComponentManager):
 
     def is_abort_allowed(self: CbfObsComponentManager) -> bool:
         self.logger.debug("Checking if Abort is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [
             ObsState.IDLE,
             ObsState.CONFIGURING,
@@ -311,7 +316,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def abort(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -326,7 +330,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="abort",
                 command_thread=self._abort,
@@ -342,6 +346,8 @@ class CbfObsComponentManager(CbfComponentManager):
         :return: True if allowed, False otherwise
         """
         self.logger.debug("Checking if ObsReset is allowed.")
+        if not self.is_communicating:
+            return False
         if self.obs_state not in [ObsState.FAULT, ObsState.ABORTED]:
             self.logger.warning(
                 f"ObsReset not allowed in ObsState {self.obs_state};\
@@ -362,7 +368,6 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         raise NotImplementedError("CbfObsComponentManager is abstract.")
 
-    @check_communicating
     def obs_reset(
         self: CbfObsComponentManager,
         task_callback: Optional[Callable] = None,
@@ -377,7 +382,7 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
-            func=functools.partial(
+            func=partial(
                 self._obs_command_with_callback,
                 hook="obsreset",
                 command_thread=self._obs_reset,

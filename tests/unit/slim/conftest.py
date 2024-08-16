@@ -15,21 +15,16 @@
 from __future__ import annotations
 
 import unittest
+from typing import Generator
 
 import pytest
 import tango
 from ska_tango_base.commands import ResultCode
-
-# Tango imports
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-from ... import test_utils
-
-# Local imports
 
 
 @pytest.fixture(name="device_under_test")
@@ -45,20 +40,28 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/slim/001")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def slim_change_event_callbacks(
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
     change_event_attr_list = [
         "longRunningCommandResult",
+        "adminMode",
+        "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list, timeout=15.0
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
 @pytest.fixture(name="device_under_test_fail")
@@ -74,18 +77,27 @@ def device_under_test_fail_fixture(
     return test_context.get_device("mid_csp_cbf/slim_fail/001")
 
 
-@pytest.fixture(name="change_event_callbacks_fail")
-def slim_change_event_callbacks_fail(
+@pytest.fixture(name="event_tracer_fail", autouse=True)
+def tango_event_tracer_fail(
     device_under_test_fail: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
-    change_event_attr_list = ["longRunningCommandResult", "state"]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test_fail, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for the device used to test failure conditions.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "state",
+    ]
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test_fail, attr)
+
+    return tracer
 
 
 @pytest.fixture()
@@ -183,34 +195,11 @@ def mock_slim_rx() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def initial_links(
-    mock_slim_link: unittest.mock.Mock,
-    mock_fail_slim_link: unittest.mock.Mock,
-) -> dict[str, unittest.mock.Mock]:
-    """
-    Return a dictionary of device proxy mocks to pre-register.
-
-    :param mock_vcc_band: a mock VccBand device that is powered off.
-    :param mock_sw: a mock VccSearchWindow that is powered off.
-
-    :return: a dictionary of device proxy mocks to pre-register.
-    """
-    return {
-        "mid_csp_cbf/slim_link/001": mock_slim_link,
-        "mid_csp_cbf/slim_link/002": mock_slim_link,
-        "mid_csp_cbf/slim_link/003": mock_slim_link,
-        "mid_csp_cbf/slim_link/004": mock_slim_link,
-        "mid_csp_cbf/slim_link_fail/001": mock_fail_slim_link,
-        "mid_csp_cbf/slim_link_fail/002": mock_fail_slim_link,
-        "mid_csp_cbf/slim_link_fail/003": mock_fail_slim_link,
-        "mid_csp_cbf/slim_link_fail/004": mock_fail_slim_link,
-    }
-
-
-@pytest.fixture()
 def initial_mocks(
     mock_slim_tx: unittest.mock.Mock,
     mock_slim_rx: unittest.mock.Mock,
+    mock_slim_link: unittest.mock.Mock,
+    mock_fail_slim_link: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -229,4 +218,12 @@ def initial_mocks(
         "talondx-001/slim-tx-rx/fs-rx1": mock_slim_rx,
         "talondx-001/slim-tx-rx/fs-rx2": mock_slim_rx,
         "talondx-001/slim-tx-rx/fs-rx3": mock_slim_rx,
+        "mid_csp_cbf/slim_link/001": mock_slim_link,
+        "mid_csp_cbf/slim_link/002": mock_slim_link,
+        "mid_csp_cbf/slim_link/003": mock_slim_link,
+        "mid_csp_cbf/slim_link/004": mock_slim_link,
+        "mid_csp_cbf/slim_link_fail/001": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/002": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/003": mock_fail_slim_link,
+        "mid_csp_cbf/slim_link_fail/004": mock_fail_slim_link,
     }

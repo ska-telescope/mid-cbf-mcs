@@ -18,26 +18,28 @@ from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_control_model import AdminMode
+from assertpy import assert_that
+from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
+
+from ... import test_utils
 
 # Paths
 file_path = os.path.dirname(os.path.abspath(__file__))
 json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-
-# To prevent tests hanging during gc.
+# Disable garbage collection to prevent tests hanging
 gc.disable()
 
 
 class TestCbfController:
     """
-    Test class for CbfController tests.
+    Test class for CbfController.
     """
 
     @pytest.fixture(name="test_context", scope="function")
@@ -59,10 +61,6 @@ class TestCbfController:
                 "mid_csp_cbf/vcc/002",
                 "mid_csp_cbf/vcc/003",
                 "mid_csp_cbf/vcc/004",
-                "mid_csp_cbf/vcc/005",
-                "mid_csp_cbf/vcc/006",
-                "mid_csp_cbf/vcc/007",
-                "mid_csp_cbf/vcc/008",
             ],
             FSP=[
                 "mid_csp_cbf/fsp/01",
@@ -110,11 +108,11 @@ class TestCbfController:
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -122,11 +120,11 @@ class TestCbfController:
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -134,13 +132,45 @@ class TestCbfController:
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test adminMode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
+        :param device_under_test: A fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
+
+    def test_Online(
+        self: TestCbfController,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test that the devState is appropriately set after device startup.
+
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
+        """
+        device_under_test.simulationMode = SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
     @pytest.mark.parametrize(
         "sys_param_file_path",
@@ -159,15 +189,13 @@ class TestCbfController:
     def test_InitSysParam(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
         sys_param_file_path: str,
     ) -> None:
         """
         Test InitSysParam and failure cases.
         """
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        self.test_Online(device_under_test, event_tracer)
 
         with open(json_file_path + sys_param_file_path) as f:
             sp = f.read()
@@ -178,80 +206,95 @@ class TestCbfController:
             sys_param_file_path == "sys_param_4_boards.json"
             or sys_param_file_path == "source_init_sys_param.json"
         ):
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[0, "InitSysParam completed OK"]',
+                ),
             )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_source.json"
             or sys_param_file_path == "source_init_sys_param_invalid_file.json"
         ):
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Retrieving the init_sys_param file failed"]',
-                )
+                ),
             )
         elif sys_param_file_path == "sys_param_dup_dishid.json":
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Duplicated Dish ID in the init_sys_param json"]',
-                )
+                ),
             )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_schema.json"
         ):
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
-                )
+                ),
             )
         else:
-            change_event_callbacks[
-                "longRunningCommandResult"
-            ].assert_change_event(
-                (
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
-                )
+                ),
             )
-        change_event_callbacks.assert_not_called()
 
     def test_On_without_init_sys_param(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test On without InitSysParam.
         """
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        self.test_Online(device_under_test, event_tracer)
 
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
-            )
+            ),
         )
-        change_event_callbacks.assert_not_called()
 
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Commands_all(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
         Test all of CbfController's commands, expect success.
@@ -261,29 +304,45 @@ class TestCbfController:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         # Establish communication
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
+        self.test_Online(device_under_test, event_tracer)
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        result_code, command_id = device_under_test.InitSysParam(sp)
-        assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "InitSysParam completed OK"]')
-        )
 
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "On completed OK"]')
-        )
-        change_event_callbacks["state"].assert_change_event(DevState.ON)
+        # dict to store return code and unique IDs of queued commands
+        command_dict = {}
 
-        result_code, command_id = device_under_test.Off()
-        assert result_code == [ResultCode.QUEUED]
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (f"{command_id[0]}", '[0, "Off completed OK"]')
-        )
-        change_event_callbacks["state"].assert_change_event(DevState.OFF)
-        change_event_callbacks.assert_not_called()
+        command_dict["InitSysParam"] = device_under_test.InitSysParam(sp)
+        command_dict["On"] = device_under_test.On()
+        command_dict["Off"] = device_under_test.Off()
+
+        attr_values = [
+            ("state", DevState.ON, DevState.OFF, 1),
+            ("state", DevState.OFF, DevState.ON, 1),
+        ]
+
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                )
+            )
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )

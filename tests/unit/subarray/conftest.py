@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import unittest
+from typing import Generator
 
 import pytest
 import tango
@@ -22,11 +23,9 @@ from ska_control_model import (
 )
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-
-from ... import test_utils
 
 
 @pytest.fixture(name="device_under_test")
@@ -43,28 +42,50 @@ def device_under_test_fixture(
     return test_context.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
 
-@pytest.fixture(name="change_event_callbacks")
-def vcc_change_event_callbacks(
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
     device_under_test: context.DeviceProxy,
-) -> MockTangoEventCallbackGroup:
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the device being tested.
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
     change_event_attr_list = [
         "longRunningCommandResult",
         "obsState",
         "receptors",
+        "sysParam",
+        "adminMode",
+        "state",
     ]
-    change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
-    )
-    test_utils.change_event_subscriber(
-        device_under_test, change_event_attr_list, change_event_callbacks
-    )
-    return change_event_callbacks
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
+
+    return tracer
 
 
 @pytest.fixture()
 def mock_tm() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_attribute("delayModel", "")
+    return builder()
+
+
+@pytest.fixture()
+def mock_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
+    builder.add_attribute("maxCapabilities", ["VCC:4", "FSP:4", "Subarray:1"])
+    builder.add_property(
+        "MaxCapabilities",
+        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
+    )
     return builder()
 
 
@@ -77,6 +98,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_result_command("UpdateDelayModel", ResultCode.OK)

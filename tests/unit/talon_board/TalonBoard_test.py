@@ -11,43 +11,41 @@
 
 from __future__ import annotations
 
-# Standard imports
 import gc
 import os
 from typing import Any, Iterator
 from unittest.mock import Mock
 
 import pytest
-from ska_tango_base.commands import ResultCode
+from assertpy import assert_that
+from ska_control_model import SimulationMode
 from ska_tango_base.control_model import AdminMode
 from ska_tango_testing import context
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
-from tango import DevFailed, DevState
+from ska_tango_testing.integration import TangoEventTracer
+from tango import DevState
 
 from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
-# To prevent tests hanging during gc.
+from ... import test_utils
+
+# Disable garbage collection to prevent tests hanging
 gc.disable()
 
-# Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-# Tango imports
 
-# SKA imports
-
-
+@pytest.mark.skip(reason="TODO: fix monkey patch dependencies and re-enable")
 class TestTalonBoard:
     """
-    Test class for TalonBoard tests.
+    Test class for TalonBoard.
     """
 
     @pytest.fixture(name="test_context")
     def talon_board_test_context(
         self: TestTalonBoard,
         request: pytest.FixtureRequest,
-        monkeypatch: pytest.MonkeyPatch,
+        monkeymodule: pytest.MonkeyPatch,
         initial_mocks: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         harness = context.ThreadedTestTangoContextManager()
@@ -65,6 +63,17 @@ class TestTalonBoard:
                 request.param["sim_ping_fault"],
             ).ping()
 
+        def mock_run(self, *args: Any, **kwargs: Any) -> bool:
+            """
+            Replace asyncio.run method with a mock method.
+
+            :param url: the URL
+            :param kwargs: other keyword args
+
+            :return: a response
+            """
+            return MockDependency.Asyncio().run
+
         def mock_do_queries(self) -> list[list]:
             """
             Replace requests.request method with a mock method.
@@ -76,11 +85,15 @@ class TestTalonBoard:
             """
             return MockDependency.InfluxdbQueryClient().do_queries()
 
-        monkeypatch.setattr(
+        monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.ping",
             mock_ping,
         )
-        monkeypatch.setattr(
+        monkeymodule.setattr(
+            "asyncio.run",
+            mock_run,
+        )
+        monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.do_queries",
             mock_do_queries,
         )
@@ -120,11 +133,11 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -141,11 +154,11 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Status
+        Test the Status attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: A fixture that provides a
+            :py:class: `CbfDeviceProxy` to the device under test, in a
+            :py:class:`context.DeviceProxy`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -162,10 +175,10 @@ class TestTalonBoard:
         self: TestTalonBoard, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test Admin Mode
+        Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
@@ -179,20 +192,37 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_StartupState(
+    def test_Online(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test Admin Mode Online
+        Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
+        :param device_under_test: A fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.OFF
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
     @pytest.mark.parametrize(
         "test_context",
@@ -203,179 +233,36 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_StartupState_missing_property(
+    def test_Online_missing_property(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test Admin Mode Online
+        Test that the State attribute is appropriately set after device startup when there is a device property misisng form charts.
 
         :param device_under_test: fixture that provides a
             :py:class:`context.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to
+            recieve subscribed change events from the device under test.
         """
         device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.State() == DevState.UNKNOWN
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test the On() command
-
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
-        """
-
-        self.test_StartupState(device_under_test)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                '[0, "On completed OK"]',
-            )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
         )
 
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_not_allowed(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test the On() command
-
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
-        """
-        with pytest.raises(
-            DevFailed, match="Communication with component is not established"
-        ):
-            device_under_test.On()
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": False,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_already_on(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test the On() command
-
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
-        """
-
-        self.test_StartupState(device_under_test)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                '[0, "On completed OK"]',
-            )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.DISABLE,
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                '[6, "Command is not allowed"]',
-            )
-        )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "test_context",
-        [
-            {
-                "sim_ping_fault": True,
-                "sim_sysid_property": "talondx-001/ska-talondx-sysid-ds/sysid",
-            },
-        ],
-        indirect=True,
-    )
-    def test_On_ping_fail(
-        self: TestTalonBoard,
-        device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
-    ) -> None:
-        """
-        Test the On() command
-
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
-        """
-
-        self.test_StartupState(device_under_test)
-
-        result_code, command_id = device_under_test.On()
-        assert result_code == [ResultCode.QUEUED]
-
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
-            (
-                f"{command_id[0]}",
-                '[3, "Failed to connect to InfluxDB"]',
-            )
-        )
-
-        assert device_under_test.State() == DevState.FAULT
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "test_context",
@@ -390,14 +277,19 @@ class TestTalonBoard:
     def test_readWriteAttr(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
-        change_event_callbacks: MockTangoEventCallbackGroup,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the that all attr can be read/written correctly.
+        Test the that all attributes can be read/written correctly.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
-        self.test_StartupState(device_under_test)
+        device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB
-        self.test_On(device_under_test, change_event_callbacks)
+        self.test_Online(device_under_test, event_tracer)
 
         # Private Attr
         assert device_under_test.subarrayID == ""
@@ -410,9 +302,10 @@ class TestTalonBoard:
         assert device_under_test.dishID == "2"
         assert device_under_test.vccID == "3"
 
-        # All these values are read from mocked device attr
         # TalonStatus Attr
+        # This values comes from charts
         assert device_under_test.ipAddr == "192.168.8.1"
+        # These values are read from mocked device attr
         assert device_under_test.bitstreamVersion == "0.2.6"
         assert device_under_test.bitstreamChecksum == 0xBEEFBABE
 
@@ -470,6 +363,3 @@ class TestTalonBoard:
         assert all(
             not warn for warn in device_under_test.ltmTemperatureWarning
         )
-
-        # assert if any captured events have gone unaddressed
-        change_event_callbacks.assert_not_called()

@@ -7,7 +7,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for MCS Slim integration tests."""
+"""This module contains pytest-specific test harness for MCS SlimLink integration tests."""
 
 from __future__ import annotations
 
@@ -25,22 +25,28 @@ def device_under_test_fixture() -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
 
-    :param test_context: the context in which the tests run
     :return: the device under test
     """
-    return context.DeviceProxy(device_name="mid_csp_cbf/talon_board/001")
+    return context.DeviceProxy(device_name="mid_csp_cbf/fs_links/000")
 
 
 @pytest.fixture(name="change_event_callbacks")
-def talon_board_change_event_callbacks(
+def slim_link_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
+    """
+    Fixture that returns the device under test's change event callback group.
+
+    :param device_under_test: the device whose change events will be subscribed to.
+    :return: the change event callback object
+    """
     change_event_attr_list = [
         "longRunningCommandResult",
         "State",
+        "healthState",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(
-        *change_event_attr_list
+        *change_event_attr_list, timeout=15.0
     )
     test_utils.change_event_subscriber(
         device_under_test, change_event_attr_list, change_event_callbacks

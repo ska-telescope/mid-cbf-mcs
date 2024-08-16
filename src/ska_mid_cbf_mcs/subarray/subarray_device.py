@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the SKA Mid.CBF MCS project
+# This file is part of the Mid.CBF MCS project
+#
+#
 #
 # Distributed under the terms of the GPL license.
-# See LICENSE for more info.
+# See LICENSE.txt for more info.
 
-"""
-CbfSubarray
-Sub-element subarray device for Mid.CBF
-"""
+# Copyright (c) 2019 National Research Council of Canada
+
 from __future__ import annotations
 
 import tango
@@ -27,7 +27,7 @@ __all__ = ["CbfSubarray", "main"]
 
 class CbfSubarray(CbfObsDevice):
     """
-    CBFSubarray TANGO device class for the CBFSubarray prototype
+    CbfSubarray TANGO device class for the prototype
     """
 
     # -----------------
@@ -81,7 +81,7 @@ class CbfSubarray(CbfObsDevice):
         :return: the list of receptor IDs
         :rtype: list[str]
         """
-        receptors = self.component_manager.dish_ids.copy()
+        receptors = list(self.component_manager.dish_ids)
         receptors.sort()
         return receptors
 
@@ -91,6 +91,20 @@ class CbfSubarray(CbfObsDevice):
         doc="list of VCC integer IDs assigned to subarray",
     )
     def assignedVCCs(self: CbfSubarray) -> list[int]:
+        """
+        Return list of VCCs assigned to subarray
+
+        :return: the list of VCC IDs
+        :rtype: list[int]
+        """
+        return self.component_manager.vcc_ids
+
+    @attribute(
+        dtype=("int",),
+        max_dim_x=197,
+        doc="list of VCC integer IDs assigned to subarray",
+    )
+    def assignedFSPs(self: CbfSubarray) -> list[int]:
         """
         Return list of VCCs assigned to subarray
 
@@ -124,6 +138,8 @@ class CbfSubarray(CbfObsDevice):
 
     @attribute(
         dtype="str",
+        memorized=True,
+        hw_memorized=True,
         doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
     )
     def sysParam(self: CbfSubarray) -> str:
@@ -150,7 +166,7 @@ class CbfSubarray(CbfObsDevice):
     @attribute(  # type: ignore[misc]  # "Untyped decorator makes function untyped"
         dtype="str", doc="The last valid delay model received."
     )
-    def lastDelayModel(self: CbfObsDevice) -> str:
+    def lastDelayModel(self: CbfSubarray) -> str:
         """
         Read the last valid delay model received.
 
@@ -158,15 +174,15 @@ class CbfSubarray(CbfObsDevice):
         """
         return self.component_manager.last_received_delay_model
 
-    # ---------------
-    # General methods
-    # ---------------
+    # --------------
+    # Initialization
+    # --------------
 
     def _init_state_model(self: CbfSubarray) -> None:
         """Set up the state model for the device."""
         super(CbfObsDevice, self)._init_state_model()
 
-        # subarray instantiates full observing state model
+        # CbfSubarray uses the full observing state model
         self.obs_state_model = ObsStateModel(
             logger=self.logger,
             callback=self._update_obs_state,
@@ -237,12 +253,6 @@ class CbfSubarray(CbfObsDevice):
             component_state_callback=self._component_state_changed,
         )
 
-    # ---------
-    # Callbacks
-    # ---------
-
-    # None at this time
-
     # --------
     # Commands
     # --------
@@ -272,10 +282,16 @@ class CbfSubarray(CbfObsDevice):
 
             self._device.set_change_event("receptors", True)
             self._device.set_archive_event("receptors", True)
+            self._device.set_change_event("sysParam", True)
+            self._device.set_archive_event("sysParam", True)
 
             return (result_code, msg)
 
-    #  Resourcing Commands  #
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- Resourcing Commands --- #
 
     @command(
         dtype_in=("str",),
@@ -349,7 +365,7 @@ class CbfSubarray(CbfObsDevice):
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
 
-    #  Scan Commands   #
+    # --- Scan Commands --- #
 
     @command(
         dtype_in="DevString",

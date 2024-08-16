@@ -23,7 +23,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -122,15 +121,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: PowerSwitchComponentManager) -> None:
+    def _start_communicating(
+        self: PowerSwitchComponentManager, *args, **kwargs
+    ) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
-        self.logger.debug("Entering PowerSwitch.start_communicating")
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
+        self.logger.info("Entering PowerSwitch._start_communicating")
 
         if self.simulation_mode:
             outlets = self.power_switch_simulator.outlets
@@ -147,17 +144,20 @@ class PowerSwitchComponentManager(CbfComponentManager):
             self.logger.error(
                 "PowerSwitch outlets reported None after initialization. Communication not established."
             )
-        super().start_communicating()
+            return
+        super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
-    def stop_communicating(self: PowerSwitchComponentManager) -> None:
+    def _stop_communicating(
+        self: PowerSwitchComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """
         if not self.simulation_mode:
             self.power_switch_driver.stop()
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # ----------------
     # Helper Functions
@@ -267,6 +267,17 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     # --- Turn On Outlet --- #
 
+    def is_turn_on_outlet_allowed(self: PowerSwitchComponentManager) -> bool:
+        """
+        Check if the TurnOnOutlet command is allowed
+
+        :return: True if the TurnOnOutlet command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if turn_on_outlet is allowed")
+        if not self.is_communicating:
+            return False
+        return True
+
     def _turn_on_outlet(
         self: PowerSwitchComponentManager,
         outlet: str,
@@ -329,7 +340,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOnOutlet completed OK"),
         )
 
-    @check_communicating
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -349,10 +359,22 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_on_outlet,
             args=[argin],
+            is_cmd_allowed=self.is_turn_on_outlet_allowed,
             task_callback=task_callback,
         )
 
     # --- Turn Off Outlet --- #
+
+    def is_turn_off_outlet_allowed(self: PowerSwitchComponentManager) -> bool:
+        """
+        Check if the TurnOffOutlet command is allowed
+
+        :return: True if the TurnOffOutlet command is allowed, False otherwise
+        """
+        self.logger.debug("Checking if turn_off_outlet is allowed")
+        if not self.is_communicating:
+            return False
+        return True
 
     def _turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -416,7 +438,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             result=(result_code, "TurnOffOutlet completed OK"),
         )
 
-    @check_communicating
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
         argin: str,
@@ -436,5 +457,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self.submit_task(
             self._turn_off_outlet,
             args=[argin],
+            is_cmd_allowed=self.is_turn_off_outlet_allowed,
             task_callback=task_callback,
         )

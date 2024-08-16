@@ -4,7 +4,7 @@ domain: mid-csp-cbf
 command: "TalonBoard"
 instances: ["01"]
 depends_on:
-  - device: mid_csp_cbf/sub_elt/controller
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -56,14 +56,6 @@ server:
           - name: "HpsMasterAddress"
             values:
             - "talondx-001/hpsmaster/hps-1"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/002"
         properties:
           - name: "TalonDxBoardAddress"
@@ -89,21 +81,13 @@ server:
             - "talondx-002/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-002/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-002/hpsmaster/hps-2"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/003"
         properties:
           - name: "TalonDxBoardAddress"
@@ -129,21 +113,13 @@ server:
             - "talondx-003/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-003/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-003/hpsmaster/hps-3"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/004"
         properties:
           - name: "TalonDxBoardAddress"
@@ -169,21 +145,13 @@ server:
             - "talondx-004/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-004/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-004/hpsmaster/hps-4"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/005"
         properties:
           - name: "TalonDxBoardAddress"
@@ -209,21 +177,13 @@ server:
             - "talondx-005/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-005/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-005/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-005/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-005/hpsmaster/hps-5"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/006"
         properties:
           - name: "TalonDxBoardAddress"
@@ -249,21 +209,13 @@ server:
             - "talondx-006/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-006/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-006/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-006/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-006/hpsmaster/hps-6"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/007"
         properties:
           - name: "TalonDxBoardAddress"
@@ -289,21 +241,13 @@ server:
             - "talondx-007/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-007/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-007/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-007/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-007/hpsmaster/hps-7"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
       - name: "mid_csp_cbf/talon_board/008"
         properties:
           - name: "TalonDxBoardAddress"
@@ -329,21 +273,13 @@ server:
             - "talondx-008/ska-talondx-sysid-ds/sysid"
           - name: "TalonDx100GEthernetAddress"
             values:
-            - "talondx-008/ska-talondx-100-gigabit-ethernet/100g_eth_"
+            - "talondx-008/ska-talondx-100-gigabit-ethernet/100g_eth"
           - name: "TalonStatusAddress"
             values:
             - "talondx-008/ska-talondx-status/status"
           - name: "HpsMasterAddress"
             values:
             - "talondx-008/hpsmaster/hps-8"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

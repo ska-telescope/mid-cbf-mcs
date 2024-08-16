@@ -24,7 +24,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -73,15 +72,13 @@ class SlimComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: SlimComponentManager) -> None:
+    def _start_communicating(
+        self: SlimComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug("Entering SlimComponentManager.start_communicating")
-
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
 
         self._dp_links = []
         self.logger.debug(f"Link FQDNs: {self._link_fqdns}")
@@ -122,21 +119,23 @@ class SlimComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self._event_ids)}"
         )
 
-        super().start_communicating()
+        super()._start_communicating()
         # This moves the op state model.
         self._update_component_state(power=PowerState.OFF)
 
-    def stop_communicating(self: SlimComponentManager) -> None:
+    def _stop_communicating(
+        self: SlimComponentManager, *args, **kwargs
+    ) -> None:
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
-
-        self._unsubscribe_command_results()
-        self._num_blocking_results = 0
+        for proxy in self._dp_links:
+            self._unsubscribe_command_results(proxy)
+        self._blocking_commands = set()
 
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
 
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands
@@ -177,7 +176,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: list[str]
         """
         fqdns = []
-        for idx, txrx in enumerate(self._active_links):
+        for idx in range(len(self._active_links)):
             fqdn = self._link_fqdns[idx]
             fqdns.append(fqdn)
         return fqdns
@@ -190,7 +189,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: list[str]
         """
         names = []
-        for idx, txrx in enumerate(self._active_links):
+        for idx in range(len(self._active_links)):
             name = self._dp_links[idx].linkName
             names.append(name)
         return names
@@ -203,7 +202,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: list[HealthState]
         """
         summary = []
-        for idx, txrx in enumerate(self._active_links):
+        for idx in range(len(self._active_links)):
             link_health = self._dp_links[idx].healthState
             summary.append(link_health)
         return summary
@@ -216,7 +215,7 @@ class SlimComponentManager(CbfComponentManager):
         :rtype: list[float]
         """
         bers = []
-        for idx, txrx in enumerate(self._active_links):
+        for idx in range(len(self._active_links)):
             ber = self._dp_links[idx].bitErrorRate
             bers.append(ber)
         return bers
@@ -380,7 +379,7 @@ class SlimComponentManager(CbfComponentManager):
         rx_error_rate_and_status: list[tuple[str, str]] = []
 
         try:
-            for idx, txrx in enumerate(self._active_links):
+            for idx in range(len(self._active_links)):
                 dp_link = self._dp_links[idx]
                 counter = dp_link.counters
                 rx_idle_word_count = counter[2]
@@ -446,10 +445,6 @@ class SlimComponentManager(CbfComponentManager):
             self.logger.error(msg)
             return ResultCode.FAILED, msg
         try:
-            self._num_blocking_results = len(self._active_links)
-            self.logger.debug(
-                f"About to connect {self._num_blocking_results} times"
-            )
             for idx, txrx in enumerate(self._active_links):
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
@@ -463,10 +458,13 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
+                    self._blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.ConnectTxRx() rejected",
                     )
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -507,6 +505,8 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_configure_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Configure is allowed.")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"Configure not allowed; PowerState is {self.power_state}"
@@ -611,7 +611,6 @@ class SlimComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def configure(
         self: SlimComponentManager,
         config_str: str,
@@ -649,11 +648,7 @@ class SlimComponentManager(CbfComponentManager):
             )
             return ResultCode.OK, "_disconnect_links completed OK"
         try:
-            self._num_blocking_results = len(self._active_links)
-            self.logger.debug(
-                f"About to disconnect {self._num_blocking_results} times"
-            )
-            for idx, txrx in enumerate(self._active_links):
+            for idx in range(len(self._active_links)):
                 if self.simulation_mode is False:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
 
@@ -666,10 +661,13 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
+                    self._blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.DisconnectTxRx() rejected",
                     )
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
                 timeout=10.0, task_abort_event=task_abort_event
@@ -698,6 +696,8 @@ class SlimComponentManager(CbfComponentManager):
 
     def is_off_allowed(self: SlimComponentManager) -> bool:
         self.logger.debug("Checking if Off is allowed.")
+        if not self.is_communicating:
+            return False
         if self.power_state != PowerState.ON:
             self.logger.warning(
                 f"Off not allowed; PowerState is {self.power_state}"
@@ -759,7 +759,6 @@ class SlimComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def off(
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,

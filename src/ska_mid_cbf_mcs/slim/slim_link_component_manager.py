@@ -20,7 +20,6 @@ from ska_control_model import (
     SimulationMode,
     TaskStatus,
 )
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -283,7 +282,9 @@ class SlimLinkComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    def start_communicating(self: SlimLinkComponentManager) -> None:
+    def _start_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
         Establish communication with the component, then start monitoring.
         """
@@ -291,22 +292,20 @@ class SlimLinkComponentManager(CbfComponentManager):
             "Entering SlimLinkComponentManager.start_communicating"
         )
 
-        if self.is_communicating:
-            self.logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
+        super()._start_communicating()
         # This moves the op state model
         self._update_component_state(power=PowerState.ON)
 
-    def stop_communicating(self: SlimLinkComponentManager) -> None:
+    def _stop_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
         Stop communication with the component.
         """
 
         self._update_component_state(power=PowerState.UNKNOWN)
         # This moves the op state model
-        super().stop_communicating()
+        super()._stop_communicating()
 
     # ---------------
     # General Methods
@@ -523,6 +522,12 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     # --- ConnectTxRx Command --- #
 
+    def is_connect_slim_tx_rx_allowed(self: SlimLinkComponentManager) -> bool:
+        self.logger.debug("Checking if ConnectTxRx is allowed.")
+        if not self.is_communicating:
+            return False
+        return True
+
     def _connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -626,7 +631,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def connect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -635,10 +639,19 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
+            is_cmd_allowed=self.is_connect_slim_tx_rx_allowed,
             task_callback=task_callback,
         )
 
     # --- DisconnectTxRx Command --- #
+
+    def is_disconnect_slim_tx_rx_allowed(
+        self: SlimLinkComponentManager,
+    ) -> bool:
+        self.logger.debug("Checking if DisconnectTxRx is allowed.")
+        if not self.is_communicating:
+            return False
+        return True
 
     def _disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
@@ -728,7 +741,6 @@ class SlimLinkComponentManager(CbfComponentManager):
             ),
         )
 
-    @check_communicating
     def disconnect_slim_tx_rx(
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
@@ -737,5 +749,6 @@ class SlimLinkComponentManager(CbfComponentManager):
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._disconnect_slim_tx_rx,
+            is_cmd_allowed=self.is_disconnect_slim_tx_rx_allowed,
             task_callback=task_callback,
         )
