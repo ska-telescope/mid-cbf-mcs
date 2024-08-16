@@ -190,15 +190,15 @@ def monitoring_device_proxies(
     return power_switch + subarray
 
 
-@pytest.fixture(name="event_tracer", scope="module", autouse=True)
+@pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
     controller: context.DeviceProxy,
-    talon_board: list[context.DeviceProxy],
-    talon_lru: list[context.DeviceProxy],
     power_switch: list[context.DeviceProxy],
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
     subarray: list[context.DeviceProxy],
+    talon_board: list[context.DeviceProxy],
+    talon_lru: list[context.DeviceProxy],
     vcc: list[context.DeviceProxy],
 ) -> Generator[TangoEventTracer, None, None]:
     """

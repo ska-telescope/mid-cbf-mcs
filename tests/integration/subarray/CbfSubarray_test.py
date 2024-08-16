@@ -25,7 +25,7 @@ from ... import test_utils
 # Test data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-# TODO: previous attr value, num values, config ID, scan ID, delay models
+# TODO: config ID, scan ID, delay models, abort paths, configure from ready, add receptors from ready
 
 
 class TestCbfSubarray:
