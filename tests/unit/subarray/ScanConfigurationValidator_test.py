@@ -16,7 +16,7 @@ from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
 )
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestScanConfigurationValidator:
@@ -36,11 +36,11 @@ class TestScanConfigurationValidator:
 
         config_file_name = "ConfigureScan_4_0_CORR.json"
         receptors = ["SKA001", "SKA036", "SKA063", "SKA100"]
-        path_to_test_json = os.path.join(file_path, config_file_name)
+        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
         subarray_component_manager.start_communicating()
 
-        with open(file_path + "sys_param_4_boards.json") as f:
+        with open(FILE_PATH + "sys_param_4_boards.json") as f:
             sp = f.read()
 
         subarray_component_manager.update_sys_param(sp)
@@ -59,7 +59,7 @@ class TestScanConfigurationValidator:
         subarray_component_manager: CbfSubarrayComponentManager,
         config_file_name: str,
     ):
-        path_to_test_json = os.path.join(file_path, config_file_name)
+        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
         validator: SubarrayScanConfigurationValidator = (
@@ -103,11 +103,11 @@ class TestScanConfigurationValidator:
         config_file_name: str,
         receptors: list[str],
     ):
-        path_to_test_json = os.path.join(file_path, config_file_name)
+        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
         subarray_component_manager.start_communicating()
 
-        with open(file_path + "sys_param_4_boards.json") as f:
+        with open(FILE_PATH + "sys_param_4_boards.json") as f:
             sp = f.read()
         subarray_component_manager.update_sys_param(sp)
 
@@ -540,7 +540,7 @@ class TestScanConfigurationValidator:
         # All three output_x uses the same function.  Just test with one test case should be good enough
         # Test cases to be added as more support channel widths are added
         config_file_name = "ConfigureScan_4_0_CORR.json"
-        path_to_test_json = os.path.join(file_path, config_file_name)
+        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0

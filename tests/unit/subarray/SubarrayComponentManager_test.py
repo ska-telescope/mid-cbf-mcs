@@ -353,3 +353,42 @@ class TestCbfSubarrayComponentManager:
         assert math.isclose(
             output_fs_sample_rate["fs_sample_rate"], expected_fs_sample_rate
         )
+
+    def test_validateSupportedConfiguration_set_to_false(
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
+    ) -> None:
+        """
+        This Test setting the validateSupportedConfiguration flag in
+        subarray_component_manager to false and THEN run a valid Scan
+        Configuration (ConfigureScan_AA4_values.json) that validates using
+        Telescope Model.  The value in that json will be consider invalid in
+        MCS, but allowable within Telscope Model's definition.
+        Update the JSON's values as needed when we expand what is allowed in MCS
+
+        :param subarray_component_manager: subarray component manager under test.
+        :param config_file_name: scan configuration file name.
+        :param receptors: receptor IDs to use in test.
+        """
+        subarray_component_manager.start_communicating()
+        receptors = ["SKA001", "SKA036", "SKA063", "SKA100"]
+        config_file_name = "ConfigureScan_AA4_values.json"
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        subarray_component_manager.update_sys_param(sp)
+
+        f = open(data_file_path + config_file_name)
+        config_string = f.read().replace("\n", "")
+        f.close()
+
+        subarray_component_manager.assign_vcc(receptors)
+
+        # It should fail the first round before setting
+        # validateSupportedConfiguration = False
+        result = subarray_component_manager.validate_input(config_string)
+        assert result[0] is False
+
+        subarray_component_manager.validateSupportedConfiguration = False
+        result = subarray_component_manager.validate_input(config_string)
+        assert result[0] is True
