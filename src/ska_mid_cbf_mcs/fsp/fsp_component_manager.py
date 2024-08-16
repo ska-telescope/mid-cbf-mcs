@@ -132,11 +132,6 @@ class FspComponentManager(CbfComponentManager):
         self.logger.debug("Checking if SetFunctionMode is allowed")
         if not self.is_communicating:
             return False
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"SetFunctionMode command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
-            )
-            return False
         if len(self.subarray_membership) != 0:
             self.logger.warning(
                 f"SetFunctionMode command cannot be issued because FSP currently has subarray membership: {self.subarray_membership}."
@@ -360,11 +355,6 @@ class FspComponentManager(CbfComponentManager):
         self.logger.debug("Checking if AddSubarrayMembership is allowed")
         if not self.is_communicating:
             return False
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"AddSubarrayMembership command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
-            )
-            return False
         if self.function_mode == FspModes.IDLE.value:
             self.logger.warning(
                 "AddSubarrayMembership command cannot be issued because FSP currently in function mode IDLE."
@@ -513,11 +503,6 @@ class FspComponentManager(CbfComponentManager):
         """
         self.logger.debug("Checking if RemoveSubarrayMembership is allowed")
         if not self.is_communicating:
-            return False
-        if self.power_state != PowerState.ON:
-            self.logger.warning(
-                f"RemoveSubarrayMembership command cannot be issued because the current PowerState (f{self.power_state}) is not ON."
-            )
             return False
         if self.function_mode == FspModes.IDLE.value:
             self.logger.warning(

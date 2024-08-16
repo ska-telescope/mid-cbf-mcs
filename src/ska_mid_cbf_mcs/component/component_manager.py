@@ -19,7 +19,6 @@ from typing import Any, Callable, Optional, cast
 
 import tango
 from ska_control_model import (
-    AdminMode,
     CommunicationStatus,
     HealthState,
     PowerState,
@@ -128,7 +127,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.info("Entering CbfComponentManager._start_communicating")
+        self.logger.debug("Entering CbfComponentManager._start_communicating")
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
@@ -163,7 +162,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self.logger.info("Entering CbfComponentManager._stop_communicating")
+        self.logger.debug("Entering CbfComponentManager._stop_communicating")
         self._update_component_state(power=PowerState.UNKNOWN)
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
@@ -542,7 +541,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         Wait for the number of anticipated results to be pushed by subordinate devices.
 
         :param timeout: Time to wait, in seconds. If default value of 0.0 is set,
-            timeout = current number of blocking commands * 5
+            timeout = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND
         :param task_abort_event: Check for abort, defaults to None
 
         :return: completed if status reached, FAILED if timed out, ABORTED if aborted
@@ -572,16 +571,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
             f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION} seconds"
         )
         return TaskStatus.COMPLETED
-
-    def toggle_simulation_mode(
-        self: CbfComponentManager,
-        proxy: context.DeviceProxy,
-        simulation_mode: SimulationMode,
-    ) -> bool:
-        proxy.adminMode = AdminMode.OFFLINE
-        proxy.simulationMode = simulation_mode
-        proxy.adminMode = AdminMode.ONLINE
-        return proxy.adminMode == simulation_mode
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:

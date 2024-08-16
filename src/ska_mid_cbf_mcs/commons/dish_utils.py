@@ -52,7 +52,6 @@ class DISHUtils:
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
 
-        # The DISH ID must be in the range of SKA[001-133] or MKT[000-063]
         fail_msg = (
             f"DISH ID {argin} is not valid. It must be SKA001-SKA133"
             " or MKT000-MKT063. Spaces before, after, or in the middle"

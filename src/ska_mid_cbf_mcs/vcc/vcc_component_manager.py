@@ -46,7 +46,6 @@ class VccComponentManager(CbfObsComponentManager):
     def __init__(
         self: VccComponentManager,
         *args: any,
-        vcc_id: int,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
@@ -55,15 +54,11 @@ class VccComponentManager(CbfObsComponentManager):
         """
         Initialize a new instance.
 
-        :param vcc_id: integer ID of this VCC
         :param talon_lru: FQDN of the TalonLRU device
         :param vcc_controller: FQDN of the HPS VCC controller device
         :param vcc_band: FQDNs of HPS VCC band devices
         """
         super().__init__(*args, **kwargs)
-
-        # TODO: remove?
-        # self._vcc_id = vcc_id
 
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller

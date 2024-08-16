@@ -552,12 +552,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 successes.append(result)
 
         if not all(successes):
+            message = "Failed to assign all requested VCCs."
+            self.logger.error(message)
             task_callback(
                 status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to assign all requested VCCs.",
-                ),
+                result=(ResultCode.FAILED, message),
             )
             return
 
@@ -701,6 +700,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 successes.append(result)
 
         if not all(successes):
+            message = "Failed to release all requested VCCs."
+            self.logger.error(message)
             return False
 
         self.dish_ids.difference_update(dish_ids_to_remove)

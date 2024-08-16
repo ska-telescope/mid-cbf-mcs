@@ -295,10 +295,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # NOTE: order matters here
-        # - must set PDU online before LRU to establish outlet power states
-        # - must set VCC online after LRU to establish LRU power state
-        # TODO: evaluate ordering and add further comments
+        # Order matters here; must set PDU online before LRU to establish outlet power states
         init_fault = False
         for fqdn in (
             self._power_switch_fqdn
@@ -310,6 +307,7 @@ class ControllerComponentManager(CbfComponentManager):
                 init_fault = True
 
         if init_fault:
+            self.logger.error("Failed to initialize proxies.")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -328,7 +326,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager._stop_communicating"
         )
         for fqdn, proxy in self._proxies.items():
@@ -713,21 +711,20 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
             try:
-                self.logger.info(f"Turning on LRU {lru.dev_name()}")
+                self.logger.info(f"Turning on LRU {fqdn}")
 
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC TalonLru.On() rejected"
                     self.logger.error(
-                        f"Nested LRC TalonLru.On() to {lru.dev_name()} rejected"
+                        f"Nested LRC TalonLru.On() to {fqdn} rejected"
                     )
                     success = False
                     continue
                 with self._results_lock:
                     self._blocking_commands.add(command_id)
 
-                # TODO: why is this so slow?
                 lrc_status = self._wait_for_blocking_results(
                     timeout=20.0, task_abort_event=task_abort_event
                 )
@@ -742,7 +739,7 @@ class ControllerComponentManager(CbfComponentManager):
             except tango.DevFailed as df:
                 message = "Nested LRC TalonLru.On() failed"
                 self.logger.error(
-                    f"Nested LRC TalonLru.On() to {lru.dev_name()} failed: {df}"
+                    f"Nested LRC TalonLru.On() to {fqdn} failed: {df}"
                 )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -842,11 +839,7 @@ class ControllerComponentManager(CbfComponentManager):
         Turn on the controller and its subordinate devices
 
         :param task_callback: Callback function to update task status.
-        :param task_abort_event: Event to signal task abort
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :param task_abort_event: Event to signal task abort.
         """
 
         self.logger.debug("Entering ControllerComponentManager.on")
@@ -863,11 +856,8 @@ class ControllerComponentManager(CbfComponentManager):
         # 3. Turn TalonBoard devices ONLINE
         # 4. Configure SLIM Mesh devices
 
-        # TODO: There are two VCCs per LRU. Need to check the number of
-        #       VCCs turned on against the number of LRUs powered on
         if self.simulation_mode == SimulationMode.FALSE:
             self._talon_lru_fqdn = self._get_talon_lru_fqdns()
-            # TODO: handle subscribed events for missing LRUs
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
             self._talon_lru_fqdn = [
@@ -940,7 +930,7 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug(f"ComponentState={self._component_state}")
+        self.logger.debug(f"Component state: {self._component_state}")
         return self.submit_task(
             self._on,
             is_cmd_allowed=self.is_on_allowed,
@@ -1025,7 +1015,9 @@ class ControllerComponentManager(CbfComponentManager):
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
                     message = "Nested LRC Slim.Off() rejected"
-                    self.logger.error(f"Nested LRC Slim.Off() to {fqdn} rejected")
+                    self.logger.error(
+                        f"Nested LRC Slim.Off() to {fqdn} rejected"
+                    )
                     success = False
                     continue
                 with self._results_lock:
@@ -1074,16 +1066,16 @@ class ControllerComponentManager(CbfComponentManager):
         obs_state_error_list = []
         for fqdn, proxy in self._proxies.items():
             self.logger.debug(f"Checking final state of device {fqdn}")
-            # power switch device state is always ON as long as it is
-            # communicating and monitoring the PDU; does not implement
-            # On/Off commands, rather TurnOn/OffOutlet commands to
-            # target specific outlets
-            if (
-                fqdn
-                not in self._power_switch_fqdn
-                + self._subarray_fqdn
-                + self._vcc_fqdn
-            ):
+            # For some components under controller monitoring, including subarray,
+            # power switch and VCC devices, they are in DevState.ON when
+            # communicating with their component (AdminMode.ONLINE),
+            # and in DevState.DISABLE when not (AdinMode.OFFLINE).
+
+            # The following devices implement power On/Off commands:
+            if fqdn in self._talon_lru_fqdn + [
+                self._fs_slim_fqdn,
+                self._vis_slim_fqdn,
+            ]:
                 try:
                     # TODO: CIP-1899 The cbfcontroller is sometimes
                     # unable to read the State() of the talon_lru
@@ -1191,10 +1183,7 @@ class ControllerComponentManager(CbfComponentManager):
         Turn off the controller and its subordinate devices
 
         :param task_callback: Callback function to update task status
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :param task_abort_event: Event to signal task abort.
         """
         self.logger.debug("Entering ControllerComponentManager.off")
 
@@ -1229,18 +1218,7 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.warning(log_msg)
             message.append(log_msg)
 
-        # Get all currently in use LRUs and turn them off
-        if self.simulation_mode == SimulationMode.FALSE:
-            if len(self._talon_lru_fqdn) == 0:
-                self._talon_lru_fqdn = self._get_talon_lru_fqdns()
-                # TODO: handle subscribed events for missing LRUs
-        else:
-            # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = [
-                "mid_csp_cbf/talon_lru/001",
-                "mid_csp_cbf/talon_lru/002",
-            ]
-
+        # TalonLRU Off
         lru_off_status, log_msg = self._turn_off_lrus(task_abort_event)
         if not lru_off_status:
             self._update_communication_state(

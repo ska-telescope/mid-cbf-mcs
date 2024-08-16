@@ -148,7 +148,6 @@ class Vcc(CbfObsDevice):
         # as self._simulation_mode at this point during init_device()
         # SimulationMode.FALSE
         return VccComponentManager(
-            vcc_id=self.DeviceID,
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
