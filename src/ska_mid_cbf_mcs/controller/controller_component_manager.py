@@ -425,6 +425,7 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
+        self.set_validateSupportedConfiguration_to_sub_device()
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """
@@ -605,10 +606,6 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode,
             )
 
-            self._group_subarray.write_attribute(
-                "validateSupportedConfiguration",
-                self.validateSupportedConfiguration,
-            )
             self._group_subarray.command_inout("On")
         except tango.DevFailed as df:
             for item in df.args:
@@ -1173,3 +1170,26 @@ class ControllerComponentManager(CbfComponentManager):
             ResultCode.OK,
             "CbfController InitSysParam command completed OK",
         )
+
+    def set_validateSupportedConfiguration_to_sub_device(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Sets the validateSupportedConfiguration value to the required sub devices
+
+        :return: None
+        """
+
+        try:
+            self._group_subarray.write_attribute(
+                "validateSupportedConfiguration",
+                self.validateSupportedConfiguration,
+            )
+        except tango.DevFailed as df:
+            for item in df.args:
+                log_msg = (
+                    f"Failed to set validateSupportedConfiguration"
+                    f"for sub device; {item.reason}"
+                )
+                self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)

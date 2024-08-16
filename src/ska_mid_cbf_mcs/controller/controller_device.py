@@ -21,7 +21,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
+from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
@@ -393,6 +393,19 @@ class CbfController(SKAController):
             self.logger.warning(msg)
 
         self.component_manager.validateSupportedConfiguration = value
+
+        # When AdminMode is OFFLINE, Controller is not communicating with the
+        # sub devices and it is not possible to set the flag for the sub devices
+        # at this point.  Setting this while in OFFLINE will set the flag value to
+        # the sub devices when AdminMode.ONLINE is set for Controller
+        if self.read_adminMode() == AdminMode.ONLINE:
+            self.component_manager.set_validateSupportedConfiguration_to_sub_device()
+        else:
+            msg = (
+                f"adminMode is {self.adminMode}.  The flag will populate to the sub devices "
+                "when adminMode is set to ONLINE for the Controller"
+            )
+            self.logger.warning(msg)
 
     # --------
     # Commands
