@@ -49,14 +49,14 @@ class TestCbfController:
         slim_vis: context.DeviceProxy,
         subarray: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
-        controller_params: dict[any],
     ) -> None:
         """
-        Test the initial states and verify the component manager
-        can start communicating
+        Verify the initial states and ensure the component manager
+        can initiate communication: Set the AdminMode to ONLINE and expect the
+        controller and its subelements to transition to the ON state.
         """
 
-        # trigger start_communicating by setting the AdminMode to ONLINE
+        # Trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
 
         expected_events = [
@@ -104,7 +104,10 @@ class TestCbfController:
         controller_params: dict[any],
     ) -> None:
         """
-        Test the "InitSysParam" command
+        Test the "InitSysParam" command.
+
+        This test is dependent on the test_Online and it's state changes.
+        Send the InitSysParam command with the sys_param_file.
         """
         # Get the system parameters
         with open(test_data_path + controller_params["sys_param_file"]) as f:
@@ -152,7 +155,11 @@ class TestCbfController:
         controller_params: dict[any],
     ):
         """
-        Test the "On" command
+        Test the "On" command.
+
+        This test is dependent on the test_InitSysParam and it's ability
+        to initialize dishIDs and SysParams. Send the On command and expect
+        the controller and its subelements to transition to the ON state.
         """
         # Get the system parameters
         with open(test_data_path + controller_params["sys_param_file"]) as f:
@@ -229,7 +236,10 @@ class TestCbfController:
         controller_params: dict[any],
     ):
         """
-        Test that InitSysParam command is not allowed when the controller is in ON state
+        Test that InitSysParam command is not allowed when the controller is in ON state.
+
+        Expects the controller to already be in the ON state, and attempts to
+        send the InitSysParam command.
         """
         assert controller.State() == DevState.ON
 
@@ -510,7 +520,8 @@ class TestCbfController:
         controller_params: dict[any],
     ) -> None:
         """
-        Verify the component manager can stop communicating
+        Verify that the component manager can stop communication: Set the AdminMode to OFFLINE
+        and expect the controller and its subelements to transition to the DISABLE state.
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE
