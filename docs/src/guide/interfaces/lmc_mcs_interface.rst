@@ -24,7 +24,7 @@ CbfController Tango Commands
 .. cbf-controller-table::
 
 ..
-    make comment for table gen reference
+    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates these tables
 ..
 
 
