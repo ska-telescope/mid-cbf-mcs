@@ -11,7 +11,7 @@ from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
 from docutils.utils import SystemMessagePropagation
 
-import ska_mid_cbf_mcs.commons.validate_interface as val_int
+from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
 
 from sphinx.util.nodes import nested_parse_with_titles
 
@@ -45,7 +45,7 @@ cbf_subarray_table = {
     "row9": ['RemoveReceptors', 'List[str]', '(ResultCode, str)', 'Remove receptors in input list\nChange observing state to EMPTY if no\nreceptors assigned', ''],
     "row10": ['Restart', 'None', '(ResultCode, str)', 'Reset subarray scan configuration\nRemove assigned receptors\nRestart observing state model to EMPTY\
               If in FAULT, send Abort/ObsReset to VCC\nIf in FAULT, send Abort/ObsReset to\nFSP <function mode> subarrays\nNo action on hardware\nSee also Restart Sequence', ''],
-    "row11": ['Scan', 'JSON str*', '(ResultCode, str)', 'Start scanning', f'{val_int.supported_interfaces["scan"]}'],
+    "row11": ['Scan', 'JSON str*', '(ResultCode, str)', 'Start scanning', f'{supported_interfaces["scan"]}'],
 }
 
 subarray_num_cols = len(cbf_subarray_table['header'])
@@ -73,7 +73,7 @@ controller_commands = [
             Initialize Dish ID to VCC ID mapping and k values
             See also :ref:'InitSysParam Sequence'
             """),   
-        "Supported Interface(s)": f'{val_int.supported_interfaces["initsysparam"]}',
+        "Supported Interface(s)": f'{supported_interfaces["initsysparam"]}',
     },
     { 
         "Command": "Standby",
