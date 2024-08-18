@@ -5,6 +5,7 @@ import yaml
 from collections import OrderedDict
 import pathlib
 
+from inspect import cleandoc
 from docutils import nodes, utils
 from docutils.parsers.rst import Directive, DirectiveError
 from docutils.parsers.rst import directives
@@ -47,15 +48,72 @@ cbf_subarray_table = {
 
 subarray_num_cols = len(cbf_subarray_table['header'])
 
-# cbf_controller_table = {
-#     "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
-#     "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', ''],
-#     "row2": ['InitSysParam', 'JSON str*', '(ResultCode, str)', 'Initialize Dish ID to VCC ID mapping and k values\n:ref:\'See also InitSysParam Sequence\'', f'{supported_interfaces["config"]}'],
-#     "row3": ['Standby', 'None', '(ResultCode, str)', 'None', ''],
-#     "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', ''],
-# }
-
-# num_cols = len(cbf_controller_table['header'])
+commands = [
+    { 
+        "Command": "Off",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Set power state to OFF for controller and
+            subordinate devices (subarrays, VCCs, FSPs)
+            Turn off power to all hardware
+            See also :ref:'Off Sequence'
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "InitSysParam",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Initialize Dish ID to VCC ID mapping and k values
+            See also :ref:'InitSysParam Sequence'
+            """),   
+        "Supported Interface(s)": f'{supported_interfaces['initsysparam']}',
+    },
+    { 
+        "Command": "Standby",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            None
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "On",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Turn on the controller and subordinate devices
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "ConfigureScan",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Change observing state to READY
+            Configure attributes from input JSON
+            Subscribe events
+            Configure VCC, VCC subarray, FSP, FSP Subarray
+            Publish output links.
+            See also :ref:`Configure Scan Sequence`
+            """    
+        ),
+        "Supported Interface(s)": [
+            "https://schema.skao.int/ska-csp-configurescan/4.3",
+            "https://schema.skao.int/ska-csp-configurescan/4.2",
+            "https://schema.skao.int/ska-csp-configurescan/4.1"
+        ],
+    }
+]
 
 
 # Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
@@ -92,26 +150,19 @@ class CbfControllerTable(Directive):
 
         table_body = nodes.tbody()
 
-        row1 = nodes.row()
-        row2 = nodes.row()
-        row3 = nodes.row()
-        row4 = nodes.row()
- 
-        for i in range(controller_num_cols):
-            r1_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row1'][i]))
-            r2_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row2'][i]))
-            r3_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row3'][i]))
-            r4_entry = nodes.entry('', nodes.paragraph(text=cbf_controller_table['row4'][i]))
-
-            row1 += r1_entry
-            row2 += r2_entry
-            row3 += r3_entry
-            row4 += r4_entry
-
-        table_body += row1
-        table_body += row2
-        table_body += row3
-        table_body += row4
+        for index, command in enumerate(commands):
+            row_class = 'row-even' if index % 2 == 0 else 'row-odd'
+            row = nodes.row("", classes=[row_class])
+            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
+            action_entry = nodes.entry('')
+            action_entry.append(self._parse_line_block(command['Action']))
+            row.append(action_entry)
+            supported_entry = nodes.entry('')
+            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
+            row.append(supported_entry)
+            table_body.append(row)
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
