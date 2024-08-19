@@ -56,7 +56,7 @@ supported_interfaces = {
     "initsysparam": CSP_INITSYSPARAM_VERSIONS,
     "assignresources": CSP_ASSIGNRESOURCES_VERSIONS,
     "endscan": CSP_ENDSCAN_VERSIONS,
-    "releaseresources": CSP_RELEASERESOURCES_VERSIONS
+    "releaseresources": CSP_RELEASERESOURCES_VERSIONS,
 }
 
 
@@ -76,7 +76,9 @@ def validate_interface(argin: str) -> tuple[bool, str]:
 
     # Check supported interface
     # if input["interface"] not in SUPPORTED_INTERFACES:
-    if not any(input["interface"] in val for val in supported_interfaces.values()):
+    if not any(
+        input["interface"] in val for val in supported_interfaces.values()
+    ):
         print(SUPPORTED_INTERFACES)
         return [False, "The command interface is not supported"]
 
