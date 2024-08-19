@@ -20,14 +20,15 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 
 .. uml:: ../../diagrams/mid-cbf-scan-ops.puml
 
+..
+    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below tables
+..
+
+
 CbfController Tango Commands
 ------------------------------
 
 .. cbf-controller-table::
-
-..
-    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates these tables
-..
 
 
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
