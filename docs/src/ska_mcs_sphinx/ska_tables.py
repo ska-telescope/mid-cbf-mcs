@@ -101,6 +101,7 @@ controller_commands = [
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
+            TEST
             Change observing state to READY
             Configure attributes from input JSON
             Subscribe events
