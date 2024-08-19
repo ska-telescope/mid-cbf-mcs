@@ -71,7 +71,7 @@ controller_commands = [
         "Action": cleandoc(
             """
             Initialize Dish ID to VCC ID mapping and k values
-            See also :ref:`Configure Scan Sequence`
+            See also :ref:`InitSysParam Sequence`
             """),   
         "Supported Interface(s)": supported_interfaces["initsysparam"],
     },
@@ -129,7 +129,7 @@ subarray_commands = [
             Send Abort to VCC
             Send Abort to FSP <function mode> Subarrays
             No action on hardware
-            See also :ref:`Configure Scan Sequence`
+            See also :ref:`Abort Sequence`
             """),   
         "Supported Interface(s)": '',
     },
@@ -156,7 +156,7 @@ subarray_commands = [
             Subscribe events
             Configure VCC, VCC subarray, FSP, FSP Subarray
             Publish output links.
-            See also Configure Scan Sequence
+            See also :ref:'Configure Scan Sequence'
             """),   
         "Supported Interface(s)": supported_interfaces["config"],
     },
