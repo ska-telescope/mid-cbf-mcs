@@ -37,6 +37,9 @@ class TestCbfController:
 
     As teardown and setup are expensive operations, tests are interdependent.
     This is handled by the pytest.mark.dependency decorator.
+
+    Note: Each test needs to take in the 'controller_params' fixture to run
+    instances of the suite between different parameter sets.
     """
 
     @pytest.mark.dependency(name="CbfController_Online")
