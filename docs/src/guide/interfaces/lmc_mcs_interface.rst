@@ -12,8 +12,6 @@ to the subarray. The calls to write the frequency offset K and frequency offset
 delta F values only need to be written when there are updates to the values. They must
 be written to the CBF Controller before the scan configuration.
 
-For full details of MCS Controller see :ref:'CbfController'.
-
 For full details of MCS Controller see :ref:`CbfController`.
 
 For full details of MCS Subarray see :ref:`CbfSubarray`.

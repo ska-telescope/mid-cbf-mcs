@@ -19,37 +19,6 @@ import importlib
 
 HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
 
-cbf_controller_table = {
-    "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
-    "row1": ['Off', 'None', '(ResultCode, str)', 'Set power state to OFF for controller and subordinate devices (subarrays, VCCs, FSPs)\nTurn off power to all hardware\nSee also :ref:\'Off Sequence\'', ''],
-    "row2": ['InitSysParam', 'JSON str*', '(ResultCode, str)', 'Initialize Dish ID to VCC ID mapping and k values\n:ref:\'See also InitSysParam Sequence\'', f'{supported_interfaces["config"]}'],
-    "row3": ['Standby', 'None', '(ResultCode, str)', 'None', ''],
-    "row4": ['On', 'None', '(ResultCode, str)', 'Turn on the controller and subordinate devices', ''],
-}
-
-controller_num_cols = len(cbf_controller_table['header'])
-
-
-cbf_subarray_table = {
-    "header": ['Command', 'Parameters', 'Return type', 'Action', 'Supported interface'],
-    "row1": ['Abort', 'None', '(ResultCode, str)', 'Change observing state to ABORTED\nSend Abort to VCC\n Send Abort to FSP <function mode> Subarrays\nNo action on hardware\nSee also :ref:\'Abort Sequence\'', ''],
-    "row2": ['AddReceptors', 'List[str]', '(ResultCode, str)', 'Assign receptors to this subarray\nTurn subarray to ObsState = IDLE if no\nreceptor was previously assigned', ''],
-    "row3": ['ConfigureScan', 'JSON str*', '(ResultCode, str)', 'Change observing state to READY\nConfigure attributes from input JSON\nSubscribe events\nConfigure VCC,\
-             VCC subarray, FSP, FSP Subarray\nPublish output links.\nSee also :ref:\'Configure Scan Sequence\'', f'{supported_interfaces["config"]}'],
-    "row4": ['EndScan', 'None', '(ResultCode, str)', 'End the scan', ''],
-    "row5": ['ObsReset', 'None', '(ResultCode, str)', 'Reset subarray scan configuration\nKeep assigned receptors\nReset observing state to IDLE\nIf in FAULT, send Abort/ObsReset to VCC\
-             If in FAULT, send Abort/ObsReset to\nFSP <function mode> subarrays\nNo action on hardware\nSee also :ref:\'ObsReset Sequence\'', ''],
-    "row6": ['Off', 'None', '(ResultCode, str)', 'Set subarray power mode to off.\nCommands FSP<function mode> Subarrays\nto turn off\nNo action on hardware power', ''],
-    "row7": ['On', 'None', '(ResultCode, str)', 'Set subarry power mode to on.\nCommand FSP<function mode> Subarrays\nto turn on', ''],
-    "row8": ['RemoveAllReceptrs', 'None', '(ResultCode, str)', 'Remove all receptors\nTurn Subarray off if no receptors are\nassigned', ''],
-    "row9": ['RemoveReceptors', 'List[str]', '(ResultCode, str)', 'Remove receptors in input list\nChange observing state to EMPTY if no\nreceptors assigned', ''],
-    "row10": ['Restart', 'None', '(ResultCode, str)', 'Reset subarray scan configuration\nRemove assigned receptors\nRestart observing state model to EMPTY\
-              If in FAULT, send Abort/ObsReset to VCC\nIf in FAULT, send Abort/ObsReset to\nFSP <function mode> subarrays\nNo action on hardware\nSee also Restart Sequence', ''],
-    "row11": ['Scan', 'JSON str*', '(ResultCode, str)', 'Start scanning', f'{supported_interfaces["scan"]}'],
-}
-
-subarray_num_cols = len(cbf_subarray_table['header'])
-
 controller_commands = [
     { 
         "Command": "Off",
@@ -60,7 +29,7 @@ controller_commands = [
             Set power state to OFF for controller and
             subordinate devices (subarrays, VCCs, FSPs)
             Turn off power to all hardware
-            See also :ref:'Off Sequence'
+            See also :ref:`Off Sequence`
             """),   
         "Supported Interface(s)": '',
     },
@@ -156,7 +125,7 @@ subarray_commands = [
             Subscribe events
             Configure VCC, VCC subarray, FSP, FSP Subarray
             Publish output links.
-            See also :ref:'Configure Scan Sequence'
+            See also :ref:`Configure Scan Sequence`
             """),   
         "Supported Interface(s)": supported_interfaces["config"],
     },
@@ -183,7 +152,7 @@ subarray_commands = [
             If in FAULT, send Abort/ObsReset to
             FSP <function mode> subarrays
             No action on hardware
-            See also :ref:'ObsReset Sequence'
+            See also :ref:`ObsReset Sequence`
             """    
         ),
         "Supported Interface(s)": "",
@@ -250,7 +219,7 @@ subarray_commands = [
             If in FAULT, send Abort/ObsReset to
             FSP <function mode> subarrays
             No action on hardware
-            See also :ref:'Restart Sequence'
+            See also :ref:`Restart Sequence`
             """),   
         "Supported Interface(s)": "",
     },
@@ -461,14 +430,5 @@ class CbfSubarrayTable(Directive):
             line = nodes.line(text=item)
             line_block.append(line)
         return line_block
-
-
-
-def main():
-    print(cbf_subarray_table['row2'][4])
-    print(cbf_subarray_table['row1'])
-
-if __name__ == "__main__":
-    main()
 
 
