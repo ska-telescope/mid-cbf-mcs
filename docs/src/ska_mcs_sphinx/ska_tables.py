@@ -238,20 +238,17 @@ subarray_commands = [
 
 sub_table_commands = [
     { 
-        "Command": "Delay model",
+        "Command": "Delay Model",
         "Parameters": "JSON str*",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
-            TODO: Delay Model Comment
+            Reads from the 'DelayModel' attribute from the CSP subarray leaf node
             """),   
         "Supported Interface(s)": supported_interfaces["delaymodel"],
     },
 ]
 
-# Variables: num_rows, command_list, param_list, return_list, action_list, supported_versions_list
-# TODO: For supported versions we can read param list and if json is found we can
-#       look for command with matching prefix as supported versions
 
 class CbfControllerTable(Directive):
     has_content = True
