@@ -178,24 +178,6 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Simulation Mode",
     )
 
-    @attribute(
-        dtype="DevBoolean",
-        access=AttrWriteType.READ_WRITE,
-        label="Restrictive Validation of Supported Configurations",
-        doc="Flag to indicate if a restrictive validation is requested for "
-        "supported configurations, such as with Scan Configurations. "
-        "Defaults to True",
-    )
-    def validateSupportedConfiguration(self: CbfSubarray) -> bool:
-        """
-        Reads and return the value in the validateSupportedConfiguration
-
-        :return: the value in validateSupportedConfiguration
-        :rtype: bool
-        """
-
-        return self.component_manager.validateSupportedConfiguration
-
     # ---------------
     # General methods
     # ---------------
@@ -480,27 +462,6 @@ class CbfSubarray(CspSubElementSubarray):
         """
         self.component_manager.update_sys_param(value)
         # PROTECTED REGION END #    //  CbfSubarray.sysParam_write
-
-    def write_validateSupportedConfiguration(
-        self: CbfSubarray, value: bool
-    ) -> None:
-        """
-        Sets the validateSupportedConfiguration flag of the device and the
-        component manager.
-
-        A warning level log is created when the flag is set to False.
-
-        :param value: Set the flag to True/False
-        """
-        if value is False:
-            msg = (
-                "Setting validateSupportedConfiguration to False in "
-                "Subarray Device. "
-                "This prevent restrictive checking with Scan Configurations."
-            )
-            self.logger.warning(msg)
-
-        self.component_manager.validateSupportedConfiguration = value
 
     # --------
     # Commands

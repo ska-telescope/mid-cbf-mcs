@@ -149,8 +149,6 @@ class CbfSubarrayComponentManager(
 
         self._logger = logger
 
-        self.validateSupportedConfiguration = True
-
         self._simulation_mode = simulation_mode
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
@@ -860,8 +858,6 @@ class CbfSubarrayComponentManager(
         Validate scan configuration.
 
         :param argin: The configuration as JSON formatted string.
-        :param validateSupportedConfiguration: Boolean flag to indicate if
-            MCS Subarray Scan Configuration is required
 
         :return: A tuple containing a boolean indicating if the configuration
             is valid and a string message. The message is for information
@@ -903,9 +899,13 @@ class CbfSubarrayComponentManager(
             full_configuration["cbf"] = copy.deepcopy(configuration)
         else:
             full_configuration["midcbf"] = copy.deepcopy(configuration)
-
+        controller_validateSupportedConfiguration = (
+            self._proxy_cbf_controller.read_attribute(
+                "validateSupportedConfiguration"
+            )
+        )
         # MCS Scan Configuration Validation
-        if self.validateSupportedConfiguration is True:
+        if controller_validateSupportedConfiguration is True:
             json_str = json.dumps(full_configuration)
             validator = SubarrayScanConfigurationValidator(
                 json_str,
