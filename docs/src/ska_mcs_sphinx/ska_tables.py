@@ -73,7 +73,7 @@ controller_commands = [
             Initialize Dish ID to VCC ID mapping and k values
             See also :ref:`Configure Scan Sequence`
             """),   
-        "Supported Interface(s)": str(supported_interfaces["initsysparam"]),
+        "Supported Interface(s)": supported_interfaces["initsysparam"],
     },
     { 
         "Command": "Standby",
@@ -158,7 +158,7 @@ subarray_commands = [
             Publish output links.
             See also Configure Scan Sequence
             """),   
-        "Supported Interface(s)": f'{supported_interfaces["config"]}',
+        "Supported Interface(s)": supported_interfaces["config"],
     },
     { 
         "Command": "EndScan",
@@ -168,7 +168,7 @@ subarray_commands = [
             """
             End the scan
             """),   
-        "Supported Interface(s)": f'{supported_interfaces["endscan"]}',
+        "Supported Interface(s)": supported_interfaces["endscan"],
     },
     { 
         "Command": "ObsReset",
@@ -262,7 +262,7 @@ subarray_commands = [
             """
             Start scanning
             """),   
-        "Supported Interface(s)": f'{supported_interfaces["scan"]}',
+        "Supported Interface(s)": supported_interfaces["scan"],
     },
 ]
 
