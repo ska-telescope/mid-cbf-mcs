@@ -45,8 +45,14 @@ class TestCbfController:
     @pytest.fixture(name="test_context", scope="function")
     def cbf_controller_test_context(
         self: TestCbfController,
-        initial_device_mocks: dict[str, Mock],
+        initial_mocks: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the CbfController.
+
+        :param initial_mocks: A dictionary of device mocks to be added to the test context.
+        :return: A test context for the CbfController.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_class=CbfController,
@@ -98,7 +104,7 @@ class TestCbfController:
             MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
         )
 
-        for name, mock in initial_device_mocks.items():
+        for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
@@ -110,9 +116,7 @@ class TestCbfController:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -122,9 +126,7 @@ class TestCbfController:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -134,9 +136,7 @@ class TestCbfController:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -148,11 +148,9 @@ class TestCbfController:
         """
         Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
@@ -179,7 +177,7 @@ class TestCbfController:
             "sys_param_dup_vcc.json",
             "sys_param_invalid_rec_id.json",
             "sys_param_dup_dishid.json",
-            # test using tm_data_sources params
+            # Test using tm_data_sources params
             "source_init_sys_param.json",
             "source_init_sys_param_invalid_source.json",
             "source_init_sys_param_invalid_file.json",
@@ -194,6 +192,11 @@ class TestCbfController:
     ) -> None:
         """
         Test InitSysParam and failure cases.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param sys_param_file_path: The path to the sys_param file to be used
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -273,6 +276,10 @@ class TestCbfController:
     ) -> None:
         """
         Test On without InitSysParam.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -299,9 +306,9 @@ class TestCbfController:
         """
         Test all of CbfController's commands, expect success.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         # Establish communication
         self.test_Online(device_under_test, event_tracer)

@@ -34,7 +34,7 @@ def device_under_test_fixture(
     Fixture that returns the device under test.
 
     :param test_context: the context in which the tests run
-    :return: the device under test
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/talon_board/001")
 
@@ -47,7 +47,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -122,6 +122,10 @@ def initial_mocks(
     """
     Return a dictionary of device proxy mocks to pre-register.
 
+    :param mock_talon_sysid: mock for talon sysid device
+    :param mock_ethernet_100g: mock for talon 100g ethernet device
+    :param mock_talon_status: mock for talon status device
+    :param mock_hps_master: mock for hps master device
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {

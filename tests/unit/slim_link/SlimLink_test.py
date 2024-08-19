@@ -44,6 +44,12 @@ class TestSlimLink:
     def slim_link_test_context(
         self: TestSlimLink, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        A fixture that provides a test context for the SlimLink device.
+
+        :param initial_mocks: A dictionary of initial mocks to be added to the test context.
+        :return: A test context for the SlimLink device.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fs_links/001",
@@ -61,9 +67,7 @@ class TestSlimLink:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -73,9 +77,7 @@ class TestSlimLink:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -85,9 +87,7 @@ class TestSlimLink:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -99,11 +99,9 @@ class TestSlimLink:
         """
         Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
@@ -143,11 +141,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
         device_under_test.txDeviceName = tx_device_name
@@ -195,11 +191,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a (mocked) SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a (mocked) SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.txDeviceName = tx_device_name
@@ -227,10 +221,9 @@ class TestSlimLink:
         """
         Test the ConnectTxRx() command when no Tx or Rx device names have been set.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -270,10 +263,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
         device_under_test.txDeviceName = tx_device_name
@@ -323,10 +315,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.txDeviceName = tx_device_name
         assert device_under_test.txDeviceName == tx_device_name
@@ -373,10 +364,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -408,10 +398,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx_empty_device_names(
             device_under_test, event_tracer
@@ -451,10 +440,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -497,10 +485,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -545,11 +532,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -582,10 +567,9 @@ class TestSlimLink:
         """
         Test the DisconnectTxRx() command without connecting first.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -624,10 +608,9 @@ class TestSlimLink:
 
         :param tx_device_name: FQDN used to create a proxy to a SlimTx device.
         :param rx_device_name: FQDN used to create a proxy to a SlimRx device.
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_ConnectTxRx(
             tx_device_name=tx_device_name,
@@ -652,10 +635,9 @@ class TestSlimLink:
         """
         Test the ClearCounters() command
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
         result, msg = device_under_test.ClearCounters()
