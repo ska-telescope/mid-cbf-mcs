@@ -101,7 +101,6 @@ controller_commands = [
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
-            TEST
             Change observing state to READY
             Configure attributes from input JSON
             Subscribe events
@@ -135,33 +134,14 @@ subarray_commands = [
         "Supported Interface(s)": '',
     },
     { 
-        "Command": "InitSysParam",
-        "Parameters": "JSON str*",
+        "Command": "AddReceptors",
+        "Parameters": "List[str]",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
-            Initialize Dish ID to VCC ID mapping and k values
-            See also :ref:'InitSysParam Sequence'
-            """),   
-        "Supported Interface(s)": str(supported_interfaces["initsysparam"]),
-    },
-    { 
-        "Command": "Standby",
-        "Parameters": "None",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            None
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
-        "Command": "On",
-        "Parameters": "None",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Turn on the controller and subordinate devices
+            Assign receptors to this subarray
+            Turn subarray to ObsState = IDLE if no
+            receptor was previously assigned
             """),   
         "Supported Interface(s)": '',
     },
@@ -171,21 +151,119 @@ subarray_commands = [
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
-            TEST
             Change observing state to READY
             Configure attributes from input JSON
             Subscribe events
             Configure VCC, VCC subarray, FSP, FSP Subarray
             Publish output links.
-            See also :ref:`Configure Scan Sequence`
+            See also Configure Scan Sequence
+            """),   
+        "Supported Interface(s)": f'{supported_interfaces['config']}',
+    },
+    { 
+        "Command": "EndScan",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            End the scan
+            """),   
+        "Supported Interface(s)": f'{supported_interfaces['scan']}',
+    },
+    { 
+        "Command": "ObsReset",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Reset subarray scan configuration
+            Keep assigned receptors
+            Reset observing state to IDLE
+            If in FAULT, send Abort/ObsReset to VCC
+            If in FAULT, send Abort/ObsReset to
+            FSP <function mode> subarrays
+            No action on hardware
+            See also :ref:'ObsReset Sequence'
             """    
         ),
-        "Supported Interface(s)": [
-            "https://schema.skao.int/ska-csp-configurescan/4.3",
-            "https://schema.skao.int/ska-csp-configurescan/4.2",
-            "https://schema.skao.int/ska-csp-configurescan/4.1"
-        ],
-    }
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "Off",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Set subarray power mode to off.
+            Commands FSP<function mode> Subarrays
+            to turn off
+            No action on hardware power
+            """),   
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "On",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Set subarry power mode to on.
+            Command FSP<function mode> Subarrays
+            to turn on
+            """),   
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "RemoveAllReceptors",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Remove all receptors
+            Turn Subarray off if no receptors are
+            assigned
+            """),   
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "RemoveReceptors",
+        "Parameters": "List[str]",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Remove receptors in input list
+            Change observing state to EMPTY if no
+            receptors assigned
+            """),   
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "Restart",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Reset subarray scan configuration
+            Remove assigned receptors
+            Restart observing state model to EMPTY
+            If in FAULT, send Abort/ObsReset to VCC
+            If in FAULT, send Abort/ObsReset to
+            FSP <function mode> subarrays
+            No action on hardware
+            See also :ref:'Restart Sequence'
+            """),   
+        "Supported Interface(s)": "",
+    },
+    { 
+        "Command": "Scan",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Start scanning
+            """),   
+        "Supported Interface(s)": f'{supported_interfaces['scan']}',
+    },
 ]
 
 
@@ -320,54 +398,19 @@ class CbfSubarrayTable(Directive):
 
         table_body = nodes.tbody()
 
-        row1 = nodes.row()
-        row2 = nodes.row()
-        row3 = nodes.row()
-        row4 = nodes.row()
-        row5 = nodes.row()
-        row6 = nodes.row()
-        row7 = nodes.row()
-        row8 = nodes.row()
-        row9 = nodes.row()
-        row10 = nodes.row()
-        row11 = nodes.row()
- 
-        for i in range(subarray_num_cols):
-            r1_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row1'][i]))
-            r2_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row2'][i]))
-            r3_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row3'][i]))
-            r4_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row4'][i]))
-            r5_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row5'][i]))
-            r6_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row6'][i]))
-            r7_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row7'][i]))
-            r8_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row8'][i]))
-            r9_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row9'][i]))
-            r10_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row10'][i]))
-            r11_entry = nodes.entry('', nodes.paragraph(text=cbf_subarray_table['row11'][i]))
-
-            row1 += r1_entry
-            row2 += r2_entry
-            row3 += r3_entry
-            row4 += r4_entry
-            row5 += r5_entry
-            row6 += r6_entry
-            row7 += r7_entry
-            row8 += r8_entry
-            row9 += r9_entry
-            row10 += r10_entry
-            row11 += r11_entry
-
-        table_body += row1
-        table_body += row2
-        table_body += row3
-        table_body += row4
-        table_body += row5
-        table_body += row6
-        table_body += row7
-        table_body += row8
-        table_body += row9
-        table_body += row10
-        table_body += row11
+        for index, command in enumerate(subarray_commands):
+            row_class = 'row-even' if index % 2 == 0 else 'row-odd'
+            row = nodes.row("", classes=[row_class])
+            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
+            action_entry = nodes.entry('')
+            action_entry.append(self._parse_line_block(command['Action']))
+            row.append(action_entry)
+            supported_entry = nodes.entry('')
+            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
+            row.append(supported_entry)
+            table_body.append(row)
 
         table  +=  (tgroup)
         tgroup  +=  (colspec_1)
@@ -378,7 +421,47 @@ class CbfSubarrayTable(Directive):
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
+
         return [table]
+    
+    def _parse_text(self, text_to_parse: str):
+        p_node = nodes.paragraph(text=text_to_parse,)
+        # Create a node.
+        node = nodes.section()
+        node.document = self.state.document
+        nested_parse_with_titles(self.state, p_node, node)
+        return node.children
+    
+    def _parse_paragraph(self, text_to_parse: str):
+        paragraph = nodes.paragraph()
+        paragraph.children = self._parse_text(text_to_parse)
+        return paragraph
+    
+    def _parse_line_block(self, text_to_parse: str):
+        lines = text_to_parse.split('\n')
+        line_block = nodes.line_block()
+        for line_entry in lines:
+            line = nodes.line()
+            parsed = self._parse_text(line_entry)
+            line.children = parsed[0].children
+            line_block.append(line)
+        return line_block
+
+    def _create_unordered_list(self, list_items: list[str]):
+        unordered_list = nodes.bullet_list()
+        for item in list_items:
+            list_item = nodes.list_item()
+            list_item.append(nodes.paragraph(text=item))
+            unordered_list.append(list_item)
+        return unordered_list
+    
+    def _create_line_block_from_list(self, list_items: list[str]):
+        line_block = nodes.line_block()
+        for item in list_items:
+            line = nodes.line(text=item)
+            line_block.append(line)
+        return line_block
+
 
 
 def main():
