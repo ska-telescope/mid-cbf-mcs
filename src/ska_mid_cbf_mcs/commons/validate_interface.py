@@ -28,10 +28,11 @@ CSP_RELEASERESOURCES_VER3_0 = CSP_RELEASERESOURCES_PREFIX + "3.0"
 
 # List of supported interfaces. Dependent on which stories have been merged into main
 
-CSP_CONFIG_VERSIONS = [CSP_CONFIG_VER2_5,   # If only CIP-2504 has been merged
-                    #    CSP_CONFIG_VER3_0,   # If CIP-2253 and CIP-2616 have been merged
-                    #    CSP_CONFIG_VER4_1,   # If none of the above have been merged
-                       ]
+CSP_CONFIG_VERSIONS = [
+    CSP_CONFIG_VER2_5,  # If only CIP-2504 has been merged
+    #    CSP_CONFIG_VER3_0,   # If CIP-2253 and CIP-2616 have been merged
+    #    CSP_CONFIG_VER4_1,   # If none of the above have been merged
+]
 CSP_DELAYMODEL_VERSIONS = [CSP_DELAYMODEL_VER3_0]
 CSP_SCAN_VERSIONS = [CSP_SCAN_VER2_3]
 CSP_INITSYSPARAM_VERSIONS = [CSP_INITSYSPARAM_VER1_0]
