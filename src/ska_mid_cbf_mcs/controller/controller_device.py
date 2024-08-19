@@ -21,7 +21,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
