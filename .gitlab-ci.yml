@@ -109,3 +109,7 @@ stop-dev-environment:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+
+pages:
+  rules:
+    - when: always
