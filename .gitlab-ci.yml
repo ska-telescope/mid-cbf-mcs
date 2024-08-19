@@ -41,7 +41,7 @@ include:
 
 # Docs pages
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/pages.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/docs-pages.gitlab-ci.yml'
 
 # .post step finalisers eg: badges
   - project: 'ska-telescope/templates-repository'
