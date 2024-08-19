@@ -73,7 +73,7 @@ controller_commands = [
             Initialize Dish ID to VCC ID mapping and k values
             See also :ref:'InitSysParam Sequence'
             """),   
-        "Supported Interface(s)": f'{supported_interfaces["initsysparam"]}',
+        "Supported Interface(s)": str(supported_interfaces["initsysparam"]),
     },
     { 
         "Command": "Standby",
