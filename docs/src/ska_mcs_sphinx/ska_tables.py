@@ -71,6 +71,76 @@ controller_commands = [
         "Action": cleandoc(
             """
             Initialize Dish ID to VCC ID mapping and k values
+            See also :ref:`Configure Scan Sequence`
+            """),   
+        "Supported Interface(s)": str(supported_interfaces["initsysparam"]),
+    },
+    { 
+        "Command": "Standby",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            None
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "On",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Turn on the controller and subordinate devices
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "ConfigureScan",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            TEST
+            Change observing state to READY
+            Configure attributes from input JSON
+            Subscribe events
+            Configure VCC, VCC subarray, FSP, FSP Subarray
+            Publish output links.
+            See also :ref:`Configure Scan Sequence`
+            """    
+        ),
+        "Supported Interface(s)": [
+            "https://schema.skao.int/ska-csp-configurescan/4.3",
+            "https://schema.skao.int/ska-csp-configurescan/4.2",
+            "https://schema.skao.int/ska-csp-configurescan/4.1"
+        ],
+    }
+]
+
+
+subarray_commands = [
+    { 
+        "Command": "Abort",
+        "Parameters": "None",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Change observing state to ABORTED
+            Send Abort to VCC
+            Send Abort to FSP <function mode> Subarrays
+            No action on hardware
+            See also :ref:`Configure Scan Sequence`
+            """),   
+        "Supported Interface(s)": '',
+    },
+    { 
+        "Command": "InitSysParam",
+        "Parameters": "JSON str*",
+        "Return Type": "(ResultCode, str)",
+        "Action": cleandoc(
+            """
+            Initialize Dish ID to VCC ID mapping and k values
             See also :ref:'InitSysParam Sequence'
             """),   
         "Supported Interface(s)": str(supported_interfaces["initsysparam"]),
