@@ -117,7 +117,7 @@ class TestCbfController:
         """
         Test the "InitSysParam" command.
 
-        This test is dependent on the test_Online and it's state changes.
+        This test is dependent on the test_Online and its state changes.
         Send the InitSysParam command with the sys_param_file.
 
         :param controller: The controller device proxy
@@ -173,7 +173,7 @@ class TestCbfController:
         """
         Test the "On" command.
 
-        This test is dependent on the test_InitSysParam and it's ability
+        This test is dependent on the test_InitSysParam and its ability
         to initialize dishIDs and SysParams. Send the On command and expect
         the controller and its subelements to transition to the ON state.
 
@@ -306,7 +306,7 @@ class TestCbfController:
         """
         Test the "Off" command.
 
-        This test is dependent on the test_On and it's ability to turn on the controller and its subelements.
+        This test is dependent on the test_On and its ability to turn on the controller and its subelements.
         Send the Off command and expect the controller and its subelements to transition to the expected states.
 
         :param controller: The controller device proxy
