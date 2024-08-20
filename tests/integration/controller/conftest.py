@@ -173,23 +173,6 @@ def slim_link_vis_proxies() -> list[context.DeviceProxy]:
     ]
 
 
-@pytest.fixture(name="powered_devices", scope="module", autouse=True)
-def powered_device_proxies(
-    talon_lru: list[context.DeviceProxy],
-    slim_fs: context.DeviceProxy,
-    slim_vis: context.DeviceProxy,
-) -> list[context.DeviceProxy]:
-    return talon_lru + [slim_fs, slim_vis]
-
-
-@pytest.fixture(name="monitoring_devices", scope="module", autouse=True)
-def monitoring_device_proxies(
-    power_switch: list[context.DeviceProxy],
-    subarray: list[context.DeviceProxy],
-) -> list[context.DeviceProxy]:
-    return power_switch + subarray
-
-
 @pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
     controller: context.DeviceProxy,
