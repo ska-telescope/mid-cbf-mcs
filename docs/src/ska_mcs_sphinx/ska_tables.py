@@ -127,7 +127,7 @@ subarray_commands = [
             Publish output links.
             See also :ref:`Configure Scan Sequence`
             """),   
-        "Supported Interface(s)": supported_interfaces["config"],
+        "Supported Interface(s)": supported_interfaces["configurescan"],
     },
     { 
         "Command": "EndScan",
