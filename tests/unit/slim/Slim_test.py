@@ -128,7 +128,35 @@ class TestSlim:
         :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
         """
         # prepare device
-        assert test_utils.device_online_and_on(device_under_test, event_tracer)
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=(DevState.OFF),
+        )
+
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[0, "On completed OK"]',
+            ),
+        )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
@@ -335,6 +363,13 @@ class TestSlim:
                 '[0, "Off completed OK"]',
             ),
         )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
@@ -403,6 +438,13 @@ class TestSlim:
                 f"{command_id[0]}",
                 '[0, "Off completed OK"]',
             ),
+        )
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
         )
 
         result_code, command_id = device_under_test.Off()

@@ -141,22 +141,6 @@ class SlimComponentManager(CbfComponentManager):
     # Fast Commands
     # -------------
 
-    def on(self: SlimComponentManager) -> tuple[ResultCode, str]:
-        """
-        On command. Currently just returns OK. The device
-        does nothing until mesh configuration is provided via
-        the Configure command.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug("Entering SlimComponentManager.on")
-
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
-
     # --- Getters --- #
 
     def get_configuration_string(self: SlimComponentManager) -> str:
@@ -416,6 +400,63 @@ class SlimComponentManager(CbfComponentManager):
     # ---------------------
     # Long Running Commands
     # ---------------------
+
+    # --- On Command --- #
+
+    def is_on_allowed(self: SlimComponentManager) -> bool:
+        self.logger.debug("Checking if On is allowed.")
+        if not self.is_communicating:
+            return False
+        if self.power_state != PowerState.OFF:
+            self.logger.warning(
+                f"On not allowed; PowerState is {self.power_state}"
+            )
+            return False
+        return True
+
+    def _on(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> tuple[ResultCode, str]:
+        """
+        On command.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering SlimComponentManager._on")
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set(
+            "Off", task_callback, task_abort_event
+        ):
+            return
+
+        self._update_component_state(power=PowerState.ON)
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "On completed OK",
+            ),
+        )
+
+    def on(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._on,
+            is_cmd_allowed=self.is_on_allowed,
+            task_callback=task_callback,
+        )
 
     # --- Configure Command --- #
 
@@ -719,7 +760,7 @@ class SlimComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug("Entering SlimComponentManager.off")
+        self.logger.debug("Entering SlimComponentManager._off")
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         if self.task_abort_event_is_set(
