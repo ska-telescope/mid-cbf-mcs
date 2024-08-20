@@ -48,6 +48,14 @@ class TestTalonBoard:
         monkeymodule: pytest.MonkeyPatch,
         initial_mocks: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the TalonBoard device.
+
+        :param request: the pytest request object
+        :param monkeymodule: the pytest monkeypatch object
+        :param initial_mocks: A dictionary of device mocks to be added to the test context.
+        :return: A test context for the TalonBoard device.
+        """
         harness = context.ThreadedTestTangoContextManager()
 
         def mock_ping(self, **kwargs: Any) -> bool:
@@ -135,9 +143,7 @@ class TestTalonBoard:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -156,9 +162,7 @@ class TestTalonBoard:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -177,9 +181,7 @@ class TestTalonBoard:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -200,11 +202,9 @@ class TestTalonBoard:
         """
         Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
@@ -241,11 +241,9 @@ class TestTalonBoard:
         """
         Test that the State attribute is appropriately set after device startup when there is a device property misisng form charts.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`context.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert_that(event_tracer).within_timeout(
@@ -282,10 +280,9 @@ class TestTalonBoard:
         """
         Test the that all attributes can be read/written correctly.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB

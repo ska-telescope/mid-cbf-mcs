@@ -47,6 +47,12 @@ class TestSlim:
         initial_mocks: dict[str, Mock],
         # initial_links: dict[str, Mock],
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the Slim tests.
+
+        :param initial_mocks: A dictionary of initial mocks to be added to the test context.
+        :return: A test context for the Slim tests.
+        """
         harness = context.ThreadedTestTangoContextManager()
         random.seed()
         # This device is set up as expected
@@ -84,9 +90,7 @@ class TestSlim:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -96,9 +100,7 @@ class TestSlim:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -108,9 +110,7 @@ class TestSlim:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -122,10 +122,9 @@ class TestSlim:
         """
         Test the On() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         # prepare device
         device_under_test.adminMode = AdminMode.ONLINE
@@ -175,10 +174,9 @@ class TestSlim:
         """
         Test the Configure() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
         assert test_utils.device_online_and_on(device_under_test, event_tracer)
@@ -214,10 +212,9 @@ class TestSlim:
         """
         Test the Configure() command when the configuration contains more links than there are SlimLink mocks.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
@@ -255,10 +252,9 @@ class TestSlim:
         """
         Test the Configure() command using SlimLink mocks set to reject the nested ConnectTxRx call.
 
-        :param device_under_test_fail: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer_fail: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
         assert test_utils.device_online_and_on(
@@ -296,11 +292,9 @@ class TestSlim:
         """
         Test the Configure() command before Slim has started up.
 
-        :param device_under_test_fail: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test_fail: DeviceProxy to the device under test for failure conditions.
+        :param event_tracer_fail: A TangoEventTracer used to recieve subscribed change
+                                  events from the device under test, for failure conditions.
         :param mesh_config_filename: A JSON file for the configuration.
         """
         device_under_test_fail.adminMode = AdminMode.OFFLINE
@@ -339,10 +333,9 @@ class TestSlim:
         """
         Test the Off() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
 
@@ -385,10 +378,9 @@ class TestSlim:
         """
         Test the Off() command when Slim has gone offline after configuring.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
 
@@ -416,10 +408,9 @@ class TestSlim:
         """
         Test the Off() command when it is already off.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
         self.test_Configure(
@@ -475,10 +466,9 @@ class TestSlim:
         """
         Test the SlimTest() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
 
@@ -503,10 +493,9 @@ class TestSlim:
         """
         Test the SlimTest() command when the configuration does not activate any links.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
 
@@ -524,10 +513,7 @@ class TestSlim:
         """
         Test the SlimTest() command before Slim has been started up or configured.
 
-        :param device_under_test: fixture that provides a
-        :py:class:`tango.DeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
-
         result_code, message = device_under_test.SlimTest()
         assert result_code == ResultCode.REJECTED, message
