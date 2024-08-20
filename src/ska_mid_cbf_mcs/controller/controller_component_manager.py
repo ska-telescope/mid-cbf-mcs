@@ -73,8 +73,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
-        :param validateSupportedConfiguration: flag to indicate if more restrictive
-                validation is required for configurations
         :param get_num_capabilities: method that returns the controller device's
                 maxCapabilities attribute (a dictionary specifying the number of each capability)
         :param subarray_fqdns_all: FQDNS of all the Subarray devices
@@ -425,7 +423,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
-        self.set_validateSupportedConfiguration_to_sub_device()
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """

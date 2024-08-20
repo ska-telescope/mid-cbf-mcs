@@ -143,31 +143,6 @@ class TestCbfController:
         result = test_proxies.controller.InitSysParam(sp)
         assert result[0] == ResultCode.FAILED
 
-    def test_setting_validateSupportedConfiguration(self, test_proxies):
-        """
-        Test that setting the validateSupportedConfiguration in Controller
-        will also set the validateSupportedConfiguration value in other sub
-        devices
-        """
-        # TODO: Add more devices when we use this flags in other devices
-
-        test_proxies.controller.validateSupportedConfiguration = False
-        assert test_proxies.controller.validateSupportedConfiguration is False
-        # The sub devices should also be False
-        for i in range(1, test_proxies.num_sub + 1):
-            assert (
-                test_proxies.subarray[i].validateSupportedConfiguration
-                is False
-            )
-
-        test_proxies.controller.validateSupportedConfiguration = True
-        assert test_proxies.controller.validateSupportedConfiguration is True
-        # The sub devices should also be False
-        for i in range(1, test_proxies.num_sub + 1):
-            assert (
-                test_proxies.subarray[i].validateSupportedConfiguration is True
-            )
-
     @pytest.mark.parametrize(
         "config_file_name",
         [

@@ -923,7 +923,8 @@ class CbfSubarrayComponentManager(
         else:
             msg = (
                 "Skipping MCS Validation of Scan Configuration. "
-                f"validateSupportedConfiguration was set to {self.validateSupportedConfiguration}"
+                f"validateSupportedConfiguration was set to {controller_validateSupportedConfiguration}"
+                "in MCS Controller"
             )
             self._logger.info(msg)
             return (True, msg)
@@ -943,7 +944,10 @@ class CbfSubarrayComponentManager(
 
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
+        if "cbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["cbf"])
+        else:
+            configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
