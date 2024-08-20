@@ -17,7 +17,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
-HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface']
+HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface(s)']
 
 controller_commands = [
     { 
