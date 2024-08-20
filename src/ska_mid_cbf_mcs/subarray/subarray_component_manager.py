@@ -1767,7 +1767,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self._subarray_id)
+            self._vis_transport.enable_output(self.subarray_id)
 
         self.scan_id = scan_id
 
