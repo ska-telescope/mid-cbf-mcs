@@ -64,26 +64,6 @@ controller_commands = [
             """),   
         "Supported Interface(s)": '',
     },
-    { 
-        "Command": "ConfigureScan",
-        "Parameters": "JSON str*",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Change observing state to READY
-            Configure attributes from input JSON
-            Subscribe events
-            Configure VCC, VCC subarray, FSP, FSP Subarray
-            Publish output links.
-            See also :ref:`Configure Scan Sequence`
-            """    
-        ),
-        "Supported Interface(s)": [
-            "https://schema.skao.int/ska-csp-configurescan/4.3",
-            "https://schema.skao.int/ska-csp-configurescan/4.2",
-            "https://schema.skao.int/ska-csp-configurescan/4.1"
-        ],
-    }
 ]
 
 
