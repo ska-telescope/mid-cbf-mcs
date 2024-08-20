@@ -25,7 +25,7 @@ from ... import test_utils
 # Test data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-# TODO: config ID, scan ID, delay models, abort paths, configure from ready, add receptors from ready
+# TODO: config ID, scan ID, delay models, remove individual receptors, configure from ready, add receptors from ready
 
 
 class TestCbfSubarray:
@@ -458,7 +458,7 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_EndScan_1"],
+        depends=["CbfSubarray_ConfigureScan_1"],
         name="CbfSubarray_GoToIdle_1",
     )
     def test_GoToIdle(
@@ -571,7 +571,7 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_GoToIdle_1"],
+        depends=["CbfSubarray_AddReceptors_1"],
         name="CbfSubarray_RemoveAllReceptors_1",
     )
     def test_RemoveAllReceptors(
@@ -642,7 +642,7 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_RemoveAllReceptors_1"],
+        depends=["CbfSubarray_Online_1"],
         name="CbfSubarray_Offline_1",
     )
     def test_Offline(
@@ -677,6 +677,658 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_Offline_1"],
+        name="CbfSubarray_Abort_1",
+    )
+    def test_Abort_ObsReset(
+        self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        vcc: dict[int, context.DeviceProxy],
+    ) -> None:
+        """
+        Test CbfSubarrays's Abort and ObsReset commands
+
+        :param event_tracer: TangoEventTracer
+        :fsp: dict of DeviceProxy to Fsp devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        :vcc: dict of DeviceProxy to Vcc devices
+        """
+        sub_id = subarray_params["sub_id"]
+
+        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_sysParam(event_tracer, subarray, subarray_params)
+
+        # -------------------------
+        # Abort/ObsReset from EMPTY
+        # -------------------------
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [obsreset_command_id]] = subarray[sub_id].ObsReset()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events = [
+            (
+                "longRunningCommandResult",
+                (
+                    f"{abort_command_id}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None,
+                1,
+            ),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{obsreset_command_id}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+
+        # ------------------------
+        # Abort/ObsReset from IDLE
+        # ------------------------
+
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [obsreset_command_id]] = subarray[sub_id].ObsReset()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.IDLE, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{obsreset_command_id}",
+                        f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events = [
+            ("obsState", ObsState.ABORTING, ObsState.IDLE, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+        ]
+
+        # -------------------------
+        # Abort/ObsReset from READY
+        # -------------------------
+
+        self.test_ConfigureScan(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [obsreset_command_id]] = subarray[sub_id].ObsReset()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{obsreset_command_id}",
+                        f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
+            ]
+        )
+
+        # --- FSP events --- #
+
+        fsp_expected_events = [
+            # TODO: see subarrayMembership comment above
+            # ("subarrayMembership", [], [sub_id], 1),
+            ("functionMode", FspModes.IDLE.value, None, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+
+        fsp_corr_expected_events = [
+            ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+
+        # ----------------------------
+        # Abort/ObsReset from SCANNING
+        # ----------------------------
+
+        self.test_ConfigureScan(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+        self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [obsreset_command_id]] = subarray[sub_id].ObsReset()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 3),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 3),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 3),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{obsreset_command_id}",
+                        f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 3),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 3),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 3),
+            ]
+        )
+
+        # --- FSP events --- #
+
+        fsp_expected_events.extend(
+            [
+                # TODO: see subarrayMembership comment above
+                # ("subarrayMembership", [], [sub_id], 2),
+                ("functionMode", FspModes.IDLE.value, None, 2),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", DevState.DISABLE, DevState.ON, 2),
+            ]
+        )
+
+        fsp_corr_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", DevState.DISABLE, DevState.ON, 2),
+            ]
+        )
+
+        # -------------------
+        # Event tracer checks
+        # -------------------
+
+        # --- VCC checks --- #
+
+        for vcc_id in subarray_params["vcc_ids"]:
+            for name, value, previous, n in vcc_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+        # --- FSP checks --- #
+
+        for fsp_id in subarray_params["fsp_ids"]:
+            for name, value, previous, n in fsp_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+            for name, value, previous, n in fsp_corr_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+        # --- Subarray checks --- #
+
+        for name, value, previous, n in subarray_expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+        self.test_RemoveAllReceptors(
+            event_tracer, subarray, subarray_params, vcc
+        )
+        self.test_Offline(event_tracer, subarray, subarray_params)
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_Abort_1"],
+        name="CbfSubarray_Abort_2",
+    )
+    def test_Abort_Restart(
+        self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        vcc: dict[int, context.DeviceProxy],
+    ) -> None:
+        """
+        Test CbfSubarrays's Abort and Restart commands
+
+        :param event_tracer: TangoEventTracer
+        :fsp: dict of DeviceProxy to Fsp devices
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        :vcc: dict of DeviceProxy to Vcc devices
+        """
+        sub_id = subarray_params["sub_id"]
+
+        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_sysParam(event_tracer, subarray, subarray_params)
+
+        # -------------------------
+        # Abort/Restart from EMPTY
+        # -------------------------
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [restart_command_id]] = subarray[sub_id].Restart()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events = [
+            (
+                "longRunningCommandResult",
+                (
+                    f"{abort_command_id}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None,
+                1,
+            ),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{restart_command_id}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+
+        # ------------------------
+        # Abort/Restart from IDLE
+        # ------------------------
+
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [restart_command_id]] = subarray[sub_id].Restart()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.IDLE, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+                ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 1),
+                ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 1),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{restart_command_id}",
+                        f'[{ResultCode.OK.value}, "Restart completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events = [
+            ("obsState", ObsState.ABORTING, ObsState.IDLE, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+            ("subarrayMembership", 0, sub_id, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+
+        # -------------------------
+        # Abort/Restart from READY
+        # -------------------------
+
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+        self.test_ConfigureScan(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [restart_command_id]] = subarray[sub_id].Restart()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 2),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{restart_command_id}",
+                        f'[{ResultCode.OK.value}, "Restart completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
+                ("subarrayMembership", 0, sub_id, 2),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", DevState.DISABLE, DevState.ON, 2),
+            ]
+        )
+
+        # --- FSP events --- #
+
+        fsp_expected_events = [
+            # TODO: see subarrayMembership comment above
+            # ("subarrayMembership", [], [sub_id], 1),
+            ("functionMode", FspModes.IDLE.value, None, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+
+        fsp_corr_expected_events = [
+            ("obsState", ObsState.ABORTING, ObsState.READY, 1),
+            ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
+            ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
+            ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
+            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", DevState.DISABLE, DevState.ON, 1),
+        ]
+
+        # ----------------------------
+        # Abort/Restart from SCANNING
+        # ----------------------------
+
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+        self.test_ConfigureScan(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+        self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
+
+        [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
+        assert result_code == ResultCode.QUEUED
+
+        [[result_code], [restart_command_id]] = subarray[sub_id].Restart()
+        assert result_code == ResultCode.QUEUED
+
+        # --- Subarray events --- #
+
+        subarray_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 3),
+                ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 3),
+                ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 3),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{abort_command_id}",
+                        f'[{ResultCode.OK.value}, "Abort completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{restart_command_id}",
+                        f'[{ResultCode.OK.value}, "Restart completed OK"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        # --- VCC events --- #
+
+        vcc_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 3),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 3),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 3),
+                ("subarrayMembership", 0, sub_id, 3),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 3),
+                ("state", DevState.DISABLE, DevState.ON, 3),
+            ]
+        )
+
+        # --- FSP events --- #
+
+        fsp_expected_events.extend(
+            [
+                # TODO: see subarrayMembership comment above
+                # ("subarrayMembership", [], [sub_id], 2),
+                ("functionMode", FspModes.IDLE.value, None, 2),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", DevState.DISABLE, DevState.ON, 2),
+            ]
+        )
+
+        fsp_corr_expected_events.extend(
+            [
+                ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
+                ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
+                ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
+                ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", DevState.DISABLE, DevState.ON, 2),
+            ]
+        )
+
+        # -------------------
+        # Event tracer checks
+        # -------------------
+
+        # --- VCC checks --- #
+
+        for vcc_id in subarray_params["vcc_ids"]:
+            for name, value, previous, n in vcc_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+        # --- FSP checks --- #
+
+        for fsp_id in subarray_params["fsp_ids"]:
+            for name, value, previous, n in fsp_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+            for name, value, previous, n in fsp_corr_expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+        # --- Subarray checks --- #
+
+        for name, value, previous, n in subarray_expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+        self.test_Offline(event_tracer, subarray, subarray_params)
 
     # @pytest.mark.parametrize(
     #     "configure_scan_file, \

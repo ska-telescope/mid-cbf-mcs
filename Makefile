@@ -28,7 +28,7 @@ K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 PYTHON_TEST_FILE = ./tests/unit/
 K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 
-# additional pytest flags; use -k to isolate particular tests, e.g. -k CbfSubarray (for subarray tests)
+# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
 PYTHON_VARS_AFTER_PYTEST = --forked
 K8S_VARS_AFTER_PYTEST = -s
 

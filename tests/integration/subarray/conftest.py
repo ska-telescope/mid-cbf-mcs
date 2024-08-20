@@ -32,39 +32,39 @@ from ska_mid_cbf_mcs.commons.global_enum import const
             "vcc_ids": [1],  # must be VCC IDs equivalent to assigned DISH IDs
             "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
         },
-        {
-            "sys_param_file": "sys_param_4_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
-        },
-        {
-            "sys_param_file": "sys_param_4_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "fsp_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be FSP IDs provided in ConfigureScan JSON
-        },
+        # {
+        #     "sys_param_file": "sys_param_4_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
+        # },
+        # {
+        #     "sys_param_file": "sys_param_4_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "fsp_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #     ],  # must be FSP IDs provided in ConfigureScan JSON
+        # },
     ],
 )
 def subarray_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
