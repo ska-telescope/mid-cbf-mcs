@@ -34,7 +34,11 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
+# isort: off
+# ska_telmodel.schema before ska_telmodel.csp due to circular dependency
 from ska_telmodel.schema import validate as telmodel_validate
+
+# isort: on
 from ska_telmodel.csp.common_schema import (
     MAX_CHANNELS_PER_STREAM,
     MAX_STREAMS_PER_FSP,
