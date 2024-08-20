@@ -16,7 +16,6 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -201,14 +200,13 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # Fast Commands
     # -------------
 
-    @check_communicating
     def update_delay_model(
-        self: FspCorrSubarrayComponentManager, argin: str
+        self: FspCorrSubarrayComponentManager, model: str
     ) -> tuple[ResultCode, str]:
         """
         Update the FSP's delay model (serialized JSON object)
 
-        :param argin: the delay model data
+        :param model: the delay model data
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -216,16 +214,10 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.debug("Entering update_delay_model")
 
-        # the whole delay model must be stored
-        self.delay_model = argin
-        delay_model = json.loads(argin)
-
         try:
-            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
-                json.dumps(delay_model)
-            )
+            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(model)
         except tango.DevFailed as df:
-            self.logger.error(f"{df.args[0].desc}")
+            self.logger.error(f"{df}")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -233,6 +225,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 ResultCode.FAILED,
                 "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
             )
+
+        # the whole delay model must be stored
+        self.delay_model = model
+        self._device_attr_change_callback("delayModel", model)
+        self._device_attr_archive_callback("delayModel", model)
 
         return (ResultCode.OK, "UpdateDelayModel completed OK")
 
@@ -470,6 +467,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # Update obsState callback
+        self._update_component_state(scanning=False)
 
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),
