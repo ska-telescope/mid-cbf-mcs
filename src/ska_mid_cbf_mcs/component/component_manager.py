@@ -106,15 +106,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
-        # initialize a lock and the set of of blocking resources
+        # Initialize a lock and a set of to track the blocking LRC command IDs
         # that an LRC thread may depend on
+        # See docstring under _wait_for_blocking_result for an example scenario
         self._event_ids = {}
         self._results_lock = Lock()
         self._blocking_commands: set["str"] = set()
 
-        # NOTE: using component manager default of SimulationMode.TRUE,
-        # as self._simulation_mode at this point during init_device()
-        # SimulationMode.FALSE
+        # NOTE: currently all devices are using constructor default
+        # simulation_mode == SimulationMode.TRUE
         self.simulation_mode = simulation_mode
 
     # -------------
@@ -212,6 +212,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _subscribe_command_results(
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
+        """
+        Subscribe to a proxy's longRunningCommandResult attribute.
+
+        :param proxy: DeviceProxy
+        """
         dev_name = proxy.dev_name()
         self.logger.debug(f"Subscribing to {dev_name} LRC results")
         if dev_name in self._event_ids:
@@ -233,6 +238,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _unsubscribe_command_results(
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
+        """
+        Unsubscribe from a proxy's longRunningCommandResult attribute.
+
+        :param proxy: DeviceProxy
+        """
         dev_name = proxy.dev_name()
         event_id = self._event_ids.pop(dev_name, None)
         if event_id is None:
@@ -528,7 +538,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, event_data: Optional[tango.EventData]
     ) -> None:
         """
-        Callback for LRC command result events
+        Callback for LRC command result events.
+        All subdevices that may block our LRC thread with their own LRC execution
+        have their `longRunningCommandResult` attribute subscribed to with this method
+        as the change event callback (see `_subscribe_command_results` method above).
 
         :param event_data: Tango attribute change event data
         """
@@ -543,6 +556,41 @@ class CbfComponentManager(TaskExecutorComponentManager):
     ) -> TaskStatus:
         """
         Wait for the number of anticipated results to be pushed by subordinate devices.
+
+        When issuing an LRC (or multiple) on subordinate devices from an LRC thread,
+        first store the LRC command ID in `_blocking_commands`, then use this
+        method to wait for all blocking command ID `longRunningCommandResult` events.
+
+        All subdevices that may block our LRC thread with their own LRC execution
+        have the `results_callback` method above provided as the change event callback
+        for their `longRunningCommandResult` attribute subscription, which will remove
+        command IDs from `_blocking_commands` as change events are received.
+
+        Nested LRC management example code inside LRC thread:
+
+        # ...
+
+        # Collect all blocking command IDs from subdevices
+
+        for proxy in self.proxies:
+            [[result_code], [command_id]] = proxy.LongRunningCommand()
+            if result_code == ResultCode.QUEUED:
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
+            else:
+                # command rejection handling
+
+        # Continue until we must wait for nested LRCs to complete
+
+        # ...
+
+        # Then wait for all of their longRunningCommandResult attributes to update
+
+        lrc_status = self._wait_for_blocking_results()
+        if lrc_status != TaskStatus.COMPLETED:
+            # LRC timeout/abort handling
+
+        # ...
 
         :param timeout: Time to wait, in seconds. If default value of 0.0 is set,
             timeout = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND

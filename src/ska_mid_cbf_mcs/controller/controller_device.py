@@ -254,7 +254,7 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
-            simulation_mode=SimulationMode.TRUE,
+            simulation_mode=self._simulation_mode,
             logger=self.logger,
         )
 
@@ -314,7 +314,6 @@ class CbfController(CbfDevice):
             """
             (result_code, msg) = super().do(*args, **kwargs)
 
-            self._device._simulation_mode = SimulationMode.TRUE
             self._device._command_progress = 0
 
             return (result_code, msg)

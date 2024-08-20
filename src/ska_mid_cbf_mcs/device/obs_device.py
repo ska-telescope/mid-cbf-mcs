@@ -98,13 +98,6 @@ class CbfSubElementObsStateMachine(Machine):
       scanning
     * **component_not_scanning**: the monitored component has stopped
       scanning
-
-    A diagram of the state machine is shown below. Reflexive transitions
-    and transitions to FAULT obs state are omitted to simplify the
-    diagram.
-
-    .. uml:: obs_state_machine.uml
-       :caption: Diagram of the CSP subelement obs state machine
     """
 
     def __init__(

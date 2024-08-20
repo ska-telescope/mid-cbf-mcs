@@ -16,7 +16,6 @@ from __future__ import annotations
 from typing import Any
 
 import tango
-from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
@@ -108,9 +107,6 @@ class Fsp(CbfDevice):
         """
 
         self.logger.debug("Entering create_component_manager()")
-        # NOTE: using component manager default of SimulationMode.TRUE,
-        # as self._simulation_mode at this point during init_device()
-        # SimulationMode.FALSE
 
         return FspComponentManager(
             fsp_id=self.DeviceID,
@@ -153,9 +149,6 @@ class Fsp(CbfDevice):
             self._device.set_archive_event("functionMode", True)
             self._device.set_change_event("subarrayMembership", True)
             self._device.set_archive_event("subarrayMembership", True)
-
-            # Setting initial simulation mode to True
-            self._device._simulation_mode = SimulationMode.TRUE
 
             return (result_code, message)
 

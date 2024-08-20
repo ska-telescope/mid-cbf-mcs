@@ -14,12 +14,7 @@ from typing import Callable, Optional
 
 import backoff
 import tango
-from ska_control_model import (
-    HealthState,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
+from ska_control_model import HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -40,16 +35,12 @@ class SlimLinkComponentManager(CbfComponentManager):
     def __init__(
         self: SlimLinkComponentManager,
         *args: any,
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
-
-        :param simulation_mode: Enum that identifies if the simulator should be used
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
 
         self._link_name = ""
         self._tx_device_name = ""

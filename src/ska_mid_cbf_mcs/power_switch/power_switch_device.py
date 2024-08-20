@@ -19,7 +19,7 @@ from __future__ import annotations
 from ska_control_model import PowerState, SimulationMode
 
 # tango imports
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -146,25 +146,6 @@ class PowerSwitch(CbfDevice):
     # -------------
     # Fast Commands
     # -------------
-
-    class InitCommand(CbfDevice.InitCommand):
-        """
-        A class for the PowerSwitch's init_device() "command".
-        """
-
-        def do(self: PowerSwitch.InitCommand) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-
-            (result_code, message) = super().do()
-            self._device._simulation_mode = SimulationMode.TRUE
-
-            return (result_code, message)
 
     class GetOutletPowerStateCommand(CbfFastCommand):
         """

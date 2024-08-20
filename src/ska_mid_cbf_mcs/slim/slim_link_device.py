@@ -15,7 +15,6 @@ from __future__ import annotations
 from ska_control_model import AdminMode, HealthState, SimulationMode
 
 # tango imports
-from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import (
     FastCommand,
     ResultCode,
@@ -263,25 +262,6 @@ class SlimLink(CbfDevice):
     # -------------
     # Fast Commands
     # -------------
-
-    class InitCommand(SKABaseDevice.InitCommand):
-        """
-        A class for the SlimLink's init_device() "command".
-        """
-
-        def do(self: SlimLink.InitCommand) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code, message) = super().do()
-            self._device._simulation_mode = SimulationMode.TRUE
-
-            return (result_code, message)
 
     class VerifyConnectionCommand(FastCommand):
         """

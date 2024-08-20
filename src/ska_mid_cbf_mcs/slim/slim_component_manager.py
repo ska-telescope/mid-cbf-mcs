@@ -17,13 +17,7 @@ from typing import Callable, Optional
 
 import tango
 from beautifultable import BeautifulTable
-from ska_control_model import (
-    AdminMode,
-    HealthState,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
+from ska_control_model import AdminMode, HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -46,17 +40,14 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         *args: any,
         link_fqdns: list[str],
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
 
         :param link_fqdns: a list of SLIM Link FQDNs
-        :param simulation_mode: Enum that identifies if the simulator should be used
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
 
         self.mesh_configured = False
         self._config_str = ""
