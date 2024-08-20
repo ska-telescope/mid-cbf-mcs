@@ -35,7 +35,7 @@ def device_under_test_fixture(
     Fixture that returns the device under test.
 
     :param test_context: the context in which the tests run
-    :return: the device under test
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/slim/001")
 
@@ -48,7 +48,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -69,10 +69,10 @@ def device_under_test_fail_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
     """
-    Fixture that returns the device under test.
+    Fixture that returns the device under test. For testing failure conditions.
 
     :param test_context: the context in which the tests run
-    :return: the device under test
+    :return: the DeviceProxy for the device under test for failure conditions
     """
     return test_context.get_device("mid_csp_cbf/slim_fail/001")
 
@@ -85,7 +85,7 @@ def tango_event_tracer_fail(
     Fixture that returns a TangoEventTracer for the device used to test failure conditions.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test for failure conditions
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -204,8 +204,10 @@ def initial_mocks(
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc_band: a mock VccBand device that is powered off.
-    :param mock_sw: a mock VccSearchWindow that is powered off.
+    :param mock_slim_tx: a mock SlimTx device.
+    :param mock_slim_rx: a mock SlimRx device.
+    :param mock_slim_link: a mock SlimLink device.
+    :param mock_fail_slim_link: a mock SlimLink device that rejects commands.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

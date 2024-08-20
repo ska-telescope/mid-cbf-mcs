@@ -40,13 +40,9 @@ class Const:
         self.DEFAULT_COUNT_VCC = 4
         self.DEFAULT_COUNT_FSP = 4
         self.DEFAULT_COUNT_SUBARRAY = 1
-        self.DEFAULT_COUNT_LRU = 2
-        self.DEFAULT_COUNT_BOARD = 4
-        self.DEFAULT_COUNT_PDU = 2
 
         self.DEFAULT_TIMEOUT = 4
 
-        self.POWER_SWITCH_OUTLETS = 8
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
 

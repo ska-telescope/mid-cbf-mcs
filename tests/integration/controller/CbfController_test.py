@@ -37,6 +37,9 @@ class TestCbfController:
 
     As teardown and setup are expensive operations, tests are interdependent.
     This is handled by the pytest.mark.dependency decorator.
+
+    Note: Each test needs to take in the 'controller_params' fixture to run
+    instances of the suite between different parameter sets.
     """
 
     @pytest.mark.dependency(name="CbfController_Online")
@@ -53,10 +56,19 @@ class TestCbfController:
     ) -> None:
         """
         Test the initial states and verify the component manager
-        can start communicating
+        can start communicating.
+
+        :param controller: The controller device proxy
+        :param talon_lru: The list of talon_lru device proxies
+        :param power_switch: The list of power_switch device proxies
+        :param slim_fs: The slim_fs device proxy
+        :param slim_vis: The slim_vis device proxy
+        :param subarray: The list of subarray device proxies
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
 
-        # trigger start_communicating by setting the AdminMode to ONLINE
+        # Trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
 
         expected_events = [
@@ -99,12 +111,19 @@ class TestCbfController:
         self: TestCbfController,
         controller: context.DeviceProxy,
         vcc: list[context.DeviceProxy],
-        talon_board: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
     ) -> None:
         """
-        Test the "InitSysParam" command
+        Test the "InitSysParam" command.
+
+        This test is dependent on the test_Online and its state changes.
+        Send the InitSysParam command with the sys_param_file.
+
+        :param controller: The controller device proxy
+        :param vcc: The list of VCC device proxies
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
         # Get the system parameters
         with open(test_data_path + controller_params["sys_param_file"]) as f:
@@ -152,7 +171,19 @@ class TestCbfController:
         controller_params: dict[any],
     ):
         """
-        Test the "On" command
+        Test the "On" command.
+
+        This test is dependent on the test_InitSysParam and its ability
+        to initialize dishIDs and SysParams. Send the On command and expect
+        the controller and its subelements to transition to the ON state.
+
+        :param controller: The controller device proxy
+        :param talon_lru: The list of talon_lru device proxies
+        :param slim_fs: The slim_fs device proxy
+        :param slim_vis: The slim_vis device proxy
+        :param talon_board: The list of talon_board device proxies
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
         # Get the system parameters
         with open(test_data_path + controller_params["sys_param_file"]) as f:
@@ -229,7 +260,14 @@ class TestCbfController:
         controller_params: dict[any],
     ):
         """
-        Test that InitSysParam command is not allowed when the controller is in ON state
+        Test that InitSysParam command is not allowed when the controller is in ON state.
+
+        Expects the controller to already be in the ON state, and attempts to
+        send the InitSysParam command.
+
+        :param controller: The controller device proxy
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
         assert controller.State() == DevState.ON
 
@@ -260,14 +298,24 @@ class TestCbfController:
         controller: context.DeviceProxy,
         talon_board: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
-        subarray: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
         slim_vis: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
     ):
         """
-        Test the "Off" command
+        Test the "Off" command.
+
+        This test is dependent on the test_On and its ability to turn on the controller and its subelements.
+        Send the Off command and expect the controller and its subelements to transition to the expected states.
+
+        :param controller: The controller device proxy
+        :param talon_board: The list of talon_board device proxies
+        :param talon_lru: The list of talon_lru device proxies
+        :param slim_fs: The slim_fs device proxy
+        :param slim_vis: The slim_vis device proxy
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
 
         assert controller.State() == DevState.ON
@@ -490,7 +538,18 @@ class TestCbfController:
         controller_params: dict[any],
     ) -> None:
         """
-        Verify the component manager can stop communicating
+        Verify that the component manager can stop communication.
+
+        Set the AdminMode to OFFLINE and expect the controller and its subelements to transition to the DISABLE state.
+
+        :param controller: The controller device proxy
+        :param talon_lru: The list of talon_lru device proxies
+        :param power_switch: The list of power_switch device proxies
+        :param slim_fs: The slim_fs device proxy
+        :param slim_vis: The slim_vis device proxy
+        :param subarray: The list of subarray device proxies
+        :param event_tracer: The event tracer for the controller
+        :param controller_params: Input parameters for running different instances of the suite.
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE

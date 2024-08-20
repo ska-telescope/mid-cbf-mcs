@@ -81,30 +81,6 @@ class CbfDevice(SKABaseDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # ---------------
-    # General methods
-    # ---------------
-
-    def init_command_objects(self: CbfDevice) -> None:
-        """
-        Set up the command objects."
-        """
-        super().init_command_objects()
-
-        # Overriding base On/Off SubmittedSlowCommand register with FastCommand objects
-        self.register_command_object(
-            "On",
-            self.OnCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-        self.register_command_object(
-            "Off",
-            self.OffCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
     # --------
     # Commands
     # --------
@@ -125,42 +101,6 @@ class CbfDevice(SKABaseDevice):
                 "Standby command rejected; Mid.CBF does not currently implement standby state."
             ],
         )
-
-    class OnCommand(CbfFastCommand):
-        """
-        A class for the CbfDevice's on command.
-        """
-
-        def do(
-            self: CbfDevice.OnCommand,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.on()
-
-    class OffCommand(CbfFastCommand):
-        """
-        A class for the CbfDevice's off command.
-        """
-
-        def do(
-            self: CbfDevice.OffCommand,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.off()
 
 
 # ----------

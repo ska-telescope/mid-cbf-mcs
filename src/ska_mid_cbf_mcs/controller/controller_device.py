@@ -191,7 +191,7 @@ class CbfController(CbfDevice):
         Sets up the command objects
         """
         # Registers Off and On commands
-        super(CbfDevice, self).init_command_objects()
+        super().init_command_objects()
 
         self.register_command_object(
             "InitSysParam",

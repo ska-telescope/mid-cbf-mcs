@@ -32,9 +32,8 @@ def device_under_test_fixture(
     """
     Fixture that returns the device under test.
 
-    :param tango_harness: a test harness for Tango devices
-
-    :return: the device under test
+    :param test_context: the context in which the tests run
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/cbf_controller/001")
 
@@ -47,7 +46,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -159,7 +158,7 @@ def mock_slim_mesh() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def initial_device_mocks(
+def initial_mocks(
     mock_vcc: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,

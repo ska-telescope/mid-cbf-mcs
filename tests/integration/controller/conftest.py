@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Generator
 
 import pytest
+import yaml
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
@@ -47,8 +48,15 @@ def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
     """
     Fixture that controller test input parameters.
 
-    :return: dict containing all controller test input parameters
+    :return: A dictionary containing all the test input parameters for the controller.
+             This includes the system parameter file path, a flag indicating whether to retrieve
+             the system parameters from the file, and the hardware configuration file path.
+             Format follows {"sys_param_file": str, "sys_param_from_file": bool, "hw_config_file": str}.
     """
+    hw_config_dict = yaml.safe_load(request.param["hw_config_file"])
+    request.param["num_lru"] = len(hw_config_dict["talon_lru"])
+    request.param["num_board"] = len(hw_config_dict["talon_board"])
+    request.param["num_pdu"] = len(hw_config_dict["power_switch"])
     return request.param
 
 
@@ -89,41 +97,50 @@ def vcc_proxies() -> list[context.DeviceProxy]:
 
 
 @pytest.fixture(name="talon_lru", scope="module", autouse=True)
-def talon_lru_proxies() -> list[context.DeviceProxy]:
+def talon_lru_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to Talon LRU devices.
 
+    :param controller_params: Input parameters for running different instances of the suite.
     :return: list of DeviceProxy to TalonLRU devices
     """
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/talon_lru/{i:03}")
-        for i in range(1, const.DEFAULT_COUNT_LRU + 1)
+        for i in range(1, controller_params["num_lru"] + 1)
     ]
 
 
 @pytest.fixture(name="talon_board", scope="module", autouse=True)
-def talon_board_proxies() -> list[context.DeviceProxy]:
+def talon_board_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to Talon board devices.
 
+    :param controller_params: Input parameters for running different instances of the suite.
     :return: list of DeviceProxy to TalonBoard devices
     """
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/talon_board/{i:03}")
-        for i in range(1, const.DEFAULT_COUNT_BOARD + 1)
+        for i in range(1, controller_params["num_board"] + 1)
     ]
 
 
 @pytest.fixture(name="power_switch", scope="module", autouse=True)
-def power_switch_proxies() -> list[context.DeviceProxy]:
+def power_switch_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
     """
     Fixture that returns a list of proxies to power switch devices.
 
+    :param controller_params: Input parameters for running different instances of the suite.
     :return: list of DeviceProxy to PowerSwitch devices
     """
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/power_switch/{i:03}")
-        for i in range(1, const.DEFAULT_COUNT_PDU + 1)
+        for i in range(1, controller_params["num_pdu"] + 1)
     ]
 
 

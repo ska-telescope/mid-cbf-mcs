@@ -25,7 +25,7 @@ def device_under_test_fixture(
     Fixture that returns the device under test.
 
     :param test_context: the context in which the tests run
-    :return: the device under test
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/power_switch/001")
 
@@ -38,7 +38,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()

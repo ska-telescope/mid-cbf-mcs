@@ -41,6 +41,36 @@ from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
 __all__ = ["PowerSwitchComponentManager"]
 
 
+def get_power_switch_driver(
+    model: str,
+    ip: str,
+    login: str,
+    password: str,
+    logger: logging.Logger,
+):
+    # The text must match the powerswitch.yaml
+    if model == "DLI LPC9":
+        return DLIProSwitchDriver(
+            ip=ip, login=login, password=password, logger=logger
+        )
+    elif model == "Server Technology Switched PRO2":
+        return STSwitchedPRO2Driver(
+            ip=ip, login=login, password=password, logger=logger
+        )
+    elif model == "APC AP8681 SSH":
+        return ApcPduDriver(
+            ip=ip, login=login, password=password, logger=logger
+        )
+    elif model == "APC AP8681 SNMP":
+        return ApcSnmpDriver(
+            ip=ip, login=login, password=password, logger=logger
+        )
+    else:
+        err = f"Model name {model} is not supported."
+        logger.error(err)
+        return None
+
+
 class PowerSwitchComponentManager(CbfComponentManager):
     """
     A component manager for the power switch. Calls either the power
@@ -79,13 +109,19 @@ class PowerSwitchComponentManager(CbfComponentManager):
         super().__init__(*args, **kwargs)
         self.simulation_mode = simulation_mode
 
-        self.power_switch_driver = self.get_power_switch_driver(
+        self.power_switch_driver = get_power_switch_driver(
             model=model,
             ip=ip,
             login=login,
             password=password,
             logger=self.logger,
         )
+        if self.power_switch_driver is None:
+            tango.Except.throw_exception(
+                "PowerSwitch_CreateDriverFailed",
+                f"Model name {model} is not supported.",
+                "get_power_switch_driver()",
+            )
 
         self.power_switch_simulator = PowerSwitchSimulator(
             model=model, logger=self.logger
@@ -162,40 +198,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
     # ----------------
     # Helper Functions
     # ----------------
-
-    def get_power_switch_driver(
-        self: PowerSwitchComponentManager,
-        model: str,
-        ip: str,
-        login: str,
-        password: str,
-        logger: logging.Logger,
-    ):
-        # The text must match the powerswitch.yaml
-        if model == "DLI LPC9":
-            return DLIProSwitchDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "Server Technology Switched PRO2":
-            return STSwitchedPRO2Driver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "APC AP8681 SSH":
-            return ApcPduDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        elif model == "APC AP8681 SNMP":
-            return ApcSnmpDriver(
-                ip=ip, login=login, password=password, logger=logger
-            )
-        else:
-            err = f"Model name {model} is not supported."
-            logger.error(err)
-            tango.Except.throw_exception(
-                "PowerSwitch_CreateDriverFailed",
-                err,
-                "get_power_switch_driver()",
-            )
 
     def check_power_state(
         self: PowerSwitchComponentManager,

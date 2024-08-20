@@ -430,20 +430,6 @@ class CbfObsDevice(SKAObsDevice):
         """Set up the command objects."""
         super().init_command_objects()
 
-        # Overriding base On/Off SubmittedSlowCommand register with FastCommand objects
-        self.register_command_object(
-            "On",
-            self.OnCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-        self.register_command_object(
-            "Off",
-            self.OffCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
         for command_name, method_name in [
             ("ConfigureScan", "configure_scan"),
             ("Scan", "scan"),
@@ -518,42 +504,6 @@ class CbfObsDevice(SKAObsDevice):
                 "Standby command rejected; Mid.CBF does not currently implement standby state."
             ],
         )
-
-    class OnCommand(CbfFastCommand):
-        """
-        A class for the CbfObsDevice's on command.
-        """
-
-        def do(
-            self: CbfObsDevice.OnCommand,
-        ) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.on()
-
-    class OffCommand(CbfFastCommand):
-        """
-        A class for the CbfObsDevice's off command.
-        """
-
-        def do(
-            self: CbfObsDevice.OffCommand,
-        ) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.off()
 
     @command(
         dtype_in="DevString",

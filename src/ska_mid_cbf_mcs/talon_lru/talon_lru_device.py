@@ -75,12 +75,6 @@ class TalonLRU(CbfDevice):
     # Initialization
     # --------------
 
-    def init_command_objects(self: TalonLRU) -> None:
-        """
-        Sets up the command objects.
-        """
-        super(CbfDevice, self).init_command_objects()
-
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
         Create and return a component manager for this device.

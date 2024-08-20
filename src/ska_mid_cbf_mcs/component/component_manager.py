@@ -213,9 +213,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         dev_name = proxy.dev_name()
-        self.logger.info(f"Subscribing to {dev_name} LRC results")
+        self.logger.debug(f"Subscribing to {dev_name} LRC results")
         if dev_name in self._event_ids:
-            self.logger.warning(
+            self.logger.debug(
                 f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
             )
             return
@@ -236,11 +236,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
         dev_name = proxy.dev_name()
         event_id = self._event_ids.pop(dev_name, None)
         if event_id is None:
-            self.logger.warning(
+            self.logger.debug(
                 f"No longRunningCommandResult event subscription for {dev_name}"
             )
             return
-        self.logger.info(f"Unsubscribing from {dev_name} event ID {event_id}.")
+        self.logger.debug(
+            f"Unsubscribing from {dev_name} event ID {event_id}."
+        )
         proxy.unsubscribe_event(event_id)
 
     # -------------
@@ -497,21 +499,26 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         # If the command ID not in blocking commands, we should wait a bit,
         # as the event may have occurred before we had the chance to add
-        # it in the component manager
+        # it in the component manager.
         ticks = int(DEFAULT_TIMEOUT_PER_COMMAND / TIMEOUT_RESOLUTION)
         while command_id not in self._blocking_commands:
             sleep(TIMEOUT_RESOLUTION)
             ticks -= 1
             if ticks <= 0:
+                # If command ID was never added, we might have received an event
+                # triggered by a different device.
+                self.logger.warning(
+                    f"Received event with command ID {command_id} that was not issued by this device."
+                )
                 return
 
-        if result_code == ResultCode.OK:
-            with self._results_lock:
-                self._blocking_commands.remove(command_id)
-        else:
+        if result_code != ResultCode.OK:
             self.logger.error(
                 f"Command ID {command_id} result code: {result_code}"
             )
+
+        with self._results_lock:
+            self._blocking_commands.remove(command_id)
 
         self.logger.info(
             f"Blocking commands remaining: {self._blocking_commands}"
@@ -564,8 +571,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 with self._results_lock:
                     self._blocking_commands = set()
                 return TaskStatus.FAILED
-        self.logger.info(
-            f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION} seconds"
+        self.logger.debug(
+            f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION:.3f} seconds"
         )
         return TaskStatus.COMPLETED
 

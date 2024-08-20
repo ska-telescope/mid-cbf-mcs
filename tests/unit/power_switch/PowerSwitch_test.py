@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import gc
-from typing import Any, Iterator
+import logging
+from typing import Iterator
 
 import pytest
 from assertpy import assert_that
@@ -22,7 +23,9 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import Const
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    get_power_switch_driver,
+)
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
@@ -38,6 +41,7 @@ class TestPowerSwitch:
     """
 
     power_switch_driver_model = None
+    power_switch_outlets = 0
 
     @pytest.fixture(name="test_context")
     def power_switch_test_context(
@@ -46,9 +50,17 @@ class TestPowerSwitch:
         power_switch_model: str,
         monkeymodule: pytest.MonkeyPatch,
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that provides a test context for the PowerSwitch device.
+
+        :param request: the pytest request object
+        :param power_switch_model: the power switch model
+        :param monkeymodule: the monkeypatch fixture
+        :return: a test context for the PowerSwitch device
+        """
         harness = context.ThreadedTestTangoContextManager()
 
-        def mock_patch(url: str, **kwargs: Any) -> MockDependency.Response:
+        def mock_patch(url: str, **kwargs: any) -> MockDependency.Response:
             """
             Replace requests.request method with a mock method.
 
@@ -64,7 +76,7 @@ class TestPowerSwitch:
             )
 
         def mock_get(
-            url: str, params: Any = None, **kwargs: Any
+            url: str, params: any = None, **kwargs: any
         ) -> MockDependency.Response:
             """
             Replace requests.get with mock method.
@@ -125,7 +137,16 @@ class TestPowerSwitch:
             mock_set_snmp,
         )
 
+        # TODO: test other drivers
         if power_switch_model == "DLI_PRO":
+            self.power_switch_outlets = get_power_switch_driver(
+                model="DLI LPC9",
+                ip="192.168.0.100",
+                login="admin",
+                password="1234",
+                logger=logging.getLogger(),
+            ).power_switch_outlets
+
             harness.add_device(
                 device_name="mid_csp_cbf/power_switch/001",
                 device_class=PowerSwitch,
@@ -134,7 +155,16 @@ class TestPowerSwitch:
                 PowerSwitchModel="DLI LPC9",
                 PowerSwitchPassword="1234",
             )
+
         elif power_switch_model == "APC_SNMP":
+            self.power_switch_outlets = get_power_switch_driver(
+                model="APC AP8681 SNMP",
+                ip="192.168.1.253",
+                login="apc",
+                password="apc",
+                logger=logging.getLogger(),
+            ).power_switch_outlets
+
             harness.add_device(
                 device_name="mid_csp_cbf/power_switch/001",
                 device_class=PowerSwitch,
@@ -154,9 +184,7 @@ class TestPowerSwitch:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -166,9 +194,7 @@ class TestPowerSwitch:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -178,9 +204,7 @@ class TestPowerSwitch:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -205,10 +229,9 @@ class TestPowerSwitch:
         and that the power switch driver has been initialized
         (indicated by the numOutlets value).
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
@@ -233,7 +256,7 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         # Check that numOutlets is the same as the driver
-        return device_under_test.numOutlets == Const.POWER_SWITCH_OUTLETS
+        return device_under_test.numOutlets == self.power_switch_outlets
 
     @pytest.mark.parametrize(
         "test_context",
@@ -255,11 +278,9 @@ class TestPowerSwitch:
         Tests the PowerSwitch's isCommunicating attr, which
         makes an API call to the PDU to verify connection.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
@@ -285,11 +306,9 @@ class TestPowerSwitch:
         """
         Tests that a GET request failure is appropriately handled.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
@@ -338,17 +357,15 @@ class TestPowerSwitch:
         Tests that a PATCH request failure is appropriately handled.
 
         :param power_switch_model: Informs the test for which driver's responses to expect.
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.power_switch_driver_model = power_switch_model
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
         if self.power_switch_driver_model == "DLI_PRO":
             msg = '[3, "HTTP response error"]'
         elif self.power_switch_driver_model == "APC_SNMP":
@@ -398,16 +415,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOffOutlet() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets off and check the state again
         for i in range(1, 8):
@@ -444,11 +459,9 @@ class TestPowerSwitch:
         """
         Tests the TurnOffOutlet() command when the power switch is not communicating.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.OFFLINE
@@ -495,16 +508,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOffOutlet() command when outlets do not turn off as instructed.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets off and check the state again
         for i in range(1, 8):
@@ -541,16 +552,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOffOutlet() command when an invalid outlet is provided.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         result_code, command_id = device_under_test.TurnOffOutlet(
             f"{num_outlets + 1}"
@@ -587,16 +596,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOnOutlet() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets on and check the state again
         for i in range(1, 8):
@@ -633,11 +640,9 @@ class TestPowerSwitch:
         """
         Tests the TurnOnOutlet() command when the power switch is not communicating.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
@@ -686,16 +691,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOnOutlet() command when outlets do not turn on as instructed.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets on and check the state again
         for i in range(1, 8):
@@ -732,16 +735,14 @@ class TestPowerSwitch:
         """
         Tests the TurnOnOutlet() command when an invalid outlet is provided.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         result_code, command_id = device_under_test.TurnOnOutlet(
             str(num_outlets + 1)

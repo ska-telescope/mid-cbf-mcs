@@ -38,7 +38,7 @@ class TestCbfSubarray:
     ) -> None:
         """
         Test the initial states and verify the component manager
-        can start communicating
+        can start communicating.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
@@ -46,7 +46,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        # trigger start_communicating by setting the AdminMode to ONLINE
+        # Trigger start_communicating by setting the AdminMode to ONLINE
         subarray[sub_id].adminMode = AdminMode.ONLINE
 
         expected_events = [
@@ -76,7 +76,7 @@ class TestCbfSubarray:
         subarray_params: dict[any],
     ) -> None:
         """
-        Test writing the sysParam attribute
+        Test writing the sysParam attribute.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
@@ -111,7 +111,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's AddReceptors command
+        Test CbfSubarrays's AddReceptors command.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
@@ -185,7 +185,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's ConfigureScan command
+        Test CbfSubarrays's ConfigureScan command.
 
         :param event_tracer: TangoEventTracer
         :fsp: dict of DeviceProxy to Fsp devices
@@ -310,7 +310,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's Scan command
+        Test CbfSubarrays's Scan command.
 
         :param event_tracer: TangoEventTracer
         :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
@@ -392,7 +392,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command
+        Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
         :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
@@ -471,7 +471,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command
+        Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
         :fsp: dict of DeviceProxy to Fsp devices
@@ -582,7 +582,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command
+        Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
@@ -653,6 +653,8 @@ class TestCbfSubarray:
     ) -> None:
         """
         Verify component manager can stop communication with the component.
+
+        Set the AdminMode to OFFLINE and expect the subarray to transition to the DISABLE state.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
