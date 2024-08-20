@@ -953,6 +953,8 @@ class ControllerComponentManager(CbfComponentManager):
             True,
             f"{subarray.dev_name()} successfully set to ObsState.EMPTY",
         )
+        if subarray.obsState in [ObsState.EMPTY]:
+            return success, message
 
         # Can issue Abort if subarray is in any of the following states:
         if subarray.obsState in [
