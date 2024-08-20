@@ -40,6 +40,12 @@ class TestFsp:
     def fsp_test_context(
         self: TestFsp, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        A fixture that creates a test context for the Fsp.
+
+        :param initial_mocks: A dictionary of initial mocks for the Fsp.
+        :return: A test context for the Fsp.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fsp/01",
@@ -61,9 +67,7 @@ class TestFsp:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -73,9 +77,7 @@ class TestFsp:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -85,9 +87,7 @@ class TestFsp:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -99,10 +99,9 @@ class TestFsp:
         """
         Helper function to start up and turn on the DUT.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
         device_under_test.simulationMode == SimulationMode.FALSE
@@ -136,11 +135,9 @@ class TestFsp:
         """
         Test the SetFunctionMode() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param function_mode: the function mode to be set
         """
         # set device ONLINE and ON
@@ -188,11 +185,9 @@ class TestFsp:
         """
         Test the SetFunctionMode() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param function_mode: the function mode to be set
         """
         # SetFunctionMode not allowed if state is not ON
@@ -232,11 +227,9 @@ class TestFsp:
         """
         Test the AddSubarrayMembership() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param sub_ids: list of subarray IDs to add
         """
 
@@ -314,11 +307,9 @@ class TestFsp:
         """
         Test the RemoveSubarryMembership() command's happy path.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param sub_ids: list of subarray IDs to remove
         """
 

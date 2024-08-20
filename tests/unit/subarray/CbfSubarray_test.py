@@ -42,6 +42,12 @@ class TestCbfSubarray:
     def subarray_test_context(
         self: TestCbfSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the CbfSubarray device.
+
+        :param initial_mocks: A dictionary of initial mocks to be used in the test context.
+        :return: A test context for the CbfSubarray device.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/sub_elt/subarray_01",
@@ -75,7 +81,7 @@ class TestCbfSubarray:
             DeviceID="1",
         )
         for name, mock in initial_mocks.items():
-            # subarray requires unique VCC mocks to be generated
+            # Subarray requires unique VCC mocks to be generated
             if "mid_csp_cbf/vcc/" in name:
                 harness.add_mock_device(device_name=name, device_mock=mock())
             else:
@@ -90,9 +96,7 @@ class TestCbfSubarray:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -102,9 +106,7 @@ class TestCbfSubarray:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -114,9 +116,7 @@ class TestCbfSubarray:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -128,11 +128,9 @@ class TestCbfSubarray:
         """
         Test writing to the sysParam attribute. Also used to test startup of the DUT.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         device_under_test.simulationMode = SimulationMode.FALSE
 
@@ -198,16 +196,14 @@ class TestCbfSubarray:
         Test the AddReceptors(), RemoveReceptors(),
         and RemoveAllReceptors() commands' happy paths.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param remove_all: False to use RemoveReceptors, True for RemoveAllReceptors
         :param receptors_to_remove: list of DISH IDs to remove from subarray
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
         attr_values = [
@@ -215,16 +211,16 @@ class TestCbfSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
         ]
 
-        # add receptors in 2 stages
+        # Add receptors in 2 stages
         curr_rec = set()
         for i, input_rec in enumerate([receptors[:-1], receptors[-1:]]):
             (return_value, command_id) = device_under_test.AddReceptors(
                 input_rec
             )
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             attr_values.append(
                 (
                     "longRunningCommandResult",
@@ -256,10 +252,10 @@ class TestCbfSubarray:
         if remove_all:
             (return_value, command_id) = device_under_test.RemoveAllReceptors()
 
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             attr_values.append(
                 (
                     "longRunningCommandResult",
@@ -273,7 +269,7 @@ class TestCbfSubarray:
             )
 
         else:
-            # remove receptors in 2 stages
+            # Remove receptors in 2 stages
             for input_rec in [
                 receptors_to_remove[:-1],
                 receptors_to_remove[-1:],
@@ -282,10 +278,10 @@ class TestCbfSubarray:
                     input_rec
                 )
 
-                # check that the command was successfully queued
+                # Check that the command was successfully queued
                 assert return_value[0] == ResultCode.QUEUED
 
-                # check that the queued command succeeded
+                # Check that the queued command succeeded
                 attr_values.append(
                     (
                         "longRunningCommandResult",
@@ -298,7 +294,7 @@ class TestCbfSubarray:
                     )
                 )
 
-                # check obsState transitions
+                # Check obsState transitions
                 attr_values.append(
                     ("obsState", ObsState.RESOURCING, ObsState.IDLE, i)
                 )
@@ -306,7 +302,7 @@ class TestCbfSubarray:
                     ("obsState", ObsState.IDLE, ObsState.RESOURCING, i + 1)
                 )
 
-                # assert receptors attribute updated
+                # Assert receptors attribute updated
                 curr_rec.difference_update(input_rec)
                 receptors_push_val = list(curr_rec.copy())
                 receptors_push_val.sort()
@@ -315,15 +311,15 @@ class TestCbfSubarray:
                 )
                 i += 1
 
-            # remove remaining receptor(s)
+            # Remove remaining receptor(s)
             (return_value, command_id) = device_under_test.RemoveReceptors(
                 list(curr_rec)
             )
 
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             attr_values.append(
                 (
                     "longRunningCommandResult",
@@ -336,13 +332,13 @@ class TestCbfSubarray:
                 )
             )
 
-        # check obsState transitions
+        # Check obsState transitions
         attr_values.append(("obsState", ObsState.RESOURCING, ObsState.IDLE, i))
         attr_values.append(
             ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1)
         )
 
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         attr_values.append(("receptors", (), None, 1))
 
         for name, value, previous, n in attr_values:
@@ -369,25 +365,23 @@ class TestCbfSubarray:
         """
         Test the AddReceptors() command when a receptor ID is out of valid range.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param invalid_receptor: invalid DISH ID
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # add receptors
+        # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(
             invalid_receptor
         )
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # check that the queued command failed
+        # Check that the queued command failed
         attr_values = [
             (
                 "longRunningCommandResult",
@@ -435,27 +429,25 @@ class TestCbfSubarray:
         Test the RemoveReceptors() command when one of the receptors to remove
         was not assigned to the subarray.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param unassigned_receptors: unassigned DISH IDs
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # add receptors
+        # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         receptors.sort()
 
-        # check that the queued command succeeded
+        # Check that the queued command succeeded
         attr_values = [
             (
                 "longRunningCommandResult",
@@ -471,11 +463,11 @@ class TestCbfSubarray:
             ("receptors", tuple(receptors), None, 1),
         ]
 
-        # try removing a receptor not assigned to subarray
+        # Try removing a receptor not assigned to subarray
         (return_value, command_id) = device_under_test.RemoveReceptors(
             unassigned_receptors
         )
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values.append(
@@ -524,24 +516,22 @@ class TestCbfSubarray:
         Test the RemoveReceptors() command when one of the receptor IDs to be
         removed is not in valid range.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param receptors: list of DISH IDs to assign to subarray
         :param invalid_receptor: invalid DISH ID
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # add receptors
+        # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         receptors.sort()
 
         attr_values = [
@@ -559,15 +549,15 @@ class TestCbfSubarray:
             ("receptors", tuple(receptors), None, 1),
         ]
 
-        # try to remove invalid receptors
+        # Try to remove invalid receptors
         (return_value, command_id) = device_under_test.RemoveReceptors(
             invalid_receptor
         )
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # check that the queued command failed
+        # Check that the queued command failed
         attr_values.append(
             (
                 "longRunningCommandResult",
@@ -610,24 +600,22 @@ class TestCbfSubarray:
         Test the RemoveReceptors() and RemoveAllReceptors()
         commands when subarray is in ObsState.EMPTY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param receptors: list of DISH IDs to remove from subarray
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # try to remove receptors
+        # Try to remove receptors
         (return_value, command_id) = device_under_test.RemoveReceptors(
             receptors
         )
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
-        # check that the queued command failed
+        # Check that the queued command failed
         attr_values = [
             (
                 "longRunningCommandResult",
@@ -640,9 +628,9 @@ class TestCbfSubarray:
             )
         ]
 
-        # try to remove allreceptors
+        # Try to remove allreceptors
         (return_value, command_id) = device_under_test.RemoveAllReceptors()
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values.append(
@@ -657,7 +645,7 @@ class TestCbfSubarray:
             )
         )
 
-        # check that the queued commands failed
+        # Check that the queued commands failed
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
@@ -685,25 +673,23 @@ class TestCbfSubarray:
         """
         Test the Scan() command's happy path with a minimal successful scan configuration.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_file_name: JSON file for the scan ID
+        :param scan_file_name: file name for the scan ID
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             config_str = f.read().replace("\n", "")
         with open(test_data_path + scan_file_name) as f:
             scan_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         command_dict["AddReceptors"] = device_under_test.AddReceptors(
@@ -735,9 +721,9 @@ class TestCbfSubarray:
             ("receptors", (), None, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -777,32 +763,30 @@ class TestCbfSubarray:
         """
         Test subarrays's ability to reconfigure and run multiple scans.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_id: JSON file for the scan id
+        :param scan_file_name: file name for the scan ID
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             config_str = f.read().replace("\n", "")
         with open(test_data_path + scan_file_name) as f:
             scan_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # add receptors
+        # Add receptors
         command_dict["AddReceptors"] = device_under_test.AddReceptors(
             receptors
         )
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         receptors.sort()
 
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
@@ -811,12 +795,12 @@ class TestCbfSubarray:
         command_dict["Scan"] = device_under_test.Scan(scan_str)
         command_dict["EndScan"] = device_under_test.EndScan()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -828,7 +812,7 @@ class TestCbfSubarray:
                 ),
             )
 
-        # second round of observation
+        # Second round of observation
         command_dict = {}
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             config_str
@@ -858,9 +842,9 @@ class TestCbfSubarray:
             ("receptors", (), None, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -901,29 +885,27 @@ class TestCbfSubarray:
         """
         Test the Abort() command from ObsState.READY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             config_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # add receptors
+        # Add receptors
         command_dict["AddReceptors"] = device_under_test.AddReceptors(
             receptors
         )
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         receptors.sort()
 
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
@@ -941,9 +923,9 @@ class TestCbfSubarray:
             ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -985,32 +967,30 @@ class TestCbfSubarray:
         """
         Test the Abort() command from ObsState.SCANNING.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_file_name: JSON file for the scan ID
+        :param scan_file_name: file name for the scan ID
         """
-        # set device ONLINE and ON
+        # Set device ONLINE and ON
         self.test_sysParam(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             config_str = f.read().replace("\n", "")
         with open(test_data_path + scan_file_name) as f:
             scan_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # add receptors
+        # Add receptors
         command_dict["AddReceptors"] = device_under_test.AddReceptors(
             receptors
         )
-        # assert receptors attribute updated
+        # Assert receptors attribute updated
         receptors.sort()
 
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
@@ -1030,9 +1010,9 @@ class TestCbfSubarray:
             ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -1073,15 +1053,13 @@ class TestCbfSubarray:
         """
         Test the ObsReset() command to ObsState.IDLE from ObsState.READY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
         """
-        # test ObsReset from READY
+        # Test ObsReset from READY
         self.test_Abort_from_ready(
             device_under_test,
             event_tracer,
@@ -1091,7 +1069,7 @@ class TestCbfSubarray:
 
         (return_value, command_id) = device_under_test.ObsReset()
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values = [
@@ -1135,16 +1113,14 @@ class TestCbfSubarray:
         """
         Test the ObsReset() command to ObsState.IDLE from ObsState.SCANNING.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_file_name: JSON file for the scan ID
+        :param scan_file_name: file name for the scan ID
         """
-        # test ObsReset from SCANNING
+        # Test ObsReset from SCANNING
         self.test_Abort_from_scanning(
             device_under_test,
             event_tracer,
@@ -1155,7 +1131,7 @@ class TestCbfSubarray:
 
         (return_value, command_id) = device_under_test.ObsReset()
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values = [
@@ -1198,16 +1174,13 @@ class TestCbfSubarray:
         """
         Test the Restart() command to ObsState.EMPTY from ObsState.READY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_file_name: JSON file for the scan ID
         """
-        # test Restart from READY
+        # Test Restart from READY
         self.test_Abort_from_ready(
             device_under_test,
             event_tracer,
@@ -1217,7 +1190,7 @@ class TestCbfSubarray:
 
         (return_value, command_id) = device_under_test.Restart()
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values = [
@@ -1262,17 +1235,15 @@ class TestCbfSubarray:
         """
         Test the Restart() command to ObsState.EMPTY from ObsState.SCANNING.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration
         :param receptors: list of DISH IDs to assign to subarray
-        :param scan_file_name: JSON file for the scan ID
+        :param scan_file_name: file name for the scan ID
         """
 
-        # test Restart from SCANNING
+        # Test Restart from SCANNING
         self.test_Abort_from_scanning(
             device_under_test,
             event_tracer,
@@ -1283,7 +1254,7 @@ class TestCbfSubarray:
 
         (return_value, command_id) = device_under_test.Restart()
 
-        # check that the command was successfully queued
+        # Check that the command was successfully queued
         assert return_value[0] == ResultCode.QUEUED
 
         attr_values = [

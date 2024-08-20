@@ -36,8 +36,7 @@ def device_under_test_fixture(
     Fixture that returns the device under test.
 
     :param test_context: the context in which the tests run
-
-    :return: the device under test
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
@@ -50,7 +49,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -91,7 +90,6 @@ def mock_controller() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def mock_vcc_builder() -> unittest.mock.Mock:
-    """Subarray requires unique Vcc mocks, so we return the mock builder"""
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
@@ -224,12 +222,16 @@ def initial_mocks(
     """
     Return a dictionary of proxy mocks to pre-register.
 
-    :param mock_delay: a mock delayModel attribute
-    :param mock_controller: a mock CbfController that is powered on.
-    :param mock_vcc_builder: a builder for a mock Vcc that is powered on.
-    :param mock_fsp: a mock Fsp that is powered off.
-    :param mock_fsp_subarray: a mock Fsp function mode subarray that is powered on.
-    :param mock_talon_board: a mock talon board device
+    :param mock_tm: a mock TM.
+    :param mock_controller: a mock CbfController.
+    :param mock_vcc_builder: a mock Vcc builder.
+    :param mock_fsp: a mock Fsp.
+    :param mock_fsp_subarray: a mock FspCorrSubarray.
+    :param mock_talon_board: a mock TalonBoard.
+    :param mock_vis_mesh: a mock SlimMesh.
+    :param mock_host_lut_s1: a mock HostLutStage1.
+    :param mock_host_lut_s2: a mock HostLutStage2.
+    :param mock_spead_desc: a mock SpeadDescriptor.
 
     :return: a dictionary of proxy mocks to pre-register.
     """

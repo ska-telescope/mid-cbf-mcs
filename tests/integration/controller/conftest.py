@@ -47,7 +47,10 @@ def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
     """
     Fixture that controller test input parameters.
 
-    :return: dict containing all controller test input parameters
+    :return: A dictionary containing all the test input parameters for the controller.
+             This includes the system parameter file path, a flag indicating whether to retrieve
+             the system parameters from the file, and the hardware configuration file path.
+             Format follows {"sys_param_file": str, "sys_param_from_file": bool, "hw_config_file": str}.
     """
     return request.param
 
@@ -179,6 +182,10 @@ def powered_device_proxies(
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
 ) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to powered devices. This includes
+    the Talon LRU, frequency slice SLIM, and visibility SLIM devices.
+    """
     return talon_lru + [slim_fs, slim_vis]
 
 
@@ -187,6 +194,10 @@ def monitoring_device_proxies(
     power_switch: list[context.DeviceProxy],
     subarray: list[context.DeviceProxy],
 ) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to monitoring devices. This includes
+    the power switch and subarray devices.
+    """
     return power_switch + subarray
 
 
