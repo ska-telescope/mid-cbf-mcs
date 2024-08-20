@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import gc
-from typing import Any, Iterator
+import logging
+from typing import Iterator
 
 import pytest
 from assertpy import assert_that
@@ -22,7 +23,9 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import Const
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    get_power_switch_driver,
+)
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
@@ -38,6 +41,7 @@ class TestPowerSwitch:
     """
 
     power_switch_driver_model = None
+    power_switch_outlets = 0
 
     @pytest.fixture(name="test_context")
     def power_switch_test_context(
@@ -48,7 +52,7 @@ class TestPowerSwitch:
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         harness = context.ThreadedTestTangoContextManager()
 
-        def mock_patch(url: str, **kwargs: Any) -> MockDependency.Response:
+        def mock_patch(url: str, **kwargs: any) -> MockDependency.Response:
             """
             Replace requests.request method with a mock method.
 
@@ -64,7 +68,7 @@ class TestPowerSwitch:
             )
 
         def mock_get(
-            url: str, params: Any = None, **kwargs: Any
+            url: str, params: any = None, **kwargs: any
         ) -> MockDependency.Response:
             """
             Replace requests.get with mock method.
@@ -125,7 +129,16 @@ class TestPowerSwitch:
             mock_set_snmp,
         )
 
+        # TODO: test other drivers
         if power_switch_model == "DLI_PRO":
+            self.power_switch_outlets = get_power_switch_driver(
+                model="DLI LPC9",
+                ip="192.168.0.100",
+                login="admin",
+                password="1234",
+                logger=logging.getLogger(),
+            ).power_switch_outlets
+
             harness.add_device(
                 device_name="mid_csp_cbf/power_switch/001",
                 device_class=PowerSwitch,
@@ -134,7 +147,16 @@ class TestPowerSwitch:
                 PowerSwitchModel="DLI LPC9",
                 PowerSwitchPassword="1234",
             )
+
         elif power_switch_model == "APC_SNMP":
+            self.power_switch_outlets = get_power_switch_driver(
+                model="APC AP8681 SNMP",
+                ip="192.168.1.253",
+                login="apc",
+                password="apc",
+                logger=logging.getLogger(),
+            ).power_switch_outlets
+
             harness.add_device(
                 device_name="mid_csp_cbf/power_switch/001",
                 device_class=PowerSwitch,
@@ -233,7 +255,7 @@ class TestPowerSwitch:
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         # Check that numOutlets is the same as the driver
-        return device_under_test.numOutlets == Const.POWER_SWITCH_OUTLETS
+        return device_under_test.numOutlets == self.power_switch_outlets
 
     @pytest.mark.parametrize(
         "test_context",
@@ -348,7 +370,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
         if self.power_switch_driver_model == "DLI_PRO":
             msg = '[3, "HTTP response error"]'
         elif self.power_switch_driver_model == "APC_SNMP":
@@ -407,7 +429,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets off and check the state again
         for i in range(1, 8):
@@ -504,7 +526,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets off and check the state again
         for i in range(1, 8):
@@ -550,7 +572,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         result_code, command_id = device_under_test.TurnOffOutlet(
             f"{num_outlets + 1}"
@@ -596,7 +618,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets on and check the state again
         for i in range(1, 8):
@@ -695,7 +717,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         # Turn outlets on and check the state again
         for i in range(1, 8):
@@ -741,7 +763,7 @@ class TestPowerSwitch:
         self.test_Online(device_under_test, event_tracer)
 
         num_outlets = device_under_test.numOutlets
-        assert num_outlets == Const.POWER_SWITCH_OUTLETS
+        assert num_outlets == self.power_switch_outlets
 
         result_code, command_id = device_under_test.TurnOnOutlet(
             str(num_outlets + 1)
