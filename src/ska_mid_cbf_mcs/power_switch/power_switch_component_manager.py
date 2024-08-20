@@ -17,12 +17,7 @@ from time import sleep
 from typing import Callable, Optional
 
 import tango
-from ska_control_model import (
-    CommunicationStatus,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
+from ska_control_model import CommunicationStatus, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
@@ -92,7 +87,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
         ip: str,
         login: str,
         password: str,
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: any,
     ) -> None:
         """
@@ -102,12 +96,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param ip: IP address of the power switch
         :param login: Login username of the power switch
         :param password: Login password for the power switch
-        :param simulation_mode: simulation mode identifies if the real power switch
-                driver or the simulator should be used
-
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
 
         self.power_switch_driver = get_power_switch_driver(
             model=model,

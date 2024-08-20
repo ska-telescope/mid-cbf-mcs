@@ -51,6 +51,33 @@ class CbfDevice(SKABaseDevice):
     Extends SKABaseDevice to override certain key values.
     """
 
+    # --------------
+    # Initialization
+    # --------------
+
+    class InitCommand(SKABaseDevice.InitCommand):
+        """
+        A class for the CbfController's Init() command.
+        """
+
+        def do(
+            self: CbfDevice.InitCommand,
+            *args: any,
+            **kwargs: any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string message indicating status.
+                     The message is for information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code, msg) = super().do(*args, **kwargs)
+
+            self._device._simulation_mode = SimulationMode.TRUE
+
+            return (result_code, msg)
+
     # -----------------
     # Device Properties
     # -----------------

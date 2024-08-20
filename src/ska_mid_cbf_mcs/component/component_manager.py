@@ -112,9 +112,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._results_lock = Lock()
         self._blocking_commands: set["str"] = set()
 
-        # NOTE: using component manager default of SimulationMode.TRUE,
-        # as self._simulation_mode at this point during init_device()
-        # SimulationMode.FALSE
+        # NOTE: currently all devices are using constructor default
+        # simulation_mode == SimulationMode.TRUE
         self.simulation_mode = simulation_mode
 
     # -------------

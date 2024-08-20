@@ -14,10 +14,7 @@ TANGO device class for monitoring a Talon board.
 from __future__ import annotations
 
 # tango imports
-from ska_tango_base.base.base_device import (
-    DevVarLongStringArrayType,
-    SKABaseDevice,
-)
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode
 from tango import (
     DebugIt,
@@ -879,12 +876,14 @@ class TalonBoard(CbfDevice):
     # Fast Commands
     # -------------
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the TalonBoard's init_device() "command".
         """
 
-        def do(self: TalonBoard.InitCommand) -> tuple[ResultCode, str]:
+        def do(
+            self: TalonBoard.InitCommand, *args, **kwargs
+        ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -892,6 +891,7 @@ class TalonBoard(CbfDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
+            (result_code, msg) = super().do(*args, **kwargs)
 
             # Some of these IDs are typically integers. But it is easier to use
             # empty string to show the board is not assigned.
@@ -902,7 +902,7 @@ class TalonBoard(CbfDevice):
             self._device.set_change_event("dishID", True)
             self._device.set_archive_event("dishID", True)
 
-            return super().do()
+            return (result_code, msg)
 
     # ---------------------
     # Long Running Commands
