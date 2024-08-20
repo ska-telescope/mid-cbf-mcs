@@ -53,7 +53,8 @@ def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
              the system parameters from the file, and the hardware configuration file path.
              Format follows {"sys_param_file": str, "sys_param_from_file": bool, "hw_config_file": str}.
     """
-    hw_config_dict = yaml.safe_load(request.param["hw_config_file"])
+    with open(request.param["hw_config_file"]) as f:
+        hw_config_dict = yaml.safe_load(f)
     request.param["num_lru"] = len(hw_config_dict["talon_lru"])
     request.param["num_board"] = len(hw_config_dict["talon_board"])
     request.param["num_pdu"] = len(hw_config_dict["power_switch"])
