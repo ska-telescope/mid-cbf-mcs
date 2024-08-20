@@ -612,6 +612,9 @@ class VccComponentManager(CbfObsComponentManager):
                 "Aborting from IDLE; not issuing Abort command to VCC band devices"
             )
 
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,

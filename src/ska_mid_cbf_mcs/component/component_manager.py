@@ -481,44 +481,41 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param event_data: Tango attribute change event data
         """
-        if (
-            event_data.attr_value is not None
-            and event_data.attr_value.value != ("", "")
-        ):
-            self.logger.info(
-                f"EventData attr_value: {event_data.attr_value.value}"
-            )
-            # fetch the result code from the event_data tuple.
-            try:
-                result_code = int(
-                    event_data.attr_value.value[1].split(",")[0].split("[")[1]
-                )
-                command_id = event_data.attr_value.value[0]
-            except IndexError as ie:
-                self.logger.error(f"{ie}")
+        value = event_data.attr_value.value
+
+        if value is None or value == ("", ""):
+            return
+
+        self.logger.info(f"EventData attr_value: {value}")
+        # fetch the result code from the event_data tuple.
+        try:
+            result_code = int(value[1].split(",")[0].split("[")[1])
+            command_id = value[0]
+        except IndexError as ie:
+            self.logger.error(f"{ie}")
+            return
+
+        # If the command ID not in blocking commands, we should wait a bit,
+        # as the event may have occurred before we had the chance to add
+        # it in the component manager
+        ticks = int(DEFAULT_TIMEOUT_PER_COMMAND / TIMEOUT_RESOLUTION)
+        while command_id not in self._blocking_commands:
+            sleep(TIMEOUT_RESOLUTION)
+            ticks -= 1
+            if ticks <= 0:
                 return
 
-            # If the command ID not in blocking commands, we should wait a bit,
-            # as the event may have occurred before we had the chance to add
-            # it in the component manager
-            ticks = int(DEFAULT_TIMEOUT_PER_COMMAND / TIMEOUT_RESOLUTION)
-            while command_id not in self._blocking_commands:
-                sleep(TIMEOUT_RESOLUTION)
-                ticks -= 1
-                if ticks <= 0:
-                    return
-
-            if result_code == ResultCode.OK:
-                with self._results_lock:
-                    self._blocking_commands.remove(command_id)
-            else:
-                self.logger.error(
-                    f"Command ID {command_id} result code: {result_code}"
-                )
-
-            self.logger.info(
-                f"Blocking commands remaining: {self._blocking_commands}"
+        if result_code == ResultCode.OK:
+            with self._results_lock:
+                self._blocking_commands.remove(command_id)
+        else:
+            self.logger.error(
+                f"Command ID {command_id} result code: {result_code}"
             )
+
+        self.logger.info(
+            f"Blocking commands remaining: {self._blocking_commands}"
+        )
 
     def results_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]

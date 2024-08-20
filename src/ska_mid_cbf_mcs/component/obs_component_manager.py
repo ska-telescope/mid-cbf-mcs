@@ -90,8 +90,7 @@ class CbfObsComponentManager(CbfComponentManager):
             ObsState.READY,
         ]:
             self.logger.warning(
-                f"ConfigureScan not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.IDLE or READY"
+                f"ConfigureScan not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -147,8 +146,7 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
-                f"Scan not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.READY"
+                f"Scan not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -200,8 +198,7 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         if self.obs_state not in [ObsState.SCANNING]:
             self.logger.warning(
-                f"EndScan not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.SCANNING"
+                f"EndScan not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -248,8 +245,7 @@ class CbfObsComponentManager(CbfComponentManager):
             return False
         if self.obs_state not in [ObsState.READY]:
             self.logger.warning(
-                f"GoToIdle not allowed in ObsState {self.obs_state}; \
-                    must be in ObsState.READY"
+                f"GoToIdle not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -289,17 +285,9 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug("Checking if Abort is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state not in [
-            ObsState.IDLE,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.ABORTING,
-            ObsState.RESETTING,
-        ]:
+        if self.obs_state in [ObsState.EMPTY, ObsState.FAULT]:
             self.logger.warning(
-                f"Abort not allowed in ObsState {self.obs_state};\
-                    must be in ObsState.IDLE, READY or SCANNING."
+                f"Abort not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -348,10 +336,9 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug("Checking if ObsReset is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state not in [ObsState.FAULT, ObsState.ABORTED]:
+        if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
             self.logger.warning(
-                f"ObsReset not allowed in ObsState {self.obs_state};\
-                    must be in ObsState.ABORTED or FAULT."
+                f"ObsReset not allowed in ObsState {self.obs_state}"
             )
             return False
         return True

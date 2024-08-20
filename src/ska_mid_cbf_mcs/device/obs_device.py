@@ -26,13 +26,14 @@ from ska_control_model import (
     ResultCode,
     SimulationMode,
 )
-from ska_tango_base.base.base_component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.obs.obs_device import SKAObsDevice
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
+
+from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
 
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
@@ -518,19 +519,10 @@ class CbfObsDevice(SKAObsDevice):
             ],
         )
 
-    class OnCommand(FastCommand):
+    class OnCommand(CbfFastCommand):
         """
         A class for the CbfObsDevice's on command.
         """
-
-        def __init__(
-            self: CbfObsDevice.OnCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
 
         def do(
             self: CbfObsDevice.OnCommand,
@@ -545,19 +537,10 @@ class CbfObsDevice(SKAObsDevice):
             """
             return self.component_manager.on()
 
-    class OffCommand(FastCommand):
+    class OffCommand(CbfFastCommand):
         """
         A class for the CbfObsDevice's off command.
         """
-
-        def __init__(
-            self: CbfObsDevice.OffCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
 
         def do(
             self: CbfObsDevice.OffCommand,

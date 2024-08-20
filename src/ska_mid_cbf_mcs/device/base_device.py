@@ -77,7 +77,7 @@ class CbfDevice(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        self.logger.debug(f"Writing simulationMode to {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
@@ -126,19 +126,10 @@ class CbfDevice(SKABaseDevice):
             ],
         )
 
-    class OnCommand(FastCommand):
+    class OnCommand(CbfFastCommand):
         """
         A class for the CbfDevice's on command.
         """
-
-        def __init__(
-            self: CbfDevice.OnCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
 
         def do(
             self: CbfDevice.OnCommand,
@@ -153,19 +144,10 @@ class CbfDevice(SKABaseDevice):
             """
             return self.component_manager.on()
 
-    class OffCommand(FastCommand):
+    class OffCommand(CbfFastCommand):
         """
         A class for the CbfDevice's off command.
         """
-
-        def __init__(
-            self: CbfDevice.OffCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
 
         def do(
             self: CbfDevice.OffCommand,
