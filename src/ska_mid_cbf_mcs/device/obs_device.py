@@ -33,8 +33,6 @@ from tango import DebugIt
 from tango.server import attribute, command, device_property
 from transitions.extensions import LockedMachine as Machine
 
-from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
-
 __all__ = ["CbfSubElementObsStateMachine", "CbfObsDevice", "main"]
 
 
