@@ -11,11 +11,7 @@
 from __future__ import annotations
 
 from ska_control_model import HealthState, PowerState, SimulationMode
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
@@ -193,7 +189,7 @@ class Slim(CbfDevice):
     # Fast Commands
     # -------------
 
-    class SlimTestCommand(FastCommand):
+    class SlimTestCommand(CbfFastCommand):
         """
         A command to test the mesh of SLIM Links.
         """
