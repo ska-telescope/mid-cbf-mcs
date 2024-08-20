@@ -208,7 +208,7 @@ class FspCorrSubarray(CbfObsDevice):
             :rtype: (ResultCode, str)
             """
             if self.is_allowed():
-                self.component_manager.update_delay_model(argin)
+                return self.component_manager.update_delay_model(argin)
             return (ResultCode.REJECTED, "UpdateDelayModel not allowed")
 
     @command(
