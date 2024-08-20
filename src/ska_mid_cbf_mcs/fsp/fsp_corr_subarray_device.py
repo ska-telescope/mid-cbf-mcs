@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 
 import tango
-from ska_control_model import ObsState
+from ska_control_model import ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from tango.server import attribute, command, device_property, run
 
@@ -171,33 +171,28 @@ class FspCorrSubarray(CbfObsDevice):
     # Fast Commands
     # -------------
 
-    def is_UpdateDelayModel_allowed(
-        self: FspCorrSubarray,
-    ) -> bool:
-        """
-        Determine if UpdateDelayModelis allowed
-        (allowed if FSP state is ON and ObsState is
-        READY or SCANNINNG).
-
-        :return: if UpdateDelayModel is allowed
-        :rtype: bool
-        """
-        if not self.component_manager.is_communicating:
-            return False
-
-        obs_state = self.obs_state_model.obs_state
-        if obs_state not in [ObsState.READY, ObsState.SCANNING]:
-            self.logger.warning(
-                f"Ignoring delay model received in {obs_state} (must be READY or SCANNING)."
-            )
-            return False
-
-        return True
-
     class UpdateDelayModelCommand(CbfFastCommand):
         """
         A class for the Fsp's UpdateDelayModel() command.
         """
+
+        def is_allowed(self: FspCorrSubarray.UpdateDelayModelCommand) -> bool:
+            """
+            Determine if UpdateDelayModel command is allowed.
+
+            :return: True if command is allowed, otherwise False
+            """
+            if not self.component_manager.is_communicating:
+                return False
+
+            obs_state = self.component_manager.obs_state
+            if obs_state not in [ObsState.READY, ObsState.SCANNING]:
+                self.logger.warning(
+                    f"Ignoring delay model received in {obs_state} (must be READY or SCANNING)."
+                )
+                return False
+
+            return True
 
         def do(
             self: FspCorrSubarray.UpdateDelayModelCommand,
@@ -212,7 +207,9 @@ class FspCorrSubarray(CbfObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.component_manager.update_delay_model(argin)
+            if self.is_allowed():
+                self.component_manager.update_delay_model(argin)
+            return (ResultCode.REJECTED, "UpdateDelayModel not allowed")
 
     @command(
         dtype_in="str",

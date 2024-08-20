@@ -209,31 +209,28 @@ class Slim(CbfDevice):
 
             return (result_code, message)
 
-    def is_SlimTest_allowed(
-        self: Slim,
-    ) -> bool:
-        """
-        Determine if SlimTest command is allowed.
-
-        :return: if SlimTest is allowed
-        :rtype: bool
-        """
-        if self.component_manager.power_state != PowerState.ON:
-            self.logger.warning(
-                "SLIM must be turned on before SlimTest can be called"
-            )
-            return False
-        if not self.component_manager.mesh_configured:
-            self.logger.warning(
-                "SLIM must be configured before SlimTest can be called"
-            )
-            return False
-        return True
-
     class SlimTestCommand(CbfFastCommand):
         """
         A command to test the mesh of SLIM Links.
         """
+
+        def is_allowed(self: Slim.SlimTestCommand) -> bool:
+            """
+            Determine if SlimTest command is allowed.
+
+            :return: True if command is allowed, otherwise False
+            """
+            if self.component_manager.power_state != PowerState.ON:
+                self.logger.warning(
+                    "SLIM must be turned on before SlimTest can be called"
+                )
+                return False
+            if not self.component_manager.mesh_configured:
+                self.logger.warning(
+                    "SLIM must be configured before SlimTest can be called"
+                )
+                return False
+            return True
 
         def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
@@ -244,7 +241,9 @@ class Slim(CbfDevice):
                 if exception is caught.
             :rtype: (ResultCode, str)
             """
-            return self.component_manager.slim_test()
+            if self.is_allowed():
+                return self.component_manager.slim_test()
+            return (ResultCode.REJECTED, "SLIM Test not allowed")
 
     @command(
         dtype_out="DevVarLongStringArray",
