@@ -137,6 +137,13 @@ class ApcPduDriver:
         return True
 
     def get_outlet_list(self: ApcPduDriver) -> list[Outlet]:
+        """
+        Query the power switch for a list of outlets and get their name
+        and current state.
+
+        :return: list of all the outlets available in this power switch,
+                 or an empty list if there was an error.
+        """
         out_list = []
         outlets = self._outlet_status(
             "all"
