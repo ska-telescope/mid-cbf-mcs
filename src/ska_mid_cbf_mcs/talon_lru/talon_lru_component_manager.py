@@ -114,9 +114,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         :return: True if both proxies were successfully initialized, False otherwise
         """
-        self._proxy_power_switch1 = self._init_power_switch(
-            self._pdus[0]
-        )
+        self._proxy_power_switch1 = self._init_power_switch(self._pdus[0])
         if self._proxy_power_switch1 is None:
             return False
 
@@ -127,9 +125,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             if self._pdu_outlets[0] == self._pdu_outlets[1]:
                 self._using_single_outlet = True
         else:
-            self._proxy_power_switch2 = self._init_power_switch(
-                self._pdus[1]
-            )
+            self._proxy_power_switch2 = self._init_power_switch(self._pdus[1])
             if self._proxy_power_switch2 is None:
                 return False
         return True
