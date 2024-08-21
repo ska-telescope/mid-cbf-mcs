@@ -926,7 +926,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
-            self.logger.error("One or more command calls timed out.")
+            self.logger.error("One or more command calls failed/timed out.")
             return lrc_status
         if lrc_status == TaskStatus.ABORTED:
             self.logger.warning(
@@ -1106,7 +1106,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to VCC ConfigureBand command timed out."
+                "One or more calls to VCC ConfigureBand command failed/timed out."
             )
             return False
 
@@ -1214,7 +1214,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to VCC ConfigureScan command timed out."
+                "One or more calls to VCC ConfigureScan command failed/timed out."
             )
             return False
 
@@ -1395,7 +1395,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands timed out."
+                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands failed/timed out."
             )
             return False
 
@@ -1426,7 +1426,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP ConfigureScan command timed out."
+                "One or more calls to FSP ConfigureScan command failed/timed out."
             )
             return False
 
@@ -1495,7 +1495,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         lrc_status = self._wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP RemoveSubarrayMembership command timed out."
+                "One or more calls to FSP RemoveSubarrayMembership command failed/timed out."
             )
             return False
 
