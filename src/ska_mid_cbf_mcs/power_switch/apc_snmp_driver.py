@@ -268,9 +268,8 @@ class ApcSnmpDriver:
         and current state.
 
         :return: list of all the outlets available in this power switch,
-                 or an empty list if there was an error
+                 or an empty list if there was an error.
         """
-
         # Extract the outlet list
         outlets: list[Outlet] = []
 

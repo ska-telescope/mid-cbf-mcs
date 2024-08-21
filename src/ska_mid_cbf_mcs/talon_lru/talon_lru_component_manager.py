@@ -85,7 +85,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
             return None
 
-    def _init_power_switch(self, pdu, pdu_outlet) -> context.DeviceProxy:
+    def _init_power_switch(
+        self: TalonLRUComponentManager, pdu: str
+    ) -> context.DeviceProxy | None:
         """
         Initialize power switch and get the power mode of the specified outlet.
 
