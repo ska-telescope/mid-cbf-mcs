@@ -22,11 +22,9 @@ collections "Mid.CBF\nSubarray" as subarray
 collections "VCC" as vcc
 end box
 participant "CAR" as car
-note over control                 : OpState: OFF
 lmc          -> control           : InitSysParam(\nJSON str)
-control      -> control           : check OpState is OFF
 
-alt OpState is OFF
+control      -> control           : parse JSON str
 control      -> control           : check JSON is compliant \nwith schema
 
 alt #LightBlue JSON is compliant
@@ -42,7 +40,5 @@ else JSON is not compliant
 lmc         <-- control           : Fail
 end
 
-else OpState is not OFF
-lmc         <-- control           : Fail
-end
+
 @enduml
