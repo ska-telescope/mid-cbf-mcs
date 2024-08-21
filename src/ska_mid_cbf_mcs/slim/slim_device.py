@@ -217,7 +217,7 @@ class Slim(CbfDevice):
                 if self.component_manager.mesh_configured:
                     return True
                 else:
-                    self.logger.error(
+                    self.logger.warning(
                         "SLIM must be configured before SlimTest can be called"
                     )
                     return False
