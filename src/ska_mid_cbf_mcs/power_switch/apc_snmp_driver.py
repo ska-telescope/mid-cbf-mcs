@@ -70,7 +70,7 @@ class ApcSnmpDriver:
 
         # valid range 1 to 24
         self.outlet_id_list: list[str] = [
-            str(i) for i in range(1, self.power_switch_outlets+1)
+            str(i) for i in range(1, self.power_switch_outlets + 1)
         ]
 
         # Initialize outlets
