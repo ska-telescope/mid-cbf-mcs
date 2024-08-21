@@ -679,7 +679,13 @@ class CbfSubarray(CspSubElementSubarray):
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
+            if "cbf" in full_configuration:
+                configuration = copy.deepcopy(full_configuration["cbf"])
+            else:
+                msg = (
+                    "> v4.0 Configure Scan Interfaces Currently not supported"
+                )
+                return (ResultCode.FAILED, msg)
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration:
                 common_configuration["band_5_tuning"] = [0, 0]

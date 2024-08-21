@@ -34,7 +34,7 @@ class TestScanConfigurationValidator:
         Before Each fixure, to setup the CbfSubarrayComponentManager and the Scan Configuration
         """
 
-        config_file_name = "ConfigureScan_4_0_CORR.json"
+        config_file_name = "ConfigureScan_4_1_CORR.json"
         receptors = ["SKA001", "SKA036", "SKA063", "SKA100"]
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
@@ -88,7 +88,7 @@ class TestScanConfigurationValidator:
          receptors",
         [
             (
-                "ConfigureScan_4_0_CORR.json",
+                "ConfigureScan_4_1_CORR.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
             ),
             (
@@ -539,7 +539,7 @@ class TestScanConfigurationValidator:
     ):
         # All three output_x uses the same function.  Just test with one test case should be good enough
         # Test cases to be added as more support channel widths are added
-        config_file_name = "ConfigureScan_4_0_CORR.json"
+        config_file_name = "ConfigureScan_4_1_CORR.json"
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
