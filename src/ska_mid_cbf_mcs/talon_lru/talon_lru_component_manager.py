@@ -306,7 +306,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
                 if lrc_status != TaskStatus.COMPLETED:
                     self.logger.error(
-                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out",
+                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} failed/timed out",
                     )
                     pdu1_result = ResultCode.FAILED
                 else:
@@ -345,7 +345,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
                 if lrc_status != TaskStatus.COMPLETED:
                     self.logger.error(
-                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} timed out",
+                        f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} failed/timed out",
                     )
                     pdu2_result = ResultCode.FAILED
                 else:
@@ -487,7 +487,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
                 if lrc_status != TaskStatus.COMPLETED:
                     self.logger.error(
-                        f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} timed out"
+                        f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} failed/timed out"
                     )
                     pdu1_result = ResultCode.FAILED
                 else:
@@ -524,7 +524,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     )
                     if lrc_status != TaskStatus.COMPLETED:
                         self.logger.error(
-                            f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} timed out"
+                            f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} failed/timed out"
                         )
                         pdu2_result = ResultCode.FAILED
                     else:
