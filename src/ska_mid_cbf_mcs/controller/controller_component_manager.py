@@ -560,7 +560,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Store the attribute
         self.dish_utils = DISHUtils(init_sys_param_json)
 
-        # Send init_sys_param to the subarrays, VCCs and talon boards
+        # Send init_sys_param to the subarrays and VCCs.
         if not self._update_init_sys_param(self.last_init_sys_param):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -568,7 +568,7 @@ class ControllerComponentManager(CbfComponentManager):
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    "Failed to update subarrays with init_sys_param",
+                    "Failed to update subarrays and/or VCCs with init_sys_param",
                 ),
                 status=TaskStatus.FAILED,
             )
