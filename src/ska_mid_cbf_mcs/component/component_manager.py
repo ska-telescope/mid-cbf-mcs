@@ -112,6 +112,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._event_ids = {}
         self._results_lock = Lock()
         self._blocking_commands: set["str"] = set()
+        self._command_failed = False
 
         # NOTE: currently all devices are using constructor default
         # simulation_mode == SimulationMode.TRUE
@@ -529,6 +530,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 self.logger.error(
                     f"Command ID {command_id} result code: {result_code}"
                 )
+                self._command_failed = True
             with self._results_lock:
                 self._blocking_commands.remove(command_id)
 
@@ -624,6 +626,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self.logger.debug(
             f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION:.3f} seconds"
         )
+        if self._command_failed:
+            self._command_failed = False
+            return TaskStatus.FAILED
         return TaskStatus.COMPLETED
 
     @property
