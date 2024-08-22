@@ -681,7 +681,7 @@ class CbfSubarray(CspSubElementSubarray):
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
+            configuration = copy.deepcopy(full_configuration["midcbf"])
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration:
                 common_configuration["band_5_tuning"] = [0, 0]
@@ -694,7 +694,7 @@ class CbfSubarray(CspSubElementSubarray):
 
             # Configure components
             full_configuration["common"] = copy.deepcopy(common_configuration)
-            full_configuration["cbf"] = copy.deepcopy(configuration)
+            full_configuration["midcbf"] = copy.deepcopy(configuration)
             (result_code, message) = component_manager.configure_scan(
                 json.dumps(full_configuration)
             )
