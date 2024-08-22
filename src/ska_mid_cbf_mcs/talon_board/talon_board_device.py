@@ -312,7 +312,7 @@ class TalonBoard(CbfDevice):
         max_alarm=13.0,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage0(self: TalonBoard) -> float:
+    def fpgaDieVoltage0(self: TalonBoard) -> float:
         """
         Reads the 12V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -337,7 +337,7 @@ class TalonBoard(CbfDevice):
         max_alarm=2.62,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage1(self: TalonBoard) -> float:
+    def fpgaDieVoltage1(self: TalonBoard) -> float:
         """
         Reads the 2.5V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -362,7 +362,7 @@ class TalonBoard(CbfDevice):
         max_alarm=0.97,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage2(self: TalonBoard) -> float:
+    def fpgaDieVoltage2(self: TalonBoard) -> float:
         """
         Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -387,7 +387,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage3(self: TalonBoard) -> float:
+    def fpgaDieVoltage3(self: TalonBoard) -> float:
         """
         Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -412,7 +412,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage4(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -437,7 +437,7 @@ class TalonBoard(CbfDevice):
         max_alarm=0.93,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage5(self: TalonBoard) -> list[float]:
         """
         Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -462,7 +462,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage6(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
