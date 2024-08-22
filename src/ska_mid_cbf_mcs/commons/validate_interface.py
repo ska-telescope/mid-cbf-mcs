@@ -1,36 +1,32 @@
 import json
+from ska_telmodel.csp.version import CSP_CONFIG_PREFIX, CSP_CONFIGSCAN_PREFIX, CSP_MID_DELAYMODEL_PREFIX, CSP_SCAN_PREFIX
 
-CSP_CONFIGURE_PREFIX = "https://schema.skao.int/ska-csp-configure/"
-CSP_CONFIGURESCAN_PREFIX = "https://schema.skao.int/ska-csp-configurescan/"
-CSP_DELAYMODEL_PREFIX = "https://schema.skao.int/ska-csp-delaymodel/"
-CSP_SCAN_PREFIX = "https://schema.skao.int/ska-csp-scan/"
 CSP_INITSYSPARAM_PREFIX = "https://schema.skao.int/ska-mid-cbf-initsysparam/"
 
-CSP_CONFIGURESCAN_VER3_0 = CSP_CONFIGURESCAN_PREFIX + "3.0"
-CSP_CONFIGURESCAN_VER4_1 = CSP_CONFIGURESCAN_PREFIX + "4.1"
-CSP_CONFIGURESCAN_VER2_5 = CSP_CONFIGURE_PREFIX + "2.5"
+CSP_CONFIGSCAN_VER3_0 = CSP_CONFIGSCAN_PREFIX + "3.0"
+CSP_CONFIGSCAN_VER4_1 = CSP_CONFIGSCAN_PREFIX + "4.1"
+CSP_CONFIGSCAN_VER2_5 = CSP_CONFIG_PREFIX + "2.5"
 
-CSP_DELAYMODEL_VER3_0 = CSP_DELAYMODEL_PREFIX + "3.0"
+CSP_MID_DELAYMODEL_VER3_0 = CSP_MID_DELAYMODEL_PREFIX + "3.0"
 
 CSP_SCAN_VER2_3 = CSP_SCAN_PREFIX + "2.3"
 
 CSP_INITSYSPARAM_VER1_0 = CSP_INITSYSPARAM_PREFIX + "1.0"
 
-# List of supported interfaces. Dependent on which stories have been merged into main
 
-CSP_CONFIGURESCAN_VERSIONS = [
-    CSP_CONFIGURESCAN_VER3_0,  # If only CIP-2504 has been merged
-    #    CSP_CONFIGURESCAN_VER4_1,   # If CIP-2253 and CIP-2616 have been merged
-    # CSP_CONFIGURESCAN_VER2_5,  # If none of the above have been merged
+CSP_CONFIGSCAN_VERSIONS = [
+    CSP_CONFIGSCAN_VER3_0,
+    # CSP_CONFIGSCAN_VER4_1,
+    # CSP_CONFIGSCAN_VER2_5,
 ]
-CSP_DELAYMODEL_VERSIONS = [CSP_DELAYMODEL_VER3_0]
+CSP_MID_DELAYMODEL_VERSIONS = [CSP_MID_DELAYMODEL_VER3_0]
 CSP_SCAN_VERSIONS = [CSP_SCAN_VER2_3]
 CSP_INITSYSPARAM_VERSIONS = [CSP_INITSYSPARAM_VER1_0]
 
 
 supported_interfaces = {
-    'configurescan': CSP_CONFIGURESCAN_VERSIONS,
-    'delaymodel': CSP_DELAYMODEL_VERSIONS,
+    'configurescan': CSP_CONFIGSCAN_VERSIONS,
+    'delaymodel': CSP_MID_DELAYMODEL_VERSIONS,
     'scan': CSP_SCAN_VERSIONS,
     'initsysparam': CSP_INITSYSPARAM_VERSIONS,
 }
@@ -58,3 +54,10 @@ def validate_interface(argin: str) -> tuple[bool, str]:
 
     # Return pass
     return [True, ""]
+
+
+def main():
+    print(CSP_CONFIGSCAN_PREFIX)
+
+if __name__ == '__main__':
+    main()

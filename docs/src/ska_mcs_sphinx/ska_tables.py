@@ -66,7 +66,6 @@ controller_commands = [
     },
 ]
 
-
 subarray_commands = [
     { 
         "Command": "Abort",
@@ -215,7 +214,6 @@ subarray_commands = [
     },
 ]
 
-
 sub_table_commands = [
     { 
         "Command": "Delay Model",
@@ -231,15 +229,11 @@ sub_table_commands = [
     },
 ]
 
-
-
 table_data_mapping = {
     'Controller': controller_commands,
     'Subarray': subarray_commands,
     'Subscriptions': sub_table_commands,
 }
-
-
 
 class CommandTable(Directive):
     required_arguments = 1
@@ -252,25 +246,8 @@ class CommandTable(Directive):
 
         tgroup = nodes.tgroup(cols = 5)
 
-        # colspec_1 = nodes.colspec(colwidth=10)
-        # colspec_2 = nodes.colspec(colwidth=10)
-        # colspec_3 = nodes.colspec(colwidth=10)
-        # colspec_4 = nodes.colspec(colwidth=10)
-        # colspec_5 = nodes.colspec(colwidth=10)
-
         header = nodes.thead()
         header_row = nodes.row()
-
-        # header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
-        # header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
-        # header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
-        # header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
-        # header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
-        # header_row  +=  (header_1)
-        # header_row  +=  (header_2)
-        # header_row  +=  (header_3)
-        # header_row  +=  (header_4)
-        # header_row  +=  (header_5)
 
         for i in range(5):
             colspec_list = nodes.colspec(colwidth = 10)
@@ -297,11 +274,6 @@ class CommandTable(Directive):
             table_body.append(row)
 
         table  +=  (tgroup)
-        # tgroup  +=  (colspec_1)
-        # tgroup  +=  (colspec_2)
-        # tgroup  +=  (colspec_3)
-        # tgroup  +=  (colspec_4)
-        # tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
