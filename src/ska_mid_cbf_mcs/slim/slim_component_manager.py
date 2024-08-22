@@ -88,7 +88,7 @@ class SlimComponentManager(CbfComponentManager):
                 dp.adminMode = AdminMode.ONLINE
                 self._subscribe_command_results(dp)
                 self._dp_links.append(dp)
-            except tango.DevFailed, AttributeError as err:
+            except (tango.DevFailed, AttributeError) as err:
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
