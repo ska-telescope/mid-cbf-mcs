@@ -97,7 +97,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # Communication
     # -------------
 
-    # TODO: refactor to push change events for TalonBoard attributes?
+    # TODO: Refactor to push change events for TalonBoard attributes?
     def _attr_change_callback(
         self, fqdn: str, name: str, value: any, quality: AttrQuality
     ) -> None:
@@ -194,8 +194,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._proxies[fqdn] = context.DeviceProxy(
                             device_name=fqdn
                         )
-                        # TODO: back to debug
-                        self.logger.info(f"Created device proxy for {fqdn}")
+                        self.logger.debug(f"Created device proxy for {fqdn}")
                     else:
                         self.logger.error(
                             "Failed to establish proxies to devices in properties. Check charts."
@@ -515,7 +514,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
-    # TODO: read attributes 100G
+    # TODO: Read attributes 100G
 
     # ----------------------------------------------
     # Talon Board Telemetry and Status from Influxdb

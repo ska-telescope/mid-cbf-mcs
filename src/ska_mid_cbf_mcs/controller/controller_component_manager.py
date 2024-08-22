@@ -213,17 +213,26 @@ class ControllerComponentManager(CbfComponentManager):
         :param fqdn: FQDN of the component device
         :return: True if the AdminMode of the device is successfully set to ONLINE, False otherwise.
         """
+        self.logger.info(
+            f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
+        )
+
         try:
-            self.logger.info(
-                f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
-            )
             self._proxies[fqdn].simulationMode = self.simulation_mode
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Failed to set SimulationMode of {fqdn} to {self.simulation_mode}: {df}"
+            )
+            return False
+
+        try:
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             self.logger.error(
                 f"Failed to set AdminMode of {fqdn} to ONLINE: {df}"
             )
             return False
+
         return True
 
     def _init_device_proxy(

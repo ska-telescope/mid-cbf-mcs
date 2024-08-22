@@ -81,13 +81,13 @@ class TestTalonBoard:
         Test reading the 7 FPGA Die Voltage Attributes
         See talon_board_simulator.py for the values expected
         """
-        assert device_under_test.FpgaDieVoltage0 == 12.0
-        assert device_under_test.FpgaDieVoltage1 == 2.5
-        assert device_under_test.FpgaDieVoltage2 == 0.87
-        assert device_under_test.FpgaDieVoltage3 == 1.8
-        assert device_under_test.FpgaDieVoltage4 == 1.8
-        assert device_under_test.FpgaDieVoltage5 == 0.9
-        assert device_under_test.FpgaDieVoltage6 == 1.8
+        assert device_under_test.fpgaDieVoltage0 == 12.0
+        assert device_under_test.fpgaDieVoltage1 == 2.5
+        assert device_under_test.fpgaDieVoltage2 == 0.87
+        assert device_under_test.fpgaDieVoltage3 == 1.8
+        assert device_under_test.fpgaDieVoltage4 == 1.8
+        assert device_under_test.fpgaDieVoltage5 == 0.9
+        assert device_under_test.fpgaDieVoltage6 == 1.8
 
     def test_Off(
         self: TestTalonBoard,
