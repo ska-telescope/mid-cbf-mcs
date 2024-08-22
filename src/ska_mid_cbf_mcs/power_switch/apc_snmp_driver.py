@@ -70,7 +70,7 @@ class ApcSnmpDriver:
 
         # valid range 1 to 24
         self.outlet_id_list: list[str] = [
-            str(i + 1) for i in range(0, self.power_switch_outlets)
+            str(i) for i in range(1, self.power_switch_outlets + 1)
         ]
 
         # Initialize outlets
@@ -268,9 +268,8 @@ class ApcSnmpDriver:
         and current state.
 
         :return: list of all the outlets available in this power switch,
-                 or an empty list if there was an error
+                 or an empty list if there was an error.
         """
-
         # Extract the outlet list
         outlets: list[Outlet] = []
 

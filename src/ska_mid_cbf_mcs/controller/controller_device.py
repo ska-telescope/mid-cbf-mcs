@@ -145,12 +145,13 @@ class CbfController(CbfDevice):
         max_dim_x=20,
         doc=(
             "Maximum number of instances of each capability type,"
-            " e.g. 'CORRELATOR:512', 'PSS-BEAMS:4'."
+            " e.g. 'VCC:4', 'FSP:4', 'Subarray:1'."
         ),
     )
     def maxCapabilities(self: CbfController) -> list[str]:
         """
-        Read maximum number of instances of each capability type.
+        Read maximum number of instances of each capability type, as definied in charts.
+        By default, these include VCC, FSP, and Subarray.
 
         :return: list of maximum number of instances of each capability type
         """
@@ -254,8 +255,10 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
-            simulation_mode=self._simulation_mode,
             logger=self.logger,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
         )
 
         fqdn_dict = {

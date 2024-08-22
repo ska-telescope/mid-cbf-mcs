@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
-import logging
 import os
 import time
 
@@ -28,11 +27,12 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
 
 __all__ = ["TalonDxComponentManager"]
 
 
-class TalonDxComponentManager:
+class TalonDxComponentManager(CbfComponentManager):
     """
     A component manager for the Talon-DX boards. Used to configure and start
     the Tango applications on the HPS of each board.
@@ -40,10 +40,10 @@ class TalonDxComponentManager:
 
     def __init__(
         self: TalonDxComponentManager,
+        *args: any,
         talondx_config_path: str,
         hw_config_path: str,
-        simulation_mode: SimulationMode,
-        logger: logging.Logger,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -58,10 +58,9 @@ class TalonDxComponentManager:
                             manager does nothing when in simulation mode
         :param logger: a logger for this object to use
         """
+        super().__init__(*args, **kwargs)
         self.talondx_config_path = talondx_config_path
         self._hw_config_path = hw_config_path
-        self.simulation_mode = simulation_mode
-        self.logger = logger
 
         self._hw_config = {}
         self.talondx_config = {}

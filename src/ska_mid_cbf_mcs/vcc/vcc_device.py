@@ -109,7 +109,10 @@ class Vcc(CbfObsDevice):
         abs_change=1,
         dtype=tango.DevEnum,
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
-        doc="Frequency band; an int in the range [0, 5]",
+        doc=(
+            "The frequency band observed by the current scan: "
+            "an enum that can be one of ['1', '2', '3', '4', '5a', '5b']"
+        ),
     )
     def frequencyBand(self: Vcc) -> tango.DevEnum:
         """
@@ -213,7 +216,8 @@ class Vcc(CbfObsDevice):
         """
         Turn on the corresponding band device and disable all the others.
 
-        :param band_config: json string containing: the frequency band name, dish sample rate, and number of samples per frame
+        :param band_config: json string containing: the frequency band name,
+                            dish sample rate, and number of samples per frame
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for

@@ -156,11 +156,12 @@ class VccComponentManager(CbfObsComponentManager):
         samples_per_frame: int,
     ) -> str:
         """
-        Helper for loading VCC internal parameter file
+        Helper for loading VCC internal parameter file.
 
         :param freq_band_name: the name of the configured frequency band
         :param dish_sample rate: the configured DISH sample rate
         :param samples_per_frame: the configured samples per frame
+        :return: JSON string with internal parameters, or empty string if file not found
         """
         self.logger.info(
             f"Configuring internal parameters for VCC band {freq_band_name}"
@@ -186,7 +187,7 @@ class VccComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     "Could not find default internal parameters file."
                 )
-                return None
+                return ""
 
         self.logger.debug(f"VCC internal parameters: {json_string}")
 
@@ -208,6 +209,11 @@ class VccComponentManager(CbfObsComponentManager):
     # ---------------------
 
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
+        """
+        Check if ConfigureBand is allowed.
+
+        :return: True if ConfigureBand is allowed, False otherwise
+        """
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
             self.logger.warning(
@@ -256,9 +262,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        # TODO: remove?
-        self.logger.debug(f"simulation mode: {self.simulation_mode}")
-
         if self.simulation_mode:
             self._vcc_controller_simulator.ConfigureBand(frequency_band)
         else:
@@ -285,7 +288,7 @@ class VccComponentManager(CbfObsComponentManager):
             dish_sample_rate=band_config["dish_sample_rate"],
             samples_per_frame=band_config["samples_per_frame"],
         )
-        if json_string is None:
+        if not json_string:
             self._update_component_state(fault=True)
             task_callback(
                 status=TaskStatus.FAILED,

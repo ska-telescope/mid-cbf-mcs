@@ -394,7 +394,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         mesh = rx.split("/")[2].split("-")[0]
         rx_arr = rx.split("/")
         tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
-        self._tx_device_name = tx
+        return tx
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -687,9 +687,9 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
 
             try:
-                self.init_tx_for_loopback()
+                loopback_tx = self.init_tx_for_loopback()
                 self._tx_device_proxy = context.DeviceProxy(
-                    device_name=self._tx_device_name
+                    device_name=loopback_tx
                 )
                 self.sync_idle_ctrl_words()
                 self._rx_device_proxy.initialize_connection(True)

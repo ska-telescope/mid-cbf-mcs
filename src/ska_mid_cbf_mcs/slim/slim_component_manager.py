@@ -504,7 +504,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    "One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.ConnectTxRx() failed/timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
@@ -707,7 +707,7 @@ class SlimComponentManager(CbfComponentManager):
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() failed/timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
