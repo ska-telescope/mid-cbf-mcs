@@ -360,7 +360,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 dish_id
             ]
 
-        # we lock the mutex, forward the configuration, then unlock it
+        # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             results_fsp = self._issue_group_command(
                 command_name="UpdateDelayModel",
@@ -572,7 +572,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._assigned_vcc_proxies.update(vcc_proxies)
 
-        # subscribe to LRC results for VCC scan operation
+        # subscribe to LRC results during the VCC scan operation
         for vcc_proxy in vcc_proxies:
             self._subscribe_command_results(vcc_proxy)
 
