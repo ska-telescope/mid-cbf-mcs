@@ -24,9 +24,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
-    HpsFspControllerSimulator,
-)
 
 
 class FspComponentManager(CbfComponentManager):
@@ -103,10 +100,6 @@ class FspComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 return
-        else:
-            self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
-                self._hps_fsp_controller_fqdn,
-            )
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
@@ -169,16 +162,17 @@ class FspComponentManager(CbfComponentManager):
         :param function_mode: function mode int
         :return: True if successfully set FSP function mode, otherwise False
         """
-        try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
-        except tango.DevFailed as df:
-            self.logger.error(
-                f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
-            )
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return False
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return False
 
         self.function_mode = function_mode
         self._device_attr_change_callback("functionMode", self.function_mode)

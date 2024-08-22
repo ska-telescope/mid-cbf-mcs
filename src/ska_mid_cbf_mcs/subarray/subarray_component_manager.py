@@ -358,14 +358,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        self.logger.info(f"Updating delay model; {delay_model_json}")
-        # pass DISH ID as VCC ID integer to FSPs
+        # Validate DISH IDs, then convert them to VCC ID integers for FSPs
         for delay_detail in delay_model_json["receptor_delays"]:
             dish_id = delay_detail["receptor"]
+            if dish_id not in self.dish_ids:
+                self.logger.error(
+                    f"Delay model contains data for DISH ID {dish_id} not belonging to this subarray, ignoring delay model."
+                )
+                return
             delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
                 dish_id
             ]
 
+        self.logger.info(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             results_fsp = self._issue_group_command(

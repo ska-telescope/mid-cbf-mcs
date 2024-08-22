@@ -25,7 +25,9 @@ from ... import test_utils
 # Test data file path
 test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-# TODO: config ID, scan ID, delay models, remove individual receptors, configure from ready, add receptors from ready
+# TODO: config ID, scan ID, remove individual receptors, configure from ready, add receptors from ready
+# TODO test fault state
+# TODO: check that only used receptors are updated in delay model
 
 
 class TestCbfSubarray:
@@ -299,6 +301,58 @@ class TestCbfSubarray:
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_ConfigureScan_1"],
+        name="CbfSubarray_delay_model_1",
+    )
+    def test_delay_model_READY(
+        self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        tm: context.DeviceProxy,
+    ) -> None:
+        """
+        Test sending CbfSubarray delay model JSON in ObsState.READY.
+
+        :param event_tracer: TangoEventTracer
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray_params: dict containing all test input parameters
+        :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
+        """
+        # Prepare test data
+        with open(test_data_path + subarray_params["delay_model_file"]) as f:
+            delay_model = json.load(f)
+
+        # Issue delay model
+        tm.delayModel = json.dumps(delay_model)
+
+        # Translate DISH IDs to VCC IDs to check FSP attribute
+        dish_id_to_vcc_id = dict(
+            zip(subarray_params["dish_ids"], subarray_params["vcc_ids"])
+        )
+        for delay_details in delay_model["receptor_delays"]:
+            dish_id = delay_details["receptor"]
+            if dish_id in dish_id_to_vcc_id:
+                delay_details["receptor"] = dish_id_to_vcc_id[dish_id]
+
+        # --- FSP checks --- #
+
+        expected_events = [
+            ("delayModel", json.dumps(delay_model), None, 1),
+        ]
+        for fsp_id in subarray_params["fsp_ids"]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_delay_model_1"],
         name="CbfSubarray_Scan_1",
     )
     def test_Scan(
@@ -378,6 +432,63 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_Scan_1"],
+        name="CbfSubarray_delay_model_2",
+    )
+    def test_delay_model_SCANNING(
+        self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        tm: context.DeviceProxy,
+    ) -> None:
+        """
+        Test sending CbfSubarray delay model JSON in ObsState.SCANNING.
+
+        :param event_tracer: TangoEventTracer
+        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray_params: dict containing all test input parameters
+        :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
+        """
+        # Prepare test data
+        with open(test_data_path + subarray_params["delay_model_file"]) as f:
+            delay_model = json.load(f)
+
+        # Slightly change the delay model from the one sent previously in READY
+        for delay_details in delay_model["receptor_delays"]:
+            new_coeff = delay_details["ypol_offset_ns"] + 1
+            delay_details["ypol_offset_ns"] = new_coeff
+
+        # Issue delay model
+        tm.delayModel = json.dumps(delay_model)
+
+        # Translate DISH IDs to VCC IDs to check FSP attribute
+        dish_id_to_vcc_id = dict(
+            zip(subarray_params["dish_ids"], subarray_params["vcc_ids"])
+        )
+        for delay_details in delay_model["receptor_delays"]:
+            dish_id = delay_details["receptor"]
+            if dish_id in dish_id_to_vcc_id:
+                delay_details["receptor"] = dish_id_to_vcc_id[dish_id]
+
+        # --- FSP checks --- #
+
+        expected_events = [
+            ("delayModel", json.dumps(delay_model), None, 1),
+        ]
+        for fsp_id in subarray_params["fsp_ids"]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    target_n_events=n,
+                )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Scan_1"],
@@ -2089,564 +2200,6 @@ class TestCbfSubarray:
     #             sleep_time_s,
     #         )
     #         test_proxies.off()
-    #     except AssertionError as ae:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise ae
-    #     except Exception as e:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise e
-
-    # @pytest.mark.parametrize(
-    #     "configure_scan_file, \
-    #     scan_file, \
-    #     receptors, \
-    #     vcc_ids",
-    #     [
-    #         (
-    #             "ConfigureScan_basic_CORR.json",
-    #             "Scan1_basic.json",
-    #             ["SKA001", "SKA036", "SKA063", "SKA100"],
-    #             [4, 1],
-    #         ),
-    #         (
-    #             "ConfigureScan_CORR_PSS_PST.json",
-    #             "Scan2_basic.json",
-    #             ["SKA036", "SKA063", "SKA001", "SKA100"],
-    #             [4, 1],
-    #         ),
-    #     ],
-    # )
-    # def test_Abort_Reset(
-    #     self: TestCbfSubarray,
-    #     test_proxies: pytest.fixture,
-    #     configure_scan_file: str,
-    #     scan_file: str,
-    #     receptors: list[str],
-    #     vcc_ids: list[int],
-    # ) -> None:
-    #     """
-    #     Test CbfSubarrays's Abort and ObsReset commands
-
-    #     :param proxies: proxies pytest fixture
-    #     :param configure_scan_file: JSON file for the configuration
-    #     :param scan_file: JSON file for the scan configuration
-    #     :param receptors: list of receptor ids
-    #     :param vcc_ids: list of vcc receptor ids
-    #     """
-    #     try:
-    #         wait_time_s = 1
-    #         sleep_time_s = 1
-
-    #         f = open(test_data_path + configure_scan_file)
-    #         json_string = f.read().replace("\n", "")
-    #         f.close()
-    #         configuration = json.loads(json_string)
-
-    #         sub_id = int(configuration["common"]["subarray_id"])
-
-    #         test_proxies.on()
-    #         time.sleep(sleep_time_s)
-
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
-    #         # -------------------- #
-    #         # abort from READY #
-    #         # -------------------- #
-    #         # add receptors
-    #         test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert sorted(
-    #             list(test_proxies.subarray[sub_id].receptors)
-    #         ) == sorted(receptors)
-    #         # configure scan
-    #         wait_time_configure = 5
-    #         test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.READY,
-    #             wait_time_configure,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.READY
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
-
-    #         # abort
-    #         test_proxies.subarray[sub_id].Abort()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.ABORTED,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.ABORTED
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
-
-    #         # ObsReset
-    #         test_proxies.subarray[sub_id].ObsReset()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-    #         assert sorted(
-    #             list(test_proxies.subarray[sub_id].receptors)
-    #         ) == sorted(receptors)
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.IDLE
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
-
-    #         # ------------------- #
-    #         # abort from SCANNING #
-    #         # ------------------- #
-    #         # add receptors
-    #         test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert sorted(
-    #             list(test_proxies.subarray[sub_id].receptors)
-    #         ) == sorted(receptors)
-    #         # configure scan
-    #         test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.READY,
-    #             wait_time_configure,
-    #             sleep_time_s,
-    #         )
-    #         # scan
-    #         f = open(test_data_path + scan_file)
-    #         json_string_scan = f.read().replace("\n", "")
-    #         test_proxies.subarray[sub_id].Scan(json_string_scan)
-    #         f.close()
-    #         scan_configuration = json.loads(json_string_scan)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.SCANNING,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-    #         assert (
-    #             test_proxies.subarray[sub_id].scanID
-    #             == scan_configuration["scan_id"]
-    #         )
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.SCANNING
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
-
-    #         # abort
-    #         test_proxies.subarray[sub_id].Abort()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.ABORTED,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.ABORTED
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
-
-    #         # ObsReset
-    #         test_proxies.subarray[sub_id].ObsReset()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-    #         assert test_proxies.subarray[sub_id].scanID == 0
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.IDLE
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
-
-    #         # Clean up
-    #         wait_time_s = 3
-    #         test_proxies.subarray[sub_id].RemoveAllReceptors()
-    #         test_proxies.wait_timeout_obs(
-    #             [
-    #                 test_proxies.vcc[i]
-    #                 for i in range(1, test_proxies.num_vcc + 1)
-    #             ],
-    #             ObsState.EMPTY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-
-    #         test_proxies.off()
-
-    #     except AssertionError as ae:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise ae
-    #     except Exception as e:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise e
-
-    # @pytest.mark.parametrize(
-    #     "configure_scan_file, \
-    #     scan_file, \
-    #     receptors, \
-    #     vcc_ids",
-    #     [
-    #         (
-    #             "ConfigureScan_basic_CORR.json",
-    #             "Scan1_basic.json",
-    #             ["SKA001", "SKA036", "SKA063", "SKA100"],
-    #             [4, 1],
-    #         ),
-    #         (
-    #             "ConfigureScan_CORR_PSS_PST.json",
-    #             "Scan2_basic.json",
-    #             ["SKA036", "SKA063", "SKA001", "SKA100"],
-    #             [4, 1],
-    #         ),
-    #     ],
-    # )
-    # def test_Abort_Restart(
-    #     self: TestCbfSubarray,
-    #     test_proxies: pytest.fixture,
-    #     configure_scan_file: str,
-    #     scan_file: str,
-    #     receptors: list[str],
-    #     vcc_ids: list[int],
-    # ) -> None:
-    #     """
-    #     Test CbfSubarrays's Abort and Restart commands
-
-    #     :param proxies: proxies pytest fixture
-    #     :param configure_scan_file: JSON file for the configuration
-    #     :param scan_file: JSON file for the scan configuration
-    #     :param receptors: list of receptor ids
-    #     :param vcc_ids: list of vcc receptor ids
-    #     """
-    #     try:
-    #         wait_time_s = 1
-    #         sleep_time_s = 1
-
-    #         f = open(test_data_path + configure_scan_file)
-    #         json_string = f.read().replace("\n", "")
-    #         f.close()
-    #         configuration = json.loads(json_string)
-
-    #         sub_id = int(configuration["common"]["subarray_id"])
-
-    #         test_proxies.on()
-    #         time.sleep(sleep_time_s)
-
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
-    #         # --------------- #
-    #         # abort from IDLE #
-    #         # --------------- #
-    #         # add receptors
-    #         test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
-    #         # abort
-    #         test_proxies.subarray[sub_id].Abort()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.ABORTED,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-
-    #         # At this point in the test, we only need to assert that the VCCs
-    #         # are aborted and not the FSPs, as the FSPs are not added to
-    #         # their respective group_proxy until ConfigureScan is executed.
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
-
-    #         # Restart: receptors should be empty
-    #         test_proxies.subarray[sub_id].Restart()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.EMPTY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-    #         assert len(test_proxies.subarray[sub_id].receptors) == 0
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.IDLE
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
-
-    #         # ---------------- #
-    #         # abort from READY #
-    #         # ---------------- #
-    #         # add receptors
-    #         test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         # configure scan
-    #         wait_time_configure = 5
-    #         test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.READY,
-    #             wait_time_configure,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.READY
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
-
-    #         # abort
-    #         test_proxies.subarray[sub_id].Abort()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.ABORTED,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.ABORTED
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
-
-    #         # Restart
-    #         test_proxies.subarray[sub_id].Restart()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.EMPTY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-    #         assert len(test_proxies.subarray[sub_id].receptors) == 0
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.IDLE
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
-
-    #         # ------------------- #
-    #         # abort from SCANNING #
-    #         # ------------------- #
-    #         # add receptors
-    #         test_proxies.subarray[sub_id].AddReceptors(receptors)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.IDLE,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         # configure scan
-    #         wait_time_configure = 5
-    #         test_proxies.subarray[sub_id].ConfigureScan(json_string)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.READY,
-    #             wait_time_configure,
-    #             sleep_time_s,
-    #         )
-    #         # scan
-    #         f = open(test_data_path + scan_file)
-    #         json_string_scan = f.read().replace("\n", "")
-    #         test_proxies.subarray[sub_id].Scan(json_string_scan)
-    #         f.close()
-    #         scan_configuration = json.loads(json_string_scan)
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.SCANNING,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-    #         assert (
-    #             test_proxies.subarray[sub_id].scanID
-    #             == scan_configuration["scan_id"]
-    #         )
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.SCANNING
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
-
-    #         # abort
-    #         test_proxies.subarray[sub_id].Abort()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.ABORTED,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.ABORTED
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.ABORTED
-
-    #         # Restart
-    #         wait_time_s = 3
-    #         test_proxies.subarray[sub_id].Restart()
-    #         test_proxies.wait_timeout_obs(
-    #             [test_proxies.subarray[sub_id]],
-    #             ObsState.EMPTY,
-    #             wait_time_s,
-    #             sleep_time_s,
-    #         )
-    #         assert len(test_proxies.subarray[sub_id].receptors) == 0
-    #         assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
-    #         for fsp in configuration["cbf"]["fsp"]:
-    #             fsp_id = int(fsp["fsp_id"])
-    #             assert (
-    #                 test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
-    #                     fsp_id
-    #                 ].obsState
-    #                 == ObsState.IDLE
-    #             )
-    #         for vcc_id in vcc_ids:
-    #             assert test_proxies.vcc[vcc_id].obsState == ObsState.IDLE
-
-    #         test_proxies.off()
-
-    #     except AssertionError as ae:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise ae
-    #     except Exception as e:
-    #         time.sleep(2)
-    #         test_proxies.clean_test_proxies()
-    #         time.sleep(2)
-    #         raise e
-
-    # # TODO: remove entirely?
-    # @pytest.mark.skip(
-    #     reason="OffCommand will not be invoked in this manner by CSP LMC Mid, \
-    #     rather a series of commands will be issued (Abort -> Restart/Reset)"
-    # )
-    # def test_Abort_from_Resourcing(self, test_proxies):
-    #     """
-    #     Test CbfSubarrays's Abort command from ObsState.RESOURCING.
-
-    #     :param test_proxies: proxies pytest fixture
-    #     """
-    #     try:
-    #         pass
-
     #     except AssertionError as ae:
     #         time.sleep(2)
     #         test_proxies.clean_test_proxies()
