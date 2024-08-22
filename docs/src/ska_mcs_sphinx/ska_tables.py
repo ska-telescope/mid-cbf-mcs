@@ -274,7 +274,7 @@ class CommandTable(Directive):
 
         colspec = []
         header = []
-        for i in range(cols = 5):
+        for i in range(5):
             colspec[i] = nodes.colspec(colwidth = 10)
             header[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
             header_row += header[i]
