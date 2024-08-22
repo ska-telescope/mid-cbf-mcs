@@ -103,6 +103,22 @@ def freq_band_dict():
     return band_info
 
 
+# For Band 1/2 the sample rate will be 3.96 Gsps (gigasample per second) +
+# 1800 x k. k=0 has a sample rate of 3,960,000,000, k=1 has a sample rate of
+# 3,960,001,800, etc.
+SAMPLE_RATE_BASE = 3960000000
+
+# Values from digitized BW
+COMMON_SAMPLE_RATE = 220200960
+# The VCC-OSPPFB oversampling factor:
+VCC_OVERSAMPLING_FACTOR = 10 / 9
+FS_BW = int(COMMON_SAMPLE_RATE / VCC_OVERSAMPLING_FACTOR)
+HALF_FS_BW = FS_BW // 2
+
+FINE_CHANNEL_WIDTH = 13440  # Hz
+FINE_CHANNELS_PER_FSP = 14880
+FINE_CHANNELS_PER_SDP_SPEAD_STREAM = 20  # 20 for AA0.5/1, 1 for AA2+
+
 # The VCC-OSPPFB oversampling factor:
 vcc_oversampling_factor = 10 / 9
 
