@@ -12,11 +12,11 @@
 
 import os
 
-from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
-    calculate_fs_info,
-    get_coarse_channels,
-    get_end_freqeuency,
-)
+# from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
+#     calculate_fs_info,
+#     get_coarse_channels,
+#     get_end_freqeuency,
+# )
 
 # Paths
 file_path = os.path.dirname(os.path.abspath(__file__))
