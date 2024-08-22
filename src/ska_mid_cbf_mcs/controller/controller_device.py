@@ -121,7 +121,8 @@ class CbfController(SKAController):
         label="Restrictive Validation of Supported Configurations",
         doc="Flag to indicate if a restrictive validation is requested for "
         "supported configurations, such as with Scan Configurations. "
-        "Defaults to True",
+        "Defaults to True.  Setting the flag to False can cause unexpected "
+        "behaviour with the system.",
     )
     def validateSupportedConfiguration(self: CbfController) -> bool:
         """
@@ -377,8 +378,11 @@ class CbfController(SKAController):
         self: CbfController, value: bool
     ) -> None:
         """
-        Sets the validateSupportedConfiguration flag of the device and the
-        component manager.
+        Setting this flag to false allows the user to bypass validation that
+        ensures the inputs are currently supported by the system.
+
+        The option to bypass validation is intended for testing purposes only.
+        Using unsupported configurations may result in unexpected system behaviour."
 
         A warning level log is created when the flag is set to False.
 
@@ -387,8 +391,8 @@ class CbfController(SKAController):
         if value is False:
             msg = (
                 "Setting validateSupportedConfiguration to False. "
-                "This prevent restrictive checking with Configurations in "
-                "MCS"
+                "Using unsupported configurations may result in "
+                "unexpected system behaviour."
             )
             self.logger.warning(msg)
 

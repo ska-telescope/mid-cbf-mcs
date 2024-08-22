@@ -139,27 +139,27 @@ def scan_configuration_supported_value(parameter: str) -> any:
         "function_modes": {FspModes.IDLE, FspModes.CORR},
         "subarray_id": [1],
         "fsp_ids": (1, 4),
-        "fsp_id": (1, 4),
-        "fsp_id_by_mode": {
-            FspModes.CORR: [1, 2, 3, 4],
-            FspModes.PST_BF: [5, 6, 7, 8],
-        },
         "band_5_tuning": False,
         "frequency_band": {"1", "2"},
         "frequency_band_offset_stream1": False,
         "frequency_band_offset_stream2": False,
         "rfi_flagging_mask": False,
-        "channel_width": {13440},
-        "channel_count": {"range": (1, 58982), "multiple": 20},
-        "output_host": {"increment": 20, "max_channel_per": 20},
-        "output_port": {"increment": 20, "max_channel_per": 20},
-        "output_link_map": {
-            "increment": 20,
-            "max_channel_per": 20,
-            "values": [1],
-        },
         "vlbi": False,
         "search_window": False,
+        "processing_region": {
+            FspModes.CORR: {
+                "fsp_id": [1, 2, 3, 4],
+                "channel_width": {13440},
+                "channel_count": {"range": (1, 58982), "multiple": 20},
+                "output_host": {"increment": 20, "max_channel_per": 20},
+                "output_port": {"increment": 20, "max_channel_per": 20},
+                "output_link_map": {
+                    "increment": 20,
+                    "max_channel_per": 20,
+                    "values": [1],
+                },
+            }
+        },
     }
 
     if parameter in supported_values:
@@ -187,7 +187,7 @@ where k (receptor dependent) is obtained from LMC via the CbfControl device.
 deltaF is fixed at 1800Hz
 
 2) calculate the input sample rate to the FSP, fs_sample_rate [Hz] as:
-fs_sample_rate = dish_sample_rate * vcc_oversampling_FACTOR_factor / total_num_FSs
+fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
 
 3) num_samples_per_frame is the parameter used as input
 to the HPS VCC low level device, currently defined in DsVccBand1And2.h

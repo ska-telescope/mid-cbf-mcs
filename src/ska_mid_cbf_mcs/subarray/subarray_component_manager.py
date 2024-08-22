@@ -875,7 +875,7 @@ class CbfSubarrayComponentManager(
             elif "midcbf" in full_configuration:
                 configuration = copy.deepcopy(full_configuration["midcbf"])
             else:
-                msg = "cbf/midcbf configuration not find in the given Scan Configuration"
+                msg = "cbf/midcbf configuration not found in the given Scan Configuration"
                 return (False, msg)
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
@@ -899,6 +899,7 @@ class CbfSubarrayComponentManager(
             full_configuration["cbf"] = copy.deepcopy(configuration)
         else:
             full_configuration["midcbf"] = copy.deepcopy(configuration)
+
         controller_validateSupportedConfiguration = (
             self._proxy_cbf_controller.read_attribute(
                 "validateSupportedConfiguration"

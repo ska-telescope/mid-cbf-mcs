@@ -28,12 +28,12 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 """
-SubarrayScanConfigurationValidator: Contains functions that validates a given Scan Configuration
+SubarrayScanConfigurationValidator: Contains functions that validates a given
+                                    Subarray Scan Configuration
 """
 
 
 class SubarrayScanConfigurationValidator:
-    # To get a list of Fuction Mode names from the FspModes Enum in global_enum.py
     # TODO: Remove once we remove the pre 4.0 validations.  Double check but
     # it shouldn't be needed with post 4.0
     possible_function_modes = [
@@ -43,19 +43,14 @@ class SubarrayScanConfigurationValidator:
         )
     ]
 
-    # Valid FSP IDs for a CPR
+    # Valid FSP IDs
     (
         supported_fsp_id_lower,
         supported_fsp_id_upper,
-    ) = scan_configuration_supported_value("fsp_id")
-
-    # Valid FSP IDs for specific FSP Modes
-    supported_fsp_id_per_mode = scan_configuration_supported_value(
-        "fsp_id_by_mode"
-    )
+    ) = scan_configuration_supported_value("fsp_ids")
 
     # Matches the value given by Scan Configuration for function mode (post v4.0)
-    # to the enum value of the function mode in MCS
+    # to the enum value of the FspMode in global_enum.py
     function_mode_value_enum_match = {
         "idle": "IDLE",
         "correlation": "CORR",
@@ -117,8 +112,8 @@ class SubarrayScanConfigurationValidator:
         try:
             full_configuration = json.loads(self._scan_configuration)
         except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-            self.logger.info(msg)
+            msg = "Scan Configuration object is not a valid JSON object. Aborting configuration."
+            self.logger.error(msg)
             return (False, msg)
 
         scan_configuration_version = (
@@ -147,9 +142,13 @@ class SubarrayScanConfigurationValidator:
 
         # Invalid Version Case
         else:
-            msg = f"Error: The version defined in the Scan Configuration is not supported by MCS: version {scan_configuration_version}"
+            msg = (
+                "Error: The version defined in the Scan Configuration"
+                f"is not supported by MCS: version {scan_configuration_version}"
+            )
             result_code = False
 
+        self.logger.info(msg)
         return (result_code, msg)
 
     # NOTE Below: Refactored Functions From Pre 4.0 Validations
@@ -283,7 +282,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
             msg = "Validate FSP: Validation Complete"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
 
     def _validate_fsp_id_legacy(
@@ -304,7 +303,7 @@ class SubarrayScanConfigurationValidator:
         """
         if fsp_id in list(range(1, self._count_fsp + 1)):
             msg = f"fsp_id {fsp_id} is valid"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
         else:
             msg = (
@@ -385,7 +384,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate CBF Configuration: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_corr_function_mode_legacy(
@@ -423,7 +422,7 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        result_code, msg = self._valdiate_integration_time(fsp)
+        result_code, msg = self._validate_integration_time(fsp)
         if result_code is False:
             return (False, msg)
 
@@ -496,7 +495,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
         msg = "FSP CORR Validation Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_pss_function_mode_legacy(
@@ -519,7 +518,7 @@ class SubarrayScanConfigurationValidator:
                 "'searchWindowID' must be one of [1, 2] "
                 f"(received {fsp['search_window_id']})."
             )
-            self.logger.info(msg)
+            self.logger.error(msg)
             return (False, msg)
 
         if len(fsp["search_beam"]) <= 192:
@@ -530,7 +529,7 @@ class SubarrayScanConfigurationValidator:
                         "'searchBeamID' must be within range 1-1500 "
                         f"(received {searchBeam['search_beam_id']})."
                     )
-                    self.logger.info(msg)
+                    self.logger.error(msg)
                     return (False, msg)
 
                 for (
@@ -554,7 +553,7 @@ class SubarrayScanConfigurationValidator:
                                     f"'searchBeamID' {search_beam_ID} is already "
                                     f"being used in another subarray by FSP {fsp_id}"
                                 )
-                                self.logger.info(msg)
+                                self.logger.error(msg)
                                 return (False, msg)
 
                 # Validate dishes
@@ -575,13 +574,13 @@ class SubarrayScanConfigurationValidator:
                 # If searchBeam["enable_output"] is not a bool
                 if not isinstance(searchBeam["enable_output"], bool):
                     msg = "'outputEnabled' is not a valid boolean"
-                    self.logger.info(msg)
+                    self.logger.error(msg)
                     return (False, msg)
 
                 # If searchBeam["averaging_interval"] is not a int
                 if not isinstance(searchBeam["averaging_interval"], int):
                     msg = "'averagingInterval' is not a valid integer"
-                    self.logger.info(msg)
+                    self.logger.error(msg)
                     return (False, msg)
 
                 # If searchBeam["search_beam_destination_address"] is not a valid ip
@@ -589,16 +588,16 @@ class SubarrayScanConfigurationValidator:
                     searchBeam["search_beam_destination_address"]
                 ):
                     msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                    self.logger.info(msg)
+                    self.logger.error(msg)
                     return (False, msg)
 
         else:
             msg = "More than 192 SearchBeams defined in PSS-BF config"
-            self.logger.info(msg)
+            self.logger.error(msg)
             return (False, msg)
 
         msg = "FSP PSS Validation Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_pst_function_mode_legacy(
@@ -671,7 +670,7 @@ class SubarrayScanConfigurationValidator:
                     return (False, msg)
 
         msg = "FSP PST Validation Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_search_window_legacy(
@@ -698,11 +697,11 @@ class SubarrayScanConfigurationValidator:
                 self.logger.error(msg)
                 return (False, msg)
             msg = "Validate Search Window: Complete"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
 
     def _validate_max_20_channel_to_same_port_per_host_legacy(
@@ -744,7 +743,7 @@ class SubarrayScanConfigurationValidator:
                             "Validate At most 20 channels"
                             "per port per host: complete"
                         )
-                        self.logger.info(msg)
+                        self.logger.debug(msg)
                         return (True, msg)
 
     # NOTE Above: Refactored Functions From Pre 4.0 Validations
@@ -785,7 +784,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate FSP in Correct Mode: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     # Was refactored out from pre 4.0 validations check for PST and PSS,
@@ -833,10 +832,10 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate Output Link Map: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
-    def _valdiate_integration_time(
+    def _validate_integration_time(
         self: SubarrayScanConfigurationValidator, fsp: dict
     ) -> tuple[bool, str]:
         """
@@ -860,8 +859,8 @@ class SubarrayScanConfigurationValidator:
                 const.MIN_INT_TIME,
             )
         ):
-            msg = "Balidate Integration Time: Complete"
-            self.logger.info(msg)
+            msg = "Validate Integration Time: Complete"
+            self.logger.debug(msg)
             return (True, msg)
         else:
             msg = (
@@ -905,17 +904,17 @@ class SubarrayScanConfigurationValidator:
                 "'receptors' not specified for Fsp CORR config."
                 "Per ICD all receptors allocated to subarray are used"
             )
-            self.logger.info(msg)
+            self.logger.debug(msg)
 
         msg = "Validate Receptor: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_vcc(
         self: SubarrayScanConfigurationValidator,
     ) -> tuple[bool, str]:
         """
-        Validats that the assigned VCC proxies found in the Subarray Devices are on
+        Validates that the assigned VCC proxies found in the Subarray Devices are on
 
         :return: tuple with:
                     bool to indicate if the VCC are on or not
@@ -927,7 +926,7 @@ class SubarrayScanConfigurationValidator:
                 msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
         msg = "Validate VCC: Compelte"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_subscription_point(
@@ -974,7 +973,7 @@ class SubarrayScanConfigurationValidator:
                 subscribed.append((subscription_point))
 
         msg = f"Finish Validating Subscription Points for: {subscribed}"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_band_5_tuning(
@@ -1045,7 +1044,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
         msg = "Band 5 Tuning Validation: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validates_frequency_band_offset_value(
@@ -1082,7 +1081,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
         else:
             msg = "Frequency Band Offset Value Validation: Complete"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
 
     # NOTE Above: Refactored Functions From Pre 4.0 Validations used in v4.0
@@ -1173,7 +1172,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate MidCBF: Validation Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_processing_regions(
@@ -1216,7 +1215,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
             result_code, msg = self._validate_processing_region_channel_values(
-                processing_region
+                processing_region, FspModes(function_mode_value)
             )
             if result_code is False:
                 return (False, msg)
@@ -1234,14 +1233,22 @@ class SubarrayScanConfigurationValidator:
 
             output_host = processing_region["output_host"]
             result_code, msg = self._validate_channels_maps(
-                output_host, "output_host", sdp_start_channel_id, channel_count
+                output_host,
+                "output_host",
+                sdp_start_channel_id,
+                channel_count,
+                FspModes(function_mode_value),
             )
             if result_code is False:
                 return (False, msg)
 
             output_port = processing_region["output_port"]
             result_code, msg = self._validate_channels_maps(
-                output_port, "output_port", sdp_start_channel_id, channel_count
+                output_port,
+                "output_port",
+                sdp_start_channel_id,
+                channel_count,
+                FspModes(function_mode_value),
             )
             if result_code is False:
                 return (False, msg)
@@ -1252,6 +1259,7 @@ class SubarrayScanConfigurationValidator:
                 "output_link_map",
                 sdp_start_channel_id,
                 channel_count,
+                FspModes(function_mode_value),
             )
             if result_code is False:
                 return (False, msg)
@@ -1265,11 +1273,16 @@ class SubarrayScanConfigurationValidator:
             if result_code is False:
                 return (False, msg)
 
+            supported_function_mode_fsp_ids = (
+                scan_configuration_supported_value("processing_region")
+            )[FspModes(function_mode_value)]["fsp_id"]
+
             for fsp_id_str in processing_region["fsp_ids"]:
                 fsp_id = int(fsp_id_str)
                 result_code, msg = self._validate_fsp_id(
                     fsp_id,
                     FspModes(function_mode_value),
+                    supported_function_mode_fsp_ids,
                     fsp_id_in_processing_region,
                 )
                 if result_code is False:
@@ -1311,7 +1324,7 @@ class SubarrayScanConfigurationValidator:
             # function_mode_value given
 
         msg = f"FSP Validation: Complete for {function_mode} function mode"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_corr_function_mode(
@@ -1333,7 +1346,7 @@ class SubarrayScanConfigurationValidator:
         if result_code is False:
             return (False, msg)
 
-        result_code, msg = self._valdiate_integration_time(processing_region)
+        result_code, msg = self._validate_integration_time(processing_region)
         if result_code is False:
             return (False, msg)
 
@@ -1344,7 +1357,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "FSP CORR Validation Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     # TODO: 5.0 Scan Configuration will change PST to be used as Processing Regiona
@@ -1388,7 +1401,9 @@ class SubarrayScanConfigurationValidator:
         return (True, msg)
 
     def _validate_processing_region_channel_values(
-        self: SubarrayScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator,
+        processing_region: dict,
+        fsp_mode: FspModes,
     ) -> tuple[bool, str]:
         """
         Validates that the channels values requested in a single processing region
@@ -1408,8 +1423,8 @@ class SubarrayScanConfigurationValidator:
         sdp_start_channel_id = int(processing_region["sdp_start_channel_id"])
 
         valid_channel_width = scan_configuration_supported_value(
-            "channel_width"
-        )
+            "processing_region"
+        )[fsp_mode]["channel_width"]
 
         # Edit the Error message once more valid channel width are added
         if channel_width not in valid_channel_width:
@@ -1419,12 +1434,12 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         valid_channel_count_values = scan_configuration_supported_value(
-            "channel_count"
-        )
+            "processing_region"
+        )[fsp_mode]["channel_count"]
 
         channel_count_multiple = valid_channel_count_values["multiple"]
         if channel_count % channel_count_multiple != 0:
-            msg = f"Invalid value for channel_count, not a multiple of 20: {channel_count}"
+            msg = f"Invalid value for channel_count, not a multiple of {channel_count_multiple}: {channel_count}"
             self.logger.error(msg)
             return (False, msg)
         channel_count_range = valid_channel_count_values["range"]
@@ -1442,7 +1457,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate Processing Region Channel Option Values: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_processing_region_frequency(
@@ -1480,7 +1495,7 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         msg = "Validate Processing Region Frequency Options Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_fsp_requirement_by_given_bandwidth(
@@ -1528,7 +1543,7 @@ class SubarrayScanConfigurationValidator:
             "Validate FSP requirement by Freqency Band: Complete:"
             f"FSP Required: {coarse_channels} FSP Given: {fsp_given}"
         )
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_processing_region_within_bandwidth(
@@ -1541,7 +1556,7 @@ class SubarrayScanConfigurationValidator:
         Validates that the Processing Region's frequency range falls
         within 0 Hz to 1,981,808,640 Hz
 
-        Gives a warning if the range given as calucalted from the start_freq,
+        Gives a warning if the range given as calculated from the start_freq,
         channel_width and channel_count is outside the range for
         Bands 1 & 2 (350MHz to 1760MHz)
 
@@ -1596,7 +1611,7 @@ class SubarrayScanConfigurationValidator:
             self.logger.warning(msg)
 
         msg = "Validate Processing Region Within Band: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_channels_maps(
@@ -1605,28 +1620,42 @@ class SubarrayScanConfigurationValidator:
         map_type: str,
         sdp_start_channel_id: int,
         channel_count: int,
+        fsp_mode: FspModes,
     ):
         """
-        Validates that the Channel Map pairs for Output Host, Output Port or Output Link Map
-        Depends on which Channel Map Pairs is passed with map_pairs
+        Validates the list of (channel id, value) pairs for Output Host,
+        Output Port or Output Link Maps
+
+        First check if the first Start Channel ID in the list matches the
+        requested SDP Start Channel ID
+
+        Then it branches off to specific validations for each map types, mainly
+        to check that it has been incremented correctly
 
         :param map_pairs:  A list of list of int, int tuple that contains the
                             channel and a value (port, host, etc.)
-        :param map_type: The name of the type of map  that was passed in wiht map_pairs
+        :param map_type: The name of the type of map  that was passed in with map_pairs
+        :param sdp_start_channel_id: The given sdp start channel id for given
+                            processing region
+        :param channel_count: The channel count given for the processing region
+        :param fsp_mode: The FSP Function Mode requested for the processing region
 
         :return: tuple with:
-                    bool to indicate if the channel map is valid or not
+                    bool to indicate if the list of is (channel id, value) pairs valid or not
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
         # for output_host, output_port, output_link_map
         # make sure only 20 channels are sent to a specific port
-        # AA 0.5 + AA 1.0: channel idea must be in increments of 20
+
+        valid_values_for_processing_region = (
+            scan_configuration_supported_value("processing_region")
+        )
 
         # channel_count = len(map_pairs*20) for ADR
-        channel_count_valid_values = scan_configuration_supported_value(
-            "channel_count"
-        )
+        channel_count_valid_values = valid_values_for_processing_region[
+            fsp_mode
+        ]["channel_count"]
         channel_count_multiple = channel_count_valid_values["multiple"]
         map_channel_count = len(map_pairs * channel_count_multiple)
         if map_channel_count > channel_count:
@@ -1648,9 +1677,10 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        valid_map_type_value = scan_configuration_supported_value(map_type)
+        valid_map_type_value = valid_values_for_processing_region[fsp_mode][
+            map_type
+        ]
         map_type_increment = valid_map_type_value["increment"]
-        prev = map_pairs[0][0] - map_type_increment
 
         # specific check for output_link_map. Remove if the restriction is changed
         if map_type == "output_link_map":
@@ -1661,20 +1691,45 @@ class SubarrayScanConfigurationValidator:
                 self.logger.error(msg)
                 return (False, msg)
 
-        # check that channels are in increment of 20
-        for channel, value in map_pairs:
-            if channel - prev != map_type_increment:
-                msg = (
-                    f"{map_type} channel map pair [{channel},{value}]:",
-                    f"channel must be in increments of 20 (Previous Channel: {prev})",
-                    "For AA 0.5 and AA 1.0",
-                )
-                self.logger.error(msg)
-                return (False, msg)
-            prev = channel
+        # check that channels are in increment for output_port
+        if map_type == "output_port":
+            prev = map_pairs[0][0] - map_type_increment
+            for channel, value in map_pairs:
+                if channel - prev != map_type_increment:
+                    msg = (
+                        f"{map_type} channel map pair [{channel},{value}]: "
+                        f"channel must be in increments of 20 (Previous Channel: {prev}) "
+                        "For AA 0.5 and AA 1.0"
+                    )
+                    self.logger.error(msg)
+                    return (False, msg)
+                prev = channel
+
+        # check that channels are multiple of map_type_increment for output_host
+        # and in ascending order
+        if map_type == "output_host":
+            prev = -1
+            for channel, value in map_pairs:
+                if channel % map_type_increment != 0:
+                    msg = (
+                        f"{map_type} channel map pair [{channel},{value}]:",
+                        "channel must be in multiples of 20",
+                        "For AA 0.5 and AA 1.0",
+                    )
+                    self.logger.error(msg)
+                    return (False, msg)
+                if channel <= prev:
+                    msg = (
+                        "Output Host Values must be in ascending order and cannot be duplicate"
+                        f"Current Value: {value} Previous Value: {prev}"
+                    )
+                    self.logger.error(msg)
+                    return (False, msg)
+
+                prev = channel
 
         msg = f"Validate Channel Maps for {map_type} : Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_max_20_channel_to_same_port_per_host(
@@ -1724,13 +1779,14 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
         msg = "20 Max Channel To Same Port Within a Host: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_fsp_id(
         self: SubarrayScanConfigurationValidator,
         fsp_id: int,
         fsp_mode: FspModes,
+        supported_function_mode_fsp_ids: list[int],
         fsp_id_in_processing_region: set[int],
     ) -> tuple[bool, str]:
         """
@@ -1740,7 +1796,9 @@ class SubarrayScanConfigurationValidator:
                         from the MidCBF Configuration
         :param fsp_mode: A FspModes Enum that indicates thee FSP Mode for the
                         given fsp_id
-        :param fsp_id_in_processing_regiond: a Hashset of intergers that
+        :param supported_function_mode_fsp_ids: A list of supported FSP ID
+                        for the given Function Mode
+        :param fsp_id_in_processing_regiond: a Hashset of integers that
                         keeps track of FSP IDs already seen in the subarray
 
         :return: tuple with:
@@ -1763,8 +1821,8 @@ class SubarrayScanConfigurationValidator:
         # NOTE: When we remove the restrictions of FSP to specific mode, we can remove
         # the validation below
         # check in global_enum.py for the supported fsp id per fsp mode dictionary
-        if fsp_id not in self.supported_fsp_id_per_mode[fsp_mode]:
-            msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {self.supported_fsp_id_per_mode[fsp_mode]}."
+        if fsp_id not in supported_function_mode_fsp_ids:
+            msg = f"AA 0.5 Requirment: {fsp_mode.name} Supports only FSP {supported_function_mode_fsp_ids}."
             self.logger.error(msg)
             return (False, msg)
 
@@ -1777,7 +1835,7 @@ class SubarrayScanConfigurationValidator:
         if fsp_id in list(range(1, self._count_fsp + 1)):
             fsp_id_in_processing_region.add(fsp_id)
             msg = f"fsp_id {fsp_id} is valid"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
         else:
             msg = (
@@ -1838,7 +1896,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
         msg = "Validate Common: Completed"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_midcbf_keys(
@@ -1957,7 +2015,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
         msg = "Validate CBF Configuration: Complete"
-        self.logger.info(msg)
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_search_window(
@@ -1998,7 +2056,7 @@ class SubarrayScanConfigurationValidator:
                 # return (True, msg)
         else:
             msg = "Validate Search Window: Search Window not in Configuration: Complete"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             return (True, msg)
 
     # NOTE Above: new validation used by v4.0

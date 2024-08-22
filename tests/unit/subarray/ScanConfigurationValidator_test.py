@@ -77,10 +77,7 @@ class TestScanConfigurationValidator:
         )
         result_code, msg = validator.validate_input()
         print(msg)
-        assert (
-            "The version defined in the Scan Configuration is not supported by MCS:"
-            in msg
-        )
+        assert "Error: The version defined in the Scan Configuration" in msg
         assert result_code is False
 
     @pytest.mark.parametrize(
@@ -193,7 +190,7 @@ class TestScanConfigurationValidator:
         assert result_code is False
 
     @pytest.mark.parametrize("fsp_ids", [[5, 6, 7, 8], [15, 19, 23, 27]])
-    def test_Invalid_FSP_IDs_CORR_ADR99(
+    def test_Invalid_FSP_IDs_CORR_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         fsp_ids: int,
@@ -257,7 +254,6 @@ class TestScanConfigurationValidator:
             )
         )
         result_code, msg = validator.validate_input()
-        print(msg)
         assert (
             f"FSP ID {fsp_id} already assigned to another Processing Region"
             in msg
@@ -274,7 +270,7 @@ class TestScanConfigurationValidator:
             ("frequency_band", "5b"),
         ],
     )
-    def test_Invalid_Common_Keys_ADR99(
+    def test_Invalid_Common_Keys_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         common_key: str,
@@ -308,7 +304,7 @@ class TestScanConfigurationValidator:
             ("rfi_flagging_mask", {}),
         ],
     )
-    def test_Invalid_MidCBF_Keys_ADR99(
+    def test_Invalid_MidCBF_Keys_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         midcbf_key: str,
@@ -339,7 +335,7 @@ class TestScanConfigurationValidator:
     @pytest.mark.parametrize(
         "start_freq_value", [0, 6719, 1981815360, 1281860161]
     )
-    def test_Invalid_start_freq_ADR99(
+    def test_Invalid_start_freq_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         start_freq_value: int,
@@ -372,7 +368,7 @@ class TestScanConfigurationValidator:
         "start_freq_value,channel_count_value",
         [(6720, 3000), (6721, 3000), (1281860160, 3000), (1281860159, 3000)],
     )
-    def test_Valid_start_freq_ADR99(
+    def test_Valid_start_freq_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         start_freq_value: int,
@@ -419,7 +415,7 @@ class TestScanConfigurationValidator:
         assert result_code is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
-    def test_Invalid_fsp_ids_amount_for_requested_bandwidth_ADR99(
+    def test_Invalid_fsp_ids_amount_for_requested_bandwidth_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         fsp_ids: list[int],
@@ -472,7 +468,7 @@ class TestScanConfigurationValidator:
             645120,
         ],
     )
-    def test_Invalid_channel_width_ADR99(
+    def test_Invalid_channel_width_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         channel_width: list[int],
@@ -503,7 +499,7 @@ class TestScanConfigurationValidator:
         assert result_code is False
 
     @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30, 58982, 59000])
-    def test_Invalid_channel_count_ADR99(
+    def test_Invalid_channel_count_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         channel_count: int,
@@ -533,7 +529,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert result_code is False
 
-    def test_Invalid_sdp_start_channel_id_ADR99(
+    def test_Invalid_sdp_start_channel_id_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
     ):
@@ -625,18 +621,6 @@ class TestScanConfigurationValidator:
         "output_host",
         [
             [
-                [60, "1.22.3.4"],
-                [40, "1.22.3.5"],
-                [20, "1.22.3.6"],
-                [0, "1.22.3.7"],
-            ],
-            [
-                [0, "1.22.3.4"],
-                [40, "1.22.3.5"],
-                [40, "1.22.3.6"],
-                [60, "1.22.3.7"],
-            ],
-            [
                 [20, "1.22.3.4"],
                 [21, "1.22.3.5"],
                 [22, "1.22.3.6"],
@@ -644,7 +628,7 @@ class TestScanConfigurationValidator:
             ],
         ],
     )
-    def test_Invalid_output_host_increment_ADR99(
+    def test_Invalid_output_host_non_multiple_20_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         output_host: list[list[int, str]],
@@ -671,9 +655,57 @@ class TestScanConfigurationValidator:
             )
         )
         result_code, msg = validator.validate_input()
-        expected_msg = "channel must be in increments of 20"
+        expected_msg = "channel must be in multiples of 20"
         print(msg)
         assert expected_msg in msg[1]
+        assert result_code is False
+
+    @pytest.mark.parametrize(
+        "output_host",
+        [
+            [
+                [0, "1.22.3.4"],
+                [40, "1.22.3.5"],
+                [40, "1.22.3.6"],
+                [60, "1.22.3.7"],
+            ],
+            [
+                [60, "1.22.3.4"],
+                [40, "1.22.3.5"],
+                [20, "1.22.3.6"],
+                [0, "1.22.3.7"],
+            ],
+        ],
+    )
+    def test_Invalid_output_host_post_v4(
+        self: TestScanConfigurationValidator,
+        subarray_component_manager: CbfSubarrayComponentManager,
+        output_host: list[list[int, str]],
+    ):
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["sdp_start_channel_id"] = output_host[0][0]
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["output_host"] = output_host
+        json_str = json.dumps(self.full_configuration)
+
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                json_str,
+                subarray_component_manager._count_fsp,
+                subarray_component_manager._proxies_fsp,
+                subarray_component_manager._proxies_assigned_vcc,
+                subarray_component_manager._proxies_fsp_pss_subarray_device,
+                subarray_component_manager._proxies_fsp_pst_subarray_device,
+                subarray_component_manager._dish_ids,
+                subarray_component_manager._subarray_id,
+                self.logger,
+            )
+        )
+        result_code, msg = validator.validate_input()
+        expected_msg = "Output Host Values must be in ascending order and cannot be duplicate"
+        assert expected_msg in msg
         assert result_code is False
 
     @pytest.mark.parametrize(
@@ -684,7 +716,7 @@ class TestScanConfigurationValidator:
             [[20, 10000], [21, 10001], [22, 1650], [42, 40000]],
         ],
     )
-    def test_Invalid_output_port_increment_ADR99(
+    def test_Invalid_output_port_increment_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
         output_port: list[list[int, int]],
@@ -692,9 +724,17 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["sdp_start_channel_id"] = output_port[0][0]
+
+        # This is to make sure that the first channel in the output host matches
+        # the sdp_start_channel_id
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["output_host"] = output_port
+        ]["output_host"] = [output_port[0]]
+
+        # set the output port values according to pytest
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["output_port"] = output_port
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -712,29 +752,28 @@ class TestScanConfigurationValidator:
         )
         result_code, msg = validator.validate_input()
         expected_msg = "channel must be in increments of 20"
-        print(msg)
-        assert expected_msg in msg[1]
+        assert expected_msg in msg
         assert result_code is False
 
-    def test_Valid_channel_map_increment_ADR99(
+    def test_Valid_channel_map_increment_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["sdp_start_channel_id"] = 1
+        ]["sdp_start_channel_id"] = 20
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["channel_count"] = 80
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["output_port"] = [[1, 10000], [21, 10001], [41, 1650], [61, 40000]]
+        ]["output_port"] = [[20, 10000], [40, 10001], [60, 1650], [80, 40000]]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["output_host"] = [[1, 10000], [21, 10001], [41, 1650], [61, 40000]]
+        ]["output_host"] = [[20, 10000], [60, 10001]]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
-        ]["output_link_map"] = [[1, 1]]
+        ]["output_link_map"] = [[20, 1]]
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -756,7 +795,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert result_code is True
 
-    def test_invalid_channel_map_count_to_single_host_ADR99(
+    def test_invalid_channel_map_count_to_single_host_post_v4(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
     ):
