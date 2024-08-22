@@ -29,10 +29,10 @@ CSP_INITSYSPARAM_VERSIONS = [CSP_INITSYSPARAM_VER1_0]
 
 
 supported_interfaces = {
-    "configurescan": CSP_CONFIGURESCAN_VERSIONS,
-    "delaymodel": CSP_DELAYMODEL_VERSIONS,
-    "scan": CSP_SCAN_VERSIONS,
-    "initsysparam": CSP_INITSYSPARAM_VERSIONS,
+    'configurescan': CSP_CONFIGURESCAN_VERSIONS,
+    'delaymodel': CSP_DELAYMODEL_VERSIONS,
+    'scan': CSP_SCAN_VERSIONS,
+    'initsysparam': CSP_INITSYSPARAM_VERSIONS,
 }
 
 

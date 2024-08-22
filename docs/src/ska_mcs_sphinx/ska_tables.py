@@ -42,7 +42,7 @@ controller_commands = [
             Initialize Dish ID to VCC ID mapping and k values
             See also :ref:`InitSysParam Sequence`
             """),   
-        "Supported Interface(s)": supported_interfaces["initsysparam"],
+        "Supported Interface(s)": supported_interfaces['initsysparam'],
     },
     { 
         "Command": "Standby",
@@ -107,7 +107,7 @@ subarray_commands = [
             Publish output links.
             See also :ref:`Configure Scan Sequence`
             """),   
-        "Supported Interface(s)": supported_interfaces["configurescan"],
+        "Supported Interface(s)": supported_interfaces['configurescan'],
     },
     { 
         "Command": "EndScan",
@@ -211,7 +211,7 @@ subarray_commands = [
             """
             Start scanning
             """),   
-        "Supported Interface(s)": supported_interfaces["scan"],
+        "Supported Interface(s)": supported_interfaces['scan'],
     },
 ]
 
@@ -225,16 +225,27 @@ sub_table_commands = [
             """
             Reads from the 'DelayModel' attribute from the CSP subarray leaf node
             """),   
-        "Supported Interface(s)": supported_interfaces["delaymodel"],
+        "Supported Interface(s)": supported_interfaces['delaymodel'],
     },
 ]
 
 
+
+table_data_mapping = {
+    'Controller': controller_commands,
+    'Subarray': subarray_commands,
+    'Subscriptions': sub_table_commands,
+}
+
+
+
 class CbfControllerTable(Directive):
+    required_arguments = 1
     has_content = True
 
     def run(self):
-
+        table_name = self.arguments[0]
+        table_data = table_data_mapping[table_name]
         table = nodes.table()
 
         tgroup = nodes.tgroup(cols = 5)
@@ -260,7 +271,7 @@ class CbfControllerTable(Directive):
 
         table_body = nodes.tbody()
 
-        for index, command in enumerate(controller_commands):
+        for index, command in enumerate(table_data):
             row_class = 'row-even' if index % 2 == 0 else 'row-odd'
             row = nodes.row("", classes=[row_class])
             row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))

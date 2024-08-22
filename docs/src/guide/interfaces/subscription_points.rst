@@ -16,4 +16,4 @@ publish-subscribe mechanism, published on the "DelayModel" attribute of the CSP 
     Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below table
 ..
 
-.. subscription-points-table::
+.. cbf-controller-table:: Subscriptions
