@@ -572,7 +572,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._assigned_vcc_proxies.update(vcc_proxies)
 
-        # subscribe to LRC results for VCC scan operation
+        # subscribe to LRC results during the VCC scan operation
         for vcc_proxy in vcc_proxies:
             self._subscribe_command_results(vcc_proxy)
 
