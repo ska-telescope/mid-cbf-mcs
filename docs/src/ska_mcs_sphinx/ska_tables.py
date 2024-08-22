@@ -220,12 +220,14 @@ sub_table_commands = [
     { 
         "Command": "Delay Model",
         "Parameters": "JSON str*",
-        "Return Type": "(ResultCode, str)",
+        "Return Type": "None",
         "Action": cleandoc(
             """
-            Reads from the 'DelayModel' attribute from the CSP subarray leaf node
+            Pass DISH ID as VCC ID integer to FSPs and VCCs
+            Update VCC Delay Model
+            Update FSP Delay Model
             """),   
-        "Supported Interface(s)": supported_interfaces['delaymodel'],
+        "Supported Interface(s)": supported_interfaces["delaymodel"],
     },
 ]
 
@@ -239,7 +241,7 @@ table_data_mapping = {
 
 
 
-class CbfControllerTable(Directive):
+class CommandTable(Directive):
     required_arguments = 1
     has_content = True
 
@@ -249,23 +251,34 @@ class CbfControllerTable(Directive):
         table = nodes.table()
 
         tgroup = nodes.tgroup(cols = 5)
-        colspec_1 = nodes.colspec(colwidth=10)
-        colspec_2 = nodes.colspec(colwidth=10)
-        colspec_3 = nodes.colspec(colwidth=10)
-        colspec_4 = nodes.colspec(colwidth=10)
-        colspec_5 = nodes.colspec(colwidth=10)
+
+        # colspec_1 = nodes.colspec(colwidth=10)
+        # colspec_2 = nodes.colspec(colwidth=10)
+        # colspec_3 = nodes.colspec(colwidth=10)
+        # colspec_4 = nodes.colspec(colwidth=10)
+        # colspec_5 = nodes.colspec(colwidth=10)
+
         header = nodes.thead()
         header_row = nodes.row()
-        header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
-        header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
-        header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
-        header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
-        header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
-        header_row  +=  (header_1)
-        header_row  +=  (header_2)
-        header_row  +=  (header_3)
-        header_row  +=  (header_4)
-        header_row  +=  (header_5)
+
+        # header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
+        # header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
+        # header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
+        # header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
+        # header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
+        # header_row  +=  (header_1)
+        # header_row  +=  (header_2)
+        # header_row  +=  (header_3)
+        # header_row  +=  (header_4)
+        # header_row  +=  (header_5)
+
+        colspec = []
+        header = []
+        for i in range(cols = 5):
+            colspec[i] = nodes.colspec(colwidth = 10)
+            header[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
+            header_row += header[i]
+            tgroup += colspec[i]
 
         header  +=  (header_row)
 
@@ -286,11 +299,11 @@ class CbfControllerTable(Directive):
             table_body.append(row)
 
         table  +=  (tgroup)
-        tgroup  +=  (colspec_1)
-        tgroup  +=  (colspec_2)
-        tgroup  +=  (colspec_3)
-        tgroup  +=  (colspec_4)
-        tgroup  +=  (colspec_5)
+        # tgroup  +=  (colspec_1)
+        # tgroup  +=  (colspec_2)
+        # tgroup  +=  (colspec_3)
+        # tgroup  +=  (colspec_4)
+        # tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
@@ -334,198 +347,4 @@ class CbfControllerTable(Directive):
             line = nodes.line(text=item)
             line_block.append(line)
         return line_block
-
-
-
-
-class CbfSubarrayTable(Directive):
-    has_content = True
-
-    def run(self):
-
-        table = nodes.table()
-
-        tgroup = nodes.tgroup(cols = 5)
-        colspec_1 = nodes.colspec(colwidth=10)
-        colspec_2 = nodes.colspec(colwidth=10)
-        colspec_3 = nodes.colspec(colwidth=10)
-        colspec_4 = nodes.colspec(colwidth=10)
-        colspec_5 = nodes.colspec(colwidth=10)
-        header = nodes.thead()
-        header_row = nodes.row()
-        header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
-        header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
-        header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
-        header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
-        header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
-        header_row  +=  (header_1)
-        header_row  +=  (header_2)
-        header_row  +=  (header_3)
-        header_row  +=  (header_4)
-        header_row  +=  (header_5)
-
-        header  +=  (header_row)
-
-        table_body = nodes.tbody()
-
-        for index, command in enumerate(subarray_commands):
-            row_class = 'row-even' if index % 2 == 0 else 'row-odd'
-            row = nodes.row("", classes=[row_class])
-            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
-            action_entry = nodes.entry('')
-            action_entry.append(self._parse_line_block(command['Action']))
-            row.append(action_entry)
-            supported_entry = nodes.entry('')
-            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
-            row.append(supported_entry)
-            table_body.append(row)
-
-        table  +=  (tgroup)
-        tgroup  +=  (colspec_1)
-        tgroup  +=  (colspec_2)
-        tgroup  +=  (colspec_3)
-        tgroup  +=  (colspec_4)
-        tgroup  +=  (colspec_5)
-        tgroup  +=  (header)
-        tgroup  +=  (table_body)
-
-
-        return [table]
     
-    def _parse_text(self, text_to_parse: str):
-        p_node = nodes.paragraph(text=text_to_parse,)
-        # Create a node.
-        node = nodes.section()
-        node.document = self.state.document
-        nested_parse_with_titles(self.state, p_node, node)
-        return node.children
-    
-    def _parse_paragraph(self, text_to_parse: str):
-        paragraph = nodes.paragraph()
-        paragraph.children = self._parse_text(text_to_parse)
-        return paragraph
-    
-    def _parse_line_block(self, text_to_parse: str):
-        lines = text_to_parse.split('\n')
-        line_block = nodes.line_block()
-        for line_entry in lines:
-            line = nodes.line()
-            parsed = self._parse_text(line_entry)
-            line.children = parsed[0].children
-            line_block.append(line)
-        return line_block
-
-    def _create_unordered_list(self, list_items: list[str]):
-        unordered_list = nodes.bullet_list()
-        for item in list_items:
-            list_item = nodes.list_item()
-            list_item.append(nodes.paragraph(text=item))
-            unordered_list.append(list_item)
-        return unordered_list
-    
-    def _create_line_block_from_list(self, list_items: list[str]):
-        line_block = nodes.line_block()
-        for item in list_items:
-            line = nodes.line(text=item)
-            line_block.append(line)
-        return line_block
-
-
-class SubscriptionPointsTable(Directive):
-    has_content = True
-
-    def run(self):
-
-        table = nodes.table()
-
-        tgroup = nodes.tgroup(cols = 5)
-        colspec_1 = nodes.colspec(colwidth=10)
-        colspec_2 = nodes.colspec(colwidth=10)
-        colspec_3 = nodes.colspec(colwidth=10)
-        colspec_4 = nodes.colspec(colwidth=10)
-        colspec_5 = nodes.colspec(colwidth=10)
-        header = nodes.thead()
-        header_row = nodes.row()
-        header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
-        header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
-        header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
-        header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
-        header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
-        header_row  +=  (header_1)
-        header_row  +=  (header_2)
-        header_row  +=  (header_3)
-        header_row  +=  (header_4)
-        header_row  +=  (header_5)
-
-        header  +=  (header_row)
-
-        table_body = nodes.tbody()
-
-        for index, command in enumerate(sub_table_commands):
-            row_class = 'row-even' if index % 2 == 0 else 'row-odd'
-            row = nodes.row("", classes=[row_class])
-            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
-            action_entry = nodes.entry('')
-            action_entry.append(self._parse_line_block(command['Action']))
-            row.append(action_entry)
-            supported_entry = nodes.entry('')
-            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
-            row.append(supported_entry)
-            table_body.append(row)
-
-        table  +=  (tgroup)
-        tgroup  +=  (colspec_1)
-        tgroup  +=  (colspec_2)
-        tgroup  +=  (colspec_3)
-        tgroup  +=  (colspec_4)
-        tgroup  +=  (colspec_5)
-        tgroup  +=  (header)
-        tgroup  +=  (table_body)
-
-
-        return [table]
-    
-    def _parse_text(self, text_to_parse: str):
-        p_node = nodes.paragraph(text=text_to_parse,)
-        # Create a node.
-        node = nodes.section()
-        node.document = self.state.document
-        nested_parse_with_titles(self.state, p_node, node)
-        return node.children
-    
-    def _parse_paragraph(self, text_to_parse: str):
-        paragraph = nodes.paragraph()
-        paragraph.children = self._parse_text(text_to_parse)
-        return paragraph
-    
-    def _parse_line_block(self, text_to_parse: str):
-        lines = text_to_parse.split('\n')
-        line_block = nodes.line_block()
-        for line_entry in lines:
-            line = nodes.line()
-            parsed = self._parse_text(line_entry)
-            line.children = parsed[0].children
-            line_block.append(line)
-        return line_block
-
-    def _create_unordered_list(self, list_items: list[str]):
-        unordered_list = nodes.bullet_list()
-        for item in list_items:
-            list_item = nodes.list_item()
-            list_item.append(nodes.paragraph(text=item))
-            unordered_list.append(list_item)
-        return unordered_list
-    
-    def _create_line_block_from_list(self, list_items: list[str]):
-        line_block = nodes.line_block()
-        for item in list_items:
-            line = nodes.line(text=item)
-            line_block.append(line)
-        return line_block
-
-
-
