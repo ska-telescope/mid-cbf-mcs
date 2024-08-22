@@ -28,7 +28,7 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Tango Commands
 ------------------------------
 
-.. cbf-controller-table:: Controller
+.. generate-command-table:: Controller
 
 
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
@@ -36,7 +36,7 @@ CbfController Tango Commands
 CbfSubarray Tango Commands
 ----------------------------
 
-.. cbf-controller-table:: Subarray
+.. generate-command-table:: Subarray
 
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
