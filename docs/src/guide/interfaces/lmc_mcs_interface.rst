@@ -51,8 +51,11 @@ CbfSubarray Tango Commands
 |                      |               |                    | | No action on hardware                         |
 |                      |               |                    | | See also :ref:`Abort Sequence`                |
 +----------------------+---------------+--------------------+-------------------------------------------------+
-| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray             |
-|                      |               |                    | | Turn subarray to ObsState = IDLE if no        |
+| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray by          |
+|                      |               |                    | | appending receptors without duplicates.       |
+|                      |               |                    | | (E.g., if you have receptors 1,2,3 and you:   |
+|                      |               |                    | | add 1,2, then add 2,3 -> gives 1,2,3)         |
+|                      |               |                    | | Turns subarray to ObsState = IDLE if no       |
 |                      |               |                    | | receptor was previously assigned              |
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change observing state to READY               |
