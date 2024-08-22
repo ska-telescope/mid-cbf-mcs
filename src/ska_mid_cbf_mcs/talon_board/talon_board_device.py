@@ -832,19 +832,6 @@ class TalonBoard(CbfDevice):
     # Initialization
     # --------------
 
-    def init_command_objects(self: TalonBoard) -> None:
-        """
-        Sets up the command objects
-        """
-        super(CbfDevice, self).init_command_objects()
-
-        self.register_command_object(
-            "Off",
-            self.OffCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
     def create_component_manager(
         self: TalonBoard,
     ) -> TalonBoardComponentManager:

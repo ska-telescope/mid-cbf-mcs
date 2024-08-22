@@ -771,7 +771,15 @@ class ControllerComponentManager(CbfComponentManager):
                 [self._fs_slim_fqdn, self._vis_slim_fqdn]
             ):
                 self._proxies[fqdn].simulationMode = self.simulation_mode
-                self._proxies[fqdn].On()
+                [[result_code], [command_id]] = self._proxies[fqdn].On()
+                # Guard incase LRC was rejected.
+                if result_code == ResultCode.REJECTED:
+                    message = f"Nested LRC Slim.On() to {fqdn} rejected"
+                    self.logger.error(message)
+                    success = False
+                    continue
+                with self._results_lock:
+                    self._blocking_commands.add(command_id)
 
                 with open(slim_config_paths[i]) as f:
                     slim_config = f.read()
@@ -781,7 +789,7 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC Slim.Configure() to {self._proxies[fqdn]} rejected"
+                    message = f"Nested LRC Slim.Configure() to {fqdn} rejected"
                     self.logger.error(message)
                     success = False
                     continue

@@ -120,9 +120,11 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         # If PDU1 and PDU2 match, use same proxy
         if self._pdus[0] == self._pdus[1]:
+            self.logger.info("LRU is using a single PDU")
             self._proxy_power_switch2 = self._proxy_power_switch1
             # If outlet1 and outlet2 match then use the same PowerState and set using_single_outlet flag
             if self._pdu_outlets[0] == self._pdu_outlets[1]:
+                self.logger.info("LRU is using a single PDU outlet")
                 self._using_single_outlet = True
         else:
             self._proxy_power_switch2 = self._init_power_switch(self._pdus[1])
@@ -170,7 +172,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def _unsubscribe_to_subdevices(self: TalonLRUComponentManager) -> None:
+    def _unsubscribe_from_subdevices(self: TalonLRUComponentManager) -> None:
         """
         Unsubscribe to command results of the subdevices (powerswitches).
         """
@@ -194,7 +196,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             "Entering TalonLRUComponentManager.stop_communicating"
         )
 
-        self._unsubscribe_to_subdevices()
+        self._unsubscribe_from_subdevices()
         self._blocking_commands = set()
 
         super()._stop_communicating()

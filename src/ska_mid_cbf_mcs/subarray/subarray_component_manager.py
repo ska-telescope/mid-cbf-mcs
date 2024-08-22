@@ -830,7 +830,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        release_success = self._release_vcc_resources(dish_ids=list(self.dish_ids))
+        release_success = self._release_vcc_resources(
+            dish_ids=list(self.dish_ids)
+        )
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
@@ -2156,7 +2158,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._update_component_state(configured=False)
 
         # remove all assigned VCCs to return to EMPTY
-        release_success = self._release_vcc_resources(dish_ids=list(self.dish_ids))
+        release_success = self._release_vcc_resources(
+            dish_ids=list(self.dish_ids)
+        )
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
