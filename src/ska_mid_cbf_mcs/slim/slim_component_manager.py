@@ -88,22 +88,12 @@ class SlimComponentManager(CbfComponentManager):
                 dp.adminMode = AdminMode.ONLINE
                 self._subscribe_command_results(dp)
                 self._dp_links.append(dp)
-            except AttributeError as ae:
-                # Thrown if the device exists in the db but the executable is not running.
+            except tango.DevFailed, AttributeError as err:
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 self.logger.error(
-                    f"Attribute error {ae}. Ensure SlimLink devices are running."
-                )
-                return
-            except tango.DevFailed as df:
-                # Thrown if the device doesn't exist in the db.
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-                self.logger.error(
-                    f"Failed to set AdminMode of {fqdn} to ONLINE: {df.args[0].desc}"
+                    f"Failed to initialize {fqdn}: {err.args[0].desc}"
                 )
                 return
         self.logger.info(
