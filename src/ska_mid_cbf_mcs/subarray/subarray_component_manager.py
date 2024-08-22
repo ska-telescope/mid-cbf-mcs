@@ -360,7 +360,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 dish_id
             ]
 
-        # we lock the mutex, forward the configuration, then unlock it
+        # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             results_fsp = self._issue_group_command(
                 command_name="UpdateDelayModel",
