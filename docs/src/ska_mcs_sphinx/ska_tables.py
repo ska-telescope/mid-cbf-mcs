@@ -272,13 +272,13 @@ class CommandTable(Directive):
         # header_row  +=  (header_4)
         # header_row  +=  (header_5)
 
-        colspec = []
-        header = []
+        colspec_list = []
+        header_list = []
         for i in range(5):
-            colspec[i] = nodes.colspec(colwidth = 10)
-            header[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
+            colspec_list[i] = nodes.colspec(colwidth = 10)
+            header_list[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
             header_row += header[i]
-            tgroup += colspec[i]
+            tgroup += colspec_list[i]
 
         header  +=  (header_row)
 
