@@ -252,33 +252,33 @@ class CommandTable(Directive):
 
         tgroup = nodes.tgroup(cols = 5)
 
-        # colspec_1 = nodes.colspec(colwidth=10)
-        # colspec_2 = nodes.colspec(colwidth=10)
-        # colspec_3 = nodes.colspec(colwidth=10)
-        # colspec_4 = nodes.colspec(colwidth=10)
-        # colspec_5 = nodes.colspec(colwidth=10)
+        colspec_1 = nodes.colspec(colwidth=10)
+        colspec_2 = nodes.colspec(colwidth=10)
+        colspec_3 = nodes.colspec(colwidth=10)
+        colspec_4 = nodes.colspec(colwidth=10)
+        colspec_5 = nodes.colspec(colwidth=10)
 
         header = nodes.thead()
         header_row = nodes.row()
 
-        # header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
-        # header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
-        # header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
-        # header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
-        # header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
-        # header_row  +=  (header_1)
-        # header_row  +=  (header_2)
-        # header_row  +=  (header_3)
-        # header_row  +=  (header_4)
-        # header_row  +=  (header_5)
+        header_1 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[0]))
+        header_2 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[1]))
+        header_3 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[2]))
+        header_4 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[3]))
+        header_5 = nodes.entry('', nodes.paragraph(text=HEADER_LIST[4]))
+        header_row  +=  (header_1)
+        header_row  +=  (header_2)
+        header_row  +=  (header_3)
+        header_row  +=  (header_4)
+        header_row  +=  (header_5)
 
-        colspec_list = []
-        header_list = []
-        for i in range(5):
-            colspec_list[i] = nodes.colspec(colwidth = 10)
-            header_list[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
-            header_row += header[i]
-            tgroup += colspec_list[i]
+        # colspec_list = []
+        # header_list = []
+        # for i in range(5):
+        #     colspec_list[i] = nodes.colspec(colwidth = 10)
+        #     header_list[i] = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
+        #     header_row += header[i]
+        #     tgroup += colspec_list[i]
 
         header  +=  (header_row)
 
@@ -299,11 +299,11 @@ class CommandTable(Directive):
             table_body.append(row)
 
         table  +=  (tgroup)
-        # tgroup  +=  (colspec_1)
-        # tgroup  +=  (colspec_2)
-        # tgroup  +=  (colspec_3)
-        # tgroup  +=  (colspec_4)
-        # tgroup  +=  (colspec_5)
+        tgroup  +=  (colspec_1)
+        tgroup  +=  (colspec_2)
+        tgroup  +=  (colspec_3)
+        tgroup  +=  (colspec_4)
+        tgroup  +=  (colspec_5)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
 
