@@ -107,6 +107,7 @@ PYTHON_LINT_TARGET = src/ tests/
 # build, 'make push' docker push procedure, etc. The other Make targets
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
+include .make/base.mk
 include .make/release.mk
 include .make/k8s.mk
 include .make/make.mk
