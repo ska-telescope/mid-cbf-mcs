@@ -219,12 +219,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxy: DeviceProxy
         """
         dev_name = proxy.dev_name()
-        self.logger.debug(f"Subscribing to {dev_name} LRC results")
+        
         if dev_name in self._event_ids:
             self.logger.debug(
                 f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
             )
             return
+        self.logger.debug(f"Subscribing to {dev_name} LRC results.")
 
         self._event_ids.update(
             {
