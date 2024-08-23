@@ -192,9 +192,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
         self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
 
-        self.logger.info(f"Active VCC FQDNs: {self._fqdn_vcc}")
-        self.logger.info(f"Active FSP FQDNs: {self._fqdn_fsp}")
-        self.logger.info(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+        self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
+        self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
+        self.logger.debug(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
 
         return True
 
