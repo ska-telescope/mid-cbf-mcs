@@ -1680,7 +1680,6 @@ class SubarrayScanConfigurationValidator:
         valid_map_type_value = valid_values_for_processing_region[fsp_mode][
             map_type
         ]
-        map_type_increment = valid_map_type_value["increment"]
 
         # specific check for output_link_map. Remove if the restriction is changed
         if map_type == "output_link_map":
@@ -1693,9 +1692,10 @@ class SubarrayScanConfigurationValidator:
 
         # check that channels are in increment for output_port
         if map_type == "output_port":
-            prev = map_pairs[0][0] - map_type_increment
+            output_port_increment = valid_map_type_value["increment"]
+            prev = map_pairs[0][0] - output_port_increment
             for channel, value in map_pairs:
-                if channel - prev != map_type_increment:
+                if channel - prev != output_port_increment:
                     msg = (
                         f"{map_type} channel map pair [{channel},{value}]: "
                         f"channel must be in increments of 20 (Previous Channel: {prev}) "
@@ -1708,9 +1708,10 @@ class SubarrayScanConfigurationValidator:
         # check that channels are multiple of map_type_increment for output_host
         # and in ascending order
         if map_type == "output_host":
+            output_host_mulitple = valid_map_type_value["multiple"]
             prev = -1
             for channel, value in map_pairs:
-                if channel % map_type_increment != 0:
+                if channel % output_host_mulitple != 0:
                     msg = (
                         f"{map_type} channel map pair [{channel},{value}]:",
                         "channel must be in multiples of 20",
