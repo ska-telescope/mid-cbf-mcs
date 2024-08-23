@@ -93,7 +93,7 @@ class SlimComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 self.logger.error(
-                    f"Failed to initialize {fqdn}: {err.args[0].desc}"
+                    f"Failed to initialize {fqdn}: {err}"
                 )
                 return
         self.logger.info(
@@ -509,7 +509,7 @@ class SlimComponentManager(CbfComponentManager):
                 CommunicationStatus.NOT_ESTABLISHED
             )
             self.logger.error(
-                f"Failed to initialize SLIM links: {df.args[0].desc}"
+                f"Failed to initialize SLIM links: {df}"
             )
             raise df
         except IndexError as ie:
@@ -620,7 +620,7 @@ class SlimComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    df.args[0].desc,
+                    df,
                 ),
             )
             return
@@ -708,7 +708,7 @@ class SlimComponentManager(CbfComponentManager):
                 CommunicationStatus.NOT_ESTABLISHED
             )
             self.logger.error(
-                f"Failed to disconnect SLIM links: {df.args[0].desc}"
+                f"Failed to disconnect SLIM links: {df}"
             )
             raise df
 
@@ -768,7 +768,7 @@ class SlimComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    df.args[0].desc,
+                    df,
                 ),
             )
             return
