@@ -92,9 +92,7 @@ class SlimComponentManager(CbfComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self.logger.error(
-                    f"Failed to initialize {fqdn}: {err}"
-                )
+                self.logger.error(f"Failed to initialize {fqdn}: {err}")
                 return
         self.logger.info(
             f"event_ids after subscribing = {len(self._event_ids)}"
@@ -508,9 +506,7 @@ class SlimComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self.logger.error(
-                f"Failed to initialize SLIM links: {df}"
-            )
+            self.logger.error(f"Failed to initialize SLIM links: {df}")
             raise df
         except IndexError as ie:
             msg = "Not enough Links defined in device properties"
@@ -707,9 +703,7 @@ class SlimComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self.logger.error(
-                f"Failed to disconnect SLIM links: {df}"
-            )
+            self.logger.error(f"Failed to disconnect SLIM links: {df}")
             raise df
 
         self.logger.info("Successfully disconnected SLIM links")

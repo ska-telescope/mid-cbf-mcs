@@ -299,10 +299,10 @@ class FspComponentManager(CbfComponentManager):
 
     def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """
-        Turn on FSP function mode subarray device for specified subarray
+        Set FSP function mode subarray device to AdminMode.ONLINE
 
         :param subarray_id: ID of subarray for which to power on function mode proxy
-        :return: False if unsuccessful in powering on FSP function mode subarray proxy,
+        :return: False if unsuccessful in setting online the FSP function mode subarray proxy,
             True otherwise
         """
         match self.function_mode:
@@ -312,8 +312,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                # TODO: alternative to hardcoded FQDN?
-                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     # set FSP devices simulationMode attributes
@@ -449,10 +448,10 @@ class FspComponentManager(CbfComponentManager):
 
     def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
         """
-        Turn off FSP function mode subarray device for specified subarray
+        Set FSP function mode subarray device to AdminMode.OFFLINE
 
         :param subarray_id: ID of subarray for which to power off function mode proxy
-        :return: False if unsuccessful in powering off FSP function mode subarray proxy,
+        :return: False if unsuccessful in setting offline the FSP function mode subarray proxy,
             True otherwise
         """
         match self.function_mode:
@@ -462,7 +461,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
