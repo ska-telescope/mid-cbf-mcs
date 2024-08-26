@@ -285,7 +285,13 @@ class CbfObsComponentManager(CbfComponentManager):
         self.logger.debug("Checking if Abort is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state in [ObsState.EMPTY, ObsState.FAULT]:
+        if self.obs_state in [
+            ObsState.EMPTY,
+            ObsState.FAULT,
+            ObsState.ABORTED,
+            ObsState.ABORTING,
+            ObsState.RESTARTING,
+        ]:
             self.logger.warning(
                 f"Abort not allowed in ObsState {self.obs_state}"
             )

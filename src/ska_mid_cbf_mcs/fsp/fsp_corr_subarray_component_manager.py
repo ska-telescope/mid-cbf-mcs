@@ -263,19 +263,18 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         # issue ConfigureScan to HPS FSP Corr controller
         if not self.simulation_mode:
+            hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:
                 self._proxy_hps_fsp_corr_controller.set_timeout_millis(
                     HPS_FSP_CORR_TIMEOUT
-                )
-
-                hps_fsp_configuration = self._build_hps_fsp_config(
-                    configuration
                 )
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(
+                    f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
+                )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
