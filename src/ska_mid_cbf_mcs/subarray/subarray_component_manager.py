@@ -508,10 +508,6 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
-
-                (valid, msg) = validate_interface(value)
-                if not valid:
-                    return (ResultCode.FAILED, msg)
                 delay_model_json = json.loads(value)
 
                 # Validate delay_model_json against the telescope model
@@ -1398,10 +1394,6 @@ class CbfSubarrayComponentManager(
         """
         # deconfigure to reset assigned FSPs and unsubscribe to events.
         self._deconfigure()
-
-        (valid, msg) = validate_interface(argin)
-        if not valid:
-            return (ResultCode.FAILED, msg)
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
@@ -1971,10 +1963,7 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        (valid, msg) = validate_interface(json.dumps(argin))
-        if not valid:
-            return (ResultCode.FAILED, msg)
+        
         # Validate scan_json against the telescope model
         try:
             telmodel_validate(

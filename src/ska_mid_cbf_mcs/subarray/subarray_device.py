@@ -30,6 +30,7 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -677,6 +678,11 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            (valid, msg) = validate_interface(argin, 'configure')
+            if not valid:
+                return (ResultCode.FAILED, msg)
+            
             component_manager = self.target
 
             full_configuration = json.loads(argin)
@@ -965,6 +971,9 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            (valid, msg) = validate_interface(json.dumps(argin), 'scan')
+            if not valid:
+                return (ResultCode.FAILED, msg)
             component_manager = self.target
             (result_code, msg) = component_manager.scan(argin)
             return (result_code, msg)

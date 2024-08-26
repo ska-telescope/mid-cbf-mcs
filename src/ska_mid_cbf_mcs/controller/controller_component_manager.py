@@ -31,7 +31,6 @@ from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -1099,10 +1098,6 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
         self._logger.debug(f"Received sys params {params}")
-
-        (valid, msg) = validate_interface(params)
-        if not valid:
-            return (ResultCode.FAILED, msg)
 
         def raise_on_duplicate_keys(pairs):
             d = {}

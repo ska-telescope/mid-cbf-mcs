@@ -25,6 +25,7 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -504,6 +505,10 @@ class CbfController(SKAController):
                     ResultCode.FAILED,
                     "InitSysParam command may be called only when state is OFF",
                 )
+            
+            (valid, message) = validate_interface(argin, 'initsysparam')
+            if not valid:
+                return (ResultCode.FAILED, message)
 
             (
                 result_code,
