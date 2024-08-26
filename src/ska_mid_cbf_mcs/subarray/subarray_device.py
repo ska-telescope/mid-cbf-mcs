@@ -679,10 +679,9 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
 
-            (valid, msg) = validate_interface(argin, 'configure')
+            (valid, msg) = validate_interface(argin, "configure")
             if not valid:
                 return (ResultCode.FAILED, msg)
-            
             component_manager = self.target
 
             full_configuration = json.loads(argin)
@@ -971,7 +970,8 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (valid, msg) = validate_interface(json.dumps(argin), 'scan')
+
+            (valid, msg) = validate_interface(json.dumps(argin), "scan")
             if not valid:
                 return (ResultCode.FAILED, msg)
             component_manager = self.target

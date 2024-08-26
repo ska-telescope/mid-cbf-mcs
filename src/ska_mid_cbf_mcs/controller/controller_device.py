@@ -505,8 +505,8 @@ class CbfController(SKAController):
                     ResultCode.FAILED,
                     "InitSysParam command may be called only when state is OFF",
                 )
-            
-            (valid, message) = validate_interface(argin, 'initsysparam')
+
+            (valid, message) = validate_interface(argin, "initsysparam")
             if not valid:
                 return (ResultCode.FAILED, message)
 

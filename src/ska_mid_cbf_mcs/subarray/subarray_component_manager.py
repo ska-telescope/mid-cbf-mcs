@@ -1963,7 +1963,7 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        
+
         # Validate scan_json against the telescope model
         try:
             telmodel_validate(
