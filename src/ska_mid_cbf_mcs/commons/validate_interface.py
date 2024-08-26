@@ -45,8 +45,6 @@ command_mapping = {
     "initsysparam": CBF_INITSYSPARAM_PREFIX,
 }
 
-__all__ = ["ValidateInterface", "main"]
-
 
 def validate_interface(argin: str, command: str) -> tuple[bool, str]:
     # Check valid JSON
@@ -96,14 +94,14 @@ def validation_test():
 
     input_no_key = """
                     {
-                    "scan_id": 7, 
+                    "scan_id": 7,
                     "transaction_id": "txn-....-00001"
                     }
                     """
 
     input_not_string = """
                     {
-                    "interface": 5, 
+                    "interface": 5,
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -111,7 +109,7 @@ def validation_test():
 
     input_configscan_supported = """
                     {
-                    "interface": "https://schema.skao.int/ska-csp-configurescan/3.0", 
+                    "interface": "https://schema.skao.int/ska-csp-configurescan/3.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -119,7 +117,7 @@ def validation_test():
 
     input_configscan_unsupported = """
                     {
-                    "interface": "https://schema.skao.int/ska-csp-configurescan/30.0", 
+                    "interface": "https://schema.skao.int/ska-csp-configurescan/30.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -127,7 +125,7 @@ def validation_test():
 
     input_scan_supported = """
                     {
-                    "interface": "https://schema.skao.int/ska-csp-scan/2.3", 
+                    "interface": "https://schema.skao.int/ska-csp-scan/2.3",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -135,7 +133,7 @@ def validation_test():
 
     input_scan_unsupported = """
                     {
-                    "interface": "https://schema.skao.int/ska-csp-scan/23.0", 
+                    "interface": "https://schema.skao.int/ska-csp-scan/23.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -143,7 +141,7 @@ def validation_test():
 
     input_initsysparam_supported = """
                     {
-                    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/1.0", 
+                    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/1.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -151,7 +149,7 @@ def validation_test():
 
     input_initsysparam_unsupported = """
                     {
-                    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/10.0", 
+                    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/10.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -159,7 +157,7 @@ def validation_test():
 
     input_delaymodel_supported = """
                     {
-                    "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/3.0", 
+                    "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/3.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -167,7 +165,7 @@ def validation_test():
 
     input_delaymodel_unsupported = """
                     {
-                    "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/30.0", 
+                    "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/30.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }
@@ -175,7 +173,7 @@ def validation_test():
 
     input_lowconfigscan = """
                     {
-                    "interface": "https://schema.skao.int/ska-low-cbf-configurescan/1.0", 
+                    "interface": "https://schema.skao.int/ska-low-cbf-configurescan/1.0",
                     "scan_id": 1,
                     "transaction_id": "txn-....-00001"
                     }

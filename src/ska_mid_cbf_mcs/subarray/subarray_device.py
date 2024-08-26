@@ -679,7 +679,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
 
-            (valid, msg) = validate_interface(argin, "configure")
+            (valid, msg) = validate_interface(argin, "configurescan")
             if not valid:
                 return (ResultCode.FAILED, msg)
             component_manager = self.target
