@@ -114,6 +114,36 @@ class CbfDevice(SKABaseDevice):
 
     @command(dtype_out="DevVarLongStringArray")
     @DebugIt()
+    def On(self: CbfDevice) -> DevVarLongStringArrayType:
+        """
+        Turn device on.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["On command rejected, as it is unimplemented for this device."],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Off(self: CbfDevice) -> DevVarLongStringArrayType:
+        """
+        Turn device off.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["Off command rejected, as it is unimplemented for this device."],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Put the device into standby mode; currently unimplemented in Mid.CBF

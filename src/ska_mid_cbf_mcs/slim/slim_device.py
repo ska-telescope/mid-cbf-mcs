@@ -11,7 +11,11 @@
 from __future__ import annotations
 
 from ska_control_model import HealthState, PowerState, SimulationMode
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import (
+    ResultCode,
+    SubmittedSlowCommand,
+)
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
@@ -238,6 +242,58 @@ class Slim(CbfDevice):
     # Long Running Commands
     # ---------------------
 
+    def is_On_allowed(
+        self: Slim,
+    ) -> bool:
+        """
+        Overwrite baseclass's is_On_allowed method.
+        """
+        return True
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()
+    def On(
+        self: Slim,
+    ) -> DevVarLongStringArrayType:
+        """
+        Turn on SLIM.
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
+        command_handler = self.get_command_object(command_name="On")
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
+
+    def is_Off_allowed(
+        self: Slim,
+    ) -> bool:
+        """
+        Overwrite baseclass's is_Off_allowed method.
+        """
+        return True
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()
+    def Off(
+        self: Slim,
+    ) -> DevVarLongStringArrayType:
+        """
+        Turn off SLIM.
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
+        command_handler = self.get_command_object(command_name="Off")
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
+
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -248,19 +304,6 @@ class Slim(CbfDevice):
     def Configure(self: Slim, argin: str) -> None:
         command_handler = self.get_command_object("Configure")
         result_code, command_id = command_handler(argin)
-        return [[result_code], [command_id]]
-
-    def is_Off_allowed(self: Slim) -> bool:
-        return True
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
-    )
-    @DebugIt()
-    def Off(self: Slim) -> None:
-        command_handler = self.get_command_object("Off")
-        result_code, command_id = command_handler()
         return [[result_code], [command_id]]
 
     # ---------

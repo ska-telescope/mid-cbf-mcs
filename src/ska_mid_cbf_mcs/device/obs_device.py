@@ -583,6 +583,8 @@ class CbfObsDevice(SKAObsDevice):
     def GoToIdle(self: CbfObsDevice) -> DevVarLongStringArrayType:
         """
         Transit the device from READY to IDLE obsState.
+        To keep in line with LMC, using "GoToIdle" rather than the SKA base class
+        equivalent "End".
 
         :return: A tuple containing a return code and a string message
             indicating status. The message is for information purpose

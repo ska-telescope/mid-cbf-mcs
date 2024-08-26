@@ -249,6 +249,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
+        # Release previously assigned VCCs
+        self._deconfigure()
+
         # Load configuration JSON, store key read attribute parameters
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
@@ -257,11 +260,10 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ]["band_index"]
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
-        # release previously assigned VCCs and assign newly specified VCCs
-        self._deconfigure()
+        # Assign newly specified VCCs
         self._assign_vcc(configuration["corr_vcc_ids"])
 
-        # issue ConfigureScan to HPS FSP Corr controller
+        # Issue ConfigureScan to HPS FSP Corr controller
         if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:

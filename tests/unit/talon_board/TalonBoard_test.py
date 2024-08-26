@@ -233,7 +233,7 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_Online_missing_property(
+    def test_Online_correct_state_when_missing_property(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
@@ -342,9 +342,9 @@ class TestTalonBoard:
         # assert all(not enabled for enabled in device_under_test.fansPwmEnable)
         assert all(not fault for fault in device_under_test.fansFault)
 
-        assert all(v == 10.0 for v in device_under_test.ltmInputVoltage)
-        assert all(v == 10.0 for v in device_under_test.ltmOutputVoltage1)
-        assert all(v == 10.0 for v in device_under_test.ltmOutputVoltage2)
+        assert all(v == 12.0 for v in device_under_test.ltmInputVoltage)
+        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage1)
+        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage2)
 
         assert all(i == 1.0 for i in device_under_test.ltmInputCurrent)
         assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent1)

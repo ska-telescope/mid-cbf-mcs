@@ -146,7 +146,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned VCC IDs"""
+        """
+        Return the list of assigned VCC IDs
+
+        :return: list of assigned VCC IDs
+        """
         if self._dish_utils is not None:
             return [
                 self._dish_utils.dish_id_to_vcc_id[dish]
@@ -159,7 +163,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def fsp_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned FSP IDs"""
+        """
+        Return the list of assigned FSP IDs
+
+        :return: list of assigned VCC IDs
+        """
         return list(self._fsp_ids)
 
     # -------------
@@ -170,7 +178,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
-        :return: False if initialization failed, otherwise True
+        :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
             controller = context.DeviceProxy(device_name=self._fqdn_controller)
@@ -192,9 +200,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
         self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
 
-        self.logger.info(f"Active VCC FQDNs: {self._fqdn_vcc}")
-        self.logger.info(f"Active FSP FQDNs: {self._fqdn_fsp}")
-        self.logger.info(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+        self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
+        self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
+        self.logger.debug(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
 
         return True
 
@@ -202,9 +210,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxies to FSP and VCC subelements
 
-        :return: False if initialization failed, otherwise True
+        :return: True if proxy initialization succeed, otherwise False
         """
         try:
+            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+                self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
+                    device_name=fqdn
+                )
+
             for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
                 zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
             ):
@@ -256,6 +269,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
+    # --------
+    # sysParam
+    # --------
+
     def _update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str, *args, **kwargs
     ) -> None:
@@ -269,19 +286,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(
             "Updated DISH ID to VCC ID and frequency offset k mapping"
         )
-        for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
-            dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
-            try:
-                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
-                    device_name=fqdn
-                )
-            except tango.DevFailed as df:
-                self.logger.error(f"Failed to initialize VCC proxies; {df}")
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-            except KeyError as ke:
-                self.logger.error(f"DISH ID not found for VCC {vcc_id}; {ke}")
 
         self._sys_param_str = sys_param_str
         self._device_attr_change_callback("sysParam", self._sys_param_str)
@@ -291,7 +295,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
         """
-        Reload sys param from input JSON
+        Submit reload sys param operation to task executor queue
 
         :param sys_param_str: sys params JSON string
         """
@@ -306,9 +310,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
 
-    # -------------
-    # Fast Commands
-    # -------------
+    # ----------------------
+    # Subscription callbacks
+    # ----------------------
 
     def _update_delay_model(
         self: CbfSubarrayComponentManager, event_data: tango.EventData
@@ -429,7 +433,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return None
 
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if AddReceptors command is allowed in current state"""
+        """
+        Check if AddReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if AddReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -498,14 +506,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        input_dish_valid, msg = self._dish_utils.are_Valid_DISH_Ids(argin)
-        if not input_dish_valid:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, msg),
-            )
-            return
-
         # build list of VCCs to assign
         vcc_proxies = []
         talon_proxies = []
@@ -513,7 +513,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            try:
+                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            except KeyError as ke:
+                self.logger.error(f"Invalid DISH ID {dish_id} provided; {ke}")
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"Invalid DISH ID {dish_id}"),
+                )
+                return
+
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_subarray_id = vcc_proxy.subarrayMembership
 
             # only add VCC if it does not already belong to a subarray
@@ -608,7 +618,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- RemoveReceptors Command --- #
 
     def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveReceptors command is allowed in current state"""
+        """
+        Check if RemoveReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -673,7 +687,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 continue
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_proxies.append(vcc_proxy)
             talon_proxies.append(self._get_talon_proxy_from_dish_id(dish_id))
             dish_ids_to_remove.append(dish_id)
@@ -791,7 +806,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
     def is_release_all_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveAllReceptors command is allowed in current state"""
+        """
+        Check if RemoveAllReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveAllReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -1057,7 +1076,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Prepare args for ConfigureBand
         for dish_id in self.dish_ids:
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
 
             # Fetch K-value based on dish_id, calculate dish sample rate
             dish_sample_rate = self._calculate_dish_sample_rate(
@@ -2049,7 +2069,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- Restart Command --- #
 
     def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if Restart command is allowed in current state"""
+        """
+        Check if Restart command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if Restart is allowed.")
         if not self.is_communicating:
             return False

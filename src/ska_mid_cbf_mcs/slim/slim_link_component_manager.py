@@ -449,7 +449,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df.args[0].desc}"
+            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df}"
             self.logger.error(error_msg)
             self._update_device_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
@@ -607,7 +607,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.args[0].desc,
+                        df,
                     ),
                 )
                 return
@@ -715,7 +715,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.args[0].desc,
+                        df,
                     ),
                 )
                 return

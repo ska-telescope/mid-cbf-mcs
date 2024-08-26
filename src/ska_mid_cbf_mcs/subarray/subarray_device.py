@@ -101,17 +101,17 @@ class CbfSubarray(CbfObsDevice):
 
     @attribute(
         dtype=("int",),
-        max_dim_x=197,
-        doc="list of VCC integer IDs assigned to subarray",
+        max_dim_x=27,
+        doc="list of FSP integer IDs assigned to subarray",
     )
     def assignedFSPs(self: CbfSubarray) -> list[int]:
         """
-        Return list of VCCs assigned to subarray
+        Return list of FSPs assigned to subarray
 
-        :return: the list of VCC IDs
+        :return: the list of FSP IDs
         :rtype: list[int]
         """
-        return self.component_manager.vcc_ids
+        return self.component_manager.fsp_ids
 
     @attribute(
         dtype=("int",),
