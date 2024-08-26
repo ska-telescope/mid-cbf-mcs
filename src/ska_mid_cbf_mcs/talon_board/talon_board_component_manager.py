@@ -130,7 +130,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         Subscribe to attribute change events from HPS device proxies
         """
-        self.logger.info(f"Current proxies: {self._proxies}")
 
         # Talon System ID attributes
         self._talon_sysid_events = {}
