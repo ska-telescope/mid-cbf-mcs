@@ -113,7 +113,7 @@ class CbfDevice(SKABaseDevice):
     # --------
 
     @command(dtype_out="DevVarLongStringArray")
-    @DebugIt
+    @DebugIt()
     def On(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Turn device on.
@@ -128,7 +128,7 @@ class CbfDevice(SKABaseDevice):
         )
 
     @command(dtype_out="DevVarLongStringArray")
-    @DebugIt
+    @DebugIt()
     def Off(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Turn device off.
@@ -143,7 +143,7 @@ class CbfDevice(SKABaseDevice):
         )
 
     @command(dtype_out="DevVarLongStringArray")
-    @DebugIt
+    @DebugIt()
     def Standby(self: CbfDevice) -> DevVarLongStringArrayType:
         """
         Put the device into standby mode; currently unimplemented in Mid.CBF

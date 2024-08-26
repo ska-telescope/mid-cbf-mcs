@@ -146,7 +146,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned VCC IDs"""
+        """
+        Return the list of assigned VCC IDs
+
+        :return: list of assigned VCC IDs
+        """
         if self._dish_utils is not None:
             return [
                 self._dish_utils.dish_id_to_vcc_id[dish]
@@ -159,7 +163,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def fsp_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned FSP IDs"""
+        """
+        Return the list of assigned FSP IDs
+
+        :return: list of assigned VCC IDs
+        """
         return list(self._fsp_ids)
 
     # -------------
@@ -170,7 +178,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
-        :return: False if initialization failed, otherwise True
+        :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
             controller = context.DeviceProxy(device_name=self._fqdn_controller)
@@ -202,7 +210,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxies to FSP and VCC subelements
 
-        :return: False if initialization failed, otherwise True
+        :return: True if proxy initialization succeed, otherwise False
         """
         try:
             for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
@@ -261,6 +269,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
+    # --------
+    # sysParam
+    # --------
+
     def _update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str, *args, **kwargs
     ) -> None:
@@ -283,7 +295,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
         """
-        Reload sys param from input JSON
+        Submit reload sys param operation to task executor queue
 
         :param sys_param_str: sys params JSON string
         """
@@ -298,9 +310,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
 
-    # -------------
-    # Fast Commands
-    # -------------
+    # ----------------------
+    # Subscription callbacks
+    # ----------------------
 
     def _update_delay_model(
         self: CbfSubarrayComponentManager, model: str
@@ -427,7 +439,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return None
 
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if AddReceptors command is allowed in current state"""
+        """
+        Check if AddReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if AddReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -609,7 +625,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- RemoveReceptors Command --- #
 
     def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveReceptors command is allowed in current state"""
+        """
+        Check if RemoveReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -794,7 +814,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
     def is_release_all_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveAllReceptors command is allowed in current state"""
+        """
+        Check if RemoveAllReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveAllReceptors is allowed.")
         if not self.is_communicating:
             return False
@@ -2051,7 +2075,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- Restart Command --- #
 
     def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if Restart command is allowed in current state"""
+        """
+        Check if Restart command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if Restart is allowed.")
         if not self.is_communicating:
             return False
