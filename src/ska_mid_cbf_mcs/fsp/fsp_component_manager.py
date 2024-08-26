@@ -306,7 +306,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     # set FSP devices simulationMode attributes
@@ -455,7 +455,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
