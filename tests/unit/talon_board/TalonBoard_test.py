@@ -272,7 +272,7 @@ class TestTalonBoard:
         ],
         indirect=True,
     )
-    def test_readWriteAttr(
+    def test_ReadWriteAttributes(
         self: TestTalonBoard,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
