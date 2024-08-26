@@ -277,7 +277,7 @@ class FspComponentManager(CbfComponentManager):
                 f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})"
             )
             return False
-        if subarray_id - 1 not in range(const.MAX_SUBARRAY):
+        if subarray_id not in range(1, const.MAX_SUBARRAY + 1):
             self.logger.error(
                 f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]"
             )
