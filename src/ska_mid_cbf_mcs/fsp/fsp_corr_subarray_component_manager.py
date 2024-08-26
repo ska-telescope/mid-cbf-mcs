@@ -203,7 +203,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.info("Entering update_delay_model")
+        self.logger.info("Entering FspCorrSubarray.update_delay_model()")
 
         if not self.simulation_mode:
             try:
