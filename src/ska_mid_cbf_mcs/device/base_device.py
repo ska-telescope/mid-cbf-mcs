@@ -104,7 +104,7 @@ class CbfDevice(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        self.logger.debug(f"Writing simulationMode to {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 

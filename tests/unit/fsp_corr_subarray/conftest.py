@@ -52,6 +52,7 @@ def tango_event_tracer(
         "obsState",
         "adminMode",
         "state",
+        "delayModel",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)

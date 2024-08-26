@@ -19,11 +19,11 @@ from __future__ import annotations
 from ska_control_model import PowerState, SimulationMode
 
 # tango imports
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+from ska_mid_cbf_mcs.device.base_device import CbfDevice, CbfFastCommand
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
     PowerSwitchComponentManager,
 )
@@ -147,21 +147,12 @@ class PowerSwitch(CbfDevice):
     # Fast Commands
     # -------------
 
-    class GetOutletPowerStateCommand(FastCommand):
+    class GetOutletPowerStateCommand(CbfFastCommand):
         """
         The command class for the GetOutletPowerState command.
 
         Get the power state of an individual outlet, specified by the outlet ID.
         """
-
-        def __init__(
-            self: PowerSwitch.GetOutletPowerStateCommand,
-            *args: any,
-            component_manager: PowerSwitchComponentManager,
-            **kwargs: any,
-        ) -> None:
-            self.component_manager = component_manager
-            super().__init__(*args, **kwargs)
 
         def do(
             self: PowerSwitch.GetOutletPowerStateCommand, argin: str

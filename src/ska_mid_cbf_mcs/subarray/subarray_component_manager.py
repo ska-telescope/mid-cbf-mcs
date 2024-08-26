@@ -315,55 +315,66 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # ----------------------
 
     def _update_delay_model(
-        self: CbfSubarrayComponentManager, model: str
+        self: CbfSubarrayComponentManager, event_data: tango.EventData
     ) -> None:
         """
-        Update FSP and VCC delay models.
+        Update FSP delay models.
         This method is always started in a separate thread.
 
-        :param model: delay model JSON string
+        :param event_data: the received change event data (delay model JSON string)
         """
-        self.logger.info(f"Updating delay model; {model}")
+        model = event_data.attr_value.value
+
+        if not self.is_communicating or model is None or model == "":
+            return
+
+        if self.obs_state not in [ObsState.READY, ObsState.SCANNING]:
+            log_msg = f"Ignoring delay model received in {self.obs_state} (must be READY or SCANNING)."
+            self.logger.warning(log_msg)
+            return
 
         if model == self.last_received_delay_model:
             self.logger.warning(
                 "Ignoring delay model (identical to previous)."
             )
             return
+
         try:
             delay_model_json = json.loads(model)
-        except (
-            json.JSONDecodeError
-        ) as je:  # delay model string not a valid JSON object
-            self.logger.error(
-                f"Delay model object is not a valid JSON object; {je}"
-            )
-            return
 
-        # Validate delay_model_json against the telescope model
-        self.logger.info(
-            f"Attempting to validate the following json against the telescope model: {delay_model_json}"
-        )
-        try:
+            self.logger.info(
+                f"Attempting to validate the following delay model JSON against the telescope model: {delay_model_json}"
+            )
             telmodel_validate(
                 version=delay_model_json["interface"],
                 config=delay_model_json,
                 strictness=1,
             )
             self.logger.info("Delay model is valid!")
-        except ValueError as e:
+        except json.JSONDecodeError as je:
             self.logger.error(
-                f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {e}."
+                f"Delay model object is not a valid JSON object; {je}"
+            )
+            return
+        except ValueError as ve:
+            self.logger.error(
+                f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {ve}."
             )
             return
 
-        # pass DISH ID as VCC ID integer to FSPs
+        # Validate DISH IDs, then convert them to VCC ID integers for FSPs
         for delay_detail in delay_model_json["receptor_delays"]:
             dish_id = delay_detail["receptor"]
+            if dish_id not in self.dish_ids:
+                self.logger.error(
+                    f"Delay model contains data for DISH ID {dish_id} not belonging to this subarray, ignoring delay model."
+                )
+                return
             delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
                 dish_id
             ]
 
+        self.logger.info(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             results_fsp = self._issue_group_command(
@@ -389,25 +400,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param event_data: the received change event data
         """
         self.logger.debug("Entering _delay_model_event_callback()")
-        if not self.is_communicating:
-            self.logger.error(
-                f"Unable to update delay model, communication_state: {self.communication_state}"
-            )
-            return
 
-        value = event_data.attr_value.value
-
-        if value is None:
-            self.logger.error(
-                f"Delay model callback: None value received; {event_data}"
-            )
-            return
-        if self.obs_state != ObsState.READY:
-            log_msg = f"Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
-            self.logger.warning(log_msg)
-            return
-
-        Thread(target=self._update_delay_model, args=(value,)).start()
+        Thread(target=self._update_delay_model, args=(event_data,)).start()
 
     # -------------------
     # Resourcing Commands
@@ -449,8 +443,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
-                f"AddReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.EMPTY or IDLE"
+                f"AddReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -635,8 +628,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
-                f"RemoveReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.IDLE"
+                f"RemoveReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -824,8 +816,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
-                f"RemoveAllReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.IDLE"
+                f"RemoveAllReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -1973,6 +1964,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
@@ -2083,14 +2077,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.debug("Checking if Restart is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state not in [
-            ObsState.ABORTED,
-            ObsState.FAULT,
-            ObsState.EMPTY,
-        ]:
+        if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
             self.logger.warning(
-                f"Restart not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.ABORTED, FAULT or EMPTY"
+                f"Restart not allowed in ObsState {self.obs_state}"
             )
             return False
         return True

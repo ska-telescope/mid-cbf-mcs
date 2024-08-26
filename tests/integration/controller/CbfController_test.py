@@ -351,26 +351,6 @@ class TestCbfController:
                     target_n_events=n,
                 )
 
-        # TODO: obs state controller reset tests for fsp/vcc/subarray
-        # for device in subarray:
-        #     assert_that(event_tracer).within_timeout(
-        #         test_utils.EVENT_TIMEOUT
-        #     ).cbf_has_change_event_occurred(
-        #         device_name=device,
-        #         attribute_name="obsState",
-        #         attribute_value=ObsState.EMPTY,
-        #     )
-
-        # TODO: obs state controller reset tests for fsp/vcc/subarray
-        # if "mid_csp_cbf/vcc" in device:
-        #     assert_that(event_tracer).within_timeout(
-        #         test_utils.EVENT_TIMEOUT
-        #     ).cbf_has_change_event_occurred(
-        #         device_name=device,
-        #         attribute_name="obsState",
-        #         attribute_value=ObsState.IDLE,
-        #     )
-
         expected_events = [
             ("state", DevState.OFF, DevState.ON, 1),
             (

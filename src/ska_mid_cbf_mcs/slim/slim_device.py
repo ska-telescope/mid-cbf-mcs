@@ -12,16 +12,12 @@ from __future__ import annotations
 
 from ska_control_model import HealthState, PowerState, SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+from ska_mid_cbf_mcs.device.base_device import CbfDevice, CbfFastCommand
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
 __all__ = ["Slim", "main"]
@@ -194,35 +190,28 @@ class Slim(CbfDevice):
     # Fast Commands
     # -------------
 
-    class SlimTestCommand(FastCommand):
+    class SlimTestCommand(CbfFastCommand):
         """
         A command to test the mesh of SLIM Links.
         """
 
-        def __init__(
-            self: Slim.SlimTestCommand,
-            *args: any,
-            component_manager: SlimComponentManager,
-            **kwargs: any,
-        ) -> None:
-            self.component_manager = component_manager
-            super().__init__(*args, **kwargs)
-
         def is_allowed(self: Slim.SlimTestCommand) -> bool:
             """
-            Check if the Init command is allowed to be executed.
+            Determine if SlimTest command is allowed.
 
-            :return: True if the command is allowed to be executed, False otherwise.
+            :return: True if command is allowed, otherwise False
             """
-            if self.component_manager.power_state == PowerState.ON:
-                if self.component_manager.mesh_configured:
-                    return True
-                else:
-                    self.logger.warning(
-                        "SLIM must be configured before SlimTest can be called"
-                    )
-                    return False
-            return False
+            if self.component_manager.power_state != PowerState.ON:
+                self.logger.warning(
+                    "SLIM must be turned on before SlimTest can be called"
+                )
+                return False
+            if not self.component_manager.mesh_configured:
+                self.logger.warning(
+                    "SLIM must be configured before SlimTest can be called"
+                )
+                return False
+            return True
 
         def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
@@ -234,13 +223,8 @@ class Slim(CbfDevice):
             :rtype: (ResultCode, str)
             """
             if self.is_allowed():
-                result_code, message = self.component_manager.slim_test()
-                return (result_code, message)
-            else:
-                return (
-                    ResultCode.REJECTED,
-                    "Failed to issue SlimTest command. Check device state and configuration.",
-                )
+                return self.component_manager.slim_test()
+            return (ResultCode.REJECTED, "SLIM Test not allowed")
 
     @command(
         dtype_out="DevVarLongStringArray",
