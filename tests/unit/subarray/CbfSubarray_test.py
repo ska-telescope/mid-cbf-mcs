@@ -388,7 +388,7 @@ class TestCbfSubarray:
                 (
                     f"{command_id[0]}",
                     f"[{ResultCode.FAILED.value}, "
-                    f'"Invalid DISH ID {invalid_receptor[0]}"]'
+                    f'"Invalid DISH ID {invalid_receptor[0]}"]',
                 ),
                 None,
                 1,
