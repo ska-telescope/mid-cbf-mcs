@@ -38,7 +38,7 @@ supported_interfaces = {
 }
 
 command_mapping = {
-    "configure": CSP_CONFIG_PREFIX, 
+    "configure": CSP_CONFIG_PREFIX,
     "configurescan": CSP_CONFIGSCAN_PREFIX,
     "delaymodel": CSP_MID_DELAYMODEL_PREFIX,
     "scan": CSP_SCAN_PREFIX,
@@ -74,22 +74,22 @@ def validate_interface(argin: str, command: str) -> tuple[bool, str]:
         return [
             False,
             "The input interface does not match the intended command",
-        ]    
-    
+        ]
+
     # Check supported interface
     if not any(
         input["interface"] in val for val in supported_interfaces.values()
     ):
         return [False, "The command interface is not supported"]
-    
+
     # Return pass
     return [True, ""]
 
 
-# Unit tests    
+# Unit tests
+
 
 def validation_test():
-
     input_txt = """
                     hello
                     """
@@ -108,7 +108,6 @@ def validation_test():
                     "transaction_id": "txn-....-00001"
                     }
                     """
-
 
     input_configscan_supported = """
                     {
@@ -202,10 +201,8 @@ def validation_test():
     print(validate_interface(input_lowconfigscan, "configure"))
 
 
-
 def main():
     validation_test()
-    
 
 
 if __name__ == "__main__":
