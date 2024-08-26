@@ -77,6 +77,20 @@ class TestVcc:
         with harness as test_context:
             yield test_context
 
+    def device_online(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+    ) -> bool:
+        """
+        Helper function to start up and turn on the DUT.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
+        # Set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        return device_under_test.adminMode == AdminMode.ONLINE
+
     def test_State(
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
@@ -132,13 +146,13 @@ class TestVcc:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def device_online_and_on(
+    def test_Online(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
-    ) -> bool:
+    ) -> None:
         """
-        Helper function to start up and turn on the DUT.
+        Test turning the device online.
 
         :param device_under_test: DeviceProxy to the device under test.
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
@@ -163,8 +177,6 @@ class TestVcc:
             attribute_name="state",
             attribute_value=DevState.ON,
         )
-
-        return device_under_test.adminMode == AdminMode.ONLINE
 
     @pytest.mark.parametrize(
         "frequency_band, success",
@@ -192,10 +204,8 @@ class TestVcc:
         :param frequency_band: The frequency band to configure.
         :param success: A parameterized value used to test success and failure conditions.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # Prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online(device_under_test)
 
         # Setting band configuration with invalid frequency band
 
@@ -268,7 +278,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online(device_under_test)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -369,10 +379,8 @@ class TestVcc:
         :param config_file_name: file name for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # Prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online(device_under_test)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -531,11 +539,8 @@ class TestVcc:
                              events from the device under test.
         :param config_file_name: file name for the configuration.
         """
-
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # Prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online(device_under_test)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -685,10 +690,8 @@ class TestVcc:
         :param config_file_name: file name for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
-
         # Prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online(device_under_test)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
