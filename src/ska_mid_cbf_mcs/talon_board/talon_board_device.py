@@ -14,15 +14,9 @@ TANGO device class for monitoring a Talon board.
 from __future__ import annotations
 
 # tango imports
-from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode
-from tango import (
-    DebugIt,
-    DevVarBooleanArray,
-    DevVarFloatArray,
-    DevVarShortArray,
-)
-from tango.server import attribute, command, device_property
+from tango import DevVarBooleanArray, DevVarFloatArray, DevVarShortArray
+from tango.server import attribute, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
@@ -895,18 +889,7 @@ class TalonBoard(CbfDevice):
     # Long Running Commands
     # ---------------------
 
-    def is_On_allowed(self: TalonBoard) -> bool:
-        return True
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
-    )
-    @DebugIt()
-    def On(self: TalonBoard) -> DevVarLongStringArrayType:
-        command_handler = self.get_command_object("On")
-        result_code, command_id = command_handler()
-        return [[result_code], [command_id]]
+    # None at this time...
 
     # ----------
     # Callbacks

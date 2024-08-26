@@ -205,6 +205,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: False if initialization failed, otherwise True
         """
         try:
+            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+                self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
+                    device_name=fqdn
+                )
+
             for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
                 zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
             ):
@@ -269,19 +274,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(
             "Updated DISH ID to VCC ID and frequency offset k mapping"
         )
-        for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
-            dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
-            try:
-                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
-                    device_name=fqdn
-                )
-            except tango.DevFailed as df:
-                self.logger.error(f"Failed to initialize VCC proxies; {df}")
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-            except KeyError as ke:
-                self.logger.error(f"DISH ID not found for VCC {vcc_id}; {ke}")
 
         self._sys_param_str = sys_param_str
         self._device_attr_change_callback("sysParam", self._sys_param_str)
@@ -505,14 +497,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        input_dish_valid, msg = self._dish_utils.are_Valid_DISH_Ids(argin)
-        if not input_dish_valid:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, msg),
-            )
-            return
-
         # build list of VCCs to assign
         vcc_proxies = []
         talon_proxies = []
@@ -520,7 +504,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            try:
+                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            except KeyError as ke:
+                self.logger.error(f"Invalid DISH ID {dish_id} provided; {ke}")
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"Invalid DISH ID {dish_id}"),
+                )
+                return
+
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_subarray_id = vcc_proxy.subarrayMembership
 
             # only add VCC if it does not already belong to a subarray
@@ -681,7 +675,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 continue
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_proxies.append(vcc_proxy)
             talon_proxies.append(self._get_talon_proxy_from_dish_id(dish_id))
             dish_ids_to_remove.append(dish_id)
@@ -1066,7 +1061,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Prepare args for ConfigureBand
         for dish_id in self.dish_ids:
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
 
             # Fetch K-value based on dish_id, calculate dish sample rate
             dish_sample_rate = self._calculate_dish_sample_rate(
