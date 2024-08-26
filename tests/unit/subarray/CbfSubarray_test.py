@@ -388,9 +388,7 @@ class TestCbfSubarray:
                 (
                     f"{command_id[0]}",
                     f"[{ResultCode.FAILED.value}, "
-                    + f'"DISH ID {invalid_receptor[0]} is not valid. '
-                    + "It must be SKA001-SKA133 or MKT000-MKT063. "
-                    + 'Spaces before, after, or in the middle of the ID are not accepted."]',
+                    f'"Invalid DISH ID {invalid_receptor[0]}"]'
                 ),
                 None,
                 1,

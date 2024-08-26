@@ -283,7 +283,7 @@ class FspComponentManager(CbfComponentManager):
                 f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})"
             )
             return False
-        if subarray_id - 1 not in range(const.MAX_SUBARRAY):
+        if subarray_id not in range(1, const.MAX_SUBARRAY + 1):
             self.logger.error(
                 f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]"
             )
@@ -312,7 +312,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     # set FSP devices simulationMode attributes
@@ -461,7 +461,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id]
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
