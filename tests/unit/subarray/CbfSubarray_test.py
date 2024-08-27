@@ -120,7 +120,7 @@ class TestCbfSubarray:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def test_sysParam(
+    def device_online_and_on(
         self: TestCbfSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
@@ -204,7 +204,7 @@ class TestCbfSubarray:
         :param receptors_to_remove: list of DISH IDs to remove from subarray
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         attr_values = [
             ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
@@ -371,7 +371,7 @@ class TestCbfSubarray:
         :param invalid_receptor: invalid DISH ID
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(
@@ -434,7 +434,7 @@ class TestCbfSubarray:
         :param unassigned_receptors: unassigned DISH IDs
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
@@ -521,7 +521,7 @@ class TestCbfSubarray:
         :param invalid_receptor: invalid DISH ID
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Add receptors
         (return_value, command_id) = device_under_test.AddReceptors(receptors)
@@ -604,7 +604,7 @@ class TestCbfSubarray:
         :param receptors: list of DISH IDs to remove from subarray
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Try to remove receptors
         (return_value, command_id) = device_under_test.RemoveReceptors(
@@ -679,7 +679,7 @@ class TestCbfSubarray:
         :param scan_file_name: file name for the scan ID
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -769,7 +769,7 @@ class TestCbfSubarray:
         :param scan_file_name: file name for the scan ID
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -890,7 +890,7 @@ class TestCbfSubarray:
         :param receptors: list of DISH IDs to assign to subarray
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -973,7 +973,7 @@ class TestCbfSubarray:
         :param scan_file_name: file name for the scan ID
         """
         # Set device ONLINE and ON
-        self.test_sysParam(device_under_test, event_tracer)
+        self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
