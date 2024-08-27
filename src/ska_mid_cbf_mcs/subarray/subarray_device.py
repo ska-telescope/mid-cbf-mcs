@@ -719,7 +719,7 @@ class CbfSubarray(CspSubElementSubarray):
             # Validate supported interface passed in the JSON string
             (valid, msg) = validate_interface(argin, "configurescan")
             if not valid:
-                return (ResultCode.FAILED, msg)
+                return (False, msg)
             # try to deserialize input string to a JSON object
             try:
                 full_configuration = json.loads(argin)
@@ -974,7 +974,7 @@ class CbfSubarray(CspSubElementSubarray):
 
             (valid, msg) = validate_interface(json.dumps(argin), "scan")
             if not valid:
-                return (ResultCode.FAILED, msg)
+                return (False, msg)
             component_manager = self.target
             (result_code, msg) = component_manager.scan(argin)
             return (result_code, msg)
