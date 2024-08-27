@@ -226,12 +226,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return
         self.logger.debug(f"Subscribing to {dev_name} LRC results.")
-        
-        subscription_id =   proxy.subscribe_event(
-                                attr_name="longRunningCommandResult",
-                                event_type=tango.EventType.CHANGE_EVENT,
-                                cb_or_queuesize=self.results_callback,
-                            )
+
+        subscription_id = proxy.subscribe_event(
+            attr_name="longRunningCommandResult",
+            event_type=tango.EventType.CHANGE_EVENT,
+            cb_or_queuesize=self.results_callback,
+        )
 
         self._event_ids.update({dev_name: subscription_id})
 

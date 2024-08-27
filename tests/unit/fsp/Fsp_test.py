@@ -176,14 +176,14 @@ class TestFsp:
             )
 
     @pytest.mark.parametrize("function_mode", [FspModes.CORR])
-    def test_SetFunctionMode_not_allowed(
+    def test_SetFunctionMode_not_allowed_from_off(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         function_mode: FspModes,
     ) -> None:
         """
-        Test the SetFunctionMode() command's happy path.
+        Test the SetFunctionMode() command before the DUT has been turned ON.
 
         :param device_under_test: DeviceProxy to the device under test.
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
@@ -191,6 +191,47 @@ class TestFsp:
         :param function_mode: the function mode to be set
         """
         # SetFunctionMode not allowed if state is not ON
+        (return_value, command_id) = device_under_test.SetFunctionMode(
+            function_mode.name
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+            ),
+        )
+
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR])
+    def test_SetFunctionMode_not_allowed_already_set(
+        self: TestFsp,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        function_mode: FspModes,
+    ) -> None:
+        """
+        Test the SetFunctionMode() command when the DUT's functionMode has already been set.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param function_mode: the function mode to be set
+        """
+        # Run test_AddSubarrayMembership() to call SetFunctionMode() the first time.
+        self.test_AddSubarrayMembership(
+            device_under_test=device_under_test,
+            event_tracer=event_tracer,
+            sub_ids=[1, 2, 3],
+        )
+
+        # test issuing SetFunctionMode on a previously set FSP
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -239,7 +280,6 @@ class TestFsp:
         )
 
         sub_ids_added = []
-        print(f"All SUB IDs: {sub_ids}")
         for sub_id in sub_ids:
             if (
                 (
@@ -287,7 +327,6 @@ class TestFsp:
 
                 # assert subarrayMembership attribute updated
                 sub_ids_added.append(sub_id)
-                print(f"SUB IDs: {sub_ids_added}")
                 # TODO: currently not working due to assertion converting attribute value to numpy array
                 # assert_that(event_tracer).within_timeout(
                 #     test_utils.EVENT_TIMEOUT
@@ -296,6 +335,41 @@ class TestFsp:
                 #     attribute_name="subarrayMembership",
                 #     attribute_value=sub_ids_added,
                 # )
+
+    def test_AddSubarrayMembership_not_allowed_from_idle_mode(
+        self: TestFsp,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the AddSubarrayMembership() command before the functionMode has been set.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+
+        # set device ONLINE and ON, but do NOT set functionMode
+        self.device_online_and_on(device_under_test, event_tracer)
+
+        for sub_id in [1, 2, 3]:
+            (
+                return_value,
+                command_id,
+            ) = device_under_test.AddSubarrayMembership(sub_id)
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                ),
+            )
 
     @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
     def test_RemoveSubarrayMembership(
