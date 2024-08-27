@@ -186,6 +186,9 @@ class TestVcc:
                 False,
             ),
             ("1", True),
+            ("2", True),
+            ("5a", True),
+            ("5b", True),
         ],
     )
     def test_ConfigureBand(
