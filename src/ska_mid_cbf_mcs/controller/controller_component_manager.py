@@ -107,6 +107,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger = logger
 
+        self.validateSupportedConfiguration = True
+
         self._connected = False  # to device proxies
 
         (
@@ -600,6 +602,7 @@ class ControllerComponentManager(CbfComponentManager):
                 "simulationMode",
                 self._talondx_component_manager.simulation_mode,
             )
+
             self._group_subarray.command_inout("On")
         except tango.DevFailed as df:
             for item in df.args:
