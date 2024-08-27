@@ -291,7 +291,7 @@ class FspComponentManager(CbfComponentManager):
         )
         return True
 
-    def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
+    def _function_mode_subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
         """
         Set FSP function mode subarray device to AdminMode.ONLINE
 
@@ -386,7 +386,7 @@ class FspComponentManager(CbfComponentManager):
             )
             return
 
-        on_success = self._subarray_on(argin)
+        on_success = self._function_mode_subarray_on(argin)
         if not on_success:
             task_callback(
                 result=(
