@@ -37,7 +37,7 @@ __all__ = ["CbfComponentManager"]
 MAX_GROUP_WORKERS = 8
 
 # Default timeout per blocking command during _wait_for_blocking_results in seconds
-DEFAULT_TIMEOUT_PER_COMMAND = 10
+DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10
 
 # 10 ms resolution
 TIMEOUT_RESOLUTION = 0.01
@@ -226,16 +226,14 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return
         self.logger.debug(f"Subscribing to {dev_name} LRC results.")
+        
+        subscription_id =   proxy.subscribe_event(
+                                attr_name="longRunningCommandResult",
+                                event_type=tango.EventType.CHANGE_EVENT,
+                                cb_or_queuesize=self.results_callback,
+                            )
 
-        self._event_ids.update(
-            {
-                dev_name: proxy.subscribe_event(
-                    attr_name="longRunningCommandResult",
-                    event_type=tango.EventType.CHANGE_EVENT,
-                    cb_or_queuesize=self.results_callback,
-                )
-            }
-        )
+        self._event_ids.update({dev_name: subscription_id})
 
     def _unsubscribe_command_results(
         self: CbfComponentManager, proxy: context.DeviceProxy
@@ -512,11 +510,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # If the command ID not in blocking commands, we should wait a bit,
         # as the event may have occurred before we had the chance to add
         # it in the component manager.
-        ticks = int(DEFAULT_TIMEOUT_PER_COMMAND / TIMEOUT_RESOLUTION)
+        ticks_10ms = int(DEFAULT_TIMEOUT_PER_COMMAND_SEC / TIMEOUT_RESOLUTION)
         while command_id not in self._blocking_commands:
             sleep(TIMEOUT_RESOLUTION)
-            ticks -= 1
-            if ticks <= 0:
+            ticks_10ms -= 1
+            if ticks_10ms <= 0:
                 # If command ID was never added, we might have received an event
                 # triggered by a different device.
                 self.logger.warning(
@@ -553,7 +551,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def _wait_for_blocking_results(
         self: CbfComponentManager,
-        timeout: float = 0.0,
+        timeout_sec: float = 0.0,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -590,21 +588,21 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         lrc_status = self._wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
-            # LRC timeout/abort handling
+            # LRC timeout_sec/abort handling
 
         # ...
 
-        :param timeout: Time to wait, in seconds. If default value of 0.0 is set,
-            timeout = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND
+        :param timeout_sec: Time to wait, in seconds. If default value of 0.0 is set,
+            timeout_sec = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND_SEC
         :param task_abort_event: Check for abort, defaults to None
 
-        :return: completed if status reached, FAILED if timed out, ABORTED if aborted
+        :return: COMPLETED if status reached, FAILED if timed out, ABORTED if aborted
         """
-        if timeout == 0.0:
-            timeout = float(
-                len(self._blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND
+        if timeout_sec == 0.0:
+            timeout_sec = float(
+                len(self._blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND_SEC
             )
-        ticks = int(timeout / TIMEOUT_RESOLUTION)
+        ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
         while len(self._blocking_commands):
             if task_abort_event and task_abort_event.is_set():
                 self.logger.warning(
@@ -612,17 +610,18 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 )
                 return TaskStatus.ABORTED
             sleep(TIMEOUT_RESOLUTION)
-            ticks -= 1
-            if ticks <= 0:
+            ticks_10ms -= 1
+            if ticks_10ms <= 0:
                 self.logger.error(
-                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout}s.\n"
+                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout_sec}s.\n"
                     f"Blocking commands remaining: {self._blocking_commands}"
                 )
                 with self._results_lock:
                     self._blocking_commands = set()
                 return TaskStatus.FAILED
+        # Loop is exited once self._blocking_commands is decremented to 0 by _results_callback_thread()
         self.logger.debug(
-            f"Waited for {timeout - ticks * TIMEOUT_RESOLUTION:.3f} seconds"
+            f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )
         if self._command_failed:
             self._command_failed = False
