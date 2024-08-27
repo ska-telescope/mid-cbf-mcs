@@ -68,6 +68,12 @@ from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
 )
 
+# from ska_mid_cbf_mcs.subarray.subarray_configurescan_util import (
+#     calculate_fs_info,
+#     get_coarse_channels,
+#     get_end_freqeuency
+# )
+
 
 class CbfSubarrayComponentManager(
     CbfComponentManager, CspSubarrayComponentManager
@@ -1396,7 +1402,7 @@ class CbfSubarrayComponentManager(
 
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
+        configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
@@ -1480,6 +1486,8 @@ class CbfSubarrayComponentManager(
             "frequency_band_offset_stream2": self._frequency_band_offset_stream2,
             "rfi_flagging_mask": configuration["rfi_flagging_mask"],
         }
+
+        # TODO: CIP-2254 convert processing regions to FSP's here
 
         # Add subset of FSP configuration to the VCC configure scan argument
         # TODO determine necessary parameters to send to VCC for each function mode

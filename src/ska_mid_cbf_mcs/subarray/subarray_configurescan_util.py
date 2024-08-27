@@ -16,30 +16,11 @@ from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
     get_coarse_channels,
     get_end_freqeuency,
 )
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 
-def create_vcc_configuration(common_config: dict, configuration: dict) -> dict:
-    """_summary_
-
-    :param common_config: _description_
-    :param configuration: _description_
-    :return: _description_
-    """
-    pass
-
-
-def create_fsp_configuration(common_config: dict, configuration: dict) -> dict:
-    """_summary_
-
-    :param common_config: _description_
-    :param configuration: _description_
-    :return: _description_
-    """
-    pass
-
-
-def create_fsp_corr_configuration(
-    common_config: dict, configuration: dict
+def create_fsp_configuration(
+    function_configuration: dict, dish_to_k: dict, function_mode: FspModes
 ) -> dict:
     """_summary_
 
@@ -47,11 +28,21 @@ def create_fsp_corr_configuration(
     :param configuration: _description_
     :return: _description_
     """
-    pass
+    assert (
+        "processing_regions" in function_configuration
+    ), "function configuration requires a processing region to process"
+
+    fsp_config = _create_fsp_configuration(
+        function_configuration["processing_regions"], dish_to_k, function_mode
+    )
+
+    # TODO: Any other Function specific configuration outside of the FSP config
+
+    return fsp_config
 
 
 def _create_fsp_configuration(
-    processing_regions: list[dict], dish_to_k: dict, function_mode: str
+    processing_regions: list[dict], dish_to_k: dict, function_mode: FspModes
 ) -> list[dict]:
     """Create a list of FSP configurations for a given list of processing regions
 
@@ -62,27 +53,26 @@ def _create_fsp_configuration(
     """
 
     fsp_configurations = []
-    for processing_region_config in processing_regions:
+    for processing_region in processing_regions:
         # TODO: When we support wideband shift, insert it here:
         wideband_shift = 0
 
         processing_region_dish_id_to_k = {}
         if (
-            "receptors" not in processing_region_config
-            or len(processing_regions["receptors"]) == 0
+            "receptors" not in processing_region
+            or len(processing_region["receptors"]) == 0
         ):
             processing_region_dish_id_to_k = dish_to_k.copy()
         else:
-            for dish_id in processing_regions["receptors"]:
+            for dish_id in processing_region["receptors"]:
                 processing_region_dish_id_to_k[dish_id] = dish_to_k[dish_id]
 
         # Calculate the fsp configs for the processing region
-        fsp_configurations = {}
         fsp_configuration = _fsp_config_from_processing_region(
-            processing_region_config,
+            processing_region,
             wideband_shift,
             processing_region_dish_id_to_k,
-            function_mode,
+            function_mode.name,
         )
 
         fsp_configurations.extend(fsp_configuration)
