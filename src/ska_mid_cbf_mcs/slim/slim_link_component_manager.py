@@ -383,9 +383,9 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
         self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
-    def init_tx_for_loopback(self: SlimLinkComponentManager) -> None:
+    def get_tx_loopback_fqdn(self: SlimLinkComponentManager) -> None:
         """
-        Initialize the Tx device for serial loopback.
+        Determine the Tx device name for serial loopback.
         """
         # To put SLIM Rx back in serial loopback, we need to determine
         # the Tx device name it should reference for ICW comparisons.
@@ -687,7 +687,8 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
 
             try:
-                loopback_tx = self.init_tx_for_loopback()
+                # Fetch the tx fqdn required to initialize link in serial loopbaack
+                loopback_tx = self.get_tx_loopback_fqdn()
                 self._tx_device_proxy = context.DeviceProxy(
                     device_name=loopback_tx
                 )
