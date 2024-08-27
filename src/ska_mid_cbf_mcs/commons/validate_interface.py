@@ -31,18 +31,11 @@ CBF_INITSYSPARAM_VERSIONS = [CBF_INITSYSPARAM_VER1_0]
 
 
 supported_interfaces = {
+    "configure": CSP_CONFIGSCAN_VERSIONS,
     "configurescan": CSP_CONFIGSCAN_VERSIONS,
     "delaymodel": CSP_MID_DELAYMODEL_VERSIONS,
     "scan": CSP_SCAN_VERSIONS,
     "initsysparam": CBF_INITSYSPARAM_VERSIONS,
-}
-
-command_mapping = {
-    "configure": CSP_CONFIG_PREFIX,
-    "configurescan": CSP_CONFIGSCAN_PREFIX,
-    "delaymodel": CSP_MID_DELAYMODEL_PREFIX,
-    "scan": CSP_SCAN_PREFIX,
-    "initsysparam": CBF_INITSYSPARAM_PREFIX,
 }
 
 
@@ -67,18 +60,12 @@ def validate_interface(argin: str, command: str) -> tuple[bool, str]:
             "The value retrieved from the interface key is not a string",
         ]
 
-    # Check intended command
-    if command_mapping[command] not in input["interface"]:
+    # Check supported interfaces for command
+    if input["interface"] not in supported_interfaces[command]:
         return [
             False,
-            "The input interface does not match the intended command",
+            f"Interface '{input['interface']}' not supported for command '{command}'",
         ]
-
-    # Check supported interface
-    if not any(
-        input["interface"] in val for val in supported_interfaces.values()
-    ):
-        return [False, "The command interface is not supported"]
 
     # Return pass
     return [True, ""]
