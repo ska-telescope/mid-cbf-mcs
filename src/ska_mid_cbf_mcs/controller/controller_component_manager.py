@@ -996,6 +996,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Validate supported interface passed in the JSON string
         (valid, msg) = validate_interface(json.dumps(params), "initsysparam")
         if not valid:
+            self._logger.error(msg)
             return (ResultCode.FAILED, msg)
         # Validate init_sys_param against the telescope model
         try:
