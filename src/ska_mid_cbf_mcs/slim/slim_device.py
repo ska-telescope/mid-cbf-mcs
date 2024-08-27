@@ -168,17 +168,6 @@ class Slim(CbfDevice):
         )
 
         self.register_command_object(
-            "Off",
-            SubmittedSlowCommand(
-                command_name="Off",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="off",
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
             "SlimTest",
             self.SlimTestCommand(
                 component_manager=self.component_manager,
