@@ -735,7 +735,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._blocking_commands.add(command_id)
 
                 lrc_status = self._wait_for_blocking_results(
-                    timeout=20.0, task_abort_event=task_abort_event
+                    timeout_sec=20.0, task_abort_event=task_abort_event
                 )
                 if lrc_status != TaskStatus.COMPLETED:
                     message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
@@ -816,7 +816,7 @@ class ControllerComponentManager(CbfComponentManager):
             success = False
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             message = "One or more calls to nested LRC Slim.Configure() failed/timed out. Check Slim logs."
@@ -1050,7 +1050,7 @@ class ControllerComponentManager(CbfComponentManager):
                 success = False
 
         lrc_status = self._wait_for_blocking_results(
-            timeout=10.0, task_abort_event=task_abort_event
+            timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             message = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
@@ -1156,7 +1156,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._blocking_commands.add(command_id)
 
                 lrc_status = self._wait_for_blocking_results(
-                    timeout=10.0, task_abort_event=task_abort_event
+                    timeout_sec=10.0, task_abort_event=task_abort_event
                 )
 
                 if lrc_status != TaskStatus.COMPLETED:

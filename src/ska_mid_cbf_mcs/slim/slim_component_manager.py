@@ -487,7 +487,7 @@ class SlimComponentManager(CbfComponentManager):
                     self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
+                timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
             if lrc_status != TaskStatus.COMPLETED:
@@ -688,7 +688,7 @@ class SlimComponentManager(CbfComponentManager):
                     self._blocking_commands.add(command_id)
 
             lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
+                timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
             if lrc_status != TaskStatus.COMPLETED:
