@@ -202,8 +202,8 @@ Important operational notes:
   also be updated to only process one request at a time. 
 
 
-Event-driven control and the significance of Mutexes in CBF
-=====================================================
+Asynchronous event-driven control structure
+===========================================
 MCS version X.X.X introduced the concept of an events-driven system, which solves some
 timing headaches and provides some additional benefits, at the expense of a more conplex system.
 
