@@ -108,9 +108,9 @@ class CbfDevice(SKABaseDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # --------
-    # Commands
-    # --------
+    # ----------------------
+    # Unimplemented Commands
+    # ----------------------
 
     @command(dtype_out="DevVarLongStringArray")
     @DebugIt()
@@ -156,6 +156,23 @@ class CbfDevice(SKABaseDevice):
             [ResultCode.REJECTED],
             [
                 "Standby command rejected; Mid.CBF does not currently implement standby state."
+            ],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Reset(self: CbfDevice) -> DevVarLongStringArrayType:
+        """
+        Reset the device; currently unimplemented in Mid.CBF
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Reset command rejected, as it is unimplemented for this device."
             ],
         )
 
