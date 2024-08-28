@@ -1,18 +1,55 @@
 .. Documentation
 
-**************************
-Code Element Design Notes
-**************************
+********************************
+Mid.CBF MCS Element Design Notes
+********************************
+
+A note on state models
+======================================================
+
+There exists a handful of state models implemented in the `SKA control model
+<https://developer.skao.int/projects/ska-control-model/en/latest/index.html>`_
+that are inherited by MCS devices. Some notes regarding most important of these, along with the states
+used by MCS and some terminology that is used in the documentation below, are listed here:
+
+* **AdminMode**: when a device's adminMode attribute is set to ONLINE it triggers
+  the component manager's ``start_communicating`` method, establishing monitoring and control
+  communications with the underlying component; when set to OFFLINE, it triggers
+  ``stop_communicating``, disengaging component monitoring and control.
+
+  * When the device is "online" (i.e. communications are established with the component, ``AdminMode.ONLINE``),
+    its operating state (OpState) is controlled via power state updates (e.g. ON, OFF).
+
+  * When the device is "offline" (i.e. communications with the component are disabled, ``AdminMode.OFFLINE``),
+    its operating state is DISABLED.
+
+* **OpState**: an extension of Tango's DevState, this represents both the power and communications
+  status of a given device.
+
+  * States used in MCS: ON, OFF, DISABLED
+
+  * Typically referred to when "powering on" or "powering off" a device, via the On/Off commands.
+
+* **ObsState**: used by observing devices to denote what stage of an observation/scan is in progress.
+  This state is driven by observing commands
+
+  * Normal scan operation states: EMPTY, RESOURCING, IDLE, CONFIGURING, READY, SCANNING 
+
+  * Abort pathway states: ABORTING, ABORTED, RESETTING, RESTARTING
+  
+    * Note that subarray resources such as VCC and FSP do not implement EMPTY, RESOURCING and RESTARTING
+      states, nor resourcing commands, as they do not require resource allocation before scan configuration.
 
 Component Managers
 ======================================================
 
+In the Mid.CBF MCS, each device is comprised of a Tango device class and a component manager class. 
+The device class provides a Tango interface, with commands, attributes and properties,
+while the component manager class performs the actual monitoring and control of the underlying component.
+The component manager updates the device's state model(s) (in particular, the ``op_state_model`` and\or ``obs_state_model``)
+via callback methods in the device.
 More details about the role of component managers can be found in the `SKA Tango Base Documentation 
-<https://developer.skao.int/projects/ska-tango-base/en/latest/guide/component_managers.html>`_. In the Mid.CBF MCS 
-each component has a Tango device class and a component manager class. The Tango device class updates its state model(s) 
-(the ``op_state_model`` and\or ``obs_state_model``). The Tango device class does not directly communicate with its component, 
-instead it tells its component manager class what to do by calling its methods. The component manager class directly interacts 
-with its component. Its role is to establish communication with its component and monitor and control it.
+<https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/component-managers.html>`_. 
 An example of this Tango device and component manager interaction is shown in the diagram below. 
 
 
@@ -22,36 +59,46 @@ An example of this Tango device and component manager interaction is shown in th
 Cbf Controller
 ======================================================
 
-The ``CbfController`` Tango device controls its subordinate Tango devices: ``Fsp``, ``Vcc``, ``Slim``, 
-``CbfSubarray``, and ``TalonLRU``. It is responsible for turning these subordinate devices on 
-and off. The ``CbfController`` also initiates the configuration of the Talon-DX boards. The ``CbfController`` 
-device’s OnCommand triggers a call to ``TalonDxComponentManager.configure_talons``, which copies 
+The ``CbfController`` Tango device controls communications and power for the following Tango devices: 
+``CbfSubarray``, ``Slim``, ``TalonBoard`` and ``TalonLRU``.
+It is responsible for setting communications for these subordinate devices online and offline,
+setting their simulation mode, as well as powering them on and off.
+The ``CbfController`` also propagates system configuration parameters, and initiates
+the configuration of the Talon-DX hardware.
+The device’s On command triggers a call to ``TalonDxComponentManager.configure_talons``, which copies 
 the device server binaries and FPGA bitstream to the Talon-DX boards, starts the HPS master 
-device server, and sends the configure command to each DsHpsMaster device.
+device servers, and sends the configure command to each DsHpsMaster device.
 
 Cbf Subarray 
 ======================================================
 
-The ``CbfSubarray`` Tango device is used to monitor and control scan operation 
-of a Mid.CBF receptor subarray. This device receives one configuration per scan, 
-and a subarray may accept this scan configuration only after being assigned at 
-least one receptor.
+The ``CbfSubarray`` Tango device is used to drive scan operations of a Mid.CBF receptor subarray.
+This device receives one configuration per scan, and a subarray may accept this scan configuration
+only after being assigned at least one receptor.
 
 Receptor assignment
 -------------------
 
 Receptor assignment to a subarray is done before configuration for a scan. 
-Receptor assignment is exclusive; receptors assigned to one subarray cannot 
+Receptor assignment is exclusive; receptors belonging to one subarray cannot 
 belong to any other subarray. Up to 197 receptors can be assigned to one subarray; 
 currently, there is only support for 4 receptors.
+
+During a given receptor's assignment, the corresponding VCC device is set online by the subarray.
+Upon a receptor's release, the corresponding VCC device is set offline by the subarray. 
 
 Scan configuration
 ------------------
 
 Subarrays receive a scan configuration via an ASCII encoded JSON string. The scan 
-configuration is validated for completeness and its parameters implemented as Tango 
-device attributes; the subarray device will then also configure subordinate devices 
-with the relevant parameters, including VCC, FSP and FSP-subarray devices.
+configuration is validated for completeness, then the subarray device will configure
+subordinate devices with the relevant parameters, including VCC, FSP and FSP function
+mode subarray devices.
+
+FSPs are assigned to subarrays during scan configuration, and may belong to any
+number of subarrays so long as those subarrays are requesting processing for
+the same function mode (more details on this below). When an FSP is assigned to its
+first subarray, that subarray sets its function mode and sets it online
 
 Frequency Slice Processor (FSP)
 ======================================================
@@ -59,16 +106,16 @@ Frequency Slice Processor (FSP)
 The ``Fsp`` Tango device is used for monitoring and control of a Frequency Slice 
 Processor (FSP) during scan operation. An FSP device can be configured for processing 
 of one of up to twenty-six frequency slices (depending on observational frequency 
-band). Additionally, an FSP can be assigned to any number of subarrays with matching 
-configurations.
+band). Additionally, an FSP can be assigned to any number of subarrays if they require
+processing for the same function mode.
 
 Fsp Function Mode
 -----------------
 
 There are four function modes available for FSP scan configuration, each with a 
-corresponding function mode capability and subarray device per FSP; furthermore, 
-each FSP function mode subarray device corresponds to a unique pairing of one FSP 
-with one subarray. Currently, one subarray and four FSPs are supported.
+corresponding function mode subarray device per FSP; furthermore, each FSP function
+mode subarray device corresponds to a unique pairing of one FSP with one subarray.
+Currently, one subarray and four FSPs are supported.
 
 FSP Function Mode Subarray devices:
 
@@ -85,7 +132,7 @@ VCC Device
 The ``Vcc`` Tango device is used to control and monitor the functionality for a
 single Talon-DX board that runs VCC functionality. This device communicates with
 the top-level VCC device server running on the Talon-DX board to coordinate
-setup and processing activites of low-level device servers.
+setup and processing activities of low-level device servers.
 
 The ``Vcc`` device can operated  in either simulation mode or not. When in simulation
 mode (this is the default), simulator classes are used in place of communication
