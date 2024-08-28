@@ -686,6 +686,22 @@ class CbfObsDevice(SKAObsDevice):
             ],
         )
 
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def End(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Set obs device from READY to IDLE; currently unimplemented in Mid.CBF,
+        as this is accomplished by GoToIdle.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["End command rejected; did you mean GoToIdle?"],
+        )
+
 
 # ----------
 # Run server
