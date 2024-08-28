@@ -11,11 +11,7 @@
 
 from ska_telmodel import channel_map
 
-from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
-    calculate_fs_info,
-    get_coarse_channels,
-    get_end_freqeuency,
-)
+from ska_mid_cbf_mcs.commons.fine_channel_partitioner import calculate_fs_info
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 
@@ -91,18 +87,6 @@ def _fsp_config_from_processing_region(
     :param function_mode: the function mode to configure the FSP's
     :return: list of individual FSP configurations
     """
-
-    # Calculate inferred value
-    end_freq = get_end_freqeuency(
-        start_freq=processing_region_config["start_freq"],
-        channel_width=processing_region_config["channel_width"],
-        channel_count=processing_region_config["channel_count"],
-    )
-
-    # get the coarse channeles this processing region will cover
-    coarse_channels = get_coarse_channels(
-        processing_region_config["start_freq"], end_freq, wideband_shift
-    )
 
     # sort the ids, just in case they are given in non-ascending order
     fsp_ids: list[int] = processing_region_config["fsp_ids"]
