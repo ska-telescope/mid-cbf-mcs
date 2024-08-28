@@ -291,13 +291,13 @@ class FspComponentManager(CbfComponentManager):
         )
         return True
 
-    def _function_mode_subarray_on(
+    def _function_mode_subarray_online(
         self: FspComponentManager, subarray_id: int
     ) -> bool:
         """
         Set FSP function mode subarray device to AdminMode.ONLINE
 
-        :param subarray_id: ID of subarray for which to power on function mode proxy
+        :param subarray_id: ID of subarray for which to set function mode proxy online
         :return: False if unsuccessful in setting online the FSP function mode subarray proxy,
             True otherwise
         """
@@ -388,12 +388,12 @@ class FspComponentManager(CbfComponentManager):
             )
             return
 
-        on_success = self._function_mode_subarray_on(argin)
+        on_success = self._function_mode_subarray_online(argin)
         if not on_success:
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    f"Unsuccessful in powering on function mode device for subarray {argin}",
+                    f"Unsuccessful in setting online function mode device for subarray {argin}",
                 ),
                 status=TaskStatus.FAILED,
             )
@@ -442,11 +442,13 @@ class FspComponentManager(CbfComponentManager):
 
     # --- RemoveSubarrayMembership Command --- #
 
-    def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
+    def _function_mode_subarray_offline(
+        self: FspComponentManager, subarray_id: int
+    ) -> bool:
         """
         Set FSP function mode subarray device to AdminMode.OFFLINE
 
-        :param subarray_id: ID of subarray for which to power off function mode proxy
+        :param subarray_id: ID of subarray for which to set function mode proxy offline
         :return: False if unsuccessful in setting offline the FSP function mode subarray proxy,
             True otherwise
         """
@@ -541,12 +543,12 @@ class FspComponentManager(CbfComponentManager):
             f"Removing subarray {argin} from subarray membership."
         )
 
-        off_success = self._subarray_off(argin)
+        off_success = self._function_mode_subarray_offline(argin)
         if not off_success:
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {argin}",
+                    f"Unsuccessful in setting offline function mode device for subarray {argin}",
                 ),
                 status=TaskStatus.FAILED,
             )

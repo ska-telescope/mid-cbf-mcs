@@ -31,10 +31,11 @@ from ska_tango_base.executor.executor_component_manager import (
 )
 from ska_tango_testing import context
 
+# Maximum number worker threads for group commands set to const.DEFAULT_COUNT_VCC for now
+from ska_mid_cbf_mcs.commons.global_enum import const
+
 __all__ = ["CbfComponentManager"]
 
-# Maximum number worker threads for group commands
-MAX_GROUP_WORKERS = 8
 
 # Default timeout per blocking command during _wait_for_blocking_results in seconds
 DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10
@@ -58,7 +59,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     Finally, the ``TaskExecutorComponentManager`` inherits from BaseComponentManager,
     which accepts the keyword arguments communication_state_callback and
-    component_state_callback, each with an analoguous callback method in the
+    component_state_callback, each with an analogous callback method in the
     SKABaseDevice (namely _communication_state_changed and _component_state_changed)
     used to drive the operational state (opState) model from the component manager.
     """
@@ -263,7 +264,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, group_proxies: dict
     ) -> bool:
         """
-        Create group proxies (list of DeviceProxy) from the list of fqdns passed in.
+        Create group proxies (list of DeviceProxy) from the list of FQDNs passed in.
         Store as class attributes.
         :param
         :return: True if the group proxies are successfully created, False otherwise.
@@ -314,7 +315,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         command_name: str,
         proxies: list[context.DeviceProxy],
         argin: Any = None,
-        max_workers: int = MAX_GROUP_WORKERS,
+        max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
@@ -373,7 +374,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         attr_name: str,
         proxies: list[context.DeviceProxy],
-        max_workers: int = MAX_GROUP_WORKERS,
+        max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> list[Any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
@@ -426,7 +427,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         value: Any,
         proxies: list[context.DeviceProxy],
-        max_workers: int = MAX_GROUP_WORKERS,
+        max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> bool:
         """
         Helper function to perform tango.Group-like threaded write_attribute().

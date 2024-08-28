@@ -476,26 +476,6 @@ class CbfObsDevice(SKAObsDevice):
 
             return (result_code, msg)
 
-    @command(dtype_out="DevVarLongStringArray")
-    @DebugIt()
-    def Standby(self: CbfObsDevice) -> DevVarLongStringArrayType:
-        """
-        Put the device into standby mode.
-
-        To modify behaviour for this command, modify the do() method of
-        the command class.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        """
-        return (
-            [ResultCode.REJECTED],
-            [
-                "Standby command rejected; Mid.CBF does not currently implement standby state."
-            ],
-        )
-
     @command(
         dtype_in="DevString",
         doc_in="JSON formatted string with the scan configuration.",
@@ -637,6 +617,74 @@ class CbfObsDevice(SKAObsDevice):
         command_handler = self.get_command_object("Abort")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
+
+    # ----------------------
+    # Unimplemented Commands
+    # ----------------------
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def On(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Turn device on.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["On command rejected, as it is unimplemented for this device."],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Off(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Turn device off.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["Off command rejected, as it is unimplemented for this device."],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Standby(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Put the device into standby mode; currently unimplemented in Mid.CBF
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Standby command rejected; Mid.CBF does not currently implement standby state."
+            ],
+        )
+
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Reset(self: CbfObsDevice) -> DevVarLongStringArrayType:
+        """
+        Reset the device; currently unimplemented in Mid.CBF
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Reset command rejected, as it is unimplemented for this device."
+            ],
+        )
 
 
 # ----------

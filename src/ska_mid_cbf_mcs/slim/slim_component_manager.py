@@ -410,9 +410,7 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.debug("Entering SlimComponentManager._on")
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if self.task_abort_event_is_set(
-            "On", task_callback, task_abort_event
-        ):
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
         self._update_component_state(power=PowerState.ON)
