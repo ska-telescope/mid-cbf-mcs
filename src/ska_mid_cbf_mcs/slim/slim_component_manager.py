@@ -411,7 +411,7 @@ class SlimComponentManager(CbfComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         if self.task_abort_event_is_set(
-            "Off", task_callback, task_abort_event
+            "On", task_callback, task_abort_event
         ):
             return
 
