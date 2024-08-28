@@ -515,6 +515,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             try:
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+                if 0 >= vcc_id > self._count_vcc:
+                    raise KeyError(
+                        f"VCC ID {vcc_id} not in current capabilities."
+                    )
             except KeyError as ke:
                 self.logger.error(f"Invalid DISH ID {dish_id} provided; {ke}")
                 task_callback(
