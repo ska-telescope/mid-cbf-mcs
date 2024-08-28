@@ -108,13 +108,11 @@ PYTHON_LINT_TARGET = src/ tests/
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
 include .make/base.mk
-include .make/release.mk
 include .make/k8s.mk
-include .make/make.mk
 include .make/oci.mk
 include .make/helm.mk
 include .make/python.mk
-include .make/docs.mk
+
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
