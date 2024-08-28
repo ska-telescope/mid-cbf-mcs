@@ -144,10 +144,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             device_proxies.append(self._proxy_power_switch2)
 
         for dp in device_proxies:
-            self._subscribe_command_results(dp)
+            self.subscribe_command_results(dp)
 
         self.logger.info(
-            f"Current event_ids after subscribing : {self._event_ids}"
+            f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
     def _start_communicating(
@@ -184,7 +184,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             device_proxies.append(self._proxy_power_switch2)
 
         for dp in device_proxies:
-            self._unsubscribe_command_results(dp)
+            self.unsubscribe_command_results(dp)
 
     def _stop_communicating(
         self: TalonLRUComponentManager, *args, **kwargs
@@ -197,7 +197,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         )
 
         self._unsubscribe_from_subdevices()
-        self._blocking_commands = set()
+        self.blocking_commands = set()
 
         super()._stop_communicating()
 
@@ -296,9 +296,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Nested LRC PowerSwitch.TurnOnOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
             else:
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
-                lrc_status = self._wait_for_blocking_results(
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
+                lrc_status = self.wait_for_blocking_results(
                     timeout_sec=10.0, task_abort_event=task_abort_event
                 )
 
@@ -335,9 +335,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                 )
                 return pdu1_result, ResultCode.FAILED
             else:
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
-                lrc_status = self._wait_for_blocking_results(
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
+                lrc_status = self.wait_for_blocking_results(
                     timeout_sec=10.0, task_abort_event=task_abort_event
                 )
 
@@ -478,9 +478,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                     f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch1.dev_name()}, outlet {self._pdu_outlets[0]} rejected"
                 )
             else:
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
-                lrc_status = self._wait_for_blocking_results(
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
+                lrc_status = self.wait_for_blocking_results(
                     timeout_sec=10.0, task_abort_event=task_abort_event
                 )
                 if lrc_status != TaskStatus.COMPLETED:
@@ -515,9 +515,9 @@ class TalonLRUComponentManager(CbfComponentManager):
                         f"Nested LRC PowerSwitch.TurnOffOutlet() to {self._proxy_power_switch2.dev_name()}, outlet {self._pdu_outlets[1]} rejected"
                     )
                 else:
-                    with self._results_lock:
-                        self._blocking_commands.add(command_id)
-                    lrc_status = self._wait_for_blocking_results(
+                    with self.results_lock:
+                        self.blocking_commands.add(command_id)
+                    lrc_status = self.wait_for_blocking_results(
                         timeout_sec=10.0, task_abort_event=task_abort_event
                     )
                     if lrc_status != TaskStatus.COMPLETED:

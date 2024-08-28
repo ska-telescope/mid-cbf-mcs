@@ -262,7 +262,7 @@ class ControllerComponentManager(CbfComponentManager):
             + self._talon_lru_fqdn
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
         ):
-            self._subscribe_command_results(proxy)
+            self.subscribe_command_results(proxy)
 
         # If the fqdn is of a power switch or talon LRU, write hw config
         device_types = {
@@ -298,7 +298,7 @@ class ControllerComponentManager(CbfComponentManager):
             "_group_subarray": self._subarray_fqdn,
         }
 
-        if not self._create_group_proxies(group_proxies):
+        if not self.create_group_proxies(group_proxies):
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -323,7 +323,7 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         self.logger.info(
-            f"event_ids after subscribing = {len(self._event_ids)}"
+            f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
         super()._start_communicating()
@@ -345,7 +345,7 @@ class ControllerComponentManager(CbfComponentManager):
                     + self._talon_lru_fqdn
                     + [self._fs_slim_fqdn, self._vis_slim_fqdn]
                 ):
-                    self._unsubscribe_command_results(proxy)
+                    self.unsubscribe_command_results(proxy)
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
                 proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
@@ -353,7 +353,7 @@ class ControllerComponentManager(CbfComponentManager):
                     f"Failed to stop communications with {fqdn}; {df}"
                 )
                 continue
-        self._blocking_commands = set()
+        self.blocking_commands = set()
 
         super()._stop_communicating()
 
@@ -731,10 +731,10 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     success = False
                     continue
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-                lrc_status = self._wait_for_blocking_results(
+                lrc_status = self.wait_for_blocking_results(
                     timeout_sec=20.0, task_abort_event=task_abort_event
                 )
                 if lrc_status != TaskStatus.COMPLETED:
@@ -787,8 +787,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(message)
                     success = False
                     continue
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
                 with open(slim_config_paths[i]) as f:
                     slim_config = f.read()
@@ -802,8 +802,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(message)
                     success = False
                     continue
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -815,7 +815,7 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error(f"Failed to read SLIM configuration file: {e}")
             success = False
 
-        lrc_status = self._wait_for_blocking_results(
+        lrc_status = self.wait_for_blocking_results(
             timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
@@ -988,8 +988,8 @@ class ControllerComponentManager(CbfComponentManager):
                 message = f"{subarray.dev_name()} Abort command rejected."
                 self.logger.error(message)
             else:
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
         # Restart subarray to send to EMPTY
         [[result_code], [command_id]] = subarray.Restart()
@@ -998,10 +998,10 @@ class ControllerComponentManager(CbfComponentManager):
             message = f"{subarray.dev_name()} Restart command rejected."
             self.logger.error(message)
         else:
-            with self._results_lock:
-                self._blocking_commands.add(command_id)
+            with self.results_lock:
+                self.blocking_commands.add(command_id)
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
             success = False
             message = "One or more calls to subarray LRC failed/timed out; check subarray logs."
@@ -1039,8 +1039,8 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     success = False
                     continue
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 message = "Nested LRC Off() failed"
                 self.logger.error(f"Nested LRC Off() to {fqdn} failed: {df}")
@@ -1049,7 +1049,7 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self._wait_for_blocking_results(
+        lrc_status = self.wait_for_blocking_results(
             timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
@@ -1152,10 +1152,10 @@ class ControllerComponentManager(CbfComponentManager):
                     )
                     success = False
                     continue
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-                lrc_status = self._wait_for_blocking_results(
+                lrc_status = self.wait_for_blocking_results(
                     timeout_sec=10.0, task_abort_event=task_abort_event
                 )
 

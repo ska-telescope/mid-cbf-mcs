@@ -175,8 +175,8 @@ class FspComponentManager(CbfComponentManager):
                 return False
 
         self.function_mode = function_mode
-        self._device_attr_change_callback("functionMode", self.function_mode)
-        self._device_attr_archive_callback("functionMode", self.function_mode)
+        self.device_attr_change_callback("functionMode", self.function_mode)
+        self.device_attr_archive_callback("functionMode", self.function_mode)
         self.logger.info(
             f"FSP set to function mode {FspModes(function_mode).name}"
         )
@@ -400,10 +400,10 @@ class FspComponentManager(CbfComponentManager):
             return
 
         self.subarray_membership.append(argin)
-        self._device_attr_change_callback(
+        self.device_attr_change_callback(
             "subarrayMembership", list(self.subarray_membership)
         )
-        self._device_attr_archive_callback(
+        self.device_attr_archive_callback(
             "subarrayMembership", list(self.subarray_membership)
         )
 
@@ -553,10 +553,10 @@ class FspComponentManager(CbfComponentManager):
             return
 
         self.subarray_membership.remove(argin)
-        self._device_attr_change_callback(
+        self.device_attr_change_callback(
             "subarrayMembership", self.subarray_membership
         )
-        self._device_attr_archive_callback(
+        self.device_attr_archive_callback(
             "subarrayMembership", self.subarray_membership
         )
 

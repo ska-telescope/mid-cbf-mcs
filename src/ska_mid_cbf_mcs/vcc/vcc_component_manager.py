@@ -141,8 +141,8 @@ class VccComponentManager(CbfObsComponentManager):
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
         self.frequency_band = 0
-        self._device_attr_change_callback("frequencyBand", self.frequency_band)
-        self._device_attr_archive_callback(
+        self.device_attr_change_callback("frequencyBand", self.frequency_band)
+        self.device_attr_archive_callback(
             "frequencyBand", self.frequency_band
         )
         self._freq_band_name = ""
@@ -309,8 +309,8 @@ class VccComponentManager(CbfObsComponentManager):
         self._freq_band_name = freq_band_name
 
         self.frequency_band = frequency_band
-        self._device_attr_change_callback("frequencyBand", self.frequency_band)
-        self._device_attr_archive_callback(
+        self.device_attr_change_callback("frequencyBand", self.frequency_band)
+        self.device_attr_archive_callback(
             "frequencyBand", self.frequency_band
         )
 

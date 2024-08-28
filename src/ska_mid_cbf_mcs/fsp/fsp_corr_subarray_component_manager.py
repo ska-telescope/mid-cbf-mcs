@@ -220,8 +220,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         # the whole delay model must be stored
         self.delay_model = model
-        self._device_attr_change_callback("delayModel", model)
-        self._device_attr_archive_callback("delayModel", model)
+        self.device_attr_change_callback("delayModel", model)
+        self.device_attr_archive_callback("delayModel", model)
 
         return (ResultCode.OK, "UpdateDelayModel completed OK")
 

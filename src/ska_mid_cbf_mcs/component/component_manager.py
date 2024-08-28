@@ -36,7 +36,7 @@ __all__ = ["CbfComponentManager"]
 # Maximum number worker threads for group commands
 MAX_GROUP_WORKERS = 8
 
-# Default timeout per blocking command during _wait_for_blocking_results in seconds
+# Default timeout per blocking command during wait_for_blocking_results in seconds
 DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10
 
 # 10 ms resolution
@@ -100,18 +100,18 @@ class CbfComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        self._device_attr_change_callback = attr_change_callback
-        self._device_attr_archive_callback = attr_archive_callback
+        self.device_attr_change_callback = attr_change_callback
+        self.device_attr_archive_callback = attr_archive_callback
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
 
         # Initialize a lock and a set of to track the blocking LRC command IDs
         # that an LRC thread may depend on
-        # See docstring under _wait_for_blocking_result for an example scenario
-        self._event_ids = {}
-        self._results_lock = Lock()
-        self._blocking_commands: set["str"] = set()
+        # See docstring under wait_for_blocking_result for an example scenario
+        self.event_ids = {}
+        self.results_lock = Lock()
+        self.blocking_commands: set["str"] = set()
         self._command_failed = False
 
         # NOTE: currently all devices are using constructor default
@@ -210,7 +210,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             return True
         return False
 
-    def _subscribe_command_results(
+    def subscribe_command_results(
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         """
@@ -220,7 +220,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         dev_name = proxy.dev_name()
 
-        if dev_name in self._event_ids:
+        if dev_name in self.event_ids:
             self.logger.debug(
                 f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
             )
@@ -233,9 +233,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             cb_or_queuesize=self.results_callback,
         )
 
-        self._event_ids.update({dev_name: subscription_id})
+        self.event_ids.update({dev_name: subscription_id})
 
-    def _unsubscribe_command_results(
+    def unsubscribe_command_results(
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         """
@@ -244,7 +244,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxy: DeviceProxy
         """
         dev_name = proxy.dev_name()
-        event_id = self._event_ids.pop(dev_name, None)
+        event_id = self.event_ids.pop(dev_name, None)
         if event_id is None:
             self.logger.debug(
                 f"No longRunningCommandResult event subscription for {dev_name}"
@@ -259,7 +259,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     # Group Methods
     # -------------
 
-    def _create_group_proxies(
+    def create_group_proxies(
         self: CbfComponentManager, group_proxies: dict
     ) -> bool:
         """
@@ -309,7 +309,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 f"Error issuing {command_name} command to {proxy.dev_name()}; {df}",
             )
 
-    def _issue_group_command(
+    def issue_group_command(
         self: CbfComponentManager,
         command_name: str,
         proxies: list[context.DeviceProxy],
@@ -459,7 +459,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     # Callback Methods
     # ----------------
 
-    def _update_device_health_state(
+    def update_device_health_state(
         self: CbfComponentManager,
         health_state: HealthState,
     ) -> None:
@@ -511,7 +511,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # as the event may have occurred before we had the chance to add
         # it in the component manager.
         ticks_10ms = int(DEFAULT_TIMEOUT_PER_COMMAND_SEC / TIMEOUT_RESOLUTION)
-        while command_id not in self._blocking_commands:
+        while command_id not in self.blocking_commands:
             sleep(TIMEOUT_RESOLUTION)
             ticks_10ms -= 1
             if ticks_10ms <= 0:
@@ -527,11 +527,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 f"Command ID {command_id} result code: {result_code}"
             )
             self._command_failed = True
-        with self._results_lock:
-            self._blocking_commands.remove(command_id)
+        with self.results_lock:
+            self.blocking_commands.remove(command_id)
 
         self.logger.info(
-            f"Blocking commands remaining: {self._blocking_commands}"
+            f"Blocking commands remaining: {self.blocking_commands}"
         )
 
     def results_callback(
@@ -541,7 +541,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         Callback for LRC command result events.
         All subdevices that may block our LRC thread with their own LRC execution
         have their `longRunningCommandResult` attribute subscribed to with this method
-        as the change event callback (see `_subscribe_command_results` method above).
+        as the change event callback (see `subscribe_command_results` method above).
 
         :param event_data: Tango attribute change event data
         """
@@ -549,7 +549,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             target=self._results_callback_thread, args=(event_data,)
         ).start()
 
-    def _wait_for_blocking_results(
+    def wait_for_blocking_results(
         self: CbfComponentManager,
         timeout_sec: float = 0.0,
         task_abort_event: Optional[Event] = None,
@@ -558,13 +558,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
         Wait for the number of anticipated results to be pushed by subordinate devices.
 
         When issuing an LRC (or multiple) on subordinate devices from an LRC thread,
-        first store the LRC command ID in `_blocking_commands`, then use this
+        first store the LRC command ID in `blocking_commands`, then use this
         method to wait for all blocking command ID `longRunningCommandResult` events.
 
         All subdevices that may block our LRC thread with their own LRC execution
         have the `results_callback` method above provided as the change event callback
         for their `longRunningCommandResult` attribute subscription, which will remove
-        command IDs from `_blocking_commands` as change events are received.
+        command IDs from `blocking_commands` as change events are received.
 
         Nested LRC management example code inside LRC thread:
 
@@ -575,8 +575,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         for proxy in self.proxies:
             [[result_code], [command_id]] = proxy.LongRunningCommand()
             if result_code == ResultCode.QUEUED:
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
             else:
                 # command rejection handling
 
@@ -586,7 +586,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         # Then wait for all of their longRunningCommandResult attributes to update
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
             # LRC timeout_sec/abort handling
 
@@ -600,10 +600,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         if timeout_sec == 0.0:
             timeout_sec = float(
-                len(self._blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND_SEC
+                len(self.blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND_SEC
             )
         ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
-        while len(self._blocking_commands):
+        while len(self.blocking_commands):
             if task_abort_event and task_abort_event.is_set():
                 self.logger.warning(
                     "Task aborted while waiting for blocking results."
@@ -613,13 +613,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
             ticks_10ms -= 1
             if ticks_10ms <= 0:
                 self.logger.error(
-                    f"{len(self._blocking_commands)} blocking result(s) remain after {timeout_sec}s.\n"
-                    f"Blocking commands remaining: {self._blocking_commands}"
+                    f"{len(self.blocking_commands)} blocking result(s) remain after {timeout_sec}s.\n"
+                    f"Blocking commands remaining: {self.blocking_commands}"
                 )
-                with self._results_lock:
-                    self._blocking_commands = set()
+                with self.results_lock:
+                    self.blocking_commands = set()
                 return TaskStatus.FAILED
-        # Loop is exited once self._blocking_commands is decremented to 0 by _results_callback_thread()
+        # Loop is exited once self.blocking_commands is decremented to 0 by _results_callback_thread()
         self.logger.debug(
             f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )

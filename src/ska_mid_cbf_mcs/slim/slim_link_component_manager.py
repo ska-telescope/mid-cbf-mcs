@@ -422,7 +422,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._rx_device_proxy is None)
         ):
             self.logger.warning("Tx and Rx devices have not been connected.")
-            self._update_device_health_state(HealthState.UNKNOWN)
+            self.update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "VerifyConnection completed OK"
 
         error_msg = ""
@@ -451,15 +451,15 @@ class SlimLinkComponentManager(CbfComponentManager):
             )
             error_msg = f"VerifyConnection FAILED: {self._link_name} - {df}"
             self.logger.error(error_msg)
-            self._update_device_health_state(HealthState.FAILED)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
             self.logger.warning(
                 f"{self._link_name}: failed health check - {error_msg}"
             )
-            self._update_device_health_state(HealthState.FAILED)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "VerifyConnection completed OK"
-        self._update_device_health_state(HealthState.OK)
+        self.update_device_health_state(HealthState.OK)
         return ResultCode.OK, "VerifyConnection completed OK"
 
     def clear_counters(

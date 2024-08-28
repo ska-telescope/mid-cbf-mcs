@@ -86,7 +86,7 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self._subscribe_command_results(dp)
+                self.subscribe_command_results(dp)
                 self._dp_links.append(dp)
             except (tango.DevFailed, AttributeError) as err:
                 self._update_communication_state(
@@ -95,7 +95,7 @@ class SlimComponentManager(CbfComponentManager):
                 self.logger.error(f"Failed to initialize {fqdn}: {err}")
                 return
         self.logger.info(
-            f"event_ids after subscribing = {len(self._event_ids)}"
+            f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
         super()._start_communicating()
@@ -108,8 +108,8 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
         for proxy in self._dp_links:
-            self._unsubscribe_command_results(proxy)
-        self._blocking_commands = set()
+            self.unsubscribe_command_results(proxy)
+        self.blocking_commands = set()
 
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
@@ -478,15 +478,15 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.ConnectTxRx() rejected",
                     )
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-            lrc_status = self._wait_for_blocking_results(
+            lrc_status = self.wait_for_blocking_results(
                 timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
@@ -679,15 +679,15 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.DisconnectTxRx() rejected",
                     )
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-            lrc_status = self._wait_for_blocking_results(
+            lrc_status = self.wait_for_blocking_results(
                 timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
