@@ -57,21 +57,18 @@ def _create_fsp_configuration(
         # TODO: When we support wideband shift, insert it here:
         wideband_shift = 0
 
-        processing_region_dish_id_to_k = {}
-        if (
-            "receptors" not in processing_region
-            or len(processing_region["receptors"]) == 0
-        ):
-            processing_region_dish_id_to_k = dish_to_k.copy()
-        else:
-            for dish_id in processing_region["receptors"]:
-                processing_region_dish_id_to_k[dish_id] = dish_to_k[dish_id]
+        # Algorithm needs a K-value, however this is only to calculate the major
+        # shift, which the VCC's already calculate. So using k = 1000.
+        # Note: alignment (minor) shift needs to be sent to each Resampler &
+        # Delay tracker, but that value is not K-value dependent, and will be
+        # the same regardless of k-value.
+        k_value = 1000
 
         # Calculate the fsp configs for the processing region
         fsp_configuration = _fsp_config_from_processing_region(
             processing_region,
             wideband_shift,
-            processing_region_dish_id_to_k,
+            k_value,
             function_mode.name,
         )
 
@@ -83,7 +80,7 @@ def _create_fsp_configuration(
 def _fsp_config_from_processing_region(
     processing_region_config: dict,
     wideband_shift: int,
-    dish_id_to_k: dict,
+    k_value: int,
     function_mode: str,
 ) -> list[dict]:
     """Create a list of FSP configurations for a given processing region config
@@ -111,36 +108,14 @@ def _fsp_config_from_processing_region(
     fsp_ids: list[int] = processing_region_config["fsp_ids"]
     fsp_ids.sort()
 
-    # validation ensures we have enough fsp_ids for coarse channels
-    # but edge case where config supplies too many fsp_ids.
-    # calculate_fs_info only returns fsp info for enough to cover the coarse
-    # channels.
-    fsp_to_dish_id_shift = {}
-    for fsp_id in fsp_ids[: len(coarse_channels)]:
-        fsp_to_dish_id_shift[fsp_id] = {}
-
-    # need to run the calculation for each k_value, and collect the shift info
-    # for the dish_id for each FSP.
-    # only the vcc_downshift_freq and shift will differ between k, so it's
-    # ok to use the last run for the rest of the values for the FSP config
-    calculated_fs_infos = {}
-    for dish_id, k_value in dish_id_to_k:
-        calculated_fs_infos = calculate_fs_info(
-            fsp_ids=fsp_ids,
-            start_freq=processing_region_config["start_freq"],
-            channel_width=processing_region_config["channel_width"],
-            channel_count=processing_region_config["channel_count"],
-            k_value=k_value,
-            wideband_shift=wideband_shift,
-        )
-
-        # Collect the shift for the dish_id
-        for fs_info in calculated_fs_infos.values():
-            shift = {}
-            shift["vcc_downshift_freq"] = fs_info["vcc_downshift_freq"]
-            shift["alignment_shift_freq"] = fs_info["alignment_shift_freq"]
-            shift["total_shift_freq"] = fs_info["total_shift_freq"]
-            fsp_to_dish_id_shift[fs_info["fsp_id"]][dish_id] = shift
+    calculated_fs_infos = calculate_fs_info(
+        fsp_ids=fsp_ids,
+        start_freq=processing_region_config["start_freq"],
+        channel_width=processing_region_config["channel_width"],
+        channel_count=processing_region_config["channel_count"],
+        k_value=k_value,
+        wideband_shift=wideband_shift,
+    )
 
     output_port = (
         processing_region_config["output_port"]
@@ -149,7 +124,8 @@ def _fsp_config_from_processing_region(
     )
 
     if len(output_port) > 0:
-        # Split up the PR output ports according to the start channel ids of the FSPs
+        # Split up the PR output ports according to the start channel ids of the
+        # FSPs
         sdp_start_channel_ids = [
             fs_info["stp_start_channel_id"]
             for fs_info in calculated_fs_infos.values()
@@ -187,8 +163,8 @@ def _fsp_config_from_processing_region(
             calculated_fs_infos[fsp]["sdp_start_channel_id"]
             - calculated_fs_infos[fsp]["fsp_start_ch"]
         )
-        fsp_config["dish_id_to_shift"] = fsp_to_dish_id_shift[
-            fsp_config["fsp_id"]
+        fsp_config["alignment_shift_freq"] = calculated_fs_infos[fsp][
+            "alignment_shift_freq"
         ]
 
         # Optional values
