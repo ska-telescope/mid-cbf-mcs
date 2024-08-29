@@ -9,9 +9,9 @@ variables:
   KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
 stages:
+  - pages
   - lint
   - build
-  - pages
   - test
   - deploy
   - integration
