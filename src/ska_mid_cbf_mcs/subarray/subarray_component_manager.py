@@ -878,9 +878,9 @@ class CbfSubarrayComponentManager(
             purpose only.
         :rtype: (bool, str)
         """
-        (valid, msg) = validate_interface(argin, "configurescan")
-        if not valid:
-            return (False, msg)
+        # (valid, msg) = validate_interface(argin, "configurescan")
+        # if not valid:
+        #     return (False, msg)
         # try to deserialize input string to a JSON object
         try:
             full_configuration = json.loads(argin)
