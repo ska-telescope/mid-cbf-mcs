@@ -878,10 +878,10 @@ class CbfSubarrayComponentManager(
             purpose only.
         :rtype: (bool, str)
         """
-        # try to deserialize input string to a JSON object
         (valid, msg) = validate_interface(argin, "configurescan")
         if not valid:
             return (False, msg)
+        # try to deserialize input string to a JSON object
         try:
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
