@@ -29,11 +29,6 @@ from ska_control_model import (
 )
 from ska_tango_testing import context
 
-# TODO
-# from ska_telmodel.csp.common_schema import (
-#     MAX_CHANNELS_PER_STREAM,
-#     MAX_STREAMS_PER_FSP,
-# )
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -42,10 +37,12 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
     mhz_to_hz,
-    vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
+)
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
+    SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
@@ -88,6 +85,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self.subarray_id = subarray_id
         self._fqdn_controller = controller
+        self._proxy_controller = None
 
         self._fqdn_vcc_all = vcc
         self._fqdn_fsp_all = fsp
@@ -181,9 +179,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
-            controller = context.DeviceProxy(device_name=self._fqdn_controller)
             self._controller_max_capabilities = dict(
-                pair.split(":") for pair in controller.maxCapabilities
+                pair.split(":") for pair in self._proxy_controller.maxCapabilities
             )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -206,13 +203,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
-    def _init_subelement_proxies(self: CbfSubarrayComponentManager) -> bool:
+    def _init_proxies(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxies to FSP and VCC subelements
 
         :return: True if proxy initialization succeed, otherwise False
         """
         try:
+            self._proxy_controller = context.DeviceProxy(
+                device_name=self._fqdn_controller
+            )
+
             for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
@@ -248,19 +249,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for start_communicating operation.
         """
-        controller_success = self._get_max_capabilities()
-        if not controller_success:
-            self.logger.error(
-                "Failed to initialize max capabilities from controller."
-            )
+        subelement_success = self._init_proxies()
+        if not subelement_success:
+            self.logger.error("Failed to initialize subelement proxies.")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
 
-        subelement_success = self._init_subelement_proxies()
-        if not subelement_success:
-            self.logger.error("Failed to initialize subelement proxies.")
+        controller_success = self._get_max_capabilities()
+        if not controller_success:
+            self.logger.error(
+                "Failed to initialize max capabilities from controller."
+            )
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -952,9 +953,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return TaskStatus.COMPLETED
 
-    def _validate_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
+    def _validate_configure_scan_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
         """
-        Validate scan configuration.
+        Validate scan configuration JSON.
 
         :param argin: The configuration as JSON formatted string.
 
@@ -982,8 +983,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return False
 
-        # TODO: return additional validation as needed
-        # include new output_port validation
+        # At this point, validate FSP, VCC, subscription parameters
+        controller_validateSupportedConfiguration = self._proxy_cbf_controller.validateSupportedConfiguration
+        # MCS Scan Configuration Validation
+        if controller_validateSupportedConfiguration is True:
+            validator = SubarrayScanConfigurationValidator(
+                argin,
+                self._count_fsp,
+                self._proxies_fsp,
+                self._proxies_assigned_vcc,
+                self._proxies_fsp_pss_subarray_device,
+                self._proxies_fsp_pst_subarray_device,
+                self._dish_ids,
+                self._subarray_id,
+                self._logger,
+            )
+            return validator.validate_input()
 
         return True
 
@@ -1037,7 +1052,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self.logger.debug(log_msg)
         fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+            dish_sample_rate * const.VCC_OVERSAMPLING_FACTOR / total_num_fs
         )
         fs_sample_rate_for_band = {
             "vcc_id": vcc_id,
@@ -1593,7 +1608,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        validation_success = self._validate_input(argin)
+        validation_success = self._validate_configure_scan_input(argin)
         if not validation_success:
             task_callback(
                 status=TaskStatus.FAILED,
@@ -1618,7 +1633,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
+        # Pre 4.0
+        if "cbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["cbf"])
+        # Post 4.0
+        elif "midcbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # store configID
         self.config_id = str(common_configuration["config_id"])

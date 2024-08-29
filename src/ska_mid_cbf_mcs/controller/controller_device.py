@@ -183,9 +183,34 @@ class CbfController(CbfDevice):
         self._talondx_component_manager.simulation_mode = value
         self.component_manager.simulation_mode = value
 
+<<<<<<< HEAD
     # --------------
     # Initialization
     # --------------
+=======
+    @attribute(
+        dtype="DevBoolean",
+        access=AttrWriteType.READ_WRITE,
+        label="Restrictive Validation of Supported Configurations",
+        doc="Flag to indicate if a restrictive validation is requested for "
+        "supported configurations, such as with Scan Configurations. "
+        "Defaults to True.  Setting the flag to False can cause unexpected "
+        "behaviour with the system.",
+    )
+    def validateSupportedConfiguration(self: CbfController) -> bool:
+        """
+        Reads and return the value in the validateSupportedConfiguration
+
+        :return: the value in validateSupportedConfiguration
+        :rtype: bool
+        """
+        res = self.component_manager.validateSupportedConfiguration
+        return res
+
+    # ---------------
+    # General methods
+    # ---------------
+>>>>>>> main
 
     def init_command_objects(self: CbfController) -> None:
         """
@@ -205,9 +230,52 @@ class CbfController(CbfDevice):
             ),
         )
 
+<<<<<<< HEAD
     def _get_max_capabilities(self: CbfController) -> dict[str, int]:
         """
         Get maximum number of capabilities for VCC, FSP and Subarray. If property not found in db, then assign a default amount.
+=======
+        self.register_command_object(
+            "InitSysParam", self.InitSysParamCommand(*device_args)
+        )
+
+    def get_num_capabilities(
+        self: CbfController,
+    ) -> None:
+        # self._max_capabilities inherited from SKAController
+        # check first if property exists in DB
+        """Get number of capabilities for _init_Device.
+        If property not found in db, then assign a default amount(197,27,16)"""
+
+        if self._max_capabilities:
+            return self._max_capabilities
+        else:
+            self.logger.warning("MaxCapabilities device property not defined")
+
+    class InitCommand(SKAController.InitCommand):
+        def _get_num_capabilities(
+            self: CbfController.InitCommand,
+        ) -> None:
+            # self._max_capabilities inherited from SKAController
+            # check first if property exists in DB
+            """Get number of capabilities for _init_Device.
+            If property not found in db, then assign a default amount(197,27,16)
+            """
+
+            device = self.target
+
+            device.write_simulationMode(True)
+            device.write_validateSupportedConfiguration(True)
+
+            if device._max_capabilities:
+                try:
+                    device._count_vcc = device._max_capabilities["VCC"]
+                except KeyError:  # not found in DB
+                    self.logger.warning(
+                        "VCC capabilities not defined; defaulting to 197."
+                    )
+                    device._count_vcc = 197
+>>>>>>> main
 
         :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
         """
@@ -294,9 +362,106 @@ class CbfController(CbfDevice):
             component_state_callback=self._component_state_changed,
         )
 
+<<<<<<< HEAD
     # -------------
     # Fast Commands
     # -------------
+=======
+    def delete_device(self: CbfController) -> None:
+        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off"""
+        # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
+        # PROTECTED REGION END #    //  CbfController.delete_device
+
+    # ------------------
+    # Attributes methods
+    # ------------------
+
+    def read_commandProgress(self: CbfController) -> int:
+        # PROTECTED REGION ID(CbfController.commandProgress_read) ENABLED START #
+        """Return commandProgress attribute: percentage progress implemented for
+        commands that result in state/mode transitions for a large number of
+        components and/or are executed in stages (e.g power up, power down)"""
+        return self._command_progress
+        # PROTECTED REGION END #    //  CbfController.commandProgress_read
+
+    def read_sysParam(self: CbfController) -> str:
+        # PROTECTED REGION ID(CbfController.read_sysParam) ENABLED START #
+        """Return the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format."""
+        return self.component_manager._init_sys_param
+        # PROTECTED REGION END #    //  CbfController.sysParam_read
+
+    def read_sourceSysParam(self: CbfController) -> str:
+        # PROTECTED REGION ID(CbfController.read_sourceSysParam) ENABLED START #
+        """Return the location of the json file that contains the mapping from
+        Dish ID to VCC and frequency offset k, to be retrieved using the Telescope Model.
+        """
+        return self.component_manager._source_init_sys_param
+        # PROTECTED REGION END #    //  CbfController.read_sourceSysParam
+
+    def read_dishToVcc(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.dishToVcc_read) ENABLED START #
+        """Return 'dishID:vccID'"""
+        if self.component_manager.dish_utils is None:
+            return []
+        out_str = [
+            f"{r}:{v}"
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
+        ]
+
+        return out_str
+        # PROTECTED REGION END #    //  CbfController.dishToVcc_read
+
+    def read_vccToDish(self: CbfController) -> List[str]:
+        # PROTECTED REGION ID(CbfController.vccToDish_read) ENABLED START #
+        """Return dishToVcc attribute: 'vccID:dishID'"""
+        if self.component_manager.dish_utils is None:
+            return []
+        out_str = [
+            f"{v}:{r}"
+            for r, v in self.component_manager.dish_utils.dish_id_to_vcc_id.items()
+        ]
+        return out_str
+        # PROTECTED REGION END #    //  CbfController.vccToDish_read
+
+    def write_simulationMode(
+        self: CbfController, value: SimulationMode
+    ) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self._talondx_component_manager.simulation_mode = value
+
+    def write_validateSupportedConfiguration(
+        self: CbfController, value: bool
+    ) -> None:
+        """
+        Setting this flag to false allows the user to bypass validation that
+        ensures the inputs are currently supported by the system.
+
+        The option to bypass validation is intended for testing purposes only.
+        Using unsupported configurations may result in unexpected system behaviour."
+
+        A warning level log is created when the flag is set to False.
+
+        :param value: Set the flag to True/False
+        """
+        if value is False:
+            msg = (
+                "Setting validateSupportedConfiguration to False. "
+                "Using unsupported configurations may result in "
+                "unexpected system behaviour."
+            )
+            self.logger.warning(msg)
+
+        self.component_manager.validateSupportedConfiguration = value
+
+    # --------
+    # Commands
+    # --------
+>>>>>>> main
 
     class InitCommand(CbfDevice.InitCommand):
         """
