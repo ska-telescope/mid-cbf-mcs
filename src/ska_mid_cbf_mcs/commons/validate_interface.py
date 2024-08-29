@@ -7,10 +7,10 @@ import json
 #     CSP_SCAN_PREFIX,
 # )
 
-CSP_CONFIG_PREFIX='https://schema.skao.int/ska-csp-configure/'
-CSP_CONFIGSCAN_PREFIX='https://schema.skao.int/ska-csp-configurescan/'
-CSP_MID_DELAYMODEL_PREFIX='https://schema.skao.int/ska-mid-csp-delaymodel/'
-CSP_SCAN_PREFIX='https://schema.skao.int/ska-csp-scan/'
+CSP_CONFIG_PREFIX = "https://schema.skao.int/ska-csp-configure/"
+CSP_CONFIGSCAN_PREFIX = "https://schema.skao.int/ska-csp-configurescan/"
+CSP_MID_DELAYMODEL_PREFIX = "https://schema.skao.int/ska-mid-csp-delaymodel/"
+CSP_SCAN_PREFIX = "https://schema.skao.int/ska-csp-scan/"
 
 CBF_INITSYSPARAM_PREFIX = "https://schema.skao.int/ska-mid-cbf-initsysparam/"
 
@@ -33,9 +33,9 @@ CSP_CONFIGSCAN_VERSIONS = [
 ]
 CSP_MID_DELAYMODEL_VERSIONS = [CSP_MID_DELAYMODEL_VER3_0]
 CSP_SCAN_VERSIONS = [
-                    CSP_SCAN_VER2_2,
-                    CSP_SCAN_VER2_3,
-                    ]
+    CSP_SCAN_VER2_2,
+    CSP_SCAN_VER2_3,
+]
 CBF_INITSYSPARAM_VERSIONS = [CBF_INITSYSPARAM_VER1_0]
 
 
