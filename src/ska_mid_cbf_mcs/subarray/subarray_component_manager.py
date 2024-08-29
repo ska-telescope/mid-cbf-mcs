@@ -42,7 +42,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
     mhz_to_hz,
-    vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
@@ -1037,7 +1036,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self.logger.debug(log_msg)
         fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+            dish_sample_rate * const.VCC_OVERSAMPLING_FACTOR / total_num_fs
         )
         fs_sample_rate_for_band = {
             "vcc_id": vcc_id,
