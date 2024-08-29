@@ -48,19 +48,19 @@ class SubarrayScanConfigurationValidator:
     def __init__(
         self: SubarrayScanConfigurationValidator,
         scan_configuration: str,
-        count_fsp: int,
         dish_ids: list[str],
         subarray_id: int,
         logger: logging.Logger,
+        count_fsp: int = const.DEFAULT_COUNT_FSP,
     ) -> None:
         """
         Constructor for SubarrayScanConfigurationValidator
 
         :param scan_configuration: A Scan Configuration json string
-        :param count_fsp: Count of FSPs in a Subarray Component Manager to be validated
         :param dish_ids: list of Dish IDs
         :param subarray_id: The ID of the Subarray's Scan Configuration being validated
         :param logger: A Logger object to handle logging message for the class
+        :param count_fsp: Count of FSPs in a Subarray Component Manager to be validated
         """
 
         self._scan_configuration = scan_configuration
@@ -1035,10 +1035,9 @@ class SubarrayScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
 
-        # TODO: PSS
-        # success, msg = self._validate_search_window(configuration)
-        # if success is False:
-        #     return (False, msg)
+        success, msg = self._validate_search_window(configuration)
+        if success is False:
+            return (False, msg)
 
         # Not Supported in AA 0.5/AA 1.0
         if "frequency_band_offset_stream1" in configuration:
@@ -1868,14 +1867,7 @@ class SubarrayScanConfigurationValidator:
 
         # Invalid Version Case
         else:
-            self.logger.error(
-                "The version defined in the Scan Configuration"
-                f"is not supported by MCS: version {scan_configuration_version}"
-            )
-            return False
+            success = False
+            msg = f"Error: The version defined in the Scan Configuration is not supported by MCS: version {scan_configuration_version}"
 
-        if success:
-            self.logger.info(msg)
-        else:
-            self.logger.error(msg)
-        return success
+        return success, msg

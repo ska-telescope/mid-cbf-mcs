@@ -1,30 +1,19 @@
 from __future__ import annotations
 
 import copy
-import gc
 import json
 import os
 from logging import getLogger
-from typing import Iterator
-from unittest.mock import Mock
 
 import pytest
-from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
-    CbfSubarrayComponentManager,
-)
-from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 
 # Path
 FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-# Disable garbage collection to prevent tests hanging
-gc.disable()
 
 
 class TestScanConfigurationValidator:
@@ -37,96 +26,27 @@ class TestScanConfigurationValidator:
         autouse=True,
         params=[
             {
-                "sys_param_file": "sys_param_4_boards.json",
-                "configure_scan_file": "ConfigureScan_basic_CORR.json",
-                "delay_model_file": "delay_model_1_receptor.json",
-                "scan_file": "Scan1_basic.json",
+                "configure_scan_file": "ConfigureScan_4_1_CORR.json",
                 "sub_id": 1,
-                "dish_ids": ["SKA001"],
-                "vcc_ids": [
-                    1
-                ],  # must be VCC IDs equivalent to assigned DISH IDs
-                "fsp_ids": [
-                    1
-                ],  # must be FSP IDs provided in ConfigureScan JSON
+                "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
             }
         ],
     )
-    def before_each(
+    def validator_params(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
-    ):
+        request: pytest.FixtureRequest,
+    ) -> dict[any]:
         """
         Before Each fixture, to setup the CbfSubarrayComponentManager and the Scan Configuration
         """
+        params = request.param
 
-        config_file_name = "ConfigureScan_4_1_CORR.json"
-        receptors = ["SKA001", "SKA036", "SKA063", "SKA100"]
-        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
-
-        subarray_component_manager.start_communicating()
-
-        with open(FILE_PATH + "sys_param_4_boards.json") as f:
-            sp = f.read()
-
-        subarray_component_manager.update_sys_param(sp)
-        subarray_component_manager.assign_vcc(receptors)
-
-        with open(path_to_test_json) as file:
+        with open(FILE_PATH + params["configure_scan_file"]) as file:
             json_str = file.read().replace("\n", "")
+
         self.full_configuration = json.loads(json_str)
 
-    @pytest.fixture(name="test_context")
-    def subarray_test_context(
-        self: TestScanConfigurationValidator, initial_mocks: dict[str, Mock]
-    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
-        """
-        Fixture that creates a test context for the CbfSubarray device.
-
-        :param initial_mocks: A dictionary of initial mocks to be used in the test context.
-        :return: A test context for the CbfSubarray device.
-        """
-        harness = context.ThreadedTestTangoContextManager()
-        harness.add_device(
-            device_name="mid_csp_cbf/sub_elt/subarray_01",
-            device_class=CbfSubarray,
-            CbfControllerAddress="mid_csp_cbf/sub_elt/controller",
-            VCC=[
-                "mid_csp_cbf/vcc/001",
-                "mid_csp_cbf/vcc/002",
-                "mid_csp_cbf/vcc/003",
-                "mid_csp_cbf/vcc/004",
-            ],
-            FSP=[
-                "mid_csp_cbf/fsp/01",
-                "mid_csp_cbf/fsp/02",
-                "mid_csp_cbf/fsp/03",
-                "mid_csp_cbf/fsp/04",
-            ],
-            FspCorrSubarray=[
-                "mid_csp_cbf/fspCorrSubarray/01_01",
-                "mid_csp_cbf/fspCorrSubarray/02_01",
-                "mid_csp_cbf/fspCorrSubarray/03_01",
-                "mid_csp_cbf/fspCorrSubarray/04_01",
-            ],
-            TalonBoard=[
-                "mid_csp_cbf/talon_board/001",
-                "mid_csp_cbf/talon_board/002",
-                "mid_csp_cbf/talon_board/003",
-                "mid_csp_cbf/talon_board/004",
-            ],
-            VisSLIM=["mid_csp_cbf/slim/slim-vis"],
-            DeviceID="1",
-        )
-        for name, mock in initial_mocks.items():
-            # Subarray requires unique VCC mocks to be generated
-            if "mid_csp_cbf/vcc/" in name:
-                harness.add_mock_device(device_name=name, device_mock=mock())
-            else:
-                harness.add_mock_device(device_name=name, device_mock=mock)
-
-        with harness as test_context:
-            yield test_context
+        return params
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -134,7 +54,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_Configuration_Version(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         config_file_name: str,
     ):
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
@@ -143,79 +63,46 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         print(msg)
         assert "Error: The version defined in the Scan Configuration" in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
-        "config_file_name,\
-         receptors",
-        [
-            (
-                "ConfigureScan_4_1_CORR.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-            ),
-            (
-                "ConfigureScan_basic_CORR.json",
-                ["SKA001", "SKA036", "SKA063", "SKA100"],
-            ),
-        ],
+        "config_file_name",
+        ["ConfigureScan_4_1_CORR.json", "ConfigureScan_basic_CORR.json"],
     )
     def test_Valid_Configuration_Version(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         config_file_name: str,
-        receptors: list[str],
     ):
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
-
-        subarray_component_manager.start_communicating()
-
-        with open(FILE_PATH + "sys_param_4_boards.json") as f:
-            sp = f.read()
-        subarray_component_manager.update_sys_param(sp)
-
-        subarray_component_manager.assign_vcc(receptors)
-
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
+
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         print(msg)
         assert "Scan configuration is valid." in msg
-        assert result_code is True
+        assert success is True
 
     @pytest.mark.parametrize("subarray_id", [(2), (3), (16)])
     def test_Invalid_Subarray_ID(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         subarray_id: int,
     ):
         self.full_configuration["common"]["subarray_id"] = subarray_id
@@ -224,27 +111,20 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         print(msg)
         assert f"subarray_id {subarray_id} not supported." in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5]])
     def test_Invalid_FSP_IDs(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         fsp_ids: int,
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -255,30 +135,23 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         print(msg)
         assert (
             f"AA 0.5 only support fsp_ids with array length of 1-4,size of the fsp_ids given: {len(fsp_ids)}"
             in msg
         )
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize("fsp_ids", [[5, 6, 7, 8], [15, 19, 23, 27]])
     def test_Invalid_FSP_IDs_CORR_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         fsp_ids: int,
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -289,28 +162,21 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = f"AA 0.5 Requirement: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize("fsp_id", [1, 2, 3, 4])
     def test_Invalid_Duplicate_FSP_IDs_in_single_subarray(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         fsp_id: int,
     ):
         self.full_configuration["midcbf"]["correlation"][
@@ -331,24 +197,17 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         assert (
             f"FSP ID {fsp_id} already assigned to another Processing Region"
             in msg
         )
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "common_key, common_key_value",
@@ -362,7 +221,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_Common_Keys_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         common_key: str,
         common_key_value: any,
     ):
@@ -372,21 +231,14 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         print(msg)
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "midcbf_key, midcbf_value",
@@ -398,7 +250,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_MidCBF_Keys_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         midcbf_key: str,
         midcbf_value: any,
     ):
@@ -408,30 +260,23 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = f"{midcbf_key} Currently Not Supported In AA 0.5/AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "start_freq_value", [0, 6719, 1981815360, 1281860161]
     )
     def test_Invalid_start_freq_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         start_freq_value: int,
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -442,23 +287,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is accepted by MCS"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "start_freq_value,channel_count_value",
@@ -466,7 +304,7 @@ class TestScanConfigurationValidator:
     )
     def test_Valid_start_freq_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         start_freq_value: int,
         channel_count_value: int,
     ):
@@ -494,28 +332,21 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
         print(msg)
         assert expected_msg in msg
-        assert result_code is True
+        assert success is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
     def test_Invalid_fsp_ids_amount_for_requested_bandwidth_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         fsp_ids: list[int],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -526,23 +357,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "channel_width",
@@ -570,7 +394,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_channel_width_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         channel_width: list[int],
     ):
         # Test cases to be added as more support channel widths are added
@@ -582,28 +406,21 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = f"Invalid value for channel_width:{channel_width}"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30, 58982, 59000])
     def test_Invalid_channel_count_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         channel_count: int,
     ):
         # Test cases to be added as more support channel widths are added
@@ -615,27 +432,20 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Invalid value for channel_count"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     def test_Invalid_sdp_start_channel_id_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         # All three output_x uses the same function.  Just test with one test case should be good enough
         # Test cases to be added as more support channel widths are added
@@ -651,23 +461,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_host"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -680,23 +483,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_port"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -709,23 +505,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_link_map"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "output_host",
@@ -740,7 +529,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_output_host_non_multiple_20_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         output_host: list[list[int, str]],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -754,23 +543,16 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "channel must be in multiples of 20"
         print(msg)
         assert expected_msg in msg[1]
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "output_host",
@@ -791,7 +573,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_output_host_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         output_host: list[list[int, str]],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -805,22 +587,15 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Output Host Values must be in ascending order and cannot be duplicate"
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     @pytest.mark.parametrize(
         "output_port",
@@ -832,7 +607,7 @@ class TestScanConfigurationValidator:
     )
     def test_Invalid_output_port_increment_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
         output_port: list[list[int, int]],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -854,26 +629,19 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "channel must be in increments of 20"
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     def test_Valid_channel_map_increment_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
@@ -895,27 +663,20 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
         print(msg)
         assert expected_msg in msg
-        assert result_code is True
+        assert success is True
 
     def test_invalid_channel_map_count_to_single_host_post_v4(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         test_output_port_map = [[i, 10000] for i in range(0, 421, 20)]
 
@@ -930,27 +691,20 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "There are over 20 channels assigned to a specific port within a single host "
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     def test_invalid_more_channel_in_channel_maps_than_channel_count(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         channel_count = self.full_configuration["midcbf"]["correlation"][
             "processing_regions"
@@ -963,28 +717,21 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "output_port exceeds the max allowable channel "
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     # To be removed when MCS supports search window
     def test_reject_search_window(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         self.full_configuration["midcbf"]["search_window"] = {}
         json_str = json.dumps(self.full_configuration)
@@ -992,28 +739,21 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "search_window Not Supported in AA 0.5 and AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False
 
     # To be removed when MCS supports vlbi
     def test_reject_vlbi(
         self: TestScanConfigurationValidator,
-        subarray_component_manager: CbfSubarrayComponentManager,
+        validator_params: dict[any],
     ):
         self.full_configuration["midcbf"]["vlbi"] = {}
         json_str = json.dumps(self.full_configuration)
@@ -1021,20 +761,13 @@ class TestScanConfigurationValidator:
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
                 scan_configuration=json_str,
-                count_fsp=subarray_component_manager._count_fsp,
-                proxies_fsp=list(
-                    subarray_component_manager._all_fsp_proxies.values()
-                ),
-                proxies_assigned_vcc=list(
-                    subarray_component_manager._assigned_vcc_proxies
-                ),
-                dish_ids=list(subarray_component_manager._dish_ids),
-                subarray_id=subarray_component_manager.subarray_id,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
                 logger=self.logger,
             )
         )
-        result_code, msg = validator.validate_input()
+        success, msg = validator.validate_input()
         expected_msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
         print(msg)
         assert expected_msg in msg
-        assert result_code is False
+        assert success is False

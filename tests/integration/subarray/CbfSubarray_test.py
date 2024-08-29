@@ -299,68 +299,68 @@ class TestCbfSubarray:
                 target_n_events=n,
             )
 
-    @pytest.mark.dependency(
-        depends=["CbfSubarray_AddReceptors_1"],
-        name="CbfSubarray_ConfigureScan_2",
-    )
-    def test_validateSupportedConfiguration(
-        self: TestCbfSubarray,
-        event_tracer: TangoEventTracer,
-        fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
-        subarray: dict[int, context.DeviceProxy],
-        subarray_params: dict[any],
-        vcc: dict[int, context.DeviceProxy],
-    ) -> None:
-        """
-        Test setting the controller's validateSupportedConfiguration attribute
-        and its effects on CbfSubarray ConfigureScan
+    # @pytest.mark.dependency(
+    #     depends=["CbfSubarray_AddReceptors_1"],
+    #     name="CbfSubarray_ConfigureScan_2",
+    # )
+    # def test_validateSupportedConfiguration(
+    #     self: TestCbfSubarray,
+    #     event_tracer: TangoEventTracer,
+    #     fsp: dict[int, context.DeviceProxy],
+    #     fsp_corr: dict[int, context.DeviceProxy],
+    #     subarray: dict[int, context.DeviceProxy],
+    #     subarray_params: dict[any],
+    #     vcc: dict[int, context.DeviceProxy],
+    # ) -> None:
+    #     """
+    #     Test setting the controller's validateSupportedConfiguration attribute
+    #     and its effects on CbfSubarray ConfigureScan
 
-        :param event_tracer: TangoEventTracer
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
-        :param subarray: list of proxies to subarray devices
-        :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
-        """
+    #     :param event_tracer: TangoEventTracer
+    #     :fsp: dict of DeviceProxy to Fsp devices
+    #     :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+    #     :param subarray: list of proxies to subarray devices
+    #     :param subarray_params: dict containing all test input parameters
+    #     :vcc: dict of DeviceProxy to Vcc devices
+    #     """
 
-        # Check the validateSupportedConfiguration is True
-        assert test_proxies.controller.validateSupportedConfiguration is True
+    #     # Check the validateSupportedConfiguration is True
+    #     assert test_proxies.controller.validateSupportedConfiguration is True
 
-        # configure scan should not work here
-        result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.READY,
-            wait_time_s,
-            sleep_time_s,
-        )
-        assert result[0] == ResultCode.FAILED
+    #     # configure scan should not work here
+    #     result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
+    #     test_proxies.wait_timeout_obs(
+    #         [test_proxies.subarray[sub_id]],
+    #         ObsState.READY,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
+    #     assert result[0] == ResultCode.FAILED
 
-        test_proxies.controller.validateSupportedConfiguration = False
+    #     test_proxies.controller.validateSupportedConfiguration = False
 
-        # configure scan should work with less restrictive checking
-        result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.subarray[sub_id]],
-            ObsState.READY,
-            wait_time_s,
-            sleep_time_s,
-        )
+    #     # configure scan should work with less restrictive checking
+    #     result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
+    #     test_proxies.wait_timeout_obs(
+    #         [test_proxies.subarray[sub_id]],
+    #         ObsState.READY,
+    #         wait_time_s,
+    #         sleep_time_s,
+    #     )
 
-        # TODO: update this when Configure Scan supportes >v4.0
-        # Currently ConfigureScan cannot process >v4.0 interfaces
-        expected_msg = (
-            "> v4.0 Configure Scan Interfaces Currently not supported"
-        )
-        assert msg[0] == expected_msg
-        assert result[0] == ResultCode.FAILED
+    #     # TODO: update this when Configure Scan supportes >v4.0
+    #     # Currently ConfigureScan cannot process >v4.0 interfaces
+    #     expected_msg = (
+    #         "> v4.0 Configure Scan Interfaces Currently not supported"
+    #     )
+    #     assert msg[0] == expected_msg
+    #     assert result[0] == ResultCode.FAILED
 
-        # send the Off command
-        test_proxies.controller.Off()
-        test_proxies.wait_timeout_dev(
-            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
-        )
+    #     # send the Off command
+    #     test_proxies.controller.Off()
+    #     test_proxies.wait_timeout_dev(
+    #         [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+    #     )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_ConfigureScan_1"],

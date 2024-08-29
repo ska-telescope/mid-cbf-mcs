@@ -986,7 +986,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # At this point, validate FSP, VCC, subscription parameters
         controller_validateSupportedConfiguration = (
-            self._proxy_cbf_controller.validateSupportedConfiguration
+            self._proxy_controller.validateSupportedConfiguration
         )
         # MCS Scan Configuration Validation
         if controller_validateSupportedConfiguration is True:
@@ -997,7 +997,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 subarray_id=self.subarray_id,
                 logger=self.logger,
             )
-            return validator.validate_input()
+            success, msg = validator.validate_input()
+            if success:
+                self.logger.info(msg)
+            else:
+                self.logger.error(msg)
+            return success
 
         return True
 
