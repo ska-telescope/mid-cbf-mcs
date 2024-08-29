@@ -55,8 +55,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     mhz_to_hz,
     vcc_oversampling_factor,
 )
-
-# from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -879,9 +877,6 @@ class CbfSubarrayComponentManager(
             purpose only.
         :rtype: (bool, str)
         """
-        # (valid, msg) = validate_interface(argin, "configurescan")
-        # if not valid:
-        #     return (False, msg)
         # try to deserialize input string to a JSON object
         try:
             full_configuration = json.loads(argin)

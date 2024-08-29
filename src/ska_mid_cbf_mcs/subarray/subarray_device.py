@@ -720,7 +720,7 @@ class CbfSubarray(CspSubElementSubarray):
             if not valid:
                 return (
                     False,
-                    "Scan configuration object is not a valid JSON object. Aborting configuration.",
+                    msg,
                 )
             # try to deserialize input string to a JSON object
             try:
