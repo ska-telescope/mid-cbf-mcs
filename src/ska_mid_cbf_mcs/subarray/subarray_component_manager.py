@@ -1557,6 +1557,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_corr_proxies = set()
         return True
 
+    # TODO: split up deconfigure for safer flow in event of partial command failure
     def _deconfigure(
         self: CbfSubarrayComponentManager,
     ) -> bool:
@@ -1623,6 +1624,25 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        full_configuration = json.loads(argin)
+        common_configuration = copy.deepcopy(full_configuration["common"])
+        # Pre 4.0
+        if "cbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["cbf"])
+        # Post 4.0
+        elif "midcbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["midcbf"])
+
+            # TODO: remove this return when Configure Scan supports >v4.0
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "> v4.0 Configure Scan Interfaces Currently not supported",
+                ),
+            )
+            return
+
         # deconfigure to reset assigned FSPs and unsubscribe from events.
         deconfigure_success = self._deconfigure()
         if not deconfigure_success:
@@ -1634,15 +1654,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-
-        full_configuration = json.loads(argin)
-        common_configuration = copy.deepcopy(full_configuration["common"])
-        # Pre 4.0
-        if "cbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["cbf"])
-        # Post 4.0
-        elif "midcbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # Configure delayModel subscription point
         delay_model_success = self._subscribe_tm_event(
