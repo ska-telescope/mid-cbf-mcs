@@ -40,7 +40,7 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
+from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
@@ -178,6 +178,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
+            self._proxy_controller = context.DeviceProxy(
+                device_name=self._fqdn_controller
+            )
             self._controller_max_capabilities = dict(
                 pair.split(":")
                 for pair in self._proxy_controller.maxCapabilities
@@ -210,10 +213,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if proxy initialization succeed, otherwise False
         """
         try:
-            self._proxy_controller = context.DeviceProxy(
-                device_name=self._fqdn_controller
-            )
-
             for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
@@ -249,19 +248,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for start_communicating operation.
         """
-        subelement_success = self._init_proxies()
-        if not subelement_success:
-            self.logger.error("Failed to initialize subelement proxies.")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
-
         controller_success = self._get_max_capabilities()
         if not controller_success:
             self.logger.error(
                 "Failed to initialize max capabilities from controller."
             )
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
+
+        subelement_success = self._init_proxies()
+        if not subelement_success:
+            self.logger.error("Failed to initialize subelement proxies.")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )

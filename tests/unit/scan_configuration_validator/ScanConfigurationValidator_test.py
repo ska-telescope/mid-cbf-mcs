@@ -1,22 +1,30 @@
 from __future__ import annotations
 
 import copy
+import gc
 import json
 import os
 from logging import getLogger
+from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
+from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
 )
+from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 
 # Path
 FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+
+# Disable garbage collection to prevent tests hanging
+gc.disable()
 
 
 class TestScanConfigurationValidator:
@@ -25,13 +33,31 @@ class TestScanConfigurationValidator:
     # Shared self.full_configuration, to be set in before_each
     full_configuration = {}
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(
+        autouse=True,
+        params=[
+            {
+                "sys_param_file": "sys_param_4_boards.json",
+                "configure_scan_file": "ConfigureScan_basic_CORR.json",
+                "delay_model_file": "delay_model_1_receptor.json",
+                "scan_file": "Scan1_basic.json",
+                "sub_id": 1,
+                "dish_ids": ["SKA001"],
+                "vcc_ids": [
+                    1
+                ],  # must be VCC IDs equivalent to assigned DISH IDs
+                "fsp_ids": [
+                    1
+                ],  # must be FSP IDs provided in ConfigureScan JSON
+            }
+        ],
+    )
     def before_each(
         self: TestScanConfigurationValidator,
         subarray_component_manager: CbfSubarrayComponentManager,
     ):
         """
-        Before Each fixure, to setup the CbfSubarrayComponentManager and the Scan Configuration
+        Before Each fixture, to setup the CbfSubarrayComponentManager and the Scan Configuration
         """
 
         config_file_name = "ConfigureScan_4_1_CORR.json"
@@ -50,6 +76,58 @@ class TestScanConfigurationValidator:
             json_str = file.read().replace("\n", "")
         self.full_configuration = json.loads(json_str)
 
+    @pytest.fixture(name="test_context")
+    def subarray_test_context(
+        self: TestScanConfigurationValidator, initial_mocks: dict[str, Mock]
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the CbfSubarray device.
+
+        :param initial_mocks: A dictionary of initial mocks to be used in the test context.
+        :return: A test context for the CbfSubarray device.
+        """
+        harness = context.ThreadedTestTangoContextManager()
+        harness.add_device(
+            device_name="mid_csp_cbf/sub_elt/subarray_01",
+            device_class=CbfSubarray,
+            CbfControllerAddress="mid_csp_cbf/sub_elt/controller",
+            VCC=[
+                "mid_csp_cbf/vcc/001",
+                "mid_csp_cbf/vcc/002",
+                "mid_csp_cbf/vcc/003",
+                "mid_csp_cbf/vcc/004",
+            ],
+            FSP=[
+                "mid_csp_cbf/fsp/01",
+                "mid_csp_cbf/fsp/02",
+                "mid_csp_cbf/fsp/03",
+                "mid_csp_cbf/fsp/04",
+            ],
+            FspCorrSubarray=[
+                "mid_csp_cbf/fspCorrSubarray/01_01",
+                "mid_csp_cbf/fspCorrSubarray/02_01",
+                "mid_csp_cbf/fspCorrSubarray/03_01",
+                "mid_csp_cbf/fspCorrSubarray/04_01",
+            ],
+            TalonBoard=[
+                "mid_csp_cbf/talon_board/001",
+                "mid_csp_cbf/talon_board/002",
+                "mid_csp_cbf/talon_board/003",
+                "mid_csp_cbf/talon_board/004",
+            ],
+            VisSLIM=["mid_csp_cbf/slim/slim-vis"],
+            DeviceID="1",
+        )
+        for name, mock in initial_mocks.items():
+            # Subarray requires unique VCC mocks to be generated
+            if "mid_csp_cbf/vcc/" in name:
+                harness.add_mock_device(device_name=name, device_mock=mock())
+            else:
+                harness.add_mock_device(device_name=name, device_mock=mock)
+
+        with harness as test_context:
+            yield test_context
+
     @pytest.mark.parametrize(
         "config_file_name",
         [("ConfigureScan_1_0_CORR.json"), ("ConfigureScan_19_0_CORR.json")],
@@ -64,15 +142,17 @@ class TestScanConfigurationValidator:
             json_str = file.read().replace("\n", "")
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -114,15 +194,17 @@ class TestScanConfigurationValidator:
             json_str = file.read().replace("\n", "")
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -141,15 +223,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -170,15 +254,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -202,19 +288,21 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
-        expected_msg = f"AA 0.5 Requirment: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
+        expected_msg = f"AA 0.5 Requirement: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
         print(msg)
         assert expected_msg in msg
         assert result_code is False
@@ -234,7 +322,7 @@ class TestScanConfigurationValidator:
                 ][0]
             )
         )
-        # The FSP provided are all dups, but I want to check that it recognized more than one different values as duplciates
+        # The FSP provided are all dupes, but I want to check that it recognized more than one different values as duplicates
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             1
         ]["fsp_ids"] = [fsp_id, 2, 3, 4]
@@ -242,15 +330,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -281,15 +371,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -315,15 +407,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -347,19 +441,21 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
-        expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is acepted by MCS"
+        expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is accepted by MCS"
         print(msg)
         assert expected_msg in msg
         assert result_code is False
@@ -397,15 +493,17 @@ class TestScanConfigurationValidator:
         )
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -427,15 +525,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -481,15 +581,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -512,15 +614,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -546,15 +650,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -573,15 +679,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -600,15 +708,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -643,15 +753,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -692,15 +804,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -739,15 +853,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -778,15 +894,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -811,15 +929,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -842,15 +962,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -869,15 +991,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()
@@ -896,15 +1020,17 @@ class TestScanConfigurationValidator:
 
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
-                json_str,
-                subarray_component_manager._count_fsp,
-                subarray_component_manager._proxies_fsp,
-                subarray_component_manager._proxies_assigned_vcc,
-                subarray_component_manager._proxies_fsp_pss_subarray_device,
-                subarray_component_manager._proxies_fsp_pst_subarray_device,
-                subarray_component_manager._dish_ids,
-                subarray_component_manager._subarray_id,
-                self.logger,
+                scan_configuration=json_str,
+                count_fsp=subarray_component_manager._count_fsp,
+                proxies_fsp=list(
+                    subarray_component_manager._all_fsp_proxies.values()
+                ),
+                proxies_assigned_vcc=list(
+                    subarray_component_manager._assigned_vcc_proxies
+                ),
+                dish_ids=list(subarray_component_manager._dish_ids),
+                subarray_id=subarray_component_manager.subarray_id,
+                logger=self.logger,
             )
         )
         result_code, msg = validator.validate_input()

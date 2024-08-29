@@ -8,14 +8,8 @@ import sys
 from collections import defaultdict
 
 import tango
-from ska_tango_base.control_model import ObsState
 from ska_tango_testing import context
-from ska_telmodel.csp.common_schema import (
-    MAX_CHANNELS_PER_STREAM,
-    MAX_STREAMS_PER_FSP,
-)
 
-import ska_mid_cbf_mcs.subarray.subarray_component_manager as scm
 from ska_mid_cbf_mcs.commons.global_enum import (
     AcceptedScanConfigurationVersion,
     FspModes,
@@ -23,6 +17,14 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     freq_band_dict,
     scan_configuration_supported_value,
 )
+
+# TODO: circular import issue
+# from ska_telmodel.csp.common_schema import (
+#     MAX_CHANNELS_PER_STREAM,
+#     MAX_STREAMS_PER_FSP,
+# )
+MAX_STREAMS_PER_FSP = 744
+MAX_CHANNELS_PER_STREAM = 20
 
 """
 SubarrayScanConfigurationValidator: Contains functions that validates a given
@@ -477,180 +479,182 @@ class SubarrayScanConfigurationValidator:
         self.logger.debug(msg)
         return (True, msg)
 
-    def _validate_pss_function_mode_legacy(
-        self: SubarrayScanConfigurationValidator, fsp: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates the configuration parameters given for PST Function Mode
-        for pre v4.0 Scan Configurations
+    # TODO: PSS
+    # def _validate_pss_function_mode_legacy(
+    #     self: SubarrayScanConfigurationValidator, fsp: dict
+    # ) -> tuple[bool, str]:
+    #     """
+    #     Validates the configuration parameters given for PST Function Mode
+    #     for pre v4.0 Scan Configurations
 
-        :param fsp: A FSP Configuration as a Dictionary
+    #     :param fsp: A FSP Configuration as a Dictionary
 
-        :return: tuple with:
-                    bool to indicate if the configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        # searchWindowID not in valid range
-        if int(fsp["search_window_id"]) not in [1, 2]:
-            msg = (
-                "'searchWindowID' must be one of [1, 2] "
-                f"(received {fsp['search_window_id']})."
-            )
-            self.logger.error(msg)
-            return (False, msg)
+    #     :return: tuple with:
+    #                 bool to indicate if the configuration is valid or not
+    #                 str message about the configuration
+    #     :rtype: tuple[bool, str]
+    #     """
+    #     # searchWindowID not in valid range
+    #     if int(fsp["search_window_id"]) not in [1, 2]:
+    #         msg = (
+    #             "'searchWindowID' must be one of [1, 2] "
+    #             f"(received {fsp['search_window_id']})."
+    #         )
+    #         self.logger.error(msg)
+    #         return (False, msg)
 
-        if len(fsp["search_beam"]) <= 192:
-            for searchBeam in fsp["search_beam"]:
-                if 1 > int(searchBeam["search_beam_id"]) > 1500:
-                    # searchbeamID not in valid range
-                    msg = (
-                        "'searchBeamID' must be within range 1-1500 "
-                        f"(received {searchBeam['search_beam_id']})."
-                    )
-                    self.logger.error(msg)
-                    return (False, msg)
+    #     if len(fsp["search_beam"]) <= 192:
+    #         for searchBeam in fsp["search_beam"]:
+    #             if 1 > int(searchBeam["search_beam_id"]) > 1500:
+    #                 # searchbeamID not in valid range
+    #                 msg = (
+    #                     "'searchBeamID' must be within range 1-1500 "
+    #                     f"(received {searchBeam['search_beam_id']})."
+    #                 )
+    #                 self.logger.error(msg)
+    #                 return (False, msg)
 
-                for (
-                    fsp_pss_subarray_proxy
-                ) in self._proxies_fsp_pss_subarray_device:
-                    searchBeamID = fsp_pss_subarray_proxy.searchBeamID
-                    fsp_id = fsp_pss_subarray_proxy.get_property("FspID")[
-                        "FspID"
-                    ][0]
-                    if searchBeamID is not None:
-                        for search_beam_ID in searchBeamID:
-                            # If: We have duplicate searchBeamID
-                            # and (second check) if the proxy is not in ObsState.IDLE
-                            if (
-                                int(searchBeam["search_beam_id"])
-                                == search_beam_ID
-                                and fsp_pss_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"'searchBeamID' {search_beam_ID} is already "
-                                    f"being used in another subarray by FSP {fsp_id}"
-                                )
-                                self.logger.error(msg)
-                                return (False, msg)
+    #             for (
+    #                 fsp_pss_subarray_proxy
+    #             ) in self._proxies_fsp_pss_subarray_device:
+    #                 searchBeamID = fsp_pss_subarray_proxy.searchBeamID
+    #                 fsp_id = fsp_pss_subarray_proxy.get_property("FspID")[
+    #                     "FspID"
+    #                 ][0]
+    #                 if searchBeamID is not None:
+    #                     for search_beam_ID in searchBeamID:
+    #                         # If: We have duplicate searchBeamID
+    #                         # and (second check) if the proxy is not in ObsState.IDLE
+    #                         if (
+    #                             int(searchBeam["search_beam_id"])
+    #                             == search_beam_ID
+    #                             and fsp_pss_subarray_proxy.obsState
+    #                             != ObsState.IDLE
+    #                         ):
+    #                             msg = (
+    #                                 f"'searchBeamID' {search_beam_ID} is already "
+    #                                 f"being used in another subarray by FSP {fsp_id}"
+    #                             )
+    #                             self.logger.error(msg)
+    #                             return (False, msg)
 
-                # Validate dishes
-                # if not given, assign first DISH ID in subarray, as
-                # there is currently only support for 1 DISH per beam
-                if "receptor_ids" not in searchBeam:
-                    searchBeam["receptor_ids"] = [self._dish_ids.copy()[0]]
+    #             # Validate dishes
+    #             # if not given, assign first DISH ID in subarray, as
+    #             # there is currently only support for 1 DISH per beam
+    #             if "receptor_ids" not in searchBeam:
+    #                 searchBeam["receptor_ids"] = [self._dish_ids.copy()[0]]
 
-                # Sanity check:
-                for dish in searchBeam["receptor_ids"]:
-                    if dish not in self._dish_ids:
-                        msg = (
-                            f"Receptor {dish} does not belong to "
-                            f"subarray {self._subarray_id}."
-                        )
-                        self.logger.error(msg)
-                        return (False, msg)
-                # If searchBeam["enable_output"] is not a bool
-                if not isinstance(searchBeam["enable_output"], bool):
-                    msg = "'outputEnabled' is not a valid boolean"
-                    self.logger.error(msg)
-                    return (False, msg)
+    #             # Sanity check:
+    #             for dish in searchBeam["receptor_ids"]:
+    #                 if dish not in self._dish_ids:
+    #                     msg = (
+    #                         f"Receptor {dish} does not belong to "
+    #                         f"subarray {self._subarray_id}."
+    #                     )
+    #                     self.logger.error(msg)
+    #                     return (False, msg)
+    #             # If searchBeam["enable_output"] is not a bool
+    #             if not isinstance(searchBeam["enable_output"], bool):
+    #                 msg = "'outputEnabled' is not a valid boolean"
+    #                 self.logger.error(msg)
+    #                 return (False, msg)
 
-                # If searchBeam["averaging_interval"] is not a int
-                if not isinstance(searchBeam["averaging_interval"], int):
-                    msg = "'averagingInterval' is not a valid integer"
-                    self.logger.error(msg)
-                    return (False, msg)
+    #             # If searchBeam["averaging_interval"] is not a int
+    #             if not isinstance(searchBeam["averaging_interval"], int):
+    #                 msg = "'averagingInterval' is not a valid integer"
+    #                 self.logger.error(msg)
+    #                 return (False, msg)
 
-                # If searchBeam["search_beam_destination_address"] is not a valid ip
-                if not self._validate_ip(
-                    searchBeam["search_beam_destination_address"]
-                ):
-                    msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                    self.logger.error(msg)
-                    return (False, msg)
+    #             # If searchBeam["search_beam_destination_address"] is not a valid ip
+    #             if not self._validate_ip(
+    #                 searchBeam["search_beam_destination_address"]
+    #             ):
+    #                 msg = "'searchBeamDestinationAddress' is not a valid IP address"
+    #                 self.logger.error(msg)
+    #                 return (False, msg)
 
-        else:
-            msg = "More than 192 SearchBeams defined in PSS-BF config"
-            self.logger.error(msg)
-            return (False, msg)
+    #     else:
+    #         msg = "More than 192 SearchBeams defined in PSS-BF config"
+    #         self.logger.error(msg)
+    #         return (False, msg)
 
-        msg = "FSP PSS Validation Complete"
-        self.logger.debug(msg)
-        return (True, msg)
+    #     msg = "FSP PSS Validation Complete"
+    #     self.logger.debug(msg)
+    #     return (True, msg)
 
-    def _validate_pst_function_mode_legacy(
-        self: SubarrayScanConfigurationValidator, fsp: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates the configuration parameters given for PST Function Mode
-        for v4.0 Scan Configurations
+    # TODO: PST
+    # def _validate_pst_function_mode_legacy(
+    #     self: SubarrayScanConfigurationValidator, fsp: dict
+    # ) -> tuple[bool, str]:
+    #     """
+    #     Validates the configuration parameters given for PST Function Mode
+    #     for v4.0 Scan Configurations
 
-        :param fsp: A FSP Configurations as a Dictionary
+    #     :param fsp: A FSP Configurations as a Dictionary
 
-        :return: tuple with:
-                    bool to indicate if the configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
+    #     :return: tuple with:
+    #                 bool to indicate if the configuration is valid or not
+    #                 str message about the configuration
+    #     :rtype: tuple[bool, str]
+    #     """
 
-        if len(fsp["timing_beam"]) <= 16:
-            for timingBeam in fsp["timing_beam"]:
-                if 1 > int(timingBeam["timing_beam_id"]) > 16:
-                    # timingBeamID not in valid range
-                    msg = (
-                        "'timingBeamID' must be within range 1-16 "
-                        f"(received {timingBeam['timing_beam_id']})."
-                    )
-                    return (False, msg)
-                for (
-                    fsp_pst_subarray_proxy
-                ) in self._proxies_fsp_pst_subarray_device:
-                    timingBeamID = fsp_pst_subarray_proxy.timingBeamID
-                    fsp_id = fsp_pst_subarray_proxy.get_property("FspID")[
-                        "FspID"
-                    ][0]
-                    if timingBeamID is not None:
-                        for timing_beam_ID in timingBeamID:
-                            if (
-                                int(timingBeam["timing_beam_id"])
-                                == timing_beam_ID
-                                and fsp_pst_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"'timingBeamID' {timing_beam_ID} is already "
-                                    f"being used in another subarray by FSP {fsp_id}"
-                                )
-                                return (False, msg)
+    #     if len(fsp["timing_beam"]) <= 16:
+    #         for timingBeam in fsp["timing_beam"]:
+    #             if 1 > int(timingBeam["timing_beam_id"]) > 16:
+    #                 # timingBeamID not in valid range
+    #                 msg = (
+    #                     "'timingBeamID' must be within range 1-16 "
+    #                     f"(received {timingBeam['timing_beam_id']})."
+    #                 )
+    #                 return (False, msg)
+    #             for (
+    #                 fsp_pst_subarray_proxy
+    #             ) in self._proxies_fsp_pst_subarray_device:
+    #                 timingBeamID = fsp_pst_subarray_proxy.timingBeamID
+    #                 fsp_id = fsp_pst_subarray_proxy.get_property("FspID")[
+    #                     "FspID"
+    #                 ][0]
+    #                 if timingBeamID is not None:
+    #                     for timing_beam_ID in timingBeamID:
+    #                         if (
+    #                             int(timingBeam["timing_beam_id"])
+    #                             == timing_beam_ID
+    #                             and fsp_pst_subarray_proxy.obsState
+    #                             != ObsState.IDLE
+    #                         ):
+    #                             msg = (
+    #                                 f"'timingBeamID' {timing_beam_ID} is already "
+    #                                 f"being used in another subarray by FSP {fsp_id}"
+    #                             )
+    #                             return (False, msg)
 
-                # Validate dishes
-                # if not given, assign all DISH IDs belonging to subarray
-                if "receptor_ids" not in timingBeam:
-                    timingBeam["receptor_ids"] = self._dish_ids.copy()
+    #             # Validate dishes
+    #             # if not given, assign all DISH IDs belonging to subarray
+    #             if "receptor_ids" not in timingBeam:
+    #                 timingBeam["receptor_ids"] = self._dish_ids.copy()
 
-                for dish in timingBeam["receptor_ids"]:
-                    if dish not in self._dish_ids:
-                        msg = (
-                            f"Receptor {dish} does not belong to "
-                            f"subarray {self._subarray_id}."
-                        )
-                        self.logger.error(msg)
-                        return (False, msg)
+    #             for dish in timingBeam["receptor_ids"]:
+    #                 if dish not in self._dish_ids:
+    #                     msg = (
+    #                         f"Receptor {dish} does not belong to "
+    #                         f"subarray {self._subarray_id}."
+    #                     )
+    #                     self.logger.error(msg)
+    #                     return (False, msg)
 
-                if not isinstance()(timingBeam["enable_output"], bool):
-                    msg = "'outputEnabled' is not a valid boolean"
-                    return (False, msg)
+    #             if not isinstance()(timingBeam["enable_output"], bool):
+    #                 msg = "'outputEnabled' is not a valid boolean"
+    #                 return (False, msg)
 
-                if not self._validate_ip(
-                    timingBeam["timing_beam_destination_address"]
-                ):
-                    msg = "'timingBeamDestinationAddress' is not a valid IP address"
-                    return (False, msg)
+    #             if not self._validate_ip(
+    #                 timingBeam["timing_beam_destination_address"]
+    #             ):
+    #                 msg = "'timingBeamDestinationAddress' is not a valid IP address"
+    #                 return (False, msg)
 
-        msg = "FSP PST Validation Complete"
-        self.logger.debug(msg)
-        return (True, msg)
+    #     msg = "FSP PST Validation Complete"
+    #     self.logger.debug(msg)
+    #     return (True, msg)
 
     def _validate_search_window_legacy(
         self: SubarrayScanConfigurationValidator, configuration: dict
@@ -768,7 +772,9 @@ class SubarrayScanConfigurationValidator:
 
     # Was refactored out from pre 4.0 validations check for PST and PSS,
     # but might be used when post 4.0 PST and PSS validations are in
-    def _validate_ip(self: scm.CbfSubarrayComponentManager, ip: str) -> bool:
+    def _validate_ip(
+        self: SubarrayScanConfigurationValidator, ip: str
+    ) -> bool:
         """
         Validates a IP address format.
 
