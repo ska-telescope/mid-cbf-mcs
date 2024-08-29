@@ -1472,7 +1472,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
         """
-        Remove subarray membership and return FSP to IDLE state if possible
+        Remove subarray membership and return FSP to FunctionMode.IDLE if possible
 
         :return: False if failed to release FSP device, True otherwise
         """

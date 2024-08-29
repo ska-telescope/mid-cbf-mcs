@@ -60,7 +60,7 @@ CbfSubarray Tango Commands
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change observing state to READY               |
 |                      |               |                    | | Configure attributes from input JSON          |
-|                      |               |                    | | Subscribe events                              |
+|                      |               |                    | | Subscribe to TMC events                       |
 |                      |               |                    | | Configure VCC, VCC subarray, FSP, FSP Subarray|
 |                      |               |                    | | Publish output links.                         |
 |                      |               |                    | | See also :ref:`Configure Scan Sequence`       |
@@ -76,14 +76,10 @@ CbfSubarray Tango Commands
 |                      |               |                    | | No action on hardware                         |
 |                      |               |                    | | See also :ref:`ObsReset Sequence`             |
 +----------------------+---------------+--------------------+-------------------------------------------------+
-| Off                  | None          | (ResultCode, str)  | | Set subarray power mode to off.               |
-|                      |               |                    | | Commands FSP<function mode> Subarrays         |
-|                      |               |                    | | to turn off                                   |
-|                      |               |                    | | No action on hardware power                   |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.                 |
-|                      |               |                    | | Command FSP<function mode> Subarrays          |
-|                      |               |                    | | to turn on                                    |
+| GoToIdle             | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
+|                      |               |                    | | Release assigned receptors                    |
+|                      |               |                    | | Unsubscribe from TMC events                   |
+|                      |               |                    | | Reset observing state to IDLE                 |
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                          |
 |                      |               |                    | | Turn Subarray off if no receptors are         |

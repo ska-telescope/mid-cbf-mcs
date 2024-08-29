@@ -13,64 +13,129 @@ BoxBackgroundColor #F0FFFF
 
 title MCS Correlation Configure Scan\n
 
-participant "TMC\n" as tmc
-participant "CSP_Mid\n.LMC" as lmc
+participant "TMC\n" as tmc #SandyBrown
+participant "CSP_Mid\n.LMC" as lmc #Thistle
 
 box "MCS"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 participant "VCC\n" as vcc
 participant "FSP\n" as fsp
-participant "FspCorr\nSubarray" as fspcorr
+participant "FSP Corr\nSubarray" as fspcorr
+participant "Visibility\nTransport" as vis_trans
 end box
 
-participant "HPS\nDevices" as hps
+box "HPS\nDevices" 
+participant "VCC\nController" as vcc_cont
+participant "VCC\nBand" as vcc_band
+participant "FSP\nController" as fsp_cont
+participant "FSP Corr\nController" as fspcorr_cont
+end box
 
 lmc         -> subarray     : ConfigureScan(json_str)
-subarray    -> subarray     : validateInput
+subarray    -> subarray     : validate JSON\nagainst schema
 
-group Each FSP
-subarray    -> fsp          : Unsubscribe to state/healthstate
+group #LightCyan For each FSP:
+subarray    -> fsp          : RemoveSubarrayMembership
+note over fsp               : FunctionMode == IDLE
 end group
 
 subarray    -> tmc          : Unsubscribe all events
-subarray    -> vcc          : GoToIdle
-subarray    -> fspcorr      : GoToIdle
-subarray    -> fsp          : RemoveSubarrayMembership(subarrayID)
-subarray    -> vcc          : ConfigureBand(int)
-subarray    -> vcc          : ConfigureScan(json_str)
-vcc         -> hps          : configure HPS VCC
+subarray    -> subarray     : clear old\nconfiguration
+subarray    -> subarray     : load new\nconfiguration
 
 group Delay model subscription point
 subarray    -> tmc          : subscribe delay model
 end group
 
-group Doppler subscription point
-subarray    -> tmc          : subscribe Doppler phase correction
+group #LightCyan For each assigned receptor:
+subarray    -> vcc          : ConfigureBand(int)
+vcc         -> vcc          : load band\nconfiguration
+vcc         -> vcc_cont     : ConfigureBand(str)
+vcc         -> vcc_band     : SetInternalParameters(json_str)
+subarray   <-- vcc          : Success
 end group
 
-group Jones matrix subscription point
-subarray    -> tmc          : subscribe Jones matrix
+subarray    -> subarray     : Set Stream tuning,\nFrequencyBand offset,\nRFI flagging mask
+
+group #LightCyan For each assigned receptor:
+subarray    -> vcc          : ConfigureScan(json_str)
+vcc         -> vcc          : load scan\nconfiguration
+vcc         -> vcc_band     : ConfigureScan(json_str)
+note over vcc               : ObsState == READY
+subarray   <-- vcc          : Success
 end group
 
-group Timing beam subscription point
-subarray    -> tmc          : subscribe timing beam weights
-end group
+group #LightCyan For each FSP to configure:
+subarray    -> subarray     : set FSP\nconfiguration
 
-group SearchWindow
-subarray    ->vcc           : ConfigureSearchWindow(data)
-end group
-
-group Each FSP
-subarray    -> fsp          : AddSubarrayMembership(subarrayID)
 subarray    -> fsp          : SetFunctionMode(str)
-subarray    -> fsp          : subscribe to state/healthstate changes
-fsp         -> hps          : configure HPS FSP
+fsp         -> fsp          : validate\nfunction mode
+fsp         -> fsp_cont     : SetFunctionMode(int)
+
+subarray    -> fsp          : AddSubarrayMembership(int)
+fsp         -> fsp          : validate\nsubarray ID
+fsp         -> fspcorr      : corr subarray On
+fsp         -> fsp          : Update\nSubarrayMembership
+
+subarray    -> subarray     : set 'corr_vcc_ids'\nconfiguration property
+subarray    -> fspcorr      : ConfigureScan(json_str)
+fspcorr     -> fspcorr      : load FSP configuration,\nreset old configuration,\nrelease all VCCs,\nassign new VCCs,\nload FSP CORR configuration
 end group
 
-group Each FSP Corr
-subarray    -> fspcorr          : ConfigureScan(json_str)
-fspcorr         -> hps          : configure HPS FSP Corr
+group #LightCyan For each FSP FunctionMode Subarray:
+fspcorr     -> fspcorr_cont : ConfigureScan(json_str)
+note over fspcorr           : ObsState == READY
 end group
+
+subarray   <-- fspcorr      : Success
+
+group #SeaShell If FSP ConfigureScan fails:
+subarray    -> subarray     : Reset all assigned\nFSP devices
+lmc         <-- subarray    : Failure
+end group
+
+subarray    -> vis_trans    : Configure(json_str, yaml_str)
+subarray   <-- vis_trans    : Success
+
+note over subarray          : ObsState == READY
+lmc        <-- subarray     : Success
+
+' subarray    -> vcc          : GoToIdle
+' subarray    -> fspcorr      : GoToIdle
+' subarray    -> fsp          : RemoveSubarrayMembership(subarrayID)
+
+
+' vcc         -> hps          : configure HPS VCC
+
+
+
+' group Doppler subscription point
+' subarray    -> tmc          : subscribe Doppler phase correction
+' end group
+
+' group Jones matrix subscription point
+' subarray    -> tmc          : subscribe Jones matrix
+' end group
+
+' group Timing beam subscription point
+' subarray    -> tmc          : subscribe timing beam weights
+' end group
+
+' group SearchWindow
+' subarray    ->vcc           : ConfigureSearchWindow(data)
+' end group
+
+' group Each FSP
+' subarray    -> fsp          : AddSubarrayMembership(subarrayID)
+' subarray    -> fsp          : SetFunctionMode(str)
+' subarray    -> fsp          : subscribe to state/healthstate changes
+' fsp         -> hps          : configure HPS FSP
+' end group
+
+' group Each FSP Corr
+' subarray    -> fspcorr          : ConfigureScan(json_str)
+' fspcorr         -> hps          : configure HPS FSP Corr
+' end group
 
 @enduml

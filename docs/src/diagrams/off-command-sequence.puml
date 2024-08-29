@@ -18,7 +18,7 @@ skinparam database {
   BorderColor DarkGreen
 }
 title Off Command Sequence - Correlation\n
-participant "CSP_Mid\n.LMC" as lmc
+participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "MCS"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
@@ -29,7 +29,7 @@ participant "SLIM\nFS" as slim_fs
 participant "SLIM\nVis" as slim_vis
 collections "SLIM\nLink" as slimlink
 end box
-participant "PDU\n" as pdu
+participant "PDU\n" as pdu #Orange
 box "HPS"
 participant "Linux\nOS" as os #LightGreen
 participant "HPS\nMaster" as hpsmaster
@@ -40,44 +40,43 @@ lmc -> controller : Off()
 
 note over controller         : Clean up observing model:
 
-loop Until Subarray ObsState EMPTY or time exceeded
-alt
-else ObStates RESOURCING, RESTARTING, ABORTING, \nREADY, RESETTING, SCANNING
+
+group #LightCyan For each subarray:
+group #SeaShell If ObsState == RESOURCING, RESTARTING, ABORTING,\n                      READY, RESETTING, SCANNING:
 controller -> subarray   : Abort
 end
 
 controller -> subarray   : Restart
+note over subarray       : ObsState == EMPTY
 end loop
 
-note over subarray       : Subarray\nObsState EMPTY
 controller ->  slim_fs       : Off
 slim_fs    ->  slim_fs       : PowerState OFF
-slim_fs    ->  slimlink      : Disconnect Links
+slim_fs    ->  slimlink      : DisconnectTxRx
 
-group SLIM FS Link
-slimlink   ->  hpsdevices    : DisconnectTxRx
+group #LightCyan For each SLIM FS Link:
+slimlink   ->  hpsdevices    : InitializeConnection(serial_loopback=True)
 end 
 
 controller ->  slim_vis      : Off
 slim_vis   ->  slim_vis      : PowerState OFF
-slim_vis   ->  slimlink      : Disconnect Links
+slim_vis   ->  slimlink      : DisconnectTxRx
 
-
-group SLIM Vis Link
-slimlink   ->  hpsdevices    : DisconnectTxRx
+group #LightCyan For each SLIM Vis Link:
+slimlink   ->  hpsdevices    : InitializeConnection(serial_loopback=True)
 end
 
 controller ->  talon_board   : Off
 controller ->  hpsmaster     : Shutdown(3)
-group no Tango exception on Shutdown
 hpsmaster  ->  hpsdevices !! : kill pid
 hpsmaster  ->  os !!         : system "shutdown now"
-controller ->  controller    : wait 4 sec
-end group
+controller ->  controller    : sleep(4s)
+
 controller ->  lru           : Off
 lru        ->  switch        : Off
 switch     ->  pdu           : Off(outlets)
 
 controller ->  controller    : PowerState OFF
+lmc       <--  controller    : Success
 
 @enduml

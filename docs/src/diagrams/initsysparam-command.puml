@@ -15,29 +15,28 @@ skinparam collections {
 }
 skinparam responseMessageBelowArrow true
 title InitSysParam Command Sequence\n
-participant "CSP_Mid\n.LMC" as lmc
+participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "MCS"
 participant "Mid.CBF\nController" as control
 collections "Mid.CBF\nSubarray" as subarray
 collections "VCC" as vcc
 end box
-participant "CAR" as car
-lmc          -> control           : InitSysParam(\nJSON str)
+participant "CAR" as car #YellowGreen
+lmc          -> control           : InitSysParam(json_str)
 
-control      -> control           : parse JSON str
-control      -> control           : check JSON is compliant \nwith schema
+control      -> control           : validate JSON \nagainst schema
 
-alt #LightBlue JSON is compliant
-alt #DeepSkyBlue URI provided
+group #SeaShell If JSON is valid:
+group #SeaShell If URI provided:
 control      -> car               : retrieve init sys param file
+control      -> control           : validate JSON \nagainst schema
 end
 control      -> control           : store sys_param
-control      -> subarray          : write sys_param (json str)
+control      -> subarray          : write sys_param (json_str)
 subarray     -> subarray          : store sys_param
-control      -> vcc               : set receptor ID
+control      -> vcc               : set dish ID
 lmc         <-- control           : Success
-else JSON is not compliant
-lmc         <-- control           : Fail
+
 end
 
 
