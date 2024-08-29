@@ -68,39 +68,10 @@ class ControllerComponentManager(CbfComponentManager):
         :param talondx_component_manager: instance of TalonDxComponentManager
         """
 
-<<<<<<< HEAD
         super().__init__(*args, **kwargs)
-=======
-        self._logger = logger
 
         self.validateSupportedConfiguration = True
 
-        self._connected = False  # to device proxies
-
-        (
-            self._fqdn_vcc,
-            self._fqdn_fsp,
-            self._fqdn_subarray,
-            self._fqdn_talon_lru,
-            self._fqdn_talon_board,
-            self._fqdn_power_switch,
-        ) = ([] for i in range(6))
-
-        # init sub-element count to default
-        self._count_vcc = const.DEFAULT_COUNT_VCC
-        self._count_fsp = const.DEFAULT_COUNT_FSP
-        self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
-
-        # init sub-element FQDNs to all
-        self._subarray_fqdns_all = subarray_fqdns_all
-        self._vcc_fqdns_all = vcc_fqdns_all
-        self._fsp_fqdns_all = fsp_fqdns_all
-        self._talon_lru_fqdns_all = talon_lru_fqdns_all
-        self._talon_board_fqdns_all = talon_board_fqdns_all
-        self._power_switch_fqdns_all = power_switch_fqdns_all
-        self._fs_slim_fqdn = fs_slim_fqdn
-        self._vis_slim_fqdn = vis_slim_fqdn
->>>>>>> main
         self._lru_timeout = lru_timeout
 
         (
@@ -928,7 +899,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Configure all the Talon boards
         # Clears process inside the Talon Board to make it a clean state
-        # Also sets the simulation mode of the Talon Boards based on TalonDx Compnent Manager's SimulationMode Attribute
+        # Also sets the simulation mode of the Talon Boards based on TalonDx Component Manager's SimulationMode Attribute
         if (
             self._talondx_component_manager.configure_talons()
             == ResultCode.FAILED
@@ -939,21 +910,11 @@ class ControllerComponentManager(CbfComponentManager):
                 result=(ResultCode.FAILED, msg),
                 status=TaskStatus.FAILED,
             )
-<<<<<<< HEAD
             return
 
         # Start monitoring talon board telemetries and fault status
         # Failure here won't cause On command failure
         self._init_talon_boards()
-=======
-
-            self._group_subarray.command_inout("On")
-        except tango.DevFailed as df:
-            for item in df.args:
-                log_msg = f"Failed to turn on group proxies; {item.reason}"
-                self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
->>>>>>> main
 
         # Configure SLIM Mesh devices
         slim_configure_status, msg = self._configure_slim_devices(
@@ -1130,7 +1091,7 @@ class ControllerComponentManager(CbfComponentManager):
             # For some components under controller monitoring, including subarray,
             # power switch and VCC devices, they are in DevState.ON when
             # communicating with their component (AdminMode.ONLINE),
-            # and in DevState.DISABLE when not (AdinMode.OFFLINE).
+            # and in DevState.DISABLE when not (AdminMode.OFFLINE).
 
             # The following devices implement power On/Off commands:
             if fqdn in self._talon_lru_fqdn + [
@@ -1138,11 +1099,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self._vis_slim_fqdn,
             ]:
                 try:
-                    # TODO: CIP-1899 The cbfcontroller is sometimes
+                    # TODO: CIP-1899 The controller is sometimes
                     # unable to read the State() of the talon_lru
                     # device server due to an error trying to
                     # acquire the serialization monitor. As a temporary
-                    # workaround, the cbfcontroller will log these
+                    # workaround, the controller will log these
                     # errors if they occur but continue polling.
                     poll(
                         lambda: proxy.State() == tango.DevState.OFF,

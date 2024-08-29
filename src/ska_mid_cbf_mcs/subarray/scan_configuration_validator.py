@@ -442,9 +442,7 @@ class SubarrayScanConfigurationValidator:
 
         # validate output_link
         # check the format
-        success, msg = self._validate_output_link_map(
-            fsp["output_link_map"]
-        )
+        success, msg = self._validate_output_link_map(fsp["output_link_map"])
         if success is False:
             return (False, msg)
 
@@ -1313,9 +1311,7 @@ class SubarrayScanConfigurationValidator:
                     return (False, msg)
 
             # validate The Function Mode for each processing regions
-            success, msg = self._validate_corr_function_mode(
-                processing_region
-            )
+            success, msg = self._validate_corr_function_mode(processing_region)
             if success is False:
                 return (False, msg)
 

@@ -28,7 +28,6 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_testing import context
-
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -180,7 +179,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         try:
             self._controller_max_capabilities = dict(
-                pair.split(":") for pair in self._proxy_controller.maxCapabilities
+                pair.split(":")
+                for pair in self._proxy_controller.maxCapabilities
             )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -953,7 +953,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return TaskStatus.COMPLETED
 
-    def _validate_configure_scan_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
+    def _validate_configure_scan_input(
+        self: CbfSubarrayComponentManager, argin: str
+    ) -> bool:
         """
         Validate scan configuration JSON.
 
@@ -984,7 +986,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         # At this point, validate FSP, VCC, subscription parameters
-        controller_validateSupportedConfiguration = self._proxy_cbf_controller.validateSupportedConfiguration
+        controller_validateSupportedConfiguration = (
+            self._proxy_cbf_controller.validateSupportedConfiguration
+        )
         # MCS Scan Configuration Validation
         if controller_validateSupportedConfiguration is True:
             validator = SubarrayScanConfigurationValidator(
