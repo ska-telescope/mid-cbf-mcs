@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 # Additional import
-from ska_control_model import AdminMode, HealthState, SimulationMode
+from ska_control_model import HealthState, SimulationMode
 
 # tango imports
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
@@ -232,7 +232,6 @@ class SlimLink(CbfDevice):
         self.register_command_object(
             "VerifyConnection",
             self.VerifyConnectionCommand(
-                device=self,
                 component_manager=self.component_manager,
                 logger=self.logger,
             ),
@@ -250,7 +249,6 @@ class SlimLink(CbfDevice):
         self.register_command_object(
             "ClearCounters",
             self.ClearCountersCommand(
-                device=self,
                 component_manager=self.component_manager,
                 logger=self.logger,
             ),
@@ -268,7 +266,7 @@ class SlimLink(CbfDevice):
         """
 
         def is_allowed(self: SlimLink.VerifyConnectionCommand) -> bool:
-            if self.device._admin_mode == AdminMode.ONLINE:
+            if self.component_manager.is_communicating:
                 return True
             return False
 
@@ -307,7 +305,7 @@ class SlimLink(CbfDevice):
         """
 
         def is_allowed(self: SlimLink.ClearCountersCommand) -> bool:
-            if self.device._admin_mode == AdminMode.ONLINE:
+            if self.component_manager.is_communicating:
                 return True
             return False
 
