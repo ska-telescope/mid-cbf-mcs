@@ -717,9 +717,9 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (bool, str)
             """
             # Validate supported interface passed in the JSON string
-            (valid, msg) = validate_interface(argin, "configurescan")
-            if not valid:
-                return (False, msg + "hello")
+            # (valid, msg) = validate_interface(argin, "configurescan")
+            # if not valid:
+            #     return (False, msg)
             # try to deserialize input string to a JSON object
             try:
                 full_configuration = json.loads(argin)
