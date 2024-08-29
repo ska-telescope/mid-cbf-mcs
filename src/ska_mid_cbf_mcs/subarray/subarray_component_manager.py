@@ -993,7 +993,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             validator = SubarrayScanConfigurationValidator(
                 scan_configuration=argin,
                 count_fsp=self._count_fsp,
-                dish_ids=list(self._dish_ids),
+                dish_ids=list(self.dish_ids),
                 subarray_id=self.subarray_id,
                 logger=self.logger,
             )
