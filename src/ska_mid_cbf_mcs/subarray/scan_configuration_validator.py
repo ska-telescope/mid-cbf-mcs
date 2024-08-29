@@ -7,17 +7,15 @@ import math
 import sys
 from collections import defaultdict
 
-# Tango imports
 import tango
 from ska_tango_base.control_model import ObsState
+from ska_tango_testing import context
 from ska_telmodel.csp.common_schema import (
     MAX_CHANNELS_PER_STREAM,
     MAX_STREAMS_PER_FSP,
 )
 
-# SKA imports
 import ska_mid_cbf_mcs.subarray.subarray_component_manager as scm
-from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
     AcceptedScanConfigurationVersion,
     FspModes,
@@ -25,7 +23,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     freq_band_dict,
     scan_configuration_supported_value,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 """
 SubarrayScanConfigurationValidator: Contains functions that validates a given
@@ -63,10 +60,8 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator,
         scan_configuration: str,
         count_fsp: int,
-        proxies_fsp: list[CbfDeviceProxy],
-        proxies_assigned_vcc: dict[CbfDeviceProxy],
-        proxies_fsp_pss_subarray_device: list[CbfDeviceProxy],
-        proxies_fsp_pst_subarray_device: list[CbfDeviceProxy],
+        proxies_fsp: list[context.DeviceProxy],
+        proxies_assigned_vcc: list[context.DeviceProxy],
         dish_ids: list[str],
         subarray_id: int,
         logger: logging.Logger,
@@ -79,8 +74,6 @@ class SubarrayScanConfigurationValidator:
         :param proxies_fsp: List of FSP Proxy Devices
         :param proxies_assigned_vcc: Dictionary of VCC Device Proxies,
                 with Dish ID as the key
-        :param proxies_fsp_pss_subarray_device: List of FSP PSS Device Proxies
-        :param proxies_fsp_pst_subarray_device: List of FSP PST Device Proxies
         :param dish_ids: list of Dish IDs
         :param subarray_id: The ID of the Subarray's Scan Configuration being validated
         :param logger: A Logger object to handle logging message for the class
@@ -90,8 +83,10 @@ class SubarrayScanConfigurationValidator:
         self._count_fsp = count_fsp
         self._proxies_fsp = proxies_fsp
         self._proxies_assigned_vcc = proxies_assigned_vcc
-        self._proxies_fsp_pss_subarray_device = proxies_fsp_pss_subarray_device
-        self._proxies_fsp_pst_subarray_device = proxies_fsp_pst_subarray_device
+
+        # TODO: PSS, PST, VLBI support
+        self._proxies_fsp_pss_subarray_device = None
+        self._proxies_fsp_pst_subarray_device = None
 
         self._dish_ids = dish_ids
         self._subarray_id = subarray_id
@@ -171,17 +166,14 @@ class SubarrayScanConfigurationValidator:
 
         """
 
-        success, msg = self._validate_subscription_point(configuration)
-        if success is False:
-            return (False, msg)
-
         success, msg = self._validate_vcc()
         if success is False:
             return (False, msg)
 
-        success, msg = self._validate_search_window_legacy(configuration)
-        if success is False:
-            return (False, msg)
+        # TODO: PSS
+        # success, msg = self._validate_search_window_legacy(configuration)
+        # if success is False:
+        #     return (False, msg)
 
         success, msg = self._validate_fsp_legacy(
             configuration, common_configuration
@@ -251,18 +243,6 @@ class SubarrayScanConfigurationValidator:
                             success,
                             msg,
                         ) = self._validate_corr_function_mode_legacy(fsp)
-
-                    case FspModes.PSS_BF:
-                        (
-                            success,
-                            msg,
-                        ) = self._validate_pss_function_mode_legacy(fsp)
-
-                    case FspModes.PST_BF:
-                        (
-                            success,
-                            msg,
-                        ) = self._validate_pst_function_mode_legacy(fsp)
 
                     case _:
                         return (
@@ -753,7 +733,7 @@ class SubarrayScanConfigurationValidator:
         fsp: dict,
         fsp_id: int,
         function_mode_value: int,
-        fsp_proxy: CbfDeviceProxy,
+        fsp_proxy: context.DeviceProxy,
     ):
         """
         Validates that the given FSP Proxy of a given FSP ID is in the requested mode
@@ -920,58 +900,11 @@ class SubarrayScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        for dish_id, proxy in self._proxies_assigned_vcc.items():
+        for proxy in self._proxies_assigned_vcc:
             if proxy.State() != tango.DevState.ON:
                 msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
-        msg = "Validate VCC: Compelte"
-        self.logger.debug(msg)
-        return (True, msg)
-
-    def _validate_subscription_point(
-        self: SubarrayScanConfigurationValidator, configuration: dict
-    ) -> tuple[bool, str]:
-        """
-        Checks if subscription points are requested in the Scan Configuration
-        and validates that the requested subscription points's
-        device server are reachable
-
-        :param configuration: A CBF Configuration (pre 4.0)/MidCBF Configuration (post 4.0)
-                                as a Dictionary
-
-        :return: tuple with:
-                    bool to indicate if the subscription points are reachable or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        subscription_points = [
-            "delay_model_subscription_point",
-            "jones_matrix_subscription_point",
-            "timing_beam_weights_subscription_point",
-        ]
-
-        subscribed = []
-        for subscription_point in subscription_points:
-            if subscription_point in configuration:
-                try:
-                    attribute_proxy = CbfAttributeProxy(
-                        fqdn=configuration[subscription_point],
-                        logger=self.logger,
-                    )
-                    attribute_proxy.ping()
-                except (
-                    tango.DevFailed
-                ):  # attribute doesn't exist or is not set up correctly
-                    msg = (
-                        f"Attribute {configuration[subscription_point]}"
-                        " not found or not set up correctly for "
-                        "'{subscription_point}'. Aborting configuration."
-                    )
-                    self.logger.error(msg)
-                    return (False, msg)
-                subscribed.append((subscription_point))
-
-        msg = f"Finish Validating Subscription Points for: {subscribed}"
+        msg = "Validate VCC: Complete"
         self.logger.debug(msg)
         return (True, msg)
 
@@ -1911,15 +1844,10 @@ class SubarrayScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
 
-        # Create helper functions for below when MCS being support it
-
-        success, msg = self._validate_subscription_point(configuration)
-        if success is False:
-            return (False, msg)
-
-        success, msg = self._validate_search_window(configuration)
-        if success is False:
-            return (False, msg)
+        # TODO: PSS
+        # success, msg = self._validate_search_window(configuration)
+        # if success is False:
+        #     return (False, msg)
 
         # Not Supported in AA 0.5/AA 1.0
         if "frequency_band_offset_stream1" in configuration:

@@ -992,15 +992,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # MCS Scan Configuration Validation
         if controller_validateSupportedConfiguration is True:
             validator = SubarrayScanConfigurationValidator(
-                argin,
-                self._count_fsp,
-                self._proxies_fsp,
-                self._proxies_assigned_vcc,
-                self._proxies_fsp_pss_subarray_device,
-                self._proxies_fsp_pst_subarray_device,
-                self._dish_ids,
-                self._subarray_id,
-                self._logger,
+                scan_configuration=argin,
+                count_fsp=self._count_fsp,
+                proxies_fsp=list(self._all_fsp_proxies.values()),
+                proxies_assigned_vcc=list(self._assigned_vcc_proxies),
+                dish_ids=list(self._dish_ids),
+                subarray_id=self.subarray_id,
+                logger=self.logger,
             )
             return validator.validate_input()
 
@@ -1644,9 +1642,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         elif "midcbf" in full_configuration:
             configuration = copy.deepcopy(full_configuration["midcbf"])
 
-        # store configID
-        self.config_id = str(common_configuration["config_id"])
-
         # Configure delayModel subscription point
         delay_model_success = self._subscribe_tm_event(
             subscription_point=configuration["delay_model_subscription_point"],
@@ -1662,6 +1657,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # store configID
+        self.config_id = str(common_configuration["config_id"])
 
         # --- Configure VCC --- #
 
