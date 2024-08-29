@@ -1,11 +1,16 @@
 import json
 
-from ska_telmodel.csp.version import (
-    CSP_CONFIG_PREFIX,
-    CSP_CONFIGSCAN_PREFIX,
-    CSP_MID_DELAYMODEL_PREFIX,
-    CSP_SCAN_PREFIX,
-)
+# from ska_telmodel.csp.version import (
+#     CSP_CONFIG_PREFIX,
+#     CSP_CONFIGSCAN_PREFIX,
+#     CSP_MID_DELAYMODEL_PREFIX,
+#     CSP_SCAN_PREFIX,
+# )
+
+CSP_CONFIG_PREFIX='https://schema.skao.int/ska-csp-configure/'
+CSP_CONFIGSCAN_PREFIX='https://schema.skao.int/ska-csp-configurescan/'
+CSP_MID_DELAYMODEL_PREFIX='https://schema.skao.int/ska-mid-csp-delaymodel/'
+CSP_SCAN_PREFIX='https://schema.skao.int/ska-csp-scan/'
 
 CBF_INITSYSPARAM_PREFIX = "https://schema.skao.int/ska-mid-cbf-initsysparam/"
 
@@ -27,7 +32,10 @@ CSP_CONFIGSCAN_VERSIONS = [
     # CSP_CONFIGSCAN_VER2_5,
 ]
 CSP_MID_DELAYMODEL_VERSIONS = [CSP_MID_DELAYMODEL_VER3_0]
-CSP_SCAN_VERSIONS = [CSP_SCAN_VER2_2, CSP_SCAN_VER2_3]
+CSP_SCAN_VERSIONS = [
+                    CSP_SCAN_VER2_2,
+                    CSP_SCAN_VER2_3,
+                    ]
 CBF_INITSYSPARAM_VERSIONS = [CBF_INITSYSPARAM_VER1_0]
 
 
@@ -59,6 +67,13 @@ def validate_interface(argin: str, command: str) -> tuple[bool, str]:
         return [
             False,
             "The value retrieved from the interface key is not a string",
+        ]
+
+    # Check proper command input
+    if command not in supported_interfaces:
+        return [
+            False,
+            f"Command: '{command}' does not exist",
         ]
 
     # Check supported interfaces for command
