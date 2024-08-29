@@ -198,8 +198,7 @@ class CbfController(CbfDevice):
         :return: the value in validateSupportedConfiguration
         :rtype: bool
         """
-        res = self.component_manager.validateSupportedConfiguration
-        return res
+        return self.component_manager.validate_supported_configuration
 
     @validateSupportedConfiguration.write
     def validateSupportedConfiguration(
@@ -224,7 +223,7 @@ class CbfController(CbfDevice):
             )
             self.logger.warning(msg)
 
-        self.component_manager.validateSupportedConfiguration = value
+        self.component_manager.validate_supported_configuration = value
 
     # --------------
     # Initialization

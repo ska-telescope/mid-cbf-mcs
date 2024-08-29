@@ -171,7 +171,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
-    def _get_max_capabilities(self: CbfSubarrayComponentManager) -> bool:
+    def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
@@ -206,7 +206,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
-    def _init_proxies(self: CbfSubarrayComponentManager) -> bool:
+    def _init_subelement_proxies(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxies to FSP and VCC subelements
 
@@ -248,7 +248,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for start_communicating operation.
         """
-        controller_success = self._get_max_capabilities()
+        controller_success = self._init_controller_proxy()
         if not controller_success:
             self.logger.error(
                 "Failed to initialize max capabilities from controller."
@@ -258,7 +258,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        subelement_success = self._init_proxies()
+        subelement_success = self._init_subelement_proxies()
         if not subelement_success:
             self.logger.error("Failed to initialize subelement proxies.")
             self._update_communication_state(

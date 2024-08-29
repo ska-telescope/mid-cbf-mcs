@@ -70,7 +70,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().__init__(*args, **kwargs)
 
-        self.validateSupportedConfiguration = True
+        self.validate_supported_configuration = True
 
         self._lru_timeout = lru_timeout
 
