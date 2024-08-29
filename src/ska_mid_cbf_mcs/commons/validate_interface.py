@@ -69,13 +69,6 @@ def validate_interface(argin: str, command: str) -> tuple[bool, str]:
             "The value retrieved from the interface key is not a string",
         ]
 
-    # Check proper command input
-    if command not in supported_interfaces:
-        return [
-            False,
-            f"Command: '{command}' does not exist",
-        ]
-
     # Check supported interfaces for command
     if input["interface"] not in supported_interfaces[command]:
         return [
