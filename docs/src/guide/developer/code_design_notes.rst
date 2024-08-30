@@ -40,20 +40,32 @@ used by MCS, and some terminology, are listed here:
     * Note that subarray resources such as VCC and FSP do not implement EMPTY, RESOURCING and RESTARTING
       states, nor resourcing commands, as they do not require resource allocation before scan configuration.
 
-Component Managers
+Devices and Component Managers
 ======================================================
 
 In the Mid.CBF MCS, each device is comprised of a Tango device class and a component manager class. 
-The device class provides a Tango interface, with commands, attributes and properties,
+The device class provides a Tango interface, with commands, attributes, properties, and state models, 
 while the component manager class performs the actual monitoring and control of the underlying component.
 The component manager updates the device's state model(s) (in particular, the ``op_state_model`` and/or ``obs_state_model``)
-via callback methods in the device.
+via callback methods in the device. 
+
 More details about the role of component managers can be found in the `SKA Tango Base Documentation 
 <https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/component-managers.html>`_. 
 An example of this Tango device and component manager interaction is shown in the diagram below. 
 
 .. figure:: ../../diagrams/component-manager-interactions.png
    :align: center
+
+
+Cbf Base Class Inheritance
+==========================
+Cbf decouples itself from ``ska-tango-base`` by extending ``SkaBaseDevice`` and ``SkaObsDevice`` into 
+``CbfDevice`` and ``CbfObsDevice``, respectively. Cbf component managers are similarly extended 
+into ``CbfComponentManager`` and ``CbfObsComponentManager`` from ``TaskExecutorComponentManager``, 
+which itself extends ``BaseComponentManager`` to enable aynchronous command execution via Long Running Commands (LRCs).
+This choice to decouple from ``ska-tango-base`` gives the MCS freedom to override the base implementation as needed. 
+For example, ``CbfObsDevice`` initializes a slightly reduced observing state model that omits the EMPTY and RESOURCING 
+states since they are not required by MCS observing devices, with the exception of ``CbfSubarray``.
 
 
 Cbf Controller
@@ -262,12 +274,15 @@ approach was in place, a workaround used in MCS was to have clients temporarily 
 component's timeout from the default 3 seconds before issuing calls, then 
 reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
-Updates to ska-tango-base in version 1.0.0 introduced the LRC paradigm. By having commands
+Updates to ``ska-tango-base`` in version 1.0.0 introduced the LRC paradigm. By having command classes
 inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` and ``ResponseCommand``, 
-clients no longer expect an immediate result to be returned from command calls. Instead, the 
-command's inital return value only indicates whether the command was added to the ``TaskExecutor``'s queue, or
-else if it was immediately rejected for not meeting the criteria specified in the ``is_COMMAND_allowed()`` method.
-From this queue, commands are executed within a separate "task-executor thread" running in parallel to the main control thread.
+clients no longer expect a result to be returned immediately from command calls; although they both return a tuple containing (result_code, message),
+LRC return values are quite different. An LRC's message actually contains a whole other tuple (cast to a string), holding
+1. the command's unique identifier (command_id) and 2. a result message like those expected from non-LRCs. 
+An LRC's result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, or was rejected 
+**TODO: Need to clarify When REJECTED vs. NOT_ALLOWED is returned.**
+for not meeting the criteria specified in the ``is_COMMAND_allowed()`` method. From this queue, commands are 
+executed within a separate "task-executor thread" running in parallel to the main control thread.
 
 One implication of this shift to executing commands in a separate thread is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
@@ -281,7 +296,7 @@ timeout for LRCs, after which the client must give up and call the original comm
 
 Blocking Commands and Locks
 ----------------------------
-In MCS, any command added to the TaskExecutor's queue is a "blocking command", in the sense that each of these 
+In MCS, any command added to the ``TaskExecutor``'s queue is a "blocking command", in the sense that each of these 
 commands will eventually block the client that issued them. 
 
 As a simple example, if command A adds command B to the queue, 
