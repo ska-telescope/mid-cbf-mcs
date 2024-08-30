@@ -28,7 +28,7 @@ K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 PYTHON_TEST_FILE = ./tests/unit/
 K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 
-# additional pytest flags; use -k to isolate particular tests, e.g. -k CbfSubarray (for subarray tests)
+# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
 PYTHON_VARS_AFTER_PYTEST = --forked
 K8S_VARS_AFTER_PYTEST = -s
 
@@ -107,13 +107,12 @@ PYTHON_LINT_TARGET = src/ tests/
 # build, 'make push' docker push procedure, etc. The other Make targets
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
-include .make/release.mk
+include .make/base.mk
 include .make/k8s.mk
-include .make/make.mk
 include .make/oci.mk
 include .make/helm.mk
 include .make/python.mk
-include .make/docs.mk
+
 #
 # Defines a default make target so that help is printed if make is called
 # without a target

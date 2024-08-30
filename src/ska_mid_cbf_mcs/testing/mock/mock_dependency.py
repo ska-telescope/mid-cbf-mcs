@@ -105,7 +105,7 @@ class MockDependency:
         ) -> None:
             return
 
-        def run(self: MockDependency.Asyncio, result: bool) -> bool:
+        def run(self: MockDependency.Asyncio, result: any) -> any:
             return result
 
     class InfluxdbQueryClient:
@@ -205,18 +205,18 @@ class MockDependency:
                 ],
                 # _query_ltm_voltages
                 [
-                    ("LTMs_0_LTM_voltage-input", datetime.now(), 10.0),
-                    ("LTMs_1_LTM_voltage-input", datetime.now(), 10.0),
-                    ("LTMs_2_LTM_voltage-input", datetime.now(), 10.0),
-                    ("LTMs_3_LTM_voltage-input", datetime.now(), 10.0),
-                    ("LTMs_0_LTM_voltage-output-1", datetime.now(), 10.0),
-                    ("LTMs_1_LTM_voltage-output-1", datetime.now(), 10.0),
-                    ("LTMs_2_LTM_voltage-output-1", datetime.now(), 10.0),
-                    ("LTMs_3_LTM_voltage-output-1", datetime.now(), 10.0),
-                    ("LTMs_0_LTM_voltage-output-2", datetime.now(), 10.0),
-                    ("LTMs_1_LTM_voltage-output-2", datetime.now(), 10.0),
-                    ("LTMs_2_LTM_voltage-output-2", datetime.now(), 10.0),
-                    ("LTMs_3_LTM_voltage-output-2", datetime.now(), 10.0),
+                    ("LTMs_0_LTM_voltage-input", datetime.now(), 12.0),
+                    ("LTMs_1_LTM_voltage-input", datetime.now(), 12.0),
+                    ("LTMs_2_LTM_voltage-input", datetime.now(), 12.0),
+                    ("LTMs_3_LTM_voltage-input", datetime.now(), 12.0),
+                    ("LTMs_0_LTM_voltage-output-1", datetime.now(), 1.5),
+                    ("LTMs_1_LTM_voltage-output-1", datetime.now(), 1.5),
+                    ("LTMs_2_LTM_voltage-output-1", datetime.now(), 1.5),
+                    ("LTMs_3_LTM_voltage-output-1", datetime.now(), 1.5),
+                    ("LTMs_0_LTM_voltage-output-2", datetime.now(), 1.5),
+                    ("LTMs_1_LTM_voltage-output-2", datetime.now(), 1.5),
+                    ("LTMs_2_LTM_voltage-output-2", datetime.now(), 1.5),
+                    ("LTMs_3_LTM_voltage-output-2", datetime.now(), 1.5),
                     (
                         "LTMs_0_LTM_voltage-output-max-alarm-1",
                         datetime.now(),

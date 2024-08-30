@@ -14,18 +14,9 @@ TANGO device class for monitoring a Talon board.
 from __future__ import annotations
 
 # tango imports
-from ska_tango_base.base.base_device import (
-    DevVarLongStringArrayType,
-    SKABaseDevice,
-)
 from ska_tango_base.commands import ResultCode
-from tango import (
-    DebugIt,
-    DevVarBooleanArray,
-    DevVarFloatArray,
-    DevVarShortArray,
-)
-from tango.server import attribute, command, device_property
+from tango import DevVarBooleanArray, DevVarFloatArray, DevVarShortArray
+from tango.server import attribute, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
@@ -315,7 +306,7 @@ class TalonBoard(CbfDevice):
         max_alarm=13.0,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage0(self: TalonBoard) -> float:
+    def fpgaDieVoltage0(self: TalonBoard) -> float:
         """
         Reads the 12V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -340,7 +331,7 @@ class TalonBoard(CbfDevice):
         max_alarm=2.62,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage1(self: TalonBoard) -> float:
+    def fpgaDieVoltage1(self: TalonBoard) -> float:
         """
         Reads the 2.5V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -365,7 +356,7 @@ class TalonBoard(CbfDevice):
         max_alarm=0.97,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage2(self: TalonBoard) -> float:
+    def fpgaDieVoltage2(self: TalonBoard) -> float:
         """
         Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -390,7 +381,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage3(self: TalonBoard) -> float:
+    def fpgaDieVoltage3(self: TalonBoard) -> float:
         """
         Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -415,7 +406,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage4(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage4(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -440,7 +431,7 @@ class TalonBoard(CbfDevice):
         max_alarm=0.93,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage5(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage5(self: TalonBoard) -> list[float]:
         """
         Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -465,7 +456,7 @@ class TalonBoard(CbfDevice):
         max_alarm=1.89,
         polling_period=ATTR_POLLING_PERIOD,
     )
-    def FpgaDieVoltage6(self: TalonBoard) -> list[float]:
+    def fpgaDieVoltage6(self: TalonBoard) -> list[float]:
         """
         Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
@@ -835,19 +826,6 @@ class TalonBoard(CbfDevice):
     # Initialization
     # --------------
 
-    def init_command_objects(self: TalonBoard) -> None:
-        """
-        Sets up the command objects
-        """
-        super(CbfDevice, self).init_command_objects()
-
-        self.register_command_object(
-            "Off",
-            self.OffCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-
     def create_component_manager(
         self: TalonBoard,
     ) -> TalonBoardComponentManager:
@@ -879,12 +857,14 @@ class TalonBoard(CbfDevice):
     # Fast Commands
     # -------------
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the TalonBoard's init_device() "command".
         """
 
-        def do(self: TalonBoard.InitCommand) -> tuple[ResultCode, str]:
+        def do(
+            self: TalonBoard.InitCommand, *args, **kwargs
+        ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -892,6 +872,7 @@ class TalonBoard(CbfDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
+            (result_code, msg) = super().do(*args, **kwargs)
 
             # Some of these IDs are typically integers. But it is easier to use
             # empty string to show the board is not assigned.
@@ -902,24 +883,13 @@ class TalonBoard(CbfDevice):
             self._device.set_change_event("dishID", True)
             self._device.set_archive_event("dishID", True)
 
-            return super().do()
+            return (result_code, msg)
 
     # ---------------------
     # Long Running Commands
     # ---------------------
 
-    def is_On_allowed(self: TalonBoard) -> bool:
-        return True
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
-    )
-    @DebugIt()
-    def On(self: TalonBoard) -> DevVarLongStringArrayType:
-        command_handler = self.get_command_object("On")
-        result_code, command_id = command_handler()
-        return [[result_code], [command_id]]
+    # None at this time...
 
     # ----------
     # Callbacks

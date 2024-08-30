@@ -51,6 +51,33 @@ class CbfDevice(SKABaseDevice):
     Extends SKABaseDevice to override certain key values.
     """
 
+    # --------------
+    # Initialization
+    # --------------
+
+    class InitCommand(SKABaseDevice.InitCommand):
+        """
+        A class for the CbfController's Init() command.
+        """
+
+        def do(
+            self: CbfDevice.InitCommand,
+            *args: any,
+            **kwargs: any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string message indicating status.
+                     The message is for information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code, msg) = super().do(*args, **kwargs)
+
+            self._device._simulation_mode = SimulationMode.TRUE
+
+            return (result_code, msg)
+
     # -----------------
     # Device Properties
     # -----------------
@@ -77,37 +104,43 @@ class CbfDevice(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        self.logger.debug(f"Writing simulationMode to {value}")
+        self.logger.info(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # ---------------
-    # General methods
-    # ---------------
+    # ----------------------
+    # Unimplemented Commands
+    # ----------------------
 
-    def init_command_objects(self: CbfDevice) -> None:
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def On(self: CbfDevice) -> DevVarLongStringArrayType:
         """
-        Set up the command objects."
-        """
-        super().init_command_objects()
+        Turn device on.
 
-        # Overriding base On/Off SubmittedSlowCommand register with FastCommand objects
-        self.register_command_object(
-            "On",
-            self.OnCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
-        self.register_command_object(
-            "Off",
-            self.OffCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["On command rejected, as it is unimplemented for this device."],
         )
 
-    # --------
-    # Commands
-    # --------
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Off(self: CbfDevice) -> DevVarLongStringArrayType:
+        """
+        Turn device off.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return (
+            [ResultCode.REJECTED],
+            ["Off command rejected, as it is unimplemented for this device."],
+        )
 
     @command(dtype_out="DevVarLongStringArray")
     @DebugIt()
@@ -126,59 +159,22 @@ class CbfDevice(SKABaseDevice):
             ],
         )
 
-    class OnCommand(FastCommand):
+    @command(dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def Reset(self: CbfDevice) -> DevVarLongStringArrayType:
         """
-        A class for the CbfDevice's on command.
+        Reset the device; currently unimplemented in Mid.CBF
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
         """
-
-        def __init__(
-            self: CbfDevice.OnCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
-
-        def do(
-            self: CbfDevice.OnCommand,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.on()
-
-    class OffCommand(FastCommand):
-        """
-        A class for the CbfDevice's off command.
-        """
-
-        def __init__(
-            self: CbfDevice.OffCommand,
-            *args,
-            component_manager: BaseComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
-
-        def do(
-            self: CbfDevice.OffCommand,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.component_manager.off()
+        return (
+            [ResultCode.REJECTED],
+            [
+                "Reset command rejected, as it is unimplemented for this device."
+            ],
+        )
 
 
 # ----------

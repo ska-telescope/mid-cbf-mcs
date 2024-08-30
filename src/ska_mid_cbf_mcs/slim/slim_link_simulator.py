@@ -201,7 +201,7 @@ class SlimLinkSimulator:
     # Helpers
     # -------
 
-    def _update_device_health_state(
+    def update_device_health_state(
         self: SlimLinkSimulator,
         health_state: HealthState,
     ) -> None:
@@ -254,14 +254,14 @@ class SlimLinkSimulator:
         :rtype: (ResultCode, str)
         """
         if not self._link_enabled:
-            self._update_device_health_state(HealthState.UNKNOWN)
+            self.update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "link is not active"
         if (self._tx_idle_ctrl_word != self._rx_idle_ctrl_word) or (
             self._bit_error_rate > BER_PASS_THRESHOLD
         ):
-            self._update_device_health_state(HealthState.FAILED)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "link is not healthy"
-        self._update_device_health_state(HealthState.OK)
+        self.update_device_health_state(HealthState.OK)
         return ResultCode.OK, "link is healthy"
 
     def disconnect_slim_tx_rx(

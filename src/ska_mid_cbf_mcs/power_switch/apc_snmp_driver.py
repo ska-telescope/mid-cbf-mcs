@@ -31,7 +31,6 @@ from pysnmp.proto import rfc1902
 from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["ApcSnmpDriver"]
@@ -48,6 +47,8 @@ class ApcSnmpDriver:
     :param password: Login password for the power switch
     :param logger: a logger for this object to use
     """
+
+    power_switch_outlets = 24
 
     query_timeout_s = 6
     """Timeout in seconds used when waiting for a reply from the power switch"""
@@ -68,9 +69,8 @@ class ApcSnmpDriver:
         self.ip = ip
 
         # valid range 1 to 24
-        Const.POWER_SWITCH_OUTLETS = 24
         self.outlet_id_list: list[str] = [
-            str(i + 1) for i in range(0, Const.POWER_SWITCH_OUTLETS)
+            str(i) for i in range(1, self.power_switch_outlets + 1)
         ]
 
         # Initialize outlets
@@ -268,9 +268,8 @@ class ApcSnmpDriver:
         and current state.
 
         :return: list of all the outlets available in this power switch,
-                 or an empty list if there was an error
+                 or an empty list if there was an error.
         """
-
         # Extract the outlet list
         outlets: list[Outlet] = []
 

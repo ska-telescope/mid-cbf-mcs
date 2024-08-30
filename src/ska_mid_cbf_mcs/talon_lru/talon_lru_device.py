@@ -18,7 +18,6 @@ from typing import Any
 
 import tango
 from ska_control_model import PowerState
-from ska_tango_base import SKABaseDevice
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode
 from tango.server import attribute, command, device_property
@@ -75,12 +74,6 @@ class TalonLRU(CbfDevice):
     # Initialization
     # --------------
 
-    def init_command_objects(self: TalonLRU) -> None:
-        """
-        Sets up the command objects.
-        """
-        super(CbfDevice, self).init_command_objects()
-
     def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
         Create and return a component manager for this device.
@@ -102,7 +95,7 @@ class TalonLRU(CbfDevice):
     # Fast Commands
     # -------------
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the TalonLRU's init_device() "command".
         """

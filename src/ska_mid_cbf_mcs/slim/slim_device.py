@@ -11,17 +11,13 @@
 from __future__ import annotations
 
 from ska_control_model import HealthState, PowerState, SimulationMode
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.base.base_device import DevVarLongStringArrayType
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.device.base_device import CbfDevice
+from ska_mid_cbf_mcs.device.base_device import CbfDevice, CbfFastCommand
 from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
 __all__ = ["Slim", "main"]
@@ -172,17 +168,6 @@ class Slim(CbfDevice):
         )
 
         self.register_command_object(
-            "Off",
-            SubmittedSlowCommand(
-                command_name="Off",
-                command_tracker=self._command_tracker,
-                component_manager=self.component_manager,
-                method_name="off",
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
             "SlimTest",
             self.SlimTestCommand(
                 component_manager=self.component_manager,
@@ -194,54 +179,28 @@ class Slim(CbfDevice):
     # Fast Commands
     # -------------
 
-    class InitCommand(SKABaseDevice.InitCommand):
-        """
-        A class for the init_device() "command".
-        """
-
-        def do(self: Slim.InitCommand) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code, message) = super().do()
-            self._device.simulationMode = SimulationMode.TRUE
-
-            return (result_code, message)
-
-    class SlimTestCommand(FastCommand):
+    class SlimTestCommand(CbfFastCommand):
         """
         A command to test the mesh of SLIM Links.
         """
 
-        def __init__(
-            self: Slim.SlimTestCommand,
-            *args: any,
-            component_manager: SlimComponentManager,
-            **kwargs: any,
-        ) -> None:
-            self.component_manager = component_manager
-            super().__init__(*args, **kwargs)
-
         def is_allowed(self: Slim.SlimTestCommand) -> bool:
             """
-            Check if the Init command is allowed to be executed.
+            Determine if SlimTest command is allowed.
 
-            :return: True if the command is allowed to be executed, False otherwise.
+            :return: True if command is allowed, otherwise False
             """
-            if self.component_manager.power_state == PowerState.ON:
-                if self.component_manager.mesh_configured:
-                    return True
-                else:
-                    self.logger.error(
-                        "SLIM must be configured before SlimTest can be called"
-                    )
-                    return False
-            return False
+            if self.component_manager.power_state != PowerState.ON:
+                self.logger.warning(
+                    "SLIM must be turned on before SlimTest can be called"
+                )
+                return False
+            if not self.component_manager.mesh_configured:
+                self.logger.warning(
+                    "SLIM must be configured before SlimTest can be called"
+                )
+                return False
+            return True
 
         def do(self: Slim.SlimTestCommand) -> tuple[ResultCode, str]:
             """
@@ -253,13 +212,8 @@ class Slim(CbfDevice):
             :rtype: (ResultCode, str)
             """
             if self.is_allowed():
-                result_code, message = self.component_manager.slim_test()
-                return (result_code, message)
-            else:
-                return (
-                    ResultCode.REJECTED,
-                    "Failed to issue SlimTest command. Check device state and configuration.",
-                )
+                return self.component_manager.slim_test()
+            return (ResultCode.REJECTED, "SLIM Test not allowed")
 
     @command(
         dtype_out="DevVarLongStringArray",
@@ -274,6 +228,58 @@ class Slim(CbfDevice):
     # Long Running Commands
     # ---------------------
 
+    def is_On_allowed(
+        self: Slim,
+    ) -> bool:
+        """
+        Overwrite baseclass's is_On_allowed method.
+        """
+        return True
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()
+    def On(
+        self: Slim,
+    ) -> DevVarLongStringArrayType:
+        """
+        Turn on SLIM.
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
+        command_handler = self.get_command_object(command_name="On")
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
+
+    def is_Off_allowed(
+        self: Slim,
+    ) -> bool:
+        """
+        Overwrite baseclass's is_Off_allowed method.
+        """
+        return True
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()
+    def Off(
+        self: Slim,
+    ) -> DevVarLongStringArrayType:
+        """
+        Turn off SLIM.
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
+        command_handler = self.get_command_object(command_name="Off")
+        result_code, command_id = command_handler()
+        return [[result_code], [command_id]]
+
     @command(
         dtype_in="DevString",
         doc_in="mesh configuration as a string in YAML format",
@@ -284,19 +290,6 @@ class Slim(CbfDevice):
     def Configure(self: Slim, argin: str) -> None:
         command_handler = self.get_command_object("Configure")
         result_code, command_id = command_handler(argin)
-        return [[result_code], [command_id]]
-
-    def is_Off_allowed(self: Slim) -> bool:
-        return True
-
-    @command(
-        dtype_out="DevVarLongStringArray",
-        doc_out="Tuple of a string containing a return code and message indicating the status of the command, as well as the SubmittedSlowCommand's command ID.",
-    )
-    @DebugIt()
-    def Off(self: Slim) -> None:
-        command_handler = self.get_command_object("Off")
-        result_code, command_id = command_handler()
         return [[result_code], [command_id]]
 
     # ---------

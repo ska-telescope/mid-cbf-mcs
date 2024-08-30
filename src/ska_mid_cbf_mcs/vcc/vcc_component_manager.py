@@ -141,10 +141,8 @@ class VccComponentManager(CbfObsComponentManager):
     def _deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
         self.frequency_band = 0
-        self._device_attr_change_callback("frequencyBand", self.frequency_band)
-        self._device_attr_archive_callback(
-            "frequencyBand", self.frequency_band
-        )
+        self.device_attr_change_callback("frequencyBand", self.frequency_band)
+        self.device_attr_archive_callback("frequencyBand", self.frequency_band)
         self._freq_band_name = ""
         self.config_id = ""
         self.scan_id = 0
@@ -156,11 +154,12 @@ class VccComponentManager(CbfObsComponentManager):
         samples_per_frame: int,
     ) -> str:
         """
-        Helper for loading VCC internal parameter file
+        Helper for loading VCC internal parameter file.
 
         :param freq_band_name: the name of the configured frequency band
         :param dish_sample rate: the configured DISH sample rate
         :param samples_per_frame: the configured samples per frame
+        :return: JSON string with internal parameters, or empty string if file not found
         """
         self.logger.info(
             f"Configuring internal parameters for VCC band {freq_band_name}"
@@ -186,7 +185,7 @@ class VccComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     "Could not find default internal parameters file."
                 )
-                return None
+                return ""
 
         self.logger.debug(f"VCC internal parameters: {json_string}")
 
@@ -208,6 +207,11 @@ class VccComponentManager(CbfObsComponentManager):
     # ---------------------
 
     def is_configure_band_allowed(self: VccComponentManager) -> bool:
+        """
+        Check if ConfigureBand is allowed.
+
+        :return: True if ConfigureBand is allowed, False otherwise
+        """
         self.logger.debug("Checking if VCC ConfigureBand is allowed.")
         if self.obs_state not in [ObsState.IDLE, ObsState.READY]:
             self.logger.warning(
@@ -256,9 +260,6 @@ class VccComponentManager(CbfObsComponentManager):
             )
             return
 
-        # TODO: remove?
-        self.logger.debug(f"simulation mode: {self.simulation_mode}")
-
         if self.simulation_mode:
             self._vcc_controller_simulator.ConfigureBand(frequency_band)
         else:
@@ -285,7 +286,7 @@ class VccComponentManager(CbfObsComponentManager):
             dish_sample_rate=band_config["dish_sample_rate"],
             samples_per_frame=band_config["samples_per_frame"],
         )
-        if json_string is None:
+        if not json_string:
             self._update_component_state(fault=True)
             task_callback(
                 status=TaskStatus.FAILED,
@@ -306,10 +307,8 @@ class VccComponentManager(CbfObsComponentManager):
         self._freq_band_name = freq_band_name
 
         self.frequency_band = frequency_band
-        self._device_attr_change_callback("frequencyBand", self.frequency_band)
-        self._device_attr_archive_callback(
-            "frequencyBand", self.frequency_band
-        )
+        self.device_attr_change_callback("frequencyBand", self.frequency_band)
+        self.device_attr_archive_callback("frequencyBand", self.frequency_band)
 
         task_callback(
             result=(ResultCode.OK, "ConfigureBand completed OK"),
@@ -611,6 +610,9 @@ class VccComponentManager(CbfObsComponentManager):
             self.logger.info(
                 "Aborting from IDLE; not issuing Abort command to VCC band devices"
             )
+
+        # Update obsState callback
+        self._update_component_state(scanning=False)
 
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),

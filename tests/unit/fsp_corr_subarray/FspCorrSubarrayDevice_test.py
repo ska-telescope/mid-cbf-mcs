@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import gc
+import json
 import os
 from typing import Iterator
 from unittest.mock import Mock
@@ -45,6 +46,12 @@ class TestFspCorrSubarray:
     def fsp_corr_test_context(
         self: TestFspCorrSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        A fixture that creates a test context for the FspCorrSubarray tests.
+
+        :param initial_mocks: A dictionary of initial mocks for the FspCorrSubarray.
+        :return: A test context for the FspCorrSubarray.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/fspCorrSubarray/01_01",
@@ -64,8 +71,7 @@ class TestFspCorrSubarray:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-        :py:class: `CbfDeviceProxy` to the device under test, in a
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
@@ -75,9 +81,7 @@ class TestFspCorrSubarray:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -87,9 +91,7 @@ class TestFspCorrSubarray:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -101,10 +103,9 @@ class TestFspCorrSubarray:
         """
         Helper function to start up and turn on the DUT.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         # Set the DUT to AdminMode.ONLINE and DevState.ON
         device_under_test.simulationMode == SimulationMode.FALSE
@@ -141,24 +142,22 @@ class TestFspCorrSubarray:
         """
         Test a minimal successful scan configuration.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
-        # prepare device for observation
+        # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test happy path observing command sequence
+        # Test happy path observing command sequence
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -216,37 +215,35 @@ class TestFspCorrSubarray:
         """
         Test FspCorrSubarray's ability to reconfigure and run multiple scans.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
-        # prepare device for observation
+        # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test happy path observing command sequence
+        # Test happy path observing command sequence
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -258,7 +255,7 @@ class TestFspCorrSubarray:
                 ),
             )
 
-        # second round of observation
+        # Second round of observation
         command_dict = {}
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
@@ -279,9 +276,9 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.IDLE, ObsState.READY, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -320,24 +317,22 @@ class TestFspCorrSubarray:
         """
         Test a Abort from ObsState.READY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
-        # prepare device for observation
+        # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing Abort and ObsReset from READY
+        # Test issuing Abort and ObsReset from READY
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -353,9 +348,9 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -395,24 +390,22 @@ class TestFspCorrSubarray:
         """
         Test a Abort from ObsState.SCANNING.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param config_file_name: JSON file for the configuration
         """
-        # prepare device for observation
+        # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing Abort and ObsReset from SCANNING
+        # Test issuing Abort and ObsReset from SCANNING
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
@@ -430,9 +423,9 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
         ]
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -459,14 +452,22 @@ class TestFspCorrSubarray:
             )
 
     @pytest.mark.parametrize(
-        "delay_model_file_name",
-        ["/../../data/delaymodel_unit_test.json"],
+        "config_file_name, delay_model_file_name, scan_id",
+        [
+            (
+                "FspCorrSubarray_ConfigureScan_basic.json",
+                "/../../data/delaymodel_unit_test.json",
+                1,
+            )
+        ],
     )
     def test_UpdateDelayModel(
         self: TestFspCorrSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
+        config_file_name: str,
         delay_model_file_name: str,
+        scan_id: int,
     ) -> None:
         """
         Test Fsp's UpdateDelayModel command
@@ -476,21 +477,113 @@ class TestFspCorrSubarray:
             :py:class:`context.DeviceProxy`.
         :param event_tracer: A :py:class:`TangoEventTracer` used to
             recieve subscribed change events from the device under test.
+        :param config_file_name: JSON file for the configuration
         :param delay_model_file_name: JSON file for the delay model
-        :param sub_id: the subarray id
+        :param scan_id: scan command input ID
         """
         assert self.device_online_and_on(device_under_test, event_tracer)
 
         # prepare input data
+        with open(test_data_path + config_file_name) as f:
+            config_str = f.read().replace("\n", "")
         with open(file_path + delay_model_file_name) as f:
             delay_model = f.read().replace("\n", "")
 
-        # delay model should be empty string after initialization
+        # Delay model should be empty string after initialization
         assert device_under_test.delayModel == ""
+
+        # test issuing delay model from READY
+        [[result_code], [command_id]] = device_under_test.ConfigureScan(
+            config_str
+        )
+        assert result_code == ResultCode.QUEUED
+
+        attr_values = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
 
         result = device_under_test.UpdateDelayModel(delay_model)
         assert result == [
             [ResultCode.OK.value],
             ["UpdateDelayModel completed OK"],
         ]
-        assert device_under_test.delayModel == delay_model
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="delayModel",
+            attribute_value=delay_model,
+            previous_value="",
+            target_n_events=1,
+        )
+
+        # test issuing delay model from SCANNING
+        [[result_code], [command_id]] = device_under_test.Scan(scan_id)
+        assert result_code == ResultCode.QUEUED
+
+        attr_values = [
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "Scan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+        # Send a delay model with missing data just to check change event
+        # JSON is only validated above FSP in the subarray
+        delay_model_json = json.loads(delay_model)
+        delay_model_json["receptor_delays"] = []
+        new_delay_model = json.dumps(delay_model_json)
+
+        result = device_under_test.UpdateDelayModel(new_delay_model)
+        assert result == [
+            [ResultCode.OK.value],
+            ["UpdateDelayModel completed OK"],
+        ]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="delayModel",
+            attribute_value=new_delay_model,
+            previous_value=delay_model,
+            target_n_events=1,
+        )

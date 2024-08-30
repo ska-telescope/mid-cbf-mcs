@@ -17,13 +17,7 @@ from typing import Callable, Optional
 
 import tango
 from beautifultable import BeautifulTable
-from ska_control_model import (
-    AdminMode,
-    HealthState,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
+from ska_control_model import AdminMode, HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -46,17 +40,14 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         *args: any,
         link_fqdns: list[str],
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
 
         :param link_fqdns: a list of SLIM Link FQDNs
-        :param simulation_mode: Enum that identifies if the simulator should be used
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
 
         self.mesh_configured = False
         self._config_str = ""
@@ -95,28 +86,16 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self._subscribe_command_results(dp)
+                self.subscribe_command_results(dp)
                 self._dp_links.append(dp)
-            except AttributeError as ae:
-                # Thrown if the device exists in the db but the executable is not running.
+            except (tango.DevFailed, AttributeError) as err:
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self.logger.error(
-                    f"Attribute error {ae}. Ensure SlimLink devices are running."
-                )
-                return
-            except tango.DevFailed as df:
-                # Thrown if the device doesn't exist in the db.
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-                self.logger.error(
-                    f"Failed to set AdminMode of {fqdn} to ONLINE: {df.args[0].desc}"
-                )
+                self.logger.error(f"Failed to initialize {fqdn}: {err}")
                 return
         self.logger.info(
-            f"event_ids after subscribing = {len(self._event_ids)}"
+            f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
         super()._start_communicating()
@@ -129,8 +108,8 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
         for proxy in self._dp_links:
-            self._unsubscribe_command_results(proxy)
-        self._blocking_commands = set()
+            self.unsubscribe_command_results(proxy)
+        self.blocking_commands = set()
 
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
@@ -140,22 +119,6 @@ class SlimComponentManager(CbfComponentManager):
     # -------------
     # Fast Commands
     # -------------
-
-    def on(self: SlimComponentManager) -> tuple[ResultCode, str]:
-        """
-        On command. Currently just returns OK. The device
-        does nothing until mesh configuration is provided via
-        the Configure command.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self.logger.debug("Entering SlimComponentManager.on")
-
-        self._update_component_state(power=PowerState.ON)
-        return (ResultCode.OK, "On completed OK")
 
     # --- Getters --- #
 
@@ -417,6 +380,61 @@ class SlimComponentManager(CbfComponentManager):
     # Long Running Commands
     # ---------------------
 
+    # --- On Command --- #
+
+    def is_on_allowed(self: SlimComponentManager) -> bool:
+        self.logger.debug("Checking if On is allowed.")
+        if not self.is_communicating:
+            return False
+        if self.power_state != PowerState.OFF:
+            self.logger.warning(
+                f"On not allowed; PowerState is {self.power_state}"
+            )
+            return False
+        return True
+
+    def _on(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> tuple[ResultCode, str]:
+        """
+        On command.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug("Entering SlimComponentManager._on")
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set("On", task_callback, task_abort_event):
+            return
+
+        self._update_component_state(power=PowerState.ON)
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "On completed OK",
+            ),
+        )
+
+    def on(
+        self: SlimComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._on,
+            is_cmd_allowed=self.is_on_allowed,
+            task_callback=task_callback,
+        )
+
     # --- Configure Command --- #
 
     def _initialize_links(
@@ -458,21 +476,21 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.ConnectTxRx() rejected",
                     )
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-            lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
+            lrc_status = self.wait_for_blocking_results(
+                timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    "One or more calls to nested LRC SlimLink.ConnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.ConnectTxRx() failed/timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
@@ -486,9 +504,7 @@ class SlimComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self.logger.error(
-                f"Failed to initialize SLIM links: {df.args[0].desc}"
-            )
+            self.logger.error(f"Failed to initialize SLIM links: {df}")
             raise df
         except IndexError as ie:
             msg = "Not enough Links defined in device properties"
@@ -598,7 +614,7 @@ class SlimComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    df.args[0].desc,
+                    df,
                 ),
             )
             return
@@ -661,21 +677,21 @@ class SlimComponentManager(CbfComponentManager):
                     self.logger.error(
                         f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return (
                         ResultCode.FAILED,
                         "Nested LRC SlimLink.DisconnectTxRx() rejected",
                     )
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
-            lrc_status = self._wait_for_blocking_results(
-                timeout=10.0, task_abort_event=task_abort_event
+            lrc_status = self.wait_for_blocking_results(
+                timeout_sec=10.0, task_abort_event=task_abort_event
             )
 
             if lrc_status != TaskStatus.COMPLETED:
                 self.logger.error(
-                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() timed out. Check SlimLink logs."
+                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() failed/timed out. Check SlimLink logs."
                 )
                 return (
                     ResultCode.FAILED,
@@ -685,9 +701,7 @@ class SlimComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self.logger.error(
-                f"Failed to disconnect SLIM links: {df.args[0].desc}"
-            )
+            self.logger.error(f"Failed to disconnect SLIM links: {df}")
             raise df
 
         self.logger.info("Successfully disconnected SLIM links")
@@ -719,7 +733,7 @@ class SlimComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug("Entering SlimComponentManager.off")
+        self.logger.debug("Entering SlimComponentManager._off")
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         if self.task_abort_event_is_set(
@@ -746,7 +760,7 @@ class SlimComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    df.args[0].desc,
+                    df,
                 ),
             )
             return

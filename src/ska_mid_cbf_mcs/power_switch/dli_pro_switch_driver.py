@@ -18,7 +18,6 @@ from requests.structures import CaseInsensitiveDict
 from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.commons.global_enum import Const
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["DLIProSwitchDriver"]
@@ -35,6 +34,8 @@ class DLIProSwitchDriver:
     :param password: Login password for the power switch
     :param logger: a logger for this object to use
     """
+
+    power_switch_outlets = 8
 
     query_timeout_s = 6
     """Timeout in seconds used when waiting for a reply from the power switch"""
@@ -82,9 +83,8 @@ class DLIProSwitchDriver:
         self.state_off = "False"
 
         # valid range 0 to 7
-        Const.POWER_SWITCH_OUTLETS = 8
         self.outlet_id_list: list[str] = [
-            str(i) for i in range(0, Const.POWER_SWITCH_OUTLETS)
+            str(i) for i in range(0, self.power_switch_outlets)
         ]
 
         # Initialize outlets

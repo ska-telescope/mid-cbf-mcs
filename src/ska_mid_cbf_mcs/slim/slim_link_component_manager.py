@@ -14,12 +14,7 @@ from typing import Callable, Optional
 
 import backoff
 import tango
-from ska_control_model import (
-    HealthState,
-    PowerState,
-    SimulationMode,
-    TaskStatus,
-)
+from ska_control_model import HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -40,16 +35,12 @@ class SlimLinkComponentManager(CbfComponentManager):
     def __init__(
         self: SlimLinkComponentManager,
         *args: any,
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
-
-        :param simulation_mode: Enum that identifies if the simulator should be used
         """
         super().__init__(*args, **kwargs)
-        self.simulation_mode = simulation_mode
 
         self._link_name = ""
         self._tx_device_name = ""
@@ -392,9 +383,9 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
         self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
-    def init_tx_for_loopback(self: SlimLinkComponentManager) -> None:
+    def get_tx_loopback_fqdn(self: SlimLinkComponentManager) -> None:
         """
-        Initialize the Tx device for serial loopback.
+        Determine the Tx device name for serial loopback.
         """
         # To put SLIM Rx back in serial loopback, we need to determine
         # the Tx device name it should reference for ICW comparisons.
@@ -403,7 +394,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         mesh = rx.split("/")[2].split("-")[0]
         rx_arr = rx.split("/")
         tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
-        self._tx_device_name = tx
+        return tx
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -431,7 +422,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._rx_device_proxy is None)
         ):
             self.logger.warning("Tx and Rx devices have not been connected.")
-            self._update_device_health_state(HealthState.UNKNOWN)
+            self.update_device_health_state(HealthState.UNKNOWN)
             return ResultCode.OK, "VerifyConnection completed OK"
 
         error_msg = ""
@@ -458,17 +449,17 @@ class SlimLinkComponentManager(CbfComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df.args[0].desc}"
+            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df}"
             self.logger.error(error_msg)
-            self._update_device_health_state(HealthState.FAILED)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
             self.logger.warning(
                 f"{self._link_name}: failed health check - {error_msg}"
             )
-            self._update_device_health_state(HealthState.FAILED)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.OK, "VerifyConnection completed OK"
-        self._update_device_health_state(HealthState.OK)
+        self.update_device_health_state(HealthState.OK)
         return ResultCode.OK, "VerifyConnection completed OK"
 
     def clear_counters(
@@ -616,7 +607,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.args[0].desc,
+                        df,
                     ),
                 )
                 return
@@ -696,9 +687,10 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
 
             try:
-                self.init_tx_for_loopback()
+                # Fetch the tx fqdn required to initialize link in serial loopbaack
+                loopback_tx = self.get_tx_loopback_fqdn()
                 self._tx_device_proxy = context.DeviceProxy(
-                    device_name=self._tx_device_name
+                    device_name=loopback_tx
                 )
                 self.sync_idle_ctrl_words()
                 self._rx_device_proxy.initialize_connection(True)
@@ -724,7 +716,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.args[0].desc,
+                        df,
                     ),
                 )
                 return

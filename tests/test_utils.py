@@ -4,7 +4,8 @@ from ska_control_model import AdminMode, SimulationMode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
-EVENT_TIMEOUT = 60
+# Event Tracer's timeout in seconds
+EVENT_TIMEOUT = 30
 
 
 def device_online_and_on(

@@ -26,6 +26,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
         {
             "sys_param_file": "sys_param_4_boards.json",
             "configure_scan_file": "ConfigureScan_basic_CORR.json",
+            "delay_model_file": "delay_model_1_receptor.json",
             "scan_file": "Scan1_basic.json",
             "sub_id": 1,
             "dish_ids": ["SKA001"],
@@ -35,6 +36,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
         {
             "sys_param_file": "sys_param_4_boards.json",
             "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
+            "delay_model_file": "delay_model_4_receptor.json",
             "scan_file": "Scan1_basic.json",
             "sub_id": 1,
             "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -49,6 +51,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
         {
             "sys_param_file": "sys_param_4_boards.json",
             "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
+            "delay_model_file": "delay_model_4_receptor.json",
             "scan_file": "Scan1_basic.json",
             "sub_id": 1,
             "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
@@ -133,6 +136,18 @@ def vcc_proxies() -> dict[int, context.DeviceProxy]:
     }
 
 
+@pytest.fixture(name="tm", scope="session", autouse=True)
+def tm_proxy() -> context.DeviceProxy:
+    """
+    Fixture that returns a proxy to the TM leaf node emulator device.
+
+    :return: DeviceProxy to TmCspSubarrayLeafNodeTest device
+    """
+    return context.DeviceProxy(
+        device_name="ska_mid/tm_leaf_node/csp_subarray_01"
+    )
+
+
 # TODO: scope=test?
 @pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
@@ -157,20 +172,23 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "receptors")
         tracer.subscribe_event(proxy, "sysParam")
 
-    for proxy in (
-        list(vcc.values()) + list(fsp.values()) + list(fsp_corr.values())
-    ):
+    for proxy in list(fsp.values()):
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
+        tracer.subscribe_event(proxy, "subarrayMembership")
+        tracer.subscribe_event(proxy, "functionMode")
 
-        # only FSP is not an obs device
-        if "mid_csp_cbf/fsp/" not in proxy.dev_name():
-            tracer.subscribe_event(proxy, "obsState")
-            if "mid_csp_cbf/vcc/" in proxy.dev_name():
-                tracer.subscribe_event(proxy, "subarrayMembership")
-                tracer.subscribe_event(proxy, "frequencyBand")
-        else:
-            tracer.subscribe_event(proxy, "subarrayMembership")
-            tracer.subscribe_event(proxy, "functionMode")
+    for proxy in list(fsp_corr.values()):
+        tracer.subscribe_event(proxy, "adminMode")
+        tracer.subscribe_event(proxy, "state")
+        tracer.subscribe_event(proxy, "obsState")
+        tracer.subscribe_event(proxy, "delayModel")
+
+    for proxy in list(vcc.values()):
+        tracer.subscribe_event(proxy, "adminMode")
+        tracer.subscribe_event(proxy, "state")
+        tracer.subscribe_event(proxy, "obsState")
+        tracer.subscribe_event(proxy, "subarrayMembership")
+        tracer.subscribe_event(proxy, "frequencyBand")
 
     return tracer

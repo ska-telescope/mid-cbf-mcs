@@ -26,11 +26,10 @@ def fsp_corr_device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
     """
-    Fixture that returns the device under test.
+    Fixture that returns the DeviceProxy to device under test.
 
     :param test_context: the context in which the tests run
-
-    :return: the device under test
+    :return: the DeviceProxy for the device under test
     """
     return test_context.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
@@ -43,7 +42,7 @@ def tango_event_tracer(
     Fixture that returns a TangoEventTracer for pertinent devices.
     Takes as parameter all required device proxy fixtures for this test module.
 
-    :param device_under_test: the device being tested.
+    :param device_under_test: the DeviceProxy for the device under test
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
@@ -53,6 +52,7 @@ def tango_event_tracer(
         "obsState",
         "adminMode",
         "state",
+        "delayModel",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)

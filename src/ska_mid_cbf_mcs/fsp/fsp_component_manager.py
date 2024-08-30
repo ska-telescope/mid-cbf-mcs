@@ -24,9 +24,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
-    HpsFspControllerSimulator,
-)
 
 
 class FspComponentManager(CbfComponentManager):
@@ -103,10 +100,6 @@ class FspComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 return
-        else:
-            self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
-                self._hps_fsp_controller_fqdn,
-            )
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
@@ -169,20 +162,21 @@ class FspComponentManager(CbfComponentManager):
         :param function_mode: function mode int
         :return: True if successfully set FSP function mode, otherwise False
         """
-        try:
-            self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
-        except tango.DevFailed as df:
-            self.logger.error(
-                f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
-            )
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return False
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return False
 
         self.function_mode = function_mode
-        self._device_attr_change_callback("functionMode", self.function_mode)
-        self._device_attr_archive_callback("functionMode", self.function_mode)
+        self.device_attr_change_callback("functionMode", self.function_mode)
+        self.device_attr_archive_callback("functionMode", self.function_mode)
         self.logger.info(
             f"FSP set to function mode {FspModes(function_mode).name}"
         )
@@ -283,7 +277,7 @@ class FspComponentManager(CbfComponentManager):
                 f"Fsp already assigned to the maximum number of subarrays ({const.MAX_SUBARRAY})"
             )
             return False
-        if subarray_id - 1 not in range(const.MAX_SUBARRAY):
+        if subarray_id not in range(1, const.MAX_SUBARRAY + 1):
             self.logger.error(
                 f"Subarray {subarray_id} invalid; must be in range [1, {const.MAX_SUBARRAY}]"
             )
@@ -297,12 +291,14 @@ class FspComponentManager(CbfComponentManager):
         )
         return True
 
-    def _subarray_on(self: FspComponentManager, subarray_id: int) -> bool:
+    def _function_mode_subarray_online(
+        self: FspComponentManager, subarray_id: int
+    ) -> bool:
         """
-        Turn on FSP function mode subarray device for specified subarray
+        Set FSP function mode subarray device to AdminMode.ONLINE
 
-        :param subarray_id: ID of subarray for which to power on function mode proxy
-        :return: False if unsuccessful in powering on FSP function mode subarray proxy,
+        :param subarray_id: ID of subarray for which to set function mode proxy online
+        :return: False if unsuccessful in setting online the FSP function mode subarray proxy,
             True otherwise
         """
         match self.function_mode:
@@ -312,8 +308,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                # TODO: alternative to hardcoded FQDN?
-                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     # set FSP devices simulationMode attributes
@@ -393,22 +388,22 @@ class FspComponentManager(CbfComponentManager):
             )
             return
 
-        on_success = self._subarray_on(argin)
+        on_success = self._function_mode_subarray_online(argin)
         if not on_success:
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    f"Unsuccessful in powering on function mode device for subarray {argin}",
+                    f"Unsuccessful in setting online function mode device for subarray {argin}",
                 ),
                 status=TaskStatus.FAILED,
             )
             return
 
         self.subarray_membership.append(argin)
-        self._device_attr_change_callback(
+        self.device_attr_change_callback(
             "subarrayMembership", list(self.subarray_membership)
         )
-        self._device_attr_archive_callback(
+        self.device_attr_archive_callback(
             "subarrayMembership", list(self.subarray_membership)
         )
 
@@ -447,12 +442,14 @@ class FspComponentManager(CbfComponentManager):
 
     # --- RemoveSubarrayMembership Command --- #
 
-    def _subarray_off(self: FspComponentManager, subarray_id: int) -> bool:
+    def _function_mode_subarray_offline(
+        self: FspComponentManager, subarray_id: int
+    ) -> bool:
         """
-        Turn off FSP function mode subarray device for specified subarray
+        Set FSP function mode subarray device to AdminMode.OFFLINE
 
-        :param subarray_id: ID of subarray for which to power off function mode proxy
-        :return: False if unsuccessful in powering off FSP function mode subarray proxy,
+        :param subarray_id: ID of subarray for which to set function mode proxy offline
+        :return: False if unsuccessful in setting offline the FSP function mode subarray proxy,
             True otherwise
         """
         match self.function_mode:
@@ -462,7 +459,7 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.CORR.value:
-                fqdn = f"mid_csp_cbf/fspCorrSubarray/{self._fsp_id:02}_{subarray_id:02}"
+                fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
@@ -546,22 +543,22 @@ class FspComponentManager(CbfComponentManager):
             f"Removing subarray {argin} from subarray membership."
         )
 
-        off_success = self._subarray_off(argin)
+        off_success = self._function_mode_subarray_offline(argin)
         if not off_success:
             task_callback(
                 result=(
                     ResultCode.FAILED,
-                    f"Unsuccessful in powering off function mode device for subarray {argin}",
+                    f"Unsuccessful in setting offline function mode device for subarray {argin}",
                 ),
                 status=TaskStatus.FAILED,
             )
             return
 
         self.subarray_membership.remove(argin)
-        self._device_attr_change_callback(
+        self.device_attr_change_callback(
             "subarrayMembership", self.subarray_membership
         )
-        self._device_attr_archive_callback(
+        self.device_attr_archive_callback(
             "subarrayMembership", self.subarray_membership
         )
 

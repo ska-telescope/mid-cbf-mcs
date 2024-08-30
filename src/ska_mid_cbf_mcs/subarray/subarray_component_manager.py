@@ -42,7 +42,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
     mhz_to_hz,
-    vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
@@ -146,7 +145,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def vcc_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned VCC IDs"""
+        """
+        Return the list of assigned VCC IDs
+
+        :return: list of assigned VCC IDs
+        """
         if self._dish_utils is not None:
             return [
                 self._dish_utils.dish_id_to_vcc_id[dish]
@@ -159,7 +162,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     @property
     def fsp_ids(self: CbfSubarrayComponentManager) -> list[int]:
-        """Return the list of assigned FSP IDs"""
+        """
+        Return the list of assigned FSP IDs
+
+        :return: list of assigned VCC IDs
+        """
         return list(self._fsp_ids)
 
     # -------------
@@ -170,7 +177,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
-        :return: False if initialization failed, otherwise True
+        :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
             controller = context.DeviceProxy(device_name=self._fqdn_controller)
@@ -192,9 +199,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
         self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
 
-        self.logger.info(f"Active VCC FQDNs: {self._fqdn_vcc}")
-        self.logger.info(f"Active FSP FQDNs: {self._fqdn_fsp}")
-        self.logger.info(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+        self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
+        self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
+        self.logger.debug(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
 
         return True
 
@@ -202,9 +209,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialize proxies to FSP and VCC subelements
 
-        :return: False if initialization failed, otherwise True
+        :return: True if proxy initialization succeed, otherwise False
         """
         try:
+            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+                self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
+                    device_name=fqdn
+                )
+
             for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
                 zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
             ):
@@ -256,6 +268,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
+    # --------
+    # sysParam
+    # --------
+
     def _update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str, *args, **kwargs
     ) -> None:
@@ -269,29 +285,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(
             "Updated DISH ID to VCC ID and frequency offset k mapping"
         )
-        for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
-            dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
-            try:
-                self._all_vcc_proxies[dish_id] = context.DeviceProxy(
-                    device_name=fqdn
-                )
-            except tango.DevFailed as df:
-                self.logger.error(f"Failed to initialize VCC proxies; {df}")
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
-            except KeyError as ke:
-                self.logger.error(f"DISH ID not found for VCC {vcc_id}; {ke}")
 
         self._sys_param_str = sys_param_str
-        self._device_attr_change_callback("sysParam", self._sys_param_str)
-        self._device_attr_archive_callback("sysParam", self._sys_param_str)
+        self.device_attr_change_callback("sysParam", self._sys_param_str)
+        self.device_attr_archive_callback("sysParam", self._sys_param_str)
 
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
         """
-        Reload sys param from input JSON
+        Submit reload sys param operation to task executor queue
 
         :param sys_param_str: sys params JSON string
         """
@@ -306,63 +309,74 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
 
-    # -------------
-    # Fast Commands
-    # -------------
+    # ----------------------
+    # Subscription callbacks
+    # ----------------------
 
     def _update_delay_model(
-        self: CbfSubarrayComponentManager, model: str
+        self: CbfSubarrayComponentManager, event_data: tango.EventData
     ) -> None:
         """
-        Update FSP and VCC delay models.
+        Update FSP delay models.
         This method is always started in a separate thread.
 
-        :param model: delay model JSON string
+        :param event_data: the received change event data (delay model JSON string)
         """
-        self.logger.info(f"Updating delay model; {model}")
+        model = event_data.attr_value.value
+
+        if not self.is_communicating or model is None or model == "":
+            return
+
+        if self.obs_state not in [ObsState.READY, ObsState.SCANNING]:
+            log_msg = f"Ignoring delay model received in {self.obs_state} (must be READY or SCANNING)."
+            self.logger.warning(log_msg)
+            return
 
         if model == self.last_received_delay_model:
             self.logger.warning(
                 "Ignoring delay model (identical to previous)."
             )
             return
+
         try:
             delay_model_json = json.loads(model)
-        except (
-            json.JSONDecodeError
-        ) as je:  # delay model string not a valid JSON object
-            self.logger.error(
-                f"Delay model object is not a valid JSON object; {je}"
-            )
-            return
 
-        # Validate delay_model_json against the telescope model
-        self.logger.info(
-            f"Attempting to validate the following json against the telescope model: {delay_model_json}"
-        )
-        try:
+            self.logger.info(
+                f"Attempting to validate the following delay model JSON against the telescope model: {delay_model_json}"
+            )
             telmodel_validate(
                 version=delay_model_json["interface"],
                 config=delay_model_json,
                 strictness=1,
             )
             self.logger.info("Delay model is valid!")
-        except ValueError as e:
+        except json.JSONDecodeError as je:
             self.logger.error(
-                f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {e}."
+                f"Delay model object is not a valid JSON object; {je}"
+            )
+            return
+        except ValueError as ve:
+            self.logger.error(
+                f"Delay model JSON validation against the telescope model schema failed, ignoring delay model;\n {ve}."
             )
             return
 
-        # pass DISH ID as VCC ID integer to FSPs
+        # Validate DISH IDs, then convert them to VCC ID integers for FSPs
         for delay_detail in delay_model_json["receptor_delays"]:
             dish_id = delay_detail["receptor"]
+            if dish_id not in self.dish_ids:
+                self.logger.error(
+                    f"Delay model contains data for DISH ID {dish_id} not belonging to this subarray, ignoring delay model."
+                )
+                return
             delay_detail["receptor"] = self._dish_utils.dish_id_to_vcc_id[
                 dish_id
             ]
 
-        # we lock the mutex, forward the configuration, then unlock it
+        self.logger.info(f"Updating delay model; {delay_model_json}")
+        # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
-            results_fsp = self._issue_group_command(
+            results_fsp = self.issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
                 argin=json.dumps(delay_model_json),
@@ -385,25 +399,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param event_data: the received change event data
         """
         self.logger.debug("Entering _delay_model_event_callback()")
-        if not self.is_communicating:
-            self.logger.error(
-                f"Unable to update delay model, communication_state: {self.communication_state}"
-            )
-            return
 
-        value = event_data.attr_value.value
-
-        if value is None:
-            self.logger.error(
-                f"Delay model callback: None value received; {event_data}"
-            )
-            return
-        if self.obs_state != ObsState.READY:
-            log_msg = f"Ignoring delay model (obsState not correct). Delay model being passed in is: {value}"
-            self.logger.warning(log_msg)
-            return
-
-        Thread(target=self._update_delay_model, args=(value,)).start()
+        Thread(target=self._update_delay_model, args=(event_data,)).start()
 
     # -------------------
     # Resourcing Commands
@@ -435,14 +432,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return None
 
     def is_assign_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if AddReceptors command is allowed in current state"""
+        """
+        Check if AddReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if AddReceptors is allowed.")
         if not self.is_communicating:
             return False
         if self.obs_state not in [ObsState.EMPTY, ObsState.IDLE]:
             self.logger.warning(
-                f"AddReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.EMPTY or IDLE"
+                f"AddReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -505,14 +505,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        input_dish_valid, msg = self._dish_utils.are_Valid_DISH_Ids(argin)
-        if not input_dish_valid:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, msg),
-            )
-            return
-
         # build list of VCCs to assign
         vcc_proxies = []
         talon_proxies = []
@@ -520,7 +512,21 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for dish_id in argin:
             self.logger.debug(f"Attempting to add receptor {dish_id}")
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            try:
+                vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+                if 0 >= vcc_id > self._count_vcc:
+                    raise KeyError(
+                        f"VCC ID {vcc_id} not in current capabilities."
+                    )
+            except KeyError as ke:
+                self.logger.error(f"Invalid DISH ID {dish_id} provided; {ke}")
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"Invalid DISH ID {dish_id}"),
+                )
+                return
+
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_subarray_id = vcc_proxy.subarrayMembership
 
             # only add VCC if it does not already belong to a subarray
@@ -567,14 +573,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.dish_ids.update(dish_ids_to_add)
         receptors_push_val = list(self.dish_ids)
         receptors_push_val.sort()
-        self._device_attr_change_callback("receptors", receptors_push_val)
-        self._device_attr_archive_callback("receptors", receptors_push_val)
+        self.device_attr_change_callback("receptors", receptors_push_val)
+        self.device_attr_archive_callback("receptors", receptors_push_val)
 
         self._assigned_vcc_proxies.update(vcc_proxies)
 
-        # subscribe to LRC results for VCC scan operation
+        # subscribe to LRC results during the VCC scan operation
         for vcc_proxy in vcc_proxies:
-            self._subscribe_command_results(vcc_proxy)
+            self.subscribe_command_results(vcc_proxy)
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
@@ -615,14 +621,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- RemoveReceptors Command --- #
 
     def is_release_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveReceptors command is allowed in current state"""
+        """
+        Check if RemoveReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveReceptors is allowed.")
         if not self.is_communicating:
             return False
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
-                f"RemoveReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.IDLE"
+                f"RemoveReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -658,7 +667,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(f"Failed to release VCC; {df}")
             return False
 
-    def _release_vcc_loop(
+    def _release_vcc_resources(
         self: CbfSubarrayComponentManager, dish_ids: list[str]
     ) -> bool:
         """
@@ -681,7 +690,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 continue
 
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
             vcc_proxies.append(vcc_proxy)
             talon_proxies.append(self._get_talon_proxy_from_dish_id(dish_id))
             dish_ids_to_remove.append(dish_id)
@@ -707,14 +717,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.dish_ids.difference_update(dish_ids_to_remove)
         receptors_push_val = list(self.dish_ids)
         receptors_push_val.sort()
-        self._device_attr_change_callback("receptors", receptors_push_val)
-        self._device_attr_archive_callback("receptors", receptors_push_val)
+        self.device_attr_change_callback("receptors", receptors_push_val)
+        self.device_attr_archive_callback("receptors", receptors_push_val)
 
         self._assigned_vcc_proxies.difference_update(vcc_proxies)
 
         # unsubscribe from VCC LRC results
         for vcc_proxy in vcc_proxies:
-            self._unsubscribe_command_results(vcc_proxy)
+            self.unsubscribe_command_results(vcc_proxy)
 
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
@@ -749,7 +759,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        release_success = self._release_vcc_loop(dish_ids=argin)
+        release_success = self._release_vcc_resources(dish_ids=argin)
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
@@ -799,14 +809,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
     def is_release_all_vcc_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if RemoveAllReceptors command is allowed in current state"""
+        """
+        Check if RemoveAllReceptors command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if RemoveAllReceptors is allowed.")
         if not self.is_communicating:
             return False
         if self.obs_state not in [ObsState.IDLE]:
             self.logger.warning(
-                f"RemoveAllReceptors not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.IDLE"
+                f"RemoveAllReceptors not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -830,7 +843,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        release_success = self._release_vcc_loop(dish_ids=list(self.dish_ids))
+        release_success = self._release_vcc_resources(
+            dish_ids=list(self.dish_ids)
+        )
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,
@@ -908,7 +923,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("No resources currently assigned.")
             return TaskStatus.COMPLETED
 
-        for [[result_code], [command_id]] in self._issue_group_command(
+        for [[result_code], [command_id]] in self.issue_group_command(
             command_name=command_name,
             proxies=list(assigned_resources),
             argin=argin,
@@ -917,16 +932,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     f"Failed to issue {command_name} command to assigned resources; {result_code}"
                 )
-                self._blocking_commands = set()
+                self.blocking_commands = set()
                 return TaskStatus.FAILED
-            with self._results_lock:
-                self._blocking_commands.add(command_id)
+            with self.results_lock:
+                self.blocking_commands.add(command_id)
 
-        lrc_status = self._wait_for_blocking_results(
+        lrc_status = self.wait_for_blocking_results(
             task_abort_event=task_abort_event
         )
         if lrc_status == TaskStatus.FAILED:
-            self.logger.error("One or more command calls timed out.")
+            self.logger.error("One or more command calls failed/timed out.")
             return lrc_status
         if lrc_status == TaskStatus.ABORTED:
             self.logger.warning(
@@ -1021,7 +1036,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self.logger.debug(log_msg)
         fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+            dish_sample_rate * const.VCC_OVERSAMPLING_FACTOR / total_num_fs
         )
         fs_sample_rate_for_band = {
             "vcc_id": vcc_id,
@@ -1064,7 +1079,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Prepare args for ConfigureBand
         for dish_id in self.dish_ids:
-            vcc_proxy = self._all_vcc_proxies[dish_id]
+            vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
+            vcc_proxy = self._all_vcc_proxies[vcc_id]
 
             # Fetch K-value based on dish_id, calculate dish sample rate
             dish_sample_rate = self._calculate_dish_sample_rate(
@@ -1092,10 +1108,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self.logger.error(
                         f"{vcc_proxy.dev_name()} ConfigureBand command rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return False
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1103,10 +1119,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return False
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to VCC ConfigureBand command timed out."
+                "One or more calls to VCC ConfigureBand command failed/timed out."
             )
             return False
 
@@ -1201,20 +1217,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     self.logger.error(
                         f"{vcc_proxy.dev_name()} ConfigureScan command rejected"
                     )
-                    self._blocking_commands = set()
+                    self.blocking_commands = set()
                     return False
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {vcc_proxy.dev_name()}; {df}"
                 )
                 return False
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to VCC ConfigureScan command timed out."
+                "One or more calls to VCC ConfigureScan command failed/timed out."
             )
             return False
 
@@ -1306,8 +1322,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
                     )
                     return False
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
@@ -1318,8 +1334,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     f"{fsp_proxy.dev_name()} AddSubarrayMembership command rejected"
                 )
                 return False
-            with self._results_lock:
-                self._blocking_commands.add(command_id)
+            with self.results_lock:
+                self.blocking_commands.add(command_id)
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -1354,7 +1370,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 case "CORR":
                     # set function mode and add subarray membership
                     fsp_proxy = self._all_fsp_proxies[fsp_id]
-                    self._subscribe_command_results(fsp_proxy)
+                    self.subscribe_command_results(fsp_proxy)
                     self._assigned_fsp_proxies.add(fsp_proxy)
                     self._fsp_ids.add(fsp_id)
 
@@ -1392,10 +1408,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
                     )
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands timed out."
+                "One or more calls to FSP SetFunctionMode/AddSubarrayMembership commands failed/timed out."
             )
             return False
 
@@ -1403,7 +1419,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # TODO: refactor for other function modes
         for fsp_mode_proxy, fsp_config_str in all_fsp_config:
             try:
-                self._subscribe_command_results(fsp_mode_proxy)
+                self.subscribe_command_results(fsp_mode_proxy)
 
                 self.logger.debug(f"fsp_config: {fsp_config_str}")
                 [[result_code], [command_id]] = fsp_mode_proxy.ConfigureScan(
@@ -1414,8 +1430,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{fsp_mode_proxy.dev_name()} ConfigureScan command rejected"
                     )
                     return False
-                with self._results_lock:
-                    self._blocking_commands.add(command_id)
+                with self.results_lock:
+                    self.blocking_commands.add(command_id)
                 self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1423,10 +1439,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return False
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP ConfigureScan command timed out."
+                "One or more calls to FSP ConfigureScan command failed/timed out."
             )
             return False
 
@@ -1478,7 +1494,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Releasing all FSP from subarray...")
         # remove subarray membership from assigned FSP
-        for [[result_code], [command_id]] in self._issue_group_command(
+        for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
             argin=self.subarray_id,
@@ -1487,28 +1503,28 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(
                     "FSP RemoveSubarrayMembership command failed"
                 )
-                self._blocking_commands = set()
+                self.blocking_commands = set()
                 return False
-            with self._results_lock:
-                self._blocking_commands.add(command_id)
+            with self.results_lock:
+                self.blocking_commands.add(command_id)
 
-        lrc_status = self._wait_for_blocking_results()
+        lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
             self.logger.error(
-                "One or more calls to FSP RemoveSubarrayMembership command timed out."
+                "One or more calls to FSP RemoveSubarrayMembership command failed/timed out."
             )
             return False
 
         for proxy in self._assigned_fsp_corr_proxies:
             try:
-                self._unsubscribe_command_results(proxy)
+                self.unsubscribe_command_results(proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 return False
 
         for proxy in self._assigned_fsp_proxies:
             try:
-                self._unsubscribe_command_results(proxy)
+                self.unsubscribe_command_results(proxy)
                 # If FSP subarrayMembership is empty, set it OFFLINE
                 if len(proxy.subarrayMembership) == 0:
                     proxy.adminMode = AdminMode.OFFLINE
@@ -1663,11 +1679,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             for proxy in (
                 self._assigned_fsp_corr_proxies | self._assigned_fsp_proxies
             ):
-                self._unsubscribe_command_results(proxy)
+                self.unsubscribe_command_results(proxy)
             self._fsp_ids = set()
             self._assigned_fsp_corr_proxies = set()
             self._assigned_fsp_proxies = set()
-            self._blocking_commands = set()
+            self.blocking_commands = set()
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
@@ -1767,7 +1783,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self._subarray_id)
+            self._vis_transport.enable_output(self.subarray_id)
 
         self.scan_id = scan_id
 
@@ -1951,6 +1967,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
@@ -2053,18 +2072,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # --- Restart Command --- #
 
     def is_restart_allowed(self: CbfSubarrayComponentManager) -> bool:
-        """Check if Restart command is allowed in current state"""
+        """
+        Check if Restart command is allowed in current state
+
+        :return: True if command is allowed, otherwise False
+        """
         self.logger.debug("Checking if Restart is allowed.")
         if not self.is_communicating:
             return False
-        if self.obs_state not in [
-            ObsState.ABORTED,
-            ObsState.FAULT,
-            ObsState.EMPTY,
-        ]:
+        if self.obs_state not in [ObsState.ABORTED, ObsState.FAULT]:
             self.logger.warning(
-                f"Restart not allowed in ObsState {self.obs_state}; "
-                + "must be in ObsState.ABORTED, FAULT or EMPTY"
+                f"Restart not allowed in ObsState {self.obs_state}"
             )
             return False
         return True
@@ -2156,7 +2174,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._update_component_state(configured=False)
 
         # remove all assigned VCCs to return to EMPTY
-        release_success = self._release_vcc_loop(dish_ids=list(self.dish_ids))
+        release_success = self._release_vcc_resources(
+            dish_ids=list(self.dish_ids)
+        )
         if not release_success:
             task_callback(
                 status=TaskStatus.FAILED,

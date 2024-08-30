@@ -16,16 +16,12 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
-from ska_tango_base.base.base_component_manager import check_communicating
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
-)
-from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
-    HpsFspCorrControllerSimulator,
 )
 
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
@@ -104,12 +100,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                     ResultCode.FAILED,
                     "Failed to establish proxy to HPS FSP Corr controller device.",
                 )
-        else:
-            self._proxy_hps_fsp_corr_controller = (
-                HpsFspCorrControllerSimulator(
-                    self._hps_fsp_corr_controller_fqdn
-                )
-            )
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
@@ -201,38 +191,37 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
     # Fast Commands
     # -------------
 
-    @check_communicating
     def update_delay_model(
-        self: FspCorrSubarrayComponentManager, argin: str
+        self: FspCorrSubarrayComponentManager, model: str
     ) -> tuple[ResultCode, str]:
         """
         Update the FSP's delay model (serialized JSON object)
 
-        :param argin: the delay model data
+        :param model: the delay model data
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.logger.debug("Entering update_delay_model")
+        self.logger.info("Entering FspCorrSubarray.update_delay_model()")
+
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(model)
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+                )
 
         # the whole delay model must be stored
-        self.delay_model = argin
-        delay_model = json.loads(argin)
-
-        try:
-            self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
-                json.dumps(delay_model)
-            )
-        except tango.DevFailed as df:
-            self.logger.error(f"{df.args[0].desc}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return (
-                ResultCode.FAILED,
-                "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
-            )
+        self.delay_model = model
+        self.device_attr_change_callback("delayModel", model)
+        self.device_attr_archive_callback("delayModel", model)
 
         return (ResultCode.OK, "UpdateDelayModel completed OK")
 
@@ -260,6 +249,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
+        # Release previously assigned VCCs
+        self._deconfigure()
+
         # Load configuration JSON, store key read attribute parameters
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
@@ -268,32 +260,34 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ]["band_index"]
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
-        # release previously assigned VCCs and assign newly specified VCCs
-        self._deconfigure()
+        # Assign newly specified VCCs
         self._assign_vcc(configuration["corr_vcc_ids"])
 
-        # issue ConfigureScan to HPS FSP Corr controller
-        try:
+        # Issue ConfigureScan to HPS FSP Corr controller
+        if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
-            self._proxy_hps_fsp_corr_controller.set_timeout_millis(
-                HPS_FSP_CORR_TIMEOUT
-            )
-            self._proxy_hps_fsp_corr_controller.ConfigureScan(
-                hps_fsp_configuration
-            )
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ConfigureScan command to HPS FSP Corr controller device.",
-                ),
-            )
-            return
+            try:
+                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
+                    HPS_FSP_CORR_TIMEOUT
+                )
+                self._proxy_hps_fsp_corr_controller.ConfigureScan(
+                    hps_fsp_configuration
+                )
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue ConfigureScan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
 
         # Update obsState callback
         self._update_component_state(configured=True)
@@ -326,21 +320,22 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         self.scan_id = argin
 
-        try:
-            self._proxy_hps_fsp_corr_controller.Scan(self.scan_id)
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue Scan command to HPS FSP Corr controller device.",
-                ),
-            )
-            return
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.Scan(self.scan_id)
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Scan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
 
         # Update obsState callback
         self._update_component_state(scanning=True)
@@ -368,21 +363,22 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        try:
-            self._proxy_hps_fsp_corr_controller.EndScan()
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue EndScan command to HPS FSP Corr controller device.",
-                ),
-            )
-            return
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.EndScan()
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue EndScan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
 
         # Update obsState callback
         self._update_component_state(scanning=False)
@@ -410,21 +406,22 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        try:
-            self._proxy_hps_fsp_corr_controller.GoToIdle()
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue Unconfigure command to HPS FSP Corr controller device.",
-                ),
-            )
-            return
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.GoToIdle()
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Unconfigure command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
 
         # reset configured attributes
         self._deconfigure()
@@ -471,6 +468,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
         task_callback(
             result=(ResultCode.OK, "Abort completed OK"),
             status=TaskStatus.COMPLETED,
@@ -493,23 +493,25 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             "ObsReset", task_callback, task_abort_event
         ):
             return
-        try:
-            pass
-            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-            # self._proxy_hps_fsp_corr_controller.ObsReset()
-        except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to issue ObsReset to HPS FSP Corr controller device.",
-                ),
-            )
-            return
+
+        if not self.simulation_mode:
+            try:
+                pass
+                # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+                # self._proxy_hps_fsp_corr_controller.ObsReset()
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue ObsReset to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
 
         # reset configured attributes
         self._deconfigure()

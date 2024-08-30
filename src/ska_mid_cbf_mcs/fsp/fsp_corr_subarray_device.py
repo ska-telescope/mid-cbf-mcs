@@ -20,10 +20,11 @@ from __future__ import annotations
 import os
 
 import tango
+from ska_control_model import ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.commands import FastCommand
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
     FspCorrSubarrayComponentManager,
@@ -54,7 +55,7 @@ class FspCorrSubarray(CbfObsDevice):
         dtype="str",
         doc="Differential off-boresight beam delay model",
     )
-    def delayModel(self: FspCorrSubarrayComponentManager) -> str:
+    def delayModel(self: FspCorrSubarray) -> str:
         """
         Read the delayModel attribute.
 
@@ -108,7 +109,32 @@ class FspCorrSubarray(CbfObsDevice):
     # Initialization
     # --------------
 
-    def init_command_objects(self: FspCorrSubarrayComponentManager) -> None:
+    class InitCommand(CbfObsDevice.InitCommand):
+        """
+        A class for the FspCorrSubarray's init_device() "command".
+        """
+
+        def do(
+            self: FspCorrSubarray.InitCommand,
+            *args: any,
+            **kwargs: any,
+        ) -> DevVarLongStringArrayType:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code, msg) = super().do(*args, **kwargs)
+
+            self._device.set_change_event("delayModel", True)
+            self._device.set_archive_event("delayModel", True)
+
+            return (result_code, msg)
+
+    def init_command_objects(self: FspCorrSubarray) -> None:
         """
         Sets up the command objects
         """
@@ -145,37 +171,31 @@ class FspCorrSubarray(CbfObsDevice):
     # Fast Commands
     # -------------
 
-    def is_UpdateDelayModel_allowed(
-        self: FspCorrSubarrayComponentManager,
-    ) -> bool:
-        """
-        Determine if UpdateDelayModelis allowed
-        (allowed if FSP state is ON and ObsState is
-        READY OR SCANNINNG).
-
-        :return: if UpdateDelayModel is allowed
-        :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-
-    class UpdateDelayModelCommand(FastCommand):
+    class UpdateDelayModelCommand(CbfFastCommand):
         """
         A class for the Fsp's UpdateDelayModel() command.
         """
 
-        def __init__(
-            self: FspCorrSubarrayComponentManager.UpdateDelayModelCommand,
-            *args,
-            component_manager: FspCorrSubarrayComponentManager,
-            **kwargs,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            self.component_manager = component_manager
+        def is_allowed(self: FspCorrSubarray.UpdateDelayModelCommand) -> bool:
+            """
+            Determine if UpdateDelayModel command is allowed.
+
+            :return: True if command is allowed, otherwise False
+            """
+            if not self.component_manager.is_communicating:
+                return False
+
+            obs_state = self.component_manager.obs_state
+            if obs_state not in [ObsState.READY, ObsState.SCANNING]:
+                self.logger.warning(
+                    f"Ignoring delay model received in {obs_state} (must be READY or SCANNING)."
+                )
+                return False
+
+            return True
 
         def do(
-            self: FspCorrSubarrayComponentManager.UpdateDelayModelCommand,
+            self: FspCorrSubarray.UpdateDelayModelCommand,
             argin: str,
         ) -> DevVarLongStringArrayType:
             """
@@ -187,7 +207,9 @@ class FspCorrSubarray(CbfObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.component_manager.update_delay_model(argin)
+            if self.is_allowed():
+                return self.component_manager.update_delay_model(argin)
+            return (ResultCode.REJECTED, "UpdateDelayModel not allowed")
 
     @command(
         dtype_in="str",
@@ -195,7 +217,7 @@ class FspCorrSubarray(CbfObsDevice):
         doc_in="Delay Model, per receptor per polarization per timing beam",
     )
     def UpdateDelayModel(
-        self: FspCorrSubarrayComponentManager, argin: str
+        self: FspCorrSubarray, argin: str
     ) -> DevVarLongStringArrayType:
         """
         Update the FSP's delay model (serialized JSON object)

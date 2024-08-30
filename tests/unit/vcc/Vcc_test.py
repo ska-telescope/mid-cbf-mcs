@@ -41,16 +41,22 @@ class TestVcc:
     Test class for VCC.
     """
 
-    # TODO: check configured parameters in READY and IDLE?
-    # TODO: test invalid frequency band
+    # TODO: Check configured parameters in READY and IDLE?
+    # TODO: Test invalid frequency band
     # TODO: subarrayMembership?
-    # TODO: simulator vs mock HPS?
-    # TODO: validate ConfigureScan at VCC level?
+    # TODO: Simulator vs mock HPS?
+    # TODO: Validate ConfigureScan at VCC level?
 
     @pytest.fixture(name="test_context")
     def vcc_test_context(
         self: TestVcc, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the Vcc device.
+
+        :param initial_mocks: A dictionary of initial mocks to be used in the test context.
+        :return: A test context for the Vcc device.
+        """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
@@ -71,15 +77,27 @@ class TestVcc:
         with harness as test_context:
             yield test_context
 
+    def device_online(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+    ) -> bool:
+        """
+        Helper function to start up and turn on the DUT.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
+        # Set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        return device_under_test.adminMode == AdminMode.ONLINE
+
     def test_State(
         self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test the State attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.state() == DevState.DISABLE
 
@@ -91,17 +109,15 @@ class TestVcc:
         """
         Test reading/writing subarrayMembership while catching the corresponding change events.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
-
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         assert device_under_test.subarrayMembership == 0
         device_under_test.subarrayMembership = 1
         assert device_under_test.subarrayMembership == 1
 
-        # assert subarrayMembership attribute event change
+        # Assert subarrayMembership attribute event change
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -116,9 +132,7 @@ class TestVcc:
         """
         Test the Status attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
@@ -128,24 +142,21 @@ class TestVcc:
         """
         Test the adminMode attribute just after device initialization.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    def device_online_and_on(
+    def test_Online(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
-    ) -> bool:
+    ) -> None:
         """
-        Helper function to start up and turn on the DUT.
+        Test turning the device online.
 
-        :param device_under_test: A fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
         device_under_test.simulationMode == SimulationMode.FALSE
@@ -167,8 +178,6 @@ class TestVcc:
             attribute_value=DevState.ON,
         )
 
-        return device_under_test.adminMode == AdminMode.ONLINE
-
     @pytest.mark.parametrize(
         "frequency_band, success",
         [
@@ -177,6 +186,9 @@ class TestVcc:
                 False,
             ),
             ("1", True),
+            ("2", True),
+            ("5a", True),
+            ("5b", True),
         ],
     )
     def test_ConfigureBand(
@@ -189,20 +201,16 @@ class TestVcc:
         """
         Test ConfigureBand with both failing and passing configurations.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         :param frequency_band: The frequency band to configure.
         :param success: A parameterized value used to test success and failure conditions.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
+        # Prepare device for observation
+        assert self.device_online(device_under_test)
 
-        # prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
-
-        # setting band configuration with invalid frequency band
+        # Setting band configuration with invalid frequency band
 
         band_configuration = {
             "frequency_band": frequency_band,
@@ -210,7 +218,7 @@ class TestVcc:
             "samples_per_frame": 18,
         }
 
-        # test issuing invalid frequency band
+        # Test issuing invalid frequency band
         return_value = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
@@ -219,7 +227,7 @@ class TestVcc:
         assert return_value[0] == ResultCode.QUEUED
 
         if success:
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -231,7 +239,7 @@ class TestVcc:
                 ),
             )
 
-            # assert frequencyBand attribute was pushed
+            # Assert frequencyBand attribute was pushed
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -241,7 +249,7 @@ class TestVcc:
             )
 
         else:
-            # check that the queued command failed
+            # Check that the queued command failed
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -266,18 +274,16 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
-        # prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
+        # Prepare device for observation
+        assert self.device_online(device_under_test)
 
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = json.loads(json_str)
@@ -288,14 +294,14 @@ class TestVcc:
             "samples_per_frame": 18,
         }
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test happy path observing command sequence
+        # Test happy path observing command sequence
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -311,12 +317,12 @@ class TestVcc:
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -328,7 +334,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
             ObsState.CONFIGURING,
@@ -347,7 +353,7 @@ class TestVcc:
             )
             previous_state = obs_state
 
-        # assert frequencyBand attribute reset during GoToIdle
+        # Assert frequencyBand attribute reset during GoToIdle
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -370,21 +376,16 @@ class TestVcc:
         """
         Test Vcc's ability to reconfigure and run multiple scans.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
+        # Prepare device for observation
+        assert self.device_online(device_under_test)
 
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        # prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
-
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = json.loads(json_str)
@@ -395,14 +396,14 @@ class TestVcc:
             "samples_per_frame": 18,
         }
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test happy path observing command sequence
+        # Test happy path observing command sequence
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -417,12 +418,12 @@ class TestVcc:
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -434,7 +435,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
             ObsState.CONFIGURING,
@@ -461,12 +462,12 @@ class TestVcc:
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -478,7 +479,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).cbf_has_change_event_occurred(
@@ -514,7 +515,7 @@ class TestVcc:
             previous_value=previous_state,
         )
 
-        # assert frequencyBand attribute reset during GoToIdle
+        # Assert frequencyBand attribute reset during GoToIdle
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -536,20 +537,15 @@ class TestVcc:
         """
         Test Abort from ObsState.READY.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
         """
+        # Prepare device for observation
+        assert self.device_online(device_under_test)
 
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        # prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
-
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = json.loads(json_str)
@@ -560,14 +556,14 @@ class TestVcc:
             "samples_per_frame": 18,
         }
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing Abort and ObsReset from READY
+        # Test issuing Abort and ObsReset from READY
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -582,12 +578,12 @@ class TestVcc:
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -599,7 +595,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
             ObsState.CONFIGURING,
@@ -619,7 +615,7 @@ class TestVcc:
             )
             previous_state = obs_state
 
-        # assert frequencyBand attribute reset during ObsReset
+        # Assert frequencyBand attribute reset during ObsReset
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -632,7 +628,7 @@ class TestVcc:
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -644,12 +640,12 @@ class TestVcc:
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -661,7 +657,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         for obs_state in [
             ObsState.CONFIGURING,
             ObsState.READY,
@@ -691,21 +687,16 @@ class TestVcc:
         """
         Test Abort from ObsState.SCANNING.
 
-        :param device_under_test: A fixture that provides a
-            :py:class: `CbfDeviceProxy` to the device under test, in a
-            :py:class:`context.DeviceProxy`.
-        :param event_tracer: A :py:class:`TangoEventTracer` used to
-            recieve subscribed change events from the device under test.
-        :param config_file_name: JSON file for the configuration.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
         :param scan_id: An identifier for the scan operation.
         """
+        # Prepare device for observation
+        assert self.device_online(device_under_test)
 
-        device_under_test.simulationMode = SimulationMode.FALSE
-
-        # prepare device for observation
-        assert self.device_online_and_on(device_under_test, event_tracer)
-
-        # prepare input data
+        # Prepare input data
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
             configuration = json.loads(json_str)
@@ -716,14 +707,14 @@ class TestVcc:
             "samples_per_frame": 18,
         }
 
-        # dict to store return code and unique IDs of queued commands
+        # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # test issuing Abort and ObsReset from SCANNING
+        # Test issuing Abort and ObsReset from SCANNING
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -739,12 +730,12 @@ class TestVcc:
         command_dict["Abort"] = device_under_test.Abort()
         command_dict["ObsReset"] = device_under_test.ObsReset()
 
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -756,7 +747,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         previous_state = ObsState.IDLE
         for obs_state in [
             ObsState.CONFIGURING,
@@ -777,7 +768,7 @@ class TestVcc:
             )
             previous_state = obs_state
 
-        # assert frequencyBand attribute reset during ObsReset
+        # Assert frequencyBand attribute reset during ObsReset
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -790,7 +781,7 @@ class TestVcc:
         command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
             json.dumps(band_configuration)
         )
-        # assert frequencyBand attribute updated
+        # Assert frequencyBand attribute updated
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -802,12 +793,12 @@ class TestVcc:
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
-        # assertions for all issued LRC
+        # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
-            # check that the command was successfully queued
+            # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
-            # check that the queued command succeeded
+            # Check that the queued command succeeded
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
@@ -819,7 +810,7 @@ class TestVcc:
                 ),
             )
 
-        # check all obsState transitions
+        # Check all obsState transitions
         for obs_state in [
             ObsState.CONFIGURING,
             ObsState.READY,

@@ -12,20 +12,16 @@
 from __future__ import annotations
 
 # Additional import
-from ska_control_model import AdminMode, HealthState, SimulationMode
+from ska_control_model import HealthState, SimulationMode
 
 # tango imports
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.commands import (
-    FastCommand,
-    ResultCode,
-    SubmittedSlowCommand,
-)
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt
 from tango.server import attribute, command
 
 from ska_mid_cbf_mcs.device.base_device import (
     CbfDevice,
+    CbfFastCommand,
     DevVarLongStringArrayType,
 )
 from ska_mid_cbf_mcs.slim.slim_link_component_manager import (
@@ -236,7 +232,6 @@ class SlimLink(CbfDevice):
         self.register_command_object(
             "VerifyConnection",
             self.VerifyConnectionCommand(
-                device=self,
                 component_manager=self.component_manager,
                 logger=self.logger,
             ),
@@ -254,7 +249,6 @@ class SlimLink(CbfDevice):
         self.register_command_object(
             "ClearCounters",
             self.ClearCountersCommand(
-                device=self,
                 component_manager=self.component_manager,
                 logger=self.logger,
             ),
@@ -264,45 +258,15 @@ class SlimLink(CbfDevice):
     # Fast Commands
     # -------------
 
-    class InitCommand(SKABaseDevice.InitCommand):
-        """
-        A class for the SlimLink's init_device() "command".
-        """
-
-        def do(self: SlimLink.InitCommand) -> tuple[ResultCode, str]:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code, message) = super().do()
-            self._device._simulation_mode = SimulationMode.TRUE
-
-            return (result_code, message)
-
-    class VerifyConnectionCommand(FastCommand):
+    class VerifyConnectionCommand(CbfFastCommand):
         """
         The command class for the VerifyConnection command.
 
         Run several health checks on the SLIM Link.
         """
 
-        def __init__(
-            self: SlimLink.VerifyConnectionCommand,
-            *args: any,
-            device: SlimLink,
-            component_manager: SlimLinkComponentManager,
-            **kwargs: any,
-        ) -> None:
-            self.device = device
-            self.component_manager = component_manager
-            super().__init__(*args, **kwargs)
-
         def is_allowed(self: SlimLink.VerifyConnectionCommand) -> bool:
-            if self.device._admin_mode == AdminMode.ONLINE:
+            if self.component_manager.is_communicating:
                 return True
             return False
 
@@ -333,26 +297,15 @@ class SlimLink(CbfDevice):
         return_code, message = command_handler()
         return [[return_code], [message]]
 
-    class ClearCountersCommand(FastCommand):
+    class ClearCountersCommand(CbfFastCommand):
         """
         The command class for the ClearCounters command.
 
         Clear the read counters array on Tx and Rx sides of the SLIM Link.
         """
 
-        def __init__(
-            self: SlimLink.ClearCountersCommand,
-            *args: any,
-            device: SlimLink,
-            component_manager: SlimLinkComponentManager,
-            **kwargs: any,
-        ) -> None:
-            self.device = device
-            self.component_manager = component_manager
-            super().__init__(*args, **kwargs)
-
         def is_allowed(self: SlimLink.ClearCountersCommand) -> bool:
-            if self.device._admin_mode == AdminMode.ONLINE:
+            if self.component_manager.is_communicating:
                 return True
             return False
 

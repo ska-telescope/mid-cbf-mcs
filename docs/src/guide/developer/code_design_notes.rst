@@ -249,6 +249,63 @@ Important operational notes:
   also be updated to only process one request at a time. 
 
 
+Asynchronous event-driven control structure
+===========================================
+MCS version X.X.X introduced the concept of an events-driven system, which solves some
+timing headaches and provides some additional benefits, at the expense of a more conplex system.
+
+Long-Running Commands (LRC)
+---------------------------
+Some operations in the CBF take sime and there's no getting around it. Before the new events-driven
+approach was in place, a workaround used in MCS was to have the client temporarily increase a 
+component's timeout from the default 3 seconds before issuing the offending command call, then 
+reverting this change upon completion. Since this is clearly a hacky solution, an alternative was needed.
+
+Fortunately, updates to ska-tango-base in version 1.0.0 introduced the LRC paradigm. By having commands
+inherit from ``SubmittedSlowCommand`` rather than the previous ``BaseCommand`` and ``ResponseCommand``, 
+the client no longer expects an immediate result to be returned from the command call. Instead, the 
+command's inital return value only indicates whether the command was added to the ``TaskExecutor``'s queue, or
+else if it was immediately rejected for not meeting the criteria specified in the is_COMMAND_allowed() method.
+From this queue, commands are executed within a separate "task-executor thread" running in parallel to the main control thread.
+
+One implication of this shift to executing commands in a separate thread is that multiple commands can be queued 
+without regard for their results, or even for how long they take to run (at least until their results are needed), 
+which solves the hacky updating-command-timeouts problem. Instead, once queued, LRCs rely on change events to 
+communicate their progress. A callback mechanism was created to detect these events and keep track 
+of who is waiting on which results, which is not trivial as this queue opens the door for even further complexity; 
+when one LRC triggers a command call on one of its components that also happens to be an LRC. To tackle this 
+cornucopia of confusion, mutexes (locks in python) are used to block commands from getting too far ahead of their 
+components' LRC results by a) keeping count of how many LRCs remain in progress for a given client, and b) enforcing a final (much longer) 
+timeout for LRCs, after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
+
+Blocking Commands and Locks
+----------------------------
+In MCS, we refer to any command added to the TaskExecutor's queue as a blocking command, in the sense that each of these 
+commands will eventually block the client that issued them. 
+
+As a simple example, if command A adds command B to the queue, 
+command A will be blocked until command B produces a
+change event for its result. After command A queues command B, it is free to continue 
+executing any logic that does not rely on command B's result, but once it reaches this blocking point, it must wait.
+
+MCS keeps track of these blocking commands by adding unique command IDs to a set as they are queued, 
+and removing them when change events for the longRunningCommandResult attribute are recieved. 
+This way, when command A reaches its blocking point, it calls a function that waits until the set is empty 
+(at which point it knows command B's result has arrived), else the timeout is reached and command A fails.
+
+Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt to access a shared resource concurrently. 
+Sticking with our previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
+Without locking the set during the add operation, command B would be free to manipulate blocking_commands 
+as well, which could lead to a non-deterministic result. If command A is the first of several commands issued in a loop, 
+it is possible that the next command, command C, could be added to blocking_commands at the same moment command B's 
+results change event is recieved, causing command B to be removed from blocking_commands. Using a lock to access 
+blocking_commands restores determinism because if the add operation locks the set, the remove operation will wait 
+patiently until it unlocks, and vice versa.
+
+In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain attribute accesses, 
+such as healthState and Subarray.lastDelayModel. Some of these locks are not currently necessarry, but as event-driven functionality 
+continues to be added, new change event callbacks may opt to update these resources, so locks were proactively created.
+
 Talon DX Log Consumer
 =====================================================
 The Talon DX Log Consumer is a Tango device intended to run on the host machine that connects

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 # Tango imports
 import tango
-from ska_control_model import SimulationMode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
@@ -110,7 +109,10 @@ class Vcc(CbfObsDevice):
         abs_change=1,
         dtype=tango.DevEnum,
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
-        doc="Frequency band; an int in the range [0, 5]",
+        doc=(
+            "The frequency band observed by the current scan: "
+            "an enum that can be one of ['1', '2', '3', '4', '5a', '5b']"
+        ),
     )
     def frequencyBand(self: Vcc) -> tango.DevEnum:
         """
@@ -144,9 +146,6 @@ class Vcc(CbfObsDevice):
         )
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
-        # NOTE: using component manager default of SimulationMode.TRUE,
-        # as self._simulation_mode at this point during init_device()
-        # SimulationMode.FALSE
         return VccComponentManager(
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
@@ -199,9 +198,6 @@ class Vcc(CbfObsDevice):
             self._device.set_change_event("subarrayMembership", True)
             self._device.set_archive_event("subarrayMembership", True)
 
-            # Setting initial simulation mode to True
-            self._device._simulation_mode = SimulationMode.TRUE
-
             return (result_code, msg)
 
     # ---------------------
@@ -220,7 +216,8 @@ class Vcc(CbfObsDevice):
         """
         Turn on the corresponding band device and disable all the others.
 
-        :param band_config: json string containing: the frequency band name, dish sample rate, and number of samples per frame
+        :param band_config: json string containing: the frequency band name,
+                            dish sample rate, and number of samples per frame
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
