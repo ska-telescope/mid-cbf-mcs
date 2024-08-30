@@ -22,7 +22,7 @@ box "HPS"
 participant "HPS VCC\nController" as hpsvcc
 participant "HPS VCC\nBand1&2" as vccband1
 participant "Circuit\nSwitch" as cs
-participant "VCC\n" as vccdevice
+participant "HPS\nVCC" as vccdevice
 participant "Wide Band\nInput Buffer" as wb
 end box
 
@@ -38,15 +38,16 @@ group #LightCyan For each assigned receptor:
         hpsvcc  -> vccband1     : Disable
     end group
     vcc         -> vccband1     : SetInternalParameters(json_str)
-    vccband1    -> vccband1     : Set VCC gains
+    vccband1    -> vccband1     : set VCC gains,\nset sample rate
 
     subarray    -> vcc          : ConfigureScan(json_str)
     vcc         -> vccband1     : ConfigureScan(json_str)
-    vccband1    -> cs           : write_attribute(input_select)
+    vccband1    -> cs           : write_attribute(cs_input_select)
     vccband1    -> vccdevice    : write_attribute(frame_count)
     vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
-    vccband1    -> wb           : read_attributes(meta_transport_sample_rate, rx_sample_rate, dish_id)
+    note over wb                : RecieveEnable == True
     vccband1    -> vccband1     : verify_configuration()
+    note over vcc               : ObsState == READY
 end group
 
 

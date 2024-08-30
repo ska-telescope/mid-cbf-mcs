@@ -251,7 +251,7 @@ Important operational notes:
 
 Asynchronous event-driven control structure
 ===========================================
-MCS version X.X.X introduced the concept of an events-driven system, which solves some
+MCS version 1.0.0(TBD) introduced the concept of an events-driven system, which solves some
 timing headaches and provides some additional benefits, at the expense of a more conplex system.
 
 Long-Running Commands (LRC)

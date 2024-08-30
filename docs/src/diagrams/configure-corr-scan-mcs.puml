@@ -19,9 +19,9 @@ participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "MCS"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
-participant "VCC\n" as vcc
-participant "FSP\n" as fsp
-participant "FSP Corr\nSubarray" as fspcorr
+collections "VCC\n" as vcc
+collections "FSP\n" as fsp
+collections "FSP Corr\nSubarray" as fspcorr
 participant "Visibility\nTransport" as vis_trans
 end box
 
@@ -44,26 +44,21 @@ group #LemonChiffon Delay model subscription point
     subarray    -> tmc          : Unsubscribe all events
 end group
 
-subarray    -> subarray     : clear old\nconfiguration
-subarray    -> subarray     : load new\nconfiguration
+subarray    -> subarray     : clear old configuration,\nload new configuration
 
 group #LemonChiffon Delay model subscription point
-    subarray    -> tmc          : subscribe delay model
+    subarray    -> tmc          : Subscribe delay model
 end group
 
 group  *See next diagram for more detail
 
     group #LightCyan For each assigned receptor:
         subarray    -> vcc          : ConfigureBand(json_str)
-        vcc         -> vcc          : load band\nconfiguration
         vcc         -> vcc_cont     : ConfigureBand(int)
         vcc         -> vcc_band     : SetInternalParameters(json_str)
-        subarray   <-- vcc          : Success
         subarray    -> vcc          : ConfigureScan(json_str)
-        vcc         -> vcc          : load scan\nconfiguration
         vcc         -> vcc_band     : ConfigureScan(json_str)
         note over vcc               : ObsState == READY
-        subarray   <-- vcc          : Success
     end group
 
 end group
@@ -79,7 +74,7 @@ group #LightCyan For each FSP to configure:
 
     subarray    -> fsp          : AddSubarrayMembership(int)
     fsp         -> fsp          : validate\nsubarray ID
-    fsp         -> fspcorr      : corr subarray ONLINE
+    fsp         -> fspcorr      : AdminMode.ONLINE
     fsp         -> fsp          : Update\nSubarrayMembership
 
     subarray    -> subarray     : set 'corr_vcc_ids'\nconfiguration property
@@ -89,15 +84,7 @@ group #LightCyan For each FSP to configure:
     note over fspcorr           : ObsState == READY
 end group
 
-subarray   <-- fspcorr      : Success
-
-group #SeaShell If FSP ConfigureScan fails:
-    subarray    -> subarray     : Reset all assigned\nFSP devices
-    lmc         <-- subarray    : Failure
-end group
-
 subarray    -> vis_trans    : Configure(json_str, yaml_str)
-subarray   <-- vis_trans    : Success
 
 note over subarray          : ObsState == READY
 lmc        <-- subarray     : Success
