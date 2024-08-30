@@ -11,12 +11,12 @@ BoxBorderColor LightBlue
 BoxBackgroundColor #F0FFFF
 }
 
-title TMC and Mid_CBF.LMC Scan Sequence\nHigh Level
+title TMC and Mid_CBF.LMC Scan Sequence - High Level
 
 participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 
-box "MCS"
+box "\nMCS\n"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 end box
@@ -24,12 +24,12 @@ end box
 note over controller        : OpState: ON
 lmc         -> subarray     : AddReceptors(strs)
 subarray    -> subarray     : ObsState: IDLE
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 lmc         -> subarray     : ConfigureScan(json_str)
 subarray    -> tmc          : unsubscribe all events
 
-group Delay model subscription point
-subarray    -> tmc          : subscribe delay model
+group #LemonChiffon Delay model subscription point
+subarray    -> tmc          : Subscribe delay model
 end group
 
 ' group Doppler subscription point
@@ -45,22 +45,22 @@ end group
 ' end group
 
 subarray    -> subarray     : ObsState: READY
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : Scan()
 subarray    -> subarray     : ObsState: SCANNING
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : EndScan()
 subarray    -> subarray     : ObsState: READY
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : GoToIdle()
 subarray    -> subarray     : ObsState: IDLE
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : RemoveAllReceptors()
 subarray    -> subarray     : ObsState: EMPTY
-subarray   --> lmc          : success
+subarray   --> lmc          : Success
 
 @enduml

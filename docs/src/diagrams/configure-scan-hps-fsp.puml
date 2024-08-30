@@ -17,17 +17,16 @@ skinparam collections {
 
 title HPS Configure FSP for Correlation Scan\n
 
-box "MCS"
-participant "FSP Corr\nSubarray\n" as fspcorr
+box "\nMCS\n"
+    participant "FSP Corr\nSubarray\n" as fspcorr
 end box
-
-box "HPS"
-participant "FSP Corr\nController\n" as hpsfspcorr
-collections "Packet\nStream\nRepair" as psr
-collections "Resampler\nDelay\nTracker" as rdt
-collections "Fine\nChannelizer\n" as channelizer
-collections "DDR4\nCorner\nTurner" as dct
-participant "Correlator\n\n" as correlator
+box "\nHPS\n"
+    participant "FSP Corr\nController\n" as hpsfspcorr
+    collections "Packet\nStream\nRepair" as psr
+    collections "Resampler\nDelay\nTracker" as rdt
+    collections "Fine\nChannelizer\n" as channelizer
+    collections "DDR4\nCorner\nTurner" as dct
+    participant "Correlator\n\n" as correlator
 end box
 
 group #LightCyan For each FSP in use:
@@ -50,7 +49,7 @@ group #LightCyan For each FSP in use:
 
     hpsfspcorr  -> correlator   : write attributes
     hpsfspcorr  -> correlator   : program long term accumulator
-    note over hpsfspcorr        : ObsState == READY
+    note over hpsfspcorr        : ObsState: READY
     hpsfspcorr  --> fspcorr     : Success
 end group
 

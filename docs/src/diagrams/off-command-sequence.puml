@@ -19,21 +19,21 @@ skinparam database {
 }
 title Off Command Sequence - Correlation\n
 participant "CSP_Mid\n.LMC" as lmc #Thistle
-box "MCS"
-participant "Mid.CBF\nController" as controller
-participant "Mid.CBF\nSubarray" as subarray
-participant "Talon\nBoard" as talon_board
-participant "Talon\nLRU" as lru
-participant "Power\nSwitch" as switch
-participant "SLIM\nFS" as slim_fs
-participant "SLIM\nVis" as slim_vis
-collections "SLIM\nLink" as slimlink
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "Mid.CBF\nSubarray" as subarray
+  participant "Talon\nBoard" as talon_board
+  participant "Talon\nLRU" as lru
+  participant "Power\nSwitch" as switch
+  participant "SLIM\nFS" as slim_fs
+  participant "SLIM\nVis" as slim_vis
+  collections "SLIM\nLink" as slimlink
 end box
 participant "PDU\n" as pdu #Orange
-box "HPS"
-participant "Linux\nOS" as os #LightGreen
-participant "HPS\nMaster" as hpsmaster
-collections "HPS\nDevices" as hpsdevices
+box "\nHPS\n"
+  participant "Linux\nOS" as os #LightGreen
+  participant "HPS\nMaster" as hpsmaster
+  collections "HPS\nDevices" as hpsdevices
 end box
 
 lmc -> controller : Off()
@@ -47,7 +47,7 @@ controller -> subarray   : Abort
 end
 
 controller -> subarray   : Restart
-note over subarray       : ObsState == EMPTY
+note over subarray       : ObsState: EMPTY
 end loop
 
 controller ->  slim_fs       : Off

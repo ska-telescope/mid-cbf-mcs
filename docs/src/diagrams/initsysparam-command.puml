@@ -14,30 +14,31 @@ skinparam collections {
   BorderColor DodgerBlue
 }
 skinparam responseMessageBelowArrow true
-title InitSysParam Command Sequence\n
-participant "CSP_Mid\n.LMC" as lmc #Thistle
-box "MCS"
-participant "Mid.CBF\nController" as control
-collections "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
-end box
-participant "CAR" as car #YellowGreen
-lmc          -> control           : InitSysParam(json_str)
 
-control      -> control           : validate JSON \nagainst schema
+title InitSysParam Command Sequence\n
+
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  collections "Mid.CBF\nSubarray" as subarray
+  collections "VCC\n" as vcc
+end box
+participant "CAR\n" as car #YellowGreen
+
+lmc          -> controller           : InitSysParam(json_str)
+controller      -> controller           : validate JSON \nagainst schema
 
 group #SeaShell If JSON is valid:
-group #SeaShell If URI provided:
-control      -> car               : retrieve init sys param file
-control      -> control           : validate JSON \nagainst schema
-end
-control      -> control           : store sys_param
-control      -> subarray          : write sys_param (json_str)
-subarray     -> subarray          : store sys_param
-control      -> vcc               : set dish ID
-lmc         <-- control           : Success
-
-end
+  group #SeaShell If URI provided:
+    controller      -> car            : retrieve init sys param file
+    controller      -> controller     : validate JSON \nagainst schema
+  end group
+  controller      -> controller     : store sys_param
+  controller      -> subarray       : write sys_param (json_str)
+  subarray     -> subarray          : store sys_param
+  controller      -> vcc            : set dish ID
+  lmc         <-- controller        : Success
+end group
 
 
 @enduml

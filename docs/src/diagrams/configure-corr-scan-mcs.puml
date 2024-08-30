@@ -19,21 +19,19 @@ title MCS Correlation Configure Scan\n
 
 participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
-
-box "MCS"
-participant "Mid.CBF\nController" as controller
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC\n" as vcc
-collections "FSP\n" as fsp
-collections "FSP Corr\nSubarray" as fspcorr
-participant "Visibility\nTransport" as vis_trans
+box "\nMCS\n"
+    participant "Mid.CBF\nController" as controller
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "VCC\n" as vcc
+    collections "FSP\n" as fsp
+    collections "FSP Corr\nSubarray" as fspcorr
+    participant "Visibility\nTransport" as vis_trans
 end box
-
-box "HPS\nDevices" 
-participant "VCC\nController" as vcc_cont
-participant "VCC\nBand" as vcc_band
-participant "FSP\nController" as fsp_cont
-participant "FSP Corr\nController" as fspcorr_cont
+box "\nHPS\n" 
+    participant "VCC\nController" as vcc_cont
+    participant "VCC\nBand1&2" as vcc_band
+    participant "FSP\nController" as fsp_cont
+    participant "FSP Corr\nController" as fspcorr_cont
 end box
 
 lmc         -> subarray     : ConfigureScan(json_str)
@@ -41,7 +39,10 @@ subarray    -> subarray     : validate JSON\nagainst schema
 
 group #LightCyan For each FSP:
     subarray    -> fsp          : RemoveSubarrayMembership
-    note over fsp               : FunctionMode == IDLE
+    note over fsp_cont          : functionMode: IDLE
+    group #SeaShell If no other subarray membership:
+      fsp       ->  fspcorr     : AdminMode.OFFLINE
+    end group
 end group
 
 group #LemonChiffon Delay model subscription point
@@ -60,16 +61,17 @@ group #LightCyan For each assigned receptor:
     vcc         -> vcc_band     : SetInternalParameters(json_str)
     subarray    -> vcc          : ConfigureScan(json_str)
     vcc         -> vcc_band     : ConfigureScan(json_str)
-    note over vcc               : ObsState == READY
+    note over vcc               : ObsState: READY
 end group
 
 group #LightCyan For each FSP in use:
     subarray    -> subarray     : build FSP\nconfiguration
 
-    group #SeaShell If FunctionMode == IDLE:
+    group #SeaShell If functionMode == IDLE:
         subarray    -> fsp          : SetFunctionMode(str)
         fsp         -> fsp          : validate\nfunction mode
         fsp         -> fsp_cont     : SetFunctionMode(int)
+        note over fsp_cont          : functionMode: CORR    
     end group
 
     subarray    -> fsp          : AddSubarrayMembership(int)
@@ -77,16 +79,15 @@ group #LightCyan For each FSP in use:
     fsp         -> fspcorr      : AdminMode.ONLINE
     fsp         -> fsp          : Update\nSubarrayMembership
 
-    subarray    -> subarray     : set 'corr_vcc_ids'\nconfiguration property
     subarray    -> fspcorr      : ConfigureScan(json_str)
     fspcorr     -> fspcorr      : reset old configuration,\nrelease all VCCs,\nload FSP configuration,\nassign new VCCs,\nbuild FSP CORR configuration
     fspcorr     -> fspcorr_cont : ConfigureScan(json_str)
-    note over fspcorr           : ObsState == READY
+    note over fspcorr           : ObsState: READY
 end group
 
 subarray    -> vis_trans    : Configure(json_str, yaml_str)
 
-note over subarray          : ObsState == READY
+note over subarray          : ObsState: READY
 lmc        <-- subarray     : Success
 
 @enduml

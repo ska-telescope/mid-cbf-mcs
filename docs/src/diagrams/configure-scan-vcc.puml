@@ -17,17 +17,16 @@ skinparam collections {
 
 title MCS Correlation Configure Scan Band 1/2 - VCC Detail\n
 
-box "MCS"
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC\n" as vcc
+box "\nMCS\n"
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "VCC\n" as vcc
 end box
-
-box "HPS"
-participant "HPS VCC\nController" as hpsvcc
-participant "HPS VCC\nBand1&2" as vccband1
-participant "Circuit\nSwitch" as cs
-participant "HPS\nVCC" as vccdevice
-participant "Wide Band\nInput Buffer" as wb
+box "\nHPS\n"
+    participant "VCC\nController" as hpsvcc
+    participant "VCC\nBand1&2" as vccband1
+    participant "Circuit\nSwitch" as cs
+    participant "VCC\n" as vccdevice
+    participant "Wide Band\nInput Buffer" as wb
 end box
 
 group #LightCyan For each assigned receptor:
@@ -49,9 +48,9 @@ group #LightCyan For each assigned receptor:
     vccband1    -> cs           : write_attribute(cs_input_select)
     vccband1    -> vccdevice    : write_attribute(frame_count)
     vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
-    note over wb                : RecieveEnable == True
+    note over wb                : RecieveEnable: True
     vccband1    -> vccband1     : verify_configuration()
-    note over vcc               : ObsState == READY
+    note over vcc               : ObsState: READY
 end group
 
 
