@@ -26,21 +26,28 @@ participant "VCC\n" as vccdevice
 participant "Wide Band\nInput Buffer" as wb
 end box
 
-subarray    -> subarray     : Calc dish_sample_rate
-note right                  : dish_sample_rate (Band 1/2) = 3960 MHz + (1 * K * <U+0394>F)
-subarray    -> vcc          : ConfigureBand(json_str)
-vcc         -> hpsvcc       : ConfigureBand(int)
-hpsvcc      -> vccband1     : On
-vcc         -> vccband1     : SetInternalParameters(json_str)
-vccband1    -> vccdevice    : write_attribute(gain)
-subarray    -> vcc          : ConfigureScan(json_str)
-vcc         -> vccband1     : ConfigureScan(json_str)
-vccband1    -> cs           : write_attribute(input_select)
-vccband1    -> vccdevice    : write_attribute(frame_count)
-vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
-vccband1    -> wb           : read_attributes(meta_transport_sample_rate, rx_sample_rate, dish_id)
-vccband1    -> vccband1     : verify_configuration()
+group #LightCyan For each assigned receptor:
+    subarray    -> subarray     : Calculate\ndish_sample_rate
+    note right                  : dish_sample_rate (Band 1/2) = 3960 MHz + (1 * K * <U+0394>F)
+    subarray    -> vcc          : ConfigureBand(json_str)
+    vcc         -> vcc          : load band\nconfiguration
+    vcc         -> hpsvcc       : ConfigureBand(int)
+    group #SeaShell If FrequencyBand == [1,2]:
+        hpsvcc  -> vccband1     : On
+    else 
+        hpsvcc  -> vccband1     : Disable
+    end group
+    vcc         -> vccband1     : SetInternalParameters(json_str)
+    vccband1    -> vccband1     : Set VCC gains
 
+    subarray    -> vcc          : ConfigureScan(json_str)
+    vcc         -> vccband1     : ConfigureScan(json_str)
+    vccband1    -> cs           : write_attribute(input_select)
+    vccband1    -> vccdevice    : write_attribute(frame_count)
+    vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
+    vccband1    -> wb           : read_attributes(meta_transport_sample_rate, rx_sample_rate, dish_id)
+    vccband1    -> vccband1     : verify_configuration()
+end group
 
 
 @enduml
