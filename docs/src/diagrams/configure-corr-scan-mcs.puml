@@ -3,17 +3,21 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
 }
 
 title MCS Correlation Configure Scan\n
 
-participant "TMC\n" as tmc #SandyBrown
+participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 
 box "MCS"
@@ -50,20 +54,16 @@ group #LemonChiffon Delay model subscription point
     subarray    -> tmc          : Subscribe delay model
 end group
 
-group  *See next diagram for more detail
-
-    group #LightCyan For each assigned receptor:
-        subarray    -> vcc          : ConfigureBand(json_str)
-        vcc         -> vcc_cont     : ConfigureBand(int)
-        vcc         -> vcc_band     : SetInternalParameters(json_str)
-        subarray    -> vcc          : ConfigureScan(json_str)
-        vcc         -> vcc_band     : ConfigureScan(json_str)
-        note over vcc               : ObsState == READY
-    end group
-
+group #LightCyan For each assigned receptor:
+    subarray    -> vcc          : ConfigureBand(json_str)
+    vcc         -> vcc_cont     : ConfigureBand(int)
+    vcc         -> vcc_band     : SetInternalParameters(json_str)
+    subarray    -> vcc          : ConfigureScan(json_str)
+    vcc         -> vcc_band     : ConfigureScan(json_str)
+    note over vcc               : ObsState == READY
 end group
 
-group #LightCyan For each FSP to configure:
+group #LightCyan For each FSP in use:
     subarray    -> subarray     : build FSP\nconfiguration
 
     group #SeaShell If FunctionMode == IDLE:

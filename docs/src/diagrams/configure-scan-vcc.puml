@@ -3,19 +3,23 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
 }
 
 title MCS Correlation Configure Scan Band 1/2 - VCC Detail\n
 
 box "MCS"
 participant "Mid.CBF\nSubarray" as subarray
-participant "VCC\n" as vcc
+collections "VCC\n" as vcc
 end box
 
 box "HPS"

@@ -13,7 +13,7 @@ BoxBackgroundColor #F0FFFF
 
 title TMC and Mid_CBF.LMC Scan Sequence\nHigh Level
 
-participant "TMC\n" as tmc #SandyBrown
+participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 
 box "MCS"
