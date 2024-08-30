@@ -7,14 +7,14 @@ Mid.CBF MCS Element Design Notes
 A note on state models
 ======================================================
 
-There exists a handful of state models implemented in the `SKA control model
+There exist a handful of state models implemented in the `SKA control model
 <https://developer.skao.int/projects/ska-control-model/en/latest/index.html>`_
-that are inherited by MCS devices. Some notes regarding most important of these, along with the states
-used by MCS and some terminology that is used in the documentation below, are listed here:
+that are inherited by MCS devices. Some notes regarding the most important of these, along with the states
+used by MCS, and some terminology, are listed here:
 
 * **AdminMode**: when a device's adminMode attribute is set to ONLINE it triggers
-  the component manager's ``start_communicating`` method, establishing monitoring and control
-  communications with the underlying component; when set to OFFLINE, it triggers
+  the component manager's ``start_communicating`` method, establishing monitoring and control 
+  over the underlying component; when set to OFFLINE, it triggers
   ``stop_communicating``, disengaging component monitoring and control.
 
   * When the device is "online" (i.e. communications are established with the component, ``AdminMode.ONLINE``),
@@ -26,16 +26,16 @@ used by MCS and some terminology that is used in the documentation below, are li
 * **OpState**: an extension of Tango's DevState, this represents both the power and communications
   status of a given device.
 
-  * States used in MCS: ON, OFF, DISABLED
+  * States used in MCS: ON, OFF, DISABLED.
 
   * Typically referred to when "powering on" or "powering off" a device, via the On/Off commands.
 
 * **ObsState**: used by observing devices to denote what stage of an observation/scan is in progress.
-  This state is driven by observing commands
+  This state is driven by observing commands.
 
-  * Normal scan operation states: EMPTY, RESOURCING, IDLE, CONFIGURING, READY, SCANNING 
+  * Normal scan operation states: EMPTY, RESOURCING, IDLE, CONFIGURING, READY, SCANNING.
 
-  * Abort pathway states: ABORTING, ABORTED, RESETTING, RESTARTING
+  * Abort pathway states: ABORTING, ABORTED, RESETTING, RESTARTING.
   
     * Note that subarray resources such as VCC and FSP do not implement EMPTY, RESOURCING and RESTARTING
       states, nor resourcing commands, as they do not require resource allocation before scan configuration.
@@ -46,15 +46,15 @@ Component Managers
 In the Mid.CBF MCS, each device is comprised of a Tango device class and a component manager class. 
 The device class provides a Tango interface, with commands, attributes and properties,
 while the component manager class performs the actual monitoring and control of the underlying component.
-The component manager updates the device's state model(s) (in particular, the ``op_state_model`` and\or ``obs_state_model``)
+The component manager updates the device's state model(s) (in particular, the ``op_state_model`` and/or ``obs_state_model``)
 via callback methods in the device.
 More details about the role of component managers can be found in the `SKA Tango Base Documentation 
 <https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/component-managers.html>`_. 
 An example of this Tango device and component manager interaction is shown in the diagram below. 
 
-
 .. figure:: ../../diagrams/component-manager-interactions.png
    :align: center
+
 
 Cbf Controller
 ======================================================
@@ -92,7 +92,7 @@ Scan configuration
 
 Subarrays receive a scan configuration via an ASCII encoded JSON string. The scan 
 configuration is validated for completeness, then the subarray device will configure
-subordinate devices with the relevant parameters, including VCC, FSP and FSP function
+subordinate devices with the relevant parameters, including VCC, FSP, and FSP function
 mode subarray devices.
 
 FSPs are assigned to subarrays during scan configuration, and may belong to any
@@ -130,13 +130,13 @@ Mid.Cbf VCC Device Server (Vcc)
 VCC Device
 ----------
 The ``Vcc`` Tango device is used to control and monitor the functionality for a
-single Talon-DX board that runs VCC functionality. This device communicates with
+single Talon-DX board that runs Very-Coarse Channelizer (VCC) functionality. This device communicates with
 the top-level VCC device server running on the Talon-DX board to coordinate
 setup and processing activities of low-level device servers.
 
 The ``Vcc`` device can operated  in either simulation mode or not. When in simulation
 mode (this is the default), simulator classes are used in place of communication
-with the real Talon-DX Tango devices. This allows testing of the MCS without
+with the real Talon-DX Tango devices. This allows the testing of MCS without
 any connection to the hardware.
 
 .. figure:: ../../diagrams/vcc-device.png
@@ -234,6 +234,7 @@ and queries the list of outlets in the power switch.
 
 Important operational notes:
 
+.. #TODO: Remove? No longer relevant with PowerSwitch commands refactored into LRCs
 - Certain requests to the power switch hardware can take longer than others, hence a timeout of
   4 seconds set in the ``PowerSwitchDriver``. As such, accessing attributes or commands in the 
   ``PowerSwitch`` device can take longer than the default Tango timeout (3 seconds). Any ``DeviceProxy``
@@ -251,36 +252,36 @@ Important operational notes:
 
 Asynchronous event-driven control structure
 ===========================================
-MCS version 1.0.0(TBD) introduced the concept of an events-driven system, which solves some
-timing headaches and provides some additional benefits, at the expense of a more conplex system.
+MCS version 1.0.0(TBD) introduces the concept of an event-driven system, which solves some
+timing headaches and provides some additional benefits, at the expense of increased complexity.
 
 Long-Running Commands (LRC)
 ---------------------------
-Some operations in the CBF take sime and there's no getting around it. Before the new events-driven
-approach was in place, a workaround used in MCS was to have the client temporarily increase a 
-component's timeout from the default 3 seconds before issuing the offending command call, then 
-reverting this change upon completion. Since this is clearly a hacky solution, an alternative was needed.
+Some operations in the CBF take time and there's no getting around it. Before the event-driven
+approach was in place, a workaround used in MCS was to have clients temporarily increase a 
+component's timeout from the default 3 seconds before issuing calls, then 
+reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
-Fortunately, updates to ska-tango-base in version 1.0.0 introduced the LRC paradigm. By having commands
-inherit from ``SubmittedSlowCommand`` rather than the previous ``BaseCommand`` and ``ResponseCommand``, 
-the client no longer expects an immediate result to be returned from the command call. Instead, the 
+Updates to ska-tango-base in version 1.0.0 introduced the LRC paradigm. By having commands
+inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` and ``ResponseCommand``, 
+clients no longer expect an immediate result to be returned from command calls. Instead, the 
 command's inital return value only indicates whether the command was added to the ``TaskExecutor``'s queue, or
-else if it was immediately rejected for not meeting the criteria specified in the is_COMMAND_allowed() method.
+else if it was immediately rejected for not meeting the criteria specified in the ``is_COMMAND_allowed()`` method.
 From this queue, commands are executed within a separate "task-executor thread" running in parallel to the main control thread.
 
 One implication of this shift to executing commands in a separate thread is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
-which solves the hacky updating-command-timeouts problem. Instead, once queued, LRCs rely on change events to 
-communicate their progress. A callback mechanism was created to detect these events and keep track 
+which solves the hacky updating-command-timeouts practice. Instead, once queued, LRCs rely on change events to 
+communicate their progress. A callback mechanism detects these events and keeps track 
 of who is waiting on which results, which is not trivial as this queue opens the door for even further complexity; 
-when one LRC triggers a command call on one of its components that also happens to be an LRC. To tackle this 
-cornucopia of confusion, mutexes (locks in python) are used to block commands from getting too far ahead of their 
+when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC. To manage this confusing use case, 
+mutexes (locks in python) are used to block commands from getting too far ahead of their 
 components' LRC results by a) keeping count of how many LRCs remain in progress for a given client, and b) enforcing a final (much longer) 
 timeout for LRCs, after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
 
 Blocking Commands and Locks
 ----------------------------
-In MCS, we refer to any command added to the TaskExecutor's queue as a blocking command, in the sense that each of these 
+In MCS, any command added to the TaskExecutor's queue is a "blocking command", in the sense that each of these 
 commands will eventually block the client that issued them. 
 
 As a simple example, if command A adds command B to the queue, 
@@ -288,23 +289,23 @@ command A will be blocked until command B produces a
 change event for its result. After command A queues command B, it is free to continue 
 executing any logic that does not rely on command B's result, but once it reaches this blocking point, it must wait.
 
-MCS keeps track of these blocking commands by adding unique command IDs to a set as they are queued, 
-and removing them when change events for the longRunningCommandResult attribute are recieved. 
+MCS keeps track of these blocking commands by adding their unique command IDs to a set as they are queued, 
+and removing them when change events for the ``longRunningCommandResult`` attribute are recieved. 
 This way, when command A reaches its blocking point, it calls a function that waits until the set is empty 
-(at which point it knows command B's result has arrived), else the timeout is reached and command A fails.
+(indicating command B's result has arrived), else the timeout is reached and the parent command fails.
 
 Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt to access a shared resource concurrently. 
-Sticking with our previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
-Without locking the set during the add operation, command B would be free to manipulate blocking_commands 
+Sticking with the previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
+Without locking the set during this add operation, command B would be free to manipulate the blocking_commands set 
 as well, which could lead to a non-deterministic result. If command A is the first of several commands issued in a loop, 
-it is possible that the next command, command C, could be added to blocking_commands at the same moment command B's 
-results change event is recieved, causing command B to be removed from blocking_commands. Using a lock to access 
-blocking_commands restores determinism because if the add operation locks the set, the remove operation will wait 
-patiently until it unlocks, and vice versa.
+it is possible that the next command, command C, will attempt to be added to blocking_commands at the same moment command B's 
+results change event is recieved, which would simultaneously attempt to remove command B from blocking_commands. 
+Using a lock to access blocking_commands restores determinism because if the add operation locks the set, 
+the remove operation will wait patiently until it unlocks, and vice versa.
 
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain attribute accesses, 
-such as healthState and Subarray.lastDelayModel. Some of these locks are not currently necessarry, but as event-driven functionality 
-continues to be added, new change event callbacks may opt to update these resources, so locks were proactively created.
+such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
+continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
 
 Talon DX Log Consumer
 =====================================================
