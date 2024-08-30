@@ -43,25 +43,40 @@ lmc         ->  subarray      : Obsreset
 
 group if subarray in ObsState.FAULT
 subarray    ->  vcc           : Abort
+vcc         ->  hpsvccband    : Abort (stub)
+subarray    <--  vcc          : Success
+note over hpsvccband          : (TBD)
+note over vcc                 : VCC\nObsState ABORTED
 subarray    ->  fspsubarray   : Abort
+fspsubarray ->  hpsfsp        : Abort (stub)
+note over hpsfsp              : (TBD)
+note over fspsubarray         : FSP Corr Subarray\nObsState ABORTED
+subarray    <--  fspsubarray  : Success
 end group
 
 subarray    ->  vcc           : ObsReset
-vcc         ->  hpsvccband    : ObsReset
-
+vcc         ->  hpsvccband    : ObsReset (stub)
+note over hpsvccband          : (TBD)
 note over vcc                 : VCC\nObsState IDLE
-subarray    ->  fspsubarray   : ObsReset
+subarray    <--  vcc          : Success
 
+subarray    ->  fspsubarray   : ObsReset
+fspsubarray ->  hpsfsp        : ObsReset (stub)
+note over hpsfsp              : (TBD)
 note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
+subarray    <--  fspsubarray  : Success
 
 subarray    ->  subarray      : deconfigure
 subarray    ->  fsp           : RemoveSubarrayMembership
 
 group no other subarray membership
-fsp         ->  fspsubarray   : GoToIdle\n
+fsp         ->  fspsubarray   : AdminMode.OFFLINE\n
+note over fsp                 : FSP\nfunctionMode IDLE
+note over fsp                 : FSP\nAdminMode.OFFLINE
 end group
 
-note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
+subarray    <--  fsp          : Success
+
 note over subarray            : Subarray\nObsState IDLE
 lmc        <--  subarray      : Success
 
