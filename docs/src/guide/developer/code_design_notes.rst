@@ -60,7 +60,7 @@ An example of this Tango device and component manager interaction is shown in th
 Cbf Base Class Inheritance
 ==========================
 Cbf decouples itself from ``ska-tango-base`` by extending ``SkaBaseDevice`` and ``SkaObsDevice`` into 
-``CbfDevice`` and ``CbfObsDevice``, respectively. Cbf component managers are similarly extended 
+``CbfDevice`` and ``CbfObsDevice``, respectively. Likewise, Cbf component managers are extended 
 into ``CbfComponentManager`` and ``CbfObsComponentManager`` from ``TaskExecutorComponentManager``, 
 which itself extends ``BaseComponentManager`` to enable aynchronous command execution via Long Running Commands (LRCs).
 This choice to decouple from ``ska-tango-base`` gives the MCS freedom to override the base implementation as needed. 
@@ -264,7 +264,7 @@ Important operational notes:
 
 Asynchronous event-driven control structure
 ===========================================
-MCS version 1.0.0(TBD) introduces the concept of an event-driven system, which solves some
+MCS version 1.0.0 introduces the concept of an event-driven system, which solves some
 timing headaches and provides some additional benefits, at the expense of increased complexity.
 
 Long-Running Commands (LRC)
@@ -274,24 +274,53 @@ approach was in place, a workaround used in MCS was to have clients temporarily 
 component's timeout from the default 3 seconds before issuing calls, then 
 reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
-Updates to ``ska-tango-base`` in version 1.0.0 introduced the LRC paradigm. By having command classes
-inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` and ``ResponseCommand``, 
-clients no longer expect a result to be returned immediately from command calls; although they both return a tuple containing (result_code, message),
-LRC return values are quite different. An LRC's message actually contains a whole other tuple (cast to a string), holding
-1. the command's unique identifier (command_id) and 2. a result message like those expected from non-LRCs. 
-An LRC's result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, or was rejected 
-**TODO: Need to clarify When REJECTED vs. NOT_ALLOWED is returned.**
-for not meeting the criteria specified in the ``is_COMMAND_allowed()`` method. From this queue, commands are 
-executed within a separate "task-executor thread" running in parallel to the main control thread.
+Version 1.0.0 of ``ska-tango-base`` introduced the (`LRC protocol 
+<https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_). 
+By having command classes inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` or ``ResponseCommand``, 
+clients can no longer expect a result to be returned immediately from command calls. Although they both return a tuple,
+LRC return values are different; a fast command returns ``(result_code, message)``, 
+whereas the tuple that an LRC immediately returns is ``(result_code, command_id)``, unless the command was rejected, 
+in which case the command_id is not generated, and instead replaced with a message to explain the rejection.
 
-One implication of this shift to executing commands in a separate thread is that multiple commands can be queued 
+An LRC's result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, or was rejected, 
+for exmaple, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
+executed within a separate "task-executor thread" running in parallel to the main control thread.
+The actual results of LRCs come from published ``longRunningCommandResult`` attribute change events. 
+The value of this attribute is a tuple with the slightly odd format, (command_id, result_code_message), 
+where command_id is a unique command identifier string, and result_code_message is a list(int, str) 
+cast into a string, containing the result_code integer and message string; for example:
+``command_id, result_code_message = ('1725379432.518609_238583733127885_RemoveAllReceptors', '[0, "RemoveAllReceptors completed OK"]')``.
+
+One implication of the shift to execute commands in a separate thread is that the structure 
+of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
+implemented as an "execution" method and a command class (instantiated during initialization), whose ``do()`` method calls an associated 
+function in the component manager; this where the command logic lives. When the command is called by a client, 
+the execution method fetches the command class object and runs its ``do()`` method. Additionally, either 
+the device implements ``is_<COMMAND>_allowed()`` methods for commands that override a 
+baseclass implementation, or else the command class implements an ``is_allowed()`` method for 
+novel commands, which these commands' ``do()`` methods use as a condition to guard the 
+component manager call, in case a command is called from an invalid state, etc. In contrast, 
+LRCs still implement the execution method, but do not implement command classes; instead, 
+during initialization a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
+this object's ``do()`` method is called instead. Rather than just one associated method in the component manager, 
+LRCs have two. The first has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
+All this public method does is submit a task to the ``TaskExecutor``'s queue, and among other things, 
+this task's arguments include 1. the second, private scoped, associated function, containing all the command's logic, 
+and 2. the ``is_<COMMAND>_allowed()`` function, now defined in the component manager rather than the device; 
+this is important, as the validity of calling a given command needs to be evaluated when the task is executed rather 
+than when the command is called by the client. For this reason, overridden baseclass commands still have an 
+overridden ``is_<COMMAND>_allowed()`` method defined in the device, but all it does is return ``True``, 
+in order to defer judgement to the component manager's ``is_<COMMAND>_allowed()`` method that will 
+run when the command is popped off of the queue.
+
+Another implication of parallelism in MCS is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
-which solves the hacky updating-command-timeouts practice. Instead, once queued, LRCs rely on change events to 
+which solves the hacky updating-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
 communicate their progress. A callback mechanism detects these events and keeps track 
 of who is waiting on which results, which is not trivial as this queue opens the door for even further complexity; 
 when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC. To manage this confusing use case, 
 mutexes (locks in python) are used to block commands from getting too far ahead of their 
-components' LRC results by a) keeping count of how many LRCs remain in progress for a given client, and b) enforcing a final (much longer) 
+components' LRC results by a) keeping track of how many LRCs remain in progress for a given client, and b) enforcing a final (much longer) 
 timeout for LRCs, after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
 
 Blocking Commands and Locks
@@ -299,26 +328,26 @@ Blocking Commands and Locks
 In MCS, any command added to the ``TaskExecutor``'s queue is a "blocking command", in the sense that each of these 
 commands will eventually block the client that issued them. 
 
-As a simple example, if command A adds command B to the queue, 
+As a simple example, if command A (parent) adds command B (child) to the queue, 
 command A will be blocked until command B produces a
 change event for its result. After command A queues command B, it is free to continue 
 executing any logic that does not rely on command B's result, but once it reaches this blocking point, it must wait.
 
 MCS keeps track of these blocking commands by adding their unique command IDs to a set as they are queued, 
 and removing them when change events for the ``longRunningCommandResult`` attribute are recieved. 
-This way, when command A reaches its blocking point, it calls a function that waits until the set is empty 
+This way, when command A reaches its blocking point, it calls a function that waits until the set is emptied 
 (indicating command B's result has arrived), else the timeout is reached and the parent command fails.
 
-Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt to access a shared resource concurrently. 
+Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt concurrent access on a shared resource. 
 Sticking with the previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
 Without locking the set during this add operation, command B would be free to manipulate the blocking_commands set 
 as well, which could lead to a non-deterministic result. If command A is the first of several commands issued in a loop, 
 it is possible that the next command, command C, will attempt to be added to blocking_commands at the same moment command B's 
-results change event is recieved, which would simultaneously attempt to remove command B from blocking_commands. 
+results change event is recieved, which would simultaneously try to remove command B from blocking_commands. 
 Using a lock to access blocking_commands restores determinism because if the add operation locks the set, 
 the remove operation will wait patiently until it unlocks, and vice versa.
 
-In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain attribute accesses, 
+In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
 such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
 continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
 
