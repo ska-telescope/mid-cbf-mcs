@@ -274,8 +274,8 @@ approach was in place, a workaround used in MCS was to have clients temporarily 
 component's timeout from the default 3 seconds before issuing calls, then 
 reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
-Version 1.0.0 of ``ska-tango-base`` introduced the (`LRC protocol 
-<https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_). 
+Version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
+<https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_. 
 By having command classes inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` or ``ResponseCommand``, 
 clients can no longer expect a result to be returned immediately from command calls. Although they both return a tuple,
 LRC return values are different; a fast command returns ``(result_code, message)``, 
@@ -316,12 +316,14 @@ run when the command is popped off of the queue.
 Another implication of parallelism in MCS is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
 which solves the hacky updating-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
-communicate their progress. A callback mechanism detects these events and keeps track 
-of who is waiting on which results, which is not trivial as this queue opens the door for even further complexity; 
-when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC. To manage this confusing use case, 
-mutexes (locks in python) are used to block commands from getting too far ahead of their 
-components' LRC results by a) keeping track of how many LRCs remain in progress for a given client, and b) enforcing a final (much longer) 
-timeout for LRCs, after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
+communicate their progress. The relevant devices' ``longRunningCommandResult`` attributes are subscribed to during 
+component manager initialization, and a callback mechanism detects these events and keeps track of who is waiting 
+on which results, which is not trivial as this queue opens the door for even further complexity; 
+when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC. 
+To manage this confusing use case, mutexes (locks in python) are used to block commands 
+from getting too far ahead of their components' LRC results by a) keeping track of how many 
+LRCs remain in progress for a given client, and b) enforcing a final (much longer) timeout for LRCs, 
+after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
 
 Blocking Commands and Locks
 ----------------------------
@@ -350,6 +352,26 @@ the remove operation will wait patiently until it unlocks, and vice versa.
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
 such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
 continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
+
+
+Improvments to Control Flow
+---------------------------
+The upgrade to ``ska-tango-base`` v1.0.0 provided an opportunity to reduce technical debt and 
+consolidate the MCS code base in general. The biggest change is the removal of On/Off commands 
+from devices that do not directly control hardware, since these devices do not need to distinguish 
+between having communication established and being turned on. Notably, the ``PowerSwitch`` device, 
+although it *does* control hardware directly, does not include On/Off commands. This is because the 
+hardware it controls are individual outlets on power distribution units (PDUs), which is more granular
+than the device-level On/Off commands would be, therefore, there is no practical difference between
+a ``PowerSwitch`` device being on or simply communicating with its component. Rather than explicitly 
+issue On and Off commands to update the ``OpState`` model in these devices, the ``PowerState`` enum is 
+instead set as the end of ``start_communicating()`` and ``stop_communicating()`` methods, which run after setting
+the ``AdminMode`` attribute to ``AdminMode.ONLINE`` and ``AdminMode.OFFLINE``, respectively. In the rest of 
+the MCS devices (the ones that *do* implement On and Off commands), these methods instead set the
+``CommunicationStatus`` attribute to ``CommunicationStatus.ESTABLISHED`` and ``CommunicationStatus.DISABLED``, 
+respectively; ``stop_communicating()`` also sets ``AdminMode.UNKNOWN`` to move the ``OpState`` model, since 
+setting ``CommunicationStatus.NOT_ESTABLISHED`` has no action.
+
 
 Talon DX Log Consumer
 =====================================================
