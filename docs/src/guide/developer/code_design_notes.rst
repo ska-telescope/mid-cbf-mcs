@@ -277,34 +277,36 @@ reverting this change after completion. Since this is clearly a hacky solution, 
 Version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
 <https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_. 
 By having command classes inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` or ``ResponseCommand``, 
-clients can no longer expect a result to be returned immediately from command calls. Although they both return a tuple,
+clients can no longer expect a command's final result to be returned immediately. Although they both return a tuple,
 LRC return values are different; a fast command returns ``(result_code, message)``, 
-whereas the tuple that an LRC immediately returns is ``(result_code, command_id)``, unless the command was rejected, 
-in which case the command_id is not generated, and instead replaced with a message to explain the rejection.
+whereas the tuple that an LRC immediately returns is ``(result_code, command_id)``, where command_id is 
+a unique command identifier string, unless the command was rejected, in which case the 
+command_id is not generated, and instead replaced with a message to explain the rejection.
 
-An LRC's result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, or was rejected, 
-for exmaple, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
+An LRC's immediate result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, 
+or was rejected, for exmaple, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
 executed within a separate "task-executor thread" running in parallel to the main control thread.
 The actual results of LRCs come from published ``longRunningCommandResult`` attribute change events. 
-The value of this attribute is a tuple with the slightly odd format, (command_id, result_code_message), 
-where command_id is a unique command identifier string, and result_code_message is a list(int, str) 
-cast into a string, containing the result_code integer and message string; for example:
-``command_id, result_code_message = ('1725379432.518609_238583733127885_RemoveAllReceptors', '[0, "RemoveAllReceptors completed OK"]')``.
+The value of this attribute is a tuple of (command_id, result_code_message), a slightly odd format
+since result_code_message is a list(int, str) cast into a string, containing the result_code integer 
+*and* message string; for example: ``command_id, result_code_message = 
+('1725379432.518609_238583733127885_RemoveAllReceptors', '[0, "RemoveAllReceptors completed OK"]')``.
 
 One implication of the shift to execute commands in a separate thread is that the structure 
 of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
-implemented as an "execution" method and a command class (instantiated during initialization), whose ``do()`` method calls an associated 
+implemented as an "execution" method that initiates the command when called, and a command class 
+(instantiated during initialization), whose ``do()`` method calls an "associated" 
 function in the component manager; this where the command logic lives. When the command is called by a client, 
-the execution method fetches the command class object and runs its ``do()`` method. Additionally, either 
-the device implements ``is_<COMMAND>_allowed()`` methods for commands that override a 
-baseclass implementation, or else the command class implements an ``is_allowed()`` method for 
+the execution method fetches the command class object and runs its ``do()`` method. Additionally, 
+the device either implements ``is_<COMMAND>_allowed()`` methods for commands that override 
+baseclass commands, or else the command class implements an ``is_allowed()`` method for 
 novel commands, which these commands' ``do()`` methods use as a condition to guard the 
-component manager call, in case a command is called from an invalid state, etc. In contrast, 
+component manager call in case a command is called from an invalid state, etc. By contrast, 
 LRCs still implement the execution method, but do not implement command classes; instead, 
 during initialization a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
 this object's ``do()`` method is called instead. Rather than just one associated method in the component manager, 
 LRCs have two. The first has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
-All this public method does is submit a task to the ``TaskExecutor``'s queue, and among other things, 
+All this public method does is submit a task to the ``TaskExecutor``'s queue and, among other things, 
 this task's arguments include 1. the second, private scoped, associated function, containing all the command's logic, 
 and 2. the ``is_<COMMAND>_allowed()`` function, now defined in the component manager rather than the device; 
 this is important, as the validity of calling a given command needs to be evaluated when the task is executed rather 
@@ -315,15 +317,15 @@ run when the command is popped off of the queue.
 
 Another implication of parallelism in MCS is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
-which solves the hacky updating-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
+which solves the hacky update-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
 communicate their progress. The relevant devices' ``longRunningCommandResult`` attributes are subscribed to during 
 component manager initialization, and a callback mechanism detects these events and keeps track of who is waiting 
-on which results, which is not trivial as this queue opens the door for even further complexity; 
-when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC. 
+on what results, which is not trivial as this opens the door for even further complexity; 
+when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC, a nested LRC call. 
 To manage this confusing use case, mutexes (locks in python) are used to block commands 
 from getting too far ahead of their components' LRC results by a) keeping track of how many 
 LRCs remain in progress for a given client, and b) enforcing a final (much longer) timeout for LRCs, 
-after which the client must give up and call the original command a failure. This mechanism is described next in more detail.
+after which time the client must give up and call the original command a failure. This mechanism is described next in more detail.
 
 Blocking Commands and Locks
 ----------------------------
@@ -335,42 +337,42 @@ command A will be blocked until command B produces a
 change event for its result. After command A queues command B, it is free to continue 
 executing any logic that does not rely on command B's result, but once it reaches this blocking point, it must wait.
 
-MCS keeps track of these blocking commands by adding their unique command IDs to a set as they are queued, 
+MCS keeps track of these blocking commands by adding their command IDs to a set as they are queued, 
 and removing them when change events for the ``longRunningCommandResult`` attribute are recieved. 
 This way, when command A reaches its blocking point, it calls a function that waits until the set is emptied 
-(indicating command B's result has arrived), else the timeout is reached and the parent command fails.
+(indicating command B has finished), else the timeout is reached and the parent command fails.
 
 Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt concurrent access on a shared resource. 
 Sticking with the previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
-Without locking the set during this add operation, command B would be free to manipulate the blocking_commands set 
+Without locking the resource during this add operation, command B would be free to manipulate the blocking_commands set 
 as well, which could lead to a non-deterministic result. If command A is the first of several commands issued in a loop, 
 it is possible that the next command, command C, will attempt to be added to blocking_commands at the same moment command B's 
 results change event is recieved, which would simultaneously try to remove command B from blocking_commands. 
 Using a lock to access blocking_commands restores determinism because if the add operation locks the set, 
-the remove operation will wait patiently until it unlocks, and vice versa.
+the remove operation will see that it is locked and wait patiently for it to unlock, and vice versa.
 
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
 such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
 continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
 
 
-Improvments to Control Flow
+Improvements to Control Flow
 ---------------------------
 The upgrade to ``ska-tango-base`` v1.0.0 provided an opportunity to reduce technical debt and 
 consolidate the MCS code base in general. The biggest change is the removal of On/Off commands 
 from devices that do not directly control hardware, since these devices do not need to distinguish 
 between having communication established and being turned on. Notably, the ``PowerSwitch`` device, 
 although it *does* control hardware directly, does not include On/Off commands. This is because the 
-hardware it controls are individual outlets on power distribution units (PDUs), which is more granular
-than the device-level On/Off commands would be, therefore, there is no practical difference between
+components it controls are individual outlets on power distribution units (PDUs), which manipulates a lower-level
+than the device-level On/Off commands would, therefore, there is no practical difference between
 a ``PowerSwitch`` device being on or simply communicating with its component. Rather than explicitly 
-issue On and Off commands to update the ``OpState`` model in these devices, the ``PowerState`` enum is 
+issue On/Off commands to update the ``OpState`` model in these devices, the ``PowerState`` enum is 
 instead set as the end of ``start_communicating()`` and ``stop_communicating()`` methods, which run after setting
 the ``AdminMode`` attribute to ``AdminMode.ONLINE`` and ``AdminMode.OFFLINE``, respectively. In the rest of 
-the MCS devices (the ones that *do* implement On and Off commands), these methods instead set the
+the MCS devices (the ones that *do* implement On and Off commands), these methods set the
 ``CommunicationStatus`` attribute to ``CommunicationStatus.ESTABLISHED`` and ``CommunicationStatus.DISABLED``, 
-respectively; ``stop_communicating()`` also sets ``AdminMode.UNKNOWN`` to move the ``OpState`` model, since 
-setting ``CommunicationStatus.NOT_ESTABLISHED`` has no action.
+respectively; they also set ``AdminMode.UNKNOWN`` during ``stop_communicating()`` to move the 
+``OpState`` model, since setting ``CommunicationStatus.NOT_ESTABLISHED`` has no action.
 
 
 Talon DX Log Consumer
