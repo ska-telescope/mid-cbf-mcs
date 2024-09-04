@@ -111,11 +111,5 @@ stop-dev-environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
 
 pages:
-  script:
-    - poetry install --with docs
-    - pip install ska_telmodel  # Add this line
-    - make docs-build html
-    - export PYTHONPATH=$PYTHONPATH:/path/to/ska_telmodel
-    - make docs-build html
   rules:
     - when: always
