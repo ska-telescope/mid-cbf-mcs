@@ -6,6 +6,11 @@ import logging
 import math
 from collections import defaultdict
 
+from ska_telmodel.csp.common_schema import (
+    MAX_CHANNELS_PER_STREAM,
+    MAX_STREAMS_PER_FSP,
+)
+
 from ska_mid_cbf_mcs.commons.global_enum import (
     AcceptedScanConfigurationVersion,
     FspModes,
@@ -13,14 +18,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     freq_band_dict,
     scan_configuration_supported_value,
 )
-
-# TODO: circular import issue
-# from ska_telmodel.csp.common_schema import (
-#     MAX_STREAMS_PER_FSP,
-#     MAX_CHANNELS_PER_STREAM,
-# )
-MAX_STREAMS_PER_FSP = 744
-MAX_CHANNELS_PER_STREAM = 20
 
 """
 SubarrayScanConfigurationValidator: Contains functions that validates a given
@@ -67,8 +64,8 @@ class SubarrayScanConfigurationValidator:
         self._count_fsp = count_fsp
 
         # TODO: PSS, PST, VLBI support
-        self._proxies_fsp_pss_subarray_device = None
-        self._proxies_fsp_pst_subarray_device = None
+        # self._proxies_fsp_pss_subarray_device = None
+        # self._proxies_fsp_pst_subarray_device = None
 
         self._dish_ids = dish_ids
         self._subarray_id = subarray_id
