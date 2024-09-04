@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2732 Added sphinx directive to generate tables for documentation. Added interface validation for commands on MCS side.
 * CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
   * Removed validation for tdc fields (removed from telescope model)
   * Removed validation for doppler_phase_corr_subscription_point (removed from
