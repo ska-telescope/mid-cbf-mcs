@@ -626,7 +626,17 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: any,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
+        """
+        Long running command that submits the ConnectSlimTxRx command thread to task executor queue.
+
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._connect_slim_tx_rx,
@@ -737,7 +747,17 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: any,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
+        """
+        Long running command that submits the DisconnectSlimTxRx command thread to task executor queue.
+
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._disconnect_slim_tx_rx,

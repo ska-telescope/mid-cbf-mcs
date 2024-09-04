@@ -228,7 +228,9 @@ class VccComponentManager(CbfObsComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Configure VCC band-specific devices
+        Configure VCC band-specific devices. At the HPS level, 
+        this reconfigures the FPGA to the correct bitstream and enables the respective 
+        band device. All other band devices are disabled.
 
         :param argin: JSON string with the configure band parameters
 
@@ -322,9 +324,7 @@ class VccComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Configure the corresponding band. At the HPS level, this reconfigures the
-        FPGA to the correct bitstream and enables the respective band device. All
-        other band devices are disabled.
+        Long running command that submits the ConfigureBand command thread to task executor queue.
 
         :param argin: the frequency band name
 

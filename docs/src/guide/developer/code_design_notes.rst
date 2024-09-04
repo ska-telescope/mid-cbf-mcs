@@ -295,7 +295,7 @@ since result_code_message is a list(int, str) cast into a string, containing the
 One implication of the shift to execute commands in a separate thread is that the structure 
 of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
 implemented as an "execution" method that initiates the command when called, and a command class 
-(instantiated during initialization), whose ``do()`` method calls an "operation" 
+(instantiated during initialization), whose ``do()`` method calls a "command thread" 
 method in the component manager; this where the command logic lives. When the command is called by a client, 
 the execution method fetches the command class object and runs its ``do()`` method. Additionally, 
 the device either implements ``is_<COMMAND>_allowed()`` methods for commands that override 
@@ -307,7 +307,7 @@ during initialization a ``SubmittedSlowCommand`` object is instantiated and when
 this object's ``do()`` method is called instead. Rather than just one method in the component manager, 
 LRCs have two. The first "submit" method has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
 All this public method does is submit a task to the ``TaskExecutor``'s queue and, among other things, 
-this task's arguments include 1. the second, private scoped, operation method, containing all the command's logic, 
+this task's arguments include 1. the second, private scoped, command thread, containing all the command's logic, 
 and 2. the ``is_<COMMAND>_allowed()`` function, now defined in the component manager rather than the device; 
 this is important, as the validity of calling a given command needs to be evaluated when the task is executed rather 
 than when the command is called by the client. For this reason, overridden baseclass commands still have an 

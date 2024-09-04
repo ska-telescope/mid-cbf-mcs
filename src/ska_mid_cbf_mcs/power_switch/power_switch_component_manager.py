@@ -339,7 +339,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
-        Turn on the PDU outlet specified by argin.
+        Long running command that submits the TurnOnOutlet command thread to task executor queue.
 
         :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of
@@ -437,7 +437,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
-        Turn off the PDU outlet specified by argin.
+        Long running command that submits the TurnOffOutlet command thread to task executor queue.
 
         :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of

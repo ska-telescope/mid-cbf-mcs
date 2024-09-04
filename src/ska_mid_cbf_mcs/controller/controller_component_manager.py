@@ -596,9 +596,9 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
         """
-        Submit init_sys_param operation method to task executor queue.
+        Long running command that submits the InitSysParam command thread to task executor queue.
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
@@ -853,7 +853,6 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        *Asynchronous*
         Turn on the controller and its subordinate devices.
 
         :param task_callback: Callback function to update task status.
@@ -938,10 +937,9 @@ class ControllerComponentManager(CbfComponentManager):
     def on(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
         """
-        *Asynchronous*
-        Submit on operation method to task executor queue as an LRC.
+        Long running command that submits the On command thread to task executor queue.
 
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
@@ -1286,9 +1284,9 @@ class ControllerComponentManager(CbfComponentManager):
     def off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
         """
-        Submit off operation method to task executor queue.
+        Long running command that submits the Off command thread to task executor queue.
 
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string

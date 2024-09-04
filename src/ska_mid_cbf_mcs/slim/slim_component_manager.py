@@ -427,7 +427,17 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: any,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
+        """
+        Long running command that submits the On command thread to task executor queue.
+
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._on,
@@ -632,7 +642,18 @@ class SlimComponentManager(CbfComponentManager):
         config_str: str,
         task_callback: Optional[Callable] = None,
         **kwargs: any,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
+        """
+        Long running command that submits the Configure command thread to task executor queue.
+
+        :param config_str: a string in YAML format describing the links to be created.
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
         self.logger.info(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._configure,
@@ -777,7 +798,18 @@ class SlimComponentManager(CbfComponentManager):
         self: SlimComponentManager,
         task_callback: Optional[Callable] = None,
         **kwargs: any,
-    ) -> tuple[ResultCode, str]:
+    ) -> tuple[TaskStatus, str]:
+        """
+        Long running command that submits the Off command thread to task executor queue.
+
+        :param config_str: a string in YAML format describing the links to be created.
+        :param task_callback: Callback function to update task status
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (TaskStatus, str)
+        """
         self.logger.debug(f"ComponentState={self._component_state}")
         return self.submit_task(
             self._off,

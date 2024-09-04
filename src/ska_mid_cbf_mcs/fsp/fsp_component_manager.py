@@ -241,7 +241,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit SetFunctionMode command thread to task executor queue.
+        Long running command that submits SetFunctionMode command thread to task executor queue.
 
         :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         :param task_callback: Callback function to update task status
@@ -422,7 +422,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit AddSubarrayMembership command thread to task executor queue.
+        Long running command that submits the AddSubarrayMembership command thread to task executor queue.
 
         :param argin: an integer representing the subarray affiliation
         :param task_callback: Callback function to update task status
@@ -584,7 +584,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit RemoveSubarrayMembership command thread to task executor queue.
+        Long running command that submits the RemoveSubarrayMembership command thread to task executor queue.
 
         :param argin: an integer representing the subarray affiliation
         :param task_callback: Callback function to update task status

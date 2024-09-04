@@ -186,25 +186,35 @@ class PowerSwitch(CbfDevice):
     # ---------------------
 
     @command(
-        dtype_in="DevString",
-        doc_in="Outlet ID to turn on.",
         dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
+        """
+        Long running command that turns on the outlet specified by argin.
+
+        :param argin: the outlet ID to turn on.
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
         command_handler = self.get_command_object(command_name="TurnOnOutlet")
         result_code, command_id = command_handler(argin)
         return [[result_code], [command_id]]
 
     @command(
-        dtype_in="DevString",
-        doc_in="Outlet ID to turn off.",
         dtype_out="DevVarLongStringArray",
-        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:
+        """
+        Long running command that turns off the outlet specified by argin.
+
+        :param argin: the outlet ID to turn off.
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: DevVarLongStringArrayType
+        """
         command_handler = self.get_command_object(command_name="TurnOffOutlet")
         result_code, command_id = command_handler(argin)
         return [[result_code], [command_id]]

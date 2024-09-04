@@ -165,7 +165,7 @@ class Fsp(CbfDevice):
         self: Fsp, function_mode: str
     ) -> DevVarLongStringArrayType:
         """
-        Set the FSP function mode to either IDLE, CORR, PSS-BF, PST-BF, or VLBI.
+        Long running command that sets the FSP function mode to either IDLE, CORR, PSS-BF, PST-BF, or VLBI.
         If IDLE, set the PSS, PST, CORR, and VLBI devices to DISABLE. Else,
         turn ON the target function_mode, and DISABLE all others.
 
@@ -192,7 +192,7 @@ class Fsp(CbfDevice):
         self: Fsp, sub_id: int
     ) -> DevVarLongStringArrayType:
         """
-        Add a subarray to the subarrayMembership list.
+        Long running command that adds a subarray to the subarrayMembership list.
 
         :param argin: an integer representing the subarray affiliation
         """
@@ -211,7 +211,7 @@ class Fsp(CbfDevice):
         self: Fsp, sub_id: int
     ) -> DevVarLongStringArrayType:
         """
-        Remove subarray from the subarrayMembership list.
+        Long running command that removes subarray from the subarrayMembership list.
         If subarrayMembership is empty after removing
         (no subarray is using this FSP), set function mode to empty.
 

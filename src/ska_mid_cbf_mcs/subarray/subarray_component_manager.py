@@ -294,7 +294,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
         """
-        Submit reload sys param operation to task executor queue
+        Long running command that submits the UpdateSysParam command thread to task executor queue.
 
         :param sys_param_str: sys params JSON string
         """
@@ -596,7 +596,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit AddReceptors operation method to task executor queue.
+        Long running command that submits the AddReceptors command thread to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
         :param task_callback: callback for driving status of task executor's
@@ -786,7 +786,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit RemoveReceptors operation method to task executor queue.
+        Long running command that submits the RemoveReceptors command thread to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be removed
         :param task_callback: callback for driving status of task executor's
@@ -871,7 +871,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit RemoveAllReceptors operation method to task executor queue.
+        Long running command that submits the RemoveAllReceptors command thread to task executor queue.
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
@@ -2201,7 +2201,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Submit Restart operation method to task executor queue.
+        Long running command that submits the Restart command thread to task executor queue.
 
         :param task_callback: callback for driving status of task executor's
             current LRC task

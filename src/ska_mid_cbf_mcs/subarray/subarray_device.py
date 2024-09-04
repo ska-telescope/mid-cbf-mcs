@@ -308,7 +308,7 @@ class CbfSubarray(CbfObsDevice):
         self: CbfSubarray, argin: list[str]
     ) -> DevVarLongStringArrayType:
         """
-        Assign input receptors to this subarray.
+        Long running command that assigns input receptors to this subarray.
         Set subarray to ObsState.IDLE if no receptors were previously assigned,
         i.e. subarray was previously in ObsState.EMPTY.
 
@@ -333,7 +333,7 @@ class CbfSubarray(CbfObsDevice):
         self: CbfSubarray, argin: list[str]
     ) -> DevVarLongStringArrayType:
         """
-        Remove input from list of assigned receptors.
+        Long running command that removes argin list from list of assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
 
         :param argin: list of DISH/receptor IDs to remove
@@ -353,7 +353,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> DevVarLongStringArrayType:
         """
-        Remove all assigned receptors.
+        Long running command that removes all assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
 
         :return: A tuple containing a return code and a string
@@ -380,7 +380,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def Scan(self: CbfSubarray, argin: str) -> DevVarLongStringArrayType:
         """
-        Start an observing scan.
+        Long running command that starts an observing scan.
         Overrides CbfObsDevice as subarray's scan input is a JSON string
 
         :param argin: JSON formatted string with the scan ID.
@@ -404,7 +404,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def Restart(self: CbfSubarray) -> DevVarLongStringArrayType:
         """
-        Restart the observing device from a FAULT/ABORTED obsState to EMPTY.
+        Long running command that restarts the observing device from a FAULT/ABORTED obsState to EMPTY.
 
         :return: A tuple containing a return code and a string message
             indicating status. The message is for information purpose
