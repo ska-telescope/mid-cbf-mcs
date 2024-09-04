@@ -1,17 +1,9 @@
 import json
 
-from ska_telmodel.csp.version import (
-    CSP_CONFIG_PREFIX,
-    CSP_CONFIGSCAN_PREFIX,
-    CSP_MID_DELAYMODEL_PREFIX,
-    CSP_SCAN_PREFIX,
-)
-
-# CSP_CONFIG_PREFIX = "https://schema.skao.int/ska-csp-configure/"
-# CSP_CONFIGSCAN_PREFIX = "https://schema.skao.int/ska-csp-configurescan/"
-# CSP_MID_DELAYMODEL_PREFIX = "https://schema.skao.int/ska-mid-csp-delaymodel/"
-# CSP_SCAN_PREFIX = "https://schema.skao.int/ska-csp-scan/"
-
+CSP_CONFIG_PREFIX = "https://schema.skao.int/ska-csp-configure/"
+CSP_CONFIGSCAN_PREFIX = "https://schema.skao.int/ska-csp-configurescan/"
+CSP_MID_DELAYMODEL_PREFIX = "https://schema.skao.int/ska-mid-csp-delaymodel/"
+CSP_SCAN_PREFIX = "https://schema.skao.int/ska-csp-scan/"
 CBF_INITSYSPARAM_PREFIX = "https://schema.skao.int/ska-mid-cbf-initsysparam/"
 
 CSP_CONFIGSCAN_VER3_0 = CSP_CONFIGSCAN_PREFIX + "3.0"
