@@ -295,8 +295,8 @@ since result_code_message is a list(int, str) cast into a string, containing the
 One implication of the shift to execute commands in a separate thread is that the structure 
 of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
 implemented as an "execution" method that initiates the command when called, and a command class 
-(instantiated during initialization), whose ``do()`` method calls an "associated" 
-function in the component manager; this where the command logic lives. When the command is called by a client, 
+(instantiated during initialization), whose ``do()`` method calls an "operation" 
+method in the component manager; this where the command logic lives. When the command is called by a client, 
 the execution method fetches the command class object and runs its ``do()`` method. Additionally, 
 the device either implements ``is_<COMMAND>_allowed()`` methods for commands that override 
 baseclass commands, or else the command class implements an ``is_allowed()`` method for 
@@ -304,10 +304,10 @@ novel commands, which these commands' ``do()`` methods use as a condition to gua
 component manager call in case a command is called from an invalid state, etc. By contrast, 
 LRCs still implement the execution method, but do not implement command classes; instead, 
 during initialization a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
-this object's ``do()`` method is called instead. Rather than just one associated method in the component manager, 
-LRCs have two. The first has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
+this object's ``do()`` method is called instead. Rather than just one method in the component manager, 
+LRCs have two. The first "submit" method has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
 All this public method does is submit a task to the ``TaskExecutor``'s queue and, among other things, 
-this task's arguments include 1. the second, private scoped, associated function, containing all the command's logic, 
+this task's arguments include 1. the second, private scoped, operation method, containing all the command's logic, 
 and 2. the ``is_<COMMAND>_allowed()`` function, now defined in the component manager rather than the device; 
 this is important, as the validity of calling a given command needs to be evaluated when the task is executed rather 
 than when the command is called by the client. For this reason, overridden baseclass commands still have an 

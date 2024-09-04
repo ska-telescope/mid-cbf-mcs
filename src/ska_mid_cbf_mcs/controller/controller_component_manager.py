@@ -853,7 +853,8 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Turn on the controller and its subordinate devices
+        *Asynchronous*
+        Turn on the controller and its subordinate devices.
 
         :param task_callback: Callback function to update task status.
         :param task_abort_event: Event to signal task abort.
@@ -939,7 +940,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[ResultCode, str]:
         """
-        Submit on operation method to task executor queue.
+        Submit on operation method to task executor queue as an LRC.
 
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
