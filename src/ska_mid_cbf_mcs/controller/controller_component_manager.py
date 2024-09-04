@@ -940,6 +940,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[ResultCode, str]:
         """
+        *Asynchronous*
         Submit on operation method to task executor queue as an LRC.
 
         :param task_callback: Callback function to update task status
