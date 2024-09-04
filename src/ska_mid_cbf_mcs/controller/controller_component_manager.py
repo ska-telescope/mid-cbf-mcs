@@ -69,6 +69,9 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         super().__init__(*args, **kwargs)
+
+        self.validate_supported_configuration = True
+
         self._lru_timeout = lru_timeout
 
         (
@@ -896,7 +899,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Configure all the Talon boards
         # Clears process inside the Talon Board to make it a clean state
-        # Also sets the simulation mode of the Talon Boards based on TalonDx Compnent Manager's SimulationMode Attribute
+        # Also sets the simulation mode of the Talon Boards based on TalonDx Component Manager's SimulationMode Attribute
         if (
             self._talondx_component_manager.configure_talons()
             == ResultCode.FAILED
@@ -1088,7 +1091,7 @@ class ControllerComponentManager(CbfComponentManager):
             # For some components under controller monitoring, including subarray,
             # power switch and VCC devices, they are in DevState.ON when
             # communicating with their component (AdminMode.ONLINE),
-            # and in DevState.DISABLE when not (AdinMode.OFFLINE).
+            # and in DevState.DISABLE when not (AdminMode.OFFLINE).
 
             # The following devices implement power On/Off commands:
             if fqdn in self._talon_lru_fqdn + [
@@ -1096,11 +1099,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self._vis_slim_fqdn,
             ]:
                 try:
-                    # TODO: CIP-1899 The cbfcontroller is sometimes
+                    # TODO: CIP-1899 The controller is sometimes
                     # unable to read the State() of the talon_lru
                     # device server due to an error trying to
                     # acquire the serialization monitor. As a temporary
-                    # workaround, the cbfcontroller will log these
+                    # workaround, the controller will log these
                     # errors if they occur but continue polling.
                     poll(
                         lambda: proxy.State() == tango.DevState.OFF,

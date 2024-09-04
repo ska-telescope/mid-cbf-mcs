@@ -176,7 +176,7 @@ mhz_to_hz = 1000000
 
 
 class AcceptedScanConfigurationVersion:
-    # {major verions : {minor versions...}}
+    # {major versions : {minor versions...}}
     # For Interface Versions with Correlator Processing Regions Configuration
     versions = {3: {0}, 4: {0, 1}}
 

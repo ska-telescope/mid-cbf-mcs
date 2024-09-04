@@ -183,6 +183,48 @@ class CbfController(CbfDevice):
         self._talondx_component_manager.simulation_mode = value
         self.component_manager.simulation_mode = value
 
+    @attribute(
+        dtype="DevBoolean",
+        label="Restrictive Validation of Supported Configurations",
+        doc="Flag to indicate if a restrictive validation is requested for "
+        "supported configurations, such as with Scan Configurations. "
+        "Defaults to True.  Setting the flag to False can cause unexpected "
+        "behaviour with the system.",
+    )
+    def validateSupportedConfiguration(self: CbfController) -> bool:
+        """
+        Reads and return the value in the validateSupportedConfiguration
+
+        :return: the value in validateSupportedConfiguration
+        :rtype: bool
+        """
+        return self.component_manager.validate_supported_configuration
+
+    @validateSupportedConfiguration.write
+    def validateSupportedConfiguration(
+        self: CbfController, value: bool
+    ) -> None:
+        """
+        Setting this flag to false allows the user to bypass validation that
+        ensures the inputs are currently supported by the system.
+
+        The option to bypass validation is intended for testing purposes only.
+        Using unsupported configurations may result in unexpected system behaviour."
+
+        A warning level log is created when the flag is set to False.
+
+        :param value: Set the flag to True/False
+        """
+        if value is False:
+            msg = (
+                "Setting validateSupportedConfiguration to False. "
+                "Using unsupported configurations may result in "
+                "unexpected system behaviour."
+            )
+            self.logger.warning(msg)
+
+        self.component_manager.validate_supported_configuration = value
+
     # --------------
     # Initialization
     # --------------
