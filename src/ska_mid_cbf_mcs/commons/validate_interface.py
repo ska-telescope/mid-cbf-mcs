@@ -40,7 +40,9 @@ supported_interfaces = {
 }
 
 
-def validate_interface(command_object: str, command_name: str) -> tuple[bool, str]:
+def validate_interface(
+    command_object: str, command_name: str
+) -> tuple[bool, str]:
     """
     Validates that command object structure matches supported schema versions for MCS commands.
 
