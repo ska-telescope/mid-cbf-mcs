@@ -28,12 +28,6 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_testing import context
-
-# TODO
-# from ska_telmodel.csp.common_schema import (
-#     MAX_CHANNELS_PER_STREAM,
-#     MAX_STREAMS_PER_FSP,
-# )
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -45,6 +39,9 @@ from ska_mid_cbf_mcs.commons.global_enum import (
 )
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
+)
+from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
+    SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
@@ -87,6 +84,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self.subarray_id = subarray_id
         self._fqdn_controller = controller
+        self._proxy_controller = None
 
         self._fqdn_vcc_all = vcc
         self._fqdn_fsp_all = fsp
@@ -173,16 +171,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
-    def _get_max_capabilities(self: CbfSubarrayComponentManager) -> bool:
+    def _init_controller_proxy(self: CbfSubarrayComponentManager) -> bool:
         """
         Initialize proxy to controller device, read MaxCapabilities property
 
         :return: True if max capabilities initialization succeeded, otherwise False
         """
         try:
-            controller = context.DeviceProxy(device_name=self._fqdn_controller)
+            self._proxy_controller = context.DeviceProxy(
+                device_name=self._fqdn_controller
+            )
             self._controller_max_capabilities = dict(
-                pair.split(":") for pair in controller.maxCapabilities
+                pair.split(":")
+                for pair in self._proxy_controller.maxCapabilities
             )
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
@@ -247,7 +248,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for start_communicating operation.
         """
-        controller_success = self._get_max_capabilities()
+        controller_success = self._init_controller_proxy()
         if not controller_success:
             self.logger.error(
                 "Failed to initialize max capabilities from controller."
@@ -951,9 +952,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return TaskStatus.COMPLETED
 
-    def _validate_input(self: CbfSubarrayComponentManager, argin: str) -> bool:
+    def _validate_configure_scan_input(
+        self: CbfSubarrayComponentManager, argin: str
+    ) -> bool:
         """
-        Validate scan configuration.
+        Validate scan configuration JSON.
 
         :param argin: The configuration as JSON formatted string.
 
@@ -981,8 +984,25 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return False
 
-        # TODO: return additional validation as needed
-        # include new output_port validation
+        # At this point, validate FSP, VCC, subscription parameters
+        controller_validateSupportedConfiguration = (
+            self._proxy_controller.validateSupportedConfiguration
+        )
+        # MCS Scan Configuration Validation
+        if controller_validateSupportedConfiguration is True:
+            validator = SubarrayScanConfigurationValidator(
+                scan_configuration=argin,
+                count_fsp=self._count_fsp,
+                dish_ids=list(self.dish_ids),
+                subarray_id=self.subarray_id,
+                logger=self.logger,
+            )
+            success, msg = validator.validate_input()
+            if success:
+                self.logger.info(msg)
+            else:
+                self.logger.error(msg)
+            return success
 
         return True
 
@@ -1537,6 +1557,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._assigned_fsp_corr_proxies = set()
         return True
 
+    # TODO: split up deconfigure for safer flow in event of partial command failure
     def _deconfigure(
         self: CbfSubarrayComponentManager,
     ) -> bool:
@@ -1592,13 +1613,32 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        validation_success = self._validate_input(argin)
+        validation_success = self._validate_configure_scan_input(argin)
         if not validation_success:
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
                     "Failed to validate ConfigureScan input JSON",
+                ),
+            )
+            return
+
+        full_configuration = json.loads(argin)
+        common_configuration = copy.deepcopy(full_configuration["common"])
+        # Pre 4.0
+        if "cbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["cbf"])
+        # Post 4.0
+        elif "midcbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["midcbf"])
+
+            # TODO: remove this return when Configure Scan supports >v4.0
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "> v4.0 Configure Scan Interfaces Currently not supported",
                 ),
             )
             return
@@ -1615,13 +1655,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        full_configuration = json.loads(argin)
-        common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
-
-        # store configID
-        self.config_id = str(common_configuration["config_id"])
-
         # Configure delayModel subscription point
         delay_model_success = self._subscribe_tm_event(
             subscription_point=configuration["delay_model_subscription_point"],
@@ -1637,6 +1670,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # store configID
+        self.config_id = str(common_configuration["config_id"])
 
         # --- Configure VCC --- #
 

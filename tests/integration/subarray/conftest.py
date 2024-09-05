@@ -94,6 +94,16 @@ def subarray_proxies() -> list[context.DeviceProxy]:
     }
 
 
+@pytest.fixture(name="controller", scope="session", autouse=True)
+def controller_proxy() -> context.DeviceProxy:
+    """
+    Fixture that returns a proxy to the controller device.
+
+    :return: DeviceProxy to CbfController device
+    """
+    return context.DeviceProxy(device_name="mid_csp_cbf/sub_elt/controller")
+
+
 # TODO: upgrade fsp corr fixture for multiple subarrays
 @pytest.fixture(name="fsp_corr", scope="session", autouse=True)
 def fsp_corr_proxies() -> dict[int, context.DeviceProxy]:

@@ -118,7 +118,7 @@ class TestCbfSubarray:
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -175,10 +175,107 @@ class TestCbfSubarray:
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_AddReceptors_1"],
+        name="CbfSubarray_ConfigureScan_validation_1",
+    )
+    @pytest.mark.parametrize(
+        "invalid_configure_scan_file", ["ConfigureScan_AA4_values.json"]
+    )
+    def test_validateSupportedConfiguration(
+        self: TestCbfSubarray,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        invalid_configure_scan_file: str,
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+    ) -> None:
+        """
+        Test setting the controller's validateSupportedConfiguration attribute
+        and validate its effects on CbfSubarray ConfigureScan
+
+        :param controller: DeviceProxy to CbfController device
+        :param event_tracer: TangoEventTracer
+        :param invalid_configure_scan_file: ConfigureScan input JSON that should
+            fail validation
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        """
+        sub_id = subarray_params["sub_id"]
+
+        # Check the validateSupportedConfiguration is True
+        assert controller.validateSupportedConfiguration is True
+
+        # Prepare test data
+        with open(test_data_path + invalid_configure_scan_file) as f:
+            invalid_configuration = json.load(f)
+
+        # Issue ConfigureScan command
+        # ConfigureScan should not work here
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(invalid_configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        # TODO: update this when Configure Scan supports >v4.0
+        # Currently ConfigureScan cannot process >v4.0 interfaces
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.FAILED.value}, "> v4.0 Configure Scan Interfaces Currently not supported"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+
+        controller.validateSupportedConfiguration = False
+
+        # Issue ConfigureScan command
+        # ConfigureScan should work with less restrictive checking
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(invalid_configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        # TODO: update this when Configure Scan supports >v4.0
+        # Currently ConfigureScan cannot process >v4.0 interfaces
+        expected_events.extend(
+            [
+                ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
+                ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 2),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{command_id}",
+                        f'[{ResultCode.FAILED.value}, "> v4.0 Configure Scan Interfaces Currently not supported"]',
+                    ),
+                    None,
+                    1,
+                ),
+            ]
+        )
+
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_AddReceptors_1"],
         name="CbfSubarray_ConfigureScan_1",
     )
     def test_ConfigureScan(
         self: TestCbfSubarray,
+        controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
         fsp_corr: dict[int, context.DeviceProxy],
@@ -189,13 +286,17 @@ class TestCbfSubarray:
         """
         Test CbfSubarrays's ConfigureScan command.
 
+        :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
+        # Reset validateSupportedConfiguration
+        controller.validateSupportedConfiguration = True
+
         sub_id = subarray_params["sub_id"]
 
         # Prepare test data
@@ -314,7 +415,7 @@ class TestCbfSubarray:
         Test sending CbfSubarray delay model JSON in ObsState.READY.
 
         :param event_tracer: TangoEventTracer
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray_params: dict containing all test input parameters
         :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
         """
@@ -367,10 +468,10 @@ class TestCbfSubarray:
         Test CbfSubarrays's Scan command.
 
         :param event_tracer: TangoEventTracer
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -448,7 +549,7 @@ class TestCbfSubarray:
         Test sending CbfSubarray delay model JSON in ObsState.SCANNING.
 
         :param event_tracer: TangoEventTracer
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray_params: dict containing all test input parameters
         :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
         """
@@ -506,10 +607,10 @@ class TestCbfSubarray:
         Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -585,11 +686,11 @@ class TestCbfSubarray:
         Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -698,7 +799,7 @@ class TestCbfSubarray:
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -797,6 +898,7 @@ class TestCbfSubarray:
     )
     def test_Abort_ObsReset(
         self: TestCbfSubarray,
+        controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
         fsp_corr: dict[int, context.DeviceProxy],
@@ -807,12 +909,13 @@ class TestCbfSubarray:
         """
         Test CbfSubarrays's Abort and ObsReset commands
 
+        :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -907,7 +1010,13 @@ class TestCbfSubarray:
         # -------------------------
 
         self.test_ConfigureScan(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
         )
 
         [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
@@ -980,7 +1089,13 @@ class TestCbfSubarray:
         # ----------------------------
 
         self.test_ConfigureScan(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
         )
         self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
 
@@ -1119,6 +1234,7 @@ class TestCbfSubarray:
     )
     def test_Abort_Restart(
         self: TestCbfSubarray,
+        controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
         fsp_corr: dict[int, context.DeviceProxy],
@@ -1129,12 +1245,13 @@ class TestCbfSubarray:
         """
         Test CbfSubarrays's Abort and Restart commands
 
+        :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
-        :fsp: dict of DeviceProxy to Fsp devices
-        :fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
-        :vcc: dict of DeviceProxy to Vcc devices
+        :param vcc: dict of DeviceProxy to Vcc devices
         """
         sub_id = subarray_params["sub_id"]
 
@@ -1233,7 +1350,13 @@ class TestCbfSubarray:
 
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
         )
 
         [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
@@ -1310,7 +1433,13 @@ class TestCbfSubarray:
 
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
         )
         self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
 
