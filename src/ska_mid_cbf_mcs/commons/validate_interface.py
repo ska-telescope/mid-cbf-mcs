@@ -46,7 +46,7 @@ def validate_interface(
     """
     Validates that command object structure matches supported schema versions for MCS commands.
 
-    :param argin: The command object as a JSON formatted string
+    :param command_object: The command object as a JSON formatted string
     :param command_name: the name of the command referenced for validation, refer to the
                     dictionary above for valid command names
 
