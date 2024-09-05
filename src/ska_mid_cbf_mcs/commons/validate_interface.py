@@ -40,33 +40,43 @@ supported_interfaces = {
 }
 
 
-def validate_interface(argin: str, command: str) -> tuple[bool, str]:
+def validate_interface(command_object: str, command_name: str) -> tuple[bool, str]:
+    """
+    Validates that command object structure matches supported schema versions for MCS commands.
+
+    :param argin: The command object as a JSON formatted string
+    :param command_name: the name of the command referenced for validation
+
+    :return: A tuple containing a boolean and a string
+            message indicating reason for invalid input.
+    :rtype: (bool, str)
+    """
     # Check valid JSON
     try:
-        input = json.loads(argin)
+        input = json.loads(command_object)
     except json.JSONDecodeError:
-        return [False, "The command parameters could not be parsed"]
+        return (False, "The command parameters could not be parsed")
 
     # Check interface existence
     if "interface" not in input:
-        return [
+        return (
             False,
             "The command is missing the required interface parameter",
-        ]
+        )
 
     # Check interface value type
     if type(input["interface"]) is not str:
-        return [
+        return (
             False,
             "The value retrieved from the interface key is not a string",
-        ]
+        )
 
     # Check supported interfaces for command
-    if input["interface"] not in supported_interfaces[command]:
-        return [
+    if input["interface"] not in supported_interfaces[command_name]:
+        return (
             False,
-            f"Interface '{input['interface']}' not supported for command '{command}'",
-        ]
+            f"Interface '{input['interface']}' not supported for command '{command_name}'",
+        )
 
     # Return pass
-    return [True, ""]
+    return (True, "")
