@@ -228,8 +228,8 @@ class VccComponentManager(CbfObsComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Configure VCC band-specific devices. At the HPS level, 
-        this reconfigures the FPGA to the correct bitstream and enables the respective 
+        Configure VCC band-specific devices. At the HPS level,
+        this reconfigures the FPGA to the correct bitstream and enables the respective
         band device. All other band devices are disabled.
 
         :param argin: JSON string with the configure band parameters

@@ -364,7 +364,7 @@ class SlimLink(CbfDevice):
     @DebugIt()
     def DisconnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
         """
-        Long running command that resets a SlimLink's configuration after setting 
+        Long running command that resets a SlimLink's configuration after setting
         its associated HPS DsSlimTxRx devices to serial loopback mode.
 
         :return: A tuple containing a return code and a string message indicating status.

@@ -620,7 +620,7 @@ class TalonLRUComponentManager(CbfComponentManager):
     ) -> tuple[ResultCode, str]:
         """
         Long running command that submits the Off command thread to task executor queue.
-        
+
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
