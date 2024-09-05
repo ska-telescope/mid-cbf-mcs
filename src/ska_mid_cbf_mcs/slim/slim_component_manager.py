@@ -508,9 +508,9 @@ class SlimComponentManager(CbfComponentManager):
                 )
 
             if self.simulation_mode is False:
-                # for idx, _ in enumerate(self._active_links):
-                # Poll link health every 20 seconds
-                self._dp_links[idx].poll_command("VerifyConnection", 20000)
+                for idx, _ in enumerate(self._active_links):
+                    # Poll link health every 20 seconds
+                    self._dp_links[idx].poll_command("VerifyConnection", 20000)
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
