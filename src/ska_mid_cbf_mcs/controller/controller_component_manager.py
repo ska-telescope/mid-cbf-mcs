@@ -870,13 +870,13 @@ class ControllerComponentManager(CbfComponentManager):
 
         # The order of the following operations for ON is important:
         # 1. Power on all the Talon boards by
-        #    i.  Get the FQDNs of the LRUs
+        #    i.  Getting the FQDNs of the LRUs
         #    ii. Sending ON command to all the LRUs
         # 2. Configure all the Talon boards
         # 3. Turn TalonBoard devices ONLINE
         # 4. Configure SLIM Mesh devices
 
-        if self.simulation_mode == SimulationMode.FALSE:
+        if not self.simulation_mode:
             self._talon_lru_fqdn = self._get_talon_lru_fqdns()
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
