@@ -24,9 +24,9 @@ box "\nMCS\n"
   participant "Mid.CBF\nSubarray" as subarray
   participant "Talon\nBoard" as talon_board
   participant "Talon\nLRU" as lru
-  participant "Power\nSwitch" as switch
-  participant "SLIM\nFS" as slim_fs
-  participant "SLIM\nVis" as slim_vis
+  participant "Talon\nDX" as tdx
+  participant "Power\nSwitch" as ps
+  collections "SLIM\n" as slim
   collections "SLIM\nLink" as slimlink
 end box
 participant "PDU\n" as pdu #Orange
@@ -38,45 +38,60 @@ end box
 
 lmc -> controller : Off()
 
-note over controller         : Clean up observing model:
-
-
 group #LightCyan For each subarray:
 group #SeaShell If ObsState == RESOURCING, RESTARTING, ABORTING,\n                      READY, RESETTING, SCANNING:
-controller -> subarray   : Abort
+controller -> subarray        : Abort
 end
 
-controller -> subarray   : Restart
-note over subarray       : ObsState: EMPTY
+controller -> subarray        : Restart
+note over subarray            : ObsState: EMPTY
 end loop
 
-controller ->  slim_fs       : Off
-slim_fs    ->  slim_fs       : PowerState OFF
-slim_fs    ->  slimlink      : DisconnectTxRx
+group #LightCyan For each SLIM:
+  controller ->  slim         : Off
 
-group #LightCyan For each SLIM FS Link:
-slimlink   ->  hpsdevices    : InitializeConnection(serial_loopback=True)
-end 
+  group #LightCyan For each active SlimLink:
+    slim      ->  slimlink    : Stop polling VerifyConnection()
+    slim      ->  slimlink    : DisconnectTxRx()
+    slimlink  ->  hpsdevices  : InitializeConnection(serial_loopback=True)
+  end 
+  note over slim              : OpState: OFF
+end group
 
-controller ->  slim_vis      : Off
-slim_vis   ->  slim_vis      : PowerState OFF
-slim_vis   ->  slimlink      : DisconnectTxRx
+note over talon_board          : OpState: UNKNOWN
+controller  ->  tdx            : Shutdown()
+tdx         ->  hpsmaster      : Shutdown(3)
+hpsmaster   ->  hpsdevices !!  : kill pid
+hpsmaster   ->  os !!          : system "shutdown now"
+tdx         ->  tdx            : sleep(4s)
 
-group #LightCyan For each SLIM Vis Link:
-slimlink   ->  hpsdevices    : InitializeConnection(serial_loopback=True)
-end
+group #LightCyan For each Talon LRU in configuration:
+  controller    ->  lru         : Off()
+  lru           ->  ps          : outlet1_state = GetOutletPowerState(outlet1)
+  ps            ->  pdu         : GetOutletPowerState(outlet1)
+  group #SeaShell If using_single_outlet == True:
+    lru         ->  lru         : outlet2_state = outlet1_state
+    else
+    lru         ->  ps          : outlet2_state = GetOutletPowerState(outlet2)
+    ps          ->  pdu         : GetOutletPowerState(outlet2)
+  end group
 
-controller ->  talon_board   : Off
-controller ->  hpsmaster     : Shutdown(3)
-hpsmaster  ->  hpsdevices !! : kill pid
-hpsmaster  ->  os !!         : system "shutdown now"
-controller ->  controller    : sleep(4s)
+  note over lru                 : OpState: UNKNOWN
+  group #SeaShell If outlet1_state OR outlet2_state == ON:
+    note over lru               : OpState: ON
+  else If outlet1_state AND outlet2_state == OFF:
+    note over lru               : OpState: OFF
+  end group
 
-controller ->  lru           : Off
-lru        ->  switch        : Off
-switch     ->  pdu           : Off(outlets)
+  lru           ->  ps          : TurnOffOutlet(outlet1)
+  ps            ->  pdu         : TurnOffOutlet(outlet1)
+  group #SeaShell If using_single_outlet == False:
+    lru         ->  ps          : TurnOffOutlet(outlet2)
+    ps          ->  pdu         : TurnOffOutlet(outlet2)
+  end group
+end group
 
-controller ->  controller    : PowerState OFF
-lmc       <--  controller    : Success
+note over controller           : OpState: OFF
+lmc        <--  controller     : Success
 
 @enduml

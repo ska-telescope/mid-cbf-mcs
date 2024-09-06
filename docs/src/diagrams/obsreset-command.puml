@@ -21,6 +21,7 @@ skinparam database {
 
 title ObsReset Command Sequence - Correlation\n
 
+participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
   participant "Mid.CBF\nSubarray" as subarray
@@ -37,43 +38,49 @@ end box
 
 lmc         ->  subarray      : ObsReset
 
+group #SeaShell If ObsState == [ABORTED, FAULT]:
+  note over subarray           : ObsState: RESETTING
+end group
+
 group #SeaShell If ObsState == FAULT:
   subarray    ->  vcc           : Abort
   vcc         ->  hpsvccband    : Abort (stub)
-  subarray    <--  vcc          : Success
   note over hpsvccband          : (TBD)
   note over vcc                 : ObsState: ABORTED
   subarray    ->  fspsubarray   : Abort
   fspsubarray ->  hpsfsp        : Abort (stub)
   note over hpsfsp              : (TBD)
   note over fspsubarray         : ObsState: ABORTED
-  subarray    <--  fspsubarray  : Success
 end group
 
 subarray    ->  vcc           : ObsReset
+note over vcc                 : ObsState: RESETTING
 vcc         ->  hpsvccband    : ObsReset (stub)
 note over hpsvccband          : (TBD)
+vcc         ->  vcc           : Deconfigure scan\nconfiguration parameters 
 note over vcc                 : ObsState: IDLE
-subarray    <--  vcc          : Success
 
 subarray    ->  fspsubarray   : ObsReset
+note over fspsubarray         : ObsState: RESETTING
 fspsubarray ->  hpsfsp        : ObsReset (stub)
 note over hpsfsp              : (TBD)
+fspsubarray ->  fspsubarray   : Deconfigure scan\nconfiguration parameters
 note over fspsubarray         : ObsState: IDLE
 subarray    <--  fspsubarray  : Success
 
 group #LightCyan For each FSP:
-    subarray    -> fsp          : RemoveSubarrayMembership
-    note over hpsfsp_cont       : functionMode: IDLE
-    group #SeaShell If no other subarray membership:
-      fsp       ->  fspsubarray : AdminMode.OFFLINE
+    subarray    -> fsp        : RemoveSubarrayMembership
+    note over hpsfsp_cont     : functionMode: IDLE
+    group #SeaShell If no subarray membership:
+      note over fsp           : OpState: UNKNOWN
     end group
 end group
 
-subarray    <--  fsp          : Success
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc        : Unsubscribe all events
+end group
 
 note over subarray            : ObsState: IDLE
 lmc        <--  subarray      : Success
-
 
 @enduml

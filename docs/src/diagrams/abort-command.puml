@@ -37,20 +37,19 @@ box "\nHPS\n"
 end box
 
 lmc        ->  subarray      : Abort
-
+note over subarray           : ObsState: ABORTING
 subarray   ->  vcc           : Abort
+note over vcc                : ObsState: ABORTING
 vcc        ->  hpsvccband    : Abort (stub) 
 note over hpsvccband         : (TBD)
 note over vcc                : ObsState: ABORTED
-subarray   <-- vcc           : Success
 subarray   ->  fspsubarray   : Abort
-fspsubarray->  hpsfspcorr        : Abort (stub)
-note over hpsfspcorr             : (TBD)
+note over fspsubarray        : ObsState: ABORTING
+fspsubarray->  hpsfspcorr    : Abort (stub)
+note over hpsfspcorr         : (TBD)
 note over fspsubarray        : ObsState: ABORTED
-subarray   <-- fspsubarray   : Success
-
-lmc       <--  subarray      : Success
 note over subarray           : ObsState: ABORTED
 
+lmc       <--  subarray      : Success
 
 @enduml

@@ -273,6 +273,7 @@ Some operations in the CBF take time and there's no getting around it. Before th
 approach was in place, a workaround used in MCS was to have clients temporarily increase a 
 component's timeout from the default 3 seconds before issuing calls, then 
 reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
+For any command that is expected to complete within the default timeout, the simpler ``FastCommand`` class is used. 
 
 Version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
 <https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_. 

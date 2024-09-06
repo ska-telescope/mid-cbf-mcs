@@ -35,13 +35,14 @@ box "\nHPS\n"
 end box
 
 lmc         -> subarray     : ConfigureScan(json_str)
-subarray    -> subarray     : validate JSON\nagainst schema
+subarray    -> subarray     : Validate JSON against schema,\nLoad new configuration
 
 group #LightCyan For each FSP:
     subarray    -> fsp          : RemoveSubarrayMembership
+    note over fspcorr           : OpState: UNKNOWN
     note over fsp_cont          : functionMode: IDLE
-    group #SeaShell If no other subarray membership:
-      fsp       ->  fspcorr     : AdminMode.OFFLINE
+    group #SeaShell If no subarray membership:
+      note over fsp             : OpState: UNKNOWN
     end group
 end group
 
@@ -49,7 +50,7 @@ group #LemonChiffon Delay model subscription point
     subarray    -> tmc          : Unsubscribe all events
 end group
 
-subarray    -> subarray     : clear old configuration,\nload new configuration
+subarray    -> subarray     : Clear old configuration
 
 group #LemonChiffon Delay model subscription point
     subarray    -> tmc          : Subscribe delay model
@@ -65,22 +66,24 @@ group #LightCyan For each assigned receptor:
 end group
 
 group #LightCyan For each FSP in use:
-    subarray    -> subarray     : build FSP\nconfiguration
+    subarray    -> subarray     : Build FSP\nconfiguration
 
     group #SeaShell If functionMode == IDLE:
+        note over fsp               : OpState: ON
         subarray    -> fsp          : SetFunctionMode(str)
-        fsp         -> fsp          : validate\nfunction mode
+        fsp         -> fsp          : Validate\nfunctionMode
         fsp         -> fsp_cont     : SetFunctionMode(int)
-        note over fsp_cont          : functionMode: CORR    
+        note over fsp_cont          : functionMode: CORR
+        note over fsp               : functionMode: CORR 
     end group
 
     subarray    -> fsp          : AddSubarrayMembership(int)
-    fsp         -> fsp          : validate\nsubarray ID
-    fsp         -> fspcorr      : AdminMode.ONLINE
+    fsp         -> fsp          : Validate\nsubarray ID
+    note over fspcorr           : OpState: ON
     fsp         -> fsp          : Update\nSubarrayMembership
 
     subarray    -> fspcorr      : ConfigureScan(json_str)
-    fspcorr     -> fspcorr      : reset old configuration,\nrelease all VCCs,\nload FSP configuration,\nassign new VCCs,\nbuild FSP CORR configuration
+    fspcorr     -> fspcorr      : Reset old configuration,\nRelease all VCCs,\nLoad FSP configuration,\nAssign new VCCs,\nBuild HPS FSP CORR\nconfiguration
     fspcorr     -> fspcorr_cont : ConfigureScan(json_str)
     note over fspcorr           : ObsState: READY
 end group

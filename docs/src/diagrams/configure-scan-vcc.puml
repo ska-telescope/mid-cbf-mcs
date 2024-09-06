@@ -33,7 +33,7 @@ group #LightCyan For each assigned receptor:
     subarray    -> subarray     : Calculate\ndish_sample_rate
     note right                  : dish_sample_rate (Band 1/2) = 3960 MHz + (1 * K * <U+0394>F)
     subarray    -> vcc          : ConfigureBand(json_str)
-    vcc         -> vcc          : load band\nconfiguration
+    vcc         -> vcc          : Load band\nconfiguration
     vcc         -> hpsvcc       : ConfigureBand(int)
     group #SeaShell If FrequencyBand == [1,2]:
         hpsvcc  -> vccband1     : On
@@ -41,14 +41,14 @@ group #LightCyan For each assigned receptor:
         hpsvcc  -> vccband1     : Disable
     end group
     vcc         -> vccband1     : SetInternalParameters(json_str)
-    vccband1    -> vccband1     : set VCC gains,\nset sample rate
+    vccband1    -> vccband1     : Set VCC gains,\nSet sample rate
 
     subarray    -> vcc          : ConfigureScan(json_str)
     vcc         -> vccband1     : ConfigureScan(json_str)
     vccband1    -> cs           : write_attribute(cs_input_select)
     vccband1    -> vccdevice    : write_attribute(frame_count)
     vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
-    note over wb                : RecieveEnable: True
+    note over wb                : recieveEnable: True
     vccband1    -> vccband1     : verify_configuration()
     note over vcc               : ObsState: READY
 end group

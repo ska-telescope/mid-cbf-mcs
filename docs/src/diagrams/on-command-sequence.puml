@@ -67,7 +67,7 @@ end group
 
 group #LightCyan For each Talon board in configuration:
   controller    ->  tdx         : ConfigureTalons()
-  tdx           ->  tdx         : Read config files,\nsetup tango host file
+  tdx           ->  tdx         : Read config files,\nSetup tango host file
   tdx           ->  os          : Clear processes
   tdx           ->  os          : Configure Talon networking
   tdx           ->  os          : Copy binaries and bitstream
@@ -84,7 +84,7 @@ group #LightCyan For each Talon board in configuration:
     tdx         ->  talon_board : Set SimulationMode.FALSE
   end group
 
-  controller    ->  talon_board : set device properties
+  controller    ->  talon_board : Set device properties
   controller    ->  talon_board : Init()
   controller    ->  talon_board : Set SimulationMode
   controller    ->  talon_board : Set AdminMode.ONLINE
@@ -106,7 +106,7 @@ group #LightCyan For each SLIM:
   group #LightCyan For each active SlimLink:
       slim   ->  slimlink      : Set Tx and Rx device FQDNs
       slim   ->  slimlink      : ConnectTxRx()
-      slimlink  ->  slimlink      : Sync idle\ncontrol words
+      slimlink  ->  slimlink      : Sync idle control words
       slimlink  ->  hpsdevices    : InitializeConnection(serial_loopback=False)
       slimlink  ->  slimlink      : ClearCounters(),\nSet linkName attribute
       slim   ->  slimlink      : Start polling VerifyConnection()

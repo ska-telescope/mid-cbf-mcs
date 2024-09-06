@@ -21,12 +21,15 @@ skinparam database {
 
 title Restart Command Sequence - Correlation\n
 
+participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
   participant "Mid.CBF\nSubarray" as subarray
+  collections "Talon\nBoard" as talonboard
   collections "VCC\n" as vcc
   collections "FSP\n" as fsp
   collections "FSP Corr\nSubarray" as fspsubarray
+  
 end box
 box "\nHPS\n"
   participant "VCC\nController" as hpsvcc
@@ -37,46 +40,54 @@ end box
 
 lmc         ->  subarray      : Restart
 
+group #SeaShell If ObsState == [ABORTED, ABORTED_EMPTY, FAULT, FAULT_EMPTY, EMPTY]:
+  note over subarray           : ObsState: RESTARTING
+end group
+
 group #SeaShell If ObsState == FAULT:
   subarray    ->  vcc           : Abort
   vcc         ->  hpsvccband    : Abort (stub)
-  subarray    <--  vcc          : Success
   note over hpsvccband          : (TBD)
   note over vcc                 : ObsState: ABORTED
   subarray    ->  fspsubarray   : Abort
-  fspsubarray ->  hpsfsp_corr   : Abort (stub)
-  note over hpsfsp_corr         : (TBD)
+  fspsubarray ->  hpsfsp        : Abort (stub)
+  note over hpsfsp              : (TBD)
   note over fspsubarray         : ObsState: ABORTED
-  subarray    <--  fspsubarray  : Success
 end group
 
 subarray    ->  vcc           : ObsReset
+note over vcc                 : ObsState: RESETTING
 vcc         ->  hpsvccband    : ObsReset (stub)
 note over hpsvccband          : (TBD)
+vcc         ->  vcc           : Deconfigure scan\nconfiguration parameters 
 note over vcc                 : ObsState: IDLE
-subarray    <--  vcc          : Success
 
 subarray    ->  fspsubarray   : ObsReset
-fspsubarray ->  hpsfsp_corr   : ObsReset (stub)
-note over hpsfsp_corr         : (TBD)
+note over fspsubarray         : ObsState: RESETTING
+fspsubarray ->  hpsfsp        : ObsReset (stub)
+note over hpsfsp              : (TBD)
+fspsubarray ->  fspsubarray   : Deconfigure scan\nconfiguration parameters
 note over fspsubarray         : ObsState: IDLE
-subarray    <--  fspsubarray  : Success
 
 group #LightCyan For each FSP:
-  subarray    -> fsp          : RemoveSubarrayMembership
-  note over hpsfsp            : functionMode: IDLE
-  group #SeaShell If no other subarray membership:
-    fsp       ->  fspsubarray : AdminMode.OFFLINE
-  end group
+    subarray    -> fsp        : RemoveSubarrayMembership
+    note over hpsfsp_cont     : functionMode: IDLE
+    group #SeaShell If no subarray membership:
+      note over fsp           : OpState: UNKNOWN
+    end group
 end group
 
-subarray    <--  fsp          : Success
-note over subarray            : ObsState: IDLE
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc        : Unsubscribe all events
+end group
 
 group #LightCyan For each assigned receptor:
-  subarray    ->  vcc           : subarrayMembership = 0
-  subarray    ->  vcc           : AdminMode.OFFLINE
+  subarray    ->  vcc         : Reset SubarrayMembership attribute
+  note over vcc               : OpState: UNKNOWN
+  subarray    ->  talonboard  : Reset SubarrayID attribute
 end group
+
+subarray      -> subarray     : Reset scan configuration\nattributes
 
 note over subarray            : ObsState: EMPTY
 lmc         <--  subarray     : Success
