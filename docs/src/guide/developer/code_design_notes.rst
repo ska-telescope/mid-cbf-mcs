@@ -271,16 +271,19 @@ Long-Running Commands (LRC)
 ---------------------------
 Some operations in the CBF take time and there's no getting around it. Before the event-driven
 approach was in place, a workaround used in MCS was to have clients temporarily increase a 
-component's timeout from the default 3 seconds before issuing calls, then 
-reverting this change after completion. Since this is clearly a hacky solution, an alternative was needed.
-For any command that is expected to complete within the default timeout, the simpler ``FastCommand`` class is used. 
+component's timeout from the default 3 seconds before issuing calls, then
+revert this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
 Version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
 <https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_. 
 By having command classes inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` or ``ResponseCommand``, 
-clients can no longer expect a command's final result to be returned immediately. Although they both return a tuple,
-LRC return values are different; a fast command returns ``(result_code, message)``, 
-whereas the tuple that an LRC immediately returns is ``(result_code, command_id)``, where command_id is 
+clients can no longer expect a command's final result to be returned immediately. 
+It should be noted that not all commands in MCS are LRCs, however, by MCS v1.0.0, all commands 
+have been upgraded to either a ``SubmittedSlowCommand`` (LRC) or a ``FastCommand`` (non-LRC); 
+any command that is expected to execute within the default timeout is implemented as a 
+``FastCommand`` due to its simpler implementation. Although both of these command classes return a tuple,
+LRC return values are different; a ``FastCommand`` returns ``(result_code, message)``, 
+whereas a ``SubmittedSlowCommand`` returns ``(result_code, command_id)``, where command_id is 
 a unique command identifier string, unless the command was rejected, in which case the 
 command_id is not generated, and instead replaced with a message to explain the rejection.
 
