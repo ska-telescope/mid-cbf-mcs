@@ -281,6 +281,7 @@ class Slim(CbfDevice):
         return [[result_code], [command_id]]
 
     @command(
+        dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
     )
     @DebugIt()

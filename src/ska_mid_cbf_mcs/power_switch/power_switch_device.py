@@ -186,6 +186,7 @@ class PowerSwitch(CbfDevice):
     # ---------------------
 
     @command(
+        dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
     )
     @DebugIt()
@@ -203,6 +204,7 @@ class PowerSwitch(CbfDevice):
         return [[result_code], [command_id]]
 
     @command(
+        dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
     )
     @DebugIt()
