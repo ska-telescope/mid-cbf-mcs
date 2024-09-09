@@ -18,19 +18,13 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
-import sys
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    ObsState,
-    PowerMode,
-    SimulationMode,
-)
+from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
@@ -53,7 +47,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     const,
     freq_band_dict,
     mhz_to_hz,
-    vcc_oversampling_factor,
 )
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -64,6 +57,9 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator import (
+    SubarrayScanConfigurationValidator,
+)
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
 )
@@ -877,509 +873,71 @@ class CbfSubarrayComponentManager(
             purpose only.
         :rtype: (bool, str)
         """
-        # try to deserialize input string to a JSON object
+
         try:
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
+            # Pre 4.0
+            if "cbf" in full_configuration:
+                configuration = copy.deepcopy(full_configuration["cbf"])
+            # Post 4.0
+            elif "midcbf" in full_configuration:
+                configuration = copy.deepcopy(full_configuration["midcbf"])
+            else:
+                msg = "cbf/midcbf configuration not found in the given Scan Configuration"
+                return (False, msg)
         except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = f"Scan configuration object is not a valid JSON object. Aborting configuration. argin is: {argin}"
+            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             return (False, msg)
 
-        # Validate delay_model_subscription_point.
+        # Validate full_configuration against the telescope model
         try:
-            attribute_proxy = CbfAttributeProxy(
-                fqdn=configuration["delay_model_subscription_point"],
-                logger=self._logger,
+            telmodel_validate(
+                version=full_configuration["interface"],
+                config=full_configuration,
+                strictness=2,
             )
-            attribute_proxy.ping()
-        except (
-            tango.DevFailed
-        ):  # attribute doesn't exist or is not set up correctly
-            msg = (
-                f"Attribute {configuration['delay_model_subscription_point']}"
-                " not found or not set up correctly for "
-                "'delayModelSubscriptionPoint'. Aborting configuration."
-            )
-            return (False, msg)
+            self._logger.info("Scan configuration is valid!")
+        except ValueError as e:
+            msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
+            self._logger.error(msg)
 
-        # Validate jonesMatrixSubscriptionPoint.
-        if "jones_matrix_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["jones_matrix_subscription_point"],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['jones_matrix_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'jonesMatrixSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
-
-        # Validate beamWeightsSubscriptionPoint.
-        if "timing_beam_weights_subscription_point" in configuration:
-            try:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration[
-                        "timing_beam_weights_subscription_point"
-                    ],
-                    logger=self._logger,
-                )
-                attribute_proxy.ping()
-            except (
-                tango.DevFailed
-            ):  # attribute doesn't exist or is not set up correctly
-                msg = (
-                    f"Attribute {configuration['timing_beam_weights_subscription_point']}"
-                    " not found or not set up correctly for "
-                    "'beamWeightsSubscriptionPoint'. Aborting configuration."
-                )
-                return (False, msg)
-
-        for dish_id, proxy in self._proxies_assigned_vcc.items():
-            if proxy.State() != tango.DevState.ON:
-                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
-                return (False, msg)
-
-        # Validate searchWindow.
-        if "search_window" in configuration:
-            # check if searchWindow is an array of maximum length 2
-            if len(configuration["search_window"]) > 2:
-                msg = (
-                    "'searchWindow' must be an array of maximum length 2. "
-                    "Aborting configuration."
-                )
-                return (False, msg)
+        # At this point, validate FSP, VCC, subscription parameters
+        full_configuration["common"] = copy.deepcopy(common_configuration)
+        if "cbf" in full_configuration:
+            full_configuration["cbf"] = copy.deepcopy(configuration)
         else:
-            pass
+            full_configuration["midcbf"] = copy.deepcopy(configuration)
 
-        # Validate fsp.
-        for fsp in configuration["fsp"]:
-            try:
-                # Validate fsp_id.
-                if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
-                    fsp_id = int(fsp["fsp_id"])
-                    fsp_proxy = self._proxies_fsp[fsp_id - 1]
-                else:
-                    msg = (
-                        f"'fsp_id' must be an integer in the range [1, {self._count_fsp}]."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
+        controller_validateSupportedConfiguration = (
+            self._proxy_cbf_controller.read_attribute(
+                "validateSupportedConfiguration"
+            )
+        )
+        # MCS Scan Configuration Validation
+        if controller_validateSupportedConfiguration is True:
+            json_str = json.dumps(full_configuration)
+            validator = SubarrayScanConfigurationValidator(
+                json_str,
+                self._count_fsp,
+                self._proxies_fsp,
+                self._proxies_assigned_vcc,
+                self._proxies_fsp_pss_subarray_device,
+                self._proxies_fsp_pst_subarray_device,
+                self._dish_ids,
+                self._subarray_id,
+                self._logger,
+            )
+            return validator.validate_input()
 
-                # Validate functionMode.
-                valid_function_modes = [
-                    "IDLE",
-                    "CORR",
-                    "PSS-BF",
-                    "PST-BF",
-                    "VLBI",
-                ]
-                try:
-                    function_mode_value = valid_function_modes.index(
-                        fsp["function_mode"]
-                    )
-                except ValueError:
-                    return (
-                        False,
-                        f"{fsp['function_mode']} is not a valid FSP function mode.",
-                    )
-                fsp_function_mode = fsp_proxy.functionMode
-                if fsp_function_mode not in [
-                    FspModes.IDLE.value,
-                    function_mode_value,
-                ]:
-                    msg = f"FSP {fsp_id} currently set to function mode {valid_function_modes.index(fsp_function_mode)}, \
-                            cannot be used for {fsp['function_mode']} \
-                            until it is returned to IDLE."
-                    return (False, msg)
-
-                # TODO - why add these keys to the fsp dict - not good practice!
-                # TODO - create a new dict from a deep copy of the fsp dict.
-                fsp["frequency_band"] = common_configuration["frequency_band"]
-                if "frequency_band_offset_stream1" in configuration:
-                    fsp["frequency_band_offset_stream1"] = configuration[
-                        "frequency_band_offset_stream1"
-                    ]
-                if "frequency_band_offset_stream2" in configuration:
-                    fsp["frequency_band_offset_stream2"] = configuration[
-                        "frequency_band_offset_stream2"
-                    ]
-                if fsp["frequency_band"] in ["5a", "5b"]:
-                    fsp["band_5_tuning"] = common_configuration[
-                        "band_5_tuning"
-                    ]
-
-                # Validate output_port
-                # At most one stream (20 channels) per port per output_host
-                if "output_port" in fsp:
-                    if "output_host" in fsp:
-                        for index, host_mapping in enumerate(
-                            fsp["output_host"]
-                        ):
-                            start_channel = host_mapping[0]
-                            if (index + 1) == len(fsp["output_host"]):
-                                end_channel = (
-                                    MAX_STREAMS_PER_FSP
-                                    * MAX_CHANNELS_PER_STREAM
-                                )
-                            else:
-                                end_channel = fsp["output_host"][index + 1][0]
-
-                            ports_for_host = [
-                                entry[1]
-                                for entry in fsp["output_port"]
-                                if entry[0] >= start_channel
-                                and entry[0] < end_channel
-                            ]
-                            # Ensure all ports are unique for the given host
-                            if len(ports_for_host) != len(set(ports_for_host)):
-                                msg = "'output_port' port mappings must be unique per host "
-                                self._logger.error(msg)
-                                return (False, msg)
-
-                # CORR #
-
-                if fsp["function_mode"] == "CORR":
-                    # dishes may not be specified in the
-                    # configuration at all, or the list may be empty
-                    if "receptors" in fsp and len(fsp["receptors"]) > 0:
-                        self._logger.debug(
-                            f"List of receptors: {self._dish_ids}"
-                        )
-                        for dish in fsp["receptors"]:
-                            if dish not in self._dish_ids:
-                                msg = (
-                                    f"Receptor {dish} does not belong to "
-                                    f"subarray {self._subarray_id}."
-                                )
-                                self._logger.error(msg)
-                                return (False, msg)
-                    else:
-                        msg = (
-                            "'receptors' not specified for Fsp CORR config."
-                            "Per ICD all receptors allocated to subarray are used"
-                        )
-                        self._logger.info(msg)
-
-                    frequencyBand = freq_band_dict()[fsp["frequency_band"]][
-                        "band_index"
-                    ]
-                    # Validate frequencySliceID.
-                    # TODO: move these to consts
-                    # See for ex. Fig 8-2 in the Mid.CBF DDD
-                    num_frequency_slices = [4, 5, 7, 12, 26, 26]
-                    if int(fsp["frequency_slice_id"]) in list(
-                        range(1, num_frequency_slices[frequencyBand] + 1)
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "'frequencySliceID' must be an integer in the range "
-                            f"[1, {num_frequency_slices[frequencyBand]}] "
-                            f"for a 'frequencyBand' of {fsp['frequency_band']}."
-                        )
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # Validate integrationTime.
-                    if int(fsp["integration_factor"]) in list(
-                        range(
-                            const.MIN_INT_TIME,
-                            10 * const.MIN_INT_TIME + 1,
-                            const.MIN_INT_TIME,
-                        )
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "'integrationTime' must be an integer in the range"
-                            f" [1, 10] multiplied by {const.MIN_INT_TIME}."
-                        )
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # Validate fspChannelOffset
-                    try:
-                        if "channel_offset" in fsp:
-                            if int(fsp["channel_offset"]) >= 0:
-                                pass
-                            # TODO has to be a multiple of 14880
-                            else:
-                                msg = "fspChannelOffset must be greater than or equal to zero"
-                                self._logger.error(msg)
-                                return (False, msg)
-                    except (TypeError, ValueError):
-                        msg = "fspChannelOffset must be an integer"
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # validate outputlink
-                    # check the format
-                    try:
-                        for element in fsp["output_link_map"]:
-                            (int(element[0]), int(element[1]))
-                    except (TypeError, ValueError, IndexError):
-                        msg = "'outputLinkMap' format not correct."
-                        self._logger.error(msg)
-                        return (False, msg)
-
-                    # Validate channelAveragingMap.
-                    if "channel_averaging_map" in fsp:
-                        try:
-                            # validate dimensions
-                            for i in range(
-                                0, len(fsp["channel_averaging_map"])
-                            ):
-                                assert (
-                                    len(fsp["channel_averaging_map"][i]) == 2
-                                )
-
-                            # validate averaging factor
-                            for i in range(
-                                0, len(fsp["channel_averaging_map"])
-                            ):
-                                # validate channel ID of first channel in group
-                                if (
-                                    int(fsp["channel_averaging_map"][i][0])
-                                    == i
-                                    * const.NUM_FINE_CHANNELS
-                                    / const.NUM_CHANNEL_GROUPS
-                                ):
-                                    pass  # the default value is already correct
-                                else:
-                                    msg = (
-                                        f"'channelAveragingMap'[{i}][0] is not the channel ID of the "
-                                        f"first channel in a group (received {fsp['channel_averaging_map'][i][0]})."
-                                    )
-                                    self._logger.error(msg)
-                                    return (False, msg)
-
-                                # validate averaging factor
-                                if int(fsp["channel_averaging_map"][i][1]) in [
-                                    0,
-                                    1,
-                                    2,
-                                    3,
-                                    4,
-                                    6,
-                                    8,
-                                ]:
-                                    pass
-                                else:
-                                    msg = (
-                                        f"'channelAveragingMap'[{i}][1] must be one of "
-                                        f"[0, 1, 2, 3, 4, 6, 8] (received {fsp['channel_averaging_map'][i][1]})."
-                                    )
-                                    self._logger.error(msg)
-                                    return (False, msg)
-                        except (
-                            TypeError,
-                            AssertionError,
-                        ):  # dimensions not correct
-                            msg = (
-                                "channel Averaging Map dimensions not correct"
-                            )
-                            self._logger.error(msg)
-                            return (False, msg)
-
-                    # TODO: validate destination addresses: outputHost, outputPort
-
-                # PSS-BF #
-
-                # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
-                if fsp["function_mode"] == "PSS-BF":
-                    if int(fsp["search_window_id"]) in [1, 2]:
-                        pass
-                    else:  # searchWindowID not in valid range
-                        msg = (
-                            "'searchWindowID' must be one of [1, 2] "
-                            f"(received {fsp['search_window_id']})."
-                        )
-                        return (False, msg)
-                    if len(fsp["search_beam"]) <= 192:
-                        for searchBeam in fsp["search_beam"]:
-                            if 1 > int(searchBeam["search_beam_id"]) > 1500:
-                                # searchbeamID not in valid range
-                                msg = (
-                                    "'searchBeamID' must be within range 1-1500 "
-                                    f"(received {searchBeam['search_beam_id']})."
-                                )
-                                return (False, msg)
-
-                            for (
-                                fsp_pss_subarray_proxy
-                            ) in self._proxies_fsp_pss_subarray_device:
-                                searchBeamID = (
-                                    fsp_pss_subarray_proxy.searchBeamID
-                                )
-                                fsp_id = fsp_pss_subarray_proxy.get_property(
-                                    "FspID"
-                                )["FspID"][0]
-                                if searchBeamID is None:
-                                    pass
-                                else:
-                                    for search_beam_ID in searchBeamID:
-                                        if (
-                                            int(searchBeam["search_beam_id"])
-                                            != search_beam_ID
-                                        ):
-                                            pass
-                                        elif (
-                                            fsp_pss_subarray_proxy.obsState
-                                            == ObsState.IDLE
-                                        ):
-                                            pass
-                                        else:
-                                            msg = (
-                                                f"'searchBeamID' {search_beam_ID} is already "
-                                                f"being used in another subarray by FSP {fsp_id}"
-                                            )
-                                            return (False, msg)
-
-                            # Validate dishes
-                            # if not given, assign first DISH ID in subarray, as
-                            # there is currently only support for 1 DISH per beam
-                            if "receptor_ids" not in searchBeam:
-                                searchBeam["receptor_ids"] = [
-                                    self._dish_ids.copy()[0]
-                                ]
-
-                            # Sanity check:
-                            for dish in searchBeam["receptor_ids"]:
-                                if dish not in self._dish_ids:
-                                    msg = (
-                                        f"Receptor {dish} does not belong to "
-                                        f"subarray {self._subarray_id}."
-                                    )
-                                    self._logger.error(msg)
-                                    return (False, msg)
-
-                            if (
-                                searchBeam["enable_output"] is False
-                                or searchBeam["enable_output"] is True
-                            ):
-                                pass
-                            else:
-                                msg = "'outputEnabled' is not a valid boolean"
-                                return (False, msg)
-
-                            if isinstance(
-                                searchBeam["averaging_interval"], int
-                            ):
-                                pass
-                            else:
-                                msg = "'averagingInterval' is not a valid integer"
-                                return (False, msg)
-
-                            if self.validate_ip(
-                                searchBeam["search_beam_destination_address"]
-                            ):
-                                pass
-                            else:
-                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                                return (False, msg)
-
-                    else:
-                        msg = "More than 192 SearchBeams defined in PSS-BF config"
-                        return (False, msg)
-
-                # PST-BF #
-
-                # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
-                if fsp["function_mode"] == "PST-BF":
-                    if len(fsp["timing_beam"]) <= 16:
-                        for timingBeam in fsp["timing_beam"]:
-                            if 1 > int(timingBeam["timing_beam_id"]) > 16:
-                                # timingBeamID not in valid range
-                                msg = (
-                                    "'timingBeamID' must be within range 1-16 "
-                                    f"(received {timingBeam['timing_beam_id']})."
-                                )
-                                return (False, msg)
-                            for (
-                                fsp_pst_subarray_proxy
-                            ) in self._proxies_fsp_pst_subarray_device:
-                                timingBeamID = (
-                                    fsp_pst_subarray_proxy.timingBeamID
-                                )
-                                fsp_id = fsp_pst_subarray_proxy.get_property(
-                                    "FspID"
-                                )["FspID"][0]
-                                if timingBeamID is None:
-                                    pass
-                                else:
-                                    for timing_beam_ID in timingBeamID:
-                                        if (
-                                            int(timingBeam["timing_beam_id"])
-                                            != timing_beam_ID
-                                        ):
-                                            pass
-                                        elif (
-                                            fsp_pst_subarray_proxy.obsState
-                                            == ObsState.IDLE
-                                        ):
-                                            pass
-                                        else:
-                                            msg = (
-                                                f"'timingBeamID' {timing_beam_ID} is already "
-                                                f"being used in another subarray by FSP {fsp_id}"
-                                            )
-                                            return (False, msg)
-
-                            # Validate dishes
-                            # if not given, assign all DISH IDs belonging to subarray
-                            if "receptor_ids" not in timingBeam:
-                                timingBeam[
-                                    "receptor_ids"
-                                ] = self._dish_ids.copy()
-
-                            for dish in timingBeam["receptor_ids"]:
-                                if dish not in self._dish_ids:
-                                    msg = (
-                                        f"Receptor {dish} does not belong to "
-                                        f"subarray {self._subarray_id}."
-                                    )
-                                    self._logger.error(msg)
-                                    return (False, msg)
-                            if (
-                                timingBeam["enable_output"] is False
-                                or timingBeam["enable_output"] is True
-                            ):
-                                pass
-                            else:
-                                msg = "'outputEnabled' is not a valid boolean"
-                                return (False, msg)
-
-                            if self.validate_ip(
-                                timingBeam["timing_beam_destination_address"]
-                            ):
-                                pass
-                            else:
-                                msg = "'timingBeamDestinationAddress' is not a valid IP address"
-                                return (False, msg)
-
-                    else:
-                        msg = (
-                            "More than 16 TimingBeams defined in PST-BF config"
-                        )
-                        return (False, msg)
-
-            except tango.DevFailed:  # exception in ConfigureScan
-                msg = (
-                    "An exception occurred while configuring FSPs:"
-                    f"\n{sys.exc_info()[1].args[0].desc}\n"
-                    "Aborting configuration"
-                )
-                return (False, msg)
-
-        # At this point, everything has been validated.
-        return (True, "Scan configuration is valid.")
+        else:
+            msg = (
+                "Skipping MCS Validation of Scan Configuration. "
+                f"validateSupportedConfiguration was set to {controller_validateSupportedConfiguration}"
+                "in MCS Controller"
+            )
+            self._logger.info(msg)
+            return (True, msg)
 
     @check_communicating
     def configure_scan(
@@ -1395,7 +953,10 @@ class CbfSubarrayComponentManager(
         self._deconfigure()
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        configuration = copy.deepcopy(full_configuration["cbf"])
+        if "cbf" in full_configuration:
+            configuration = copy.deepcopy(full_configuration["cbf"])
+        else:
+            configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
@@ -2161,7 +1722,7 @@ class CbfSubarrayComponentManager(
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)
         fs_sample_rate = int(
-            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+            dish_sample_rate * const.VCC_OVERSAMPLING_FACTOR / total_num_fs
         )
         fs_sample_rate_for_band = {
             "vcc_id": vcc_id,

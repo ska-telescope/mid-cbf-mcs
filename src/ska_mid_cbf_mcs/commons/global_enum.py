@@ -43,6 +43,12 @@ class Const:
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
 
+        self.COMMON_SAMPLE_RATE = 220200960
+        self.VCC_OVERSAMPLING_FACTOR = 10 / 9
+        self.FS_BW = int(
+            self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING_FACTOR
+        )
+
 
 const = Const()
 
@@ -63,6 +69,7 @@ def freq_band_dict():
             "sample_rate_const": 1,
             "total_num_FSs": 20,
             "num_samples_per_frame": 18,
+            "num_frequency_slices": 4,
         },
         "2": {
             "band_index": 1,
@@ -70,6 +77,7 @@ def freq_band_dict():
             "sample_rate_const": 1,
             "total_num_FSs": 20,
             "num_samples_per_frame": 18,
+            "num_frequency_slices": 5,
         },
         "3": {
             "band_index": 2,
@@ -77,6 +85,7 @@ def freq_band_dict():
             "sample_rate_const": 0.8,
             "total_num_FSs": 20,
             "num_samples_per_frame": 18,
+            "num_frequency_slices": 7,
         },
         "4": {
             "band_index": 3,
@@ -84,6 +93,7 @@ def freq_band_dict():
             "sample_rate_const": 1.5,
             "total_num_FSs": 30,
             "num_samples_per_frame": 27,
+            "num_frequency_slices": 12,
         },
         "5a": {
             "band_index": 4,
@@ -91,6 +101,7 @@ def freq_band_dict():
             "sample_rate_const": 1.5,
             "total_num_FSs": 60,
             "num_samples_per_frame": 27,  # FIXME with correct value
+            "num_frequency_slices": 26,
         },
         "5b": {
             "band_index": 5,
@@ -98,15 +109,73 @@ def freq_band_dict():
             "sample_rate_const": 1.5,
             "total_num_FSs": 60,
             "num_samples_per_frame": 27,  # FIXME with correct value
+            "num_frequency_slices": 26,
         },
     }
     return band_info
 
 
-# The VCC-OSPPFB oversampling factor:
-vcc_oversampling_factor = 10 / 9
+def scan_configuration_supported_value(parameter: str) -> any:
+    """
+    Returns the value that is supported by MCS of the given parameter.
+    The return values could be one of or a combination of:
+
+    - Dictionary if only specific values are supported, or there are multiple
+         validation parameters
+
+    - List if there is a range of specific values that is supported
+
+    - Tuple if there is a min value and max value supported, inclusively
+
+    - Bool if the parameter is not supported (in that case, False), or if the parameter is not one that
+        is handled by this function (in this case, False)
+
+    :return: One of the types listed above
+    :rtype: dict | list | tuple | bool
+    """
+
+    supported_values = {
+        "frequency": (0, 1981808640),
+        "function_modes": {FspModes.IDLE, FspModes.CORR},
+        "subarray_id": [1],
+        "fsp_ids": (1, 4),
+        "band_5_tuning": False,
+        "frequency_band": {"1", "2"},
+        "frequency_band_offset_stream1": False,
+        "frequency_band_offset_stream2": False,
+        "rfi_flagging_mask": False,
+        "vlbi": False,
+        "search_window": False,
+        "processing_region": {
+            FspModes.CORR: {
+                "fsp_id": [1, 2, 3, 4],
+                "channel_width": {13440},
+                "channel_count": {"range": (1, 58982), "multiple": 20},
+                "output_host": {"multiple": 20, "max_channel_per": 20},
+                "output_port": {"increment": 20, "max_channel_per": 20},
+                "output_link_map": {
+                    "multiple": 20,
+                    "max_channel_per": 20,
+                    "values": [1],
+                },
+            }
+        },
+    }
+
+    if parameter in supported_values:
+        return supported_values[parameter]
+    else:
+        return False
+
 
 mhz_to_hz = 1000000
+
+
+class AcceptedScanConfigurationVersion:
+    # {major verions : {minor versions...}}
+    # For Interface Versions with Correlator Processing Regions Configuration
+    versions = {3: {0}, 4: {0, 1}}
+
 
 """
 NOTES:
