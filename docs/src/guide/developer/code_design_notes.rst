@@ -18,7 +18,13 @@ used by MCS, and some terminology, are listed here:
   ``stop_communicating``, disengaging component monitoring and control.
 
   * When the device is "online" (i.e. communications are established with the component, ``AdminMode.ONLINE``),
-    its operating state (OpState) is controlled via power state updates (e.g. ON, OFF).
+    its operating state (OpState) is controlled via power state updates (e.g. ON, OFF). 
+    
+    * Note that while these OpState transitions generally occur within On/Off commands, some  
+      devices do not implement On/Off commands and instead use ``start_communicating`` and 
+      ``stop_communicating`` to toggle their OpState. This is done in devices where there is no 
+      functional difference between establishing communication with the device's component, and
+      powering the device On.
 
   * When the device is "offline" (i.e. communications with the component are disabled, ``AdminMode.OFFLINE``),
     its operating state is DISABLED.
