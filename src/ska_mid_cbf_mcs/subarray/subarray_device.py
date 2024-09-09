@@ -28,7 +28,6 @@ from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
