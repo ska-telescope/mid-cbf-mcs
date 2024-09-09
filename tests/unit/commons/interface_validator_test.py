@@ -35,7 +35,7 @@ input_not_string = """
 
 input_configscan_supported = """
                 {
-                "interface": "https://schema.skao.int/ska-csp-configurescan/3.0",
+                "interface": "https://schema.skao.int/ska-csp-configurescan/4.1",
                 "scan_id": 1,
                 "transaction_id": "txn-....-00001"
                 }
@@ -117,10 +117,10 @@ class TestInterfaceValidator:
         """
         Test input that is not a valid JSON string
         """
-        assert validate_interface(input_txt, "scan") == [
+        assert validate_interface(input_txt, "scan") == (
             False,
             "The command parameters could not be parsed",
-        ]
+        )
 
     def test_MissingInterfaceKey(
         self: TestInterfaceValidator,
@@ -128,10 +128,10 @@ class TestInterfaceValidator:
         """
         Test input without "interface" key
         """
-        assert validate_interface(input_no_key, "scan") == [
+        assert validate_interface(input_no_key, "scan") == (
             False,
             "The command is missing the required interface parameter",
-        ]
+        )
 
     def test_NonStringInterface(
         self: TestInterfaceValidator,
@@ -139,10 +139,10 @@ class TestInterfaceValidator:
         """
         Test non-string interface value
         """
-        assert validate_interface(input_not_string, "scan") == [
+        assert validate_interface(input_not_string, "scan") == (
             False,
             "The value retrieved from the interface key is not a string",
-        ]
+        )
 
     def test_IncorrectCommand(
         self: TestInterfaceValidator,
@@ -150,10 +150,10 @@ class TestInterfaceValidator:
         """
         Test mismatched interface and command
         """
-        assert validate_interface(input_configscan_supported, "scan") == [
+        assert validate_interface(input_configscan_supported, "scan") == (
             False,
-            "Interface 'https://schema.skao.int/ska-csp-configurescan/3.0' not supported for command 'scan'",
-        ]
+            "Interface 'https://schema.skao.int/ska-csp-configurescan/4.1' not supported for command 'scan'",
+        )
 
     def test_SupportedConfigureScan(
         self: TestInterfaceValidator,
@@ -163,7 +163,7 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_configscan_supported, "configurescan"
-        ) == [True, ""]
+        ) == (True, "")
 
     def test_UnsupportedConfigureScan(
         self: TestInterfaceValidator,
@@ -173,10 +173,10 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_configscan_unsupported, "configurescan"
-        ) == [
+        ) == (
             False,
             "Interface 'https://schema.skao.int/ska-csp-configurescan/23.0' not supported for command 'configurescan'",
-        ]
+        )
 
     def test_SupportedScan(
         self: TestInterfaceValidator,
@@ -184,7 +184,7 @@ class TestInterfaceValidator:
         """
         Test scan
         """
-        assert validate_interface(input_scan_supported, "scan") == [True, ""]
+        assert validate_interface(input_scan_supported, "scan") == (True, "")
 
     def test_UnsupportedScan(
         self: TestInterfaceValidator,
@@ -192,10 +192,10 @@ class TestInterfaceValidator:
         """
         Test scan with unsupported interface
         """
-        assert validate_interface(input_scan_unsupported, "scan") == [
+        assert validate_interface(input_scan_unsupported, "scan") == (
             False,
             "Interface 'https://schema.skao.int/ska-csp-scan/23.0' not supported for command 'scan'",
-        ]
+        )
 
     def test_SupportedInitSysParam(
         self: TestInterfaceValidator,
@@ -205,7 +205,7 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_initsysparam_supported, "initsysparam"
-        ) == [True, ""]
+        ) == (True, "")
 
     def test_UnsupportedInitSysParam(
         self: TestInterfaceValidator,
@@ -215,10 +215,10 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_initsysparam_unsupported, "initsysparam"
-        ) == [
+        ) == (
             False,
             "Interface 'https://schema.skao.int/ska-mid-cbf-initsysparam/23.0' not supported for command 'initsysparam'",
-        ]
+        )
 
     def test_SupportedDelayModel(
         self: TestInterfaceValidator,
@@ -228,7 +228,7 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_delaymodel_supported, "delaymodel"
-        ) == [True, ""]
+        ) == (True, "")
 
     def test_UnsupportedDelayModel(
         self: TestInterfaceValidator,
@@ -238,10 +238,10 @@ class TestInterfaceValidator:
         """
         assert validate_interface(
             input_delaymodel_unsupported, "delaymodel"
-        ) == [
+        ) == (
             False,
             "Interface 'https://schema.skao.int/ska-mid-csp-delaymodel/23.0' not supported for command 'delaymodel'",
-        ]
+        )
 
     def test_LowConfigScan(
         self: TestInterfaceValidator,
@@ -249,7 +249,7 @@ class TestInterfaceValidator:
         """
         Test low config scan
         """
-        assert validate_interface(input_lowconfigscan, "configure") == [
+        assert validate_interface(input_lowconfigscan, "configure") == (
             False,
             "Interface 'https://schema.skao.int/ska-low-cbf-configurescan/1.0' not supported for command 'configure'",
-        ]
+        )
