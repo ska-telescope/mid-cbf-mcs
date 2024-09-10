@@ -2097,7 +2097,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # Update obsState callback
-        self._update_component_state(configured=False)
+        self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),
@@ -2167,7 +2167,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
-            self._update_component_state(obsfault=False)
 
         obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
@@ -2224,7 +2223,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # Update obsState callback
-        self._update_component_state(resourced=False)
+        self._update_component_state(resourced=False, obsfault=False)
 
         task_callback(
             result=(ResultCode.OK, "Restart completed OK"),

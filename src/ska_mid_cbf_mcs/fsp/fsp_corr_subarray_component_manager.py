@@ -324,7 +324,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self._proxy_hps_fsp_corr_controller.Scan(self.scan_id)
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -367,7 +367,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self._proxy_hps_fsp_corr_controller.EndScan()
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -410,7 +410,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self._proxy_hps_fsp_corr_controller.GoToIdle()
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -455,7 +455,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             # TODO: Abort command not implemented for the HPS FSP application
             pass
         except tango.DevFailed as df:
-            self.logger.error(str(df.args[0].desc))
+            self.logger.error(f"{df}")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -500,7 +500,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
                 # self._proxy_hps_fsp_corr_controller.ObsReset()
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -517,7 +517,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._deconfigure()
 
         # Update obsState callback
-        self._update_component_state(configured=False)
+        self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),

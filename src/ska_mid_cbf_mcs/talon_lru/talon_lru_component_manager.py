@@ -74,15 +74,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param fqdn: FQDN of the device to connect to
         :return: context.DeviceProxy to the device or None if no connection was made
         """
+        self.logger.debug(f"Attempting connection to {fqdn} device")
         try:
-            self.logger.debug(f"Attempting connection to {fqdn} device")
-            device_proxy = context.DeviceProxy(device_name=fqdn)
-            return device_proxy
+            return context.DeviceProxy(device_name=fqdn)
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.error(
-                    f"Failed connection to {fqdn} device: {item.reason}"
-                )
+            self.logger.error(f"Failed connection to {fqdn} device: {df}")
             return None
 
     def _init_power_switch(
@@ -174,7 +170,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def _unsubscribe_from_subdevices(self: TalonLRUComponentManager) -> None:
         """
-        Unsubscribe to command results of the subdevices (powerswitches).
+        Unsubscribe to command results of the subdevices (power switches).
         """
         device_proxies = [
             self._proxy_power_switch1,
@@ -369,17 +365,24 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: A tuple containing a return code and a string
         """
         if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-            msg = f'LRU failed to turn on: {"single outlet failed to turn on" if self._using_single_outlet else "both outlets failed to turn on"}'
-
-            self.logger.error(msg)
+            msg = (
+                "single outlet failed to turn on"
+                if self._using_single_outlet
+                else "both outlets failed to turn on"
+            )
+            self.logger.error(f"LRU failed to turn on: {msg}")
             return (
                 ResultCode.FAILED,
                 msg,
             )
 
         if result1 == ResultCode.OK and result2 == ResultCode.OK:
-            msg = f'LRU succesfully turned on: {"single PDU successfully turned on" if self._using_single_outlet else "both outlets successfully turned on"}'
-            self.logger.info(msg)
+            msg = (
+                "single PDU successfully turned on"
+                if self._using_single_outlet
+                else "both outlets successfully turned on"
+            )
+            self.logger.info(f"LRU successfully turned on: {msg}")
 
         else:
             self.logger.info(
