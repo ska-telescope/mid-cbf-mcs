@@ -233,7 +233,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_power_switch2, self._pdu_outlets[1]
             )
 
-    def get_lru_power_state(self: TalonLRUComponentManager) -> PowerState:
+    def _get_lru_power_state(self: TalonLRUComponentManager) -> PowerState:
         """
         Get the current PowerState of the TalonLRU based on the power mode of the PDUs.
         Also update the current LRU PowerState state to match.
@@ -241,7 +241,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         :return: the current TalonLRU PowerState
         """
         self.logger.debug(
-            "Entering TalonLRUComponentManager.get_lru_power_state"
+            "Entering TalonLRUComponentManager._get_lru_power_state"
         )
 
         self._update_pdu_power_states()
@@ -426,7 +426,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self.task_abort_event_is_set("On", task_callback, task_abort_event):
             return
 
-        self._update_component_state(power=self.get_lru_power_state())
+        self._update_component_state(power=self._get_lru_power_state())
         result1, result2 = self._turn_on_pdus(task_abort_event)
 
         # _determine_on_result_code will update the component power state
@@ -607,7 +607,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         ):
             return
 
-        self._update_component_state(power=self.get_lru_power_state())
+        self._update_component_state(power=self._get_lru_power_state())
         # Power off both outlets
         result1, result2 = self._turn_off_pdus(task_abort_event)
 
