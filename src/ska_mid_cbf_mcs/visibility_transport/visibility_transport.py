@@ -88,6 +88,7 @@ class VisibilityTransport:
             self._logger.error(
                 f"Failed to configure visibility transport devices: {msg}"
             )
+            self._logger.error(f"for now print the whole thing: {df}")
 
         self._fsp_config = fsp_config
 
@@ -112,21 +113,34 @@ class VisibilityTransport:
         dest_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config
         )
+        self._logger.info(
+            f"subarray id, fsp config: {subarray_id}, {self._fsp_config}"
+        )
+        self._logger.info(f"fsp ids: {self._fsp_ids}")
+        self._logger.info(f"dest_host_data: {dest_host_data}")
 
         try:
             # FSP App is responsible for calling the "Configure" command.
             # If not already called, StartScan will fail.
             self._dp_spead_desc.command_inout("StartScan", dest_host_data)
+            self._logger.info("after StartScan")
 
             self._dp_host_lut_s2.command_inout("Program", dest_host_data)
+            self._logger.info("after Program")
 
             for dp in self._dp_host_lut_s1:
+                self._logger.info(f"about to program dp {dp}")
                 dp.command_inout("Program")
+                print(f"after program dp {dp}")
+                self._logger.info(
+                    f"device name: {dp.host_lut_stage_2_device_name}"
+                )
         except DevFailed as df:
             msg = str(df.args[0].desc)
             self._logger.error(
-                f"Failed to configure visibility transport devices: {msg}"
+                f"Failed to enable output of visibility transport devices: {msg}"
             )
+            self._logger.error(f"for now print the whole thing: {df}")
 
     def disable_output(self):
         """
