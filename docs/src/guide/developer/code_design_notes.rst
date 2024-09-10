@@ -268,10 +268,10 @@ Important operational notes:
   also be updated to only process one request at a time. 
 
 
-Asynchronous event-driven control structure
+Asynchronous Event-Driven Control Structure
 ===========================================
 MCS version 1.0.0 introduces the concept of an event-driven system, which solves some
-timing headaches and provides some additional benefits, at the expense of increased complexity.
+timing challenges and provides additional benefits, at the expense of increased complexity.
 
 Long-Running Commands (LRC)
 ---------------------------
@@ -302,28 +302,29 @@ since result_code_message is a list(int, str) cast into a string, containing the
 *and* message string; for example: ``command_id, result_code_message = 
 ('1725379432.518609_238583733127885_RemoveAllReceptors', '[0, "RemoveAllReceptors completed OK"]')``.
 
-One implication of the shift to execute commands in a separate thread is that the structure 
+One implication of the shift to execute commands in a secondary thread is that the structure 
 of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
-implemented as an "execution" method that initiates the command when called, and a command class 
-(instantiated during initialization), whose ``do()`` method calls a "command thread" 
-method in the component manager; this where the command logic lives. When the command is called by a client, 
-the execution method fetches the command class object and runs its ``do()`` method. Additionally, 
-the device either implements ``is_<COMMAND>_allowed()`` methods for commands that override 
+implemented as a "command" method that initiates the command when called, and a command class 
+(instantiated during initialization), whose ``do()`` method calls an "execution" 
+method in the component manager; this where the command's logic lives. When the command is called by a client, 
+the command method fetches the command class object and runs its ``do()`` method. Additionally, 
+the device either implements an ``is_<COMMAND>_allowed()`` method for commands that override 
 baseclass commands, or else the command class implements an ``is_allowed()`` method for 
 novel commands, which these commands' ``do()`` methods use as a condition to guard the 
-component manager call in case a command is called from an invalid state, etc. By contrast, 
-LRCs still implement the execution method, but do not implement command classes; instead, 
-during initialization a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
+component manager call in case a command is called from an invalid state, etc. 
+
+By contrast, LRCs still implement the command method, but do not implement command classes; instead, 
+during initialization, a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
 this object's ``do()`` method is called instead. Rather than just one method in the component manager, 
 LRCs have two. The first "submit" method has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
-All this public method does is submit a task to the ``TaskExecutor``'s queue and, among other things, 
-this task's arguments include 1. the second, private scoped, command thread, containing all the command's logic, 
-and 2. the ``is_<COMMAND>_allowed()`` function, now defined in the component manager rather than the device; 
-this is important, as the validity of calling a given command needs to be evaluated when the task is executed rather 
-than when the command is called by the client. For this reason, overridden baseclass commands still have an 
-overridden ``is_<COMMAND>_allowed()`` method defined in the device, but all it does is return ``True``, 
-in order to defer judgement to the component manager's ``is_<COMMAND>_allowed()`` method that will 
-run when the command is popped off of the queue.
+All this public method does is submit a task to the ``TaskExecutor``'s queue. This task's arguments include 
+1. the second, private scoped, execution method, containing the command's logic, 
+and 2. the ``is_<COMMAND>_allowed()`` function (now in the component manager), which is important, 
+as the validity of calling a given command needs to be evaluated when the task is 
+executed rather than when the command is called by the client. For this reason, overridden baseclass 
+commands still have an overridden ``is_<COMMAND>_allowed()`` method defined in the device, 
+but all it does is return ``True``, in order to defer judgement to the component manager's 
+``is_<COMMAND>_allowed()`` method that will run when the command is popped off of the queue.
 
 Another implication of parallelism in MCS is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
@@ -342,24 +343,31 @@ Blocking Commands and Locks
 In MCS, any command added to the ``TaskExecutor``'s queue is a "blocking command", in the sense that each of these 
 commands will eventually block the client that issued them. 
 
-As a simple example, if command A (parent) adds command B (child) to the queue, 
-command A will be blocked until command B produces a
-change event for its result. After command A queues command B, it is free to continue 
-executing any logic that does not rely on command B's result, but once it reaches this blocking point, it must wait.
+For example, when ``Subarray``'s ``ConfigureScan()`` (parent) adds ``VCC``'s ``ConfigureBand()`` (child) 
+to the queue, ``Subarray`` will be blocked until ``VCC`` produces a change event for its result. 
+After ``Subarray`` queues the ``VCC`` command, it is free to continue executing any logic that does not 
+rely on ``VCC``'s result, but once it reaches this blocking point, it must wait.
 
 MCS keeps track of these blocking commands by adding their command IDs to a set as they are queued, 
 and removing them when change events for the ``longRunningCommandResult`` attribute are recieved. 
-This way, when command A reaches its blocking point, it calls a function that waits until the set is emptied 
-(indicating command B has finished), else the timeout is reached and the parent command fails.
+This way, when ``Subarray`` reaches its blocking point, it calls a function that waits until the set is emptied 
+(indicating ``VCC`` has finished), else the timeout is reached and the parent command fails.
 
-Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt concurrent access on a shared resource. 
-Sticking with the previous example, when command A adds command B to the queue, it also adds command B to the blocking_commands set.
-Without locking the resource during this add operation, command B would be free to manipulate the blocking_commands set 
-as well, which could lead to a non-deterministic result. If command A is the first of several commands issued in a loop, 
-it is possible that the next command, command C, will attempt to be added to blocking_commands at the same moment command B's 
-results change event is recieved, which would simultaneously try to remove command B from blocking_commands. 
-Using a lock to access blocking_commands restores determinism because if the add operation locks the set, 
-the remove operation will see that it is locked and wait patiently for it to unlock, and vice versa.
+Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt concurrent 
+access on a shared resource. When ``Subarray`` adds ``ConfigureBand()`` to the queue, it also adds 
+it to the blocking_commands set. Without locking the resource during this add operation, ``Subarray`` 
+callbacks would be free to manipulate the blocking_commands set as well, which could lead to a 
+non-deterministic result. For instance, since ``Subarray``'s ``ConfigureScan()`` is the first of 
+several commands issued, it is possible that the next command, ``Scan()``, will queue up and attempt 
+to be added to blocking_commands at the same moment that ``ConfigureBand()``'s' ``longRunningCommandResult`` 
+change event is recieved, which would simultaneously try to remove ``ConfigureBand()`` from ``Subarray``'s blocking_commands. 
+Using a lock to access blocking_commands restores determinism because when the add operation locks the set, 
+the remove operation will see that it is locked and wait patiently for it to unlock, or vice versa.
+
+The following sequence diagram illustrates the entire forementioned LRC mechanism. Note that this diagram only shows
+a subset of ``Subarray``'s ``ConfigureScan()`` execusion, up to the end of the calls to ``VCC``, in order to simplify the diagram;
+including the FSP calls, etc. would overcomplicate the diagram, and its purpose is to illustrate LRCs, not the ``ConfigureScan`` 
+sequence, which is documented in :ref:`config_scan`.
 
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
 such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 

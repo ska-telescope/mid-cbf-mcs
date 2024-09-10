@@ -90,6 +90,7 @@ to initialize the system parameters.
 
 .. uml:: ../../diagrams/initsysparam-command.puml
 
+.. _config_scan:
 Configure Scan Sequence
 ++++++++++++++++++++++++
 
