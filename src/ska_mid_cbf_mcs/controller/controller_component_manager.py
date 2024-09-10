@@ -119,11 +119,22 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _set_fqdns(self: ControllerComponentManager) -> None:
         """
-        Set the list of sub-element FQDNs to be used, limited by max capabilities count.
+        Set the list of sub-element FQDNs to be used, limited by max capabilities count
+        and HW config.
 
         :update: self._vcc_fqdn, self._fsp_fqdn, self._subarray_fqdn, self._talon_lru_fqdn,
                  self._talon_board_fqdn, self._power_switch_fqdn
         """
+        # Observing/capability devices
+        self._vcc_fqdn = list(self._vcc_fqdns_all)[: self._count_vcc]
+        self._fsp_fqdn = list(self._fsp_fqdns_all)[: self._count_fsp]
+        self._subarray_fqdn = list(self._subarray_fqdns_all)[
+            : self._count_subarray
+        ]
+
+        # Hardware devices
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
 
         def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
             return [
@@ -133,11 +144,6 @@ class ControllerComponentManager(CbfComponentManager):
                 in list(self._hw_config[config_key].keys())
             ]
 
-        self._vcc_fqdn = list(self._vcc_fqdns_all)[: self._count_vcc]
-        self._fsp_fqdn = list(self._fsp_fqdns_all)[: self._count_fsp]
-        self._subarray_fqdn = list(self._subarray_fqdns_all)[
-            : self._count_subarray
-        ]
         self._talon_lru_fqdn = _filter_fqdn(
             self._talon_lru_fqdns_all, "talon_lru"
         )
@@ -160,7 +166,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in fqdn_variables.items():
-            self.logger.debug(f"fqdn {name}: {value}")
+            self.logger.debug(f"Active {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -240,12 +246,18 @@ class ControllerComponentManager(CbfComponentManager):
     def _init_device_proxy(
         self: ControllerComponentManager,
         fqdn: str,
+        subscribe: bool = False,
+        hw_device_type: str = None,
     ) -> bool:
         """
         Initialize the device proxy from its FQDN, store the proxy in the _proxies dictionary,
         and set the AdminMode to ONLINE
 
         :param fqdn: FQDN of the device
+        :param subscribe: True if should subscribe to the device's longRunningCommandResult attribute;
+            defaults to False
+        :param hw_device_type: if not default value of None, indicates the type of hardware-connected
+            device to initialize
         :return: True if the device proxy is successfully initialized, False otherwise.
         """
         if fqdn not in self._proxies:
@@ -259,25 +271,45 @@ class ControllerComponentManager(CbfComponentManager):
 
         proxy = self._proxies[fqdn]
 
-        if fqdn in (
-            self._subarray_fqdn
-            + self._talon_lru_fqdn
-            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-        ):
+        if subscribe:
             self.subscribe_command_results(proxy)
 
-        # If the fqdn is of a power switch or talon LRU, write hw config
-        device_types = {
-            "power_switch": self._power_switch_fqdn,
-            "talon_lru": self._talon_lru_fqdn,
-        }
-        for device_type, device_fqdns in device_types.items():
-            if fqdn in device_fqdns:
-                if not self._write_hw_config(fqdn, proxy, device_type):
-                    return False
-                break
+        if hw_device_type is not None:
+            if not self._write_hw_config(fqdn, proxy, hw_device_type):
+                return False
 
         return self._set_proxy_online(fqdn)
+
+    def _init_device_proxies(self: ControllerComponentManager) -> bool:
+        """
+        Initialize all device proxies.
+
+        :return: True if the device proxies are all successfully initialized, False otherwise.
+        """
+        init_fault = False
+
+        # Order matters here; must set PDU online before LRU to establish outlet power states
+        for fqdn in self._power_switch_fqdn:
+            if not self._init_device_proxy(
+                fqdn=fqdn, hw_device_type="power_switch"
+            ):
+                init_fault = True
+
+        for fqdn in self._talon_lru_fqdn:
+            if not self._init_device_proxy(
+                fqdn=fqdn, subscribe=True, hw_device_type="talon_lru"
+            ):
+                init_fault = True
+
+        for fqdn in self._subarray_fqdn:
+            if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
+                init_fault = True
+
+        for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
+            if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
+                init_fault = True
+
+        return init_fault
 
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
@@ -289,35 +321,9 @@ class ControllerComponentManager(CbfComponentManager):
             "Entering ControllerComponentManager._start_communicating"
         )
 
-        with open(self._hw_config_path) as yaml_fd:
-            self._hw_config = yaml.safe_load(yaml_fd)
-
         self._set_fqdns()
 
-        group_proxies = {
-            "_group_vcc": self._vcc_fqdn,
-            "_group_fsp": self._fsp_fqdn,
-            "_group_subarray": self._subarray_fqdn,
-        }
-
-        if not self.create_group_proxies(group_proxies):
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
-
-        # Order matters here; must set PDU online before LRU to establish outlet power states
-        init_fault = False
-        for fqdn in (
-            self._power_switch_fqdn
-            + self._talon_lru_fqdn
-            + self._subarray_fqdn
-            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-        ):
-            if not self._init_device_proxy(fqdn):
-                init_fault = True
-
-        if init_fault:
+        if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
