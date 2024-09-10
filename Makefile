@@ -102,6 +102,9 @@ K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 
 PYTHON_LINT_TARGET = src/ tests/
 
+# CIP-2859
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=DAR101,DAR201,DAR301,DAR401,N802,N803,N806,E501,W503
+
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets
