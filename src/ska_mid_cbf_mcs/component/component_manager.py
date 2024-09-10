@@ -495,6 +495,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango attribute change event data
         """
         value = event_data.attr_value.value
+        dev_name = event_data.device.dev_name()
 
         if value is None or value == ("", ""):
             return
@@ -505,7 +506,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             result_code = int(value[1].split(",")[0].split("[")[1])
             command_id = value[0]
         except IndexError as ie:
-            self.logger.error(f"{ie}")
+            self.logger.error(f"IndexError in parsing EventData; {ie}")
             return
 
         # If the command ID not in blocking commands, we should wait a bit,
@@ -519,13 +520,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 # If command ID was never added, we might have received an event
                 # triggered by a different device.
                 self.logger.warning(
-                    f"Received event with command ID {command_id} that was not issued by this device."
+                    f"Received event from {dev_name} with command ID {command_id} that was not issued by this device."
                 )
                 return
 
         if result_code != ResultCode.OK:
             self.logger.error(
-                f"Command ID {command_id} result code: {result_code}"
+                f"{dev_name} command ID {command_id} result code: {result_code}"
             )
             self._command_failed = True
         with self.results_lock:
