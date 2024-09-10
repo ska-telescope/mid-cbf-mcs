@@ -14,7 +14,6 @@ from typing import Generator
 
 import pytest
 import tango
-from ska_control_model import PowerState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -63,13 +62,6 @@ def tango_event_tracer(
 
 
 @pytest.fixture()
-def mock_talon_lru() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_attribute("LRUPowerState", PowerState.OFF)
-    return builder()
-
-
-@pytest.fixture()
 def mock_vcc_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
@@ -94,20 +86,17 @@ def mock_vcc_band() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_talon_lru: unittest.mock.Mock,
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_talon_lru: mock for the talon_lru device
     :param mock_vcc_controller: mock for the vcc_controller device
     :param mock_vcc_band: mock for the vcc_band device
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/talon_lru/001": mock_talon_lru,
         "talondx-001/vcc-app/vcc-controller": mock_vcc_controller,
         "talondx-001/vcc-app/vcc-band-1-and-2": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,

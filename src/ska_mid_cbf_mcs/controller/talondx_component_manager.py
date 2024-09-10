@@ -109,11 +109,9 @@ class TalonDxComponentManager(CbfComponentManager):
                 ret = ResultCode.FAILED
 
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.error(
-                    f"Exception while sending configure command"
-                    f" to {hps_master_fqdn} device: {str(item.reason)}"
-                )
+            self.logger.error(
+                f"Exception while sending configure command to {hps_master_fqdn} device: {df}"
+            )
             ret = ResultCode.FAILED
 
         return ret
@@ -137,10 +135,7 @@ class TalonDxComponentManager(CbfComponentManager):
         try:
             self.proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.error(
-                    f"Failed connection to {fqdn} device: {item.reason}"
-                )
+            self.logger.error(f"Failed connection to {fqdn} device: {df}")
             ret = ResultCode.FAILED
 
         return ret
@@ -643,11 +638,9 @@ class TalonDxComponentManager(CbfComponentManager):
         try:
             hps_master.shutdown(3)
         except tango.DevFailed as df:
-            for item in df.args:
-                self.logger.warning(
-                    f"Exception while sending shutdown command"
-                    f" to {hps_master_fqdn} device: {str(item.reason)}"
-                )
+            self.logger.warning(
+                f"Exception while sending shutdown command to {hps_master_fqdn} device: {df}"
+            )
             # TODO: determine behaviour here; the shutdown command will
             # inevitably throw an exception, as the device is shut off
             # there may be a more elegant way to handle the expected shutdown

@@ -122,7 +122,7 @@ class VccComponentManager(CbfObsComponentManager):
                     for fqdn in self._vcc_band_fqdn
                 ]
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -269,7 +269,7 @@ class VccComponentManager(CbfObsComponentManager):
                 self._vcc_controller_proxy.ConfigureBand(frequency_band)
 
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -392,7 +392,7 @@ class VccComponentManager(CbfObsComponentManager):
             try:
                 self._band_proxies[fb_index].ConfigureScan(argin)
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -444,7 +444,7 @@ class VccComponentManager(CbfObsComponentManager):
             try:
                 self._band_proxies[fb_index].Scan(self.scan_id)
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -492,7 +492,7 @@ class VccComponentManager(CbfObsComponentManager):
             try:
                 self._band_proxies[fb_index].EndScan()
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -539,7 +539,7 @@ class VccComponentManager(CbfObsComponentManager):
                 # TODO CIP-1850
                 # self._vcc_controller_proxy.Unconfigure()
             except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
+                self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -592,7 +592,7 @@ class VccComponentManager(CbfObsComponentManager):
                     # TODO CIP-1850
                     # self._band_proxies[fb_index].Abort()
                 except tango.DevFailed as df:
-                    self.logger.error(str(df.args[0].desc))
+                    self.logger.error(f"{df}")
                     self._update_communication_state(
                         communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
@@ -648,7 +648,7 @@ class VccComponentManager(CbfObsComponentManager):
                     # TODO CIP-1850
                     # self._band_proxies[fb_index].ObsReset()
                 except tango.DevFailed as df:
-                    self.logger.error(str(df.args[0].desc))
+                    self.logger.error(f"{df}")
                     self._update_communication_state(
                         communication_state=CommunicationStatus.NOT_ESTABLISHED
                     )
@@ -671,7 +671,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._deconfigure()
 
         # Update obsState callback
-        self._update_component_state(configured=False)
+        self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
             result=(ResultCode.OK, "ObsReset completed OK"),

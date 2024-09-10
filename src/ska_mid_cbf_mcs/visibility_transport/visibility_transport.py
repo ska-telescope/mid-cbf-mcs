@@ -84,9 +84,8 @@ class VisibilityTransport:
                 self._channel_offsets
             )
         except DevFailed as df:
-            msg = str(df.args[0].desc)
             self.logger.error(
-                f"Failed to configure visibility transport devices: {msg}"
+                f"Failed to configure visibility transport devices: {df}"
             )
 
         self._fsp_config = fsp_config
@@ -123,9 +122,8 @@ class VisibilityTransport:
             for dp in self._dp_host_lut_s1:
                 dp.command_inout("Program")
         except DevFailed as df:
-            msg = str(df.args[0].desc)
             self.logger.error(
-                f"Failed to configure visibility transport devices: {msg}"
+                f"Failed to configure visibility transport devices: {df}"
             )
 
     def disable_output(self):
@@ -143,9 +141,8 @@ class VisibilityTransport:
                 dp.command_inout("Unprogram")
             self._dp_host_lut_s2.command_inout("Unprogram")
         except DevFailed as df:
-            msg = str(df.args[0].desc)
             self.logger.error(
-                f"Failed to configure visibility transport devices: {msg}"
+                f"Failed to configure visibility transport devices: {df}"
             )
 
     def _parse_visibility_transport_info(
