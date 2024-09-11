@@ -15,29 +15,30 @@
 import json
 import math
 
-from ska_mid_cbf_mcs.commons.global_enum import (
-    FINE_CHANNEL_WIDTH,
-    FINE_CHANNELS_PER_FSP,
-    FINE_CHANNELS_PER_SDP_SPEAD_STREAM,
-    FS_BW,
-    HALF_FS_BW,
-    SAMPLE_RATE_BASE,
+from ska_mid_cbf_mcs.commons.global_enum import const
+
+(
+
+    const.NUM_CHANNEL_GROUPS,
+    const.FS_BW,
+    const.HALF_FS_BW,
+    const.SAMPLE_RATE_BASE,
 )
 
 # HELPER FUNCTIONS
 ##############################################################################
 
 
-def get_coarse_channels(
+def get_coarse_frequency_slice_channels(
     start_freq: int, end_freq: int, wb_shift: int
 ) -> list[int]:
     """
-    Determine the Frequency Slices needed for this processing region
+    Determine the coarse frequency Slices that contain the processing region
 
     :param start_freq: Start frequency of the processing region (Hz)
     :param end_freq: End frequency of the processing region (Hz)
     :praam wb_shift: Wideband shift (Hz)
-    :return: A list of frequency slice id's
+    :return: A list of coarse frequency slice id's
 
     :raise AssertionError: if start_freq is greater than end_freq
     """
@@ -45,18 +46,26 @@ def get_coarse_channels(
 
     # coarse_channel = floor [(Frequency + WB_shift + 99090432Hz) / 198180864 Hz]
     coarse_channel_low = math.floor(
-        (start_freq - wb_shift + HALF_FS_BW) / FS_BW
+        (start_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
     )
     coarse_channel_high = math.floor(
-        (end_freq - wb_shift + HALF_FS_BW) / FS_BW
+        (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
     )
     coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
     return coarse_channels
 
 
-def get_end_freqeuency(
+def _get_end_freqeuency(
     start_freq: int, channel_width: int, channel_count: int
 ) -> int:
+    """
+    Determine the end frequency of the processing region (Hz)
+
+    :param start_freq:  Start frequency of the processing region (Hz)
+    :param channel_width: Width of a fine frequency channel (Hz)
+    :param channel_count: Number of fine frequency channels
+    :return: End frequency of the processing region (Hz)
+    """
     assert channel_width > 0, "channel_width must be positive"
     assert channel_count > 0, "channel_count must be positive"
 
@@ -82,11 +91,11 @@ def _find_fine_channel(
     channel = None
     last = None
     for n in range(
-        0, FINE_CHANNELS_PER_FSP // FINE_CHANNELS_PER_SDP_SPEAD_STREAM
+        0, const.NUM_FINE_CHANNELS // const.NUM_CHANNEL_GROUPS
     ):  # == 0 to 744
         n2 = (
-            -FINE_CHANNELS_PER_FSP // 2
-            + FINE_CHANNELS_PER_SDP_SPEAD_STREAM * n
+            -const.NUM_FINE_CHANNELS // 2
+            + const.NUM_CHANNEL_GROUPS * n
         )
         center_f = _nominal_fs_spacing(fs) + channel_width * n2
         diff = abs(shifted_target_freq - center_f)
@@ -108,7 +117,7 @@ def _nominal_fs_spacing(fs_id: int) -> int:
     :param id: coarse frequency slice id
     :return: center frequency in digitized bandwidth of the frequency slice
     """
-    return fs_id * FS_BW
+    return fs_id * const.FS_BW
 
 
 def _k_dependent_fs_center(fs_id: int, k: int) -> int:
@@ -120,7 +129,7 @@ def _k_dependent_fs_center(fs_id: int, k: int) -> int:
     :return: the k-dependent frequency slice center frequency (Hz)
     """
     # Center frequency of FS n = (sample rate / 20) x n
-    sample_rate = SAMPLE_RATE_BASE + 1800 * k
+    sample_rate = const.SAMPLE_RATE_BASE + 1800 * k
     center_frequency = (sample_rate // 20) * fs_id
     return center_frequency
 
@@ -142,31 +151,31 @@ def _sum_of_channels(fs_infos: dict) -> int:
 def _nearest_stream(start: int, end: int) -> int:
     """
     Determine the nearest end channel that will result in the number of
-    channels being a multiple of the FINE_CHANNELS_PER_SDP_SPEAD_STREAM.
+    channels being a multiple of the const.NUM_CHANNEL_GROUPS.
 
-    Note: FINE_CHANNELS_PER_SDP_SPEAD_STREAM = 20 for AA0.50
+    Note: const.NUM_CHANNEL_GROUPS = 20 for AA0.50
 
     :param start: the starting channel id
     :param end: the last channel
-    :return: the new end channel that results in the channel count being a mulitple of the FINE_CHANNELS_PER_SDP_SPEAD_STREAM
+    :return: the new end channel that results in the channel count being a mulitple of the const.NUM_CHANNEL_GROUPS
     """
     num_channels = end - start + 1
-    remainder = num_channels % FINE_CHANNELS_PER_SDP_SPEAD_STREAM
-    if remainder >= (FINE_CHANNELS_PER_SDP_SPEAD_STREAM // 2):
-        neareset = end + (FINE_CHANNELS_PER_SDP_SPEAD_STREAM - remainder)
+    remainder = num_channels % const.NUM_CHANNEL_GROUPS
+    if remainder >= (const.NUM_CHANNEL_GROUPS // 2):
+        neareset = end + (const.NUM_CHANNEL_GROUPS - remainder)
     else:
         neareset = end - remainder
     return neareset
 
 
 def _round_to_nearest(
-    value: int, multiple: int = FINE_CHANNELS_PER_SDP_SPEAD_STREAM
+    value: int, multiple: int = const.NUM_CHANNEL_GROUPS
 ) -> int:
     """
     Round to the nearest multiple
 
     :param value: the value to round
-    :param multiple: the multiple to round to. default to the FINE_CHANNELS_PER_SDP_SPEAD_STREAM which is 20 for AA0.5
+    :param multiple: the multiple to round to. default to the const.NUM_CHANNEL_GROUPS which is 20 for AA0.5
     :return: the rounded value
     """
     return multiple * round(value / multiple)
@@ -202,7 +211,7 @@ https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Ide
 """
 
 
-def calculate_fs_info(
+def partition_spectrum_to_frequency_slices(
     fsp_ids: list[int],
     start_freq: int,
     channel_width: int,
@@ -234,7 +243,7 @@ def calculate_fs_info(
     ], "fsp_ids cannot contain a negative fsp_id"
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
-    coarse_channels = get_coarse_channels(
+    coarse_channels = get_coarse_frequency_slice_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
 
@@ -281,7 +290,7 @@ def calculate_fs_info(
             fs_info["start_ch_exact"] = (
                 fs_info["start_ch_freq"] - _nominal_fs_spacing(fs)
             ) / channel_width
-            # round to nearest group of FINE_CHANNELS_PER_SDP_SPEAD_STREAM
+            # round to nearest group of const.NUM_CHANNEL_GROUPS
             fs_info["start_ch"] = _round_to_nearest(
                 round(fs_info["start_ch_exact"])
             )
@@ -312,12 +321,12 @@ def calculate_fs_info(
         else:
             # We go to the end of the FS slice
             fs_info["end_ch_exact"] = (
-                HALF_FS_BW - fs_info["alignment_shift_freq"]
+                const.HALF_FS_BW - fs_info["alignment_shift_freq"]
             ) / channel_width
             fs_info["end_ch"] = round(fs_info["end_ch_exact"])
 
         # Change end channel so our number of channels will be a multiple of
-        # the FINE_CHANNELS_PER_SDP_SPEAD_STREAM
+        # the const.NUM_CHANNEL_GROUPS
         fs_info["end_ch"] = _nearest_stream(
             fs_info["start_ch"], fs_info["end_ch"]
         )
@@ -340,9 +349,9 @@ def calculate_fs_info(
         fs_info["sdp_end_channel_id"] = first_sdp_channel_id - 1
 
         fs_info["fsp_start_ch"] = (
-            fs_info["start_ch"] + FINE_CHANNELS_PER_FSP // 2
+            fs_info["start_ch"] + const.NUM_FINE_CHANNELS // 2
         )
-        fs_info["fsp_end_ch"] = fs_info["end_ch"] + FINE_CHANNELS_PER_FSP // 2
+        fs_info["fsp_end_ch"] = fs_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
 
         # sort the keys
         fs_info_Keys = list(fs_info.keys())
@@ -368,10 +377,10 @@ if __name__ == "__main__":
     K_VALUE = 1000
 
     # Derived from inputs
-    TOTAL_BWIDTH = FINE_CHANNEL_COUNT * FINE_CHANNEL_WIDTH
-    STREAMS = TOTAL_BWIDTH / FINE_CHANNELS_PER_SDP_SPEAD_STREAM
-    END_FREQ = get_end_freqeuency(
-        START_FREQ, FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
+    TOTAL_BWIDTH = FINE_CHANNEL_COUNT * const.FINE_CHANNEL_WIDTH
+    STREAMS = TOTAL_BWIDTH / const.NUM_CHANNEL_GROUPS
+    END_FREQ = _get_end_freqeuency(
+        START_FREQ, const.FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
     )
 
     print(f"With a wideband shift    : {WB_SHIFT} Hz")
@@ -380,7 +389,7 @@ if __name__ == "__main__":
     print(f"total bandwidth          : {TOTAL_BWIDTH} Hz")
     print(f"total streams            : {STREAMS}")
 
-    coarse_channels = get_coarse_channels(START_FREQ, END_FREQ, WB_SHIFT)
+    coarse_channels = get_coarse_frequency_slice_channels(START_FREQ, END_FREQ, WB_SHIFT)
 
     # Use fs_ids to validate we have enough FSP's for the bandwidth
     print(f"coarse_channels = {coarse_channels}")
@@ -391,10 +400,10 @@ if __name__ == "__main__":
         # fsp_ids should match the number of coarse slices needed
         exit(1)
 
-    results = calculate_fs_info(
+    results = partition_spectrum_to_frequency_slices(
         fsp_ids=fsp_ids,
         start_freq=START_FREQ,
-        channel_width=FINE_CHANNEL_WIDTH,
+        channel_width=const.FINE_CHANNEL_WIDTH,
         channel_count=FINE_CHANNEL_COUNT,
         k_value=K_VALUE,
         wideband_shift=WB_SHIFT,
@@ -409,26 +418,26 @@ if __name__ == "__main__":
 
         start_f = (
             WB_SHIFT
-            + coarse_ch * FS_BW
+            + coarse_ch * const.FS_BW
             + fs_info["alignment_shift_freq"]
-            + fs_info["start_ch"] * FINE_CHANNEL_WIDTH
+            + fs_info["start_ch"] * const.FINE_CHANNEL_WIDTH
         )
         end_f = (
             WB_SHIFT
-            + coarse_ch * FS_BW
+            + coarse_ch * const.FS_BW
             + fs_info["alignment_shift_freq"]
-            + fs_info["end_ch"] * FINE_CHANNEL_WIDTH
+            + fs_info["end_ch"] * const.FINE_CHANNEL_WIDTH
         )
         print(
             f'{coarse_ch:2}: start = ch {fs_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fs_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
         )
 
-        assert (fs_info["start_ch"]) % FINE_CHANNELS_PER_SDP_SPEAD_STREAM == 0
+        assert (fs_info["start_ch"]) % const.NUM_CHANNEL_GROUPS == 0
         assert (
             fs_info["end_ch"] + 1
-        ) % FINE_CHANNELS_PER_SDP_SPEAD_STREAM == 0
+        ) % const.NUM_CHANNEL_GROUPS == 0
 
-        expect_start_f = end_f + FINE_CHANNEL_WIDTH
+        expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
 
     print(f"total channels: {sum_of_result_channels}")
     assert sum_of_result_channels == FINE_CHANNEL_COUNT

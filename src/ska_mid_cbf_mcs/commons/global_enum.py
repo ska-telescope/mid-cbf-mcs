@@ -46,11 +46,14 @@ class Const:
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
 
+        self.SAMPLE_RATE_BASE = 3960000000
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING_FACTOR = 10 / 9
         self.FS_BW = int(
             self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING_FACTOR
         )
+        self.HALF_FS_BW = self.FS_BW // 2
+        self.FINE_CHANNEL_WIDTH = 13440  # Hz
 
 
 const = Const()
