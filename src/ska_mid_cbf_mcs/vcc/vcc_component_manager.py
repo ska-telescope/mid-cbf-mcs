@@ -671,6 +671,8 @@ class VccComponentManager(CbfObsComponentManager):
         self._deconfigure()
 
         # Update obsState callback
+        # There is no obsfault == False action implemented, however,
+        # we reset it it False so that obsfault == True may be triggered in the future
         self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
