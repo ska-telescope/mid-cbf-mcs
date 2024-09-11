@@ -17,10 +17,9 @@ from threading import Lock
 from typing import Any
 
 import tango
-from ska_control_model import PowerState
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode
-from tango.server import attribute, command, device_property
+from tango.server import command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
@@ -57,18 +56,7 @@ class TalonLRU(CbfDevice):
     # Attributes
     # ----------
 
-    @attribute(
-        dtype="uint16",
-        label="PowerState of the Talon LRU",
-        doc="PowerState of the Talon LRU",
-    )
-    def LRUPowerState(self: TalonLRU) -> PowerState:
-        """
-        Read the LRU's PowerState.
-
-        :return: PowerState of the LRU.
-        """
-        return self.component_manager.get_lru_power_state()
+    # None at this time...
 
     # --------------
     # Initialization
