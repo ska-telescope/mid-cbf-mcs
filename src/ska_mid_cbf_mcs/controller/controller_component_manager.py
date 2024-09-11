@@ -31,7 +31,6 @@ from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -996,11 +995,6 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         params: dict,
     ) -> Tuple:
-        # Validate supported interface passed in the JSON string
-        (valid, msg) = validate_interface(json.dumps(params), "initsysparam")
-        if not valid:
-            self._logger.error(msg)
-            return (ResultCode.FAILED, msg)
         # Validate init_sys_param against the telescope model
         try:
             telmodel_validate(
