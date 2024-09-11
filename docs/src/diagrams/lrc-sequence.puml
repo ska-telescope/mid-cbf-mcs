@@ -72,3 +72,5 @@ vcc_ex      ->  hps_vccband     : ConfigureScan()
 note over vcc_ex                : ObsState: READY
 vcc_ex     -->  sub_ex          : longRunningCommandResult
 note over sub_ex                : blocking_commands = 0
+
+@enduml
