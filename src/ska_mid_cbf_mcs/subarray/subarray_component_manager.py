@@ -28,7 +28,13 @@ from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
+
+# isort: off
+# ska_telmodel.schema before ska_telmodel.csp due to circular dependency
 from ska_telmodel.schema import validate as telmodel_validate
+
+# isort: on
+
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
@@ -942,7 +948,6 @@ class CbfSubarrayComponentManager(
         """
         # deconfigure to reset assigned FSPs and unsubscribe to events.
         self._deconfigure()
-
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
         if "cbf" in full_configuration:

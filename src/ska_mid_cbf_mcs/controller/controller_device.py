@@ -548,7 +548,6 @@ class CbfController(SKAController):
                     ResultCode.FAILED,
                     "InitSysParam command may be called only when state is OFF",
                 )
-
             (
                 result_code,
                 message,

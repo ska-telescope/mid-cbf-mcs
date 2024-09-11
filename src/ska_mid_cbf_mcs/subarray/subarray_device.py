@@ -28,6 +28,7 @@ from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -675,6 +676,7 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
             component_manager = self.target
 
             full_configuration = json.loads(argin)
@@ -722,6 +724,12 @@ class CbfSubarray(CspSubElementSubarray):
                 purpose only.
             :rtype: (bool, str)
             """
+            (valid, msg) = validate_interface(argin, "configurescan")
+            if not valid:
+                return (
+                    False,
+                    msg,
+                )
             # try to deserialize input string to a JSON object
 
             component_manager = self.target
@@ -868,6 +876,10 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            (valid, msg) = validate_interface(json.dumps(argin), "scan")
+            if not valid:
+                return (False, msg)
             component_manager = self.target
             (result_code, msg) = component_manager.scan(argin)
             return (result_code, msg)
