@@ -584,7 +584,6 @@ class SlimLinkComponentManager(CbfComponentManager):
                 # Take SLIM Rx out of serial loopback
                 self._rx_device_proxy.initialize_connection(False)
 
-                self.clear_counters()
             except AttributeError as ae:
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
@@ -613,6 +612,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
             self._link_enabled = True
             self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
+            self.clear_counters()
 
         task_callback(
             status=TaskStatus.COMPLETED,

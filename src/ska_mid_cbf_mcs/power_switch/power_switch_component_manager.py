@@ -43,7 +43,19 @@ def get_power_switch_driver(
     password: str,
     logger: logging.Logger,
 ):
-    # The text must match the powerswitch.yaml
+    """
+    Return a power switch driver based on the requested model.
+    Model name must be found in the hw_config.yaml file.
+
+    :param model: power switch model name
+    :param ip: power switch IP address
+    :param login: power switch login username
+    :param password: power switch login password
+    :param logger: logger to be used by the driver
+
+    :return: power switch driver, or None if model name is invalid
+    """
+    # The text must match the hw_config.yaml
     if model == "DLI LPC9":
         return DLIProSwitchDriver(
             ip=ip, login=login, password=password, logger=logger
@@ -283,7 +295,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         Tell the power switch to turn on a specific outlet.
 
         :param outlet: outlet ID to turn on
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: a tuple containing a return code and a string
                  message indicating status
@@ -381,7 +393,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         Tell the power switch to turn off a specific outlet.
 
         :param outlet: outlet ID to turn off
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: a tuple containing a return code and a string
                 message indicating status

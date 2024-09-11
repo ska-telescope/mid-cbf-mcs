@@ -2104,6 +2104,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # Update obsState callback
+        # There is no obsfault == False action implemented, however,
+        # we reset it it False so that obsfault == True may be triggered in the future
         self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
@@ -2230,6 +2232,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # Update obsState callback
+        # There is no obsfault == False action implemented, however,
+        # we reset it it False so that obsfault == True may be triggered in the future
         self._update_component_state(resourced=False, obsfault=False)
 
         task_callback(
