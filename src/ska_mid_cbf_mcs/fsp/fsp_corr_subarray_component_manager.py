@@ -153,6 +153,10 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # first construct HPS FSP ConfigureScan input
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
+        # VCC IDs must be sorted in ascending order for the HPS
+        hps_fsp_configuration["subarray_vcc_ids"].sort()
+        hps_fsp_configuration["corr_vcc_ids"].sort()
+
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
         with open(internal_params_file_name) as f:
