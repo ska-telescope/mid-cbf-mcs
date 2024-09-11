@@ -11,20 +11,21 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import copy
+
 from ska_telmodel import channel_map
 
-from ska_mid_cbf_mcs.commons.fine_channel_partitioner import partition_spectrum_to_frequency_slices
+from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
+    partition_spectrum_to_frequency_slices,
+)
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 
-class FspScanConfigurationBuilder():
-
+class FspScanConfigurationBuilder:
     function_mode: FspModes = None
     function_configuration: dict = None
 
     def _fsp_config_from_processing_regions(
-        self: FspScanConfigurationBuilder,
-        processing_regions: list[dict]
+        self: FspScanConfigurationBuilder, processing_regions: list[dict]
     ) -> list[dict]:
         """Create a list of FSP configurations for a given list of processing regions
 
@@ -56,7 +57,6 @@ class FspScanConfigurationBuilder():
             fsp_configurations.extend(fsp_configuration)
 
         return fsp_configurations
-
 
     def _fsp_config_from_processing_region(
         self: FspScanConfigurationBuilder,
@@ -121,7 +121,9 @@ class FspScanConfigurationBuilder():
             fsp_config = {}
             fsp_config["fsp_id"] = calculated_fs_infos[fsp]["fsp_id"]
             fsp_config["function_mode"] = function_mode
-            fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp]["fs_id"]
+            fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp][
+                "fs_id"
+            ]
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
@@ -159,12 +161,15 @@ class FspScanConfigurationBuilder():
 
         return fsp_configs
 
-
-    def set_fsp_mode(self: FspScanConfigurationBuilder, function_mode: FspModes) -> FspScanConfigurationBuilder:
+    def set_fsp_mode(
+        self: FspScanConfigurationBuilder, function_mode: FspModes
+    ) -> FspScanConfigurationBuilder:
         self.function_mode = function_mode
         return self
-    
-    def set_config(self: FspScanConfigurationBuilder, function_configuration: dict) -> FspScanConfigurationBuilder:
+
+    def set_config(
+        self: FspScanConfigurationBuilder, function_configuration: dict
+    ) -> FspScanConfigurationBuilder:
         self.function_configuration = copy.deepcopy(function_configuration)
         return self
 
@@ -175,7 +180,7 @@ class FspScanConfigurationBuilder():
         """
         assert self.function_mode is not None
         assert self.function_configuration is not None
-        
+
         assert (
             "processing_regions" in self.function_configuration
         ), "function configuration requires a processing region to process"
@@ -187,5 +192,3 @@ class FspScanConfigurationBuilder():
         # TODO: Any other Function specific configuration outside of the FSP config
 
         return fsp_config
-
-    

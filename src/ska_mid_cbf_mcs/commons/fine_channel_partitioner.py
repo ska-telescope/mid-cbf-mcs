@@ -18,7 +18,6 @@ import math
 from ska_mid_cbf_mcs.commons.global_enum import const
 
 (
-
     const.NUM_CHANNEL_GROUPS,
     const.FS_BW,
     const.HALF_FS_BW,
@@ -93,10 +92,7 @@ def _find_fine_channel(
     for n in range(
         0, const.NUM_FINE_CHANNELS // const.NUM_CHANNEL_GROUPS
     ):  # == 0 to 744
-        n2 = (
-            -const.NUM_FINE_CHANNELS // 2
-            + const.NUM_CHANNEL_GROUPS * n
-        )
+        n2 = -const.NUM_FINE_CHANNELS // 2 + const.NUM_CHANNEL_GROUPS * n
         center_f = _nominal_fs_spacing(fs) + channel_width * n2
         diff = abs(shifted_target_freq - center_f)
         if last is None or diff < last:
@@ -351,7 +347,9 @@ def partition_spectrum_to_frequency_slices(
         fs_info["fsp_start_ch"] = (
             fs_info["start_ch"] + const.NUM_FINE_CHANNELS // 2
         )
-        fs_info["fsp_end_ch"] = fs_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
+        fs_info["fsp_end_ch"] = (
+            fs_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
+        )
 
         # sort the keys
         fs_info_Keys = list(fs_info.keys())
@@ -389,7 +387,9 @@ if __name__ == "__main__":
     print(f"total bandwidth          : {TOTAL_BWIDTH} Hz")
     print(f"total streams            : {STREAMS}")
 
-    coarse_channels = get_coarse_frequency_slice_channels(START_FREQ, END_FREQ, WB_SHIFT)
+    coarse_channels = get_coarse_frequency_slice_channels(
+        START_FREQ, END_FREQ, WB_SHIFT
+    )
 
     # Use fs_ids to validate we have enough FSP's for the bandwidth
     print(f"coarse_channels = {coarse_channels}")
@@ -433,9 +433,7 @@ if __name__ == "__main__":
         )
 
         assert (fs_info["start_ch"]) % const.NUM_CHANNEL_GROUPS == 0
-        assert (
-            fs_info["end_ch"] + 1
-        ) % const.NUM_CHANNEL_GROUPS == 0
+        assert (fs_info["end_ch"] + 1) % const.NUM_CHANNEL_GROUPS == 0
 
         expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
 
