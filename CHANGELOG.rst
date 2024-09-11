@@ -7,21 +7,14 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
-<<<<<<< CHANGELOG.rst
-* CIP-2732 Added sphinx directive to generate tables for documentation. 
-  Added validation for supported schema versions specified in the interface parameter for commands in MCS.
-* CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
-* Abstracted out the Scan Configuration Validation in Subarray into a seperate class  
-* Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
-* Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
-
-=======
+* CIP-2732 Added supported interface validation and documentation updates
+  * Added validation for supported schema versions specified in the interface parameter for commands in MCS.
+  * Added sphinx directive to generate tables for documentation
 * CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
   * Abstracted out the Scan Configuration Validation in Subarray into a seperate class  
   * Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
   * Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
 
->>>>>>> CHANGELOG.rst
 * CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
   * Removed validation for tdc fields (removed from telescope model)
   * Removed validation for doppler_phase_corr_subscription_point (removed from
