@@ -286,30 +286,30 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if the device proxies are all successfully initialized, False otherwise.
         """
-        init_fault = False
+        init_success = True
 
         # Order matters here; must set PDU online before LRU to establish outlet power states
         for fqdn in self._power_switch_fqdn:
             if not self._init_device_proxy(
                 fqdn=fqdn, hw_device_type="power_switch"
             ):
-                init_fault = True
+                init_success = False
 
         for fqdn in self._talon_lru_fqdn:
             if not self._init_device_proxy(
                 fqdn=fqdn, subscribe=True, hw_device_type="talon_lru"
             ):
-                init_fault = True
+                init_success = False
 
         for fqdn in self._subarray_fqdn:
             if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
-                init_fault = True
+                init_success = False
 
         for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
             if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
-                init_fault = True
+                init_success = False
 
-        return init_fault
+        return init_success
 
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
