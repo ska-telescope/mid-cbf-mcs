@@ -369,6 +369,8 @@ a subset of ``Subarray``'s ``ConfigureScan()`` execusion, up to the end of the c
 including the FSP calls, etc. would overcomplicate the diagram, and its purpose is to illustrate LRCs, not the ``ConfigureScan`` 
 sequence, which is documented in :ref:`config_scan`.
 
+.. uml:: ../../diagrams/lrc-sequence.puml
+
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
 such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
 continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
