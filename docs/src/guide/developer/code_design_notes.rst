@@ -364,10 +364,10 @@ change event is recieved, which would simultaneously try to remove ``ConfigureBa
 Using a lock to access blocking_commands restores determinism because when the add operation locks the set, 
 the remove operation will see that it is locked and wait patiently for it to unlock, or vice versa.
 
-The following sequence diagram illustrates the entire forementioned LRC mechanism. Note that this diagram only shows
-a subset of ``Subarray``'s ``ConfigureScan()`` execusion, up to the end of the calls to ``VCC``, in order to simplify the diagram;
-including the FSP calls, etc. would overcomplicate the diagram, and its purpose is to illustrate LRCs, not the ``ConfigureScan`` 
-sequence, which is documented in :ref:`config_scan`.
+The following sequence diagram illustrates the LRC mechanism. Note that for simplicity, only a subset of 
+the ``Subarray`` ``ConfigureScan()`` execution is shown, up to the end of the calls to the ``VCC`` device. 
+This was done because including the FSP calls, etc. would overcomplicate the diagram, and its purpose is 
+to illustrate the LRC sequence, not the ``ConfigureScan`` sequence, which is documented in :ref:`config_scan`.
 
 .. uml:: ../../diagrams/lrc-sequence.puml
 
