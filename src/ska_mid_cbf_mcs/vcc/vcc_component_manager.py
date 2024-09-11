@@ -107,6 +107,8 @@ class VccComponentManager(CbfObsComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
+        self.logger.debug("Entering VccComponentManager._start_communicating")
+
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
         if not self.simulation_mode:

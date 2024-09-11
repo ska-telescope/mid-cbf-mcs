@@ -177,7 +177,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug(
-            "Entering TalonBoardComponentManager.start_communicating"
+            "Entering TalonBoardComponentManager._start_communicating"
         )
 
         if not self.simulation_mode:

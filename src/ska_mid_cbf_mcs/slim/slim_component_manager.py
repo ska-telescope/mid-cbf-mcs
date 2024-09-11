@@ -69,7 +69,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.debug("Entering SlimComponentManager.start_communicating")
+        self.logger.debug("Entering SlimComponentManager._start_communicating")
 
         self._dp_links = []
         self.logger.debug(f"Link FQDNs: {self._link_fqdns}")

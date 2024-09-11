@@ -75,6 +75,8 @@ class FspComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
+        self.logger.debug("Entering FspComponentManager._start_communicating")
+
         for fqdn in self._all_fsp_corr_subarray_fqdn:
             try:
                 self._all_fsp_corr[fqdn] = context.DeviceProxy(fqdn)

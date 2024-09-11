@@ -280,7 +280,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug(
-            "Entering SlimLinkComponentManager.start_communicating"
+            "Entering SlimLinkComponentManager._start_communicating"
         )
 
         super()._start_communicating()

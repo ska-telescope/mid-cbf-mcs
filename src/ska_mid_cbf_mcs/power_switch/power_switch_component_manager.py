@@ -153,7 +153,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         Perform any setup needed for communicating with the power switch.
         """
-        self.logger.info("Entering PowerSwitch._start_communicating")
+        self.logger.debug(
+            "Entering PowerSwitchComponentManager._start_communicating"
+        )
 
         if self.simulation_mode:
             outlets = self.power_switch_simulator.outlets
