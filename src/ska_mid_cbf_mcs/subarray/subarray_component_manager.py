@@ -28,7 +28,13 @@ from ska_control_model import (
     TaskStatus,
 )
 from ska_tango_testing import context
+
+# isort: off
+# ska_telmodel.schema before ska_telmodel.csp due to circular dependency
 from ska_telmodel.schema import validate as telmodel_validate
+
+# isort: on
+
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
@@ -37,6 +43,7 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     freq_band_dict,
     mhz_to_hz,
 )
+from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
@@ -964,6 +971,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Validating ConfigureScan input JSON...")
 
+        (valid, msg) = validate_interface(argin, "configurescan")
+        if not valid:
+            self.logger.error(msg)
+            return False
+
         # Validate full_configuration against the telescope model
         try:
             full_configuration = json.loads(argin)
@@ -1771,6 +1783,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "Scan", task_callback, task_abort_event
         ):
             return
+
+        (valid, msg) = validate_interface(json.dumps(argin), "scan")
+        if not valid:
+            self.logger.error(msg)
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to validate schema for Scan input JSON",
+                ),
+            )
 
         scan = json.loads(argin)
 
