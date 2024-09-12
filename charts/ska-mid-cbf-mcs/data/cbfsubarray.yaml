@@ -24,7 +24,9 @@ server:
     classes:
     - name: "CbfSubarray"
       devices:
-      - name: "mid_csp_cbf/sub_elt/subarray_01"
+      {{ $count := (.Values.num_subarrays | int) }}
+      {{- range $i, $e := until $count }}
+      - name: "mid_csp_cbf/sub_elt/subarray_0{{ add1 $i }}"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -37,10 +39,10 @@ server:
             - "mid_csp_cbf/fsp/04"
           - name: "FspCorrSubarray"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/01_01"
-            - "mid_csp_cbf/fspCorrSubarray/02_01"
-            - "mid_csp_cbf/fspCorrSubarray/03_01"
-            - "mid_csp_cbf/fspCorrSubarray/04_01"
+            - "mid_csp_cbf/fspCorrSubarray/01_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/02_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/03_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/04_0{{ add1 $i }}"
           - name: "SubID"
             values:
             - "1"
@@ -63,6 +65,7 @@ server:
           - name: "VisSLIM"
             values:
             - "mid_csp_cbf/slim/slim-vis"
+      {{- end}}
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
