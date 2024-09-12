@@ -1784,7 +1784,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
-        (valid, msg) = validate_interface(json.dumps(argin), "scan")
+        (valid, msg) = validate_interface(argin, "scan")
         if not valid:
             self.logger.error(msg)
             task_callback(
