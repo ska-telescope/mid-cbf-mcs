@@ -129,6 +129,7 @@ subarray_commands = [
     { 
         "Command": "ObsReset",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
