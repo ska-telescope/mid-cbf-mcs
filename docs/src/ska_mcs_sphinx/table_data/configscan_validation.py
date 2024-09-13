@@ -41,6 +41,12 @@ configurescan_validation_rules = {
                 #. check 3
                 
                 """),
-        }
+        },
+        {
+            "Scan Configuration Parameter": "other",
+            "AA4 Ranges (see TM)": "some value",
+            "Supported": "a subset of the value",
+            "Comment": "no comment",
+        },
     ]
 }
