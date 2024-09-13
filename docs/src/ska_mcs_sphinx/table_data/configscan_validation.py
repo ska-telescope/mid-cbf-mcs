@@ -13,23 +13,26 @@ configurescan_validation_rules = [
             """),
         "Supported": cleandoc(
             """
-            .. warning::
-                This is a warning block
-            
-                This value is not supported yet!
+            this is a literal block::
+
+                This is the first line of a ``not processed`` line
+                
+                This is the **second** line which is not *processed*
+                
+            This is normal text again
             """),
         "Comment": cleandoc(
             """
-            complex check:
+            a list of items:
             
-            #. check 1
-            #. check 2
+            * check 1
+            * check 2
             
-               * Sub-point 1
+              * Sub-point 1
 
-               * Sub-point 2
+              * Sub-point 2
             
-            #. check 3
+            * check 3
             
             """),
     }
