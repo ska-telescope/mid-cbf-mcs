@@ -503,7 +503,9 @@ class SlimComponentManager(CbfComponentManager):
                     # Poll link health every 20 seconds, and also verify now.
                     self._dp_links[idx].VerifyConnection()
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
-                    self.logger.debug(f"VerifyConnection() polling activated on {self._dp_links[idx].linkName}")
+                    self.logger.debug(
+                        f"VerifyConnection() polling activated on {self._dp_links[idx].linkName}"
+                    )
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
