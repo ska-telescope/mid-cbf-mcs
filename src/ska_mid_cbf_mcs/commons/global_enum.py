@@ -178,12 +178,6 @@ def scan_configuration_supported_value(parameter: str) -> any:
 mhz_to_hz = 1000000
 
 
-class AcceptedScanConfigurationVersion:
-    # {major versions : {minor versions...}}
-    # For Interface Versions with Correlator Processing Regions Configuration
-    versions = {3: {0}, 4: {0, 1}}
-
-
 """
 NOTES:
 

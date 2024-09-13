@@ -48,34 +48,10 @@ class TestScanConfigurationValidator:
 
         return params
 
-    @pytest.mark.parametrize(
-        "config_file_name",
-        [("ConfigureScan_1_0_CORR.json"), ("ConfigureScan_19_0_CORR.json")],
-    )
-    def test_Invalid_Configuration_Version(
-        self: TestScanConfigurationValidator,
-        validator_params: dict[any],
-        config_file_name: str,
-    ):
-        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
-        with open(path_to_test_json) as file:
-            json_str = file.read().replace("\n", "")
-        validator: SubarrayScanConfigurationValidator = (
-            SubarrayScanConfigurationValidator(
-                scan_configuration=json_str,
-                dish_ids=validator_params["dish_ids"],
-                subarray_id=validator_params["sub_id"],
-                logger=self.logger,
-            )
-        )
-        success, msg = validator.validate_input()
-        print(msg)
-        assert "Error: The version defined in the Scan Configuration" in msg
-        assert success is False
 
     @pytest.mark.parametrize(
         "config_file_name",
-        ["ConfigureScan_4_1_CORR.json", "ConfigureScan_basic_CORR.json"],
+        ["ConfigureScan_4_1_CORR.json"],
     )
     def test_Valid_Configuration_Version(
         self: TestScanConfigurationValidator,
@@ -392,7 +368,7 @@ class TestScanConfigurationValidator:
             645120,
         ],
     )
-    def test_Invalid_channel_width_post_v4(
+    def test_Invalid_channel_width(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         channel_width: list[int],
@@ -443,7 +419,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is False
 
-    def test_Invalid_sdp_start_channel_id_post_v4(
+    def test_Invalid_sdp_start_channel_id(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
@@ -527,7 +503,7 @@ class TestScanConfigurationValidator:
             ],
         ],
     )
-    def test_Invalid_output_host_non_multiple_20_post_v4(
+    def test_Invalid_output_host_non_multiple_20(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_host: list[list[int, str]],
@@ -571,7 +547,7 @@ class TestScanConfigurationValidator:
             ],
         ],
     )
-    def test_Invalid_output_host_post_v4(
+    def test_Invalid_output_host(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_host: list[list[int, str]],
@@ -605,7 +581,7 @@ class TestScanConfigurationValidator:
             [[20, 10000], [21, 10001], [22, 1650], [42, 40000]],
         ],
     )
-    def test_Invalid_output_port_increment_post_v4(
+    def test_Invalid_output_port_increment(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_port: list[list[int, int]],
@@ -639,7 +615,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is False
 
-    def test_Valid_channel_map_increment_post_v4(
+    def test_Valid_channel_map_increment(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
@@ -674,7 +650,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is True
 
-    def test_invalid_channel_map_count_to_single_host_post_v4(
+    def test_invalid_channel_map_count_to_single_host(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
