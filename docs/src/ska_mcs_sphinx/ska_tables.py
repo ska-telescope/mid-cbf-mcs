@@ -50,12 +50,12 @@ class CommandTable(Directive):
 
         table_body = nodes.tbody()
 
-        for index, command in enumerate(table_data):
+        for index, row_data in enumerate(table_data):
             row_class = 'row-even' if index % 2 == 0 else 'row-odd'
             row = nodes.row("", classes=[row_class])
             for header_value in headers_data:
-                col_data = command.get(header_value,'')
-                # some special cases for some column names
+                col_data = row_data.get(header_value,'')
+                # Special cases for some column names
                 if header_value == 'Action':
                     action_entry = nodes.entry('')
                     action_entry.append(self._parse_line_block(col_data))
@@ -65,9 +65,7 @@ class CommandTable(Directive):
                     supported_entry.append(self._create_line_block_from_list(col_data))
                     row.append(supported_entry)
                 else:
-                    col_entry = nodes.entry('')
-                    col_entry.append(self._parse_text(col_data))
-                    row.append(col_entry)
+                    row.append(nodes.entry('', nodes.paragraph(text=col_data)))
 
             table_body.append(row)
 
