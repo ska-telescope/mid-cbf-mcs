@@ -9,7 +9,7 @@ configurescan_validation_rules = {
     ], 
     "data": [
         {
-            "Scan Configuration Parameter": "",
+            "Scan Configuration Parameter": "test",
             "AA4 Ranges (see TM)": cleandoc(
                 """
                 some ``formated`` text here.
@@ -44,14 +44,14 @@ configurescan_validation_rules = {
         },
         {
             "Scan Configuration Parameter": "other",
-            "AA4 Ranges (see TM)": "1 - 24",
+            "AA4 Ranges (see TM)": "0 - 24",
             "Supported": cleandoc(
                 """
                 calls code:
                 
                 .. code-block:: bash
                 
-                   echo ${host} && curl 8.8.8.8
+                   echo $\{host\} && curl 8.8.8.8
                    cat /src/test.txt | grep "hello"
                 
                 """),
