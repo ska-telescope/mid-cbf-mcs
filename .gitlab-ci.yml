@@ -8,16 +8,15 @@ variables:
   K8S_TIMEOUT: 500s
   KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
 
-# TODO: PUT PAGES BACK AFTER JOIN-REPORTS!
 stages:
   - lint
   - build
-  - pages
   - test
   - deploy
   - integration
   - staging
   - join-reports
+  - pages
   - publish
   - scan
 
