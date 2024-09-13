@@ -44,23 +44,9 @@ configurescan_validation_rules = {
         },
         {
             "Scan Configuration Parameter": "other",
-            "AA4 Ranges (see TM)": "0 - 24",
-            "Supported": cleandoc(
-                """
-                calls code:
-                
-                remove code call
-                
-                """),
-            "Comment": cleandoc(
-                """
-                .. warning::
-
-                    This value is currently unsupported.
-
-                    using this will result in unexpected behaviour.
-
-                """),
+            "AA4 Ranges (see TM)": "1 - 24",
+            "Supported": "1 - 4",
+            "Comment": "no comment",
         }
     ]
 }
