@@ -17,7 +17,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
-HEADER_LIST = ['Command', 'Parameters', 'Long Running\nCommand', 'Return type', 'Action', 'Supported Interface(s)']
+HEADER_LIST = ['Command', 'Parameters', 'Long Running Command', 'Return type', 'Action', 'Supported Interface(s)']
 
 controller_commands = [
     { 
@@ -232,7 +232,7 @@ class CommandTable(Directive):
         table_data = table_data_mapping[table_name]
         table = nodes.table()
 
-        tgroup = nodes.tgroup(cols = 5)
+        tgroup = nodes.tgroup(cols = 6)
 
         header = nodes.thead()
         header_row = nodes.row()
