@@ -82,7 +82,7 @@ class CommandTable(Directive):
         view_list_to_parse = ViewList()
         for index, line in enumerate(lines):
             view_list_to_parse.append(line, 
-                                      source=self.state.document.current_source,
+                                      source="fakefile.rst",
                                       offset=index)
         # Create a node.
         node = nodes.section()
