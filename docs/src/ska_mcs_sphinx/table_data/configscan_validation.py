@@ -51,17 +51,18 @@ configurescan_validation_rules = {
                 
                 .. code-block:: bash
                 
-                    echo ${host} && curl 8.8.8.8
-                    cat /src/test.txt | grep "hello"
+                   echo ${host} && curl 8.8.8.8
+                   cat /src/test.txt | grep "hello"
                 
                 """),
             "Comment": cleandoc(
                 """
                 .. warning::
-                    This value is currently unsupported.
-                    
-                    using this will result in unexpected behaviour.
-                
+
+                   This value is currently unsupported.
+
+                using this will result in unexpected behaviour.
+
                 """),
         }
     ]
