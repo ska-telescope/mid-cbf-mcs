@@ -33,8 +33,8 @@ class CommandTable(Directive):
 
     def run(self):
         table_name = self.arguments[0]
-        table_data :list[dict] = table_data_mapping[table_name]
-        headers_data = table_data[0].keys()
+        table_data :list[dict] = table_data_mapping[table_name]["data"]
+        headers_data = table_data_mapping[table_name]["headers"]
         table = nodes.table()
         tgroup = nodes.tgroup(cols = len(headers_data))
 
