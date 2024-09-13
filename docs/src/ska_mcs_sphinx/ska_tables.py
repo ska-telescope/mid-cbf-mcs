@@ -81,10 +81,13 @@ class CommandTable(Directive):
         lines = text_to_parse.split('\n')
         view_list_to_parse = ViewList()
         for index, line in enumerate(lines):
-            view_list_to_parse.append(item=line, offset=index)
+            view_list_to_parse.append(line, 
+                                      source=self.state.document.current_source,
+                                      offset=index)
         # Create a node.
         node = nodes.section()
         node.document = self.state.document
+        
         nested_parse_with_titles(self.state, view_list_to_parse, node)
         return node.children
 
