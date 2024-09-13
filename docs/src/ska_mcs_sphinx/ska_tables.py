@@ -66,7 +66,7 @@ class CommandTable(Directive):
                     row.append(supported_entry)
                 else:
                     col_entry = nodes.entry('')
-                    col_entry.append(self._parse_paragraph(col_data))
+                    col_entry.append(self._parse_text(col_data))
                     row.append(col_entry)
 
             table_body.append(row)
