@@ -65,7 +65,9 @@ class CommandTable(Directive):
                     supported_entry.append(self._create_line_block_from_list(col_data))
                     row.append(supported_entry)
                 else:
-                    row.append(nodes.entry('', self._parse_text(col_data)))
+                    col_entry = nodes.entry()
+                    col_entry.children = self._parse_text(col_data)
+                    row.append(col_entry)
 
             table_body.append(row)
 
