@@ -24,6 +24,9 @@ class FspScanConfigurationBuilder:
     function_mode: FspModes = None
     function_configuration: dict = None
 
+    def __init__(self) -> None:
+        pass
+
     def _fsp_config_from_processing_regions(
         self: FspScanConfigurationBuilder, processing_regions: list[dict]
     ) -> list[dict]:
@@ -164,12 +167,14 @@ class FspScanConfigurationBuilder:
     def set_fsp_mode(
         self: FspScanConfigurationBuilder, function_mode: FspModes
     ) -> FspScanConfigurationBuilder:
+        assert function_mode is not None
         self.function_mode = function_mode
         return self
 
     def set_config(
         self: FspScanConfigurationBuilder, function_configuration: dict
     ) -> FspScanConfigurationBuilder:
+        assert self.function_configuration is not None
         self.function_configuration = copy.deepcopy(function_configuration)
         return self
 
@@ -180,7 +185,6 @@ class FspScanConfigurationBuilder:
         """
         assert self.function_mode is not None
         assert self.function_configuration is not None
-
         assert (
             "processing_regions" in self.function_configuration
         ), "function configuration requires a processing region to process"
