@@ -1313,7 +1313,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self._dish_utils.dish_id_to_vcc_id[dish]
             )
 
-        self.logger.info(f"{fsp_config}")
+        self.logger.debug(f"{fsp_config}")
 
         return fsp_config
 

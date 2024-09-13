@@ -153,7 +153,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # first construct HPS FSP ConfigureScan input
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.info(f"{hps_fsp_configuration}")
+        self.logger.debug(f"{hps_fsp_configuration}")
 
         # VCC IDs must be sorted in ascending order for the HPS
         hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"].sort()

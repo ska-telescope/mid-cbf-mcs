@@ -15,7 +15,7 @@ from threading import Event
 from typing import Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, PowerState, SimulationMode, TaskStatus
+from ska_control_model import AdminMode, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
