@@ -48,7 +48,6 @@ class TestScanConfigurationValidator:
 
         return params
 
-
     @pytest.mark.parametrize(
         "config_file_name",
         ["ConfigureScan_4_1_CORR.json"],

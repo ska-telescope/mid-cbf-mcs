@@ -70,7 +70,7 @@ class SubarrayScanConfigurationValidator:
         self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
-        Validates that the "receptors" value found in Processing Region is 
+        Validates that the "receptors" value found in Processing Region is
         within the given specification
 
         :param processing_region: Processing Region configuration as a
@@ -83,7 +83,10 @@ class SubarrayScanConfigurationValidator:
         """
         # dishes may not be specified in the
         # configuration at all, or the list may be empty
-        if "receptors" in processing_region and len(processing_region["receptors"]) > 0:
+        if (
+            "receptors" in processing_region
+            and len(processing_region["receptors"]) > 0
+        ):
             self.logger.debug(f"List of receptors: {self._dish_ids}")
             for dish in processing_region["receptors"]:
                 if dish not in self._dish_ids:
@@ -111,7 +114,7 @@ class SubarrayScanConfigurationValidator:
         Validates that the integration_factor value found in
         the Processing Region is within the given specification
 
-        :param processing_region: Processing Region configuration as a 
+        :param processing_region: Processing Region configuration as a
                     Dictionary
 
         :return: tuple with:
@@ -1084,7 +1087,7 @@ class SubarrayScanConfigurationValidator:
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["midcbf"])
 
-        # TODO: As of 4.1 Scan Configuration, PSS and PST is at the top level
+        # TODO: As of 4.0 Scan Configuration, PSS and PST is at the top level
         # TODO: PST will be moved to a Processing Region in 5.0
         if "pss" in full_configuration:
             success, msg = self._validate_pss_function_mode(
@@ -1127,13 +1130,6 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        scan_configuration_version = (
-            ((full_configuration["interface"]).split("/"))[-1]
-        ).split(".")
-
-        
-        success, msg = self._validate_scan_configuration(
-            full_configuration
-        )
+        success, msg = self._validate_scan_configuration(full_configuration)
 
         return success, msg
