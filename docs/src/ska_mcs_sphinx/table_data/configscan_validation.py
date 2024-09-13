@@ -29,7 +29,6 @@ configurescan_validation_rules = [
             * check 2
             
               * Sub-point 1
-
               * Sub-point 2
             
             * check 3

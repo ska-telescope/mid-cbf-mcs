@@ -10,6 +10,7 @@
 # Copyright (c) 2024 National Research Council of Canada
 
 from docutils import nodes
+from docutils.statemachine import StringList
 from docutils.parsers.rst import Directive
 from sphinx.util.nodes import nested_parse_with_titles
 
@@ -77,11 +78,14 @@ class CommandTable(Directive):
         return [table]
 
     def _parse_text(self, text_to_parse: str):
-        p_node = nodes.paragraph(text=text_to_parse,)
+        lines = text_to_parse.split('\n')
+        string_list_to_parse = StringList()
+        for index, line in enumerate(lines):
+            string_list_to_parse.append(item=line, offset=index)
         # Create a node.
         node = nodes.section()
         node.document = self.state.document
-        nested_parse_with_titles(self.state, p_node, node)
+        nested_parse_with_titles(self.state, string_list_to_parse, node)
         return node.children
 
     def _parse_paragraph(self, text_to_parse: str):
