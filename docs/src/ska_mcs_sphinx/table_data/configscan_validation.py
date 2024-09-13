@@ -32,13 +32,35 @@ configurescan_validation_rules = {
                 """
                 a list of items:
                 
-                * check 1
-                * check 2
+                #. check 1
+                #. check 2
                 
-                * Sub-point 1
-                * Sub-point 2
+                   * Sub-point 1
+                   * Sub-point 2
                 
-                * check 3
+                #. check 3
+                
+                """),
+        },
+        {
+            "Scan Configuration Parameter": "other",
+            "AA4 Ranges (see TM)": "1 - 24",
+            "Supported": cleandoc(
+                """
+                calls code:
+                
+                .. code-block:: bash
+                
+                    echo ${host} && curl 8.8.8.8
+                    cat /src/test.txt | grep "hello"
+                
+                """),
+            "Comment": cleandoc(
+                """
+                .. warning::
+                    This value is currently unsupported.
+                    
+                    using this will result in unexpected behaviour.
                 
                 """),
         }
