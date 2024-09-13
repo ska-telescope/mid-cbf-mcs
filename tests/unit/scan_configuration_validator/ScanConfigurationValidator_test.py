@@ -319,7 +319,7 @@ class TestScanConfigurationValidator:
         assert success is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
-    def test_Invalid_fsp_ids_amount_for_requested_bandwidth_post_v4(
+    def test_Invalid_fsp_ids_amount_for_requested_bandwidth(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: list[int],
