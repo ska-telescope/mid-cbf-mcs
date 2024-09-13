@@ -44,8 +44,8 @@ configurescan_validation_rules = {
         },
         {
             "Scan Configuration Parameter": "other",
-            "AA4 Ranges (see TM)": "1 - 24",
-            "Supported": "1 - 4",
+            "AA4 Ranges (see TM)": "[1 - 24]",
+            "Supported": "[1 - 4]",
             "Comment": "no comment",
         }
     ]
