@@ -252,6 +252,7 @@ class CommandTable(Directive):
             row = nodes.row("", classes=[row_class])
             row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Long Running Command'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
             action_entry = nodes.entry('')
             action_entry.append(self._parse_line_block(command['Action']))
