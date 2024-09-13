@@ -498,7 +498,7 @@ class SlimComponentManager(CbfComponentManager):
                 )
 
             # Poll link health every 20 seconds
-            if self.simulation_mode is False:
+            if not self.simulation_mode:
                 for idx, _ in enumerate(self._active_links):
                     # Poll link health every 20 seconds, and also verify now.
                     self._dp_links[idx].VerifyConnection()
@@ -671,7 +671,7 @@ class SlimComponentManager(CbfComponentManager):
             return ResultCode.OK, "_disconnect_links completed OK"
         try:
             for idx in range(len(self._active_links)):
-                if self.simulation_mode is False:
+                if not self.simulation_mode:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
 
                 [[result_code], [command_id]] = self._dp_links[
