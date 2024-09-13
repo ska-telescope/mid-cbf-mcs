@@ -41,8 +41,8 @@ CbfSubarray Tango Commands
 \* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 
-Supported Configurescan Values
---------------------------------
+Supported ConfigureScan Validation
+------------------------------------
 
 The telescope model will validate AA4 ranges, but due to ongoing development, 
 MCS supports a subset of values for the given parameters.
