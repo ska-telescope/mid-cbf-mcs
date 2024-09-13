@@ -33,16 +33,16 @@ class CommandTable(Directive):
     def run(self):
         table_name = self.arguments[0]
         table_data :list[dict] = table_data_mapping[table_name]
-        headers = table_data[0].keys()
+        headers_data = table_data[0].keys()
         table = nodes.table()
-        tgroup = nodes.tgroup(cols = len(headers))
+        tgroup = nodes.tgroup(cols = len(headers_data))
 
         header = nodes.thead()
         header_row = nodes.row()
 
-        for header in headers:
+        for header_value in headers_data:
             colspec_list = nodes.colspec(colwidth = 10)
-            header_list = nodes.entry('', nodes.paragraph(text=header))
+            header_list = nodes.entry('', nodes.paragraph(text=header_value))
             header_row += header_list
             tgroup += colspec_list
 
@@ -53,14 +53,14 @@ class CommandTable(Directive):
         for index, command in enumerate(table_data):
             row_class = 'row-even' if index % 2 == 0 else 'row-odd'
             row = nodes.row("", classes=[row_class])
-            for header in headers:
-                col_data = command.get(header,'')
+            for header_value in headers_data:
+                col_data = command.get(header_value,'')
                 # some special cases for some column names
-                if header == 'Action':
+                if header_value == 'Action':
                     action_entry = nodes.entry('')
                     action_entry.append(self._parse_line_block(col_data))
                     row.append(action_entry)
-                elif header == 'Supported Interface(s)':
+                elif header_value == 'Supported Interface(s)':
                     supported_entry = nodes.entry('')
                     supported_entry.append(self._create_line_block_from_list(col_data))
                     row.append(supported_entry)
