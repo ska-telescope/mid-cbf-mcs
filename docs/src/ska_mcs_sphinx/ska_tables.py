@@ -81,8 +81,9 @@ class CommandTable(Directive):
         lines = text_to_parse.split('\n')
         view_list_to_parse = ViewList()
         for index, line in enumerate(lines):
+            # Need to provide a source to report in warnings
             view_list_to_parse.append(line, 
-                                      source="fakefile.rst",
+                                      source="ska_mcs_sphinx.ska_tables",
                                       offset=index)
         # Create a node.
         node = nodes.section()

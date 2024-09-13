@@ -52,7 +52,7 @@ configurescan_validation_rules = {
                 .. code-block:: bash
                     :linenos:
 
-                    echo $\{host\} && curl 8.8.8.8
+                    echo $HOST && curl 8.8.8.8
                     cat /src/test.txt | grep "hello"
                 
                 """),
