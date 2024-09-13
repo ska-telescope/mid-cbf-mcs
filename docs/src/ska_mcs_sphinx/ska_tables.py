@@ -17,7 +17,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
-HEADER_LIST = ['Command', 'Parameters', 'Long Running Command', 'Return type', 'Action', 'Supported Interface(s)']
+HEADER_LIST = ['Command', 'Parameters', 'Long Running\nCommand', 'Return type', 'Action', 'Supported Interface(s)']
 
 controller_commands = [
     { 
@@ -205,6 +205,7 @@ sub_table_commands = [
     { 
         "Command": "Delay Model",
         "Parameters": "JSON str*",
+        "Long Running Command": "N/A",
         "Return Type": "None",
         "Action": cleandoc(
             """
