@@ -49,16 +49,17 @@ configurescan_validation_rules = {
                 """
                 calls code:
                 
-                .. code-block:: bash
-                   :linenos:
-
-                    echo $HOST && curl 8.8.8.8
-                    cat /src/test.txt | grep "hello"
+                remove code call
                 
                 """),
             "Comment": cleandoc(
                 """
-                remove warning
+                .. warning::
+
+                    This value is currently unsupported.
+
+                    using this will result in unexpected behaviour.
+
                 """),
         }
     ]
