@@ -47,17 +47,6 @@ controller_commands = [
         "Supported Interface(s)": supported_interfaces['initsysparam'],
     },
     { 
-        "Command": "Standby",
-        "Parameters": "None",
-        "Long Running Command": "No",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            None
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
         "Command": "On",
         "Parameters": "None",
         "Long Running Command": "Yes",
