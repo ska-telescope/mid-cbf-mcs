@@ -17,7 +17,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
-HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface(s)']
+HEADER_LIST = ['Command', 'Parameters', 'Long Running Command', 'Return type', 'Action', 'Supported Interface(s)']
 
 controller_commands = [
     { 
@@ -236,7 +236,7 @@ class CommandTable(Directive):
         header = nodes.thead()
         header_row = nodes.row()
 
-        for i in range(5):
+        for i in range(6):
             colspec_list = nodes.colspec(colwidth = 10)
             header_list = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
             header_row += header_list
