@@ -531,7 +531,7 @@ class TalonDxComponentManager(CbfComponentManager):
         # Now we set TalonBoard devices to SimulationMode.FALSE if they have been assigned a
         # live hardware target to monitor by the deployment configuration JSON.
 
-        if self.simulation_mode == SimulationMode.FALSE:
+        if not self.simulation_mode:
             target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
             try:
                 talon_board_proxy = context.DeviceProxy(

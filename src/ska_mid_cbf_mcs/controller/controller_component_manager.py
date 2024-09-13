@@ -886,7 +886,7 @@ class ControllerComponentManager(CbfComponentManager):
         # 4. Configure SLIM Mesh devices
 
         # Get FQDNs of Talon devices with hardware targets
-        if self.simulation_mode == SimulationMode.FALSE:
+        if not self.simulation_mode:
             self._get_talon_fqdns()
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
