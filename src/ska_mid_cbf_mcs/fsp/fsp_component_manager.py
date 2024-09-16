@@ -15,7 +15,7 @@ from threading import Event
 from typing import Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, PowerState, SimulationMode, TaskStatus
+from ska_control_model import AdminMode, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -89,7 +89,7 @@ class FspComponentManager(CbfComponentManager):
 
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
-        if self.simulation_mode == SimulationMode.FALSE:
+        if not self.simulation_mode:
             try:
                 self._proxy_hps_fsp_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_controller_fqdn

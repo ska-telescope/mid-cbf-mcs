@@ -512,6 +512,9 @@ class SlimComponentManager(CbfComponentManager):
                     # Poll link health every 20 seconds, and also verify now.
                     self._dp_links[idx].VerifyConnection()
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
+                    self.logger.debug(
+                        f"VerifyConnection() polling activated on {self._dp_links[idx].linkName}"
+                    )
         except tango.DevFailed as df:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
@@ -688,7 +691,7 @@ class SlimComponentManager(CbfComponentManager):
             return ResultCode.OK, "_disconnect_links completed OK"
         try:
             for idx in range(len(self._active_links)):
-                if self.simulation_mode is False:
+                if not self.simulation_mode:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
 
                 [[result_code], [command_id]] = self._dp_links[
