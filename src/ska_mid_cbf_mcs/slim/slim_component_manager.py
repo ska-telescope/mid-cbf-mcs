@@ -785,7 +785,6 @@ class SlimComponentManager(CbfComponentManager):
                 ),
             )
             return
-        self._update_component_state(power=PowerState.OFF)
 
         self._update_component_state(power=PowerState.OFF)
         task_callback(
