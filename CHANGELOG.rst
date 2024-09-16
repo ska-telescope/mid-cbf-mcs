@@ -7,6 +7,28 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
+  * Abstracted out the Scan Configuration Validation in Subarray into a seperate class  
+  * Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
+  * Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
+
+* CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
+  * Removed validation for tdc fields (removed from telescope model)
+  * Removed validation for doppler_phase_corr_subscription_point (removed from
+    telescope model)
+  * Removed check for existence of delay_model_subscription (mandatory in telmodel)
+  * Removed validation and setting zoom_factor and zoom_window_tuning
+
+    * Removed from telescope model
+    * Class properties remain, to be removed in base class update
+    * zoom_factor set to 0 for downstream HPS configscan, this will be set later
+      when zoom is implemented from the channel_width parameter indroduced in 
+      ADR-99
+
+  * Added cross validation for cbf.fsp.output_port for the incoming ConfigureScan
+  * Removed setting fsp subarray values from parameters removed from schema
+  * Updated ConfigureScan unit test data to interface 3.0 
+  * Updated output_port default value to expanded 2-tuple format
 
 0.15.2
 ******

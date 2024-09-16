@@ -464,6 +464,86 @@ class TestCbfController:
                         == ObsState.IDLE
                     )
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        receptors",
+        [
+            (
+                "ConfigureScan_AA4_values.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+            )
+        ],
+    )
+    def test_setting_validateSupportedConfiguration(
+        self,
+        test_proxies,
+        config_file_name,
+        receptors,
+    ):
+        """
+        Test setting the validateSupportedConfiguration attribute and see if
+        if is picked up by other dependent devices/functions.
+        """
+        wait_time_s = 5
+        sleep_time_s = 1
+
+        self.test_On(test_proxies)
+
+        # load scan config
+        f = open(data_file_path + config_file_name)
+        json_string = f.read().replace("\n", "")
+        f.close()
+        configuration = json.loads(json_string)
+        sub_id = int(configuration["common"]["subarray_id"])
+
+        # Off from SCANNING to test Abort path
+        # add receptors
+        test_proxies.subarray[sub_id].AddReceptors(receptors)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.IDLE,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # Check the validateSupportedConfiguration is True
+        assert test_proxies.controller.validateSupportedConfiguration is True
+
+        # configure scan should not work here
+        result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
+        assert result[0] == ResultCode.FAILED
+
+        test_proxies.controller.validateSupportedConfiguration = False
+
+        # configure scan should work with less restrictive checking
+        result, msg = test_proxies.subarray[sub_id].ConfigureScan(json_string)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.subarray[sub_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
+
+        # TODO: update this when Configure Scan supportes >v4.0
+        # Currently ConfigureScan cannot process >v4.0 interfaces
+        expected_msg = (
+            "> v4.0 Configure Scan Interfaces Currently not supported"
+        )
+        assert msg[0] == expected_msg
+        assert result[0] == ResultCode.FAILED
+
+        # send the Off command
+        test_proxies.controller.Off()
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        )
+
     def test_Standby(self, test_proxies):
         """
         Test the "Standby" command

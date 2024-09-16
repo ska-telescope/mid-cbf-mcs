@@ -840,54 +840,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     )
                     self._logger.warning(log_msg)
 
-                # Configure tdcEnable.
-                proxy_sw.tdcEnable = argin["tdc_enable"]
-                # if argin["tdc_enable"]:
-                #     proxy_sw.On()
-                # else:
-                #     proxy_sw.Off()
-
-                # Configure tdcNumBits.
-                if argin["tdc_enable"]:
-                    proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
-
-                # Configure tdcPeriodBeforeEpoch.
-                if "tdc_period_before_epoch" in argin:
-                    proxy_sw.tdcPeriodBeforeEpoch = int(
-                        argin["tdc_period_before_epoch"]
-                    )
-                else:
-                    proxy_sw.tdcPeriodBeforeEpoch = 2
-                    log_msg = (
-                        "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
-                        "Defaulting to 2."
-                    )
-                    self._logger.warning(log_msg)
-
-                # Configure tdcPeriodAfterEpoch.
-                if "tdc_period_after_epoch" in argin:
-                    proxy_sw.tdcPeriodAfterEpoch = int(
-                        argin["tdc_period_after_epoch"]
-                    )
-                else:
-                    proxy_sw.tdcPeriodAfterEpoch = 22
-                    log_msg = (
-                        "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
-                        "Defaulting to 22."
-                    )
-                    self._logger.warning(log_msg)
-
-                # Configure tdcDestinationAddress.
-                # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
-                if argin["tdc_enable"]:
-                    for tdc_dest in argin["tdc_destination_address"]:
-                        if tdc_dest["receptor_id"] == self._vcc_id:
-                            # TODO: validate input
-                            proxy_sw.tdcDestinationAddress = tdc_dest[
-                                "tdc_destination_address"
-                            ]
-                            break
-
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self._component_obs_fault_callback(True)
