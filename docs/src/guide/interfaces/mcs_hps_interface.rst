@@ -9,26 +9,6 @@ and start the HPS Master process. This functionality may be moved in the future,
 it is implemented in the :ref:`TalonDxComponentManager Class`, which is instantiated by the
 :ref:`CbfController`.
 
-MCS On Command
-----------------
-
-The following diagram shows the ``CbfController`` On command sequence and how it integrates with other
-components in the Mid.CBF system. The steps are outlined in detail in the 
-`Engineering Console <https://developer.skatelescope.org/projects/ska-mid-cbf-engineering-console/en/latest/system.html#on-command-sequence>`_.
-
-From a MCS perspective, the On command sequence consists of the following steps:
-
-- Arrows 4-7: Power on the Talon-DX boards
-- Arrow 9: Attempt to connect to each board over SSH (see :ref:`TalonDxComponentManager Class`)
-- Arrows 8-9: Copy the relevant binaries and bitstreams to each board
-- Arrow 10: Start up the HPS Master on each board
-- Arrow 12: Send the ``configure`` to each HPS Master device server
-
-.. figure:: ../../diagrams/on-command-sequence.png
-    :align: center
-    
-    MCS On Command Sequence
-
 Command Sequence
 -----------------
 
@@ -38,17 +18,16 @@ On Sequence
 The sequence diagram below shows the main sequence of calls in MCS
 when the On command is called. Return calls are not shown.
 
-Prior to ``On()`` being called, two pre-requisites are expected:
-1. All artifacts have been downloaded from CAR and stored under the /mnt directory inside MCS. 
-2. The Tango database has been configured, including all MCS and HPS devices that are expected to be deployed.
-3. iTango shell? This seems important for those integrating Mid.CBF, but probably not stakeholders external to our team..
+Prior to ``On()`` being called, two pre-requisite steps are expected:
+1. Artifacts have been downloaded from CAR and stored under the /mnt directory inside MCS. 
+2. The Tango database has been configured, including all MCS and HPS devices that are expected deploy.
 
 .. uml:: ../../diagrams/on-command-sequence.puml
 
 The interface between the MCS and the HPS Master device server is primarily made 
 up of the ``ConfigureTalons()`` command sent from the MCS to the HPS master, 
 which programs the FPGA and spawns the remaining HPS device servers. 
-The parameters used to configure each TalonDX board come from the "config_commands"-keyed 
+The parameters used to configure each Talon-DX board come from the "config_commands"-keyed 
 JSON objects in ``talondx-config.json``, which must be staged prior to calling Controller's 
 ``On()`` command in the path indicated by the ``Controller`` device's 
 ``TalonDxConfigPath`` property.
