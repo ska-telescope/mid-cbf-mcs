@@ -25,22 +25,22 @@ box "\nMCS\n"
     collections "Talon\nBoard" as talon
 end box
 
-lmc         ->  subarray    : AddReceptors(list[str])
-note over subarray          : ObsState: RESOURCING
+lmc         ->  subarray     : AddReceptors(list[str])
+note over subarray           : ObsState: RESOURCING
 
 group #LightCyan For each receptor in argin:
-    subarray    -> subarray     : Validate\nreceptors
-    note over vcc               : OpState: ON
-    subarray    ->  vcc         : Update subarrayMembership
-    subarray    ->  talon       : Update subarrayID
+    subarray    -> subarray  : Validate receptors in argin
+    note over vcc            : OpState: ON
+    subarray    ->  vcc      : Update subarrayMembership
+    subarray    ->  talon    : Update subarrayID
 end group
 
-subarray    ->  subarray    : Update receptors
+subarray    ->  subarray     : Update receptors
 
 group #SeaShell If len(receptors) == 0:
-    note over subarray          : ObsState: EMPTY
+    note over subarray       : ObsState: EMPTY
 else
-    note over subarray          : ObsState: IDLE
+    note over subarray       : ObsState: IDLE
 end group
 
 

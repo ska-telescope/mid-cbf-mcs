@@ -9,40 +9,6 @@ and start the HPS Master process. This functionality may be moved in the future,
 it is implemented in the :ref:`TalonDxComponentManager Class`, which is instantiated by the
 :ref:`CbfController`.
 
-MCS and HPS Master DS
-----------------------
-The interface between the MCS and the HPS Master device server is primarily made up
-of the ``configure`` command sent from the MCS to the HPS master, which programs the
-FPGA and spawns the remaining HPS device servers. Before this command can be run, it is 
-expected that the MCS has already copied the necessary bitstreams and binaries to the board
-and the HPS master has obviously been started. This is all handled automatically as part of
-the :ref:`MCS On Command`.
-
-The ``configure`` command has one argument, which is a JSON-formatted string. An example
-of its contents can be seen below.
-
-.. code-block:: json
-
-    {
-        "description": "Configures Talon DX to run VCC firmware and devices.",
-        "target": "talon1",
-        "ip_address": "169.254.100.1",
-        "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
-        "fpga_path": "/lib/firmware",
-        "fpga_dtb_name": "vcc3_2ch4.dtb",
-        "fpga_rbf_name": "vcc3_2ch4.core.rbf",
-        "fpga_label": "base",
-        "ds_path": "/lib/firmware/hps_software/vcc_test",
-        "server_instance": "talon1_test",
-        "devices": [
-            "dscircuitswitch",
-            "dsdct",
-            "dsfinechannelizer",
-            "dstalondxrdma",
-            "dsvcc"
-        ]
-    }
-
 MCS On Command
 ----------------
 
@@ -72,7 +38,44 @@ On Sequence
 The sequence diagram below shows the main sequence of calls in MCS
 when the On command is called. Return calls are not shown.
 
+Prior to ``On()`` being called, two pre-requisites are expected:
+1. All artifacts have been downloaded from CAR and stored under the /mnt directory inside MCS. 
+2. The Tango database has been configured, including all MCS and HPS devices that are expected to be deployed.
+3. iTango shell? This seems important for those integrating Mid.CBF, but probably not stakeholders external to our team..
+
 .. uml:: ../../diagrams/on-command-sequence.puml
+
+The interface between the MCS and the HPS Master device server is primarily made 
+up of the ``ConfigureTalons()`` command sent from the MCS to the HPS master, 
+which programs the FPGA and spawns the remaining HPS device servers. 
+The parameters used to configure each TalonDX board come from the "config_commands"-keyed 
+JSON objects in ``talondx-config.json``, which must be staged prior to calling Controller's 
+``On()`` command in the path indicated by the ``Controller`` device's 
+``TalonDxConfigPath`` property.
+
+An example of such a configuration is provided below:
+
+.. code-block:: json
+
+    {
+        "config_commands": [
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "001",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon1_test",
+                "devices": [
+                    "ska-mid-cbf-vcc-app"
+                ]
+            }
+        ]
+    }
 
 Off Sequence
 ++++++++++++++
@@ -108,7 +111,7 @@ Note that there also exists a RemoveAllReceptors command, which has the same
 code flow; the only difference is that it takes no argument and instead submits 
 a full copy of the current assigned receptors to the loop that resets the subdevices.
 
-.. uml:: ../../diagrams/add-receptors.puml
+.. uml:: ../../diagrams/remove-receptors.puml
 
 .. _config_scan:
 Configure Scan Sequence
