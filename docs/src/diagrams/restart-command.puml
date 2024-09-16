@@ -59,20 +59,20 @@ subarray    ->  vcc           : ObsReset
 note over vcc                 : ObsState: RESETTING
 vcc         ->  hpsvccband    : ObsReset (stub)
 note over hpsvccband          : (TBD)
-vcc         ->  vcc           : Deconfigure scan\nconfiguration parameters 
+vcc         ->  vcc           : Deconfigure scan configuration 
 note over vcc                 : ObsState: IDLE
 
 subarray    ->  fspsubarray   : ObsReset
 note over fspsubarray         : ObsState: RESETTING
 fspsubarray ->  hpsfsp        : ObsReset (stub)
 note over hpsfsp              : (TBD)
-fspsubarray ->  fspsubarray   : Deconfigure scan\nconfiguration parameters
+fspsubarray ->  fspsubarray   : Deconfigure scan configuration
 note over fspsubarray         : ObsState: IDLE
 
 group #LightCyan For each FSP:
     subarray    -> fsp        : RemoveSubarrayMembership
     note over hpsfsp_cont     : functionMode: IDLE
-    group #SeaShell If no subarray membership:
+    group #SeaShell If len(subarrayMembership) == 0:
       note over fsp           : OpState: UNKNOWN
     end group
 end group
@@ -82,12 +82,12 @@ group #LemonChiffon Delay model subscription point
 end group
 
 group #LightCyan For each assigned receptor:
-  subarray    ->  vcc         : Reset SubarrayMembership attribute
+  subarray    ->  vcc         : Reset subarrayMembership
   note over vcc               : OpState: UNKNOWN
-  subarray    ->  talonboard  : Reset SubarrayID attribute
+  subarray    ->  talonboard  : Reset subarrayID
 end group
 
-subarray      -> subarray     : Reset scan configuration\nattributes
+subarray      -> subarray     : Reset scan configuration
 
 note over subarray            : ObsState: EMPTY
 lmc         <--  subarray     : Success

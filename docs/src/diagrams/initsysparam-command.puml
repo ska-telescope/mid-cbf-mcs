@@ -25,18 +25,18 @@ box "\nMCS\n"
 end box
 participant "CAR\n" as car #YellowGreen
 
-lmc          -> controller           : InitSysParam(json_str)
-controller      -> controller           : validate JSON \nagainst schema
+lmc          -> controller          : InitSysParam(json_str)
+controller   -> controller          : Validate JSON against schema
 
 group #SeaShell If JSON is valid:
   group #SeaShell If URI provided:
-    controller      -> car            : retrieve init sys param file
-    controller      -> controller     : validate JSON \nagainst schema
+    controller    -> car            : Retrieve init sys param JSON file
+    controller    -> controller     : Validate JSON  against schema
   end group
-  controller      -> controller     : store sys_param
-  controller      -> subarray       : write sys_param (json_str)
-  subarray     -> subarray          : store sys_param
-  controller      -> vcc            : set dish ID
+  controller      -> controller     : Update sysParam
+  controller      -> subarray       : Set sysParam
+  subarray        -> subarray       : Update sysParam
+  controller      -> vcc            : Set dishID
   lmc         <-- controller        : Success
 end group
 

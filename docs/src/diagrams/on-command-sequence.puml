@@ -41,11 +41,11 @@ lmc -> controller               : On()
 
 group #LightCyan For each Talon LRU in configuration:
   controller    ->  lru         : On()
-  lru           ->  ps      : outlet1_state = GetOutletPowerState(outlet1)
+  lru           ->  ps          : outlet1_state = GetOutletPowerState(outlet1)
   ps            ->  pdu         : GetOutletPowerState(outlet1)
-  group #SeaShell If using_single_outlet == True:
+  group #SeaShell If using single outlet:
     lru         ->  lru         : outlet2_state = outlet1_state
-    else
+  else
     lru         ->  ps          : outlet2_state = GetOutletPowerState(outlet2)
     ps          ->  pdu         : GetOutletPowerState(outlet2)
   end group
@@ -59,7 +59,7 @@ group #LightCyan For each Talon LRU in configuration:
 
   lru           ->  ps          : TurnOnOutlet(outlet1)
   ps            ->  pdu         : TurnOnOutlet(outlet1)
-  group #SeaShell If using_single_outlet == False:
+  group #SeaShell If using both outlets:
     lru         ->  ps          : TurnOnOutlet(outlet2)
     ps          ->  pdu         : TurnOnOutlet(outlet2)
   end group
@@ -80,42 +80,40 @@ group #LightCyan For each Talon board in configuration:
   end group
   hpsmaster     ->  hpsmaster   : HealthCheck()
   note over hpsmaster           : OpState: ON
-  group #SeaShell If simulationMode == FALSE
-    tdx         ->  talon_board : Set SimulationMode.FALSE
-  end group
 
   controller    ->  talon_board : Set device properties
   controller    ->  talon_board : Init()
   controller    ->  talon_board : Set SimulationMode
   controller    ->  talon_board : Set AdminMode.ONLINE
+  note over talon_board         : OpState: ON
   controller    ->  talon_board : Update dishID, vccID\nattributes from hw_config
 end group
 
 group #LightCyan For each SLIM:
-  controller      ->  slim     : Set SimulationMode
-  controller      ->  slim     : On()
-  note over slim               : OpState: ON
-  controller      ->  slim     : Configure(yaml_str)
+  controller      ->  slim      : Set SimulationMode
+  controller      ->  slim      : On()
+  note over slim                : OpState: ON
+  controller      ->  slim      : Configure(yaml_str)
   group #SeaShell If mesh_configured == True
     group #LightCyan For each active SlimLink:
-      slimlink  -> hpsdevices     : DisconnectTxRx()
+      slimlink    -> hpsdevices : DisconnectTxRx()
     end group
-    slim     ->  slim       : mesh_configured = False
+    slim          ->  slim      : mesh_configured = False
   end group
 
   group #LightCyan For each active SlimLink:
-      slim   ->  slimlink      : Set Tx and Rx device FQDNs
-      slim   ->  slimlink      : ConnectTxRx()
-      slimlink  ->  slimlink      : Sync idle control words
-      slimlink  ->  hpsdevices    : InitializeConnection(serial_loopback=False)
-      slimlink  ->  slimlink      : ClearCounters(),\nSet linkName attribute
-      slim   ->  slimlink      : Start polling VerifyConnection()
-    end group
-  slim       ->  slim       : mesh_configured = True
+    slim        ->  slimlink    : Set Tx and Rx device FQDNs
+    slim        ->  slimlink    : ConnectTxRx()
+    slimlink    ->  slimlink    : Sync idle control words
+    slimlink    ->  hpsdevices  : InitializeConnection(serial_loopback=False)
+    slimlink    ->  slimlink    : ClearCounters(),\nSet linkName
+    slim        ->  slimlink    : Start polling VerifyConnection()
+  end group
+  slim          ->  slim        : mesh_configured = True
 end group
 
 note over controller            : OpState: ON
 
-lmc          <--  controller    : Success
+lmc           <--  controller   : Success
 
 @enduml

@@ -41,7 +41,7 @@ group #LightCyan For each FSP:
     subarray    -> fsp          : RemoveSubarrayMembership
     note over fspcorr           : OpState: UNKNOWN
     note over fsp_cont          : functionMode: IDLE
-    group #SeaShell If no subarray membership:
+    group #SeaShell If len(subarrayMembership) == 0:
       note over fsp             : OpState: UNKNOWN
     end group
 end group
@@ -71,19 +71,19 @@ group #LightCyan For each FSP in use:
     group #SeaShell If functionMode == IDLE:
         note over fsp               : OpState: ON
         subarray    -> fsp          : SetFunctionMode(str)
-        fsp         -> fsp          : Validate\nfunctionMode
+        fsp         -> fsp          : Validate functionMode
         fsp         -> fsp_cont     : SetFunctionMode(int)
         note over fsp_cont          : functionMode: CORR
         note over fsp               : functionMode: CORR 
     end group
 
     subarray    -> fsp          : AddSubarrayMembership(int)
-    fsp         -> fsp          : Validate\nsubarray ID
+    fsp         -> fsp          : Validate subarrayID
     note over fspcorr           : OpState: ON
-    fsp         -> fsp          : Update\nSubarrayMembership
+    fsp         -> fsp          : Update subarrayMembership
 
     subarray    -> fspcorr      : ConfigureScan(json_str)
-    fspcorr     -> fspcorr      : Reset old configuration,\nRelease all VCCs,\nLoad FSP configuration,\nAssign new VCCs,\nBuild HPS FSP CORR\nconfiguration
+    fspcorr     -> fspcorr      : Reset old configuration,\nRelease all VCCs,\nLoad FSP configuration,\nAssign new VCCs,\nBuild HPS FSP CORR configuration
     fspcorr     -> fspcorr_cont : ConfigureScan(json_str)
     note over fspcorr           : ObsState: READY
 end group

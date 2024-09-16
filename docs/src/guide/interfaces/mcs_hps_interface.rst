@@ -90,6 +90,26 @@ to initialize the system parameters.
 
 .. uml:: ../../diagrams/initsysparam-command.puml
 
+AddReceptors Sequence
+++++++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to assign resources to a subarray.
+
+.. uml:: ../../diagrams/add-receptors.puml
+
+RemoveReceptors Sequence
+++++++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to release resources from a subarray.
+
+Note that there also exists a RemoveAllReceptors command, which has the same 
+code flow; the only difference is that it takes no argument and instead submits 
+a full copy of the current assigned receptors to the loop that resets the subdevices.
+
+.. uml:: ../../diagrams/add-receptors.puml
+
 .. _config_scan:
 Configure Scan Sequence
 ++++++++++++++++++++++++

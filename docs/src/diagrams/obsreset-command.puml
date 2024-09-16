@@ -57,21 +57,21 @@ subarray    ->  vcc           : ObsReset
 note over vcc                 : ObsState: RESETTING
 vcc         ->  hpsvccband    : ObsReset (stub)
 note over hpsvccband          : (TBD)
-vcc         ->  vcc           : Deconfigure scan\nconfiguration parameters 
+vcc         ->  vcc           : Deconfigure scan configuration 
 note over vcc                 : ObsState: IDLE
 
 subarray    ->  fspsubarray   : ObsReset
 note over fspsubarray         : ObsState: RESETTING
 fspsubarray ->  hpsfsp        : ObsReset (stub)
 note over hpsfsp              : (TBD)
-fspsubarray ->  fspsubarray   : Deconfigure scan\nconfiguration parameters
+fspsubarray ->  fspsubarray   : Deconfigure scan configuration
 note over fspsubarray         : ObsState: IDLE
 subarray    <--  fspsubarray  : Success
 
 group #LightCyan For each FSP:
     subarray    -> fsp        : RemoveSubarrayMembership
     note over hpsfsp_cont     : functionMode: IDLE
-    group #SeaShell If no subarray membership:
+    group #SeaShell If len(subarrayMembership) == 0:
       note over fsp           : OpState: UNKNOWN
     end group
 end group
