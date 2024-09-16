@@ -238,6 +238,28 @@ class ControllerComponentManager(CbfComponentManager):
 
         return True
 
+    # TODO: Use to set not fitted for unused devices
+    def _set_proxy_not_fitted(
+        self: ControllerComponentManager,
+        fqdn: str,
+    ) -> bool:
+        """
+        Set the AdminMode of the component device to NOT_FITTED, given the FQDN of the device
+
+        :param fqdn: FQDN of the component device
+        :return: True if the AdminMode of the device is successfully set to NOT_FITTED, False otherwise.
+        """
+        self.logger.info(f"Setting {fqdn} to AdminMode.NOT_FITTED")
+
+        try:
+            self._proxies[fqdn].adminMode = AdminMode.NOT_FITTED
+        except tango.DevFailed as df:
+            self.logger.error(
+                f"Failed to set AdminMode of {fqdn} to NOT_FITTED: {df}"
+            )
+            return False
+        return True
+
     def _init_device_proxy(
         self: ControllerComponentManager,
         fqdn: str,
