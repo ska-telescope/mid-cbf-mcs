@@ -497,7 +497,6 @@ class SlimComponentManager(CbfComponentManager):
                     "Nested LRC SlimLink.ConnectTxRx() timed out",
                 )
 
-            # Poll link health every 20 seconds
             if not self.simulation_mode:
                 for idx, _ in enumerate(self._active_links):
                     # Poll link health every 20 seconds, and also verify now.
@@ -768,8 +767,8 @@ class SlimComponentManager(CbfComponentManager):
                 ),
             )
             return
+        
         self._update_component_state(power=PowerState.OFF)
-
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(

@@ -2083,6 +2083,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
+            # There is no obsFault action implemented, however, setting to False
+            # still updates the component state dict in BaseComponentManager.
+            self._update_component_state(obsfault=False)
 
         obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
