@@ -11,10 +11,12 @@
 from __future__ import annotations
 
 import os
-from time import sleep
 
-import pytest
+from ska_control_model import SimulationMode
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, LoggingLevel
+from ska_tango_testing import context
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 # Standard imports
@@ -33,85 +35,118 @@ class TestSlimLink:
     Test class for Slim device class integration testing.
     """
 
-    def test_Connect(self: TestSlimLink, test_proxies: pytest.fixture) -> None:
+    def test_Online(
+        self: TestSlimLink,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
-        wait_time_s = 3
-        sleep_time_s = 1
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
-        # Start monitoring the TalonLRUs and power switch devices
-        for proxy in test_proxies.power_switch:
-            proxy.adminMode = AdminMode.ONLINE
+        # trigger start_communicating by setting the AdminMode to ONLINE
+        device_under_test.adminMode = AdminMode.ONLINE
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
+        change_event_callbacks["healthState"].assert_change_event(
+            HealthState.UNKNOWN
+        )
 
-        for proxy in test_proxies.talon_lru:
-            proxy.adminMode = AdminMode.ONLINE
-            proxy.set_timeout_millis(10000)
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
-        device_under_test = test_proxies.slim_link
-
-        # The Slim should be in the UNKNOWN state after being initialised
-        for link in device_under_test:
-            link.loggingLevel = LoggingLevel.DEBUG
-            link.adminMode = AdminMode.ONLINE
-
-            test_proxies.wait_timeout_dev(
-                [link], DevState.UNKNOWN, wait_time_s, sleep_time_s
-            )
-            assert link.State() == DevState.UNKNOWN
-
-    def test_VerifyConnection(
-        self: TestSlimLink, test_proxies: pytest.fixture
+    def test_ConnectTxRx(
+        self: TestSlimLink,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
-        Verify the component manager can verify a link's health
+        Test the "ConnectTxRx" command
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
+        device_under_test.txDeviceName = "talondx/slim-tx-rx/tx-sim0"
+        device_under_test.rxDeviceName = "talondx/slim-tx-rx/rx-sim0"
+        result_code, command_id = device_under_test.ConnectTxRx()
+        assert result_code == [ResultCode.QUEUED]
 
-        sleep_time_s = 0.1
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "ConnectTxRx completed OK"]')
+        )
 
-        device_under_test = test_proxies.slim_link
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
-        for idx, link in enumerate(device_under_test):
-            link.txDeviceName = "talondx/slim-tx-rx/tx-sim" + str(idx)
-            link.rxDeviceName = "talondx/slim-tx-rx/rx-sim" + str(idx)
-            link.ConnectTxRx()
-            sleep(sleep_time_s)
-            link.VerifyConnection()
-            assert link.healthState == HealthState.OK
+    def test_VerifyConnection(
+        self: TestSlimLink,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the "VerifyConnection" method amd verify that the component manager can verify a link's health
 
-    def test_Disconnect(
-        self: TestSlimLink, test_proxies: pytest.fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        """
+        assert (
+            device_under_test.linkName
+            == "talondx/slim-tx-rx/tx-sim0->talondx/slim-tx-rx/rx-sim0"
+        )
+
+        result_code, message = device_under_test.VerifyConnection()
+        assert result_code == ResultCode.OK
+        change_event_callbacks["healthState"].assert_change_event(
+            HealthState.OK
+        )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    def test_DisconnectTxRx(
+        self: TestSlimLink,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
+        """
+        Test the "DisconnectTxRx" command
+
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        """
+        result_code, command_id = device_under_test.DisconnectTxRx()
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "DisconnectTxRx completed OK"]')
+        )
+
+        assert device_under_test.linkName == ""
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
+    def test_Offline(
+        self: TestSlimLink,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Verify the component manager can stop communicating
 
-        :param test_proxies: the proxies test fixture
+        :param device_under_test: the device under test
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
         """
+        device_under_test.adminMode = AdminMode.OFFLINE
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        device_under_test = test_proxies.slim_link
-
-        for link in device_under_test:
-            # trigger stop_communicating by setting the AdminMode to OFFLINE
-            link.adminMode = AdminMode.OFFLINE
-
-            # controller device should be in DISABLE state after stop_communicating
-            test_proxies.wait_timeout_dev(
-                [link], DevState.DISABLE, wait_time_s, sleep_time_s
-            )
-            assert link.State() == DevState.DISABLE
-
-        # Stop monitoring the TalonLRUs and power switch devices
-        for proxy in test_proxies.power_switch:
-            proxy.adminMode = AdminMode.OFFLINE
-
-        for proxy in test_proxies.talon_lru:
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.set_timeout_millis(10000)
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()

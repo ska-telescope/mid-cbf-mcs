@@ -1,10 +1,8 @@
-from enum import Enum
+from enum import IntEnum
 
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
 
-# TODO - Temporary class. These values should be retrieved
-#        from their respective devices (?)
 class Const:
     def __init__(self):
         self.MIN_INT_TIME = 1  # ADR-35: changed from 140 ms to 1 (factor)
@@ -31,12 +29,17 @@ class Const:
         self.FREQUENCY_BAND_3_RANGE_HZ = (1.65 * 10**9, 3.05 * 10**9)
         self.FREQUENCY_BAND_4_RANGE_HZ = (2.80 * 10**9, 5.18 * 10**9)
 
-        self.MAX_VCC = 4
+        self.MAX_VCC = 197
+        self.MAX_FSP = 27
         self.MAX_SUBARRAY = 16
 
-        self.DEFAULT_COUNT_VCC = 197
-        self.DEFAULT_COUNT_FSP = 27
-        self.DEFAULT_COUNT_SUBARRAY = 16
+        self.MAX_NUM_FS_LINKS = 16  # AA0.5
+        self.MAX_NUM_VIS_LINKS = 4
+
+        # TODO: update values as max capabilities increases
+        self.DEFAULT_COUNT_VCC = 4
+        self.DEFAULT_COUNT_FSP = 4
+        self.DEFAULT_COUNT_SUBARRAY = 1
 
         self.DEFAULT_TIMEOUT = 4
 
@@ -53,7 +56,8 @@ class Const:
 const = Const()
 
 
-class FspModes(Enum):
+# TODO: use ObsMode
+class FspModes(IntEnum):
     IDLE = 0
     CORR = 1
     PSS_BF = 2
@@ -172,7 +176,7 @@ mhz_to_hz = 1000000
 
 
 class AcceptedScanConfigurationVersion:
-    # {major verions : {minor versions...}}
+    # {major versions : {minor versions...}}
     # For Interface Versions with Correlator Processing Regions Configuration
     versions = {3: {0}, 4: {0, 1}}
 

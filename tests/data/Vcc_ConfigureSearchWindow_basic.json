@@ -1,8 +1,0 @@
-{
-    "frequency_band": "5a",
-    "band_5_tuning": [5.85, 7.25],
-    "frequency_band_offset_stream1": 0,
-    "frequency_band_offset_stream2": 0,
-    "search_window_id": 1,
-    "search_window_tuning": 6000000000
-}

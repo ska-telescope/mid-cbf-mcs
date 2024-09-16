@@ -13,6 +13,8 @@ telescope: SKA-mid
 signalVerificationVersion: 0.2.16
 svImageRegistry: "artefact.skao.int"
 
+num_subarrays: 1
+
 labels:
   app: ska-mid-cbf-mcs
 

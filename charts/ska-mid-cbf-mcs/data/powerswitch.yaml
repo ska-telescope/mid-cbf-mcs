@@ -38,10 +38,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "1234"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
       - name: "mid_csp_cbf/power_switch/002"
         properties:
           - name: "PowerSwitchModel"
@@ -56,10 +52,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "admn-1-Psi"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
       - name: "mid_csp_cbf/power_switch/003"
         properties:
           - name: "PowerSwitchModel"
@@ -74,10 +66,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "apc"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
       - name: "mid_csp_cbf/power_switch/004"
         properties:
           - name: "PowerSwitchModel"
@@ -92,10 +80,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "testingapcsnmp"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

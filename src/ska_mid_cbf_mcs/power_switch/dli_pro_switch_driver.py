@@ -12,12 +12,11 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
 import requests
 from requests.structures import CaseInsensitiveDict
+from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -35,6 +34,8 @@ class DLIProSwitchDriver:
     :param password: Login password for the power switch
     :param logger: a logger for this object to use
     """
+
+    power_switch_outlets = 8
 
     query_timeout_s = 6
     """Timeout in seconds used when waiting for a reply from the power switch"""
@@ -82,10 +83,12 @@ class DLIProSwitchDriver:
         self.state_off = "False"
 
         # valid range 0 to 7
-        self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+        self.outlet_id_list: list[str] = [
+            str(i) for i in range(0, self.power_switch_outlets)
+        ]
 
         # Initialize outlets
-        self.outlets: List(Outlet) = []
+        self.outlets: list[Outlet] = []
 
     def initialize(self: DLIProSwitchDriver) -> None:
         """
@@ -138,17 +141,16 @@ class DLIProSwitchDriver:
             self.logger.error("Failed to connect to power switch")
             return False
 
-    def get_outlet_power_mode(
+    def get_outlet_power_state(
         self: DLIProSwitchDriver, outlet: str
-    ) -> PowerMode:
+    ) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
-        :raise AssertionError: if outlet power mode is different than expected
         """
 
         assert (
@@ -175,32 +177,32 @@ class DLIProSwitchDriver:
                     state = str(resp["state"])
 
                     if state == self.state_on:
-                        power_mode = PowerMode.ON
+                        power_state = PowerState.ON
                     elif state == self.state_off:
-                        power_mode = PowerMode.OFF
+                        power_state = PowerState.OFF
                     else:
-                        power_mode = PowerMode.UNKNOWN
+                        power_state = PowerState.UNKNOWN
 
                 except IndexError:
-                    power_mode = PowerMode.UNKNOWN
+                    power_state = PowerState.UNKNOWN
 
-                if power_mode != self.outlets[outlet_idx].power_mode:
-                    raise AssertionError(
-                        f"Power mode of outlet ID {outlet} ({power_mode})"
-                        f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
+                if power_state != self.outlets[outlet_idx].power_state:
+                    self.logger.error(
+                        f"power state of outlet ID {outlet} ({power_state})"
+                        f" is different than the expected mode {self.outlets[outlet_idx].power_state}"
                     )
-                return power_mode
+                return power_state
             else:
                 self.logger.error(
                     f"HTTP response error: {response.status_code}"
                 )
-                return PowerMode.UNKNOWN
+                return PowerState.UNKNOWN
         except (
             requests.exceptions.ConnectTimeout,
             requests.exceptions.ConnectionError,
         ):
             self.logger.error("Failed to connect to power switch")
-            return PowerMode.UNKNOWN
+            return PowerState.UNKNOWN
 
     def turn_on_outlet(
         self: DLIProSwitchDriver, outlet: str
@@ -217,7 +219,6 @@ class DLIProSwitchDriver:
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
-
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_on_action
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -236,7 +237,7 @@ class DLIProSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerMode.ON
+                self.outlets[outlet_idx].power_state = PowerState.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -262,7 +263,6 @@ class DLIProSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
@@ -280,12 +280,11 @@ class DLIProSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                self.outlets[outlet_idx].power_mode = PowerMode.OFF
+                self.outlets[outlet_idx].power_state = PowerState.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
                 self.logger.error(
@@ -299,7 +298,7 @@ class DLIProSwitchDriver:
             self.logger.error("Failed to connect to power switch")
             return ResultCode.FAILED, "Connection error"
 
-    def get_outlet_list(self: DLIProSwitchDriver) -> List(Outlet):
+    def get_outlet_list(self: DLIProSwitchDriver) -> list[Outlet]:
         """
         Query the power switch for a list of outlets and get their name
         and current state.
@@ -321,7 +320,7 @@ class DLIProSwitchDriver:
 
             if response.status_code == requests.codes.ok:
                 # Extract the outlet list
-                outlets: List(Outlet) = []
+                outlets: list[Outlet] = []
                 resp_list = response.json()
 
                 for idx, resp_dict in enumerate(resp_list):
@@ -329,20 +328,20 @@ class DLIProSwitchDriver:
                         state = str(resp_dict["state"])
 
                         if state == self.state_on:
-                            power_mode = PowerMode.ON
+                            power_state = PowerState.ON
                         elif state == self.state_off:
-                            power_mode = PowerMode.OFF
+                            power_state = PowerState.OFF
                         else:
-                            power_mode = PowerMode.UNKNOWN
+                            power_state = PowerState.UNKNOWN
 
                     except IndexError:
-                        power_mode = PowerMode.UNKNOWN
+                        power_state = PowerState.UNKNOWN
 
                     outlets.append(
                         Outlet(
                             outlet_ID=str(idx),
                             outlet_name=resp_dict["name"],
-                            power_mode=power_mode,
+                            power_state=power_state,
                         )
                     )
                 return outlets

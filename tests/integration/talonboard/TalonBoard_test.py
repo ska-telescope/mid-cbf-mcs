@@ -8,122 +8,112 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 """Contain the tests for the TalonBoard."""
+from __future__ import annotations
 
-import time
-
-import pytest
+from ska_control_model import LoggingLevel
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, SimulationMode
 
 # Tango imports
-from ska_tango_base.control_model import AdminMode, SimulationMode
+from ska_tango_testing import context
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
 
-@pytest.mark.usefixtures("test_proxies")
 class TestTalonBoard:
     """
     Test class for TalonBoard device class integration testing.
     """
 
-    def test_Connect(self, test_proxies):
+    def test_Online(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # after init devices should be in DISABLE state
-        assert test_proxies.talon_board.adminMode == AdminMode.OFFLINE
-        assert test_proxies.talon_board.State() == DevState.DISABLE
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # trigger start_communicating by setting the AdminMode to ONLINE
-        test_proxies.talon_board.adminMode = AdminMode.ONLINE
+        device_under_test.adminMode = AdminMode.ONLINE
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        # controller device should be in OFF state after start_communicating
-        test_proxies.wait_timeout_dev(
-            [test_proxies.talon_board], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.talon_board.State() == DevState.OFF
-
-    def test_On(self, test_proxies):
+    def test_On(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the "On" command
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
         # send the On command
-        test_proxies.talon_board.On()
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.talon_board], DevState.ON, wait_time_s, sleep_time_s
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (
+                f"{command_id[0]}",
+                '[0, "On completed OK"]',
+            )
         )
-        assert test_proxies.talon_board.State() == DevState.ON
 
-        # Turn on Simulation Mode
-        test_proxies.talon_board.simulationMode = SimulationMode.TRUE
-        assert test_proxies.talon_board.simulationMode == SimulationMode.TRUE
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
 
-    def test_FPGA_Die_Voltage_Readings(self, test_proxies):
+    def test_FPGA_Die_Temperature_Read(
+        self: TestTalonBoard, device_under_test: context.DeviceProxy
+    ) -> None:
+        """
+        Test reading the FPGA Die Temperature Attributes
+        See talon_board_simulator.py for the values expected
+        """
+        assert device_under_test.fpgaDieTemperature == 50.0
+
+    def test_FPGA_Die_Voltage_Read(
+        self: TestTalonBoard, device_under_test: context.DeviceProxy
+    ) -> None:
         """
         Test reading the 7 FPGA Die Voltage Attributes
         See talon_board_simulator.py for the values expected
         """
+        assert device_under_test.fpgaDieVoltage0 == 12.0
+        assert device_under_test.fpgaDieVoltage1 == 2.5
+        assert device_under_test.fpgaDieVoltage2 == 0.87
+        assert device_under_test.fpgaDieVoltage3 == 1.8
+        assert device_under_test.fpgaDieVoltage4 == 1.8
+        assert device_under_test.fpgaDieVoltage5 == 0.9
+        assert device_under_test.fpgaDieVoltage6 == 1.8
 
-        # There seems to be some delay with callbacks to turn on SimulationMode on the Component Manager
-        time.sleep(5)
-        assert test_proxies.talon_board.FpgaDieVoltage0 == 12.0
-        assert test_proxies.talon_board.FpgaDieVoltage1 == 2.5
-        assert test_proxies.talon_board.FpgaDieVoltage2 == 0.87
-        assert test_proxies.talon_board.FpgaDieVoltage3 == 1.8
-        assert test_proxies.talon_board.FpgaDieVoltage4 == 1.8
-        assert test_proxies.talon_board.FpgaDieVoltage5 == 0.9
-        assert test_proxies.talon_board.FpgaDieVoltage6 == 1.8
-
-    def test_Off(self, test_proxies):
+    def test_Off(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Test the "Off" command
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
         # if controller is already off, we must turn it On before turning off.
-        if test_proxies.talon_board.State() == DevState.OFF:
-            test_proxies.talon_board.On()
-            test_proxies.wait_timeout_dev(
-                [test_proxies.talon_board],
-                DevState.ON,
-                wait_time_s,
-                sleep_time_s,
-            )
+        if device_under_test.State() == DevState.OFF:
+            self.test_On(device_under_test, change_event_callbacks)
 
-        assert test_proxies.talon_board.State() == DevState.ON
         # send the Off command
-        test_proxies.talon_board.Off()
+        result_code, message = device_under_test.Off()
+        assert result_code == [ResultCode.OK]
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.talon_board], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.talon_board.State() == DevState.OFF
-
-    def test_Disconnect(self, test_proxies):
+    def test_Offline(
+        self: TestTalonBoard,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+    ) -> None:
         """
         Verify the component manager can stop communicating
         """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
         # trigger stop_communicating by setting the AdminMode to OFFLINE
-        test_proxies.talon_board.adminMode = AdminMode.OFFLINE
-
-        # controller device should be in DISABLE state after stop_communicating
-        test_proxies.wait_timeout_dev(
-            [test_proxies.talon_board],
-            DevState.DISABLE,
-            wait_time_s,
-            sleep_time_s,
-        )
+        device_under_test.adminMode = AdminMode.OFFLINE
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)

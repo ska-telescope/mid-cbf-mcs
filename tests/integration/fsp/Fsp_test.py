@@ -59,66 +59,6 @@ class TestFsp:
         assert test_proxies.fsp[fsp_id].State() == DevState.OFF
 
     @pytest.mark.parametrize("fsp_id", [1])
-    def test_On(
-        self: TestFsp, test_proxies: pytest.fixture, fsp_id: int
-    ) -> None:
-        """
-        Test the "On" command
-        """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # send the On command
-        test_proxies.fsp[fsp_id].On()
-
-        test_proxies.wait_timeout_dev(
-            [test_proxies.fsp[fsp_id]], DevState.ON, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.fsp[fsp_id].State() == DevState.ON
-
-    @pytest.mark.parametrize("fsp_id", [1])
-    def test_Off(
-        self: TestFsp, test_proxies: pytest.fixture, fsp_id: int
-    ) -> None:
-        """
-        Test the "Off" command
-        """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # send the Off command
-        test_proxies.fsp[fsp_id].Off()
-
-        test_proxies.wait_timeout_dev(
-            [test_proxies.fsp[fsp_id]], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.fsp[fsp_id].State() == DevState.OFF
-
-    @pytest.mark.parametrize("fsp_id", [1])
-    def test_Standby(
-        self: TestFsp, test_proxies: pytest.fixture, fsp_id: int
-    ) -> None:
-        """
-        Test the "Standby" command
-        """
-
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        # send the Standby command
-        test_proxies.fsp[fsp_id].Standby()
-
-        test_proxies.wait_timeout_dev(
-            [test_proxies.fsp[fsp_id]],
-            DevState.STANDBY,
-            wait_time_s,
-            sleep_time_s,
-        )
-        assert test_proxies.fsp[fsp_id].State() == DevState.STANDBY
-
-    @pytest.mark.parametrize("fsp_id", [1])
     def test_SetFunctionMode(
         self, test_proxies: pytest.fixture, fsp_id: int
     ) -> None:
@@ -142,23 +82,7 @@ class TestFsp:
         function_mode = FspModes.CORR.value
         assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
-        # set function mode to PSS
-        test_proxies.fsp[fsp_id].SetFunctionMode("PSS-BF")
-        time.sleep(1)
-        function_mode = FspModes.PSS_BF.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
-
-        # set function mode to PST
-        test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
-        time.sleep(1)
-        function_mode = FspModes.PST_BF.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
-
-        # set function mode to VLBI
-        test_proxies.fsp[fsp_id].SetFunctionMode("VLBI")
-        time.sleep(1)
-        function_mode = FspModes.VLBI.value
-        assert test_proxies.fsp[fsp_id].functionMode == function_mode
+        # TODO AA0.5+: PSS, PST, VLBI
 
         # set function mode to IDLE
         test_proxies.fsp[fsp_id].SetFunctionMode("IDLE")
