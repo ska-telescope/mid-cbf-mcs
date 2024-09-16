@@ -2083,9 +2083,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
-            # There is no obsFault action implemented, however, setting to False
-            # still updates the component state dict in BaseComponentManager.
-            self._update_component_state(obsfault=False)
 
         obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
@@ -2126,7 +2123,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Update obsState callback
         # There is no obsfault == False action implemented, however,
-        # we reset it it False so that obsfault == True may be triggered in the future
+        # we reset it it False so that obsfault == True may be triggered in the future,
+        # by updating the component state dict in BaseComponentManager.
         self._update_component_state(configured=False, obsfault=False)
 
         task_callback(
@@ -2254,7 +2252,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Update obsState callback
         # There is no obsfault == False action implemented, however,
-        # we reset it it False so that obsfault == True may be triggered in the future
+        # we reset it it False so that obsfault == True may be triggered in the future,
+        # by updating the component state dict in BaseComponentManager.
         self._update_component_state(resourced=False, obsfault=False)
 
         task_callback(
