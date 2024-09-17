@@ -187,6 +187,7 @@ class TestCbfController:
     def test_InitSysParam(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
+        mock_wib: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         sys_param_file_path: str,
     ) -> None:
@@ -194,6 +195,8 @@ class TestCbfController:
         Test InitSysParam and failure cases.
 
         :param device_under_test: DeviceProxy to the device under test.
+        :param mock_wib: A mock to the Wideband Input Buffer device used to verify
+                         that the ExpectedDishID property gets updated.
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         :param sys_param_file_path: The path to the sys_param file to be used
@@ -218,6 +221,11 @@ class TestCbfController:
                     f"{command_id[0]}",
                     '[0, "InitSysParam completed OK"]',
                 ),
+            )
+
+            assert (
+                mock_wib.get_property("ExpectedDishID")["ExpectedDishID"][0]
+                == "SKA001"
             )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_source.json"
