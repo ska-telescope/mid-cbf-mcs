@@ -126,6 +126,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             logger=self.logger,
         )
 
+        # Store a list of FSP parameters used to configure the visibility transport
+        self._vis_fsp_config = []
+
         # Store maxCapabilities from controller for easy reference
         self._controller_max_capabilities = {}
         self._count_vcc = 0
@@ -1297,9 +1300,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # channel_offset is optional
         if "channel_offset" not in fsp_config:
             self.logger.warning(
-                "channel_offset not defined in configuration. Assigning default of 1."
+                "channel_offset not defined in configuration. Assigning default of 0."
             )
-            fsp_config["channel_offset"] = 1
+            fsp_config["channel_offset"] = 0
 
         fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
             common_configuration["frequency_band"]
@@ -1393,6 +1396,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # build FSP configuration JSONs, add FSP
         all_fsp_config = []
+        self._vis_fsp_config = []
         for config in configuration["fsp"]:
             fsp_config = self._build_fsp_config(
                 fsp_config=copy.deepcopy(config),
@@ -1437,6 +1441,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     all_fsp_config.append(
                         (fsp_corr_proxy, json.dumps(fsp_config))
                     )
+
+                    # Store FSP parameters to configure visibility transport
+                    self._vis_fsp_config.append(fsp_config)
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
@@ -1750,7 +1757,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if not self.simulation_mode:
             self.logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
+            self._vis_transport.configure(
+                fsp_config=self._vis_fsp_config,
+                vis_slim_yaml=vis_slim_yaml,
+            )
 
         # Update obsState callback
         self._update_component_state(configured=True)
