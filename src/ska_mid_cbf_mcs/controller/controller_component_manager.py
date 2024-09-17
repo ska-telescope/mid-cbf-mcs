@@ -453,11 +453,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.debug(f"Trying connection to {fqdn}")
                 self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
 
-                proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
+                vcc_proxy = self._proxies[fqdn]
+                vcc_id = int(vcc_proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    proxy.dishID = dish_id
+                    vcc_proxy.dishID = dish_id
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
@@ -469,6 +469,49 @@ class ControllerComponentManager(CbfComponentManager):
                     return False
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}; {df}")
+                return False
+
+            try:
+                # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
+                band_fqdn = vcc_proxy.get_property("Band1And2Address")[
+                    "Band1And2Address"
+                ][0]
+                band_proxy = context.DeviceProxy(device_name=band_fqdn)
+                # Get WIB FQDN, then proxy.
+                wib_fqdn = band_proxy.get_property("WidebandInputBufferFQDN")[
+                    "WidebandInputBufferFQDN"
+                ][0]
+                # TODO: Switch to debug
+                self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
+                wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
+                # Get property, then update with vcc_proxy.dishID.
+                old_expDishID = wib_proxy.get_property("ExpectedDishID")[
+                    "ExpectedDishID"
+                ][0]
+                dish_id_prop = tango.utils.obj_2_property(
+                    {"ExpectedDishID": vcc_proxy.dishID}
+                )
+                # TODO: Switch to debug
+                self.logger.info(
+                    f"Setting ExpectedDishID to {vcc_proxy.dishID}"
+                )
+                wib_proxy.put_property(dish_id_prop)
+                wib_proxy.Init()
+                new_expDishID = wib_proxy.get_property("ExpectedDishID")[
+                    "ExpectedDishID"
+                ][0]
+                # TODO: Switch to debug
+                self.logger.info(
+                    f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
+                )
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to update ExpectedDishID device property; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                # TODO: self._update_component_state(obs_fault=True) ?
                 return False
 
         return True
@@ -591,56 +634,6 @@ class ControllerComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
             )
             return
-
-        try:
-            # Update ExpectedDishID property of HPS WIB
-            for vcc_fqdn in self._vcc_fqdn:
-                # Get VCC band FQDN, then proxy.
-                # Hardcoded for Band 1/2 for AA0.5
-                vcc_proxy = context.DeviceProxy(device_name=vcc_fqdn)
-                band_fqdn = vcc_proxy.get_property("Band1And2Address")[
-                    "Band1And2Address"
-                ][0]
-                band_proxy = context.DeviceProxy(device_name=band_fqdn)
-
-                # Get WIB FQDN, then proxy.
-                wib_fqdn = band_proxy.get_property("WidebandInputBufferFQDN")[
-                    "WidebandInputBufferFQDN"
-                ][0]
-                # TODO: Switch to debug
-                self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-
-                # Get property, then update with vcc_proxy.dishID.
-                old_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                    "ExpectedDishID"
-                ][0]
-                dish_id_prop = tango.utils.obj_2_property(
-                    {"ExpectedDishID": vcc_proxy.dishID}
-                )
-                # TODO: Switch to debug
-                self.logger.info(
-                    f"Setting ExpectedDishID to {vcc_proxy.dishID}"
-                )
-                wib_proxy.put_property(dish_id_prop)
-                wib_proxy.Init()
-                new_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                    "ExpectedDishID"
-                ][0]
-                # TODO: Switch to debug
-                self.logger.info(
-                    f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
-                )
-        except tango.DevFailed as df:
-            self.logger.error(f"{df}")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            # TODO: self._update_component_state(obs_fault=True) ?
-            return (
-                ResultCode.FAILED,
-                "Failed to establish proxies to HPS devices while updating ExpectedDishID.",
-            )
 
         task_callback(
             result=(
