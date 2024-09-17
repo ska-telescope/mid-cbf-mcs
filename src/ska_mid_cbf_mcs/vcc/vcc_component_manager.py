@@ -121,36 +121,11 @@ class VccComponentManager(CbfObsComponentManager):
                     context.DeviceProxy(device_name=fqdn)
                     for fqdn in self._vcc_band_fqdn
                 ]
-
-                # Update HPS WIB ExpectedDishID property
-                # Create proxy to this VCC's band's WIB
-                wib_fqdn = self._band_proxies[0].get_property(
-                    "WidebandInputBufferFQDN"
-                )["WidebandInputBufferFQDN"][0]
-                self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-                old_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                    "ExpectedDishID"
-                ][0]
-                # Update WIBs ExpectedDishID property
-                dish_id_prop = tango.utils.obj_2_property(
-                    {"ExpectedDishID": self.dish_id}
-                )
-                self.logger.info(f"Setting ExpectedDishID to {self.dish_id}")
-                wib_proxy.put_property(dish_id_prop)
-                wib_proxy.Init()
-                new_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                    "ExpectedDishID"
-                ][0]
-                self.logger.info(
-                    f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
-                )
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
-                #TODO: self._update_component_state(obs_fault=True) ?
                 return (
                     ResultCode.FAILED,
                     "Failed to establish proxies to HPS VCC devices.",
