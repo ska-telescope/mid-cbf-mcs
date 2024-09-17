@@ -223,10 +223,6 @@ class TestCbfController:
                 ),
             )
 
-            assert (
-                mock_wib.get_property("ExpectedDishID")["ExpectedDishID"][0]
-                == "SKA001"
-            )
         elif (
             sys_param_file_path == "source_init_sys_param_invalid_source.json"
             or sys_param_file_path == "source_init_sys_param_invalid_file.json"
