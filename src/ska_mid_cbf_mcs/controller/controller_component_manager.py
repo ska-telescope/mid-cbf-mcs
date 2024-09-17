@@ -112,7 +112,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- Start Communicating --- #
 
-    def _set_fqdns(self: ControllerComponentManager) -> None:
+    def _set_all_fqdns(self: ControllerComponentManager) -> None:
         """
         Set the list of sub-element FQDNs to be used, limited by max capabilities count
         and HW config.
@@ -126,10 +126,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._subarray_fqdn = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-
-        # Hardware devices
-        with open(self._hw_config_path) as yaml_fd:
-            self._hw_config = yaml.safe_load(yaml_fd)
 
         def _filter_fqdn(all_domains: list[str], config_key: str) -> list[str]:
             return [
@@ -162,6 +158,33 @@ class ControllerComponentManager(CbfComponentManager):
 
         for name, value in fqdn_variables.items():
             self.logger.debug(f"Active {name} FQDNs: {value}")
+
+    def _set_used_fqdns(self: ControllerComponentManager) -> None:
+        """
+        Get the FQDNs of the Talon LRU and board devices that are connected to hardware
+        from the configuration JSON.
+
+        :update: self._talon_lru_fqdn, self._talon_board_fqdn
+        """
+        # Make these sets so as not to add duplicates
+        fqdn_talon_lru = set()
+        fqdn_talon_board = set()
+        used_talon_board_ids = set()
+
+        for config_command in self.talondx_config_json["config_commands"]:
+            target = config_command["target"]
+            for lru_id, lru_config in self._hw_config["talon_lru"].items():
+                if target in [
+                    lru_config["TalonDxBoard1"],
+                    lru_config["TalonDxBoard2"],
+                ]:
+                    fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
+                    fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{target}")
+                    used_talon_board_ids.add(target)
+
+        self._talon_lru_fqdn = list(fqdn_talon_lru)
+        self._talon_board_fqdn = list(fqdn_talon_board)
+        return used_talon_board_ids
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -338,7 +361,15 @@ class ControllerComponentManager(CbfComponentManager):
             "Entering ControllerComponentManager._start_communicating"
         )
 
-        self._set_fqdns()
+        # Read the HW config YAML
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
+
+        # Read the talondx config JSON
+        with open(f"{self._talondx_config_path}/talondx-config.json") as f:
+            self.talondx_config_json = json.load(f)
+
+        self._set_all_fqdns()  # Get FQDNs of all devices
 
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
@@ -707,33 +738,6 @@ class ControllerComponentManager(CbfComponentManager):
                             f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                         )
 
-    def _get_talon_fqdns(self: ControllerComponentManager) -> list[str]:
-        """
-        Get the FQDNs of the Talon LRU and board devices that are connected to hardware
-        from the configuration JSON.
-
-        :return: True if the FQDNs were found, False otherwise
-        """
-        # Read in list of LRUs from configuration JSON
-        with open(f"{self._talondx_config_path}/talondx-config.json") as f:
-            talondx_config_json = json.load(f)
-
-        # Make these sets so as not to add duplicates
-        fqdn_talon_lru = set()
-        fqdn_talon_board = set()
-        for config_command in talondx_config_json["config_commands"]:
-            target = config_command["target"]
-            for lru_id, lru_config in self._hw_config["talon_lru"].items():
-                if target in [
-                    lru_config["TalonDxBoard1"],
-                    lru_config["TalonDxBoard2"],
-                ]:
-                    fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
-                    fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{target}")
-
-        self._talon_lru_fqdn = list(fqdn_talon_lru)
-        self._talon_board_fqdn = list(fqdn_talon_board)
-
     def _turn_on_lrus(
         self: ControllerComponentManager,
         task_abort_event: Optional[Event] = None,
@@ -894,16 +898,14 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # The order of the following operations for ON is important:
-        # 1. Power on all the Talon boards by
-        #    i.  Get the FQDNs of the LRUs
-        #    ii. Sending ON command to all the LRUs
+        # 1. Power on all the Talon boards by sending ON command to all the LRUs
         # 2. Configure all the Talon boards
         # 3. Turn TalonBoard devices ONLINE
         # 4. Configure SLIM Mesh devices
 
-        # Get FQDNs of Talon devices with hardware targets
+        # TODO: Move this to start communciating
         if not self.simulation_mode:
-            self._get_talon_fqdns()
+            self._set_used_fqdns()
         else:
             # Use a hard-coded example fqdn talon lru for simulationMode
             self._talon_lru_fqdn = [
