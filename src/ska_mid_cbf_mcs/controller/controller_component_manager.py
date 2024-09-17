@@ -479,9 +479,9 @@ class ControllerComponentManager(CbfComponentManager):
                     ][0]
                     band_proxy = context.DeviceProxy(device_name=band_fqdn)
                     # Get WIB FQDN, then proxy.
-                    wib_fqdn = band_proxy.get_property("WidebandInputBufferFQDN")[
+                    wib_fqdn = band_proxy.get_property(
                         "WidebandInputBufferFQDN"
-                    ][0]
+                    )["WidebandInputBufferFQDN"][0]
                     # TODO: Switch to debug
                     self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
                     wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
