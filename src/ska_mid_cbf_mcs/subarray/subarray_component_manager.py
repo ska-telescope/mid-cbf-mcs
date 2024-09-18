@@ -256,7 +256,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         Thread for start_communicating operation.
         """
         self.logger.debug(
-            "Entering SubarrayComponentManaer._start_communicating"
+            "Entering SubarrayComponentManager._start_communicating"
         )
 
         controller_success = self._init_controller_proxy()
