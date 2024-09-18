@@ -68,7 +68,7 @@ Cbf Base Class Inheritance
 Cbf decouples itself from ``ska-tango-base`` by extending ``SkaBaseDevice`` and ``SkaObsDevice`` into 
 ``CbfDevice`` and ``CbfObsDevice``, respectively. Likewise, Cbf component managers are extended 
 into ``CbfComponentManager`` and ``CbfObsComponentManager`` from ``TaskExecutorComponentManager``, 
-which itself extends ``BaseComponentManager`` to enable aynchronous command execution via Long Running Commands (LRCs).
+which itself extends ``BaseComponentManager`` to enable asynchronous command execution via Long Running Commands (LRCs).
 This choice to decouple from ``ska-tango-base`` gives the MCS freedom to override the base implementation as needed. 
 For example, ``CbfObsDevice`` initializes a slightly reduced observing state model that omits the EMPTY and RESOURCING 
 states since they are not required by MCS observing devices, with the exception of ``CbfSubarray``.
@@ -210,7 +210,7 @@ any connection to the hardware.
 Talon LRU
 ======================================================
 
-The ``TalonLRU`` Tango device handles the monitor and control functionality 
+The ``TalonLRU`` Tango device handles the monitoring and control functionality 
 for a single Talon LRU. A TalonLRU instance must therefore be created for each LRU. 
 Currently this device only controls the power to the LRU via a proxy to the ``PowerSwitch`` 
 device.
@@ -250,22 +250,12 @@ and queries the list of outlets in the power switch.
    
    MCS PowerSwitch Device
 
-Important operational notes:
-
-.. #TODO: Remove? No longer relevant with PowerSwitch commands refactored into LRCs
-- Certain requests to the power switch hardware can take longer than others, hence a timeout of
-  4 seconds set in the ``PowerSwitchDriver``. As such, accessing attributes or commands in the 
-  ``PowerSwitch`` device can take longer than the default Tango timeout (3 seconds). Any ``DeviceProxy``
-  of the ``PowerSwitch`` device should increase its timeout to 5 seconds to safely complete all requests
-  (both successful and unsuccessful) before the Tango timeout. This can be done using
-  ``pwr_dev_proxy.set_timeout_millis(5000)``, assuming ``pwr_dev_proxy`` is a ``DeviceProxy`` to 
-  the ``PowerSwitch`` device.
-- Although the DLI LPC9 claims to support up to 8 concurrent clients, testing has 
-  shown a significant slow down in response time when more than one request has been 
-  sent to the power switch. As such, all communication with the power switch should be kept 
-  sequential. Currently the ``PowerSwitchDriver`` does not ensure this. If the ``PowerSwitch``
-  device is ever changed to handle requests asynchronously, the ``PowerSwitchDriver`` should
-  also be updated to only process one request at a time. 
+`Important operational note:` although the DLI LPC9 claims to support up to 8 concurrent clients, testing has 
+shown a significant slow down in response time when more than one request has been 
+sent to the power switch. As such, all communication with the power switch should be kept 
+sequential. Currently the ``PowerSwitchDriver`` does not ensure this. If the ``PowerSwitch``
+device is ever changed to handle requests asynchronously, the ``PowerSwitchDriver`` should
+also be updated to only process one request at a time. 
 
 
 Asynchronous Event-Driven Control Structure
@@ -280,7 +270,7 @@ approach was in place, a workaround used in MCS was to have clients temporarily 
 component's timeout from the default 3 seconds before issuing calls, then
 revert this change after completion. Since this is clearly a hacky solution, an alternative was needed.
 
-Version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
+The upgrade of MCS to version 1.0.0 of ``ska-tango-base`` introduced the `LRC Protocol 
 <https://developer.skao.int/projects/ska-tango-base/en/1.0.0/reference/lrc-client-server-protocol.html>`_. 
 By having command classes inherit from ``SubmittedSlowCommand`` rather than ``BaseCommand`` or ``ResponseCommand``, 
 clients can no longer expect a command's final result to be returned immediately. 
@@ -294,22 +284,22 @@ a unique command identifier string, unless the command was rejected, in which ca
 command_id is not generated, and instead replaced with a message to explain the rejection.
 
 An LRC's immediate result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, 
-or was rejected, for exmaple, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
+or was rejected, for example, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
 executed within a separate "task-executor thread" running in parallel to the main control thread.
 The actual results of LRCs come from published ``longRunningCommandResult`` attribute change events. 
-The value of this attribute is a tuple of (command_id, result_code_message), a slightly odd format
-since result_code_message is a list(int, str) cast into a string, containing the result_code integer 
+The value of this attribute is a tuple of ``(command_id, result_code_message)``, a slightly odd format
+since result_code_message is a ``list(int, str)`` cast into a string, containing the result_code integer 
 *and* message string; for example: ``command_id, result_code_message = 
 ('1725379432.518609_238583733127885_RemoveAllReceptors', '[0, "RemoveAllReceptors completed OK"]')``.
 
 One implication of the shift to execute commands in a secondary thread is that the structure 
-of the command logic had to change to accomodate parallelism. In devices, ``FastCommand``s are 
+of the command logic had to change to accommodate parallelism. In devices, ``FastCommand`` are 
 implemented as a "command" method that initiates the command when called, and a command class 
 (instantiated during initialization), whose ``do()`` method calls an "execution" 
 method in the component manager; this where the command's logic lives. When the command is called by a client, 
 the command method fetches the command class object and runs its ``do()`` method. Additionally, 
 the device either implements an ``is_<COMMAND>_allowed()`` method for commands that override 
-baseclass commands, or else the command class implements an ``is_allowed()`` method for 
+base class commands, or else the command class implements an ``is_allowed()`` method for 
 novel commands, which these commands' ``do()`` methods use as a condition to guard the 
 component manager call in case a command is called from an invalid state, etc. 
 
@@ -317,11 +307,14 @@ By contrast, LRCs still implement the command method, but do not implement comma
 during initialization, a ``SubmittedSlowCommand`` object is instantiated and when the command is executed, 
 this object's ``do()`` method is called instead. Rather than just one method in the component manager, 
 LRCs have two. The first "submit" method has public scope and is the one called by the ``SubmittedSlowCommand``'s ``do()`` method. 
-All this public method does is submit a task to the ``TaskExecutor``'s queue. This task's arguments include 
-1. the second, private scoped, execution method, containing the command's logic, 
-and 2. the ``is_<COMMAND>_allowed()`` function (now in the component manager), which is important, 
-as the validity of calling a given command needs to be evaluated when the task is 
-executed rather than when the command is called by the client. For this reason, overridden baseclass 
+All this public method does is submit a task to the ``TaskExecutor``'s queue. This task's arguments include: 
+
+- the second, private scoped, execution method, containing the command's logic
+- the ``is_<COMMAND>_allowed()`` function (now in the component manager), which is important, 
+  as the validity of calling a given command needs to be evaluated when the task is 
+  executed rather than when the command is queued by the client
+
+For this reason, overridden base class 
 commands still have an overridden ``is_<COMMAND>_allowed()`` method defined in the device, 
 but all it does is return ``True``, in order to defer judgement to the component manager's 
 ``is_<COMMAND>_allowed()`` method that will run when the command is popped off of the queue.
@@ -331,61 +324,94 @@ without regard for their results, or even for how long they take to run (at leas
 which solves the hacky update-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
 communicate their progress. The relevant devices' ``longRunningCommandResult`` attributes are subscribed to during 
 component manager initialization, and a callback mechanism detects these events and keeps track of who is waiting 
-on what results, which is not trivial as this opens the door for even further complexity; 
-when a 'parent' LRC calls a 'child' command on one of its components that is also an LRC, a nested LRC call. 
-To manage this confusing use case, mutexes (locks in python) are used to block commands 
+on what results, which opens the door for even further complexity:  when a 'parent' LRC calls a 'child' command 
+on one of its components that is also an LRC - a nested LRC call. 
+
+To manage this confusing use case, mutexes (``threading.Lock``) are used to block commands 
 from getting too far ahead of their components' LRC results by a) keeping track of how many 
 LRCs remain in progress for a given client, and b) enforcing a final (much longer) timeout for LRCs, 
-after which time the client must give up and call the original command a failure. This mechanism is described next in more detail.
+after which time the client must give up and call the original command a failure.
+This mechanism is described next in more detail.
 
 Blocking Commands and Locks
 ----------------------------
 In MCS, any command added to the ``TaskExecutor``'s queue is a "blocking command", in the sense that each of these 
 commands will eventually block the client that issued them. 
 
-For example, when ``Subarray``'s ``ConfigureScan()`` (parent) adds ``VCC``'s ``ConfigureBand()`` (child) 
-to the queue, ``Subarray`` will be blocked until ``VCC`` produces a change event for its result. 
-After ``Subarray`` queues the ``VCC`` command, it is free to continue executing any logic that does not 
-rely on ``VCC``'s result, but once it reaches this blocking point, it must wait.
+For example, when ``CbfSubarray``'s ``ConfigureScan()`` (parent LRC) adds ``Vcc``'s ``ConfigureBand()`` (child LRC) 
+to the queue, ``CbfSubarray`` will be blocked until ``VCC`` produces a change event for its result. 
+After ``CbfSubarray`` queues the ``Vcc`` command, it is free to continue executing any logic that does not 
+rely on ``Vcc``'s result, but once it reaches this blocking point, it must wait.
 
 MCS keeps track of these blocking commands by adding their command IDs to a set as they are queued, 
-and removing them when change events for the ``longRunningCommandResult`` attribute are recieved. 
-This way, when ``Subarray`` reaches its blocking point, it calls a function that waits until the set is emptied 
-(indicating ``VCC`` has finished), else the timeout is reached and the parent command fails.
+and removing them when change events for the ``longRunningCommandResult`` attribute are received. 
+This way, when ``CbfSubarray`` reaches its blocking point, it calls a function that waits until the set is emptied 
+(indicating ``Vcc`` has finished), else the timeout is reached and the parent command fails.
 
 Locks (Mutexes) are used to protect against race conditions; when multiple threads attempt concurrent 
-access on a shared resource. When ``Subarray`` adds ``ConfigureBand()`` to the queue, it also adds 
-it to the blocking_commands set. Without locking the resource during this add operation, ``Subarray`` 
-callbacks would be free to manipulate the blocking_commands set as well, which could lead to a 
-non-deterministic result. For instance, since ``Subarray``'s ``ConfigureScan()`` is the first of 
+access on a shared resource. When ``CbfSubarray`` adds ``ConfigureBand()`` to the queue, it also adds 
+it to the ``blocking_commands`` set. Without locking the resource during this add operation, ``CbfSubarray`` 
+callbacks would be free to manipulate the ``blocking_commands`` set as well, which could lead to a 
+non-deterministic result. For instance, since ``CbfSubarray``'s ``ConfigureScan()`` is the first of 
 several commands issued, it is possible that the next command, ``Scan()``, will queue up and attempt 
-to be added to blocking_commands at the same moment that ``ConfigureBand()``'s' ``longRunningCommandResult`` 
-change event is recieved, which would simultaneously try to remove ``ConfigureBand()`` from ``Subarray``'s blocking_commands. 
-Using a lock to access blocking_commands restores determinism because when the add operation locks the set, 
+to be added to ``blocking_commands`` at the same moment that ``ConfigureBand()``'s' ``longRunningCommandResult`` 
+change event is received, which would simultaneously try to remove ``ConfigureBand()`` from ``CbfSubarray``'s ``blocking_commands``. 
+Using a lock to access ``blocking_commands`` restores determinism because when the add operation locks the set, 
 the remove operation will see that it is locked and wait patiently for it to unlock, or vice versa.
 
 The following sequence diagram illustrates the LRC mechanism. Note that for simplicity, only a subset of 
-the ``Subarray`` ``ConfigureScan()`` execution is shown, up to the end of the calls to the ``VCC`` device. 
-This was done because including the FSP calls, etc. would overcomplicate the diagram, and its purpose is 
+the ``CbfSubarray`` ``ConfigureScan()`` execution is shown, up to the end of the calls to the ``Vcc`` device. 
+This was done because including the FSP calls, etc. would over-complicate the diagram, and its purpose is 
 to illustrate the LRC sequence, not the ``ConfigureScan`` sequence, which is documented in :ref:`config_scan`.
 
 .. uml:: ../../diagrams/lrc-sequence.puml
 
 In addition to protecting the blocking_commands set, locks also protect state transitions, as well as certain important attribute accesses, 
-such as ``healthState`` and ``Subarray.lastDelayModel``. Some of these locks are not currently necessarry, but as event-driven functionality 
+such as ``healthState`` and ``CbfSubarray.lastDelayModel``. Some of these locks are not currently necessary, but as event-driven functionality 
 continues to be added to MCS, new change event callbacks may opt to update these resources, so locks were proactively added.
+
+
+Testing Approaches
+===========================================
+For more detailed documentation on the testing infrastructure leveraged by MCS see `ska-tango-testing
+<https://gitlab.com/ska-telescope/ska-tango-testing>`_
+
+TangoEventTracer
+----------------
+In order to monitor and validate all device events during testing, 
+a TangoEventTracer is created during test suite initialization.
+
+The event tracer is provided device attributes to monitor for Tango change events 
+during test runtime, and is then used inside test cases to assert event occurrences, 
+using ``assertpy`` predicate syntax.
+
+Unit Testing Harness
+---------------------------
+In order to properly unit test individual Tango device modules we make use of 
+``ska-tango-testing`` test contexts, in particular the ``ThreadedTestTangoContextManager``,
+which is based on Tango's ``MultiDeviceTestContext``.
+
+Since all MCS devices communicate with entities external to themselves (mainly
+other Tango devices), the test context is used to run an individual device without
+a Tango database, and ``pytest`` fixtures are set up to build mock objects as targets
+for device communications in place of live targets. A particularly important case here 
+is of Tango device mocks, generated with use of the ``MockDeviceBuilder`` class, 
+and swapped in for actual Tango ``DeviceProxy`` objects when the test context is entered;
+this is why the ``ska_tango_testing.context.DeviceProxy`` wrapper for ``DeviceProxy``
+is used in the source code.
 
 
 Improvements to Control Flow
 ---------------------------
 The upgrade to ``ska-tango-base`` v1.0.0 provided an opportunity to reduce technical debt and 
-consolidate the MCS code base in general. The biggest change is the removal of On/Off commands 
-from devices that do not directly control hardware, since these devices do not need to distinguish 
-between having communication established and being turned on. Notably, the ``PowerSwitch`` device, 
-although it *does* control hardware directly, does not include On/Off commands. This is because the 
-components it controls are individual outlets on power distribution units (PDUs), which manipulates a lower-level
-than the device-level On/Off commands would, therefore, there is no practical difference between
-a ``PowerSwitch`` device being on or simply communicating with its component. Rather than explicitly 
+consolidate the MCS code base in general. 
+
+The biggest change is the removal of On/Off commands from devices that do not directly control hardware power,
+since these devices do not need to distinguish between having communication established and being turned on.
+Notably, the ``PowerSwitch`` device, although it *does* control hardware directly, does not include On/Off commands.
+This is because the components it controls are individual outlets on power distribution units (PDUs),
+which manipulates a lower-level than the device-level On/Off commands would, therefore, there is no practical difference between
+a ``PowerSwitch`` device being "on" or simply communicating with its component. Rather than explicitly 
 issue On/Off commands to update the ``OpState`` model in these devices, the ``PowerState`` enum is 
 instead set as the end of ``start_communicating()`` and ``stop_communicating()`` methods, which run after setting
 the ``AdminMode`` attribute to ``AdminMode.ONLINE`` and ``AdminMode.OFFLINE``, respectively. In the rest of 
