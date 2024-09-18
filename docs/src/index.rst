@@ -8,12 +8,14 @@ MID CBF MCS Documentation
 
    guide/system_context
 
-.. API =============================================================
+.. INTERFACES =============================================================
 .. toctree::
    :maxdepth: 2
-   :caption: ska-mid-cbf-mcs API
+   :caption: Interfaces
 
-   api/index
+   guide/interfaces/lmc_mcs_interface
+   guide/interfaces/mcs_hps_interface
+   guide/interfaces/subscription_points
 
 .. DEVELOPER =============================================================
 .. toctree::
@@ -23,14 +25,12 @@ MID CBF MCS Documentation
    Getting Started<guide/developer/getting_started/index>
    Design Notes<guide/developer/design_notes>
 
-.. INTERFACES =============================================================
+.. API =============================================================
 .. toctree::
    :maxdepth: 2
-   :caption: Interfaces
+   :caption: ska-mid-cbf-mcs API
 
-   guide/interfaces/lmc_mcs_interface
-   guide/interfaces/mcs_hps_interface
-   guide/interfaces/subscription_points
+   api/index
 
 
 Indices and tables
