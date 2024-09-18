@@ -30,62 +30,162 @@ class TalonBoardSimulator:
         :param logger: a logger for this object to use
         """
 
-        self._logger = logger
+        self.logger = logger
 
-    # The Voltage Values are need for Integration Tests
-    # FPGA Die Voltage has Warnings and Alarm set, and returing no value will trigger the Alarm
-    def fpga_die_voltage_0(self) -> float:
-        """
-        Simulates value for fpga_die_voltage_0 in volts
+        # Init FPGA sensor attr
+        self._fpga_die_voltages = [12.0, 2.5, 0.87, 1.8, 1.8, 0.9, 1.8]
+        self._fpga_die_temperature = 50.0
 
-        :return : a float value representing voltage reading of the sensor
-        """
-        return 12.0
+        # Init TalonSysId attr
+        self._sysid_version = "test"
+        self._bitstream_version = 0xBEEFBABE
 
-    def fpga_die_voltage_1(self) -> float:
-        """
-        Simulates value for fpga_die_voltage_1 in volts
+        # Init TalonStatus attr
+        self._iopll_locked_fault = False
+        self._fs_iopll_locked_fault = False
+        self._comms_iopll_locked_fault = False
+        self._system_clk_fault = False
+        self._emif_bl_fault = False
+        self._emif_br_fault = False
+        self._emif_tr_fault = False
+        self._e100g_0_pll_fault = False
+        self._e100g_1_pll_fault = False
+        self._slim_pll_fault = False
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def fpga_die_temperature(self: TalonBoardSimulator) -> float:
         """
-        return 2.5
+        Simulates value for fpga_die_temperature in degrees celcius
 
-    def fpga_die_voltage_2(self) -> float:
+        :return : a float value representing the temperature reading from the sensor
         """
-        Simulates value for fpga_die_voltage_2 in volts
+        return self._fpga_die_temperature
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def fpga_die_voltages(self: TalonBoardSimulator) -> list[float]:
         """
-        return 0.87
+        Simulates value for fpga_die_voltage in volts
 
-    def fpga_die_voltage_3(self) -> float:
+        :return : a list of float values representing the various voltage readings from the sensor
         """
-        Simulates value for fpga_die_voltage_3 in volts
+        return self._fpga_die_voltages
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def sysid_version(self: TalonBoardSimulator) -> str:
         """
-        return 1.8
+        The bitsream version as a string.
 
-    def fpga_die_voltage_4(self) -> float:
+        :return: the bitsream version.
+        :rtype: str
         """
-        Simulates value for fpga_die_voltage_4 in volts
+        return self._bitstream_version
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def sysid_bitstream(self: TalonBoardSimulator) -> int:
         """
-        return 1.8
+        The bitsream checksum as a string.
 
-    def fpga_die_voltage_5(self) -> float:
+        :return: the bitsream checksum.
+        :rtype: int
         """
-        Simulates value for fpga_die_voltage_5 in volts
+        return self._bitstream_version
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def status_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
         """
-        return 0.9
+        The iopll locked fault status.
 
-    def fpga_die_voltage_6(self) -> float:
+        :return: iopll locked fault status.
+        :rtype: bool
         """
-        Simulates value for fpga_die_voltage_6 in volts
+        return self._iopll_locked_fault
 
-        :return : a float value representing voltage reading of the sensor
+    @property
+    def status_fs_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
         """
-        return 1.8
+        The fs iopll locked fault status.
+
+        :return: fs iopll locked fault status.
+        :rtype: bool
+        """
+        return self._fs_iopll_locked_fault
+
+    @property
+    def status_comms_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The comms iopll locked fault status.
+
+        :return: comms iopll locked fault status.
+        :rtype: bool
+        """
+        return self._comms_iopll_locked_fault
+
+    @property
+    def status_system_clk_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The system clock fault status.
+
+        :return: system clock fault status.
+        :rtype: bool
+        """
+        return self._system_clk_fault
+
+    @property
+    def status_emif_bl_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The emif bl fault status.
+
+        :return: emif bl fault status.
+        :rtype: bool
+        """
+        return self._emif_bl_fault
+
+    @property
+    def status_emif_br_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The emif br fault status.
+
+        :return: emif br fault status.
+        :rtype: bool
+        """
+        return self._emif_br_fault
+
+    @property
+    def status_emif_tr_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The emif tr fault status.
+
+        :return: emif tr fault status.
+        :rtype: bool
+        """
+        return self._emif_tr_fault
+
+    @property
+    def status_e100g_0_pll_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The ethernet100g_0 pll fault status.
+
+        :return: e100g_0 pll fault status.
+        :rtype: bool
+        """
+        return self._e100g_0_pll_fault
+
+    @property
+    def status_e100g_1_pll_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The ethernet100g_1 pll fault status.
+
+        :return: e100g_1 pll fault status.
+        :rtype: bool
+        """
+        return self._e100g_1_pll_fault
+
+    @property
+    def status_slim_pll_fault(self: TalonBoardSimulator) -> bool:
+        """
+        The slim pll fault status.
+
+        :return: slim pll fault status.
+        :rtype: bool
+        """
+        return self._slim_pll_fault

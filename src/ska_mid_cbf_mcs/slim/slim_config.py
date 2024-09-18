@@ -1,8 +1,8 @@
 import logging
 import re
 
+import tango
 import yaml
-from tango import Except
 
 
 class SlimConfig:
@@ -11,9 +11,10 @@ class SlimConfig:
         Constructor
 
         :param yaml_str: the string defining the mesh links
+        :param logger: the logger to use for logging
         :raise Tango exception: if the configuration is not valid yaml.
         """
-        self._logger = logger
+        self.logger = logger
         self._active_links = self._parse_links_yaml(yaml_str)
 
     def active_links(self):
@@ -35,15 +36,16 @@ class SlimConfig:
         :return: the pair of HPS tx and rx device FQDNs that make up a link.
         :rtype: list[str]
         """
-        tmp = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
+        cleaned_link = re.sub(r"[\s\t]", "", link)  # removes all whitespaces
 
         # ignore disabled links or lines without the expected format
-        if tmp.endswith("[x]") or ("->" not in tmp):
+        if cleaned_link.endswith("[x]") or ("->" not in cleaned_link):
             return None
-        txrx = tmp.split("->")
-        if len(txrx) != 2:
-            return None
-        return txrx
+
+        tx_rx_pair = cleaned_link.split("->")
+        if len(tx_rx_pair) == 2:
+            return tx_rx_pair
+        return None
 
     def _validate_mesh_config(self, links: list) -> None:
         """
@@ -56,8 +58,8 @@ class SlimConfig:
         rx_set = set([y[1] for y in links])
         if len(tx_set) != len(rx_set) or len(tx_set) != len(links):
             msg = "Tx and Rx devices must be unique in the configuration."
-            self._logger.error(msg)
-            Except.throw_exception(
+            self.logger.error(msg)
+            tango.Except.throw_exception(
                 "Slim_Validate_",
                 msg,
                 "_validate_mesh_config()",
@@ -73,28 +75,24 @@ class SlimConfig:
         :return: a list of HPS tx and rx device pairs as [Tx FQDN, Rx FQDN]
         :rtype: list[list[str]]
         """
-        links = list()
         try:
             data = yaml.safe_load(yaml_str)
         except yaml.YAMLError as e:
-            self._logger.error(f"Failed to load YAML: {e}")
-            Except.throw_exception(
+            self.logger.error(f"Failed to load YAML: {e}")
+            tango.Except.throw_exception(
                 "Slim_Parse_YAML",
                 "Cannot parse SLIM configuration YAML",
                 "_parse_links_yaml()",
             )
 
-        # just assume no links are active
-        if data is None:
-            self._logger.info("Visibility Mesh is not configured")
-            return links
+        links = [
+            self._parse_link(line)
+            for value in data.values()
+            for line in value
+            if self._parse_link(line) is not None
+        ]
 
-        for k, v in data.items():
-            for line in v:
-                txrx = self._parse_link(line)
-                if txrx is not None:
-                    links.append(txrx)
-
-        # throws exception if validation fails
-        self._validate_mesh_config(links)
+        self._validate_mesh_config(
+            links
+        )  # throws exception if validation fails
         return links

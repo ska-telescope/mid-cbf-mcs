@@ -22,10 +22,9 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-from typing import List
 
-import tango
-from ska_tango_base.control_model import ObsState
+from ska_control_model import ObsState
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
@@ -42,28 +41,24 @@ class VccBandSimulator:
 
     def __init__(self: VccBandSimulator, device_name: str) -> None:
         self.device_name = device_name
-
-        self._state = tango.DevState.INIT
-        self._obs_state = ObsState.IDLE
-
         self._vcc_gain = []
 
-        self._config_id = ""
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset = [0, 0]
-        self._rfi_flagging_mask = ""
+        self._state = DevState.INIT
+        self._obs_state = ObsState.IDLE
 
         self._scan_id = 0
+        self._config_id = ""
+        self._frequency_band = 0
+        self._frequency_band_offset = [0, 0]
 
     # Properties that match the Tango attributes in the band devices
     @property
-    def obsState(self) -> List[float]:
+    def obsState(self) -> list[float]:
         """Return the Obs state attribute."""
         return self._obs_state
 
     @property
-    def vccGain(self) -> List[float]:
+    def vccGain(self) -> list[float]:
         """Return the VCC gain attribute."""
         return self._vcc_gain
 
@@ -78,7 +73,7 @@ class VccBandSimulator:
         return self._frequency_band
 
     @property
-    def frequencyBandOffset(self) -> List[int]:
+    def frequencyBandOffset(self) -> list[int]:
         """Return the frequency band offset attribute."""
         return self._frequency_band_offset
 
@@ -90,13 +85,13 @@ class VccBandSimulator:
     # Methods that match the Tango commands in the band devices
     def On(self: VccBandSimulator) -> None:
         """Set the device to the ON state"""
-        self._state = tango.DevState.ON
+        self._state = DevState.ON
 
     def Disable(self: VccBandSimulator) -> None:
         """Set the device to the DISABLE state"""
-        self._state = tango.DevState.DISABLE
+        self._state = DevState.DISABLE
 
-    def State(self: VccBandSimulator) -> tango.DevState:
+    def State(self: VccBandSimulator) -> DevState:
         """Get the current state of the device"""
         return self._state
 
@@ -128,17 +123,10 @@ class VccBandSimulator:
             configuration["frequency_band"]
         ]["band_index"]
 
-        # If band is 5a or 5b, store band 5 turning parameter
-        if self._frequency_band in [4, 5]:
-            self._stream_tuning = configuration["band_5_tuning"]
-
         self._frequency_band_offset = [
             int(configuration["frequency_band_offset_stream1"]),
             int(configuration["frequency_band_offset_stream2"]),
         ]
-
-        if "rfi_flagging_mask" in configuration:
-            self._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
 
         self._obs_state = ObsState.READY
 
@@ -167,11 +155,8 @@ class VccBandSimulator:
     def Unconfigure(self: VccBandSimulator) -> None:
         """Reset the configuration."""
         self._config_id = ""
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset = [0, 0]
-        self._rfi_flagging_mask = ""
-
         self._scan_id = 0
+        self._frequency_band = 0
+        self._frequency_band_offset = [0, 0]
 
         self._obs_state = ObsState.IDLE

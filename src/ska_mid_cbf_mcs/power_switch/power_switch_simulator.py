@@ -12,10 +12,9 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
+from ska_control_model import PowerState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
@@ -40,13 +39,13 @@ class PowerSwitchSimulator:
 
         # The text must match the powerswitch.yaml
         if model == "DLI LPC9":
-            self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+            self.outlet_id_list = [str(i) for i in range(0, 8)]
         elif model == "Server Technology Switched PRO2":
-            self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
+            self.outlet_id_list = [f"AA{i}" for i in range(1, 49)]
         elif model == "APC AP8681 SSH":
-            self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
+            self.outlet_id_list = [f"{i}" for i in range(1, 25)]
         elif model == "APC AP8681 SNMP":
-            self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
+            self.outlet_id_list = [f"{i}" for i in range(1, 25)]
         else:
             raise AssertionError(f"Invalid PDU model: {model}")
 
@@ -70,14 +69,14 @@ class PowerSwitchSimulator:
         """
         return True
 
-    def get_outlet_power_mode(
+    def get_outlet_power_state(
         self: PowerSwitchSimulator, outlet: str
-    ) -> PowerMode:
+    ) -> PowerState:
         """
-        Get the power mode of a specific outlet.
+        Get the power state of a specific outlet.
 
         :param outlet: outlet ID
-        :return: power mode of the outlet
+        :return: power state of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
         """
@@ -88,7 +87,7 @@ class PowerSwitchSimulator:
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
-        return self.outlets[outlet_idx].power_mode
+        return self.outlets[outlet_idx].power_state
 
     def turn_on_outlet(
         self: PowerSwitchSimulator, outlet: str
@@ -107,7 +106,7 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerMode.ON
+        self.outlets[outlet_idx].power_state = PowerState.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -127,23 +126,23 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        self.outlets[outlet_idx].power_mode = PowerMode.OFF
+        self.outlets[outlet_idx].power_state = PowerState.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
-    def get_outlet_list(self: PowerSwitchSimulator) -> List(Outlet):
+    def get_outlet_list(self: PowerSwitchSimulator) -> list[Outlet]:
         """
         Returns a list of 8 outlets, containing their name and current state.
         The current state is always set to OFF.
 
         :return: list of all the outlets available in this power switch
         """
-        outlets: List(Outlet) = []
+        outlets = []
         for i in range(0, len(self.outlet_id_list)):
             outlets.append(
                 Outlet(
                     outlet_ID=self.outlet_id_list[i],
                     outlet_name=f"Outlet {i}",
-                    power_mode=PowerMode.OFF,
+                    power_state=PowerState.OFF,
                 )
             )
 
