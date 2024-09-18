@@ -44,16 +44,6 @@ server:
             - "mid_csp_cbf/fs_links/013"
             - "mid_csp_cbf/fs_links/014"
             - "mid_csp_cbf/fs_links/015"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "simulationMode"
-            - "3000"
       - name: "mid_csp_cbf/slim/slim-vis"
         properties:
           - name: "Links"
@@ -62,16 +52,6 @@ server:
             - "mid_csp_cbf/vis_links/001"
             - "mid_csp_cbf/vis_links/002"
             - "mid_csp_cbf/vis_links/003"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "simulationMode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

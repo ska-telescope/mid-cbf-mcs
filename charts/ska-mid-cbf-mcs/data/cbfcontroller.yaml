@@ -4,24 +4,7 @@ domain: csp-monitoring
 command: "CbfController"
 instances: ["controller"]
 depends_on:
-  - device: mid_csp_cbf/vcc/001
-  - device: mid_csp_cbf/vcc/002
-  - device: mid_csp_cbf/vcc/003
-  - device: mid_csp_cbf/vcc/004
-  - device: mid_csp_cbf/vcc/005
-  - device: mid_csp_cbf/vcc/006
-  - device: mid_csp_cbf/vcc/007
-  - device: mid_csp_cbf/vcc/008
-  - device: mid_csp_cbf/fsp/01
-  - device: mid_csp_cbf/fsp/02
-  - device: mid_csp_cbf/fsp/03
-  - device: mid_csp_cbf/fsp/04
-  - device: mid_csp_cbf/talon_lru/001
-  - device: mid_csp_cbf/talon_lru/002
-  - device: mid_csp_cbf/talon_lru/003
-  - device: mid_csp_cbf/talon_lru/004
-  - device: mid_csp_cbf/slim/slim-fs
-  - device: mid_csp_cbf/slim/slim-vis
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -65,10 +48,6 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "TalonLRU"
             values:
             - "mid_csp_cbf/talon_lru/001"
@@ -89,6 +68,8 @@ server:
             values:
             - "mid_csp_cbf/power_switch/001"
             - "mid_csp_cbf/power_switch/002"
+            - "mid_csp_cbf/power_switch/003"
+            - "mid_csp_cbf/power_switch/004"
           - name: "FsSLIM"
             values:
             - "mid_csp_cbf/slim/slim-fs"
@@ -110,16 +91,6 @@ server:
           - name: "VisSLIMConfigPath"
             values:
             - "mnt/slim/vis/slim_config.yaml"
-          - name: "polled_attr"
-            values:
-            - "commandprogress"
-            - "3000"
-            - "receptortovcc"
-            - "3000"
-            - "vcctoreceptor"
-            - "3000"
-            - "subarrayconfigid"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

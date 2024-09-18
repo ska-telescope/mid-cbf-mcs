@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import logging
 
-from ska_tango_base.base.component_manager import BaseComponentManager
+from ska_tango_base.base.base_component_manager import BaseComponentManager
+from ska_tango_testing import context
+from tango import DevFailed
 
 _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
     "FATAL": logging.CRITICAL,
@@ -24,18 +26,25 @@ _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
 
 
 class LogComponentManager(BaseComponentManager):
-    def __init__(self, logger: logging.Logger) -> None:
+    """
+    Component manager for TalonDxLogConsumer device
+    """
+
+    def __init__(
+        self: LogComponentManager,
+        *args: any,
+        logger: logging.Logger,
+        **kwargs: any,
+    ) -> None:
         """
         Update logging config so that certain parts can be overridden
 
+        :param logger: device logger
         :return: An instance of LogComponentManager
         :rtype: LogComponentManager
         """
-        # Setting logger.propagate to false fixes the duplicated logs issue (CIP-1674),
-        # however logs executed prior to this line will still be duplicated
-        logger.propagate = False
-        super().__init__(logger, None, None)
-        self.logger = logger
+
+        super().__init__(*args, logger=logger, **kwargs)
 
         class TangoDeviceTagsFilter(logging.Filter):
             """Reset the log record components if a TLS log"""
@@ -61,14 +70,19 @@ class LogComponentManager(BaseComponentManager):
 
         self.logger.addFilter(TangoDeviceTagsFilter())
 
+    # ---------------
+    # Command methods
+    # ---------------
+
     def log(
-        self,
+        self: LogComponentManager,
         timestamp: str,
         tango_log_level: str,
         tango_device: str,
         message: str,
     ) -> None:
-        """Override log components and log to stdout.
+        """
+        Override log components and log to stdout.
 
         :param timestamp: The millisecond since epoch (01.01.1970)
         :type timestamp: str
@@ -95,6 +109,34 @@ class LogComponentManager(BaseComponentManager):
                     "timestamp": log_timestamp,
                 },
             )
-        except Exception as e:
-            self.logger.exception(e)
+        except KeyError as ke:
+            self.logger.error(
+                f"Invalid log level received: {tango_log_level}\n{ke}"
+            )
+        except BaseException as be:
+            self.logger.exception(be)
             raise
+
+    def add_logging_target(
+        self: LogComponentManager, target: str, device_name: str
+    ) -> None:
+        """Add TalonDxLogConsumer as logging target for a given device"""
+        try:
+            logging_device = context.DeviceProxy(device_name)
+            logging_device.add_logging_target(f"device::{target}")
+        except DevFailed as df:
+            self.logger.error(
+                f"Failed to add logging target {target} for {device_name}; {df}"
+            )
+
+    def remove_logging_target(
+        self: LogComponentManager, target: str, device_name: str
+    ) -> None:
+        """Remove TalonDxLogConsumer as logging target for a given device"""
+        try:
+            logging_device = context.DeviceProxy(device_name)
+            logging_device.remove_logging_target(f"device::{target}")
+        except DevFailed as df:
+            self.logger.error(
+                f"Failed to remove logging target {target} from {device_name}; {df}"
+            )
