@@ -47,11 +47,11 @@ from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
-    SubarrayScanConfigurationValidator,
-)
 from ska_mid_cbf_mcs.fsp_scan_configuration_builder.builder import (
     FspScanConfigurationBuilder,
+)
+from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
+    SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
     VisibilityTransport,
@@ -1397,14 +1397,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Configuring FSPs for scan...")
 
-        if configuration.get('correlation'):
+        if configuration.get("correlation"):
             fsp_config_builder = FspScanConfigurationBuilder()
             fsp_config_builder.set_fsp_mode(FspModes.CORR)
-            fsp_config_builder.set_config(configuration.get('correlation'))
+            fsp_config_builder.set_config(configuration.get("correlation"))
 
             # TODO: set configuration and build,
 
-            #fsp_config = fsp_config_builder.build()
+            # fsp_config = fsp_config_builder.build()
 
         # build FSP configuration JSONs, add FSP
         all_fsp_config = []
