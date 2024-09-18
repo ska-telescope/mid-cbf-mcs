@@ -170,7 +170,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn_talon_lru = set()
         fqdn_power_switch = set()
         fqdn_talon_board = set()
-        
+
         # Find used talon from talondx config, then find corresponding sub-element FQDNs from HW config
         for config_command in self.talondx_config_json["config_commands"]:
             target = config_command["target"]
@@ -181,7 +181,7 @@ class ControllerComponentManager(CbfComponentManager):
                 ]:
                     fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
                     fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{target}")
-                    
+
                     for power_switch_id in [
                         lru_config["PDU1PowerOutlet"],
                         lru_config["PDU2PowerOutlet"],
@@ -191,7 +191,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
 
         self._talon_lru_fqdn = list(fqdn_talon_lru)
-        self._power_switch_fqdn =  list(fqdn_power_switch)
+        self._power_switch_fqdn = list(fqdn_power_switch)
 
         self._talon_board_fqdn = list(fqdn_talon_board)
         self._vcc_fqdn = self._vcc_fqdns_all
@@ -382,7 +382,7 @@ class ControllerComponentManager(CbfComponentManager):
             self.talondx_config_json = json.load(f)
 
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
-        self._set_used_fqdns()    # Set the used FQDNs by talondx config
+        self._set_used_fqdns()  # Set the used FQDNs by talondx config
 
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
