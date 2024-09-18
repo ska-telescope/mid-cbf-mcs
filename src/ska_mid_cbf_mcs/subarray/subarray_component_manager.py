@@ -1396,70 +1396,59 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if successfully configured all FSP devices, otherwise False
         """
         self.logger.info("Configuring FSPs for scan...")
-
-        if configuration.get("correlation"):
-            fsp_config_builder = FspScanConfigurationBuilder()
-            fsp_config_builder.set_fsp_mode(FspModes.CORR)
-            fsp_config_builder.set_config(configuration.get("correlation"))
-
-            # TODO: set configuration and build,
-
-            # fsp_config = fsp_config_builder.build()
-
-        # build FSP configuration JSONs, add FSP
         all_fsp_config = []
         self._vis_fsp_config = []
-        for config in configuration["fsp"]:
-            fsp_config = self._build_fsp_config(
-                fsp_config=copy.deepcopy(config),
-                common_configuration=copy.deepcopy(common_configuration),
-            )
 
-            fsp_id = fsp_config["fsp_id"]
-            match fsp_config["function_mode"]:
-                case "CORR":
-                    # set function mode and add subarray membership
-                    fsp_proxy = self._all_fsp_proxies[fsp_id]
-                    self.subscribe_command_results(fsp_proxy)
-                    self._assigned_fsp_proxies.add(fsp_proxy)
-                    self._fsp_ids.add(fsp_id)
+        # build FSP configuration JSONs, add FSP
+        if "correlation" in configuration:
+            corr_config = configuration["correlation"]
+            fsp_config_builder = FspScanConfigurationBuilder()
+            fsp_config_builder.set_fsp_mode(FspModes.CORR)
+            fsp_config_builder.set_config(corr_config)
+            # TODO: set configuration and build,
+            corr_fsp_config = fsp_config_builder.build()
 
-                    fsp_success = self._assign_fsp(fsp_proxy, "CORR")
-                    if not fsp_success:
-                        return False
+            for fsp_id in corr_fsp_config.keys():
+                fsp_config = self._build_fsp_config(
+                    fsp_config=copy.deepcopy(corr_fsp_config[fsp_id]),
+                    common_configuration=copy.deepcopy(common_configuration),
+                )
+                # set function mode and add subarray membership
+                fsp_proxy = self._all_fsp_proxies[fsp_id]
+                self.subscribe_command_results(fsp_proxy)
+                self._assigned_fsp_proxies.add(fsp_proxy)
+                self._fsp_ids.add(fsp_id)
 
-                    # Parameter named "corr_vcc_ids" used by HPS contains the
-                    # subset of the subarray VCCs for which the correlation results
-                    # are requested to be used in Mid.CBF output products (visibilities);
-                    # dishes may not be specified in the configuration at all,
-                    # or the list may be empty
-                    fsp_config["corr_vcc_ids"] = []
-                    if (
-                        "receptors" not in fsp_config
-                        or len(fsp_config["receptors"]) == 0
-                    ):
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp_config["corr_vcc_ids"] = fsp_config[
-                            "subarray_vcc_ids"
-                        ].copy()
-                    else:
-                        for dish in fsp_config["receptors"]:
-                            fsp_config["corr_vcc_ids"].append(
-                                self._dish_utils.dish_id_to_vcc_id[dish]
-                            )
+                fsp_success = self._assign_fsp(fsp_proxy, "CORR")
+                if not fsp_success:
+                    return False
 
-                    # Prepare CORR proxy and its configuration
-                    fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
-                    all_fsp_config.append(
-                        (fsp_corr_proxy, json.dumps(fsp_config))
-                    )
+                # Parameter named "corr_vcc_ids" used by HPS contains the
+                # subset of the subarray VCCs for which the correlation results
+                # are requested to be used in Mid.CBF output products (visibilities);
+                # dishes may not be specified in the configuration at all,
+                # or the list may be empty
+                fsp_config["corr_vcc_ids"] = []
+                if (
+                    "receptors" not in fsp_config
+                    or len(fsp_config["receptors"]) == 0
+                ):
+                    # In this case by the ICD, all subarray allocated resources should be used.
+                    fsp_config["corr_vcc_ids"] = fsp_config[
+                        "subarray_vcc_ids"
+                    ].copy()
+                else:
+                    for dish in fsp_config["receptors"]:
+                        fsp_config["corr_vcc_ids"].append(
+                            self._dish_utils.dish_id_to_vcc_id[dish]
+                        )
 
-                    # Store FSP parameters to configure visibility transport
-                    self._vis_fsp_config.append(fsp_config)
-                case _:
-                    self.logger.error(
-                        f"Function mode {fsp_config['function_mode']} currently unsupported."
-                    )
+                # Prepare CORR proxy and its configuration
+                fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
+                all_fsp_config.append((fsp_corr_proxy, json.dumps(fsp_config)))
+
+                # Store FSP parameters to configure visibility transport
+                self._vis_fsp_config.append(fsp_config)
 
         lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
