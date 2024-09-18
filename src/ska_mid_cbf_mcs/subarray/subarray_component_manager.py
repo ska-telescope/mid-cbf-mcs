@@ -89,7 +89,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._dish_utils = None
 
-        self.subarray_id = subarray_id
+        self._subarray_id = subarray_id
         self._fqdn_controller = controller
         self._proxy_controller = None
 
@@ -480,7 +480,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy.adminMode = AdminMode.ONLINE
 
             # change subarray membership of vcc
-            vcc_proxy.subarrayMembership = self.subarray_id
+            vcc_proxy.subarrayMembership = self._subarray_id
             self.logger.debug(
                 f"{vcc_fqdn}.subarrayMembership: "
                 + f"{vcc_proxy.subarrayMembership}"
@@ -488,7 +488,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             # assign the subarray ID to the talon board with the matching DISH ID
             if talon_proxy is not None:
-                talon_proxy.subarrayID = str(self.subarray_id)
+                talon_proxy.subarrayID = str(self._subarray_id)
 
             return True
         except tango.DevFailed as df:
@@ -1009,7 +1009,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 scan_configuration=argin,
                 count_fsp=self._count_fsp,
                 dish_ids=list(self.dish_ids),
-                subarray_id=self.subarray_id,
+                subarray_id=self._subarray_id,
                 logger=self.logger,
             )
             success, msg = validator.validate_input()
@@ -1364,7 +1364,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
-                self.subarray_id
+                self._subarray_id
             )
             if result_code == ResultCode.REJECTED:
                 self.logger.error(
@@ -1538,7 +1538,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
-            argin=self.subarray_id,
+            argin=self._subarray_id,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error(
@@ -1854,7 +1854,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self.subarray_id)
+            self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
 
