@@ -31,6 +31,7 @@ note over controller        : OpState: ON
 controller --> lmc          : Success
 
 lmc         -> subarray     : AddReceptors(list[str])
+note over lmc               : Note: adds receptors without duplicates
 note over subarray          : ObsState: IDLE
 subarray   --> lmc          : Success
 

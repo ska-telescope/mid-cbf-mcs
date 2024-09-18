@@ -311,6 +311,7 @@ class CbfSubarray(CbfObsDevice):
         Long running command that assigns input receptors to this subarray.
         Set subarray to ObsState.IDLE if no receptors were previously assigned,
         i.e. subarray was previously in ObsState.EMPTY.
+        Note: adds receptors without duplicates.
 
         :param argin: list[str] of DISH IDs to add
         :return: A tuple containing a return code and a string
