@@ -65,9 +65,22 @@ class ControllerComponentManager(CbfComponentManager):
         super().__init__(*args, **kwargs)
 
         self.validate_supported_configuration = True
-
         self._lru_timeout = lru_timeout
 
+        # --- Max Capabilities --- #
+        self._count_vcc = max_capabilities["VCC"]
+        self._count_fsp = max_capabilities["FSP"]
+        self._count_subarray = max_capabilities["Subarray"]
+
+        # --- All FQDNs --- #
+        self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
+        self._vcc_fqdns_all = fqdn_dict["VCC"]
+        self._fsp_fqdns_all = fqdn_dict["FSP"]
+        self._talon_lru_fqdns_all = fqdn_dict["TalonLRU"]
+        self._talon_board_fqdns_all = fqdn_dict["TalonBoard"]
+        self._power_switch_fqdns_all = fqdn_dict["PowerSwitch"]
+
+        # --- Used FQDNs --- #
         (
             self._vcc_fqdn,
             self._fsp_fqdn,
@@ -77,18 +90,6 @@ class ControllerComponentManager(CbfComponentManager):
             self._power_switch_fqdn,
         ) = ([] for _ in range(6))
 
-        # --- Max Capabilities --- #
-        self._count_vcc = max_capabilities["VCC"]
-        self._count_fsp = max_capabilities["FSP"]
-        self._count_subarray = max_capabilities["Subarray"]
-
-        # --- FQDNs --- #
-        self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
-        self._vcc_fqdns_all = fqdn_dict["VCC"]
-        self._fsp_fqdns_all = fqdn_dict["FSP"]
-        self._talon_lru_fqdns_all = fqdn_dict["TalonLRU"]
-        self._talon_board_fqdns_all = fqdn_dict["TalonBoard"]
-        self._power_switch_fqdns_all = fqdn_dict["PowerSwitch"]
         # NOTE: Hard coded to look at first index to handle FsSLIM and VisSLIM as single device
         self._fs_slim_fqdn = fqdn_dict["FsSLIM"][0]
         self._vis_slim_fqdn = fqdn_dict["VisSLIM"][0]
@@ -112,18 +113,18 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- Start Communicating --- #
 
-    def _set_all_fqdns(self: ControllerComponentManager) -> None:
+    def _filter_all_fqdns(self: ControllerComponentManager) -> None:
         """
-        Set the list of sub-element FQDNs to be used, limited by max capabilities count
+        Update the list of all sub-element FQDNs to be used, filter by max capabilities count
         and HW config.
 
-        :update: self._vcc_fqdn, self._fsp_fqdn, self._subarray_fqdn, self._talon_lru_fqdn,
-                 self._talon_board_fqdn, self._power_switch_fqdn
+        :update: self._vcc_fqdns_all, self._fsp_fqdns_all, self._subarray_fqdns_all,
+                 self._talon_lru_fqdns_all, self._talon_board_fqdns_all, self._power_switch_fqdns_all
         """
         # Observing/capability devices
-        self._vcc_fqdn = list(self._vcc_fqdns_all)[: self._count_vcc]
-        self._fsp_fqdn = list(self._fsp_fqdns_all)[: self._count_fsp]
-        self._subarray_fqdn = list(self._subarray_fqdns_all)[
+        self._vcc_fqdns_all = list(self._vcc_fqdns_all)[: self._count_vcc]
+        self._fsp_fqdns_all = list(self._fsp_fqdns_all)[: self._count_fsp]
+        self._subarray_fqdns_all = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
 
@@ -135,42 +136,42 @@ class ControllerComponentManager(CbfComponentManager):
                 in list(self._hw_config[config_key].keys())
             ]
 
-        self._talon_lru_fqdn = _filter_fqdn(
+        self._talon_lru_fqdns_all = _filter_fqdn(
             self._talon_lru_fqdns_all, "talon_lru"
         )
-        self._talon_board_fqdn = _filter_fqdn(
+        self._talon_board_fqdns_all = _filter_fqdn(
             self._talon_board_fqdns_all, "talon_board"
         )
-        self._power_switch_fqdn = _filter_fqdn(
+        self._power_switch_fqdns_all = _filter_fqdn(
             self._power_switch_fqdns_all, "power_switch"
         )
 
-        fqdn_variables = {
-            "VCC": self._vcc_fqdn,
-            "FSP": self._fsp_fqdn,
-            "Subarray": self._subarray_fqdn,
-            "Talon board": self._talon_board_fqdn,
-            "Talon LRU": self._talon_lru_fqdn,
-            "Power switch": self._power_switch_fqdn,
+        all_fqdns = {
+            "VCC": self._vcc_fqdns_all,
+            "FSP": self._fsp_fqdns_all,
+            "Subarray": self._subarray_fqdns_all,
+            "Talon board": self._talon_board_fqdns_all,
+            "Talon LRU": self._talon_lru_fqdns_all,
+            "Power switch": self._power_switch_fqdns_all,
             "FS SLIM mesh": self._fs_slim_fqdn,
             "VIS SLIM mesh": self._vis_slim_fqdn,
         }
 
-        for name, value in fqdn_variables.items():
-            self.logger.debug(f"Active {name} FQDNs: {value}")
+        for name, value in all_fqdns.items():
+            self.logger.debug(f"All {name} FQDNs: {value}")
 
     def _set_used_fqdns(self: ControllerComponentManager) -> None:
         """
-        Get the FQDNs of the Talon LRU and board devices that are connected to hardware
-        from the configuration JSON.
+        Set the FQDNs of the sub-elements that are used based on talondx config.
 
         :update: self._talon_lru_fqdn, self._talon_board_fqdn
         """
         # Make these sets so as not to add duplicates
         fqdn_talon_lru = set()
+        fqdn_power_switch = set()
         fqdn_talon_board = set()
-        used_talon_board_ids = set()
-
+        
+        # Find used talon from talondx config, then find corresponding sub-element FQDNs from HW config
         for config_command in self.talondx_config_json["config_commands"]:
             target = config_command["target"]
             for lru_id, lru_config in self._hw_config["talon_lru"].items():
@@ -180,11 +181,22 @@ class ControllerComponentManager(CbfComponentManager):
                 ]:
                     fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
                     fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{target}")
-                    used_talon_board_ids.add(target)
+                    
+                    for power_switch_id in [
+                        lru_config["PDU1PowerOutlet"],
+                        lru_config["PDU2PowerOutlet"],
+                    ]:
+                        fqdn_power_switch.add(
+                            f"mid_csp_cbf/power_switch/{int(power_switch_id):03d}"
+                        )
 
         self._talon_lru_fqdn = list(fqdn_talon_lru)
+        self._power_switch_fqdn =  list(fqdn_power_switch)
+
         self._talon_board_fqdn = list(fqdn_talon_board)
-        return used_talon_board_ids
+        self._vcc_fqdn = self._vcc_fqdns_all
+        self._fsp_fqdn = self._fsp_fqdns_all
+        self._subarray_fqdn = self._subarray_fqdns_all
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -329,19 +341,19 @@ class ControllerComponentManager(CbfComponentManager):
         init_success = True
 
         # Order matters here; must set PDU online before LRU to establish outlet power states
-        for fqdn in self._power_switch_fqdn:
+        for fqdn in self._power_switch_fqdns_all:
             if not self._init_device_proxy(
                 fqdn=fqdn, hw_device_type="power_switch"
             ):
                 init_success = False
 
-        for fqdn in self._talon_lru_fqdn:
+        for fqdn in self._talon_lru_fqdns_all:
             if not self._init_device_proxy(
                 fqdn=fqdn, subscribe=True, hw_device_type="talon_lru"
             ):
                 init_success = False
 
-        for fqdn in self._subarray_fqdn:
+        for fqdn in self._subarray_fqdns_all:
             if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
                 init_success = False
 
@@ -369,7 +381,8 @@ class ControllerComponentManager(CbfComponentManager):
         with open(f"{self._talondx_config_path}/talondx-config.json") as f:
             self.talondx_config_json = json.load(f)
 
-        self._set_all_fqdns()  # Get FQDNs of all devices
+        self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
+        self._set_used_fqdns()    # Set the used FQDNs by talondx config
 
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
