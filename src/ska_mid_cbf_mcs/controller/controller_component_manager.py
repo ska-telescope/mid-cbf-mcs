@@ -167,9 +167,11 @@ class ControllerComponentManager(CbfComponentManager):
         :update: self._talon_lru_fqdn, self._talon_board_fqdn
         """
         # Make these sets so as not to add duplicates
+        fqdn_talon_board = set()
+        fqdn_vcc = set()
+        fqdn_fsp = set()
         fqdn_talon_lru = set()
         fqdn_power_switch = set()
-        fqdn_talon_board = set()
 
         # Find used talon from talondx config, then find corresponding sub-element FQDNs from HW config
         for config_command in self.talondx_config_json["config_commands"]:
@@ -179,9 +181,11 @@ class ControllerComponentManager(CbfComponentManager):
                     lru_config["TalonDxBoard1"],
                     lru_config["TalonDxBoard2"],
                 ]:
-                    fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
                     fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{target}")
+                    fqdn_vcc.add(f"mid_csp_cbf/vcc/{target}")
+                    fqdn_fsp.add(f"mid_csp_cbf/fsp/{int(target):02d}")
 
+                    fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{lru_id}")
                     for power_switch_id in [
                         lru_config["PDU1PowerOutlet"],
                         lru_config["PDU2PowerOutlet"],
@@ -194,9 +198,23 @@ class ControllerComponentManager(CbfComponentManager):
         self._power_switch_fqdn = list(fqdn_power_switch)
 
         self._talon_board_fqdn = list(fqdn_talon_board)
-        self._vcc_fqdn = self._vcc_fqdns_all
-        self._fsp_fqdn = self._fsp_fqdns_all
+        self._vcc_fqdn = list(fqdn_vcc)
+        self._fsp_fqdn = list(fqdn_fsp)
         self._subarray_fqdn = self._subarray_fqdns_all
+
+        used_fqdns = {
+            "VCC": self._vcc_fqdn,
+            "FSP": self._fsp_fqdn,
+            "Subarray": self._subarray_fqdn,
+            "Talon board": self._talon_board_fqdn,
+            "Talon LRU": self._talon_lru_fqdn,
+            "Power switch": self._power_switch_fqdn,
+            "FS SLIM mesh": self._fs_slim_fqdn,
+            "VIS SLIM mesh": self._vis_slim_fqdn,
+        }
+
+        for name, value in used_fqdns.items():
+            self.logger.debug(f"Used {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
