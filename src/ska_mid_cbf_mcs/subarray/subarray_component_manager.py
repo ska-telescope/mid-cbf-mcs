@@ -220,6 +220,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if proxy initialization succeed, otherwise False
         """
         try:
+            # TODO: CIP-2896
             for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
