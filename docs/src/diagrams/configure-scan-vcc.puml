@@ -48,7 +48,7 @@ group #LightCyan For each assigned receptor:
     vccband1    -> cs           : Set cs_input_select
     vccband1    -> vccdevice    : Set frame_count
     vccband1    -> wb           : Set stream_rate, packet_rate, etc.
-    note over wb                : recieveEnable: True
+    note over wb                : receiveEnable: True
     vccband1    -> vccband1     : verify_configuration()
     note over vcc               : ObsState: READY
 end group

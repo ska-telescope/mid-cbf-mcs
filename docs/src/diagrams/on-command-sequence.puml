@@ -59,10 +59,17 @@ group #LightCyan For each Talon LRU in configuration:
 
   lru           ->  ps          : TurnOnOutlet(outlet1)
   ps            ->  pdu         : TurnOnOutlet(outlet1)
+  pdu           --> lru         : result1
   group #SeaShell If using both outlets:
     lru         ->  ps          : TurnOnOutlet(outlet2)
     ps          ->  pdu         : TurnOnOutlet(outlet2)
+    pdu         --> lru         : result2
+  else
+    lru         ->  lru         : result2 = result1
   end group
+
+  group #SeaShell If result1 OR result2 == ResultCode.OK:
+    note over lru               : OpState: ON
 end group
 
 group #LightCyan For each Talon board in configuration:

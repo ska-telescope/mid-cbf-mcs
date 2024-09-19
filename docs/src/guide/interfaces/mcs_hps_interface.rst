@@ -20,7 +20,7 @@ when the On command is called. Return calls are not shown.
 
 Prior to ``On()`` being called, two pre-requisite steps are expected:
 1. Artifacts have been downloaded from CAR and stored under the /mnt directory inside MCS. 
-2. The Tango database has been configured, including all MCS and HPS devices that are expected deploy.
+2. The Tango database has been configured, including all MCS and HPS devices that are expected to deploy.
 
 .. uml:: ../../diagrams/on-command-sequence.puml
 
