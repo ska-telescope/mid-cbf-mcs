@@ -194,13 +194,6 @@ class ControllerComponentManager(CbfComponentManager):
                             f"mid_csp_cbf/power_switch/{int(power_switch_id):03d}"
                         )
 
-        # TODO: handle preset FQDNS for simulation mode
-        if self.simulation_mode:
-            self._talon_lru_fqdn = [
-                "mid_csp_cbf/talon_lru/001",
-                "mid_csp_cbf/talon_lru/002",
-            ]
-
         self._talon_lru_fqdn = list(fqdn_talon_lru)
         self._power_switch_fqdn = list(fqdn_power_switch)
 
