@@ -194,6 +194,13 @@ class ControllerComponentManager(CbfComponentManager):
                             f"mid_csp_cbf/power_switch/{int(power_switch_id):03d}"
                         )
 
+        # TODO: handle preset FQDNS for simulation mode
+        if self.simulation_mode:
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
+
         self._talon_lru_fqdn = list(fqdn_talon_lru)
         self._power_switch_fqdn = list(fqdn_power_switch)
 
@@ -212,13 +219,6 @@ class ControllerComponentManager(CbfComponentManager):
             "FS SLIM mesh": self._fs_slim_fqdn,
             "VIS SLIM mesh": self._vis_slim_fqdn,
         }
-
-        # TODO: handle preset FQDNS for simulation mode
-        if self.simulation_mode:
-            self._talon_lru_fqdn = [
-                "mid_csp_cbf/talon_lru/001",
-                "mid_csp_cbf/talon_lru/002",
-            ]
 
         for name, value in used_fqdns.items():
             self.logger.debug(f"Used {name} FQDNs: {value}")
@@ -356,7 +356,19 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._write_hw_config(fqdn, proxy, hw_device_type):
                 return False
 
-        return self._set_proxy_online(fqdn)
+        # TODO: O(n) device runtime, can optimize?
+        if fqdn in (
+            self._vcc_fqdn
+            + self._fsp_fqdn
+            + self._subarray_fqdn
+            + self._talon_lru_fqdn
+            + self._talon_board_fqdn
+            + self._power_switch_fqdn
+            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        ):
+            return self._set_proxy_online(fqdn)
+        else:
+            return self._set_proxy_not_fitted(fqdn)
 
     def _init_device_proxies(self: ControllerComponentManager) -> bool:
         """
@@ -719,6 +731,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- On Command --- #
 
+    # TODO: Move this initialization into start_communicating?
     def _init_talon_boards(self: ControllerComponentManager):
         """
         Initialize TalonBoard devices.
