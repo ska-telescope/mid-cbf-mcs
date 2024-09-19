@@ -213,6 +213,13 @@ class ControllerComponentManager(CbfComponentManager):
             "VIS SLIM mesh": self._vis_slim_fqdn,
         }
 
+        # TODO: handle preset FQDNS for simulation mode
+        if self.simulation_mode:
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
+
         for name, value in used_fqdns.items():
             self.logger.debug(f"Used {name} FQDNs: {value}")
 
@@ -933,16 +940,6 @@ class ControllerComponentManager(CbfComponentManager):
         # 2. Configure all the Talon boards
         # 3. Turn TalonBoard devices ONLINE
         # 4. Configure SLIM Mesh devices
-
-        # TODO: Move this to start communciating
-        if not self.simulation_mode:
-            self._set_used_fqdns()
-        else:
-            # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = [
-                "mid_csp_cbf/talon_lru/001",
-                "mid_csp_cbf/talon_lru/002",
-            ]
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)
