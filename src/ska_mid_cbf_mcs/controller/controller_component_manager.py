@@ -318,6 +318,7 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Failed to set AdminMode of {fqdn} to NOT_FITTED: {df}"
             )
             return False
+
         return True
 
     def _init_device_proxy(
