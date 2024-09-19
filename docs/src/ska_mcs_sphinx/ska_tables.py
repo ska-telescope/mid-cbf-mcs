@@ -106,7 +106,7 @@ subarray_commands = [
             Publish output links.
             See also :ref:`Configure Scan Sequence`
             """),   
-        "Supported Interface(s)": "NOTE: configurescan/4.1 is not yet supported by MCS and is only used in testing cases \n" + supported_interfaces['configurescan'],
+        "Supported Interface(s)": supported_interfaces['configurescan'],
     },
     { 
         "Command": "EndScan",
