@@ -119,7 +119,7 @@ certs/
 
 # Contents of mounted folder
 mnt/talondx-config/*
-!mnt/talondx-config/example-talondx-config.json
+!mnt/talondx-config/talondx-config.json
 !mnt/talondx-config/README.md
 
 # docs folder (copied content during document generation)
