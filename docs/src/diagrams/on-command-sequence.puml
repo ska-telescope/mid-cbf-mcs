@@ -45,7 +45,7 @@ group #LightCyan For each Talon LRU in configuration:
   ps            ->  pdu         : GetOutletPowerState(outlet1)
   group #SeaShell If using single outlet:
     lru         ->  lru         : outlet2_state = outlet1_state
-  else
+  else using both outlets
     lru         ->  ps          : outlet2_state = GetOutletPowerState(outlet2)
     ps          ->  pdu         : GetOutletPowerState(outlet2)
   end group
