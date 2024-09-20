@@ -624,7 +624,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Submit off operation method to task executor queue.
 
-        :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

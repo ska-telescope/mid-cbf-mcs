@@ -89,7 +89,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._dish_utils = None
 
-        self.subarray_id = subarray_id
+        self._subarray_id = subarray_id
         self._fqdn_controller = controller
         self._proxy_controller = None
 

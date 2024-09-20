@@ -187,7 +187,9 @@ class PowerSwitch(CbfDevice):
 
     @command(
         dtype_in="DevString",
+        doc_in="Outlet ID to turn on.",
         dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def TurnOnOutlet(self: PowerSwitch, argin: str) -> None:
@@ -197,7 +199,9 @@ class PowerSwitch(CbfDevice):
 
     @command(
         dtype_in="DevString",
+        doc_in="Outlet ID to turn off.",
         dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def TurnOffOutlet(self: PowerSwitch, argin: str) -> None:

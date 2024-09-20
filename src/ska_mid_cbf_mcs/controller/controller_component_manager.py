@@ -859,7 +859,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Turn on the controller and its subordinate devices.
+        Turn on the controller and its subordinate devices
 
         :param task_callback: Callback function to update task status.
         :param task_abort_event: Event to signal task abort.
