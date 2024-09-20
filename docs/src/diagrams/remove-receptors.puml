@@ -29,8 +29,9 @@ lmc             ->  subarray    : RemoveReceptors(list[str])
 note over subarray              : ObsState: RESOURCING
 group #LightCyan For each receptor in argin:
     subarray    -> subarray     : Validate receptors in argin
-    subarray    ->  vcc         : Reset subarrayMembership
-    note over vcc               : OpState: UNKNOWN
+    subarray    -> vcc          : Reset subarrayMembership to 0
+    subarray    -> vcc          : AdminMode.OFFLINE
+    note over vcc               : OpState: DISABLE
     subarray    ->  talon       : Reset subarrayID
 end group
 

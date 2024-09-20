@@ -39,10 +39,14 @@ subarray    -> subarray     : Validate JSON against schema,\nLoad new configurat
 
 group #LightCyan For each FSP:
     subarray    -> fsp          : RemoveSubarrayMembership
-    note over fspcorr           : OpState: UNKNOWN
-    note over fsp_cont          : functionMode: IDLE
     group #SeaShell If len(subarrayMembership) == 0:
-      note over fsp             : OpState: UNKNOWN
+        fsp         -> fspcorr      : AdminMode.OFFLINE
+        note over fspcorr           : OpState: DISABLE
+        fsp         -> fsp_cont     : Set function mode to IDLE
+        note over fsp_cont          : functionMode: IDLE
+        note over fsp               : functionMode: IDLE
+        subarray    -> fsp          : AdminMode.OFFLINE
+        note over fsp             : OpState: DISABLE
     end group
 end group
 
@@ -69,6 +73,8 @@ group #LightCyan For each FSP in use:
     subarray    -> subarray     : Build FSP\nconfiguration
 
     group #SeaShell If functionMode == IDLE:
+        subarray    -> fsp          : Update simulationMode
+        subarray    -> fsp          : AdminMode.ONLINE
         note over fsp               : OpState: ON
         subarray    -> fsp          : SetFunctionMode(str)
         fsp         -> fsp          : Validate functionMode
@@ -79,6 +85,8 @@ group #LightCyan For each FSP in use:
 
     subarray    -> fsp          : AddSubarrayMembership(int)
     fsp         -> fsp          : Validate subarrayID
+    fsp         -> fspcorr      : Update simulationMode
+    fsp         -> fspcorr      : AdminMode.ONLINE
     note over fspcorr           : OpState: ON
     fsp         -> fsp          : Update subarrayMembership
 

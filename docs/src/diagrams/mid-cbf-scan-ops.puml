@@ -21,6 +21,15 @@ participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 end box
 
+note over controller        : OpState: DISABLE
+note over subarray          : OpState: DISABLE
+group #LemonChiffon If setting SimulationMode to FALSE
+    lmc         -> controller   : Update simulationMode
+end group
+lmc         -> controller   : AdminMode.ONLINE
+controller  -> subarray     : SimulationMode
+controller  -> subarray     : AdminMode.ONLINE
+note over subarray          : OpState: ON
 note over controller        : OpState: OFF
 
 lmc         -> controller   : InitSysParam(json_str)
@@ -77,5 +86,10 @@ subarray   --> lmc          : Success
 lmc         -> controller   : Off()
 note over controller        : OpState: OFF
 controller --> lmc          : Success
+
+lmc         -> controller   : AdminMode.OFFLINE
+controller  -> subarray     : AdminMode.OFFLINE
+note over subarray          : OpState: DISABLE
+note over controller        : OpState: DISABLE
 
 @enduml

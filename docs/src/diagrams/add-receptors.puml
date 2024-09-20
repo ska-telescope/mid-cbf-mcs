@@ -30,6 +30,8 @@ note over subarray           : ObsState: RESOURCING
 
 group #LightCyan For each receptor in argin:
     subarray    -> subarray  : Validate receptors in argin
+    subarray    -> vcc       : Update simulationMode
+    subarray    -> vcc       : AdminMode.ONLINE
     note over vcc            : OpState: ON
     subarray    ->  vcc      : Update subarrayMembership
     subarray    ->  talon    : Update subarrayID
