@@ -605,9 +605,9 @@ class ControllerComponentManager(CbfComponentManager):
         self: ControllerComponentManager,
         argin: str,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[TaskStatus, str]:
+    ) -> tuple[ResultCode, str]:
         """
-        Long running command that submits the InitSysParam command thread to task executor queue.
+        Submit init_sys_param operation method to task executor queue.
 
         :param argin: the Dish ID - VCC ID mapping and k values in a
                         json string.
@@ -873,7 +873,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # The order of the following operations for ON is important:
         # 1. Power on all the Talon boards by
-        #    i.  Getting the FQDNs of the LRUs
+        #    i.  Get the FQDNs of the LRUs
         #    ii. Sending ON command to all the LRUs
         # 2. Configure all the Talon boards
         # 3. Turn TalonBoard devices ONLINE
@@ -944,9 +944,9 @@ class ControllerComponentManager(CbfComponentManager):
     def on(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[TaskStatus, str]:
+    ) -> tuple[ResultCode, str]:
         """
-        Long running command that submits the On command thread to task executor queue.
+        Submit on operation method to task executor queue.
 
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string
@@ -1291,9 +1291,9 @@ class ControllerComponentManager(CbfComponentManager):
     def off(
         self: ControllerComponentManager,
         task_callback: Optional[Callable] = None,
-    ) -> tuple[TaskStatus, str]:
+    ) -> tuple[ResultCode, str]:
         """
-        Long running command that submits the Off command thread to task executor queue.
+        Submit off operation method to task executor queue.
 
         :param task_callback: Callback function to update task status
         :return: A tuple containing a return code and a string

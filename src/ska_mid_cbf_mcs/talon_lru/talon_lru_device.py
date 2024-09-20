@@ -127,7 +127,7 @@ class TalonLRU(CbfDevice):
         self: TalonLRU,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns on the Talon LRU.
+        Turn on the Talon LRU.
 
         :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.
@@ -153,7 +153,7 @@ class TalonLRU(CbfDevice):
         self: TalonLRU,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns off the Talon LRU.
+        Turn off the Talon LRU.
 
         :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.

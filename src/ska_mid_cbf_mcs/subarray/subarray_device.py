@@ -308,10 +308,9 @@ class CbfSubarray(CbfObsDevice):
         self: CbfSubarray, argin: list[str]
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that assigns input receptors to this subarray.
+        Assign input receptors to this subarray.
         Set subarray to ObsState.IDLE if no receptors were previously assigned,
         i.e. subarray was previously in ObsState.EMPTY.
-        Note: adds receptors without duplicates.
 
         :param argin: list[str] of DISH IDs to add
         :return: A tuple containing a return code and a string
@@ -334,7 +333,7 @@ class CbfSubarray(CbfObsDevice):
         self: CbfSubarray, argin: list[str]
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that removes argin list from list of assigned receptors.
+        Remove input from list of assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
 
         :param argin: list of DISH/receptor IDs to remove
@@ -354,7 +353,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> DevVarLongStringArrayType:
         """
-        Long running command that removes all assigned receptors.
+        Remove all assigned receptors.
         Set subarray to ObsState.EMPTY if no receptors assigned.
 
         :return: A tuple containing a return code and a string
@@ -381,7 +380,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def Scan(self: CbfSubarray, argin: str) -> DevVarLongStringArrayType:
         """
-        Long running command that starts an observing scan.
+        Start an observing scan.
         Overrides CbfObsDevice as subarray's scan input is a JSON string
 
         :param argin: JSON formatted string with the scan ID.
@@ -405,7 +404,7 @@ class CbfSubarray(CbfObsDevice):
     @tango.DebugIt()
     def Restart(self: CbfSubarray) -> DevVarLongStringArrayType:
         """
-        Long running command that restarts the observing device from a FAULT/ABORTED obsState to EMPTY.
+        Restart the observing device from a FAULT/ABORTED obsState to EMPTY.
 
         :return: A tuple containing a return code and a string message
             indicating status. The message is for information purpose

@@ -165,9 +165,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         Perform any setup needed for communicating with the power switch.
         """
-        self.logger.debug(
-            "Entering PowerSwitchComponentManager._start_communicating"
-        )
+        self.logger.info("Entering PowerSwitch._start_communicating")
 
         if self.simulation_mode:
             outlets = self.power_switch_simulator.outlets
@@ -353,7 +351,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the TurnOnOutlet command thread to task executor queue.
+        Turn on the PDU outlet specified by argin.
 
         :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of
@@ -451,7 +449,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         **kwargs: any,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the TurnOffOutlet command thread to task executor queue.
+        Turn off the PDU outlet specified by argin.
 
         :param argin: the target outlet ID, as a string
         :param task_callback: callback to be called when the status of

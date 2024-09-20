@@ -214,7 +214,7 @@ class Vcc(CbfObsDevice):
         self: Vcc, band_config: str
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns on the corresponding band device and disable all the others.
+        Turn on the corresponding band device and disable all the others.
 
         :param band_config: json string containing: the frequency band name,
                             dish sample rate, and number of samples per frame

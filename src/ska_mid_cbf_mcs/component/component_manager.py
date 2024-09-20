@@ -138,7 +138,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
     ) -> None:
         """
-        Long running command that establishes communication with the component, then start monitoring.
+        Establish communication with the component, then start monitoring.
         """
         self.logger.info("Entering CbfComponentManager.start_communicating")
 

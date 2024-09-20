@@ -126,6 +126,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             logger=self.logger,
         )
 
+        # Store a list of FSP parameters used to configure the visibility transport
+        self._vis_fsp_config = []
+
         # Store maxCapabilities from controller for easy reference
         self._controller_max_capabilities = {}
         self._count_vcc = 0
@@ -220,7 +223,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if proxy initialization succeed, otherwise False
         """
         try:
-            # TODO: CIP-2896
             for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
@@ -256,10 +258,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.debug(
-            "Entering SubarrayComponentManager._start_communicating"
-        )
-
         controller_success = self._init_controller_proxy()
         if not controller_success:
             self.logger.error(
@@ -307,7 +305,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
         """
-        Long running command that submits the UpdateSysParam command thread to task executor queue.
+        Submit reload sys param operation to task executor queue
 
         :param sys_param_str: sys params JSON string
         """
@@ -482,7 +480,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy.adminMode = AdminMode.ONLINE
 
             # change subarray membership of vcc
-            vcc_proxy.subarrayMembership = self.subarray_id
+            vcc_proxy.subarrayMembership = self._subarray_id
             self.logger.debug(
                 f"{vcc_fqdn}.subarrayMembership: "
                 + f"{vcc_proxy.subarrayMembership}"
@@ -490,7 +488,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             # assign the subarray ID to the talon board with the matching DISH ID
             if talon_proxy is not None:
-                talon_proxy.subarrayID = str(self.subarray_id)
+                talon_proxy.subarrayID = str(self._subarray_id)
 
             return True
         except tango.DevFailed as df:
@@ -609,7 +607,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the AddReceptors command thread to task executor queue.
+        Submit AddReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be assigned
         :param task_callback: callback for driving status of task executor's
@@ -799,7 +797,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the RemoveReceptors command thread to task executor queue.
+        Submit RemoveReceptors operation method to task executor queue.
 
         :param argin: The list of DISH (receptor) IDs to be removed
         :param task_callback: callback for driving status of task executor's
@@ -884,7 +882,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the RemoveAllReceptors command thread to task executor queue.
+        Submit RemoveAllReceptors operation method to task executor queue.
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
@@ -1011,7 +1009,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 scan_configuration=argin,
                 count_fsp=self._count_fsp,
                 dish_ids=list(self.dish_ids),
-                subarray_id=self.subarray_id,
+                subarray_id=self._subarray_id,
                 logger=self.logger,
             )
             success, msg = validator.validate_input()
@@ -1302,9 +1300,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # channel_offset is optional
         if "channel_offset" not in fsp_config:
             self.logger.warning(
-                "channel_offset not defined in configuration. Assigning default of 1."
+                "channel_offset not defined in configuration. Assigning default of 0."
             )
-            fsp_config["channel_offset"] = 1
+            fsp_config["channel_offset"] = 0
 
         fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
             common_configuration["frequency_band"]
@@ -1366,7 +1364,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
-                self.subarray_id
+                self._subarray_id
             )
             if result_code == ResultCode.REJECTED:
                 self.logger.error(
@@ -1398,6 +1396,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # build FSP configuration JSONs, add FSP
         all_fsp_config = []
+        self._vis_fsp_config = []
         for config in configuration["fsp"]:
             fsp_config = self._build_fsp_config(
                 fsp_config=copy.deepcopy(config),
@@ -1442,6 +1441,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     all_fsp_config.append(
                         (fsp_corr_proxy, json.dumps(fsp_config))
                     )
+
+                    # Store FSP parameters to configure visibility transport
+                    self._vis_fsp_config.append(fsp_config)
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
@@ -1527,7 +1529,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
     def _release_all_fsp(self: CbfSubarrayComponentManager) -> bool:
         """
-        Remove subarray membership and return FSP to FunctionMode.IDLE if possible
+        Remove subarray membership and return FSP to IDLE state if possible
 
         :return: False if failed to release FSP device, True otherwise
         """
@@ -1536,7 +1538,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
-            argin=self.subarray_id,
+            argin=self._subarray_id,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error(
@@ -1755,7 +1757,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if not self.simulation_mode:
             self.logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(configuration["fsp"], vis_slim_yaml)
+            self._vis_transport.configure(
+                fsp_config=self._vis_fsp_config,
+                vis_slim_yaml=vis_slim_yaml,
+            )
 
         # Update obsState callback
         self._update_component_state(configured=True)
@@ -1849,7 +1854,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self.subarray_id)
+            self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
 
@@ -2088,9 +2093,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
-            # There is no obsFault action implemented, however, setting to False
-            # still updates the component state dict in BaseComponentManager.
-            self._update_component_state(obsfault=False)
 
         obs_reset_status = self._issue_lrc_all_assigned_resources(
             command_name="ObsReset",
@@ -2275,7 +2277,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the Restart command thread to task executor queue.
+        Submit Restart operation method to task executor queue.
 
         :param task_callback: callback for driving status of task executor's
             current LRC task

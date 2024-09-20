@@ -346,13 +346,6 @@ class SlimLink(CbfDevice):
     )
     @DebugIt()
     def ConnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
-        """
-        Long running command that initializes a SlimLink with its associated HPS DsSlimTxRx devices.
-
-        :return: A tuple containing a return code and a string message indicating status.
-            The message is for information purpose only.
-        :rtype: DevVarLongStringArrayType
-        """
         command_handler = self.get_command_object("ConnectTxRx")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]
@@ -363,14 +356,6 @@ class SlimLink(CbfDevice):
     )
     @DebugIt()
     def DisconnectTxRx(self: SlimLink) -> DevVarLongStringArrayType:
-        """
-        Long running command that resets a SlimLink's configuration after setting
-        its associated HPS DsSlimTxRx devices to serial loopback mode.
-
-        :return: A tuple containing a return code and a string message indicating status.
-            The message is for information purpose only.
-        :rtype: DevVarLongStringArrayType
-        """
         command_handler = self.get_command_object("DisconnectTxRx")
         result_code, command_id = command_handler()
         return [[result_code], [command_id]]

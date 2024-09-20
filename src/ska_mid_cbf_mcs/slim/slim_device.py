@@ -244,7 +244,7 @@ class Slim(CbfDevice):
         self: Slim,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns on SLIM.
+        Turn on SLIM.
 
         :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.
@@ -270,7 +270,7 @@ class Slim(CbfDevice):
         self: Slim,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns off SLIM.
+        Turn off SLIM.
 
         :return: A tuple containing a return code and a string message indicating status.
             The message is for information purpose only.
@@ -282,18 +282,12 @@ class Slim(CbfDevice):
 
     @command(
         dtype_in="DevString",
+        doc_in="mesh configuration as a string in YAML format",
         dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
     def Configure(self: Slim, argin: str) -> None:
-        """
-        Long running command that configures SLIM.
-
-        :param argin: mesh configuration as a string in YAML format.
-        :return: A tuple containing a return code and a string message indicating status.
-            The message is for information purpose only.
-        :rtype: DevVarLongStringArrayType
-        """
         command_handler = self.get_command_object("Configure")
         result_code, command_id = command_handler(argin)
         return [[result_code], [command_id]]

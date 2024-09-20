@@ -75,8 +75,6 @@ class FspComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.debug("Entering FspComponentManager._start_communicating")
-
         for fqdn in self._all_fsp_corr_subarray_fqdn:
             try:
                 self._all_fsp_corr[fqdn] = context.DeviceProxy(fqdn)
@@ -243,7 +241,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits SetFunctionMode command thread to task executor queue.
+        Submit SetFunctionMode command thread to task executor queue.
 
         :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         :param task_callback: Callback function to update task status
@@ -424,7 +422,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the AddSubarrayMembership command thread to task executor queue.
+        Submit AddSubarrayMembership command thread to task executor queue.
 
         :param argin: an integer representing the subarray affiliation
         :param task_callback: Callback function to update task status
@@ -586,7 +584,7 @@ class FspComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the RemoveSubarrayMembership command thread to task executor queue.
+        Submit RemoveSubarrayMembership command thread to task executor queue.
 
         :param argin: an integer representing the subarray affiliation
         :param task_callback: Callback function to update task status

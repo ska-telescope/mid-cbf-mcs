@@ -381,7 +381,7 @@ class CbfController(CbfDevice):
         self: CbfController,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns the device on.
+        Turn the device on.
 
         :return: A tuple containing a return code and a string message indicating status.
                  The message is for information purpose only.
@@ -405,7 +405,7 @@ class CbfController(CbfDevice):
         self: CbfController,
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that turns the device off.
+        Turn the device off.
 
         :return: A tuple containing a return code and a string message indicating status.
                  The message is for information purpose only.
@@ -435,7 +435,7 @@ class CbfController(CbfDevice):
         self: CbfController, argin: str
     ) -> DevVarLongStringArrayType:
         """
-        Long running command that sets the Dish ID - VCC ID mapping and k values
+        This command sets the Dish ID - VCC ID mapping and k values
 
         :param argin: the Dish ID - VCC ID mapping and frequency offset (k) in a json string.
         :return: A tuple containing a return code and a string

@@ -107,8 +107,6 @@ class VccComponentManager(CbfObsComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.debug("Entering VccComponentManager._start_communicating")
-
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
         if not self.simulation_mode:
@@ -230,9 +228,7 @@ class VccComponentManager(CbfObsComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Configure VCC band-specific devices. At the HPS level,
-        this reconfigures the FPGA to the correct bitstream and enables the respective
-        band device. All other band devices are disabled.
+        Configure VCC band-specific devices
 
         :param argin: JSON string with the configure band parameters
 
@@ -326,7 +322,9 @@ class VccComponentManager(CbfObsComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the ConfigureBand command thread to task executor queue.
+        Configure the corresponding band. At the HPS level, this reconfigures the
+        FPGA to the correct bitstream and enables the respective band device. All
+        other band devices are disabled.
 
         :param argin: the frequency band name
 

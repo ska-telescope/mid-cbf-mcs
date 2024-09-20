@@ -114,7 +114,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the ConfigureScan command thread to task executor queue.
+        Submit configure scan operation method to task executor queue.
 
         :param argin: JSON string with the configure scan parameters
 
@@ -170,7 +170,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the Scan command thread to task executor queue.
+        Submit scan operation method to task executor queue.
 
         :param argin: Scan ID integer
 
@@ -209,7 +209,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        End scan operation. Transitions the observing state from SCANNING to READY.
+        End scan operation.
 
         :raises NotImplementedError: Not implemented in abstract class
         """
@@ -220,7 +220,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the EndScan command thread to task executor queue.
+        Transition observing state from SCANNING to READY
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -267,7 +267,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the GoToIdle command thread to task executor queue.
+        Transition observing state from READY to IDLE
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -315,7 +315,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the Abort command thread to task executor queue.
+        Abort the current scan operation
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -366,7 +366,7 @@ class CbfObsComponentManager(CbfComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> tuple[TaskStatus, str]:
         """
-        Long running command that submits the ObsReset command thread to task executor queue.
+        Reset observing state from ABORTED or FAULT to IDLE.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
