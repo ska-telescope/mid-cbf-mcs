@@ -21,7 +21,6 @@ title On Command Sequence - Correlation\n
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
   participant "Mid.CBF\nController" as controller
-  participant "Mid.CBF\nSubarray" as subarray
   participant "Talon\nDX" as tdx
   participant "Talon\nLRU" as lru
   participant "Talon\nBoard" as talon_board
