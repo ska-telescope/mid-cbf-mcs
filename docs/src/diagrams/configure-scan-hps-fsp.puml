@@ -3,47 +3,53 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
 }
 
 title HPS Configure FSP for Correlation Scan\n
 
-box "MCS"
-participant "\nFspCorr\nSubarray" as fspcorr
+box "\nMCS\n"
+    participant "FSP Corr\nSubarray\n" as fspcorr
+end box
+box "\nHPS\n"
+    participant "FSP Corr\nController\n" as hpsfspcorr
+    collections "Packet\nStream\nRepair" as psr
+    collections "Resampler\nDelay\nTracker" as rdt
+    collections "Fine\nChannelizer\n" as channelizer
+    collections "DDR4\nCorner\nTurner" as dct
+    participant "Correlator\n\n" as correlator
 end box
 
-box "HPS"
-participant "FSP\nCorr\n" as hpsfspcorr
-participant "Packet\nStream\nRepair" as psr
-participant "Resampler\nDelay\nTracker" as rdt
-participant "Fine\nChannelizer\n" as channelizer
-participant "DDR4Corner\nTurner\n" as dct
-participant "Correlator\n\n" as correlator
-end box
+group #LightCyan For each FSP in use:
+    fspcorr     -> hpsfspcorr   : ConfigureScan(json_str)
+    note over hpsfspcorr       : ObsState: CONFIGURING
 
-fspcorr     -> hpsfspcorr   : ConfigureScan(json_str)
+    group #LightCyan For each assigned receptor:
+        hpsfspcorr  -> psr         : Write packet rate
+        hpsfspcorr  -> rdt         : Stop()
+        hpsfspcorr  -> rdt         : Set various attributes
+        hpsfspcorr  -> rdt         : Start()
+        hpsfspcorr  -> channelizer : Set gains
+    end group
 
-group Receptor ID
-hpsfspcorr  -> psr         : write packet rate
-hpsfspcorr  -> rdt         : stop
-hpsfspcorr  -> rdt         : write attributes
-hpsfspcorr  -> rdt         : set input sample rate
-hpsfspcorr  -> rdt         : set output sample rate
-hpsfspcorr  -> rdt         : start
-hpsfspcorr  -> channelizer : write gain
+    group #LightCyan For each corner turner:
+        hpsfspcorr  -> dct  : Write various attributes
+        hpsfspcorr  -> dct  : Subscribe to antenna_status
+    end group
+
+    hpsfspcorr  -> correlator   : Write various attributes
+    hpsfspcorr  -> correlator   : Program long term accumulator (LTA)
+    note over hpsfspcorr        : ObsState: READY
+    hpsfspcorr  --> fspcorr     : Success
 end group
-
-group Corner Turner
-hpsfspcorr -> dct : read number of samples
-hpsfspcorr -> dct : write attributes
-end group
-
-hpsfspcorr -> correlator : write attributes
-hpsfspcorr -> correlator : program long term accumulator
 
 @enduml

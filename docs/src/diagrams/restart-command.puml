@@ -3,19 +3,17 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+  ParticipantBorderColor DodgerBlue
+  ParticipantBackgroundColor DeepSkyBlue
+  ActorBorderColor DarkGreen
+  ActorBackgroundColor Green
+  BoxBorderColor LightBlue
+  BoxBackgroundColor #F0FFFF
 }
-
 skinparam collections {
   BackGroundColor LightBlue
   BorderColor DodgerBlue
 }
-
 skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
@@ -23,50 +21,76 @@ skinparam database {
 
 title Restart Command Sequence - Correlation\n
 
-participant "CSP_Mid\n.LMC" as lmc
-
-box "MCS"
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
-collections "FSP" as fsp
-collections "FSP\nCorr\nSubarray" as fspsubarray
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nSubarray" as subarray
+  collections "Talon\nBoard" as talonboard
+  collections "VCC\n" as vcc
+  collections "FSP\n" as fsp
+  collections "FSP Corr\nSubarray" as fspsubarray
+  
 end box
-
-box "HPS"
-participant "HPS\nVCC\nController" as hpsvcc
-participant "HPS\nVCC\nBand1&2" as hpsvccband
-participant "HPS FSP\nCorr App" as hpsfsp
-collections "HPS\nLow Level\nDevices" as hpsdevices
+box "\nHPS\n"
+  participant "VCC\nController" as hpsvcc
+  participant "VCC\nBand1&2" as hpsvccband
+  participant "FSP\nController" as hpsfsp
+  participant "FSP Corr\nController" as hpsfsp_corr
 end box
 
 lmc         ->  subarray      : Restart
 
-group if subarray in ObsState.FAULT
-subarray    ->  vcc           : Abort
-subarray    ->  fspsubarray   : Abort
+group #SeaShell If ObsState == [ABORTED, ABORTED_EMPTY, FAULT, FAULT_EMPTY, EMPTY]:
+  note over subarray           : ObsState: RESTARTING
+end group
+
+group #SeaShell If ObsState == FAULT:
+  subarray    ->  vcc           : Abort
+  vcc         ->  hpsvccband    : Abort (stub)
+  note over hpsvccband          : (TBD)
+  note over vcc                 : ObsState: ABORTED
+  subarray    ->  fspsubarray   : Abort
+  fspsubarray ->  hpsfsp        : Abort (stub)
+  note over hpsfsp              : (TBD)
+  note over fspsubarray         : ObsState: ABORTED
 end group
 
 subarray    ->  vcc           : ObsReset
-vcc         ->  hpsvccband    : ObsReset
+note over vcc                 : ObsState: RESETTING
+vcc         ->  hpsvccband    : ObsReset (stub)
+note over hpsvccband          : (TBD)
+vcc         ->  vcc           : Deconfigure scan configuration 
+note over vcc                 : ObsState: IDLE
 
-note over vcc                 : VCC\nObsState IDLE
 subarray    ->  fspsubarray   : ObsReset
+note over fspsubarray         : ObsState: RESETTING
+fspsubarray ->  hpsfsp        : ObsReset (stub)
+note over hpsfsp              : (TBD)
+fspsubarray ->  fspsubarray   : Deconfigure scan configuration
+note over fspsubarray         : ObsState: IDLE
 
-note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
-
-subarray    ->  subarray      : deconfigure
-subarray    ->  fsp           : RemoveSubarrayMembership
-
-group no other subarray membership
-fsp         ->  fspsubarray   : GoToIdle\n
+group #LightCyan For each FSP:
+    subarray    -> fsp        : RemoveSubarrayMembership
+    note over hpsfsp_cont     : functionMode: IDLE
+    group #SeaShell If len(subarrayMembership) == 0:
+      note over fsp           : OpState: UNKNOWN
+    end group
 end group
 
-note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
-note over subarray            : Subarray\nObsState IDLE
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc        : Unsubscribe all events
+end group
 
-subarray    ->  subarray      : remove_all_receptors
+group #LightCyan For each assigned receptor:
+  subarray    ->  vcc         : Reset subarrayMembership
+  note over vcc               : OpState: UNKNOWN
+  subarray    ->  talonboard  : Reset subarrayID
+end group
 
-lmc        <--  subarray      : Success
+subarray      -> subarray     : Reset scan configuration
+
+note over subarray            : ObsState: EMPTY
+lmc         <--  subarray     : Success
 
 
 @enduml

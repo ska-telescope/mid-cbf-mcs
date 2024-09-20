@@ -3,12 +3,12 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+  ParticipantBorderColor DodgerBlue
+  ParticipantBackgroundColor DeepSkyBlue
+  ActorBorderColor DarkGreen
+  ActorBackgroundColor Green
+  BoxBorderColor LightBlue
+  BoxBackgroundColor #F0FFFF
 }
 
 skinparam collections {
@@ -21,40 +21,35 @@ skinparam database {
   BorderColor DarkGreen
 }
 
-title Abort Command Sequence - Correlation\n
+title Abort Command Sequence - Correlation
 
-participant "CSP_Mid\n.LMC" as lmc
-
-box "MCS"
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
-collections "FSP" as fsp
-collections "FSP\nCorr\nSubarray" as fspsubarray
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nSubarray" as subarray
+  collections "VCC\n" as vcc
+  collections "FSP\n" as fsp
+  collections "FSP Corr\nSubarray" as fspsubarray
 end box
-
-box "HPS"
-participant "HPS\nVCC\nController" as hpsvcc
-participant "HPS\nVCC\nBand1&2" as hpsvccband
-participant "HPS FSP\nCorr App" as hpsfsp
-collections "HPS\nLow Level\nDevices" as hpsdevices
+box "\nHPS\n"
+  participant "VCC\nController" as hpsvcc
+  participant "VCC\nBand1&2" as hpsvccband
+  participant "FSP Corr\nController" as hpsfspcorr
 end box
 
 lmc        ->  subarray      : Abort
-
+note over subarray           : ObsState: ABORTING
 subarray   ->  vcc           : Abort
-vcc        ->  hpsvccband    : Abort
+note over vcc                : ObsState: ABORTING
+vcc        ->  hpsvccband    : Abort (stub) 
 note over hpsvccband         : (TBD)
-subarray   <-- vcc           : Success
-note over vcc                : VCC\nObsState ABORTED
+note over vcc                : ObsState: ABORTED
 subarray   ->  fspsubarray   : Abort
-fspsubarray->  hpsfsp        : Abort (stub)
-note over hpsfsp             : (TBD)
-subarray   <-- fspsubarray   : Success
-note over fspsubarray        : FSP Corr Subarray\nObsState ABORTED
-
+note over fspsubarray        : ObsState: ABORTING
+fspsubarray->  hpsfspcorr    : Abort (stub)
+note over hpsfspcorr         : (TBD)
+note over fspsubarray        : ObsState: ABORTED
+note over subarray           : ObsState: ABORTED
 
 lmc       <--  subarray      : Success
-note over subarray           : Subarray\nObsState ABORTED
-
 
 @enduml

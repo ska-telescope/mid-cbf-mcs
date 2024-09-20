@@ -1,0 +1,53 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
+}
+
+title MCS Correlation Add Receptors\n
+
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "VCC\n" as vcc
+    collections "Talon\nBoard" as talon
+end box
+
+note over subarray       : ObsState: EMPTY
+lmc         ->  subarray     : AddReceptors(list[str])
+note over subarray           : ObsState: RESOURCING
+group #LightCyan For each receptor in argin:
+    subarray    -> subarray  : Validate receptors in argin
+end group
+
+group #SeaShell If len(valid receptors) > 0:
+    group #LightCyan For each receptor:
+        subarray    -> vcc       : Update simulationMode
+        subarray    -> vcc       : AdminMode.ONLINE
+        note over vcc            : OpState: ON
+        subarray    ->  vcc      : Update subarrayMembership
+        subarray    ->  talon    : Update subarrayID
+    end group
+
+    subarray    ->  subarray     : Update receptors
+    note over subarray       : ObsState: IDLE
+else Failure in AddReceptors, ObsState unchanged
+    note over subarray       : ObsState: EMPTY
+end group
+
+
+lmc        <--  subarray     : Success
+
+@enduml
