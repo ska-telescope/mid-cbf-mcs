@@ -14,35 +14,31 @@ skinparam collections {
   BorderColor DodgerBlue
 }
 skinparam responseMessageBelowArrow true
+
 title InitSysParam Command Sequence\n
-participant "CSP_Mid\n.LMC" as lmc
-box "MCS"
-participant "Mid.CBF\nController" as control
-collections "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
+
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  collections "Mid.CBF\nSubarray" as subarray
+  collections "VCC\n" as vcc
 end box
-participant "CAR" as car
-note over control                 : OpState: OFF
-lmc          -> control           : InitSysParam(\nJSON str)
-control      -> control           : check OpState is OFF
+participant "CAR\n" as car #YellowGreen
 
-alt OpState is OFF
-control      -> control           : check JSON is compliant \nwith schema
+lmc          -> controller          : InitSysParam(json_str)
+controller   -> controller          : Validate JSON against schema
 
-alt #LightBlue JSON is compliant
-alt #DeepSkyBlue URI provided
-control      -> car               : retrieve init sys param file
-end
-control      -> control           : store sys_param
-control      -> subarray          : write sys_param (json str)
-subarray     -> subarray          : store sys_param
-control      -> vcc               : set receptor ID
-lmc         <-- control           : Success
-else JSON is not compliant
-lmc         <-- control           : Fail
-end
+group #SeaShell If JSON is valid:
+  group #SeaShell If URI provided:
+    controller    -> car            : Retrieve init sys param JSON file
+    controller    -> controller     : Validate JSON  against schema
+  end group
+  controller      -> controller     : Update sysParam
+  controller      -> subarray       : Set sysParam
+  subarray        -> subarray       : Update sysParam
+  controller      -> vcc            : Set dishID
+  lmc         <-- controller        : Success
+end group
 
-else OpState is not OFF
-lmc         <-- control           : Fail
-end
+
 @enduml
