@@ -29,8 +29,8 @@ used by MCS, and some terminology, are listed here:
   * When the device is "offline" (i.e. communications with the component are disabled, ``AdminMode.OFFLINE``),
     its operating state is DISABLED.
 
-* **OpState**: an extension of Tango's DevState, this represents both the power and communications
-  status of a given device.
+* **OpState**: an extension of Tango's DevState. Changes in both power state and communication status drive updates to the OpState for a given device.
+  For more details see _communication_state_changed and _component_state_changed methods in `SKABaseDevice <https://gitlab.com/ska-telescope/ska-tango-base/-/blob/main/src/ska_tango_base/base/base_device.py>`_.
 
   * States used in MCS: ON, OFF, DISABLED.
 
