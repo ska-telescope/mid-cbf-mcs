@@ -9,7 +9,7 @@ UNRELEASED CHANGES
 ******************
 * None at this time
 
-0.16.0
+1.0.0
 ******
 * CIP-1924 Upgrade to ska-tango-base v1.0.0
   * Created base classes for observing and non-observing devices (CbfObsDevice, CbfDevice) and component managers (CbfObsComponentManager, CbfComponentManager)
