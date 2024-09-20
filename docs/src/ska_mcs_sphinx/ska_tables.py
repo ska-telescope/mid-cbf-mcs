@@ -269,7 +269,10 @@ class CommandTable(Directive):
             action_entry.append(self._parse_line_block(command['Action']))
             row.append(action_entry)
             supported_entry = nodes.entry('')
-            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
+            if("https://schema.skao.int/ska-csp-configurescan/4.1" in command['Supported Interface(s)']):
+                supported_entry.append(self._create_line_block_from_list(["https://schema.skao.int/ska-csp-configurescan/3.0"]))
+            else:
+                supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
             row.append(supported_entry)
             table_body.append(row)
 
