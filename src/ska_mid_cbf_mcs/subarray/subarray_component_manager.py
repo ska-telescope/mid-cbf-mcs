@@ -229,13 +229,15 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     device_name=fqdn
                 )
 
-            for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
-                zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
-            ):
+            for fsp_fqdn in self._fqdn_fsp:
+                fsp_id = int(fqdn.split("/")[2])
                 self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_fqdn
                 )
-                self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
+
+            for fsp_corr_fqdn in self._fqdn_fsp_corr:
+                fsp_corr_id = int(fqdn.split("/")[2])
+                self._all_fsp_corr_proxies[fsp_corr_id] = context.DeviceProxy(
                     device_name=fsp_corr_fqdn
                 )
 
