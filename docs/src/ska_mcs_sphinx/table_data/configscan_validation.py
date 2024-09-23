@@ -16,7 +16,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
@@ -57,7 +57,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
@@ -71,7 +71,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
@@ -153,7 +153,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
@@ -173,7 +173,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
@@ -209,7 +209,7 @@ configurescan_validation_rules_data = {
                 """
                 .. warning::
 
-                    This value is currently unsupported.
+                    This value is currently unsupported
 
                     Using this value will result in a rejected scan configuration
 
