@@ -43,6 +43,7 @@ class TalonDxComponentManager(CbfComponentManager):
         *args: any,
         talondx_config_path: str,
         hw_config_path: str,
+        hps_master_timeout: int = 60,
         **kwargs: any,
     ) -> None:
         """
@@ -56,6 +57,7 @@ class TalonDxComponentManager(CbfComponentManager):
                                 a simulator should be used; note that currently there
                                 is no simulator for the Talon boards, so the component
                             manager does nothing when in simulation mode
+        :param hps_master_timeout: Timeout for HPS Master proxy in seconds
         :param logger: a logger for this object to use
         """
         super().__init__(*args, **kwargs)
@@ -65,6 +67,7 @@ class TalonDxComponentManager(CbfComponentManager):
         self._hw_config = {}
         self.talondx_config = {}
         self.proxies = {}
+        self.hps_master_timeout = hps_master_timeout
 
     # --- Configure Talons --- #
 
@@ -99,7 +102,7 @@ class TalonDxComponentManager(CbfComponentManager):
 
         self.logger.info(f"Sending configure command to {hps_master_fqdn}")
         try:
-            hps_master.set_timeout_millis(60000)
+            hps_master.set_timeout_millis(self.hps_master_timeout * 1000)
             cmd_ret = hps_master.configure(json.dumps(talon_cfg))
             if cmd_ret != 0:
                 self.logger.error(

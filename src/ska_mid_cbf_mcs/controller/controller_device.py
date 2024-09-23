@@ -36,7 +36,7 @@ class CbfController(CbfDevice):
     CbfController TANGO device class.
 
     Primary point of contact for monitoring and control of Mid.CBF.
-    Implements state and mode indicators, and a set of state transition commmands.
+    Implements state and mode indicators, and a set of state transition commands.
     """
 
     # -----------------
@@ -150,7 +150,7 @@ class CbfController(CbfDevice):
     )
     def maxCapabilities(self: CbfController) -> list[str]:
         """
-        Read maximum number of instances of each capability type, as definied in charts.
+        Read maximum number of instances of each capability type, as defined in charts.
         By default, these include VCC, FSP, and Subarray.
 
         :return: list of maximum number of instances of each capability type
@@ -224,6 +224,29 @@ class CbfController(CbfDevice):
             self.logger.warning(msg)
 
         self.component_manager.validate_supported_configuration = value
+
+    @attribute(
+        dtype=int,
+        label="HPS Master timeout",
+        doc="HPS Master timeout in seconds",
+    )
+    def hpsMasterTimeout(self: CbfController) -> int:
+        """
+        Reads and return the value of hpsMasterTimeout
+
+        :return: the value in hpsMasterTimeout
+        :rtype: int
+        """
+        return self._talondx_component_manager.hps_master_timeout
+
+    @hpsMasterTimeout.write
+    def hpsMasterTimeout(self: CbfController, value: int) -> None:
+        """
+        Write the timeout of the HPS Master device proxy; value is in seconds.
+
+        :param value: Timeout for HPS Master proxy in seconds
+        """
+        self._talondx_component_manager.hps_master_timeout = value
 
     # --------------
     # Initialization
