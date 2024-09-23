@@ -1,7 +1,7 @@
 from inspect import cleandoc
 from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
 
-subarray_commands = {
+subarray_commands_data = {
     "headers": [
         "Command",
         "Parameters",

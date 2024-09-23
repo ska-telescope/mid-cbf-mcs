@@ -15,16 +15,13 @@ from docutils.parsers.rst import Directive
 from sphinx.util.nodes import nested_parse_with_titles
 
 # import table data
-from ska_mcs_sphinx.table_data.subarray_commands import subarray_commands
-from ska_mcs_sphinx.table_data.controller_commands import controller_commands
-from ska_mcs_sphinx.table_data.subscription_commands import sub_table_commands
-from ska_mcs_sphinx.table_data.configscan_validation import configurescan_validation_rules
+import ska_mcs_sphinx.table_data as table_data
 
 table_data_mapping = {
-    'Controller': controller_commands,
-    'Subarray': subarray_commands,
-    'Subscriptions': sub_table_commands,
-    'Supported_Validation': configurescan_validation_rules
+    'Supported_Validation': table_data.configurescan_validation_rules_data,
+    'Controller': table_data.controller_commands_data,
+    'Subarray': table_data.subarray_commands_data,
+    'Subscriptions': table_data.subscription_commands_data
 }
 
 class CommandTable(Directive):

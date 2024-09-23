@@ -1,7 +1,7 @@
 from inspect import cleandoc
 from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
 
-sub_table_commands = {
+subscription_commands_data = {
     "headers": [
         "Subscription",
         "Parameters",

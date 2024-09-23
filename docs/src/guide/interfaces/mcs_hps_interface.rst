@@ -1,5 +1,5 @@
 MCS to HPS
-=====================
+==========
 The interface from the MCS to the HPS is largely in the form of communication between
 Tango devices running on either side. 
 
@@ -10,10 +10,10 @@ it is implemented in the :ref:`TalonDxComponentManager Class`, which is instanti
 :ref:`CbfController`.
 
 Command Sequence
------------------
+----------------
 
 On Sequence
-++++++++++++++
++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 when the On command is called. Return calls are not shown.
@@ -57,7 +57,7 @@ An example of such a configuration is provided below:
     }
 
 Off Sequence
-++++++++++++++
+++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 when the Off command is called. Return calls are not shown.
@@ -65,7 +65,7 @@ when the Off command is called. Return calls are not shown.
 .. uml:: ../../diagrams/off-command-sequence.puml
 
 InitSysParam Sequence
-++++++++++++++++++++++
++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to initialize the system parameters.
@@ -73,7 +73,7 @@ to initialize the system parameters.
 .. uml:: ../../diagrams/initsysparam-command.puml
 
 AddReceptors Sequence
-++++++++++++++++++++++
++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to assign resources to a subarray.
@@ -81,7 +81,7 @@ to assign resources to a subarray.
 .. uml:: ../../diagrams/add-receptors.puml
 
 RemoveReceptors Sequence
-++++++++++++++++++++++
+++++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to release resources from a subarray.
@@ -94,7 +94,7 @@ a full copy of the current assigned receptors to the loop that resets the subdev
 
 .. _config_scan:
 Configure Scan Sequence
-++++++++++++++++++++++++
++++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
@@ -128,7 +128,7 @@ correlation scan.
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
 Abort Sequence
-+++++++++++++++
+++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to Abort from a correlation scan. Return calls are not shown.
@@ -136,7 +136,7 @@ to Abort from a correlation scan. Return calls are not shown.
 .. uml:: ../../diagrams/abort-command.puml
 
 ObsReset Sequence
-++++++++++++++++++
++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to return to IDLE via the ObsReset command for a correlation scan.
@@ -145,7 +145,7 @@ Return calls are not shown.
 .. uml:: ../../diagrams/obsreset-command.puml
 
 Restart Sequence
-++++++++++++++++++
+++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to return to EMPTY via the Restart command for a correlation scan.
@@ -155,7 +155,7 @@ Return calls are not shown.
 
 
 Serial Lightweight Interconnect Mesh (SLIM) Interface
-------------------------------------------------------
+-----------------------------------------------------
 
 Refs: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_, :ref:`Serial Lightweight Interconnect Mesh (SLIM) Design`
 
@@ -185,21 +185,21 @@ AA0.5 quantities shown.
 .. uml:: /diagrams/slim-configuration-vis.puml
 
 SLIM FS Links Definition Example YAML File
-+++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
 .. literalinclude:: fs_slim_config.yaml
 
 SLIM Visibility Links Definition Example YAML File
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
 .. literalinclude:: vis_slim_config.yaml
 
 SLIM Tx / Rx Device Servers (HPS)
-++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 
 Note: See `SLIM Tx/Rx Documentation <https://gitlab.drao.nrc.ca/digital-systems/software/applications/ds-slim-tx-rx/-/blob/main/doc>`_ for more details.
 
