@@ -223,7 +223,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if proxy initialization succeed, otherwise False
         """
         try:
-            for vcc_id, fqdn in enumerate(self._fqdn_vcc, 1):
+            for fqdn in self._fqdn_vcc:
+                vcc_id = int(fqdn.split("/")[2])
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
                 )
