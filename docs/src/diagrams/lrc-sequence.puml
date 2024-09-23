@@ -1,0 +1,76 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+  ParticipantBorderColor DodgerBlue
+  ParticipantBackgroundColor DeepSkyBlue
+  ActorBorderColor DarkGreen
+  ActorBackgroundColor Green
+  BoxBorderColor LightBlue
+  BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title Long Running Command Sequence - VCC ConfigureScan\n
+
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+
+box "\nMid.CBF.Subarray\n"
+  participant "Main\nThread" as sub_main
+  participant "Task\nQueue" as sub_queue
+  participant "Executor\nThread" as sub_ex
+end box
+
+box "\nMid.CBF.VCC\n"
+  participant "Main\nThread" as vcc_main
+  participant "Command\nThread" as vcc_queue
+  participant "Executor\nThread" as vcc_ex 
+end box
+
+box "\nHPS\n"
+  participant "VCC\nController" as hps_vcc
+  participant "VCC\nBand1&2" as hps_vccband
+end box
+
+lmc         ->  sub_main        : ConfigureScan()
+sub_main    ->  sub_queue       : SubmitTask(_configure_scan())
+sub_queue  -->  sub_main        : ResultCode.QUEUED
+
+lmc         ->  sub_main        : Scan()
+sub_main    ->  sub_queue       : SubmitTask(_scan())
+sub_queue  -->  sub_main        : ResultCode.QUEUED
+
+lmc         ->  sub_main        : EndScan()
+sub_main    ->  sub_queue       : SubmitTask(_end_scan())
+sub_queue  -->  sub_main        : ResultCode.QUEUED
+
+sub_queue   ->  sub_ex          : _configure_scan()
+sub_ex      ->  vcc_main        : ConfigureBand()
+vcc_main    ->  vcc_queue       : SubmitTask(_configure_band())
+note over sub_ex                : blocking_commands = 1
+sub_ex      ->  sub_ex          : wait_for_blocking_results()
+vcc_queue   ->  vcc_ex          : _configure_band()
+vcc_ex      ->  hps_vcc         : ConfigureBand()
+vcc_ex      ->  hps_vccband     : SetInternalParameters()
+vcc_ex     -->  sub_ex          : longRunningCommandResult
+note over sub_ex                : blocking_commands = 0
+
+sub_ex      ->  vcc_main        : ConfigureScan()
+vcc_main    ->  vcc_queue       : SubmitTask(_configure_scan())
+note over sub_ex                : blocking_commands = 1
+sub_ex      ->  sub_ex          : wait_for_blocking_results()
+vcc_queue   ->  vcc_ex          : _configure_scan()
+vcc_ex      ->  hps_vccband     : ConfigureScan()
+note over vcc_ex                : ObsState: READY
+vcc_ex     -->  sub_ex          : longRunningCommandResult
+note over sub_ex                : blocking_commands = 0
+
+@enduml
