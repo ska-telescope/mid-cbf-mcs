@@ -69,13 +69,13 @@ class TestFspScanConfigurationBuilder:
         fsp_mode = params["fsp_mode"]
         config_name = params["config_name"]
 
-        if config_name is not None:
-            with open(json_file_path + params["configure_scan_file"]) as file:
+        if type(config_name) is str:
+            with open(json_file_path + params["config_name"]) as file:
                 json_str = file.read().replace("\n", "")
 
             full_configuration = json.loads(json_str)
         else:
-            full_configuration = None
+            full_configuration = params["config_name"]
 
         builder = fsp_builder()
 
