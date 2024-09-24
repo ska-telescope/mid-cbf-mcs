@@ -291,7 +291,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         return True
 
-    # TODO: Use to set not fitted for unused devices
     def _set_proxy_not_fitted(
         self: ControllerComponentManager,
         fqdn: str,
@@ -405,12 +404,27 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         # Read the HW config YAML
-        with open(self._hw_config_path) as yaml_fd:
-            self._hw_config = yaml.safe_load(yaml_fd)
+        try:
+            with open(self._hw_config_path) as yaml_fd:
+                self._hw_config = yaml.safe_load(yaml_fd)
+        except FileNotFoundError as e:
+            self.logger.error(
+                f"Failed to read HW config file at {self._hw_config_path}: {e}"
+            )
+            return
 
         # Read the talondx config JSON
-        with open(f"{self._talondx_config_path}/talondx-config.json") as f:
-            self.talondx_config_json = json.load(f)
+        try:
+            with open(f"{self._talondx_config_path}/talondx-config.json") as f:
+                self.talondx_config_json = json.load(f)
+        except FileNotFoundError as e:
+            self.logger.error(
+                f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
+            )
+            return
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to decode talondx-config JSON: {e}")
+            return
 
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
         self._set_used_fqdns()  # Set the used FQDNs by talondx config
