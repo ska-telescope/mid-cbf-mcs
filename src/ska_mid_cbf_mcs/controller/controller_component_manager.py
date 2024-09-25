@@ -181,11 +181,15 @@ class ControllerComponentManager(CbfComponentManager):
                     lru_config["TalonDxBoard1"],
                     lru_config["TalonDxBoard2"],
                 ]:
-                    fqdn_talon_board.add(f"mid_csp_cbf/talon_board/{int(target):03d}")
+                    fqdn_talon_board.add(
+                        f"mid_csp_cbf/talon_board/{int(target):03d}"
+                    )
                     fqdn_vcc.add(f"mid_csp_cbf/vcc/{int(target):03d}")
                     fqdn_fsp.add(f"mid_csp_cbf/fsp/{int(target):02d}")
 
-                    fqdn_talon_lru.add(f"mid_csp_cbf/talon_lru/{int(lru_id):03d}")
+                    fqdn_talon_lru.add(
+                        f"mid_csp_cbf/talon_lru/{int(lru_id):03d}"
+                    )
                     for power_switch_id in [
                         lru_config["PDU1PowerOutlet"],
                         lru_config["PDU2PowerOutlet"],
