@@ -38,7 +38,7 @@ __all__ = ["CbfComponentManager"]
 
 
 # Default timeout per blocking command during wait_for_blocking_results in seconds
-DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10
+DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10.0
 
 # 10 ms resolution
 TIMEOUT_RESOLUTION = 0.01
@@ -111,9 +111,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # that an LRC thread may depend on
         # See docstring under wait_for_blocking_result for an example scenario
         self.event_ids = {}
-        self.results_lock = Lock()
-        self.blocking_commands: set["str"] = set()
-        self._command_failed = False
+        self._results_lock = Lock()
+        self._received_lrc_results = {}
+        self.blocking_command_ids = set()
 
         # NOTE: currently all devices are using constructor default
         # simulation_mode == SimulationMode.TRUE
@@ -495,46 +495,21 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango attribute change event data
         """
         value = event_data.attr_value.value
-        dev_name = event_data.device.dev_name()
-
         if value is None or value == ("", ""):
             return
+        self.logger.info(
+            f"{event_data.device.dev_name()} EventData attr_value: {value}"
+        )
 
-        self.logger.info(f"EventData attr_value: {value}")
-        # fetch the result code from the event_data tuple.
         try:
-            result_code = int(value[1].split(",")[0].split("[")[1])
             command_id = value[0]
+            result = value[1]
         except IndexError as ie:
             self.logger.error(f"IndexError in parsing EventData; {ie}")
             return
 
-        # If the command ID not in blocking commands, we should wait a bit,
-        # as the event may have occurred before we had the chance to add
-        # it in the component manager.
-        ticks_10ms = int(DEFAULT_TIMEOUT_PER_COMMAND_SEC / TIMEOUT_RESOLUTION)
-        while command_id not in self.blocking_commands:
-            sleep(TIMEOUT_RESOLUTION)
-            ticks_10ms -= 1
-            if ticks_10ms <= 0:
-                # If command ID was never added, we might have received an event
-                # triggered by a different device.
-                self.logger.warning(
-                    f"Received event from {dev_name} with command ID {command_id} that was not issued by this device."
-                )
-                return
-
-        if result_code != ResultCode.OK:
-            self.logger.error(
-                f"{dev_name} command ID {command_id} result code: {result_code}"
-            )
-            self._command_failed = True
-        with self.results_lock:
-            self.blocking_commands.remove(command_id)
-
-        self.logger.info(
-            f"Blocking commands remaining: {self.blocking_commands}"
-        )
+        with self._results_lock:
+            self._received_lrc_results[command_id] = result
 
     def results_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]
@@ -560,74 +535,103 @@ class CbfComponentManager(TaskExecutorComponentManager):
         Wait for the number of anticipated results to be pushed by subordinate devices.
 
         When issuing an LRC (or multiple) on subordinate devices from an LRC thread,
-        first store the LRC command ID in `blocking_commands`, then use this
+        command result events will be stored in self._received_lrc_results; use this
         method to wait for all blocking command ID `longRunningCommandResult` events.
 
         All subdevices that may block our LRC thread with their own LRC execution
         have the `results_callback` method above provided as the change event callback
-        for their `longRunningCommandResult` attribute subscription, which will remove
-        command IDs from `blocking_commands` as change events are received.
+        for their `longRunningCommandResult` attribute subscription, which will store
+        command IDs and results as change events are received.
 
-        Nested LRC management example code inside LRC thread:
 
-        # ...
+        # --- Nested LRC management example code inside LRC thread --- #
 
         # Collect all blocking command IDs from subdevices
-
+        self.blocking_command_ids = set() # reset blocking command IDs to empty
         for proxy in self.proxies:
             [[result_code], [command_id]] = proxy.LongRunningCommand()
             if result_code == ResultCode.QUEUED:
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
+                blocking_command_ids.add(command_id)
             else:
                 # command rejection handling
-
-        # Continue until we must wait for nested LRCs to complete
-
         # ...
-
+        # Continue until we must wait for nested LRCs to complete
+        # ...
         # Then wait for all of their longRunningCommandResult attributes to update
-
         lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
             # LRC timeout_sec/abort handling
 
-        # ...
+        # --- #
 
         :param timeout_sec: Time to wait, in seconds. If default value of 0.0 is set,
             timeout_sec = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND_SEC
         :param task_abort_event: Check for abort, defaults to None
 
-        :return: COMPLETED if status reached, FAILED if timed out, ABORTED if aborted
+        :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
+            TaskStatus.ABORTED if aborted
         """
         if timeout_sec == 0.0:
-            timeout_sec = float(
-                len(self.blocking_commands) * DEFAULT_TIMEOUT_PER_COMMAND_SEC
+            timeout_sec = (
+                len(self.blocking_command_ids)
+                * DEFAULT_TIMEOUT_PER_COMMAND_SEC
             )
         ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
-        while len(self.blocking_commands):
+
+        # Loop is exited when no blocking command IDs remain
+        command_failed = False
+        while len(self.blocking_command_ids):
             if task_abort_event and task_abort_event.is_set():
                 self.logger.warning(
                     "Task aborted while waiting for blocking results."
                 )
+                self._received_lrc_results = {}
                 return TaskStatus.ABORTED
+
+            # Remove any successful results from blocking command IDs
+            command_id_list = list(self.blocking_command_ids)
+            for command_id in command_id_list:
+                with self._results_lock:
+                    result = self._received_lrc_results.pop(command_id, None)
+                if result is None:
+                    continue
+
+                try:
+                    result_code = int(result.split(",")[0].split("[")[1])
+                except IndexError as ie:
+                    self.logger.error(
+                        f"IndexError in parsing {command_id} event result code; {ie}"
+                    )
+                    command_failed = True
+                    continue
+
+                if result_code != ResultCode.OK:
+                    self.logger.error(
+                        f"Blocking command failure; {command_id}: {result}"
+                    )
+                    command_failed = True
+                    continue
+
+                self.blocking_command_ids.remove(command_id)
+
             sleep(TIMEOUT_RESOLUTION)
             ticks_10ms -= 1
             if ticks_10ms <= 0:
                 self.logger.error(
-                    f"{len(self.blocking_commands)} blocking result(s) remain after {timeout_sec}s.\n"
-                    f"Blocking commands remaining: {self.blocking_commands}"
+                    f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
+                    f"Blocking commands remaining: {self.blocking_command_ids}"
                 )
-                with self.results_lock:
-                    self.blocking_commands = set()
+                self._received_lrc_results = {}
                 return TaskStatus.FAILED
-        # Loop is exited once self.blocking_commands is decremented to 0 by _results_callback_thread()
+
         self.logger.debug(
             f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )
-        if self._command_failed:
-            self._command_failed = False
+        self._received_lrc_results = {}
+
+        if command_failed:
             return TaskStatus.FAILED
+
         return TaskStatus.COMPLETED
 
     @property
