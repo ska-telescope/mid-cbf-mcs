@@ -73,35 +73,6 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_property("DeviceID", {"DeviceID": ["1"]})
-    builder.add_property(
-        "Band1And2Address",
-        {"Band1And2Address": ["talondx-001/vcc-app/vcc-band-1-and-2"]},
-    )
-    return builder()
-
-
-@pytest.fixture()
-def mock_vcc_band() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_property(
-        "WidebandInputBufferFQDN",
-        {
-            "WidebandInputBufferFQDN": [
-                "talondx-001/wideband-input-buffer/wideband-input-buffer"
-            ]
-        },
-    )
-    return builder()
-
-
-@pytest.fixture()
-def mock_wib() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_attribute("DishID", "SKA001")
-    builder.add_property(
-        "ExpectedDishID",
-        {"ExpectedDishID": ["SKA123"]},
-    )
     return builder()
 
 
@@ -195,8 +166,6 @@ def initial_mocks(
     mock_talon_board: unittest.mock.Mock,
     mock_power_switch: unittest.mock.Mock,
     mock_slim_mesh: unittest.mock.Mock,
-    mock_vcc_band: unittest.mock.Mock,
-    mock_wib: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.

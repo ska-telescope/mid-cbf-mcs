@@ -1,6 +1,6 @@
 """
 The Visibility Transport class controls the HPS device servers responsible for
-routing the visibilties from FSPs to SDP.
+routing the visibilities from FSPs to SDP.
 
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
@@ -43,7 +43,7 @@ class VisibilityTransport:
         - determine which board is responsible for outputting visibilities
         - connect the host lut s1 devices to the host lut s2
         - write the channel offsets of each FSP to host lut s2
-        - configure all the spead descriptor DS's
+        - configure all the SPEAD descriptor devices
 
         :param fsp_config: FSP part of the scan configuration json object
         :param vis_slim_yaml: the visibility mesh config yaml

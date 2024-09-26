@@ -453,11 +453,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.debug(f"Trying connection to {fqdn}")
                 self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
 
-                vcc_proxy = self._proxies[fqdn]
-                vcc_id = int(vcc_proxy.get_property("DeviceID")["DeviceID"][0])
+                proxy = self._proxies[fqdn]
+                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    vcc_proxy.dishID = dish_id
+                    proxy.dishID = dish_id
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
@@ -470,50 +470,6 @@ class ControllerComponentManager(CbfComponentManager):
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}; {df}")
                 return False
-
-            if not self.simulation_mode:
-                try:
-                    # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
-                    band_fqdn = vcc_proxy.get_property("Band1And2Address")[
-                        "Band1And2Address"
-                    ][0]
-                    band_proxy = context.DeviceProxy(device_name=band_fqdn)
-                    # Get WIB FQDN, then proxy.
-                    wib_fqdn = band_proxy.get_property(
-                        "WidebandInputBufferFQDN"
-                    )["WidebandInputBufferFQDN"][0]
-                    # TODO: Switch to debug
-                    self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                    wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-                    # Get property, then update with vcc_proxy.dishID.
-                    old_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                        "ExpectedDishID"
-                    ][0]
-                    dish_id_prop = tango.utils.obj_2_property(
-                        {"ExpectedDishID": vcc_proxy.dishID}
-                    )
-                    # TODO: Switch to debug
-                    self.logger.info(
-                        f"Setting ExpectedDishID to {vcc_proxy.dishID}"
-                    )
-                    wib_proxy.put_property(dish_id_prop)
-                    wib_proxy.Init()
-                    new_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                        "ExpectedDishID"
-                    ][0]
-                    # TODO: Switch to debug
-                    self.logger.info(
-                        f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
-                    )
-                except tango.DevFailed as df:
-                    self.logger.error(
-                        f"Failed to update ExpectedDishID device property; {df}"
-                    )
-                    self._update_communication_state(
-                        communication_state=CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    # TODO: self._update_component_state(obs_fault=True) ?
-                    return False
 
         return True
 
@@ -903,7 +859,7 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Turn on the controller and its subordinate devices
+        Retrieve the sys_param file from the Telescope Model
 
         :param task_callback: Callback function to update task status.
         :param task_abort_event: Event to signal task abort.
@@ -1060,7 +1016,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         return success, message
 
-    def _turn_off_subelements(
+    def _init_sys_param(
         self: ControllerComponentManager,
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, list[str]]:
@@ -1084,17 +1040,17 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC Slim.Off() rejected"
-                    self.logger.error(
-                        f"Nested LRC Slim.Off() to {fqdn} rejected"
-                    )
+                    log_msg = f"Nested LRC Slim.Off() to {fqdn} rejected"
+                    self.logger.error(log_msg)
+                    message.append(log_msg)
                     success = False
                     continue
                 with self.results_lock:
                     self.blocking_commands.add(command_id)
             except tango.DevFailed as df:
-                message = "Nested LRC Off() failed"
-                self.logger.error(f"Nested LRC Off() to {fqdn} failed: {df}")
+                log_msg = f"Nested LRC Slim.Off() to {fqdn} failed: {df}"
+                self.logger.error(log_msg)
+                message.append(log_msg)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -1104,8 +1060,9 @@ class ControllerComponentManager(CbfComponentManager):
             timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
-            self.logger.error(message)
+            log_msg = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
+            self.logger.error(log_msg)
+            message.append(log_msg)
             success = False
 
         # Turn off TalonBoard devices.
@@ -1197,10 +1154,8 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC TalonLru.Off() rejected"
-                    self.logger.error(
-                        f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
-                    )
+                    message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
+                    self.logger.error(message)
                     success = False
                     continue
                 with self.results_lock:
@@ -1219,10 +1174,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.info(message)
 
             except tango.DevFailed as df:
-                message = "Nested LRC TalonLru.Off() failed"
-                self.logger.error(
-                    f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
-                )
+                message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
+                self.logger.error(message)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )

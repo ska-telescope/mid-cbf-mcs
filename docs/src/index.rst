@@ -23,12 +23,12 @@ MID CBF MCS Documentation
    :caption: Developer Guide
 
    Getting Started<guide/developer/getting_started/index>
-   Code Design Notes<guide/developer/code_design_notes>
+   Design Notes<guide/developer/design_notes>
 
-.. CODE =============================================================
+.. API =============================================================
 .. toctree::
    :maxdepth: 2
-   :caption: Code Reference
+   :caption: ska-mid-cbf-mcs API
 
    api/index
 

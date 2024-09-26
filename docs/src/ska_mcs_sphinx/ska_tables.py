@@ -17,12 +17,13 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 import importlib
 
-HEADER_LIST = ['Command', 'Parameters', 'Return type', 'Action', 'Supported Interface(s)']
+HEADER_LIST = ['Command', 'Parameters', 'Long Running Command', 'Return type', 'Action', 'Supported Interface(s)']
 
 controller_commands = [
     { 
         "Command": "Off",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -36,6 +37,7 @@ controller_commands = [
     { 
         "Command": "InitSysParam",
         "Parameters": "JSON str*",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -45,18 +47,9 @@ controller_commands = [
         "Supported Interface(s)": supported_interfaces['initsysparam'],
     },
     { 
-        "Command": "Standby",
-        "Parameters": "None",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            None
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
         "Command": "On",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -70,6 +63,7 @@ subarray_commands = [
     { 
         "Command": "Abort",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -84,6 +78,7 @@ subarray_commands = [
     { 
         "Command": "AddReceptors",
         "Parameters": "List[str]",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -96,6 +91,7 @@ subarray_commands = [
     { 
         "Command": "ConfigureScan",
         "Parameters": "JSON str*",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -111,6 +107,7 @@ subarray_commands = [
     { 
         "Command": "EndScan",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -121,6 +118,7 @@ subarray_commands = [
     { 
         "Command": "ObsReset",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -137,33 +135,9 @@ subarray_commands = [
         "Supported Interface(s)": "",
     },
     { 
-        "Command": "Off",
-        "Parameters": "None",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Set subarray power mode to off.
-            Commands FSP<function mode> Subarrays
-            to turn off
-            No action on hardware power
-            """),   
-        "Supported Interface(s)": "",
-    },
-    { 
-        "Command": "On",
-        "Parameters": "None",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Set subarry power mode to on.
-            Command FSP<function mode> Subarrays
-            to turn on
-            """),   
-        "Supported Interface(s)": "",
-    },
-    { 
         "Command": "RemoveAllReceptors",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -176,6 +150,7 @@ subarray_commands = [
     { 
         "Command": "RemoveReceptors",
         "Parameters": "List[str]",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -188,6 +163,7 @@ subarray_commands = [
     { 
         "Command": "Restart",
         "Parameters": "None",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -205,6 +181,7 @@ subarray_commands = [
     { 
         "Command": "Scan",
         "Parameters": "JSON str*",
+        "Long Running Command": "Yes",
         "Return Type": "(ResultCode, str)",
         "Action": cleandoc(
             """
@@ -218,6 +195,7 @@ sub_table_commands = [
     { 
         "Command": "Delay Model",
         "Parameters": "JSON str*",
+        "Long Running Command": "N/A",
         "Return Type": "None",
         "Action": cleandoc(
             """
@@ -244,12 +222,12 @@ class CommandTable(Directive):
         table_data = table_data_mapping[table_name]
         table = nodes.table()
 
-        tgroup = nodes.tgroup(cols = 5)
+        tgroup = nodes.tgroup(cols = 6)
 
         header = nodes.thead()
         header_row = nodes.row()
 
-        for i in range(5):
+        for i in range(6):
             colspec_list = nodes.colspec(colwidth = 10)
             header_list = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
             header_row += header_list
@@ -264,12 +242,16 @@ class CommandTable(Directive):
             row = nodes.row("", classes=[row_class])
             row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
+            row.append(nodes.entry('', nodes.paragraph(text=command['Long Running Command'])))
             row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
             action_entry = nodes.entry('')
             action_entry.append(self._parse_line_block(command['Action']))
             row.append(action_entry)
             supported_entry = nodes.entry('')
-            supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
+            if("https://schema.skao.int/ska-csp-configurescan/4.1" in command['Supported Interface(s)']):
+                supported_entry.append(self._create_line_block_from_list(["https://schema.skao.int/ska-csp-configurescan/3.0"]))
+            else:
+                supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
             row.append(supported_entry)
             table_body.append(row)
 

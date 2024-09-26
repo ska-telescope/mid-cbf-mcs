@@ -1,0 +1,49 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
+}
+
+title MCS Correlation Remove Receptors\n
+
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "VCC\n" as vcc
+    collections "Talon\nBoard" as talon
+end box
+
+lmc             ->  subarray    : RemoveReceptors(list[str])
+note over subarray              : ObsState: RESOURCING
+group #LightCyan For each receptor in argin:
+    subarray    -> subarray     : Validate receptors in argin
+    subarray    -> vcc          : Reset subarrayMembership to 0
+    subarray    -> vcc          : AdminMode.OFFLINE
+    note over vcc               : OpState: DISABLE
+    subarray    ->  talon       : Reset subarrayID
+end group
+
+subarray    ->  subarray        : Update receptors
+
+group #SeaShell If len(receptors) == 0:
+    note over subarray          : ObsState: EMPTY
+else
+    note over subarray          : ObsState: IDLE
+end group
+
+
+lmc        <--  subarray     : Success
+
+@enduml

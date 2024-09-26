@@ -93,28 +93,15 @@ def mock_vcc_band() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_wib() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.add_attribute("DishID", "SKA001")
-    builder.add_property(
-        "ExpectedDishID",
-        {"ExpectedDishID": ["SKA123"]},
-    )
-    return builder()
-
-
-@pytest.fixture()
 def initial_mocks(
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
-    mock_wib: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_vcc_controller: mock for the vcc_controller device
     :param mock_vcc_band: mock for the vcc_band device
-    :param mock_wib: mock for the wideband_input_buffer device
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
@@ -123,5 +110,4 @@ def initial_mocks(
         "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
-        "talondx-001/wideband-input-buffer/wideband-input-buffer": mock_wib,
     }
