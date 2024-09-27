@@ -1040,17 +1040,17 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC Slim.Off() rejected"
-                    self.logger.error(
-                        f"Nested LRC Slim.Off() to {fqdn} rejected"
-                    )
+                    log_msg = f"Nested LRC Slim.Off() to {fqdn} rejected"
+                    self.logger.error(log_msg)
+                    message.append(log_msg)
                     success = False
                     continue
                 with self.results_lock:
                     self.blocking_commands.add(command_id)
             except tango.DevFailed as df:
-                message = "Nested LRC Off() failed"
-                self.logger.error(f"Nested LRC Off() to {fqdn} failed: {df}")
+                log_msg = f"Nested LRC Slim.Off() to {fqdn} failed: {df}"
+                self.logger.error(log_msg)
+                message.append(log_msg)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
@@ -1060,8 +1060,9 @@ class ControllerComponentManager(CbfComponentManager):
             timeout_sec=10.0, task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
-            self.logger.error(message)
+            log_msg = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
+            self.logger.error(log_msg)
+            message.append(log_msg)
             success = False
 
         # Turn off TalonBoard devices.
@@ -1153,10 +1154,8 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC TalonLru.Off() rejected"
-                    self.logger.error(
-                        f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
-                    )
+                    message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
+                    self.logger.error(message)
                     success = False
                     continue
                 with self.results_lock:
@@ -1175,10 +1174,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.info(message)
 
             except tango.DevFailed as df:
-                message = "Nested LRC TalonLru.Off() failed"
-                self.logger.error(
-                    f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
-                )
+                message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
+                self.logger.error(message)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
