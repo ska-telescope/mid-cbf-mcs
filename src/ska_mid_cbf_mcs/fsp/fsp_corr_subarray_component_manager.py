@@ -174,6 +174,42 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
 
+        # Now we have the input and output fs sample rates, calculate
+        # freq_scfo_shift = fs_index * (input_sample_rate - output_sample_rate)
+        # // vcc_os_factor;
+        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = {}
+        for vcc_id in configuration["vcc_id_to_rdt_freq_shifts"].keys():
+            vcc_freq_shifts = configuration["vcc_id_to_rdt_freq_shifts"][
+                vcc_id
+            ]
+
+            # Get the fs_sample rate that has the vcc_id we're calculating the
+            # shift for
+            input_sample_rate = list(
+                (
+                    fs_sample_rate["fs_sample_rate"]
+                    for fs_sample_rate in hps_fsp_configuration[
+                        "fs_sample_rates"
+                    ]
+                    if fs_sample_rate["vcc_id"] == vcc_id
+                )
+            )[0]
+
+            output_sample_rate = hps_fsp_configuration[
+                "resampler_delay_tracker"
+            ]["output_sample_rate"]
+
+            vcc_freq_scfo_shift = (
+                configuration["fsp_id"]
+                * (input_sample_rate - output_sample_rate)
+                // const.VCC_OVERSAMPLING_FACTOR
+            )
+
+            vcc_freq_shifts["freq_scfo_shift"] = vcc_freq_scfo_shift
+            hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"][
+                vcc_id
+            ] = vcc_freq_shifts
+
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom

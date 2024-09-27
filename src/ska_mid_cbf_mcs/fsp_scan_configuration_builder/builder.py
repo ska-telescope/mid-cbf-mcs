@@ -14,6 +14,7 @@ import copy
 
 from ska_telmodel import channel_map
 
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
@@ -23,9 +24,9 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes
 class FspScanConfigurationBuilder:
     function_mode: FspModes = None
     function_configuration: dict = None
-
-    def __init__(self) -> None:
-        pass
+    dish_utils: DISHUtils = None
+    wideband_shift: int = 0
+    subarray_dish_ids: set = None
 
     def _fsp_config_from_processing_regions(
         self: FspScanConfigurationBuilder, processing_regions: list[dict]
@@ -38,23 +39,11 @@ class FspScanConfigurationBuilder:
         """
 
         fsp_configurations = []
+
         for processing_region in processing_regions:
-            # TODO: When we support wideband shift, insert it here:
-            wideband_shift = 0
-
-            # Algorithm needs a K-value, however this is only to calculate the major
-            # shift, which the VCC's already calculate. So using k = 1000.
-            # Note: alignment (minor) shift needs to be sent to each Resampler &
-            # Delay tracker, but that value is not K-value dependent, and will be
-            # the same regardless of k-value.
-            k_value = 1000
-
             # Calculate the fsp configs for the processing region
             fsp_configuration = self._fsp_config_from_processing_region(
-                processing_region,
-                wideband_shift,
-                k_value,
-                self.function_mode.name,
+                processing_region
             )
 
             fsp_configurations.extend(fsp_configuration)
@@ -64,9 +53,6 @@ class FspScanConfigurationBuilder:
     def _fsp_config_from_processing_region(
         self: FspScanConfigurationBuilder,
         processing_region_config: dict,
-        wideband_shift: int,
-        k_value: int,
-        function_mode: str,
     ) -> list[dict]:
         """Create a list of FSP configurations for a given processing region config
 
@@ -80,14 +66,30 @@ class FspScanConfigurationBuilder:
         fsp_ids: list[int] = processing_region_config["fsp_ids"]
         fsp_ids.sort()
 
-        calculated_fs_infos = partition_spectrum_to_frequency_slices(
-            fsp_ids=fsp_ids,
-            start_freq=processing_region_config["start_freq"],
-            channel_width=processing_region_config["channel_width"],
-            channel_count=processing_region_config["channel_count"],
-            k_value=k_value,
-            wideband_shift=wideband_shift,
-        )
+        dish_ids = []
+        if (
+            "receptors" not in processing_region_config
+            or len(processing_region_config["receptors"]) == 0
+        ):
+            for dish_id in self.subarray_dish_ids:
+                dish_ids.append(self.dish_utils.dish_id_to_vcc_id[dish_id])
+        else:
+            for dish_id in processing_region_config["receptors"]:
+                dish_ids.append(self.dish_utils.dish_id_to_vcc_id[dish_id])
+
+        vcc_to_fs_infos = {}
+        for dish_id in dish_ids:
+            calculated_fs_infos = partition_spectrum_to_frequency_slices(
+                fsp_ids=fsp_ids,
+                start_freq=processing_region_config["start_freq"],
+                channel_width=processing_region_config["channel_width"],
+                channel_count=processing_region_config["channel_count"],
+                k_value=self.dish_utils.dish_id_to_k(dish_ids),
+                wideband_shift=self.wideband_shift,
+            )
+            vcc_to_fs_infos[
+                self.dish_utils.dish_id_to_vcc_id[dish_ids]
+            ] = calculated_fs_infos
 
         output_port = (
             processing_region_config["output_port"]
@@ -123,7 +125,7 @@ class FspScanConfigurationBuilder:
         for fsp in calculated_fs_infos.keys():
             fsp_config = {}
             fsp_config["fsp_id"] = calculated_fs_infos[fsp]["fsp_id"]
-            fsp_config["function_mode"] = function_mode
+            fsp_config["function_mode"] = self.function_mode
             fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp][
                 "fs_id"
             ]
@@ -160,6 +162,23 @@ class FspScanConfigurationBuilder:
             if len(fsp_to_output_port_map[fsp]) > 0:
                 fsp_config["output_port"] = fsp_to_output_port_map[fsp]
 
+            vcc_id_to_rdt_freq_shifts = {}
+            for vcc_id in vcc_to_fs_infos.keys():
+                vcc_id_to_rdt_freq_shifts[vcc_id] = {}
+                vcc_id_to_rdt_freq_shifts[vcc_id][
+                    "freq_down_shift"
+                ] = vcc_to_fs_infos[vcc_id]["vcc_downshift_freq"]
+                vcc_id_to_rdt_freq_shifts[vcc_id][
+                    "freq_align_shift"
+                ] = vcc_to_fs_infos[vcc_id]["alignment_shift_freq"]
+                vcc_id_to_rdt_freq_shifts[vcc_id][
+                    "freq_wb_shift"
+                ] = self.wideband_shift
+                # Note: don't have the info to calculate freq_scfo_shift here, will
+                # be added further in processing at fsp_corr_subarry_component_manager._build_hps_fsp_config
+                # because fsp_corr has resampler_delay_tracker.output_sample_rate value
+            fsp_config["vcc_id_to_rdt_freq_shifts"] = vcc_id_to_rdt_freq_shifts
+
             fsp_configs.append(fsp_config)
 
         return fsp_configs
@@ -178,13 +197,29 @@ class FspScanConfigurationBuilder:
         self.function_configuration = copy.deepcopy(function_configuration)
         return self
 
+    def set_dish_utils(
+        self: FspScanConfigurationBuilder, dish_utils: DISHUtils
+    ) -> FspScanConfigurationBuilder:
+        assert dish_utils is not None
+        self.dish_utils = dish_utils
+
+    def set_subarray_dish_ids(
+        self: FspScanConfigurationBuilder, subarray_dish_ids: set
+    ):
+        assert set is not None
+        assert len(set) > 0
+        self.subarray_dish_ids = subarray_dish_ids
+
     def build(self: FspScanConfigurationBuilder) -> dict:
         """_summary_
 
         :return: _description_
         """
         assert self.function_mode is not None
+        assert self.dish_utils is not None
+        assert self.wideband_shift is not None
         assert self.function_configuration is not None
+        assert self.subarray_dish_ids is not None
         assert (
             "processing_regions" in self.function_configuration
         ), "function configuration requires a processing region to process"

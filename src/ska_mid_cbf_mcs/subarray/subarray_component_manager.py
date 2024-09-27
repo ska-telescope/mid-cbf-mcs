@@ -1402,10 +1402,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # build FSP configuration JSONs, add FSP
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
+            
+            # Build fsp configs from the processing region in the configs
             fsp_config_builder = FspScanConfigurationBuilder()
             fsp_config_builder.set_fsp_mode(FspModes.CORR)
             fsp_config_builder.set_config(corr_config)
-            # TODO: set configuration and build,
+            fsp_config_builder.set_dish_utils(self._dish_utils)
             corr_fsp_config = fsp_config_builder.build()
 
             for fsp_id in corr_fsp_config.keys():
