@@ -1,8 +1,9 @@
 {
+    "version": "0.2.0",
     "configurations": [
         {
             "name": "Python: Remote Attach",
-            "type": "python",
+            "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "127.0.0.1",
@@ -11,14 +12,14 @@
             "justMyCode": false,
             "pathMappings": [
                 {
-                  "localRoot": "${workspaceFolder}", 
-                  "remoteRoot": "/app" 
+                    "localRoot": "${workspaceFolder}", 
+                    "remoteRoot": "/app" 
                 }
-              ]
+            ]
         },
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "justMyCode": false,
