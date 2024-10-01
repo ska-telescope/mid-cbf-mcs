@@ -1360,7 +1360,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     return False
 
-                self.blocking_commands.add(command_id)
+                self.blocking_command_ids.add(command_id)
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
@@ -1372,7 +1372,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return False
 
-            self.blocking_commands.add(command_id)
+            self.blocking_command_ids.add(command_id)
         except tango.DevFailed as df:
             self.logger.error(f"{df}")
             return False
@@ -1459,7 +1459,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Call ConfigureScan for all FSP function mode subarray devices
         # TODO: refactor for other function modes
-        self.blocking_commands = set()
+        self.blocking_command_ids = set()
         for fsp_mode_proxy, fsp_config_str in all_fsp_config:
             try:
                 self.subscribe_command_results(fsp_mode_proxy)
@@ -1473,7 +1473,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"{fsp_mode_proxy.dev_name()} ConfigureScan command rejected"
                     )
                     return False
-                self.blocking_commands.add(command_id)
+                self.blocking_command_ids.add(command_id)
                 self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
             except tango.DevFailed as df:
                 self.logger.error(
@@ -1536,7 +1536,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         self.logger.info("Releasing all FSP from subarray...")
         # remove subarray membership from assigned FSP
-        self.blocking_commands = set()
+        self.blocking_command_ids = set()
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
@@ -1547,7 +1547,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     "FSP RemoveSubarrayMembership command failed"
                 )
                 return False
-            self.blocking_commands.add(command_id)
+            self.blocking_command_ids.add(command_id)
 
         lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
@@ -1740,7 +1740,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self._fsp_ids = set()
             self._assigned_fsp_corr_proxies = set()
             self._assigned_fsp_proxies = set()
-            self.blocking_commands = set()
+            self.blocking_command_ids = set()
             task_callback(
                 status=TaskStatus.FAILED,
                 result=(
