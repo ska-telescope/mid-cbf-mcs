@@ -107,10 +107,10 @@ environment_variables:
   value: "{{ .Values.hostInfo.externalPort }}"
 - name: CLUSTER_DOMAIN
   value: "{{ .Values.hostInfo.clusterDomain }}"
-# volume:
-#   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
-#   mountPath: "/app/mnt/talondx-config"
-#   readOnly: false
+volume:
+  existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
+  mountPath: "/app/mnt/talondx-config"
+  readOnly: false
 
 {{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) (.Values.talondx_config) }}
 extraVolumes:
