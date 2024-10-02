@@ -191,8 +191,8 @@ class ControllerComponentManager(CbfComponentManager):
                         f"mid_csp_cbf/talon_lru/{int(lru_id):03d}"
                     )
                     for power_switch_id in [
-                        lru_config["PDU1PowerOutlet"],
-                        lru_config["PDU2PowerOutlet"],
+                        lru_config["PDU1"],
+                        lru_config["PDU2"],
                     ]:
                         fqdn_power_switch.add(
                             f"mid_csp_cbf/power_switch/{int(power_switch_id):03d}"
