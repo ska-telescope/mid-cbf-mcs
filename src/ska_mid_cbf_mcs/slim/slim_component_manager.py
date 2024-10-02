@@ -690,6 +690,10 @@ class SlimComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 return ResultCode.FAILED, message
+            except IndexError as ie:
+                message = "Not enough Links defined in device properties"
+                self.logger.error(f"{message}; {ie}")
+                return ResultCode.FAILED, message
 
             # Guard incase LRC was rejected.
             if result_code == ResultCode.REJECTED:
