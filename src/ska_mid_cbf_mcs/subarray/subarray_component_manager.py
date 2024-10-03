@@ -1758,6 +1758,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
             self._vis_transport.configure(
+                self._subarray_id,
                 fsp_config=self._vis_fsp_config,
                 vis_slim_yaml=vis_slim_yaml,
             )
