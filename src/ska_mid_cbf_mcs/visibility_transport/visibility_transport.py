@@ -65,7 +65,7 @@ class VisibilityTransport:
         )
 
         # Create the SPEAD descriptor to be sent at start of scan
-        n_vcc = fsp_config[0]["corr_vcc_ids"]
+        n_vcc = len(fsp_config[0]["corr_vcc_ids"])
         n_baselines = n_vcc * (n_vcc + 1) // 2
         self._dp_spead_desc.baseline_count = [n_baselines]
         self._dp_spead_desc.channel_count = [20]
