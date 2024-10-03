@@ -140,7 +140,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             device_proxies.append(self._proxy_power_switch2)
 
         for dp in device_proxies:
-            self.subscribe_command_results(dp)
+            self.attr_event_subscribe(
+                proxy=dp,
+                attr_name="longRunningCommandResult",
+                callback=self.results_callback,
+            )
 
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
