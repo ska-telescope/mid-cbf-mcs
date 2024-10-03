@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
-* None at this time
+* CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
 
 1.0.0
 ******
