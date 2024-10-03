@@ -420,6 +420,17 @@ class CbfComponentManager(TaskExecutorComponentManager):
     # Callback Methods
     # ----------------
 
+    def _push_health_state_update(
+        self: CbfComponentManager, health_state: HealthState
+    ) -> None:
+        """
+        Push a health state update to the device.
+
+        :param health_state: the new health state of the component manager.
+        """
+        if self._device_health_state_callback is not None:
+            self._device_health_state_callback(health_state)
+
     def update_device_health_state(
         self: CbfComponentManager,
         health_state: HealthState,
@@ -434,17 +445,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
             if self._health_state != health_state:
                 self._health_state = health_state
                 self._push_health_state_update(health_state)
-
-    def _push_health_state_update(
-        self: CbfComponentManager, health_state: HealthState
-    ) -> None:
-        """
-        Push a health state update to the device.
-
-        :param health_state: the new health state of the component manager.
-        """
-        if self._device_health_state_callback is not None:
-            self._device_health_state_callback(health_state)
 
     def _results_callback_thread(
         self: CbfComponentManager, event_data: Optional[tango.EventData]

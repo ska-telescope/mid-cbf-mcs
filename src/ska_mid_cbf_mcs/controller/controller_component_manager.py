@@ -277,6 +277,9 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
         if subscribe_state:
+            # Init device op state to UNKNOWN
+            with self._attr_event_lock:
+                self._op_states[fqdn] = tango.DevState.UNKNOWN
             self.attr_event_subscribe(
                 proxy=proxy, attr_name="state", callback=self.op_state_callback
             )
