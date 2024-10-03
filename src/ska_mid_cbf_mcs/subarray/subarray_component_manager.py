@@ -1396,11 +1396,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if successfully configured all FSP devices, otherwise False
         """
         self.logger.info("Configuring FSPs for scan...")
+
+        # build FSP configuration JSONs, add FSP
         all_fsp_config = []
         self._vis_fsp_config = []
         self.blocking_command_ids = set()
-        
-         # build FSP configuration JSONs, add FSP
+
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
 
@@ -1416,13 +1417,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     fsp_config=copy.deepcopy(corr_fsp_config[fsp_id]),
                     common_configuration=copy.deepcopy(common_configuration),
                 )
-                
+
                 # set function mode and add subarray membership
                 fsp_proxy = self._all_fsp_proxies[fsp_id]
                 self.subscribe_command_results(fsp_proxy)
                 self._assigned_fsp_proxies.add(fsp_proxy)
                 self._fsp_ids.add(fsp_id)
-                
+
                 fsp_success = self._assign_fsp(fsp_proxy, "CORR")
                 if not fsp_success:
                     return False
@@ -1449,9 +1450,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
                 # Prepare CORR proxy and its configuration
                 fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
-                all_fsp_config.append(
-                    (fsp_corr_proxy, json.dumps(fsp_config))
-                )
+                all_fsp_config.append((fsp_corr_proxy, json.dumps(fsp_config)))
 
                 # Store FSP parameters to configure visibility transport
                 self._vis_fsp_config.append(fsp_config)
