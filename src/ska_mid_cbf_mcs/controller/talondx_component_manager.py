@@ -590,12 +590,15 @@ class TalonDxComponentManager(CbfComponentManager):
             self.logger.error(e)
             return ResultCode.FAILED
 
-    def configure_talons(self: TalonDxComponentManager) -> ResultCode:
+    def configure_talons(
+        self: TalonDxComponentManager, talon_list: list[str]
+    ) -> ResultCode:
         """
         Performs all actions to configure the Talon boards after power on. This includes: copying the device server
         binaries and FPGA bitstream to the Talon boards, starting the HPS master
         device server, and sending the configure command to each DsHpsMaster, which starts the HPS device servers.
 
+        :param talon_list: list of Talon board indices that are turned on and ready to configure
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
         if self.simulation_mode == SimulationMode.TRUE:
@@ -611,6 +614,7 @@ class TalonDxComponentManager(CbfComponentManager):
             futures = [
                 executor.submit(self._configure_talon_thread, talon_cfg)
                 for talon_cfg in self.talondx_config["config_commands"]
+                if talon_cfg["target"] in talon_list
             ]
             results = [f.result() for f in futures]
 

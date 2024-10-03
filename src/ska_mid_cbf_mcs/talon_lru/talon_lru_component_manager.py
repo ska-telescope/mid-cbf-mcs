@@ -180,7 +180,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             device_proxies.append(self._proxy_power_switch2)
 
         for dp in device_proxies:
-            self.unsubscribe_command_results(dp)
+            self.unsubscribe_all_events(dp)
 
     def _stop_communicating(
         self: TalonLRUComponentManager, *args, **kwargs

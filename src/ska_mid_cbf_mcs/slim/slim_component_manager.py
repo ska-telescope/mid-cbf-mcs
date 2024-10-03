@@ -86,7 +86,11 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self.subscribe_command_results(dp)
+                self.attr_event_subscribe(
+                    proxy=dp,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
                 self._dp_links.append(dp)
             except (tango.DevFailed, AttributeError) as err:
                 self._update_communication_state(
@@ -108,7 +112,7 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
         for proxy in self._dp_links:
-            self.unsubscribe_command_results(proxy)
+            self.unsubscribe_all_events(proxy)
         self.blocking_commands = set()
 
         for dp in self._dp_links:

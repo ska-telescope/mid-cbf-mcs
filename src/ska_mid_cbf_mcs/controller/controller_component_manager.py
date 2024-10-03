@@ -241,7 +241,8 @@ class ControllerComponentManager(CbfComponentManager):
     def _init_device_proxy(
         self: ControllerComponentManager,
         fqdn: str,
-        subscribe: bool = False,
+        subscribe_results: bool = False,
+        subscribe_state: bool = False,
         hw_device_type: str = None,
     ) -> bool:
         """
@@ -249,7 +250,9 @@ class ControllerComponentManager(CbfComponentManager):
         and set the AdminMode to ONLINE
 
         :param fqdn: FQDN of the device
-        :param subscribe: True if should subscribe to the device's longRunningCommandResult attribute;
+        :param subscribe_results: True if should subscribe to the device's longRunningCommandResult attribute;
+            defaults to False
+        :param subscribe_state: True if should subscribe to the device's state attribute;
             defaults to False
         :param hw_device_type: if not default value of None, indicates the type of hardware-connected
             device to initialize
@@ -266,8 +269,17 @@ class ControllerComponentManager(CbfComponentManager):
 
         proxy = self._proxies[fqdn]
 
-        if subscribe:
-            self.subscribe_command_results(proxy)
+        if subscribe_results:
+            self.attr_event_subscribe(
+                proxy=proxy,
+                attr_name="longRunningCommandResult",
+                callback=self.results_callback,
+            )
+
+        if subscribe_state:
+            self.attr_event_subscribe(
+                proxy=proxy, attr_name="state", callback=self.op_state_callback
+            )
 
         if hw_device_type is not None:
             if not self._write_hw_config(fqdn, proxy, hw_device_type):
@@ -292,16 +304,19 @@ class ControllerComponentManager(CbfComponentManager):
 
         for fqdn in self._talon_lru_fqdn:
             if not self._init_device_proxy(
-                fqdn=fqdn, subscribe=True, hw_device_type="talon_lru"
+                fqdn=fqdn,
+                subscribe_results=True,
+                subscribe_state=True,
+                hw_device_type="talon_lru",
             ):
                 init_success = False
 
         for fqdn in self._subarray_fqdn:
-            if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
+            if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
                 init_success = False
 
         for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-            if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
+            if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
                 init_success = False
 
         return init_success
@@ -348,7 +363,7 @@ class ControllerComponentManager(CbfComponentManager):
                     + self._talon_lru_fqdn
                     + [self._fs_slim_fqdn, self._vis_slim_fqdn]
                 ):
-                    self.unsubscribe_command_results(proxy)
+                    self.unsubscribe_all_events(proxy)
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
                 proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
@@ -744,11 +759,11 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
+        lrc_status = self.wait_for_blocking_results_partial_success(
             task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+            message = "All TalonLru.On() LRC calls failed/timed out. Check TalonLru logs."
             self.logger.error(message)
             success = False
         else:
@@ -834,18 +849,20 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if the On command is allowed, else False.
         """
-        self.logger.debug("Checking if on is allowed")
+        self.logger.debug("Checking if On is allowed")
 
         if not self.is_communicating:
             return False
         if self.dish_utils is None:
             self.logger.warning("Dish-VCC mapping has not been provided.")
             return False
-        if self.power_state == PowerState.OFF:
-            return True
+        if self.power_state not in [PowerState.ON, PowerState.OFF]:
+            self.logger.warning(
+                f"Current power state: {self.power_state}; try re-establishing component communications."
+            )
+            return False
 
-        self.logger.warning("Already on, do not need to turn on.")
-        return False
+        return True
 
     def _on(
         self: ControllerComponentManager,
@@ -898,8 +915,13 @@ class ControllerComponentManager(CbfComponentManager):
         # Configure all the Talon boards
         # Clears process inside the Talon Board to make it a clean state
         # Also sets the simulation mode of the Talon Boards based on TalonDx Component Manager's SimulationMode Attribute
+        talon_list = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.values():
+                if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
+                    talon_list.append(fqdn.split("/")[-1])
         if (
-            self._talondx_component_manager.configure_talons()
+            self._talondx_component_manager.configure_talons(talon_list)
             == ResultCode.FAILED
         ):
             msg = "Failed to configure Talon boards"
@@ -968,7 +990,7 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string message
         """
         dev_name = subarray.dev_name()
-        success, message = (
+        (success, message) = (
             True,
             f"{dev_name} successfully set to ObsState.EMPTY",
         )
@@ -976,7 +998,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         try:
             if subarray.obsState in [ObsState.EMPTY]:
-                return success, message
+                return (success, message)
 
             # Can issue Abort if subarray is in any of the following states:
             if subarray.obsState in [
@@ -1014,7 +1036,7 @@ class ControllerComponentManager(CbfComponentManager):
             message = "One or more calls to subarray LRC failed/timed out; check subarray logs."
             self.logger.error(message)
 
-        return success, message
+        return (success, message)
 
     def _turn_off_subelements(
         self: ControllerComponentManager,
@@ -1185,13 +1207,17 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if the Off command is allowed, False otherwise
         """
-        self.logger.debug("Checking if off is allowed")
+        self.logger.debug("Checking if Off is allowed")
+
         if not self.is_communicating:
             return False
-        if self.power_state == PowerState.ON:
-            return True
-        self.logger.info("Already off, do not need to turn off.")
-        return False
+        if self.power_state not in [PowerState.ON, PowerState.OFF]:
+            self.logger.warning(
+                f"Current power state: {self.power_state}; try re-establishing component communications."
+            )
+            return False
+
+        return True
 
     def _off(
         self: ControllerComponentManager,

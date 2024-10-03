@@ -18,6 +18,7 @@ from time import sleep
 from typing import Any, Callable, Optional, cast
 
 import tango
+from pydantic.utils import deep_update
 from ska_control_model import (
     CommunicationStatus,
     HealthState,
@@ -115,6 +116,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._received_lrc_results = {}
         self.blocking_command_ids = set()
 
+        # dict and lock to store latest sub-device state attribute values
+        self._op_states = {}
+        self._attr_event_lock = Lock()
+
         # NOTE: currently all devices are using constructor default
         # simulation_mode == SimulationMode.TRUE
         self.simulation_mode = simulation_mode
@@ -210,51 +215,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
             )
             return True
         return False
-
-    def subscribe_command_results(
-        self: CbfComponentManager, proxy: context.DeviceProxy
-    ) -> None:
-        """
-        Subscribe to a proxy's longRunningCommandResult attribute.
-
-        :param proxy: DeviceProxy
-        """
-        dev_name = proxy.dev_name()
-
-        if dev_name in self.event_ids:
-            self.logger.debug(
-                f"Skipping repeated longRunningCommandResult event subscription: {dev_name}"
-            )
-            return
-        self.logger.debug(f"Subscribing to {dev_name} LRC results.")
-
-        subscription_id = proxy.subscribe_event(
-            attr_name="longRunningCommandResult",
-            event_type=tango.EventType.CHANGE_EVENT,
-            cb_or_queuesize=self.results_callback,
-        )
-
-        self.event_ids.update({dev_name: subscription_id})
-
-    def unsubscribe_command_results(
-        self: CbfComponentManager, proxy: context.DeviceProxy
-    ) -> None:
-        """
-        Unsubscribe from a proxy's longRunningCommandResult attribute.
-
-        :param proxy: DeviceProxy
-        """
-        dev_name = proxy.dev_name()
-        event_id = self.event_ids.pop(dev_name, None)
-        if event_id is None:
-            self.logger.debug(
-                f"No longRunningCommandResult event subscription for {dev_name}"
-            )
-            return
-        self.logger.debug(
-            f"Unsubscribing from {dev_name} event ID {event_id}."
-        )
-        proxy.unsubscribe_event(event_id)
 
     # -------------
     # Group Methods
@@ -518,13 +478,47 @@ class CbfComponentManager(TaskExecutorComponentManager):
         Callback for LRC command result events.
         All subdevices that may block our LRC thread with their own LRC execution
         have their `longRunningCommandResult` attribute subscribed to with this method
-        as the change event callback (see `subscribe_command_results` method above).
+        as the change event callback.
 
         :param event_data: Tango attribute change event data
         """
         Thread(
             target=self._results_callback_thread, args=(event_data,)
         ).start()
+
+    def _op_state_callback_thread(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Thread to update latest state attribute events.
+
+        :param event_data: Tango attribute change event data
+        """
+        value = event_data.attr_value.value
+        if value is None:
+            return
+
+        dev_name = event_data.device.dev_name()
+        self.logger.debug(f"{dev_name} EventData attr_value: {value}")
+
+        with self._attr_event_lock:
+            self._op_states[dev_name] = value
+
+    def op_state_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Callback for state attribute events.
+
+        :param event_data: Tango attribute change event data
+        """
+        Thread(
+            target=self._op_state_callback_thread, args=(event_data,)
+        ).start()
+
+    # -------------------------
+    # Wait for Blocking Results
+    # -------------------------
 
     def wait_for_blocking_results(
         self: CbfComponentManager,
@@ -633,6 +627,146 @@ class CbfComponentManager(TaskExecutorComponentManager):
             return TaskStatus.FAILED
 
         return TaskStatus.COMPLETED
+
+    def wait_for_blocking_results_partial_success(
+        self: CbfComponentManager,
+        timeout_sec: float = 0.0,
+        task_abort_event: Optional[Event] = None,
+    ) -> TaskStatus:
+        """
+        Variant of wait_for_blocking_results that will report success if at least
+        one blocking command is successful.
+        See documentation for wait_for_blocking_results for more details.
+
+        :param timeout_sec: Time to wait, in seconds. If default value of 0.0 is set,
+            timeout_sec = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND_SEC
+        :param task_abort_event: Check for abort, defaults to None
+
+        :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
+            TaskStatus.ABORTED if aborted
+        """
+        if timeout_sec == 0.0:
+            timeout_sec = (
+                len(self.blocking_command_ids)
+                * DEFAULT_TIMEOUT_PER_COMMAND_SEC
+            )
+        ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
+
+        # Loop is exited when no blocking command IDs remain
+        successes = []
+        while len(self.blocking_command_ids):
+            if task_abort_event and task_abort_event.is_set():
+                self.logger.warning(
+                    "Task aborted while waiting for blocking results."
+                )
+                self._received_lrc_results = {}
+                return TaskStatus.ABORTED
+
+            # Remove any successful results from blocking command IDs
+            command_id_list = list(self.blocking_command_ids)
+            for command_id in command_id_list:
+                with self._results_lock:
+                    result = self._received_lrc_results.pop(command_id, None)
+                if result is None:
+                    continue
+
+                try:
+                    result_code = int(result.split(",")[0].split("[")[1])
+                except IndexError as ie:
+                    self.logger.error(
+                        f"IndexError in parsing {command_id} event result code; {ie}"
+                    )
+                    successes.append(False)
+                    continue
+
+                if result_code != ResultCode.OK:
+                    self.logger.error(
+                        f"Blocking command failure; {command_id}: {result}"
+                    )
+                    successes.append(False)
+                    continue
+
+                successes.append(True)
+                self.blocking_command_ids.remove(command_id)
+
+            sleep(TIMEOUT_RESOLUTION)
+            ticks_10ms -= 1
+            if ticks_10ms <= 0:
+                self.logger.warning(
+                    f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
+                    f"Blocking commands remaining: {self.blocking_command_ids}"
+                )
+                self._received_lrc_results = {}
+                break
+
+        self.logger.debug(
+            f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
+        )
+        self._received_lrc_results = {}
+
+        if any(successes):
+            self.logger.debug("Partial/complete blocking command success.")
+            return TaskStatus.COMPLETED
+
+        return TaskStatus.FAILED
+
+    # -----------------------
+    # Subscription Management
+    # -----------------------
+
+    def attr_event_subscribe(
+        self: CbfComponentManager,
+        proxy: context.DeviceProxy,
+        attr_name: str,
+        callback: Callable,
+    ) -> None:
+        """
+        Subscribe to a given proxy's attribute.
+
+        :param proxy: DeviceProxy
+        :param attr_name: name of attribute for change event subscription
+        :param callback: change event callback
+        """
+        dev_name = proxy.dev_name()
+
+        if dev_name in self.event_ids:
+            if attr_name in self.event_ids[dev_name]:
+                self.logger.debug(
+                    f"Skipping repeated {attr_name} event subscription: {dev_name}"
+                )
+                return
+        self.logger.debug(f"Subscribing to {dev_name} LRC results.")
+
+        event_id = proxy.subscribe_event(
+            attr_name=attr_name,
+            event_type=tango.EventType.CHANGE_EVENT,
+            cb_or_queuesize=callback,
+        )
+
+        self.event_ids = deep_update(
+            self.event_ids, {dev_name: {attr_name: event_id}}
+        )
+
+    def unsubscribe_all_events(
+        self: CbfComponentManager, proxy: context.DeviceProxy
+    ) -> None:
+        """
+        Unsubscribe from a proxy's longRunningCommandResult attribute.
+
+        :param proxy: DeviceProxy
+        """
+        dev_name = proxy.dev_name()
+        dev_events = self.event_ids.pop(dev_name, None)
+        if dev_events is None:
+            self.logger.debug(
+                f"No longRunningCommandResult event subscription for {dev_name}"
+            )
+            return
+        for attr_name, event_id in dev_events.values():
+            self.logger.debug(
+                f"Unsubscribing from {dev_name}/{attr_name} event ID {event_id}"
+            )
+            proxy.unsubscribe_event(event_id)
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
