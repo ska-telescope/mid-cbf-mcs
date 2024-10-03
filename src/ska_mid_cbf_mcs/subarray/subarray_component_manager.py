@@ -1650,22 +1650,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
-        # Pre 4.0
-        if "cbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["cbf"])
-        # Post 4.0
-        elif "midcbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["midcbf"])
-
-            # TODO: remove this return when Configure Scan supports >v4.0
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "> v4.0 Configure Scan Interfaces Currently not supported",
-                ),
-            )
-            return
+        configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # deconfigure to reset assigned FSPs and unsubscribe from events.
         deconfigure_success = self._deconfigure()
