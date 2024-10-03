@@ -230,9 +230,13 @@ def partition_spectrum_to_frequency_slices(
 
     """
 
+    assert channel_width is not None
     assert channel_width >= 0, "channel_width cannot be negative or zero"
+    assert channel_count is not None
     assert channel_count >= 0, "channel_count cannot be negative or zero"
+    assert k_value is not None
     assert k_value > 0, "k_value cannot be negative"
+    assert fsp_ids is not None
     assert len(fsp_ids) == 0, "fsp_ids cannot be empty"
     assert False not in [
         fsp_id > 0 for fsp_id in fsp_ids
