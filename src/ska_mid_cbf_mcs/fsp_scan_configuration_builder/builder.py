@@ -193,7 +193,7 @@ class FspScanConfigurationBuilder:
     def set_config(
         self: FspScanConfigurationBuilder, function_configuration: dict
     ) -> FspScanConfigurationBuilder:
-        assert self.function_configuration is not None
+        assert function_configuration is not None
         self.function_configuration = copy.deepcopy(function_configuration)
         return self
 
@@ -206,8 +206,8 @@ class FspScanConfigurationBuilder:
     def set_subarray_dish_ids(
         self: FspScanConfigurationBuilder, subarray_dish_ids: set
     ):
-        assert set is not None
-        assert len(set) > 0
+        assert subarray_dish_ids is not None
+        assert len(subarray_dish_ids) > 0
         self.subarray_dish_ids = subarray_dish_ids
 
     def build(self: FspScanConfigurationBuilder) -> dict:

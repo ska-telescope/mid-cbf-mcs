@@ -235,9 +235,11 @@ def partition_spectrum_to_frequency_slices(
     assert channel_count is not None
     assert channel_count >= 0, "channel_count cannot be negative or zero"
     assert k_value is not None
+    # from initsysparams validation
+    assert k_value <= 2222, "k_value must be between 1 - 2222"
     assert k_value > 0, "k_value cannot be negative"
     assert fsp_ids is not None
-    assert len(fsp_ids) == 0, "fsp_ids cannot be empty"
+    assert len(fsp_ids) != 0, "fsp_ids cannot be empty"
     assert False not in [
         fsp_id > 0 for fsp_id in fsp_ids
     ], "fsp_ids cannot contain a negative fsp_id"
@@ -246,10 +248,9 @@ def partition_spectrum_to_frequency_slices(
     coarse_channels = get_coarse_frequency_slice_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
-
-    assert len(fsp_ids) <= len(
+    assert (len(fsp_ids) >= len(
         coarse_channels
-    ), "too few FSPs for the given coarse channels"
+    )), "too few FSPs for the given coarse channels"
 
     fs_infos = {}
     first_sdp_channel_id = 0
@@ -369,12 +370,12 @@ def partition_spectrum_to_frequency_slices(
 ##############################################################################
 if __name__ == "__main__":
     fsp_ids = [1, 2, 3, 4, 5]
-    START_FREQ = int(350e6)
-    WB_SHIFT = int(
-        52.7e6
-    )  # positive means move the start of the coarse channel up by this many Hz.
-    # WB_SHIFT = 0
-    FINE_CHANNEL_COUNT = 58980
+    START_FREQ = int(297271296)
+    #WB_SHIFT = int(
+    #    52.7e6
+    #)  # positive means move the start of the coarse channel up by this many Hz.
+    WB_SHIFT = 0
+    FINE_CHANNEL_COUNT = 14740
     # we can get K from sysinit. example in doc assumes k=1000
     K_VALUE = 1000
 
