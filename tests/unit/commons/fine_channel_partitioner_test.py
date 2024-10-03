@@ -68,7 +68,9 @@ def test_get_coarse_channels_valid():
             actual_coarse_channels = get_coarse_frequency_slice_channels(
                 start_channel[0], end_channel[1], 0
             )
-            print(f"start index: {start_channel_index}, end index: {end_channel_index}")
+            print(
+                f"start index: {start_channel_index}, end index: {end_channel_index}"
+            )
             print(actual_coarse_channels)
             assert expected_number_of_channels == len(actual_coarse_channels)
             assert actual_coarse_channels == list(

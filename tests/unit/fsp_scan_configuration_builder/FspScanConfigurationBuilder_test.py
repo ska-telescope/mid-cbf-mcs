@@ -86,13 +86,11 @@ class TestFspScanConfigurationBuilder:
 
     @pytest.mark.parametrize("dish_ids", [None, set()])
     def test_invalid_set_subarray_dish_ids(
-        self: TestFspScanConfigurationBuilder,
-        dish_ids
+        self: TestFspScanConfigurationBuilder, dish_ids
     ):
         builder = fsp_builder()
         with pytest.raises(AssertionError):
             builder.set_subarray_dish_ids(dish_ids)
-
 
     def test_invalid_set_config(self: TestFspScanConfigurationBuilder):
         builder = fsp_builder()
@@ -115,9 +113,7 @@ class TestFspScanConfigurationBuilder:
     ):
         pass
 
-    def test_build_corr(
-        self: TestFspScanConfigurationBuilder
-    ):
+    def test_build_corr(self: TestFspScanConfigurationBuilder):
         with open(json_file_path + "ConfigureScan_basic_CORR.json") as file:
             json_str = file.read().replace("\n", "")
             full_configuration = json.loads(json_str)

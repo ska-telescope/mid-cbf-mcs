@@ -248,9 +248,9 @@ def partition_spectrum_to_frequency_slices(
     coarse_channels = get_coarse_frequency_slice_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
-    assert (len(fsp_ids) >= len(
+    assert len(fsp_ids) >= len(
         coarse_channels
-    )), "too few FSPs for the given coarse channels"
+    ), "too few FSPs for the given coarse channels"
 
     fs_infos = {}
     first_sdp_channel_id = 0
@@ -371,9 +371,9 @@ def partition_spectrum_to_frequency_slices(
 if __name__ == "__main__":
     fsp_ids = [1, 2, 3, 4, 5]
     START_FREQ = int(297271296)
-    #WB_SHIFT = int(
+    # WB_SHIFT = int(
     #    52.7e6
-    #)  # positive means move the start of the coarse channel up by this many Hz.
+    # )  # positive means move the start of the coarse channel up by this many Hz.
     WB_SHIFT = 0
     FINE_CHANNEL_COUNT = 14740
     # we can get K from sysinit. example in doc assumes k=1000
