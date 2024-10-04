@@ -1288,16 +1288,18 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
 
         all_fsp_configs = []
-        fsp_config_builder = FspScanConfigurationBuilder()
-        fsp_config_builder.set_dish_utils(self._dish_utils)
-        fsp_config_builder.set_subarray_dish_ids(self.dish_ids)
 
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
 
-            fsp_config_builder.set_fsp_mode(FspModes.CORR)
-            fsp_config_builder.set_config(corr_config)
-            # TODO: set wideband shift when ready for implementation (defaults to 0)
+            # TODO: set wideband shift when ready for implementation
+            fsp_config_builder = FspScanConfigurationBuilder(
+                function_mode=FspModes.CORR,
+                function_configuration=corr_config,
+                dish_utils=self._dish_utils,
+                subarray_dish_ids=self.dish_ids,
+                wideband_shift=0,
+            )
             corr_fsp_configs = fsp_config_builder.build()
 
             all_fsp_configs.extend(corr_fsp_configs)

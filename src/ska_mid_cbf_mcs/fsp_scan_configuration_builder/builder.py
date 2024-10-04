@@ -22,11 +22,29 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 
 class FspScanConfigurationBuilder:
-    function_mode: FspModes = None
-    function_configuration: dict = None
-    dish_utils: DISHUtils = None
-    wideband_shift: int = 0
-    subarray_dish_ids: set = None
+    function_mode: FspModes
+    function_configuration: dict
+    dish_utils: DISHUtils
+    wideband_shift: int
+    subarray_dish_ids: set
+
+    def __init__(
+        self: FspScanConfigurationBuilder,
+        function_mode: FspModes,
+        function_configuration: dict,
+        dish_utils: DISHUtils,
+        subarray_dish_ids: set,
+        wideband_shift: int,
+    ):
+        self.function_mode = function_mode
+        if "processing_regions" not in function_configuration:
+            raise ValueError(
+                "Function configuration is missing processing regions parameter"
+            )
+        self.function_configuration = function_configuration
+        self.dish_utils = dish_utils
+        self.subarray_dish_ids = subarray_dish_ids
+        self.wideband_shift = wideband_shift
 
     def _fsp_config_from_processing_regions(
         self: FspScanConfigurationBuilder, processing_regions: list[dict]
@@ -150,7 +168,7 @@ class FspScanConfigurationBuilder:
             fsp_config = {}
             # Required values
             fsp_config["fsp_id"] = fsp_id
-            fsp_config["function_mode"] = self.function_mode
+            fsp_config["function_mode"] = self.function_mode.name
             fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp_id][
                 "fs_id"
             ]
@@ -181,60 +199,12 @@ class FspScanConfigurationBuilder:
 
         return fsp_configs
 
-    def set_fsp_mode(
-        self: FspScanConfigurationBuilder, function_mode: FspModes
-    ) -> FspScanConfigurationBuilder:
-        assert function_mode is not None
-        self.function_mode = function_mode
-        return self
-
-    def set_config(
-        self: FspScanConfigurationBuilder, function_configuration: dict
-    ) -> FspScanConfigurationBuilder:
-        assert function_configuration is not None
-        self.function_configuration = copy.deepcopy(function_configuration)
-        return self
-
-    def set_dish_utils(
-        self: FspScanConfigurationBuilder, dish_utils: DISHUtils
-    ) -> FspScanConfigurationBuilder:
-        assert dish_utils is not None
-        self.dish_utils = dish_utils
-        return self
-
-    def set_subarray_dish_ids(
-        self: FspScanConfigurationBuilder, subarray_dish_ids: set
-    ) -> FspScanConfigurationBuilder:
-        assert subarray_dish_ids is not None
-        assert len(subarray_dish_ids) > 0
-        self.subarray_dish_ids = subarray_dish_ids
-        return self
-
-    def set_wideband_shift(
-        self: FspScanConfigurationBuilder, wideband_shift: int
-    ) -> FspScanConfigurationBuilder:
-        assert wideband_shift is not None
-        self.wideband_shift = wideband_shift
-        return self
-
     def build(self: FspScanConfigurationBuilder) -> list[dict]:
         """_summary_
 
         :return: _description_
         """
-        assert self.function_mode is not None
-        assert self.dish_utils is not None
-        assert self.wideband_shift is not None
-        assert self.function_configuration is not None
-        assert self.subarray_dish_ids is not None
-        assert (
-            "processing_regions" in self.function_configuration
-        ), "function configuration requires a processing region to process"
-
         fsp_config = self._fsp_config_from_processing_regions(
             self.function_configuration["processing_regions"]
         )
-
-        # TODO: Any other Function specific configuration outside of the FSP config
-
         return fsp_config

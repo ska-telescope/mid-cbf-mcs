@@ -38,85 +38,27 @@ class TestFspScanConfigurationBuilder:
     Test class for FspScanConfigurationBuilder.
     """
 
-    @pytest.mark.parametrize(
-        "params",
-        [
-            {
-                "param_description": "no fsp_mode",
-                "fsp_mode": None,
-                "config_name": "ConfigureScan_4_1_CORR.json",
-            },
-            {
-                "param_description": "no config",
-                "fsp_mode": FspModes.CORR,
-                "config_name": None,
-            },
-            {
-                "param_description": "bad config",
-                "fsp_mode": FspModes.CORR,
-                "config_name": {},
-            },
-        ],
-    )
-    def test_build_invalid(
-        self: TestFspScanConfigurationBuilder, params: dict
-    ):
-        fsp_mode = params["fsp_mode"]
-        config_name = params["config_name"]
+    def test_invalid_config(self: TestFspScanConfigurationBuilder):
+        # missing processing_regions
+        corr_config = {}
 
-        if type(config_name) is str:
-            with open(json_file_path + params["config_name"]) as file:
-                json_str = file.read().replace("\n", "")
+        # Setup subarray & dish_utils
+        with open(json_file_path + "sys_param_4_boards.json") as file:
+            json_str = file.read().replace("\n", "")
+            sys_param_configuration = json.loads(json_str)
+        subarray_dish_ids = list(
+            sys_param_configuration["dish_parameters"].keys()
+        )
+        dish_util = DISHUtils(sys_param_configuration)
 
-            full_configuration = json.loads(json_str)
-        else:
-            full_configuration = params["config_name"]
-
-        builder = fsp_builder()
-
-        with pytest.raises(AssertionError):
-            builder.set_fsp_mode(fsp_mode).set_config(
-                full_configuration
-            ).build()
-
-    def test_invalid_set_fsp_mode(self: TestFspScanConfigurationBuilder):
-        builder = fsp_builder()
-        with pytest.raises(AssertionError):
-            builder.set_fsp_mode(None)
-
-    def test_invalid_set_wideband_shift(self: TestFspScanConfigurationBuilder):
-        builder = fsp_builder()
-        with pytest.raises(AssertionError):
-            builder.set_wideband_shift(None)
-
-    @pytest.mark.parametrize("dish_ids", [None, set()])
-    def test_invalid_set_subarray_dish_ids(
-        self: TestFspScanConfigurationBuilder, dish_ids
-    ):
-        builder = fsp_builder()
-        with pytest.raises(AssertionError):
-            builder.set_subarray_dish_ids(dish_ids)
-
-    def test_invalid_set_config(self: TestFspScanConfigurationBuilder):
-        builder = fsp_builder()
-
-        with pytest.raises(AssertionError):
-            builder.set_config(None)
-
-    def test_invalid_set_dish_utils(self: TestFspScanConfigurationBuilder):
-        builder = fsp_builder()
-
-        with pytest.raises(AssertionError):
-            builder.set_dish_utils(None)
-
-    @pytest.mark.parametrize(
-        "config_name",
-        ["ConfigureScan_4_1_CORR.json", "ConfigureScan_1_0_CORR.json"],
-    )
-    def test_invalid_config(
-        self: TestFspScanConfigurationBuilder, config_name: str
-    ):
-        pass
+        with pytest.raises(ValueError):
+            fsp_builder(
+                function_mode=FspModes.CORR,
+                function_configuration=corr_config,
+                dish_utils=dish_util,
+                subarray_dish_ids=subarray_dish_ids,
+                wideband_shift=0,
+            )
 
     @pytest.mark.parametrize(
         "config_name",
@@ -127,31 +69,29 @@ class TestFspScanConfigurationBuilder:
         ],
     )
     def test_build_corr(self: TestFspScanConfigurationBuilder, config_name):
+        # Setup configuration
         with open(json_file_path + config_name) as file:
             json_str = file.read().replace("\n", "")
             full_configuration = json.loads(json_str)
 
+        corr_config = full_configuration["midcbf"]["correlation"]
+
+        # Setup subarray & dish_utils
         with open(json_file_path + "sys_param_4_boards.json") as file:
             json_str = file.read().replace("\n", "")
             sys_param_configuration = json.loads(json_str)
-
-        builder = fsp_builder()
-
-        # Setup DishUtils
-        dish_util = DISHUtils(sys_param_configuration)
-
-        # setup dish_ids
         subarray_dish_ids = list(
             sys_param_configuration["dish_parameters"].keys()
         )
+        dish_util = DISHUtils(sys_param_configuration)
 
-        corr_config = full_configuration["midcbf"]["correlation"]
-
-        builder.set_fsp_mode(FspModes.CORR)
-        builder.set_config(corr_config)
-        builder.set_dish_utils(dish_util)
-        builder.set_subarray_dish_ids(subarray_dish_ids)
-        builder.set_wideband_shift(0)
+        builder = fsp_builder(
+            function_mode=FspModes.CORR,
+            function_configuration=corr_config,
+            dish_utils=dish_util,
+            subarray_dish_ids=subarray_dish_ids,
+            wideband_shift=0,
+        )
 
         actual_output = builder.build()
 
@@ -167,7 +107,7 @@ class TestFspScanConfigurationBuilder:
         # assert values set
         total_actual_output_ports = 0
         for fsp in actual_output:
-            assert fsp["function_mode"] == FspModes.CORR
+            assert fsp["function_mode"] == FspModes.CORR.name
 
             if "output_port" in pr_config:
                 total_actual_output_ports += len(fsp["output_port"])
