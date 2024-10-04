@@ -1410,11 +1410,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             fsp_config_builder.set_fsp_mode(FspModes.CORR)
             fsp_config_builder.set_config(corr_config)
             fsp_config_builder.set_dish_utils(self._dish_utils)
-            corr_fsp_config = fsp_config_builder.build()
+            corr_fsp_configs = fsp_config_builder.build()
 
-            for fsp_id in corr_fsp_config.keys():
+            for fsp_id, corr_fsp_config in corr_fsp_configs.items():
                 fsp_config = self._build_fsp_config(
-                    fsp_config=copy.deepcopy(corr_fsp_config[fsp_id]),
+                    fsp_config=copy.deepcopy(corr_fsp_config),
                     common_configuration=copy.deepcopy(common_configuration),
                 )
 
