@@ -1170,13 +1170,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
+        fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue Vcc ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param fsp_configurations: FSP configuration list
 
         :return: True if VCC ConfigureScan was successful, otherwise False
         """
@@ -1237,7 +1238,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Add subset of FSP configuration to the VCC configure scan argument
         reduced_fsp = []
-        for fsp in configuration["fsp"]:
+        for fsp in fsp_configurations:
             function_mode = fsp["function_mode"]
             fsp_cfg = {"fsp_id": fsp["fsp_id"], "function_mode": function_mode}
             if function_mode == "CORR":
@@ -1273,6 +1274,36 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         return True
+
+    def _convert_pr_configs_to_fsp_configs(
+        self: CbfSubarrayComponentManager, configuration: dict[any]
+    ) -> list[dict[any]]:
+        """
+        go through the different supported functions processing regions and
+        convert to individual FSP configurations.
+
+        :param configuration: The Mid.CSP Function specific configurations
+
+        :return: list of Individual FSP configurations
+        """
+
+        all_fsp_configs = []
+        if "correlation" in configuration:
+            corr_config = configuration["correlation"]
+
+            # Build fsp configs from the processing region in the configs
+            fsp_config_builder = FspScanConfigurationBuilder()
+            fsp_config_builder.set_fsp_mode(FspModes.CORR)
+            fsp_config_builder.set_config(corr_config)
+            fsp_config_builder.set_dish_utils(self._dish_utils)
+            # TODO: set wideband shift when ready for implementation(defaults to 0)
+            corr_fsp_configs = fsp_config_builder.build()
+
+            all_fsp_configs.extend(corr_fsp_configs)
+
+        # TODO: build PST fsp configs and add to all_fsp_configs
+
+        return all_fsp_configs
 
     def _build_fsp_config(
         self: CbfSubarrayComponentManager,
@@ -1386,12 +1417,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
+        fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
+        :param fsp_configuration: FSP scan configuration dict
 
         :return: True if successfully configured all FSP devices, otherwise False
         """
@@ -1402,58 +1435,58 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._vis_fsp_config = []
         self.blocking_command_ids = set()
 
-        if "correlation" in configuration:
-            corr_config = configuration["correlation"]
+        for config in fsp_configurations:
+            fsp_config = self._build_fsp_config(
+                fsp_config=copy.deepcopy(config),
+                common_configuration=copy.deepcopy(common_configuration),
+            )
 
-            # Build fsp configs from the processing region in the configs
-            fsp_config_builder = FspScanConfigurationBuilder()
-            fsp_config_builder.set_fsp_mode(FspModes.CORR)
-            fsp_config_builder.set_config(corr_config)
-            fsp_config_builder.set_dish_utils(self._dish_utils)
-            corr_fsp_configs = fsp_config_builder.build()
+            fsp_id = fsp_config["fsp_id"]
+            match fsp_config["function_mode"]:
+                case "CORR":
+                    # set function mode and add subarray membership
+                    fsp_proxy = self._all_fsp_proxies[fsp_id]
+                    self.subscribe_command_results(fsp_proxy)
+                    self._assigned_fsp_proxies.add(fsp_proxy)
+                    self._fsp_ids.add(fsp_id)
 
-            for fsp_id, corr_fsp_config in corr_fsp_configs.items():
-                fsp_config = self._build_fsp_config(
-                    fsp_config=copy.deepcopy(corr_fsp_config),
-                    common_configuration=copy.deepcopy(common_configuration),
-                )
+                    fsp_success = self._assign_fsp(fsp_proxy, "CORR")
+                    if not fsp_success:
+                        return False
 
-                # set function mode and add subarray membership
-                fsp_proxy = self._all_fsp_proxies[fsp_id]
-                self.subscribe_command_results(fsp_proxy)
-                self._assigned_fsp_proxies.add(fsp_proxy)
-                self._fsp_ids.add(fsp_id)
+                    # Parameter named "corr_vcc_ids" used by HPS contains the
+                    # subset of the subarray VCCs for which the correlation
+                    # results are requested to be used in Mid.CBF output
+                    # products (visibilities); dishes may not be specified in
+                    # the configuration at all, or the list may be empty
+                    fsp_config["corr_vcc_ids"] = []
+                    if (
+                        "receptors" not in fsp_config
+                        or len(fsp_config["receptors"]) == 0
+                    ):
+                        # In this case by the ICD, all subarray allocated
+                        # resources should be used.
+                        fsp_config["corr_vcc_ids"] = fsp_config[
+                            "subarray_vcc_ids"
+                        ].copy()
+                    else:
+                        for dish in fsp_config["receptors"]:
+                            fsp_config["corr_vcc_ids"].append(
+                                self._dish_utils.dish_id_to_vcc_id[dish]
+                            )
 
-                fsp_success = self._assign_fsp(fsp_proxy, "CORR")
-                if not fsp_success:
-                    return False
+                    # Prepare CORR proxy and its configuration
+                    fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
+                    all_fsp_config.append(
+                        (fsp_corr_proxy, json.dumps(fsp_config))
+                    )
 
-                # Parameter named "corr_vcc_ids" used by HPS contains the
-                # subset of the subarray VCCs for which the correlation results
-                # are requested to be used in Mid.CBF output products (visibilities);
-                # dishes may not be specified in the configuration at all,
-                # or the list may be empty
-                fsp_config["corr_vcc_ids"] = []
-                if (
-                    "receptors" not in fsp_config
-                    or len(fsp_config["receptors"]) == 0
-                ):
-                    # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp_config["corr_vcc_ids"] = fsp_config[
-                        "subarray_vcc_ids"
-                    ].copy()
-                else:
-                    for dish in fsp_config["receptors"]:
-                        fsp_config["corr_vcc_ids"].append(
-                            self._dish_utils.dish_id_to_vcc_id[dish]
-                        )
-
-                # Prepare CORR proxy and its configuration
-                fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
-                all_fsp_config.append((fsp_corr_proxy, json.dumps(fsp_config)))
-
-                # Store FSP parameters to configure visibility transport
-                self._vis_fsp_config.append(fsp_config)
+                    # Store FSP parameters to configure visibility transport
+                    self._vis_fsp_config.append(fsp_config)
+                case _:
+                    self.logger.error(
+                        f"Function mode {fsp_config['function_mode']} currently unsupported."
+                    )
 
         lrc_status = self.wait_for_blocking_results()
         if lrc_status == TaskStatus.FAILED:
@@ -1685,6 +1718,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # store configID
         self.config_id = str(common_configuration["config_id"])
 
+        # --- Convert Processing Regions to FSP configs --- #
+        fsp_configs = self._convert_pr_configs_to_fsp_configs(
+            configuration=configuration
+        )
+
         # --- Configure VCC --- #
 
         # TODO: think about what to do about abort events here
@@ -1704,6 +1742,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            fsp_configurations=fsp_configs,
         )
         if not vcc_configure_scan_success:
             task_callback(
@@ -1720,6 +1759,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         fsp_configure_scan_success = self._fsp_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            fsp_configurations=fsp_configs,
         )
         if not fsp_configure_scan_success:
             # If unsuccessful, reset all assigned FSP devices

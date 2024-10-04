@@ -189,15 +189,24 @@ class FspScanConfigurationBuilder:
     ) -> FspScanConfigurationBuilder:
         assert dish_utils is not None
         self.dish_utils = dish_utils
+        return self
 
     def set_subarray_dish_ids(
         self: FspScanConfigurationBuilder, subarray_dish_ids: set
-    ):
+    ) -> FspScanConfigurationBuilder:
         assert subarray_dish_ids is not None
         assert len(subarray_dish_ids) > 0
         self.subarray_dish_ids = subarray_dish_ids
+        return self
 
-    def build(self: FspScanConfigurationBuilder) -> dict:
+    def set_wideband_shift(
+        self: FspScanConfigurationBuilder, wideband_shift: int
+    ) -> FspScanConfigurationBuilder:
+        assert wideband_shift is not None
+        self.wideband_shift = wideband_shift
+        return self
+
+    def build(self: FspScanConfigurationBuilder) -> list[dict]:
         """_summary_
 
         :return: _description_
