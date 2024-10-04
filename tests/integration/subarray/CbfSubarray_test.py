@@ -238,10 +238,21 @@ class TestCbfSubarray:
         )
         assert result_code == ResultCode.QUEUED
 
+        # will still fail because there is no FSP 24, but this will happen
+        # after passing through validation
         expected_events.extend(
             [
                 ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
-                ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+                ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 2),
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{command_id}",
+                        f'[{ResultCode.FAILED.value}, "Unhandled exception during execution: 24"]',
+                    ),
+                    None,
+                    1,
+                ),
             ]
         )
 
