@@ -11,7 +11,7 @@
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "correlation": {
             "processing_regions": [{
-                "fsp_ids": [26],
+                "fsp_ids": [24],
                 "start_freq": 350000000,
                 "channel_width": 13440,
                 "channel_count": 740,
@@ -21,7 +21,7 @@
                     [0, 1]
                 ]
             }, {
-                "fsp_ids": [27],
+                "fsp_ids": [25, 26],
                 "start_freq": 750000000,
                 "channel_width": 13440,
                 "channel_count": 14140,
