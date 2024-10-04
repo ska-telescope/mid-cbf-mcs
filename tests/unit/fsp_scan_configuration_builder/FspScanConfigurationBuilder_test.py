@@ -83,7 +83,7 @@ class TestFspScanConfigurationBuilder:
         builder = fsp_builder()
         with pytest.raises(AssertionError):
             builder.set_fsp_mode(None)
-    
+
     def test_invalid_set_wideband_shift(self: TestFspScanConfigurationBuilder):
         builder = fsp_builder()
         with pytest.raises(AssertionError):
@@ -145,6 +145,6 @@ class TestFspScanConfigurationBuilder:
         builder.set_subarray_dish_ids(subarray_dish_ids)
         builder.set_wideband_shift(0)
 
-        #actual_output = builder.build()
+        # actual_output = builder.build()
 
         # check outputs
