@@ -156,9 +156,21 @@ class TestFspScanConfigurationBuilder:
         actual_output = builder.build()
 
         total_fsps = 0
+        total_expected_output_ports = 0
         for pr_config in corr_config["processing_regions"]:
             total_fsps += len(pr_config["fsp_ids"])
+            if "output_port" in pr_config:
+                total_expected_output_ports += len(pr_config["output_port"])
 
         assert len(actual_output) == total_fsps
 
-        # check outputs
+        # assert values set
+        total_actual_output_ports = 0
+        for fsp in actual_output:
+            assert fsp["function_mode"] == FspModes.CORR
+
+            if "output_port" in pr_config:
+                total_actual_output_ports += len(fsp["output_port"])
+
+        if "output_port" in pr_config:
+            assert total_expected_output_ports == total_actual_output_ports
