@@ -105,7 +105,6 @@ class FspScanConfigurationBuilder:
                 for fs_info in calculated_fs_infos.values()
             ]
             calculated_fsp_ids = list(calculated_fs_infos.keys())
-            calculated_fsp_ids.sort()
 
             split_output_ports = channel_map.split_channel_map_at(
                 channel_map=processing_region_config["output_port"],
@@ -122,46 +121,24 @@ class FspScanConfigurationBuilder:
         # Build individual fsp configs
         fsp_configs = []
 
-        for fsp in calculated_fs_infos.keys():
+        for fsp_id in calculated_fs_infos.keys():
             fsp_config = {}
-            fsp_config["fsp_id"] = calculated_fs_infos[fsp]["fsp_id"]
+            # Required values
+            fsp_config["fsp_id"] = fsp_id
             fsp_config["function_mode"] = self.function_mode
-            fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp][
+            fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp_id][
                 "fs_id"
             ]
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
+            fsp_config["channel_offset"] = (
+                calculated_fs_infos[fsp_id]["sdp_start_channel_id"]
+                - calculated_fs_infos[fsp_id]["fsp_start_ch"]
+            )
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
             ]
-            fsp_config["channel_offset"] = (
-                calculated_fs_infos[fsp]["sdp_start_channel_id"]
-                - calculated_fs_infos[fsp]["fsp_start_ch"]
-            )
-            fsp_config["alignment_shift_freq"] = calculated_fs_infos[fsp][
-                "alignment_shift_freq"
-            ]
-
-            # Optional values
-            receptors = (
-                processing_region_config["receptors"]
-                if "receptors" in processing_region_config
-                else []
-            )
-            output_hosts = (
-                processing_region_config
-                if "output_host" in processing_region_config
-                else []
-            )
-
-            if len(receptors) > 0:
-                fsp_config["receptors"] = receptors
-            if len(output_hosts) > 0:
-                fsp_config["output_host"] = output_hosts
-            if len(fsp_to_output_port_map[fsp]) > 0:
-                fsp_config["output_port"] = fsp_to_output_port_map[fsp]
-
             vcc_id_to_rdt_freq_shifts = {}
             for vcc_id in vcc_to_fs_infos.keys():
                 vcc_id_to_rdt_freq_shifts[vcc_id] = {}
@@ -174,10 +151,20 @@ class FspScanConfigurationBuilder:
                 vcc_id_to_rdt_freq_shifts[vcc_id][
                     "freq_wb_shift"
                 ] = self.wideband_shift
-                # Note: don't have the info to calculate freq_scfo_shift here, will
-                # be added further in processing at fsp_corr_subarry_component_manager._build_hps_fsp_config
-                # because fsp_corr has resampler_delay_tracker.output_sample_rate value
+                # Note: don't have the info to calculate freq_scfo_shift here,
+                # will be added further in processing at
+                # fsp_corr_subarry_component_manager._build_hps_fsp_config
+                # because fsp_corr has
+                # resampler_delay_tracker.output_sample_rate value
             fsp_config["vcc_id_to_rdt_freq_shifts"] = vcc_id_to_rdt_freq_shifts
+
+            # Optional values
+            if "output_host" in processing_region_config:
+                fsp_config["output_host"] = processing_region_config[
+                    "output_host"
+                ]
+            if len(fsp_to_output_port_map[fsp_id]) > 0:
+                fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
 
             fsp_configs.append(fsp_config)
 

@@ -369,13 +369,13 @@ def partition_spectrum_to_frequency_slices(
 # EXAMPLE INPUTS
 ##############################################################################
 if __name__ == "__main__":
-    fsp_ids = [1, 2, 3, 4, 5]
+    fsp_ids = [5, 6, 7, 8, 9]
     START_FREQ = int(297271296)
     # WB_SHIFT = int(
     #    52.7e6
     # )  # positive means move the start of the coarse channel up by this many Hz.
     WB_SHIFT = 0
-    FINE_CHANNEL_COUNT = 14740
+    FINE_CHANNEL_COUNT = 44740
     # we can get K from sysinit. example in doc assumes k=1000
     K_VALUE = 1000
 
@@ -416,7 +416,8 @@ if __name__ == "__main__":
 
     sum_of_result_channels = 0
     expect_start_f = START_FREQ
-    for coarse_ch, fs_info in results.items():
+    for fsp_id, fs_info in results.items():
+        coarse_ch = fs_info["fs_id"]
         sum_of_result_channels = (
             sum_of_result_channels + fs_info["num_channels"]
         )
@@ -434,7 +435,7 @@ if __name__ == "__main__":
             + fs_info["end_ch"] * const.FINE_CHANNEL_WIDTH
         )
         print(
-            f'{coarse_ch:2}: start = ch {fs_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fs_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
+            f'fsp_id:{fsp_id} {coarse_ch:2}: start = ch {fs_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fs_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
         )
 
         assert (fs_info["start_ch"]) % const.NUM_CHANNEL_GROUPS == 0
