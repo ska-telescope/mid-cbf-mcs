@@ -191,7 +191,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                     for fs_sample_rate in hps_fsp_configuration[
                         "fs_sample_rates"
                     ]
-                    if fs_sample_rate["vcc_id"] == vcc_id
+                    # Note: vcc_id is a string in the vcc_id_to_rdt_freq_shifts
+                    # but a number in the fs_sample rate
+                    if fs_sample_rate["vcc_id"] == int(vcc_id)
                 )
             )[0]
 

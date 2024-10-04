@@ -72,10 +72,10 @@ class FspScanConfigurationBuilder:
             or len(processing_region_config["receptors"]) == 0
         ):
             for dish_id in self.subarray_dish_ids:
-                dish_ids.append(self.dish_utils.dish_id_to_vcc_id[dish_id])
+                dish_ids.append(dish_id)
         else:
             for dish_id in processing_region_config["receptors"]:
-                dish_ids.append(self.dish_utils.dish_id_to_vcc_id[dish_id])
+                dish_ids.append(dish_id)
 
         vcc_to_fs_infos = {}
         for dish_id in dish_ids:
@@ -84,12 +84,34 @@ class FspScanConfigurationBuilder:
                 start_freq=processing_region_config["start_freq"],
                 channel_width=processing_region_config["channel_width"],
                 channel_count=processing_region_config["channel_count"],
-                k_value=self.dish_utils.dish_id_to_k(dish_ids),
+                k_value=self.dish_utils.dish_id_to_k[dish_id],
                 wideband_shift=self.wideband_shift,
             )
             vcc_to_fs_infos[
-                self.dish_utils.dish_id_to_vcc_id[dish_ids]
+                self.dish_utils.dish_id_to_vcc_id[dish_id]
             ] = calculated_fs_infos
+
+        calculated_fsp_ids = list(calculated_fs_infos.keys())
+        vcc_id_to_rdt_freq_shifts = {}
+        for fsp_id in calculated_fsp_ids:
+            vcc_id_to_rdt_freq_shifts[fsp_id] = {}
+            for vcc_id in vcc_to_fs_infos.keys():
+                vcc_id_str = str(vcc_id)
+                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str] = {}
+                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
+                    "freq_down_shift"
+                ] = vcc_to_fs_infos[vcc_id][fsp_id]["vcc_downshift_freq"]
+                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
+                    "freq_align_shift"
+                ] = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
+                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
+                    "freq_wb_shift"
+                ] = self.wideband_shift
+                # Note: don't have the info to calculate freq_scfo_shift here,
+                # will be added further in processing at
+                # fsp_corr_subarry_component_manager._build_hps_fsp_config
+                # because fsp_corr has
+                # resampler_delay_tracker.output_sample_rate value
 
         output_port = (
             processing_region_config["output_port"]
@@ -101,10 +123,13 @@ class FspScanConfigurationBuilder:
             # Split up the PR output ports according to the start channel ids of the
             # FSPs
             sdp_start_channel_ids = [
-                fs_info["stp_start_channel_id"]
+                fs_info["sdp_start_channel_id"]
                 for fs_info in calculated_fs_infos.values()
             ]
-            calculated_fsp_ids = list(calculated_fs_infos.keys())
+            sdp_start_channel_ids.append(
+                processing_region_config["sdp_start_channel_id"]
+                + processing_region_config["channel_count"]
+            )
 
             split_output_ports = channel_map.split_channel_map_at(
                 channel_map=processing_region_config["output_port"],
@@ -139,31 +164,17 @@ class FspScanConfigurationBuilder:
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
             ]
-            vcc_id_to_rdt_freq_shifts = {}
-            for vcc_id in vcc_to_fs_infos.keys():
-                vcc_id_to_rdt_freq_shifts[vcc_id] = {}
-                vcc_id_to_rdt_freq_shifts[vcc_id][
-                    "freq_down_shift"
-                ] = vcc_to_fs_infos[vcc_id]["vcc_downshift_freq"]
-                vcc_id_to_rdt_freq_shifts[vcc_id][
-                    "freq_align_shift"
-                ] = vcc_to_fs_infos[vcc_id]["alignment_shift_freq"]
-                vcc_id_to_rdt_freq_shifts[vcc_id][
-                    "freq_wb_shift"
-                ] = self.wideband_shift
-                # Note: don't have the info to calculate freq_scfo_shift here,
-                # will be added further in processing at
-                # fsp_corr_subarry_component_manager._build_hps_fsp_config
-                # because fsp_corr has
-                # resampler_delay_tracker.output_sample_rate value
-            fsp_config["vcc_id_to_rdt_freq_shifts"] = vcc_id_to_rdt_freq_shifts
+
+            fsp_config[
+                "vcc_id_to_rdt_freq_shifts"
+            ] = vcc_id_to_rdt_freq_shifts[fsp_id]
 
             # Optional values
             if "output_host" in processing_region_config:
                 fsp_config["output_host"] = processing_region_config[
                     "output_host"
                 ]
-            if len(fsp_to_output_port_map[fsp_id]) > 0:
+            if "output_port" in processing_region_config:
                 fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
 
             fsp_configs.append(fsp_config)

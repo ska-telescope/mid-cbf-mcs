@@ -118,12 +118,18 @@ class TestFspScanConfigurationBuilder:
     ):
         pass
 
-    def test_build_corr(self: TestFspScanConfigurationBuilder):
-        with open(json_file_path + "ConfigureScan_basic_CORR.json") as file:
+    @pytest.mark.parametrize(
+        "config_name",
+        [
+            "ConfigureScan_basic_CORR.json",
+            "ConfigureScan_4_1_CORR.json",
+            "ConfigureScan_AA4_values.json",
+        ],
+    )
+    def test_build_corr(self: TestFspScanConfigurationBuilder, config_name):
+        with open(json_file_path + config_name) as file:
             json_str = file.read().replace("\n", "")
             full_configuration = json.loads(json_str)
-
-        print(full_configuration)
 
         with open(json_file_path + "sys_param_4_boards.json") as file:
             json_str = file.read().replace("\n", "")
@@ -137,14 +143,22 @@ class TestFspScanConfigurationBuilder:
         # setup dish_ids
         subarray_dish_ids = list(
             sys_param_configuration["dish_parameters"].keys()
-        ).pop()
+        )
+
+        corr_config = full_configuration["midcbf"]["correlation"]
 
         builder.set_fsp_mode(FspModes.CORR)
-        builder.set_config(full_configuration)
+        builder.set_config(corr_config)
         builder.set_dish_utils(dish_util)
         builder.set_subarray_dish_ids(subarray_dish_ids)
         builder.set_wideband_shift(0)
 
-        # actual_output = builder.build()
+        actual_output = builder.build()
+
+        total_fsps = 0
+        for pr_config in corr_config["processing_regions"]:
+            total_fsps += len(pr_config["fsp_ids"])
+
+        assert len(actual_output) == total_fsps
 
         # check outputs
