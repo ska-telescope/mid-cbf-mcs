@@ -215,8 +215,6 @@ class TestCbfSubarray:
         )
         assert result_code == ResultCode.QUEUED
 
-        # TODO: update this when Configure Scan supports >v4.0
-        # Currently ConfigureScan cannot process >v4.0 interfaces
         expected_events = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 1),
@@ -224,7 +222,7 @@ class TestCbfSubarray:
                 "longRunningCommandResult",
                 (
                     f"{command_id}",
-                    f'[{ResultCode.FAILED.value}, "> v4.0 Configure Scan Interfaces Currently not supported"]',
+                    f'[{ResultCode.FAILED.value}, "Failed to validate ConfigureScan input JSON"]',
                 ),
                 None,
                 1,
@@ -245,16 +243,7 @@ class TestCbfSubarray:
         expected_events.extend(
             [
                 ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
-                ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 2),
-                (
-                    "longRunningCommandResult",
-                    (
-                        f"{command_id}",
-                        f'[{ResultCode.FAILED.value}, "> v4.0 Configure Scan Interfaces Currently not supported"]',
-                    ),
-                    None,
-                    1,
-                ),
+                ("obsState", ObsState.READY, ObsState.CONFIGURING, 2),
             ]
         )
 
@@ -335,11 +324,14 @@ class TestCbfSubarray:
                 )
 
         # --- FSP checks --- #
+        fsp_to_function_mode = {}
+        for processing_region in configuration["midcbf"]["correlation"]["processing_region"]:
+            for fsp_id in processing_region["fsp_ids"]:
+                fsp_to_function_mode.update({fsp_id: FspModes.CORR})
 
-        for fsp_config in configuration["cbf"]["fsp"]:
-            fsp_id = fsp_config["fsp_id"]
-            function_mode = FspModes[fsp_config["function_mode"]].value
+        # TODO: Add fsp_ids that are in PST processing regions when ready
 
+        for fsp_id, function_mode in fsp_to_function_mode.items():
             expected_events = [
                 ("subarrayMembership", [sub_id], None, 1),
                 ("functionMode", function_mode, FspModes.IDLE.value, 1),
