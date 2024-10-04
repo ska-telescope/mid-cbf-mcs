@@ -200,7 +200,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             ]["output_sample_rate"]
 
             vcc_freq_scfo_shift = (
-                configuration["fsp_id"]
+                configuration["frequency_slice_id"]
                 * (input_sample_rate - output_sample_rate)
                 // const.VCC_OVERSAMPLING_FACTOR
             )

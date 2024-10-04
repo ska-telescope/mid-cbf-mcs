@@ -238,12 +238,10 @@ class TestCbfSubarray:
         )
         assert result_code == ResultCode.QUEUED
 
-        # TODO: update this when Configure Scan supports >v4.0
-        # Currently ConfigureScan cannot process >v4.0 interfaces
         expected_events.extend(
             [
                 ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
-                ("obsState", ObsState.READY, ObsState.CONFIGURING, 2),
+                ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
             ]
         )
 
