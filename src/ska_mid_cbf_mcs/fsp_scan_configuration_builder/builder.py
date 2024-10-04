@@ -39,9 +39,9 @@ class FspScanConfigurationBuilder:
         self.function_mode = function_mode
         if "processing_regions" not in function_configuration:
             raise ValueError(
-                "Function configuration is missing processing regions parameter"
+                "Function configuration is missing processing_regions parameter"
             )
-        self.function_configuration = function_configuration
+        self.function_configuration = copy.deepcopy(function_configuration)
         self.dish_utils = dish_utils
         self.subarray_dish_ids = subarray_dish_ids
         self.wideband_shift = wideband_shift
