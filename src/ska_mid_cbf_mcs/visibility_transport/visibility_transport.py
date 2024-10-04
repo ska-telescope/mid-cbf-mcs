@@ -64,21 +64,23 @@ class VisibilityTransport:
             f"FSP IDs = {self._fsp_ids}, channel_offsets = {self._channel_offsets}"
         )
 
-        # Create the SPEAD descriptor to be sent at start of scan
-        n_vcc = len(fsp_config[0]["corr_vcc_ids"])
-        n_baselines = n_vcc * (n_vcc + 1) // 2
-        self._dp_spead_desc.baseline_count = [n_baselines]
-        self._dp_spead_desc.channel_count = [20]
-
-        # SPEAD descriptor expects 0 based subarray ID
-        self._dp_spead_desc.command_inout("CreateDescriptor", subarray_id - 1)
-
         # Parse the visibility SLIM yaml to determine which board will output
         # visibilities.
         vis_out_map = self._get_vis_output_map(vis_slim_yaml)
 
         try:
             self._create_device_proxies(vis_out_map)
+
+            # Create the SPEAD descriptor to be sent at start of scan
+            n_vcc = len(fsp_config[0]["corr_vcc_ids"])
+            n_baselines = n_vcc * (n_vcc + 1) // 2
+            self._dp_spead_desc.baseline_count = [n_baselines]
+            self._dp_spead_desc.channel_count = [20]
+
+            # SPEAD descriptor expects 0 based subarray ID
+            self._dp_spead_desc.command_inout(
+                "CreateDescriptor", subarray_id - 1
+            )
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
