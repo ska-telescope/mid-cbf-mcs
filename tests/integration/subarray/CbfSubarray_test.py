@@ -325,7 +325,9 @@ class TestCbfSubarray:
 
         # --- FSP checks --- #
         fsp_to_function_mode = {}
-        for processing_region in configuration["midcbf"]["correlation"]["processing_region"]:
+        for processing_region in configuration["midcbf"]["correlation"][
+            "processing_region"
+        ]:
             for fsp_id in processing_region["fsp_ids"]:
                 fsp_to_function_mode.update({fsp_id: FspModes.CORR})
 
