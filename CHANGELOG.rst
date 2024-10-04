@@ -7,7 +7,8 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
-* None at this time
+* CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
+
 
 1.0.0
 ******
