@@ -989,7 +989,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 config=full_configuration,
                 strictness=2,
             )
-            self.logger.info("Scan configuration is valid!")
+            self.logger.info("Scan configuration is valid against telmodel!")
         except json.JSONDecodeError as je:  # argument not a valid JSON object
             self.logger.error(
                 f"Scan configuration object is not a valid JSON object; {je}"
@@ -1020,6 +1020,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             else:
                 self.logger.error(msg)
             return success
+        else:
+            self.logger.info("Skipping MCS supported configuration validation.")
 
         return True
 

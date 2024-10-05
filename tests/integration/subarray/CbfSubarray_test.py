@@ -175,100 +175,6 @@ class TestCbfSubarray:
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_AddReceptors_1"],
-        name="CbfSubarray_ConfigureScan_validation_1",
-    )
-    @pytest.mark.parametrize(
-        "invalid_configure_scan_file", ["ConfigureScan_AA4_values.json"]
-    )
-    def test_validateSupportedConfiguration(
-        self: TestCbfSubarray,
-        controller: context.DeviceProxy,
-        event_tracer: TangoEventTracer,
-        invalid_configure_scan_file: str,
-        subarray: dict[int, context.DeviceProxy],
-        subarray_params: dict[any],
-    ) -> None:
-        """
-        Test setting the controller's validateSupportedConfiguration attribute
-        and validate its effects on CbfSubarray ConfigureScan
-
-        :param controller: DeviceProxy to CbfController device
-        :param event_tracer: TangoEventTracer
-        :param invalid_configure_scan_file: ConfigureScan input JSON that should
-            fail validation
-        :param subarray: list of proxies to subarray devices
-        :param subarray_params: dict containing all test input parameters
-        """
-        sub_id = subarray_params["sub_id"]
-
-        # Check the validateSupportedConfiguration is True
-        assert controller.validateSupportedConfiguration is True
-
-        # Prepare test data
-        with open(test_data_path + invalid_configure_scan_file) as f:
-            invalid_configuration = json.load(f)
-
-        # Issue ConfigureScan command
-        # ConfigureScan should not work here
-        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
-            json.dumps(invalid_configuration)
-        )
-        assert result_code == ResultCode.QUEUED
-
-        expected_events = [
-            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
-            ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 1),
-            (
-                "longRunningCommandResult",
-                (
-                    f"{command_id}",
-                    f'[{ResultCode.FAILED.value}, "Failed to validate ConfigureScan input JSON"]',
-                ),
-                None,
-                1,
-            ),
-        ]
-
-        controller.validateSupportedConfiguration = False
-
-        # Issue ConfigureScan command
-        # ConfigureScan should work with less restrictive checking
-        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
-            json.dumps(invalid_configuration)
-        )
-        assert result_code == ResultCode.QUEUED
-
-        # will still fail because there is no FSP 24, but this will happen
-        # after passing through validation
-        expected_events.extend(
-            [
-                ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
-                ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 2),
-                (
-                    "longRunningCommandResult",
-                    (
-                        f"{command_id}",
-                        f'[{ResultCode.FAILED.value}, "Unhandled exception during execution: 24"]',
-                    ),
-                    None,
-                    1,
-                ),
-            ]
-        )
-
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                target_n_events=n,
-            )
-
-    @pytest.mark.dependency(
-        depends=["CbfSubarray_AddReceptors_1"],
         name="CbfSubarray_ConfigureScan_1",
     )
     def test_ConfigureScan(
@@ -335,7 +241,7 @@ class TestCbfSubarray:
         # --- FSP checks --- #
         fsp_to_function_mode = {}
         for processing_region in configuration["midcbf"]["correlation"][
-            "processing_region"
+            "processing_regions"
         ]:
             for fsp_id in processing_region["fsp_ids"]:
                 fsp_to_function_mode.update({fsp_id: FspModes.CORR})
@@ -686,7 +592,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command.
+        Test CbfSubarrays's GoToIdle command.
 
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
@@ -786,6 +692,127 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
+        depends=["CbfSubarray_GoToIdle_1"],
+        name="CbfSubarray_ConfigureScan_validation_1",
+    )
+    @pytest.mark.parametrize(
+        "invalid_configure_scan_file", ["ConfigureScan_AA4_values.json"]
+    )
+    def test_validateSupportedConfiguration(
+        self: TestCbfSubarray,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        invalid_configure_scan_file: str,
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+    ) -> None:
+        """
+        Test setting the controller's validateSupportedConfiguration attribute
+        and validate its effects on CbfSubarray ConfigureScan
+
+        :param controller: DeviceProxy to CbfController device
+        :param event_tracer: TangoEventTracer
+        :param invalid_configure_scan_file: ConfigureScan input JSON that should
+            fail validation
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        """
+        sub_id = subarray_params["sub_id"]
+
+        # Check the validateSupportedConfiguration is True
+        assert controller.validateSupportedConfiguration is True
+
+        # Prepare test data
+        with open(test_data_path + invalid_configure_scan_file) as f:
+            invalid_configuration = json.load(f)
+
+        # Issue ConfigureScan command
+        # ConfigureScan should not work here
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(invalid_configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+            ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.FAILED.value}, "Failed to validate ConfigureScan input JSON"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+        controller.validateSupportedConfiguration = False
+
+        # Issue ConfigureScan command
+        # ConfigureScan should work with less restrictive checking
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(invalid_configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+        ]
+
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+        
+        # Issue GotoIdle command
+        [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
+        assert result_code == ResultCode.QUEUED
+        
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.IDLE, ObsState.READY, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )
+
+    @pytest.mark.dependency(
         depends=["CbfSubarray_AddReceptors_1"],
         name="CbfSubarray_RemoveAllReceptors_1",
     )
@@ -797,7 +824,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command.
+        Test CbfSubarrays's RemoveAllReceptors command.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
