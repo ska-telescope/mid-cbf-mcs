@@ -746,7 +746,7 @@ class TestCbfSubarray:
                 1,
             ),
         ]
-        
+
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
@@ -782,11 +782,11 @@ class TestCbfSubarray:
                 previous_value=previous,
                 target_n_events=n,
             )
-        
+
         # Issue GotoIdle command
         [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
         assert result_code == ResultCode.QUEUED
-        
+
         # --- Subarray checks --- #
 
         expected_events = [

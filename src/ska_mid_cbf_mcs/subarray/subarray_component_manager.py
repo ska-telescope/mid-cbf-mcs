@@ -1021,7 +1021,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(msg)
             return success
         else:
-            self.logger.info("Skipping MCS supported configuration validation.")
+            self.logger.info(
+                "Skipping MCS supported configuration validation."
+            )
 
         return True
 
