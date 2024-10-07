@@ -29,7 +29,7 @@ class VisibilityTransport:
         # Tango device proxies
         self._host_lut_s1_fqdns = []
         self._host_lut_s2_fqdn = None
-        self._spead_desc_fqdns = None
+        self._spead_desc_fqdn = None
         self._dp_host_lut_s1 = []
         self._dp_host_lut_s2 = None
         self._dp_spead_desc = None
@@ -37,17 +37,20 @@ class VisibilityTransport:
         self._channel_offsets = []
         self._fsp_config = None
 
-    def configure(self, fsp_config: list, vis_slim_yaml: str) -> None:
+    def configure(
+        self, subarray_id: int, fsp_config: list, vis_slim_yaml: str
+    ) -> None:
         """
         Configure the visibility transport devices.
         - determine which board is responsible for outputting visibilities
+        - create the SPEAD descriptor to be sent at start of scan
         - connect the host lut s1 devices to the host lut s2
         - write the channel offsets of each FSP to host lut s2
         - configure all the SPEAD descriptor devices
 
+        :param subarray_id: the subarray ID
         :param fsp_config: FSP part of the scan configuration json object
         :param vis_slim_yaml: the visibility mesh config yaml
-        :param board_to_fsp_id: a dict to convert talon board str to fsp ID
         """
         self.logger.info("Configuring visibility transport devices")
 
@@ -67,6 +70,17 @@ class VisibilityTransport:
 
         try:
             self._create_device_proxies(vis_out_map)
+
+            # Create the SPEAD descriptor to be sent at start of scan
+            n_vcc = len(fsp_config[0]["corr_vcc_ids"])
+            n_baselines = n_vcc * (n_vcc + 1) // 2
+            self._dp_spead_desc.baseline_count = [n_baselines]
+            self._dp_spead_desc.channel_count = [20]
+
+            # SPEAD descriptor expects 0 based subarray ID
+            self._dp_spead_desc.command_inout(
+                "CreateDescriptor", subarray_id - 1
+            )
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
@@ -102,9 +116,7 @@ class VisibilityTransport:
         - program the host lut s2 device
         - program all the host lut s1 devices
 
-        :param fsp_config: FSP part of the scan configuration json object
-        :param n_vcc: number of receptors
-        :param scan_id: the scan ID
+        :param subarray_id: the subarray ID
         """
         self.logger.info("Enable visibility output")
 
@@ -113,8 +125,6 @@ class VisibilityTransport:
         )
 
         try:
-            # FSP App is responsible for calling the "Configure" command.
-            # If not already called, StartScan will fail.
             self._dp_spead_desc.command_inout("StartScan", dest_host_data)
 
             self._dp_host_lut_s2.command_inout("Program", dest_host_data)
