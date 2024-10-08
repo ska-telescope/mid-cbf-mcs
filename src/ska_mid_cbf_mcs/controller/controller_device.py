@@ -75,6 +75,8 @@ class CbfController(CbfDevice):
 
     LruTimeout = device_property(dtype=("str"))
 
+    HpsMasterTimeout = device_property(dtype=("str"))
+
     MaxCapabilities = device_property(dtype=("str",))
 
     # ----------
@@ -225,29 +227,6 @@ class CbfController(CbfDevice):
 
         self.component_manager.validate_supported_configuration = value
 
-    @attribute(
-        dtype=int,
-        label="HPS Master timeout",
-        doc="HPS Master timeout in seconds",
-    )
-    def hpsMasterTimeout(self: CbfController) -> int:
-        """
-        Reads and return the value of hpsMasterTimeout
-
-        :return: the value in hpsMasterTimeout
-        :rtype: int
-        """
-        return self._talondx_component_manager.hps_master_timeout
-
-    @hpsMasterTimeout.write
-    def hpsMasterTimeout(self: CbfController, value: int) -> None:
-        """
-        Write the timeout of the HPS Master device proxy; value is in seconds.
-
-        :param value: Timeout for HPS Master proxy in seconds
-        """
-        self._talondx_component_manager.hps_master_timeout = value
-
     # --------------
     # Initialization
     # --------------
@@ -320,6 +299,7 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
+            hps_master_timeout=int(self.HpsMasterTimeout),
             logger=self.logger,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,

@@ -79,6 +79,9 @@ server:
           - name: "LruTimeout"
             values:
             - "30"
+          - name: "HpsMasterTimeout"
+            values:
+            - "60"
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"
