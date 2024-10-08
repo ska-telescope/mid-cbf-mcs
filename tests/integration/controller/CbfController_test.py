@@ -135,8 +135,17 @@ class TestCbfController:
         result_code, command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
-        # TODO: cannot check VCC dishID if sys params downloaded from CAR
+        # TODO: cannot check subarray/VCC dishID if sys params downloaded from CAR
         if controller_params["sys_param_from_file"]:
+            for device in subarray:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).cbf_has_change_event_occurred(
+                    device_name=device,
+                    attribute_name="sysParam",
+                    attribute_value=sys_param_str,
+                )
+
             dish_utils = DISHUtils(json.loads(sys_param_str))
             for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
                 assert_that(event_tracer).within_timeout(
@@ -146,15 +155,6 @@ class TestCbfController:
                     attribute_name="dishID",
                     attribute_value=dish_id,
                 )
-
-        for device in subarray:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
-                device_name=device,
-                attribute_name="sysParam",
-                attribute_value=sys_param_str,
-            )
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT

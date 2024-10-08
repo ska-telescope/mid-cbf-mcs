@@ -710,6 +710,20 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if the FQDNs were found, False otherwise
         """
+        if self.simulation_mode:
+            # Use a hard-coded example fqdn talon for simulationMode
+            self._talon_lru_fqdn = [
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+            ]
+            self._talon_board_fqdn = [
+                "mid_csp_cbf/talon_board/001",
+                "mid_csp_cbf/talon_board/002",
+                "mid_csp_cbf/talon_board/003",
+                "mid_csp_cbf/talon_board/004",
+            ]
+            return
+
         # Read in list of LRUs from configuration JSON
         with open(f"{self._talondx_config_path}/talondx-config.json") as f:
             talondx_config_json = json.load(f)
@@ -833,15 +847,15 @@ class ControllerComponentManager(CbfComponentManager):
                 # TODO: healthState instead of fault
                 self._update_component_state(fault=True)
 
-        lrc_status = self.wait_for_blocking_results(
+        lrc_status = self.wait_for_blocking_results_partial_success(
             task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC Slim.Configure() failed/timed out. Check Slim logs."
+            message = "All Slim.Configure() LRC calls failed/timed out. Check Slim logs."
             self.logger.error(message)
             success = False
         else:
-            message = f"{len(slim_config_paths)} Slim devices successfully configured"
+            message = "Some/all Slim devices successfully configured."
             self.logger.info(message)
 
         return (success, message)
@@ -894,14 +908,7 @@ class ControllerComponentManager(CbfComponentManager):
         # 4. Configure SLIM Mesh devices
 
         # Get FQDNs of Talon devices with hardware targets
-        if not self.simulation_mode:
-            self._get_talon_fqdns()
-        else:
-            # Use a hard-coded example fqdn talon lru for simulationMode
-            self._talon_lru_fqdn = [
-                "mid_csp_cbf/talon_lru/001",
-                "mid_csp_cbf/talon_lru/002",
-            ]
+        self._get_talon_fqdns()
 
         # Turn on all the LRUs with the boards we need
         lru_on_status, msg = self._turn_on_lrus(task_abort_event)

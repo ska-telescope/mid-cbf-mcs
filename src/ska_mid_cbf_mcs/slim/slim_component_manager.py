@@ -139,7 +139,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Returns a list of SLIM Link FQDNs.
 
-        :return: the SLIM links assosiated with the mesh.
+        :return: the SLIM links associated with the mesh.
         :rtype: list[str]
         """
         fqdns = []
@@ -152,7 +152,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Returns a list of SLIM Link names, formatted 'tx_device_name->rx_device_name'.
 
-        :return: the names of SLIM links assosiated with the mesh.
+        :return: the names of SLIM links associated with the mesh.
         :rtype: list[str]
         """
         names = []
@@ -555,7 +555,7 @@ class SlimComponentManager(CbfComponentManager):
         Configure command. Parses the mesh configuration.
 
         :param config_str: a string in YAML format describing the links to be created.
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         """
         self.logger.debug("Entering SlimComponentManager.configure()")
