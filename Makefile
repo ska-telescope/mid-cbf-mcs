@@ -21,8 +21,7 @@ PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs K
 # Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
 # Also ignoring 503 because operators can either be before or after line break(504). 
 # We are choosing a standard to have it before the line break.
-PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=DAR101,DAR201,DAR301,DAR401,E203,E501,F407,N802,N803,N806,W503
-
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 # unit and integration test targets
