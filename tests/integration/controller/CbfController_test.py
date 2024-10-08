@@ -110,6 +110,7 @@ class TestCbfController:
     def test_InitSysParam(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        subarray: list[context.DeviceProxy],
         vcc: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
@@ -121,6 +122,7 @@ class TestCbfController:
         Send the InitSysParam command with the sys_param_file.
 
         :param controller: The controller device proxy
+        :param subarray: The list of subarray device proxies
         :param vcc: The list of VCC device proxies
         :param event_tracer: The event tracer for the controller
         :param controller_params: Input parameters for running different instances of the suite.
@@ -144,6 +146,15 @@ class TestCbfController:
                     attribute_name="dishID",
                     attribute_value=dish_id,
                 )
+
+        for device in subarray:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device,
+                attribute_name="sysParam",
+                attribute_value=sys_param_str,
+            )
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT

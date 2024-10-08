@@ -293,13 +293,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         sys_param = json.loads(sys_param_str)
         self._dish_utils = DISHUtils(sys_param)
-        self.logger.info(
-            "Updated DISH ID to VCC ID and frequency offset k mapping"
-        )
-
         self._sys_param_str = sys_param_str
         self.device_attr_change_callback("sysParam", self._sys_param_str)
         self.device_attr_archive_callback("sysParam", self._sys_param_str)
+        self.logger.info(
+            f"Updated DISH ID to VCC ID and frequency offset k mapping {self._sys_param_str}"
+        )
 
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str

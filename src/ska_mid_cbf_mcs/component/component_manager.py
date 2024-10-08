@@ -579,7 +579,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 self.logger.warning(
                     "Task aborted while waiting for blocking results."
                 )
-                self._received_lrc_results = {}
+                with self._results_lock:
+                    self._received_lrc_results = {}
                 return TaskStatus.ABORTED
 
             # Remove any successful results from blocking command IDs
@@ -615,13 +616,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
                     f"Blocking commands remaining: {self.blocking_command_ids}"
                 )
-                self._received_lrc_results = {}
+                with self._results_lock:
+                    self._received_lrc_results = {}
                 return TaskStatus.FAILED
 
         self.logger.debug(
             f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )
-        self._received_lrc_results = {}
+        with self._results_lock:
+            self._received_lrc_results = {}
 
         if command_failed:
             return TaskStatus.FAILED
@@ -659,7 +662,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 self.logger.warning(
                     "Task aborted while waiting for blocking results."
                 )
-                self._received_lrc_results = {}
+                with self._results_lock:
+                    self._received_lrc_results = {}
                 return TaskStatus.ABORTED
 
             # Remove any successful results from blocking command IDs
@@ -696,13 +700,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
                     f"Blocking commands remaining: {self.blocking_command_ids}"
                 )
-                self._received_lrc_results = {}
+                with self._results_lock:
+                    self._received_lrc_results = {}
                 break
 
         self.logger.debug(
             f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )
-        self._received_lrc_results = {}
+        with self._results_lock:
+            self._received_lrc_results = {}
 
         if any(successes):
             self.logger.debug("Partial/complete blocking command success.")
@@ -747,6 +753,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
             self.event_ids, {dev_name: {attr_name: event_id}}
         )
 
+        self.logger.debug(f"Event IDs: {self.event_ids}")
+
     def unsubscribe_all_events(
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
@@ -755,6 +763,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param proxy: DeviceProxy
         """
+        self.logger.debug(f"Event IDs: {self.event_ids}")
         dev_name = proxy.dev_name()
         dev_events = self.event_ids.pop(dev_name, None)
         if dev_events is None:
@@ -762,7 +771,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                 f"No longRunningCommandResult event subscription for {dev_name}"
             )
             return
-        for attr_name, event_id in dev_events.values():
+        for attr_name, event_id in dev_events.items():
             self.logger.debug(
                 f"Unsubscribing from {dev_name}/{attr_name} event ID {event_id}"
             )

@@ -503,7 +503,7 @@ class ControllerComponentManager(CbfComponentManager):
         if self.power_state == PowerState.OFF:
             return True
         self.logger.warning(
-            "InitSysParam command cannot be issued because the current PowerState is not 'off'."
+            f"InitSysParam command cannot be issued because the current PowerState ({self.power_state}) is not OFF."
         )
         return False
 
@@ -920,7 +920,7 @@ class ControllerComponentManager(CbfComponentManager):
         # Also sets the simulation mode of the Talon Boards based on TalonDx Component Manager's SimulationMode Attribute
         talon_list = []
         with self._attr_event_lock:
-            for fqdn, state in self._op_states.values():
+            for fqdn, state in self._op_states.items():
                 if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
                     talon_list.append(fqdn.split("/")[-1])
         if (
