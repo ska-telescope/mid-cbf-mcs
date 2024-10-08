@@ -241,7 +241,7 @@ def partition_spectrum_to_frequency_slices(
     if k_value is None:
         raise ValueError("k_value cannot be None")
     # range from initsysparams validation
-    if k_value <= 0 or k_value >= 2222:
+    if k_value < 1 or k_value > 2222:
         raise ValueError("k_value must be between 1 - 2222")
     if fsp_ids is None:
         raise ValueError("fsp_ids cannot be None")
