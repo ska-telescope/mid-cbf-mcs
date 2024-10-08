@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
+from threading import Thread
+from time import sleep
 
 import tango
 from ska_control_model import PowerState
@@ -27,6 +29,9 @@ from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
 from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
     TalonBoardSimulator,
 )
+
+# HPS Master polling period in seconds
+POLLING_PERIOD = 3
 
 
 class TalonBoardComponentManager(CbfComponentManager):
@@ -91,6 +96,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = {}
         self._talon_status_events = {}
 
+        self._poll_hps_master = False
+        self._poll_hps_master_thread = None
+
         self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
     # -------------
@@ -130,10 +138,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         Subscribe to attribute change events from HPS device proxies
         """
-
         # Talon System ID attributes
-        self._talon_sysid_events = {}
-
         if self._talon_sysid_fqdn is not None:
             for attr_name in ["version", "Bitstream"]:
                 self._talon_sysid_events[attr_name] = self._proxies[
@@ -145,8 +150,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
 
         # Talon Status attributes
-        self._talon_status_events = {}
-
         if self._talon_status_fqdn is not None:
             for attr_name in [
                 "iopll_locked_fault",
@@ -169,6 +172,16 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
 
         return
+
+    def _poll_hps_master(self: TalonBoardComponentManager) -> None:
+        """
+        Threaded method to poll HPS Master health state.
+        """
+        while self._poll_hps_master:
+            self.update_device_health_state(
+                self._proxies[self._hps_master_fqdn].healthState
+            )
+            sleep(POLLING_PERIOD)
 
     def _start_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
@@ -220,6 +233,12 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
                 return
 
+            self._poll_hps_master = True
+            self._poll_hps_master_thread = Thread(
+                target=self._poll_hps_master_thread
+            )
+            self._poll_hps_master_thread.start()
+
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
@@ -233,31 +252,24 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.stop_communicating"
         )
         if not self.simulation_mode:
-            for attr_name, event_id in self._talon_sysid_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_sysid_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_sysid_fqdn].unsubscribe_event(
-                        event_id
+            for fqdn, events in [
+                (self._talon_sysid_fqdn, self._talon_sysid_events),
+                (self._talon_status_fqdn, self._talon_status_events),
+            ]:
+                for attr_name, event_id in events.items():
+                    self.logger.info(
+                        f"Unsubscribing from {fqdn}/{attr_name} event ID {event_id}"
                     )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
+                    try:
+                        self._proxies[fqdn].unsubscribe_event(event_id)
+                    except tango.DevFailed as df:
+                        # Log exception but allow stop_communicating to continue
+                        self.logger.error(f"{df}")
+                        continue
 
-            for attr_name, event_id in self._talon_status_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_status_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_status_fqdn].unsubscribe_event(
-                        event_id
-                    )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
+            self._poll_hps_master = False
+            self._poll_hps_master_thread.join()
+            self._poll_hps_master_thread = None
 
         self._proxies = {}
         self._talon_sysid_attrs = {}

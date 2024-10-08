@@ -849,6 +849,7 @@ class TalonBoard(CbfDevice):
             talon_status_address=self.TalonStatusAddress,
             hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
+            health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )

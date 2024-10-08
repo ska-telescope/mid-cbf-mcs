@@ -166,14 +166,12 @@ class ControllerComponentManager(CbfComponentManager):
     def _write_hw_config(
         self: ControllerComponentManager,
         fqdn: str,
-        proxy: context.DeviceProxy,
         device_type: str,
     ) -> bool:
         """
         Write hardware configuration properties to the device
 
         :param fqdn: FQDN of the device
-        :param proxy: Proxy of the device
         :param device_type: Type of the device. Can be one of "power_switch", "talon_lru", or "talon_board".
         :return: True if the hardware configuration properties are successfully written to the device, False otherwise.
         """
@@ -192,12 +190,34 @@ class ControllerComponentManager(CbfComponentManager):
             else:
                 device_config = self._hw_config[device_type][device_id]
 
+            proxy = self._proxies[fqdn]
             device_config = tango.utils.obj_2_property(device_config)
             proxy.put_property(device_config)
             proxy.Init()
 
             if device_type == "talon_lru":
                 proxy.set_timeout_millis(self._lru_timeout * 1000)
+            elif device_type == "talon_board":
+                # Update board's VCC and DISH IDs
+                # VCC ID maps one-to-one with Talon board ID
+                vcc_id = int(device_id)
+                if vcc_id in self.dish_utils.vcc_id_to_dish_id:
+                    dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
+                    try:
+                        proxy.vccID = vcc_id
+                        proxy.dishID = dish_id
+                        self.logger.info(
+                            f"Assigned DISH ID {dish_id} and VCC ID {vcc_id} to {fqdn}"
+                        )
+                    except tango.DevFailed as df:
+                        self.logger.error(
+                            f"Failed to update {fqdn} with VCC ID and DISH ID; {df}"
+                        )
+                else:
+                    self.logger.warning(
+                        f"DISH ID for Talon {device_id} not found in DISH-VCC mapping; "
+                        f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
+                    )
 
         except tango.DevFailed as df:
             self.logger.error(
@@ -285,7 +305,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
         if hw_device_type is not None:
-            if not self._write_hw_config(fqdn, proxy, hw_device_type):
+            if not self._write_hw_config(fqdn, hw_device_type):
                 return False
 
         return self._set_proxy_online(fqdn)
@@ -645,64 +665,6 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- On Command --- #
 
-    def _init_talon_boards(self: ControllerComponentManager):
-        """
-        Initialize TalonBoard devices.
-        """
-        for fqdn in self._talon_board_fqdn:
-            if fqdn not in self._talon_board_proxies:
-                try:
-                    self.logger.debug(f"Trying connection to {fqdn}")
-                    proxy = context.DeviceProxy(device_name=fqdn)
-                except tango.DevFailed as df:
-                    self.logger.error(f"Failure in connection to {fqdn}: {df}")
-                    continue
-                self._talon_board_proxies[fqdn] = proxy
-            else:
-                proxy = self._talon_board_proxies[fqdn]
-
-            if not self._write_hw_config(fqdn, proxy, "talon_board"):
-                self.logger.error(f"Failed to update HW config for {fqdn}")
-                continue
-
-            self.logger.info(
-                f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
-            )
-            try:
-                proxy.simulationMode = self.simulation_mode
-                proxy.adminMode = AdminMode.ONLINE
-
-                board_ip = proxy.get_property("TalonDxBoardAddress")[
-                    "TalonDxBoardAddress"
-                ][0]
-            except tango.DevFailed as df:
-                self.logger.error(
-                    f"Failed to set AdminMode of {fqdn} to ONLINE: {df}"
-                )
-
-            # Update talon board HW config. The VCC ID to IP address mapping comes
-            # from hw_config.yaml
-            for vcc_id_str, ip in self._hw_config["talon_board"].items():
-                if board_ip == ip:
-                    vcc_id = int(vcc_id_str)
-                    if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                        dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                        try:
-                            proxy.vccID = vcc_id_str
-                            proxy.dishID = dish_id
-                            self.logger.info(
-                                f"Assigned DISH ID {dish_id} and VCC ID {vcc_id} to {fqdn}"
-                            )
-                        except tango.DevFailed as df:
-                            self.logger.error(
-                                f"Failed to update {fqdn} with VCC ID and DISH ID; {df}"
-                            )
-                    else:
-                        self.logger.warning(
-                            f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                            f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                        )
-
     def _get_talon_fqdns(self: ControllerComponentManager) -> list[str]:
         """
         Get the FQDNs of the Talon LRU and board devices that are connected to hardware
@@ -944,7 +906,11 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Start monitoring talon board telemetries and fault status
         # Failure here won't cause On command failure
-        self._init_talon_boards()
+        for fqdn in self._talon_board_fqdn:
+            self._init_device_proxy(
+                fqdn=fqdn,
+                hw_device_type="talon_board",
+            )
 
         # Configure SLIM Mesh devices
         slim_configure_status, msg = self._configure_slim_devices(
