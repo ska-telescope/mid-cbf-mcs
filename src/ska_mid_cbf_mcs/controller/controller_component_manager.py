@@ -204,7 +204,7 @@ class ControllerComponentManager(CbfComponentManager):
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
                     try:
-                        proxy.vccID = vcc_id
+                        proxy.vccID = device_id
                         proxy.dishID = dish_id
                         self.logger.info(
                             f"Assigned DISH ID {dish_id} and VCC ID {vcc_id} to {fqdn}"
