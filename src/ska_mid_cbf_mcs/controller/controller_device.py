@@ -73,9 +73,7 @@ class CbfController(CbfDevice):
 
     # --- General properties --- #
 
-    LruTimeout = device_property(dtype=("str"))
-
-    HpsMasterTimeout = device_property(dtype=("str"))
+    LRCTimeout = device_property(dtype=("str"))
 
     MaxCapabilities = device_property(dtype=("str",))
 
@@ -299,7 +297,7 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
-            hps_master_timeout=int(self.HpsMasterTimeout),
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
@@ -331,9 +329,9 @@ class CbfController(CbfDevice):
             fqdn_dict=fqdn_dict,
             config_path_dict=config_path_dict,
             max_capabilities=self._max_capabilities,
-            lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,
+            lrc_timeout=int(self.LRCTimeout),
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,

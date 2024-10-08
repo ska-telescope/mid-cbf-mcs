@@ -87,6 +87,8 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
+controllerTimeout: 60
+
 nodeSelector: {}
 
 affinity: {}
