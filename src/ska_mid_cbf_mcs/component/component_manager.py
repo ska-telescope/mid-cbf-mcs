@@ -63,7 +63,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: Any,
-        lrc_timeout: int = 10.0,
+        lrc_timeout: int = 15,
         attr_change_callback: Callable[[str, Any], None] | None = None,
         attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
@@ -568,7 +568,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
             TaskStatus.ABORTED if aborted
         """
-        timeout_sec = len(self.blocking_command_ids) * self._lrc_timeout
+        timeout_sec = float(len(self.blocking_command_ids) * self._lrc_timeout)
         ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
 
         # Loop is exited when no blocking command IDs remain
