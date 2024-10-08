@@ -15,7 +15,14 @@ from __future__ import annotations
 
 # tango imports
 from ska_tango_base.commands import ResultCode
-from tango import DevVarBooleanArray, DevVarFloatArray, DevVarShortArray
+from tango import (
+    AttrQuality,
+    DevBoolean,
+    DevVarBooleanArray,
+    DevVarFloatArray,
+    DevVarShortArray,
+    TimeVal,
+)
 from tango.server import attribute, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfDevice
@@ -626,6 +633,25 @@ class TalonBoard(CbfDevice):
         return self.component_manager.mbo_rx_los_status()
 
     @attribute(
+        dtype=bool,
+        label="Has fan control",
+        doc="Indicates whether this board has control over the fans. If false, the board cannot correctly read fan speed and fault.",
+    )
+    def hasFanControl(self: TalonBoard) -> DevBoolean:
+        """
+        Indicates whether this board has control over the fans.
+        If false, the board cannot correctly read fan speed and fault.
+
+        return: True if the board has control over fans. False otherwise.
+        """
+        # the fan*_input in the fans' MAX31790 driver will return 0
+        # if tachometers cannot be read, which either means reading tachometers
+        # is not yet enabled, or there is no fan control on this board. Either
+        # way the values returned from the fan module should not be used.
+        fans_input = self.component_manager.fans_input()
+        return any(x > 0 for x in fans_input)
+
+    @attribute(
         dtype=[int],
         max_dim_x=4,
         label="Fan PWM values",
@@ -638,7 +664,14 @@ class TalonBoard(CbfDevice):
 
         :return: the PWM value of the fans
         """
-        return self.component_manager.fans_pwm()
+        if self.hasFanControl:
+            return self.component_manager.fans_pwm()
+        else:
+            return (
+                self.component_manager.fans_pwm(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
 
     @attribute(
         dtype=[int],
@@ -655,6 +688,27 @@ class TalonBoard(CbfDevice):
         return self.component_manager.fans_pwm_enable()
 
     @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="Fan RPM values",
+        doc="Fan RPM values.",
+    )
+    def fansInput(self: TalonBoard) -> DevVarShortArray:
+        """
+        Read the RPM values of the fans
+
+        :return: the RPM value of the fans
+        """
+        if self.hasFanControl:
+            return self.component_manager.fans_input()
+        else:
+            return (
+                self.component_manager.fans_input(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
+
+    @attribute(
         dtype=[bool],
         max_dim_x=4,
         label="Fan Fault status",
@@ -666,7 +720,14 @@ class TalonBoard(CbfDevice):
 
         :return: true if fan fault register is set
         """
-        return self.component_manager.fans_fault()
+        if self.hasFanControl:
+            return self.component_manager.fans_fault()
+        else:
+            return (
+                self.component_manager.fans_fault(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
 
     @attribute(
         dtype=[float],

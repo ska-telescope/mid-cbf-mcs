@@ -831,6 +831,22 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(-1)
         return res
 
+    def fans_input(self) -> list[int]:
+        self._throw_if_device_off()
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"fans_fan-input_{i}"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                msg = f"{field} cannot be read."
+                self.logger.error(msg)
+                res.append(-1)
+        return res
+
     def fans_fault(self) -> list[bool]:
         self._throw_if_device_off()
         self._query_if_needed()
