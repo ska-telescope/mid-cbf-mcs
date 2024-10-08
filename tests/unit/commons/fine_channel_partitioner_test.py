@@ -252,6 +252,14 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             2223,
             valid_wb_shift,
         ),
+        (
+            [1],
+            valid_start_freq,
+            valid_channel_width,
+            valid_channel_count,
+            valid_k_value,
+            valid_wb_shift,
+        ),
     ],
 )
 def test_partition_spectrum_to_frequency_slices_invalid_args(

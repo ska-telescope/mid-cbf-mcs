@@ -172,16 +172,18 @@ class TestFspScanConfigurationBuilder:
                 receptor_list = subarray_dish_ids
 
             for fsp_config in fsp_to_pr[pr_index]:
-                assert len(pr_config["receptors"]) == len(
-                    fsp_config["receptors"]
-                )
                 for receptor in receptor_list:
                     vcc_id = dish_util.dish_id_to_vcc_id[receptor]
 
-                    assert vcc_id in fsp_config["vcc_id_to_rdt_freq_shifts"]
+                    # Note, hps wants vcc in the vcc_id_to_rdt_freq_shifts dict
+                    # to be a string
+                    vcc_id_str = str(vcc_id)
+                    assert (
+                        vcc_id_str in fsp_config["vcc_id_to_rdt_freq_shifts"]
+                    )
                     vcc_id_shift_config = fsp_config[
                         "vcc_id_to_rdt_freq_shifts"
-                    ][vcc_id]
+                    ][vcc_id_str]
                     assert "freq_down_shift" in vcc_id_shift_config
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config

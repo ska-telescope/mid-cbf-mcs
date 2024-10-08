@@ -41,7 +41,8 @@ def get_coarse_frequency_slice_channels(
 
     :raise AssertionError: if start_freq is greater than end_freq
     """
-    assert start_freq <= end_freq, "start_freq must be <= end_freq"
+    if start_freq > end_freq:
+        raise ValueError("start_freq must be <= end_freq")
 
     # coarse_channel = floor [(Frequency + WB_shift + 99090432Hz) / 198180864 Hz]
     coarse_channel_low = math.floor(
@@ -65,8 +66,6 @@ def _get_end_freqeuency(
     :param channel_count: Number of fine frequency channels
     :return: End frequency of the processing region (Hz)
     """
-    assert channel_width > 0, "channel_width must be positive"
-    assert channel_count > 0, "channel_count must be positive"
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
     return end_freq
@@ -252,9 +251,10 @@ def partition_spectrum_to_frequency_slices(
     coarse_channels = get_coarse_frequency_slice_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
-    assert len(fsp_ids) >= len(
-        coarse_channels
-    ), "too few FSPs for the given coarse channels"
+    if len(fsp_ids) < len(coarse_channels):
+        raise ValueError(
+            "Too few FSP's assigned for required processing region"
+        )
 
     fs_infos = {}
     first_sdp_channel_id = 0
