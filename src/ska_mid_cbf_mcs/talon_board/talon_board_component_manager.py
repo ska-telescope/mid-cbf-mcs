@@ -97,7 +97,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_status_events = {}
 
         self._poll_hps_master = False
-        self._poll_hps_master_thread = None
+        self._hps_master_thread = None
 
         self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
@@ -173,7 +173,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         return
 
-    def _poll_hps_master(self: TalonBoardComponentManager) -> None:
+    def _hps_master_polling_thread(self: TalonBoardComponentManager) -> None:
         """
         Threaded method to poll HPS Master health state.
         """
@@ -234,10 +234,10 @@ class TalonBoardComponentManager(CbfComponentManager):
                 return
 
             self._poll_hps_master = True
-            self._poll_hps_master_thread = Thread(
-                target=self._poll_hps_master_thread
+            self._hps_master_thread = Thread(
+                target=self._hps_master_polling_thread
             )
-            self._poll_hps_master_thread.start()
+            self._hps_master_thread.start()
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
@@ -268,8 +268,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                         continue
 
             self._poll_hps_master = False
-            self._poll_hps_master_thread.join()
-            self._poll_hps_master_thread = None
+            self._hps_master_thread.join()
+            self._hps_master_thread = None
 
         self._proxies = {}
         self._talon_sysid_attrs = {}
