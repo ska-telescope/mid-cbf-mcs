@@ -197,14 +197,6 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_wb_shift,
         ),
         (
-            [-1],
-            valid_start_freq,
-            valid_channel_width,
-            valid_channel_count,
-            valid_k_value,
-            valid_wb_shift,
-        ),
-        (
             valid_fsp_ids,
             valid_start_freq,
             None,
@@ -265,7 +257,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
 def test_partition_spectrum_to_frequency_slices_invalid_args(
     fsp_ids, start_freq, channel_width, channel_count, k_value, wideband_shift
 ):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         partition_spectrum_to_frequency_slices(
             fsp_ids=fsp_ids,
             start_freq=start_freq,

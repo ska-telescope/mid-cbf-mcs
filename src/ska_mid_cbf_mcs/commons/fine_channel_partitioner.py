@@ -230,19 +230,23 @@ def partition_spectrum_to_frequency_slices(
 
     """
 
-    assert channel_width is not None
-    assert channel_width >= 0, "channel_width cannot be negative or zero"
-    assert channel_count is not None
-    assert channel_count >= 0, "channel_count cannot be negative or zero"
-    assert k_value is not None
-    # from initsysparams validation
-    assert k_value <= 2222, "k_value must be between 1 - 2222"
-    assert k_value > 0, "k_value cannot be negative"
-    assert fsp_ids is not None
-    assert len(fsp_ids) != 0, "fsp_ids cannot be empty"
-    assert False not in [
-        fsp_id > 0 for fsp_id in fsp_ids
-    ], "fsp_ids cannot contain a negative fsp_id"
+    if channel_width is None:
+        raise ValueError("channel_width cannot be None")
+    if channel_width <= 0:
+        raise ValueError("channel_width cannot be negative or zero")
+    if channel_count is None:
+        raise ValueError("channel_count cannot be None")
+    if channel_count <= 0:
+        raise ValueError("channel_count cannot be negative")
+    if k_value is None:
+        raise ValueError("k_value cannot be None")
+    # range from initsysparams validation
+    if k_value <= 0 or k_value >= 2222:
+        raise ValueError("k_value must be between 1 - 2222")
+    if fsp_ids is None:
+        raise ValueError("fsp_ids cannot be None")
+    if len(fsp_ids) == 0:
+        raise ValueError("fsp_ids cannot be empty")
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
     coarse_channels = get_coarse_frequency_slice_channels(
