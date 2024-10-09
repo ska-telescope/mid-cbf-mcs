@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import tango
 from ska_control_model import PowerState
@@ -819,7 +819,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             if field in self._telemetry:
                 t, val = self._telemetry[field]
                 self._validate_time(field, t)
-                res.append(bool(val))
+                res.append(int(val))
             else:
                 msg = f"{field} cannot be read."
                 self.logger.error(msg)
@@ -1067,7 +1067,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :param record: a record from Influxdb query result
         """
-        td = datetime.now() - t
+        td = datetime.now(timezone.utc) - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
