@@ -16,7 +16,7 @@ import pytest
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 
 
 @pytest.fixture(
@@ -31,7 +31,21 @@ from ska_mid_cbf_mcs.commons.global_enum import const
             "sub_id": 1,
             "dish_ids": ["SKA001"],
             "vcc_ids": [1],  # must be VCC IDs equivalent to assigned DISH IDs
-            "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
+            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+            "fsp_modes": {
+                1: FspModes.CORR.value
+            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+            "alt_params": {
+                "configure_scan_file": "ConfigureScan_basic_CORR_alt.json",
+                "dish_ids": ["SKA001"],
+                "vcc_ids": [
+                    1
+                ],  # must be VCC IDs equivalent to assigned DISH IDs
+                "freq_band": 1,  # must be index of frequency band in ConfigureScan JSON
+                "fsp_modes": {
+                    2: FspModes.CORR.value
+                },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+            },
         },
         {
             "sys_param_file": "sys_param_4_boards.json",
@@ -46,7 +60,10 @@ from ska_mid_cbf_mcs.commons.global_enum import const
                 3,
                 4,
             ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "fsp_ids": [1],  # must be FSP IDs provided in ConfigureScan JSON
+            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+            "fsp_modes": {
+                1: FspModes.CORR.value
+            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
         },
         {
             "sys_param_file": "sys_param_4_boards.json",
@@ -61,12 +78,13 @@ from ska_mid_cbf_mcs.commons.global_enum import const
                 3,
                 4,
             ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "fsp_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be FSP IDs provided in ConfigureScan JSON
+            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+            "fsp_modes": {
+                1: FspModes.CORR.value,
+                2: FspModes.CORR.value,
+                3: FspModes.CORR.value,
+                4: FspModes.CORR.value,
+            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
         },
     ],
 )

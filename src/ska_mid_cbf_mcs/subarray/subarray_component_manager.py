@@ -1535,7 +1535,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: False if failed to release FSP device, True otherwise
         """
         self.logger.info("Releasing all FSP from subarray...")
-        # remove subarray membership from assigned FSP
+
+        # Remove subarray membership from assigned FSP
         self.blocking_command_ids = set()
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
@@ -1660,6 +1661,38 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 result=(
                     ResultCode.FAILED,
                     "> v4.0 Configure Scan Interfaces Currently not supported",
+                ),
+            )
+            return
+
+        # When configuring from READY, send any function mode subarrays in READY to IDLE
+        self.blocking_command_ids = set()
+        for [[result_code], [command_id]] in self.issue_group_command(
+            command_name="GoToIdle",
+            proxies=list(self._assigned_fsp_corr_proxies),
+        ):
+            if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
+                self.logger.error("FSP GoToIdle command failed")
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "FSP GoToIdle command failed",
+                    ),
+                )
+                return
+            self.blocking_command_ids.add(command_id)
+
+        lrc_status = self.wait_for_blocking_results()
+        if lrc_status == TaskStatus.FAILED:
+            self.logger.error(
+                "One or more calls to FSP GoToIdle command failed/timed out."
+            )
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "One or more calls to FSP GoToIdle command failed/timed out.",
                 ),
             )
             return
