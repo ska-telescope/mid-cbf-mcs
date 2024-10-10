@@ -146,13 +146,13 @@ def _sum_of_channels(fs_infos: dict) -> int:
 def _nearest_stream(start: int, end: int) -> int:
     """
     Determine the nearest end channel that will result in the number of
-    channels being a multiple of the const.NUM_CHANNEL_GROUPS.
+    channels being a multiple of the const.NUM_CHANNELS_PER_SPEAD_STREAM.
 
-    Note: const.NUM_CHANNEL_GROUPS = 20 for AA0.50
+    Note: const.NUM_CHANNELS_PER_SPEAD_STREAM = 20 for AA0.50
 
     :param start: the starting channel id
     :param end: the last channel
-    :return: the new end channel that results in the channel count being a mulitple of the const.NUM_CHANNEL_GROUPS
+    :return: the new end channel that results in the channel count being a mulitple of the const.NUM_CHANNELS_PER_SPEAD_STREAM
     """
     num_channels = end - start + 1
     remainder = num_channels % const.NUM_CHANNELS_PER_SPEAD_STREAM
@@ -170,7 +170,7 @@ def _round_to_nearest(
     Round to the nearest multiple
 
     :param value: the value to round
-    :param multiple: the multiple to round to. default to the const.NUM_CHANNEL_GROUPS which is 20 for AA0.5
+    :param multiple: the multiple to round to. default to the const.NUM_CHANNELS_PER_SPEAD_STREAM which is 20 for AA0.5
     :return: the rounded value
     """
     return multiple * round(value / multiple)
@@ -295,7 +295,7 @@ def partition_spectrum_to_frequency_slices(
             fs_info["start_ch_exact"] = (
                 fs_info["start_ch_freq"] - _nominal_fs_spacing(fs)
             ) / channel_width
-            # round to nearest group of const.NUM_CHANNEL_GROUPS
+            # round to nearest group of const.NUM_CHANNELS_PER_SPEAD_STREAM
             fs_info["start_ch"] = _round_to_nearest(
                 round(fs_info["start_ch_exact"])
             )
@@ -331,7 +331,7 @@ def partition_spectrum_to_frequency_slices(
             fs_info["end_ch"] = round(fs_info["end_ch_exact"])
 
         # Change end channel so our number of channels will be a multiple of
-        # the const.NUM_CHANNEL_GROUPS
+        # the const.NUM_CHANNELS_PER_SPEAD_STREAM
         fs_info["end_ch"] = _nearest_stream(
             fs_info["start_ch"], fs_info["end_ch"]
         )
