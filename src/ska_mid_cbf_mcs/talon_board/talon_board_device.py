@@ -634,7 +634,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=bool,
-        label="Has fan control",
+        label="has fan control",
         doc="Indicates whether this board has control over the fans. If false, the board cannot correctly read fan speed and fault.",
     )
     def hasFanControl(self: TalonBoard) -> DevBoolean:
@@ -690,8 +690,8 @@ class TalonBoard(CbfDevice):
     @attribute(
         dtype=[int],
         max_dim_x=4,
-        label="Fan RPM values",
-        doc="Fan RPM values.",
+        label="Fan RPM",
+        doc="Fan RPM.",
     )
     def fansInput(self: TalonBoard) -> DevVarShortArray:
         """
