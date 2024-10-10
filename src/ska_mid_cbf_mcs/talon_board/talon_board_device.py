@@ -302,6 +302,14 @@ class TalonBoard(CbfDevice):
         res = self.component_manager.fpga_die_temperature()
         return res
 
+    # Raise warning if voltage sensor readings are outside the range of the
+    # Stratix10 recommended operating conditions
+    # https://www.intel.com/content/www/us/en/docs/programmable/683181/current/recommended-operating-conditions-63993.html
+    #
+    # Raise alarm if voltage sensor readings are outside the range of
+    # the absolute maximum ratings
+    # https://www.intel.com/content/www/us/en/docs/programmable/683181/current/absolute-maximum-ratings.html
+
     @attribute(
         dtype=float,
         label="FPGA Die 12V sensor",
@@ -354,22 +362,19 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die 0.8V sensor",
-        doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
+        label="FPGA Die VCC sensor",
+        doc="Value of the VCC FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=0.79,
-        max_warning=0.95,
-        min_alarm=0.77,
-        max_alarm=0.97,
+        min_warning=0.77,
+        max_warning=0.97,
+        min_alarm=-0.5,
+        max_alarm=1.26,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def fpgaDieVoltage2(self: TalonBoard) -> float:
         """
         Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
-
-        ATTR_WARNING is trigger when the value is <= 0.79V or >= 0.95V
-        ATTR_ALARM  is trigger when the value is <= 0.77V or >= 0.97V
 
         :return: 0.8V VCC FPGA Die Voltage
         :rtype: float
@@ -379,22 +384,19 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die VCCIO 1.8V sensor",
-        doc="Value of the 1.8V VCCIO FPGA Die Voltage Sensor",
+        label="FPGA Die VCCIO_SDM sensor",
+        doc="Value of the VCCIO_SDM FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.19,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def fpgaDieVoltage3(self: TalonBoard) -> float:
         """
         Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
-
-        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
-        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
 
         :return: The FPGA Die VCCIO Voltage
         :rtype: float
@@ -404,13 +406,13 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die VCCPT 1.8V sensor",
-        doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
+        label="FPGA Die VCCPT sensor",
+        doc="Value of the VCCPT FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.46,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def fpgaDieVoltage4(self: TalonBoard) -> list[float]:
@@ -429,13 +431,13 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die VCCERAM 0.9V sensor",
-        doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
+        label="FPGA Die VCCERAM sensor",
+        doc="Value of the VCCERAM FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=0.876,
-        max_warning=0.924,
-        min_alarm=0.87,
-        max_alarm=0.93,
+        min_warning=0.87,
+        max_warning=0.93,
+        min_alarm=-0.50,
+        max_alarm=1.24,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def fpgaDieVoltage5(self: TalonBoard) -> list[float]:
@@ -454,13 +456,13 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die VCCADC 1.8V sensor",
-        doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
+        label="FPGA Die VCCADC sensor",
+        doc="Value of the VCCADC FPGA Die Voltage Sensor",
         unit="V",
-        min_warning=1.728,
-        max_warning=1.872,
-        min_alarm=1.71,
-        max_alarm=1.89,
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.19,
         polling_period=ATTR_POLLING_PERIOD,
     )
     def fpgaDieVoltage6(self: TalonBoard) -> list[float]:
