@@ -69,10 +69,8 @@ class TestCbfController:
         :param controller_params: Input parameters for running different instances of the suite.
         """
         # Deployer Innitialization
-        deployer.command_read_write("generate_config_jsons")
-        deployer.command_read_write("download_artifacts")
-        deployer.command_read_write("configure_db")
-
+        deployer.targetTalons = [1,2,3,4]
+        deployer.generate_config_jsons()
 
         # Trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
