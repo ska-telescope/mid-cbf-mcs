@@ -766,43 +766,37 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
+        self.blocking_command_ids = set()
         for fqdn in self._talon_lru_fqdn:
+            self.logger.info(f"Turning on LRU {fqdn}")
             lru = self._proxies[fqdn]
             try:
-                self.logger.info(f"Turning on LRU {fqdn}")
-
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = "Nested LRC TalonLru.On() rejected"
-                    self.logger.error(
-                        f"Nested LRC TalonLru.On() to {fqdn} rejected"
-                    )
-                    success = False
-                    continue
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-
-                lrc_status = self.wait_for_blocking_results(
-                    timeout_sec=20.0, task_abort_event=task_abort_event
-                )
-                if lrc_status != TaskStatus.COMPLETED:
-                    message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+                    message = f"Nested LRC TalonLru.On() to {fqdn} rejected"
                     self.logger.error(message)
                     success = False
-                else:
-                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-                    self.logger.info(message)
-
+                    continue
+                self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                message = "Nested LRC TalonLru.On() failed"
-                self.logger.error(
-                    f"Nested LRC TalonLru.On() to {fqdn} failed: {df}"
-                )
+                message = f"Nested LRC TalonLru.On() to {fqdn} failed: {df}"
+                self.logger.error(message)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
+
+        lrc_status = self.wait_for_blocking_results(
+            task_abort_event=task_abort_event
+        )
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+            self.logger.error(message)
+            success = False
+        else:
+            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+            self.logger.info(message)
 
         return (success, message)
 
@@ -816,18 +810,17 @@ class ControllerComponentManager(CbfComponentManager):
         :param task_abort_event: Event to signal task abort.
         :return: True if the SLIM devices were successfully configured, False otherwise
         """
-        try:
-            self.logger.info(
-                f"Setting SLIM simulation mode to {self.simulation_mode}"
-            )
-            success = True
-            slim_config_paths = [
-                self._fs_slim_config_path,
-                self._vis_slim_config_path,
-            ]
-            for i, fqdn in enumerate(
-                [self._fs_slim_fqdn, self._vis_slim_fqdn]
-            ):
+        self.logger.info(
+            f"Setting SLIM simulation mode to {self.simulation_mode}"
+        )
+        success = True
+        slim_config_paths = [
+            self._fs_slim_config_path,
+            self._vis_slim_config_path,
+        ]
+        self.blocking_command_ids = set()
+        for i, fqdn in enumerate([self._fs_slim_fqdn, self._vis_slim_fqdn]):
+            try:
                 self._proxies[fqdn].simulationMode = self.simulation_mode
                 [[result_code], [command_id]] = self._proxies[fqdn].On()
                 # Guard incase LRC was rejected.
@@ -836,8 +829,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(message)
                     success = False
                     continue
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
+                self.blocking_command_ids.add(command_id)
 
                 with open(slim_config_paths[i]) as f:
                     slim_config = f.read()
@@ -851,21 +843,23 @@ class ControllerComponentManager(CbfComponentManager):
                     self.logger.error(message)
                     success = False
                     continue
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(f"Failed to configure SLIM: {df}")
-            success = False
-        except (OSError, FileNotFoundError) as e:
-            self._update_component_state(fault=True)
-            self.logger.error(f"Failed to read SLIM configuration file: {e}")
-            success = False
+                self.blocking_command_ids.add(command_id)
+            except tango.DevFailed as df:
+                message = f"Failed to configure SLIM: {df}"
+                self.logger.error(message)
+                success = False
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+            except (OSError, FileNotFoundError) as e:
+                message = f"Failed to read SLIM configuration file: {e}"
+                self.logger.error(message)
+                success = False
+                # TODO: healthState instead of fault
+                self._update_component_state(fault=True)
 
         lrc_status = self.wait_for_blocking_results(
-            timeout_sec=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             message = "One or more calls to nested LRC Slim.Configure() failed/timed out. Check Slim logs."
@@ -1016,40 +1010,46 @@ class ControllerComponentManager(CbfComponentManager):
         :param subarray: DeviceProxy of the subarray
         :return: A tuple containing a boolean indicating success and a string message
         """
+        dev_name = subarray.dev_name()
         success, message = (
             True,
-            f"{subarray.dev_name()} successfully set to ObsState.EMPTY",
+            f"{dev_name} successfully set to ObsState.EMPTY",
         )
-        if subarray.obsState in [ObsState.EMPTY]:
-            return success, message
+        self.blocking_command_ids = set()
 
-        # Can issue Abort if subarray is in any of the following states:
-        if subarray.obsState in [
-            ObsState.RESOURCING,
-            ObsState.IDLE,
-            ObsState.CONFIGURING,
-            ObsState.READY,
-            ObsState.SCANNING,
-            ObsState.RESETTING,
-        ]:
-            [[result_code], [command_id]] = subarray.Abort()
+        try:
+            if subarray.obsState in [ObsState.EMPTY]:
+                return success, message
+
+            # Can issue Abort if subarray is in any of the following states:
+            if subarray.obsState in [
+                ObsState.RESOURCING,
+                ObsState.IDLE,
+                ObsState.CONFIGURING,
+                ObsState.READY,
+                ObsState.SCANNING,
+                ObsState.RESETTING,
+            ]:
+                [[result_code], [command_id]] = subarray.Abort()
+                if result_code == ResultCode.REJECTED:
+                    success = False
+                    message = f"{subarray.dev_name()} Abort command rejected."
+                    self.logger.error(message)
+                else:
+                    self.blocking_command_ids.add(command_id)
+
+            # Restart subarray to send to EMPTY
+            [[result_code], [command_id]] = subarray.Restart()
             if result_code == ResultCode.REJECTED:
                 success = False
-                message = f"{subarray.dev_name()} Abort command rejected."
+                message = f"{subarray.dev_name()} Restart command rejected."
                 self.logger.error(message)
             else:
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-
-        # Restart subarray to send to EMPTY
-        [[result_code], [command_id]] = subarray.Restart()
-        if result_code == ResultCode.REJECTED:
-            success = False
-            message = f"{subarray.dev_name()} Restart command rejected."
+                self.blocking_command_ids.add(command_id)
+        except tango.DevFailed as df:
+            message = f"Failed to communicate with subarray {dev_name}; {df}"
             self.logger.error(message)
-        else:
-            with self.results_lock:
-                self.blocking_commands.add(command_id)
+            success = False
 
         lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
@@ -1071,15 +1071,15 @@ class ControllerComponentManager(CbfComponentManager):
         """
         success = True
         message = []
+        self.blocking_command_ids = set()
 
         # Turn off Slim devices
         for fqdn, slim in [
             (self._fs_slim_fqdn, self._proxies[self._fs_slim_fqdn]),
             (self._vis_slim_fqdn, self._proxies[self._vis_slim_fqdn]),
         ]:
+            self.logger.info(f"Turning off SLIM controller {fqdn}")
             try:
-                self.logger.info(f"Turning off SLIM controller {fqdn}")
-
                 [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
@@ -1088,8 +1088,7 @@ class ControllerComponentManager(CbfComponentManager):
                     message.append(log_msg)
                     success = False
                     continue
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
+                self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
                 log_msg = f"Nested LRC Slim.Off() to {fqdn} failed: {df}"
                 self.logger.error(log_msg)
@@ -1100,7 +1099,7 @@ class ControllerComponentManager(CbfComponentManager):
                 success = False
 
         lrc_status = self.wait_for_blocking_results(
-            timeout_sec=10.0, task_abort_event=task_abort_event
+            task_abort_event=task_abort_event
         )
         if lrc_status != TaskStatus.COMPLETED:
             log_msg = "One or more calls to nested LRC Off() failed/timed out. Check Slim logs."
@@ -1109,8 +1108,7 @@ class ControllerComponentManager(CbfComponentManager):
             success = False
 
         # Turn off TalonBoard devices.
-        # NOTE: This is separated from the subelements_fast group call because
-        #       a failure shouldn't cause Controller.Off() to fail.
+        # NOTE: a failure here won't cause Controller.Off() to fail.
         try:
             for proxy in self._talon_board_proxies.values():
                 proxy.adminMode = AdminMode.OFFLINE
@@ -1189,40 +1187,38 @@ class ControllerComponentManager(CbfComponentManager):
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
+        self.blocking_command_ids = set()
         for fqdn in self._talon_lru_fqdn:
             lru = self._proxies[fqdn]
+            self.logger.info(f"Turning off LRU {fqdn}")
             try:
-                self.logger.info(f"Turning off LRU {lru.dev_name()}")
-
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} rejected"
+                    message = f"Nested LRC TalonLru.Off() to {fqdn} rejected"
                     self.logger.error(message)
                     success = False
                     continue
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-
-                lrc_status = self.wait_for_blocking_results(
-                    timeout_sec=10.0, task_abort_event=task_abort_event
-                )
-
-                if lrc_status != TaskStatus.COMPLETED:
-                    message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
-                    self.logger.error(message)
-                    success = False
-                else:
-                    message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-                    self.logger.info(message)
-
+                self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                message = f"Nested LRC TalonLru.Off() to {lru.dev_name()} failed: {df}"
+                message = f"Nested LRC TalonLru.Off() to {fqdn} failed: {df}"
                 self.logger.error(message)
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 success = False
+
+        lrc_status = self.wait_for_blocking_results(
+            task_abort_event=task_abort_event
+        )
+
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
+            self.logger.error(message)
+            success = False
+        else:
+            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
+            self.logger.info(message)
 
         return (success, message)
 

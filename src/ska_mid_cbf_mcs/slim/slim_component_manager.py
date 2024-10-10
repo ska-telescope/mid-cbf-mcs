@@ -458,67 +458,72 @@ class SlimComponentManager(CbfComponentManager):
                 "No active links are defined in the mesh configuration"
             )
             return ResultCode.OK, "_initialize_links completed OK"
+
         if len(self._active_links) > len(self._dp_links):
-            msg = "Too many links defined in the link configuration. Not enough SlimLink devices exist."
-            self.logger.error(msg)
-            return ResultCode.FAILED, msg
-        try:
-            for idx, txrx in enumerate(self._active_links):
+            message = "Too many links defined in the link configuration. Not enough SlimLink devices exist."
+            self.logger.error(message)
+            return ResultCode.FAILED, message
+
+        self.blocking_command_ids = set()
+        for idx, txrx in enumerate(self._active_links):
+            dev_name = self._dp_links[idx].dev_name()
+            try:
                 self._dp_links[idx].txDeviceName = txrx[0]
                 self._dp_links[idx].rxDeviceName = txrx[1]
-
                 [[result_code], [command_id]] = self._dp_links[
                     idx
                 ].ConnectTxRx()
-
-                # Guard incase LRC was rejected.
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"Nested LRC SlimLink.ConnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
-                    )
-                    self.blocking_commands = set()
-                    return (
-                        ResultCode.FAILED,
-                        "Nested LRC SlimLink.ConnectTxRx() rejected",
-                    )
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-
-            lrc_status = self.wait_for_blocking_results(
-                timeout_sec=10.0, task_abort_event=task_abort_event
-            )
-
-            if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(
-                    "One or more calls to nested LRC SlimLink.ConnectTxRx() failed/timed out. Check SlimLink logs."
+            except tango.DevFailed as df:
+                message = f"Failed to initialize SLIM link {dev_name}: {df}"
+                self.logger.error(message)
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
                 )
-                return (
-                    ResultCode.FAILED,
-                    "Nested LRC SlimLink.ConnectTxRx() timed out",
-                )
+                return ResultCode.FAILED, message
+            except IndexError as ie:
+                message = "Not enough Links defined in device properties"
+                self.logger.error(f"{message}; {ie}")
+                return ResultCode.FAILED, message
 
-            if not self.simulation_mode:
-                for idx, _ in enumerate(self._active_links):
-                    # Poll link health every 20 seconds, and also verify now.
+            # Guard incase LRC was rejected.
+            if result_code == ResultCode.REJECTED:
+                message = (
+                    f"Nested LRC SlimLink.ConnectTxRx() to {dev_name} rejected"
+                )
+                self.logger.error(message)
+                return ResultCode.FAILED, message
+
+            self.blocking_command_ids.add(command_id)
+
+        lrc_status = self.wait_for_blocking_results(
+            task_abort_event=task_abort_event
+        )
+
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "One or more calls to nested LRC SlimLink.ConnectTxRx() failed/timed out. Check SlimLink logs."
+            self.logger.error(message)
+            return ResultCode.FAILED, message
+
+        if not self.simulation_mode:
+            for idx, _ in enumerate(self._active_links):
+                # Poll link health every 20 seconds, and also verify now.
+                try:
                     self._dp_links[idx].VerifyConnection()
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
-                    self.logger.debug(
-                        f"VerifyConnection() polling activated on {self._dp_links[idx].linkName}"
+                except tango.DevFailed as df:
+                    message = f"Failed to initialize SLIM links: {df}"
+                    self.logger.error(message)
+                    self._update_communication_state(
+                        CommunicationStatus.NOT_ESTABLISHED
                     )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(f"Failed to initialize SLIM links: {df}")
-            raise df
-        except IndexError as ie:
-            msg = "Not enough Links defined in device properties"
-            self.logger.error(f"{msg} - {ie}")
-            tango.Except.throw_exception(
-                "IndexError",
-                msg,
-                "_initialize_links()",
-            )
+                    return ResultCode.FAILED, message
+                except IndexError as ie:
+                    message = "Not enough Links defined in device properties"
+                    self.logger.error(f"{message}; {ie}")
+                    return ResultCode.FAILED, message
+                self.logger.debug(
+                    f"VerifyConnection() polling activated on {self._dp_links[idx].linkName}"
+                )
 
         self.logger.info("Successfully initialized SLIM links")
         self.mesh_configured = True
@@ -668,46 +673,44 @@ class SlimComponentManager(CbfComponentManager):
                 "No active links are defined in the SlimLink configuration"
             )
             return ResultCode.OK, "_disconnect_links completed OK"
-        try:
-            for idx in range(len(self._active_links)):
+
+        self.blocking_command_ids = set()
+        for idx in range(len(self._active_links)):
+            try:
                 if not self.simulation_mode:
                     self._dp_links[idx].stop_poll_command("VerifyConnection")
 
                 [[result_code], [command_id]] = self._dp_links[
                     idx
                 ].DisconnectTxRx()
-
-                # Guard incase LRC was rejected.
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
-                    )
-                    self.blocking_commands = set()
-                    return (
-                        ResultCode.FAILED,
-                        "Nested LRC SlimLink.DisconnectTxRx() rejected",
-                    )
-                with self.results_lock:
-                    self.blocking_commands.add(command_id)
-
-            lrc_status = self.wait_for_blocking_results(
-                timeout_sec=10.0, task_abort_event=task_abort_event
-            )
-
-            if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(
-                    "One or more calls to nested LRC SlimLink.DisconnectTxRx() failed/timed out. Check SlimLink logs."
+            except tango.DevFailed as df:
+                message = f"Failed to disconnect SLIM links: {df}"
+                self.logger.error(message)
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
                 )
-                return (
-                    ResultCode.FAILED,
-                    "Nested LRC SlimLink.DisconnectTxRx() timed out",
-                )
-        except tango.DevFailed as df:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self.logger.error(f"Failed to disconnect SLIM links: {df}")
-            raise df
+                return ResultCode.FAILED, message
+            except IndexError as ie:
+                message = "Not enough Links defined in device properties"
+                self.logger.error(f"{message}; {ie}")
+                return ResultCode.FAILED, message
+
+            # Guard incase LRC was rejected.
+            if result_code == ResultCode.REJECTED:
+                message = f"Nested LRC SlimLink.DisconnectTxRx() to {self._dp_links[idx].dev_name()} rejected"
+                self.logger.error(message)
+                return ResultCode.FAILED, message
+
+            self.blocking_command_ids.add(command_id)
+
+        lrc_status = self.wait_for_blocking_results(
+            task_abort_event=task_abort_event
+        )
+
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "One or more calls to nested LRC SlimLink.DisconnectTxRx() failed/timed out. Check SlimLink logs."
+            self.logger.error(message)
+            return ResultCode.FAILED, message
 
         self.logger.info("Successfully disconnected SLIM links")
         self.mesh_configured = False
