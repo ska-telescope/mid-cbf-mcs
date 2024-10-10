@@ -420,9 +420,6 @@ class TalonBoard(CbfDevice):
         Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
-        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
-
         :return: The FPGA Die VCCPT Voltage
         :rtype: float
         """
@@ -445,9 +442,6 @@ class TalonBoard(CbfDevice):
         Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
 
-        ATTR_WARNING is trigger when the value is <= 0.876V or >= 0.924V
-        ATTR_ALARM  is trigger when the value is <= 0.87V or >= 0.93V
-
         :return: The PGA Die VCCERAM Voltage
         :rtype: float
         """
@@ -469,9 +463,6 @@ class TalonBoard(CbfDevice):
         """
         Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
         This value gets polled every 10 seconds to prevent overhead with Alarm checking
-
-        ATTR_WARNING is trigger when the value is <= 1.728V or >= 1.872V
-        ATTR_ALARM  is trigger when the value is <= 1.71V or >= 1.89V
 
         :return: The FPGA Die VCCADC Voltage
         :rtype: float
