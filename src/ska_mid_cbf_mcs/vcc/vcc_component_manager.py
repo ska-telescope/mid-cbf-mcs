@@ -355,20 +355,10 @@ class VccComponentManager(CbfObsComponentManager):
             wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
             
             # Get property, then update with vcc_proxy.dishID.
-            old_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                "ExpectedDishID"
-            ][0]
-            dish_id_prop = tango.utils.obj_2_property(
-                {"ExpectedDishID": self.dish_id}
-            )
-            wib_proxy.put_property(dish_id_prop)
-            wib_proxy.Init()
-            
-            new_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                "ExpectedDishID"
-            ][0]
+            old_expDishID = wib_proxy.ExpectedDishID
+            wib_proxy.ExpectedDishID = self.dish_id
             self.logger.debug(
-                f"Updated ExpectedDishID from [{old_expDishID}] to [{new_expDishID}]"
+                f"Updated ExpectedDishID from [{old_expDishID}] to [{wib_proxy.ExpectedDishID}]"
             )
         except tango.DevFailed as df:
             msg = f"Failed to update ExpectedDishID device property of {wib_fqdn}; {df}"
