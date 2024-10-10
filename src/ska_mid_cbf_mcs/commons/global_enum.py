@@ -16,7 +16,7 @@ class Const:
         self.FREQUENCY_BAND_5b_TUNING_BOUNDS = (9.55, 14.05)  # GHz
         self.BAND_5_STREAM_BANDWIDTH = 2.5  # GHz
         self.NUM_FINE_CHANNELS = 14880
-        self.NUM_CHANNEL_GROUPS = 20
+        self.NUM_CHANNELS_PER_SPEAD_STREAM = 20
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
         self.DELTA_F = 1800  # Hz

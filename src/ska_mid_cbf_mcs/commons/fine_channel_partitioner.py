@@ -18,7 +18,7 @@ import math
 from ska_mid_cbf_mcs.commons.global_enum import const
 
 (
-    const.NUM_CHANNEL_GROUPS,
+    const.NUM_CHANNELS_PER_SPEAD_STREAM,
     const.FS_BW,
     const.HALF_FS_BW,
     const.SAMPLE_RATE_BASE,
@@ -89,9 +89,9 @@ def _find_fine_channel(
     channel = None
     last = None
     for n in range(
-        0, const.NUM_FINE_CHANNELS // const.NUM_CHANNEL_GROUPS
+        0, const.NUM_FINE_CHANNELS // const.NUM_CHANNELS_PER_SPEAD_STREAM
     ):  # == 0 to 744
-        n2 = -const.NUM_FINE_CHANNELS // 2 + const.NUM_CHANNEL_GROUPS * n
+        n2 = -const.NUM_FINE_CHANNELS // 2 + const.NUM_CHANNELS_PER_SPEAD_STREAM * n
         center_f = _nominal_fs_spacing(fs) + channel_width * n2
         diff = abs(shifted_target_freq - center_f)
         if last is None or diff < last:
@@ -155,16 +155,16 @@ def _nearest_stream(start: int, end: int) -> int:
     :return: the new end channel that results in the channel count being a mulitple of the const.NUM_CHANNEL_GROUPS
     """
     num_channels = end - start + 1
-    remainder = num_channels % const.NUM_CHANNEL_GROUPS
-    if remainder >= (const.NUM_CHANNEL_GROUPS // 2):
-        neareset = end + (const.NUM_CHANNEL_GROUPS - remainder)
+    remainder = num_channels % const.NUM_CHANNELS_PER_SPEAD_STREAM
+    if remainder >= (const.NUM_CHANNELS_PER_SPEAD_STREAM // 2):
+        neareset = end + (const.NUM_CHANNELS_PER_SPEAD_STREAM - remainder)
     else:
         neareset = end - remainder
     return neareset
 
 
 def _round_to_nearest(
-    value: int, multiple: int = const.NUM_CHANNEL_GROUPS
+    value: int, multiple: int = const.NUM_CHANNELS_PER_SPEAD_STREAM
 ) -> int:
     """
     Round to the nearest multiple
@@ -385,7 +385,7 @@ if __name__ == "__main__":
 
     # Derived from inputs
     TOTAL_BWIDTH = FINE_CHANNEL_COUNT * const.FINE_CHANNEL_WIDTH
-    STREAMS = TOTAL_BWIDTH / const.NUM_CHANNEL_GROUPS
+    STREAMS = TOTAL_BWIDTH / const.NUM_CHANNELS_PER_SPEAD_STREAM
     END_FREQ = _get_end_freqeuency(
         START_FREQ, const.FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
     )
@@ -442,8 +442,8 @@ if __name__ == "__main__":
             f'fsp_id:{fsp_id} {coarse_ch:2}: start = ch {fs_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fs_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
         )
 
-        assert (fs_info["start_ch"]) % const.NUM_CHANNEL_GROUPS == 0
-        assert (fs_info["end_ch"] + 1) % const.NUM_CHANNEL_GROUPS == 0
+        assert (fs_info["start_ch"]) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (fs_info["end_ch"] + 1) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
 
         expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
 

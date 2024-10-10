@@ -58,11 +58,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.config_id = ""
         self.channel_averaging_map = [
             [
-                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
+                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNELS_PER_SPEAD_STREAM)
                 + 1,
                 0,
             ]
-            for i in range(const.NUM_CHANNEL_GROUPS)
+            for i in range(const.NUM_CHANNELS_PER_SPEAD_STREAM)
         ]
         self.vis_destination_address = {
             "outputHost": [],
