@@ -360,8 +360,7 @@ class VccComponentManager(CbfObsComponentManager):
             "ConfigureScan", task_callback, task_abort_event
         ):
             return
-        
-        ###
+
         # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
         if not self.simulation_mode:
             try:
@@ -369,10 +368,10 @@ class VccComponentManager(CbfObsComponentManager):
                 wib_fqdn = self._band_proxies[0].get_property(
                     "WidebandInputBufferFQDN"
                 )["WidebandInputBufferFQDN"][0]
-                
+
                 # TODO: Switch to debug
                 self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                
+
                 wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
                 # Get property, then update with vcc_proxy.dishID.
                 old_expDishID = wib_proxy.get_property("ExpectedDishID")[
@@ -381,19 +380,17 @@ class VccComponentManager(CbfObsComponentManager):
                 dish_id_prop = tango.utils.obj_2_property(
                     {"ExpectedDishID": self.dish_id}
                 )
-                
+
                 # TODO: Switch to debug
-                self.logger.info(
-                    f"Setting ExpectedDishID to {self.dish_id}"
-                )
-                
+                self.logger.info(f"Setting ExpectedDishID to {self.dish_id}")
+
                 wib_proxy.put_property(dish_id_prop)
                 wib_proxy.Init()
-                
+
                 new_expDishID = wib_proxy.get_property("ExpectedDishID")[
                     "ExpectedDishID"
                 ][0]
-                
+
                 # TODO: Switch to debug
                 self.logger.info(
                     f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
