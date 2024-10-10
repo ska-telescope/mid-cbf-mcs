@@ -162,16 +162,16 @@ def _find_end_channel_for_spead_stream(start: int, end: int) -> int:
 
 
 def _round_to_nearest(
-    value: int, multiple: int = const.NUM_CHANNELS_PER_SPEAD_STREAM
+    value: int, nearest: int = const.NUM_CHANNELS_PER_SPEAD_STREAM
 ) -> int:
     """
-    Round to the nearest multiple
+    Round the value to the nearest multiple.
 
     :param value: the value to round
-    :param multiple: the multiple to round to. default to the const.NUM_CHANNELS_PER_SPEAD_STREAM which is 20 for AA0.5
+    :param nearest: the multiple to round to. default to the const.NUM_CHANNELS_PER_SPEAD_STREAM
     :return: the rounded value
     """
-    return multiple * round(value / multiple)
+    return nearest * round(value / nearest)
 
 
 # MAIN ALGORITHM
