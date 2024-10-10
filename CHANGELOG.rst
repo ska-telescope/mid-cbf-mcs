@@ -9,6 +9,7 @@ UNRELEASED CHANGES
 ******************
 * CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
 * CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
+* CIP-2911 fixed bad error message appending in controller Off command
 * CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
