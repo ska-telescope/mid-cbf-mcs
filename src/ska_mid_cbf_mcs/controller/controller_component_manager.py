@@ -470,50 +470,6 @@ class ControllerComponentManager(CbfComponentManager):
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}; {df}")
                 return False
-
-            if not self.simulation_mode:
-                try:
-                    # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
-                    band_fqdn = vcc_proxy.get_property("Band1And2Address")[
-                        "Band1And2Address"
-                    ][0]
-                    band_proxy = context.DeviceProxy(device_name=band_fqdn)
-                    # Get WIB FQDN, then proxy.
-                    wib_fqdn = band_proxy.get_property(
-                        "WidebandInputBufferFQDN"
-                    )["WidebandInputBufferFQDN"][0]
-                    # TODO: Switch to debug
-                    self.logger.info(f"Updating ExpectedDishID in {wib_fqdn}")
-                    wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-                    # Get property, then update with vcc_proxy.dishID.
-                    old_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                        "ExpectedDishID"
-                    ][0]
-                    dish_id_prop = tango.utils.obj_2_property(
-                        {"ExpectedDishID": vcc_proxy.dishID}
-                    )
-                    # TODO: Switch to debug
-                    self.logger.info(
-                        f"Setting ExpectedDishID to {vcc_proxy.dishID}"
-                    )
-                    wib_proxy.put_property(dish_id_prop)
-                    wib_proxy.Init()
-                    new_expDishID = wib_proxy.get_property("ExpectedDishID")[
-                        "ExpectedDishID"
-                    ][0]
-                    # TODO: Switch to debug
-                    self.logger.info(
-                        f"Updated ExpectedDishID from {old_expDishID} to {new_expDishID}"
-                    )
-                except tango.DevFailed as df:
-                    self.logger.error(
-                        f"Failed to update ExpectedDishID device property; {df}"
-                    )
-                    self._update_communication_state(
-                        communication_state=CommunicationStatus.NOT_ESTABLISHED
-                    )
-                    # TODO: self._update_component_state(obs_fault=True) ?
-                    return False
         return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
