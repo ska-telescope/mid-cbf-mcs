@@ -22,6 +22,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
     const.FS_BW,
     const.HALF_FS_BW,
     const.SAMPLE_RATE_BASE,
+    const.K_VALUE_RANGE
 )
 
 # HELPER FUNCTIONS
@@ -237,9 +238,8 @@ def partition_spectrum_to_frequency_slices(
         raise ValueError("channel_count cannot be negative")
     if k_value is None:
         raise ValueError("k_value cannot be None")
-    # range from initsysparams validation
-    if k_value < 1 or k_value > 2222:
-        raise ValueError("k_value must be between 1 - 2222")
+    if k_value < const.K_VALUE_RANGE[0] or k_value > const.K_VALUE_RANGE[1]:
+        raise ValueError(f"k_value must be between {const.K_VALUE_RANGE[0]} - {const.K_VALUE_RANGE[1]}")
     if fsp_ids is None:
         raise ValueError("fsp_ids cannot be None")
     if len(fsp_ids) == 0:

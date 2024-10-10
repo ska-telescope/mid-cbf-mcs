@@ -57,6 +57,7 @@ class Const:
         )
         self.HALF_FS_BW = self.FS_BW // 2
         self.FINE_CHANNEL_WIDTH = 13440  # Hz
+        self.K_VALUE_RANGE = (1, 2222)
 
 
 const = Const()
