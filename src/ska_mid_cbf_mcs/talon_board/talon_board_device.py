@@ -304,7 +304,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 0",
+        label="FPGA Die 12V sensor",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
         min_warning=11.2,
@@ -329,7 +329,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 1",
+        label="FPGA Die 2.5V sensor",
         doc="Value of the 2.5V FPGA Die Voltage Sensor",
         unit="V",
         min_warning=2.404,
@@ -354,7 +354,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 2",
+        label="FPGA Die 0.8V sensor",
         doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
         unit="V",
         min_warning=0.79,
@@ -379,7 +379,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 3",
+        label="FPGA Die VCCIO 1.8V sensor",
         doc="Value of the 1.8V VCCIO FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -404,7 +404,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 4",
+        label="FPGA Die VCCPT 1.8V sensor",
         doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -429,7 +429,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 5",
+        label="FPGA Die VCCERAM 0.9V sensor",
         doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
         unit="V",
         min_warning=0.876,
@@ -454,7 +454,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        label="FPGA Die Voltage 6",
+        label="FPGA Die VCCADC 1.8V sensor",
         doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
         unit="V",
         min_warning=1.728,
@@ -693,7 +693,7 @@ class TalonBoard(CbfDevice):
         label="Fan RPM",
         doc="Fan RPM.",
     )
-    def fansInput(self: TalonBoard) -> DevVarShortArray:
+    def fansRpm(self: TalonBoard) -> DevVarShortArray:
         """
         Read the RPM values of the fans
 
