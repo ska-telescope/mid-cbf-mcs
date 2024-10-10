@@ -162,9 +162,15 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
 
         # Currently require multiples of 20 for SPEAD packets, but this will
         # eventually change, so this assertion may eventually change later (AA*)
-        assert (fsp_config["num_channels"]) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
-        assert (fsp_config["start_ch"]) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
-        assert (fsp_config["end_ch"] + 1) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (
+            fsp_config["num_channels"]
+        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (
+            fsp_config["start_ch"]
+        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (
+            fsp_config["end_ch"] + 1
+        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
 
         # Assert that start/end channel frequencies are correct
         assert start_frequency == expected_start_frequency

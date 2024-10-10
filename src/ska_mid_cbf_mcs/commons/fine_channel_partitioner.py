@@ -22,7 +22,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
     const.FS_BW,
     const.HALF_FS_BW,
     const.SAMPLE_RATE_BASE,
-    const.K_VALUE_RANGE
+    const.K_VALUE_RANGE,
 )
 
 # HELPER FUNCTIONS
@@ -92,7 +92,10 @@ def _find_fine_channel(
     for n in range(
         0, const.NUM_FINE_CHANNELS // const.NUM_CHANNELS_PER_SPEAD_STREAM
     ):  # == 0 to 744
-        n2 = -const.NUM_FINE_CHANNELS // 2 + const.NUM_CHANNELS_PER_SPEAD_STREAM * n
+        n2 = (
+            -const.NUM_FINE_CHANNELS // 2
+            + const.NUM_CHANNELS_PER_SPEAD_STREAM * n
+        )
         center_f = _nominal_fs_spacing(fs) + channel_width * n2
         diff = abs(shifted_target_freq - center_f)
         if last is None or diff < last:
@@ -188,7 +191,7 @@ def partition_spectrum_to_frequency_slices(
     """
     determine the channelization information based on the calculations in
     https://confluence.skatelescope.org/pages/viewpage.action?pageId=265843120
-    
+
     example output:
     {
         "1": {    # the fsp_id
@@ -233,7 +236,9 @@ def partition_spectrum_to_frequency_slices(
     if k_value is None:
         raise ValueError("k_value cannot be None")
     if k_value < const.K_VALUE_RANGE[0] or k_value > const.K_VALUE_RANGE[1]:
-        raise ValueError(f"k_value must be between {const.K_VALUE_RANGE[0]} - {const.K_VALUE_RANGE[1]}")
+        raise ValueError(
+            f"k_value must be between {const.K_VALUE_RANGE[0]} - {const.K_VALUE_RANGE[1]}"
+        )
     if fsp_ids is None:
         raise ValueError("fsp_ids cannot be None")
     if len(fsp_ids) == 0:
@@ -435,7 +440,9 @@ if __name__ == "__main__":
         )
 
         assert (fs_info["start_ch"]) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
-        assert (fs_info["end_ch"] + 1) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (
+            fs_info["end_ch"] + 1
+        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
 
         expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
 
