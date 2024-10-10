@@ -110,10 +110,48 @@ class FspScanConfigurationBuilder:
             ] = calculated_fs_infos
 
         calculated_fsp_ids = list(calculated_fs_infos.keys())
+
+        # vcc_id_to_rdt_freq_shifts are the shift values needed by the
+        # Resampler Delay Tracker (rdt) for each vcc of the FSP:
+        # freq_down_shift  - the the shift to move the FS into the center of the
+        #                    digitized requency (k dependent)
+        # freq_align_shift - the shift to align channels between FSs
+        # freq_wb_shift    - the wideband shift
+        # freq_scfo_shift  - the frequency shift required due to SCFO sampling
+
+        # loops in the below code are hard to understand, but I'm moving from a
+        # per-vcc config in vcc_to_fs_infos to a per-fsp config, as well as
+        # rename the fields to match what HPS wants.
+        #
+        # essentially I have in vcc_to_fs_infos:
+        # vcc1:
+        #     fsp_1:
+        #           shift values A
+        #     fsp_2:
+        #           shift values B
+        # vcc2:
+        #     fsp_1:
+        #           shift values C
+        #     fsp_2:
+        #           shift values D
+        #
+        # But I need them sent down to HPS as:
+        # fsp_1:
+        #     vcc 1:
+        #          shift values A
+        #     vcc 2:
+        #          shift values C
+        # fsp_2:
+        #     vcc 1:
+        #          shift values B
+        #     vcc 2:
+        #          shift values C
+
         vcc_id_to_rdt_freq_shifts = {}
         for fsp_id in calculated_fsp_ids:
             vcc_id_to_rdt_freq_shifts[fsp_id] = {}
             for vcc_id in vcc_to_fs_infos.keys():
+                # HPS wants vcc id to be a string value, not int
                 vcc_id_str = str(vcc_id)
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str] = {}
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
@@ -138,8 +176,8 @@ class FspScanConfigurationBuilder:
         )
 
         if len(output_port) > 0:
-            # Split up the PR output ports according to the start channel ids of the
-            # FSPs
+            # Split up the PR output ports according to the start channel ids of
+            # the FSPs
             sdp_start_channel_ids = [
                 fs_info["sdp_start_channel_id"]
                 for fs_info in calculated_fs_infos.values()
