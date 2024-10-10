@@ -16,6 +16,9 @@ class Const:
         self.FREQUENCY_BAND_5b_TUNING_BOUNDS = (9.55, 14.05)  # GHz
         self.BAND_5_STREAM_BANDWIDTH = 2.5  # GHz
         self.NUM_FINE_CHANNELS = 14880
+        
+        # Number of Fine channels per SPEAD stream;
+        # TODO: NUM_CHANNELS_PER_SPEAD_STREAM = 20 for TDC (AA0.5, AA1) only; for Mid.CBF (AA2+) it will be set to 1
         self.NUM_CHANNELS_PER_SPEAD_STREAM = 20
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80

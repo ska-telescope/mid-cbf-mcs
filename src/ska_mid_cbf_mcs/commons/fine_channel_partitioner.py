@@ -143,12 +143,10 @@ def _sum_of_channels(fs_infos: dict) -> int:
     return total_channels
 
 
-def _nearest_stream(start: int, end: int) -> int:
+def _find_end_channel_for_spead_stream(start: int, end: int) -> int:
     """
     Determine the nearest end channel that will result in the number of
     channels being a multiple of the const.NUM_CHANNELS_PER_SPEAD_STREAM.
-
-    Note: const.NUM_CHANNELS_PER_SPEAD_STREAM = 20 for AA0.50
 
     :param start: the starting channel id
     :param end: the last channel
@@ -332,7 +330,7 @@ def partition_spectrum_to_frequency_slices(
 
         # Change end channel so our number of channels will be a multiple of
         # the const.NUM_CHANNELS_PER_SPEAD_STREAM
-        fs_info["end_ch"] = _nearest_stream(
+        fs_info["end_ch"] = _find_end_channel_for_spead_stream(
             fs_info["start_ch"], fs_info["end_ch"]
         )
 
