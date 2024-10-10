@@ -7,6 +7,7 @@ supporting up to 8 boards.
 """
 import logging
 
+import numpy
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -90,7 +91,7 @@ class VisibilityTransport:
                     f"Connecting to {self._host_lut_s2_fqdn} with channel offset {ch_offset}"
                 )
                 s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
-                s1_dp.channel_offset = ch_offset
+                s1_dp.channel_offset = numpy.uint32(numpy.int32(ch_offset))
                 s1_dp.connectToHostLUTStage2()
 
             # write the channel offsets of each FSP to host lut s2
