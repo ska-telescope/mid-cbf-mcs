@@ -175,10 +175,9 @@ class FspScanConfigurationBuilder:
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
-            fsp_config["channel_offset"] = (
-                calculated_fs_infos[fsp_id]["sdp_start_channel_id"]
-                - calculated_fs_infos[fsp_id]["fsp_start_ch"]
-            )
+            fsp_config["channel_offset"] = calculated_fs_infos[fsp_id][
+                "fsp_start_ch"
+            ]
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
             ]
