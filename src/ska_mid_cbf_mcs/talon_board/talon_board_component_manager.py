@@ -781,6 +781,14 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
+    def has_fan_control(self) -> bool:
+        # the fan*_input in the fans' MAX31790 driver will return 0
+        # if tachometers cannot be read, which either means reading tachometers
+        # is not yet enabled, or there is no fan control on this board. Either
+        # way the values returned from the fan module should not be used.
+        fans_input = self.fans_input()
+        return any(x > 0 for x in fans_input)
+
     def fans_pwm(self) -> list[int]:
         self._query_if_needed()
         res = []

@@ -644,12 +644,7 @@ class TalonBoard(CbfDevice):
 
         return: True if the board has control over fans. False otherwise.
         """
-        # the fan*_input in the fans' MAX31790 driver will return 0
-        # if tachometers cannot be read, which either means reading tachometers
-        # is not yet enabled, or there is no fan control on this board. Either
-        # way the values returned from the fan module should not be used.
-        fans_input = self.component_manager.fans_input()
-        return any(x > 0 for x in fans_input)
+        return self.component_manager.has_fan_control()
 
     @attribute(
         dtype=[int],
@@ -664,7 +659,7 @@ class TalonBoard(CbfDevice):
 
         :return: the PWM value of the fans
         """
-        if self.hasFanControl:
+        if self.component_manager.has_fan_control():
             return self.component_manager.fans_pwm()
         else:
             return (
@@ -699,7 +694,7 @@ class TalonBoard(CbfDevice):
 
         :return: the RPM value of the fans
         """
-        if self.hasFanControl:
+        if self.component_manager.has_fan_control():
             return self.component_manager.fans_input()
         else:
             return (
@@ -720,7 +715,7 @@ class TalonBoard(CbfDevice):
 
         :return: true if fan fault register is set
         """
-        if self.hasFanControl:
+        if self.component_manager.has_fan_control():
             return self.component_manager.fans_fault()
         else:
             return (
