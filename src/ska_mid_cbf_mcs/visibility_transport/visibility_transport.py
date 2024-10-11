@@ -56,7 +56,10 @@ class VisibilityTransport:
         self.logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
-        self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
+        self._channel_offsets = [
+            numpy.uint16(numpy.int16(fc["channel_offset"]))
+            for fc in fsp_config
+        ]
 
         if len(self._channel_offsets) == 0:
             self._channel_offsets = [0]
@@ -91,7 +94,7 @@ class VisibilityTransport:
                     f"Connecting to {self._host_lut_s2_fqdn} with channel offset {ch_offset}"
                 )
                 s1_dp.host_lut_stage_2_device_name = self._host_lut_s2_fqdn
-                s1_dp.channel_offset = numpy.uint32(numpy.int32(ch_offset))
+                s1_dp.channel_offset = ch_offset
                 s1_dp.connectToHostLUTStage2()
 
             # write the channel offsets of each FSP to host lut s2
