@@ -53,6 +53,7 @@ class TestFspScanConfigurationBuilder:
                 dish_utils=dish_util,
                 subarray_dish_ids=subarray_dish_ids,
                 wideband_shift=0,
+                frequency_band="1",
             )
 
     @pytest.mark.parametrize(
@@ -74,6 +75,7 @@ class TestFspScanConfigurationBuilder:
             full_configuration = json.loads(json_str)
 
         corr_config = full_configuration["midcbf"]["correlation"]
+        common_config = full_configuration["common"]
 
         # Setup subarray & dish_utils
         with open(json_file_path + "sys_param_4_boards.json") as file:
@@ -90,6 +92,7 @@ class TestFspScanConfigurationBuilder:
             dish_utils=dish_util,
             subarray_dish_ids=subarray_dish_ids,
             wideband_shift=0,
+            frequency_band=common_config["frequency_band"],
         )
 
         # Run function
