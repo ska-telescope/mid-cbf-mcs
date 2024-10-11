@@ -88,7 +88,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 600,
             "fsp_ids": [1],
             "wideband_shift": 0,
-            "band_name": "1"
+            "band_name": "1",
         },
         {
             "description": "within single FS with wideband shift",
@@ -96,7 +96,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 600,
             "fsp_ids": [1],
             "wideband_shift": int(52.7e6),
-            "band_name": "1"
+            "band_name": "1",
         },
         {
             "description": "full single FS with wideband shift",
@@ -104,7 +104,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 14740,
             "fsp_ids": [2],
             "wideband_shift": 0,
-            "band_name": "1"
+            "band_name": "1",
         },
         {
             "description": "two FSP worth",
@@ -112,7 +112,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 29480,
             "fsp_ids": [3, 4],
             "wideband_shift": 0,
-            "band_name": "1"
+            "band_name": "1",
         },
         {
             "description": "multiple fsp with wideband",
@@ -120,7 +120,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 44220,
             "fsp_ids": [5, 6, 7, 8],
             "wideband_shift": int(52.7e6),
-            "band_name": "1"
+            "band_name": "1",
         },
         {
             "description": "working spectrum (FS 0 - 9)",
@@ -128,7 +128,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 140080,
             "fsp_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "wideband_shift": 0,
-            "band_name": "1"
+            "band_name": "1",
         },
     ],
 )
@@ -140,8 +140,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
         channel_count=parameters["channel_count"],
         k_value=1000,
         wideband_shift=parameters["wideband_shift"],
-        band_name=parameters["band_name"]
-        
+        band_name=parameters["band_name"],
     )
 
     # assert we get the same number of fsp configs for the given fsp ids
