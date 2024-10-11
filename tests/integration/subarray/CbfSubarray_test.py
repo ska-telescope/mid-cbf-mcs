@@ -788,7 +788,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-
         controller.validateSupportedConfiguration = False
 
         # Issue ConfigureScan command
