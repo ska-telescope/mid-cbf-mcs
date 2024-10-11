@@ -274,14 +274,20 @@ class TestScanConfigurationValidator:
         assert success is False
 
     @pytest.mark.parametrize(
-        "start_freq_value,channel_count_value",
-        [(6720, 3000), (6721, 3000), (1281860160, 3000), (1281860159, 3000)],
+        "start_freq_value,channel_count_value,fsp_ids",
+        [
+            (6720, 3000, [1]),
+            (6721, 3000, [1]),
+            (1281860160, 3000, [1, 2]),
+            (1281860159, 3000, [1, 2]),
+        ],
     )
     def test_Valid_start_freq_post_v4(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         start_freq_value: int,
         channel_count_value: int,
+        fsp_ids: list[int],
     ):
         port = 10000
         output_ports_map = []
@@ -295,6 +301,9 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["channel_count"] = channel_count_value
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = fsp_ids
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_port"] = output_ports_map
@@ -319,7 +328,7 @@ class TestScanConfigurationValidator:
         assert success is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
-    def test_Invalid_fsp_ids_amount_for_requested_bandwidth(
+    def test_Invalid_fsp_ids_amount_too_many_for_requested_bandwidth(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: list[int],
@@ -339,6 +348,34 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
+        print(msg)
+        assert expected_msg in msg
+        assert success is False
+
+    @pytest.mark.parametrize("fsp_ids", [[1, 2], [1, 2, 3], [1, 2, 3, 4]])
+    def test_Invalid_fsp_ids_amount_too_few_for_requested_bandwidth(
+        self: TestScanConfigurationValidator,
+        validator_params: dict[any],
+        fsp_ids: list[int],
+    ):
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = fsp_ids
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["channel_count"] = 200
+        json_str = json.dumps(self.full_configuration)
+
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                scan_configuration=json_str,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
+                logger=self.logger,
+            )
+        )
+        success, msg = validator.validate_input()
+        expected_msg = "Too many FSP assigned in the processing region to process the range of the requested spectrum"
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -624,6 +661,9 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["channel_count"] = 80
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = [1]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_port"] = [[20, 10000], [40, 10001], [60, 1650], [80, 40000]]

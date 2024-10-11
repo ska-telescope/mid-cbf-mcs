@@ -3,12 +3,13 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
-import math
 from collections import defaultdict
 
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
     const,
+    get_coarse_frequency_slice_channels,
+    get_end_frequency,
     scan_configuration_supported_value,
 )
 
@@ -720,20 +721,22 @@ class SubarrayScanConfigurationValidator:
         :rtype: tuple[bool, str]
         """
         # check if we have enough FSP for the given Frequency Band
-        end_freq = start_freq + ((channel_count - 1) * channel_width)
-        coarse_channel_low = math.floor(
-            (start_freq + const.FS_BW // 2) / const.FS_BW
-        )
-        coarse_channel_high = math.floor(
-            (end_freq + const.FS_BW // 2) / const.FS_BW
-        )
-        coarse_channels = list(
-            range(coarse_channel_low, coarse_channel_high + 1)
+        end_freq = get_end_frequency(start_freq, channel_width, channel_count)
+        coarse_channels = get_coarse_frequency_slice_channels(
+            start_freq, end_freq, wb_shift=0
         )
 
         if len(fsp_given) < len(coarse_channels):
             msg = (
                 "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
+                f"\nNumber of FSPs Required: {len(coarse_channels)}, Number of FSPs Given: {len(fsp_given)}"
+            )
+            self.logger.error(msg)
+            return (False, msg)
+
+        if len(fsp_given) > len(coarse_channels):
+            msg = (
+                "Too many FSP assigned in the processing region to process the range of the requested spectrum"
                 f"\nNumber of FSPs Required: {len(coarse_channels)}, Number of FSPs Given: {len(fsp_given)}"
             )
             self.logger.error(msg)

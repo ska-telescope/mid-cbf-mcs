@@ -1,4 +1,5 @@
 from enum import IntEnum
+from math import floor
 
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
@@ -229,3 +230,46 @@ def calculate_dish_sample_rate(
     return (base_dish_sample_rate_MH * mhz_to_hz) + (
         sample_rate_const * freq_offset_k * const.DELTA_F
     )
+
+
+def get_coarse_frequency_slice_channels(
+    start_freq: int, end_freq: int, wb_shift: int
+) -> list[int]:
+    """
+    Determine the coarse frequency Slices that contain the processing region
+
+    :param start_freq: Start frequency of the processing region (Hz)
+    :param end_freq: End frequency of the processing region (Hz)
+    :praam wb_shift: Wideband shift (Hz)
+    :return: A list of coarse frequency slice id's
+
+    :raise AssertionError: if start_freq is greater than end_freq
+    """
+    if start_freq > end_freq:
+        raise ValueError("start_freq must be <= end_freq")
+
+    # coarse_channel = floor [(Frequency + WB_shift + 99090432Hz) / 198180864 Hz]
+    coarse_channel_low = floor(
+        (start_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
+    )
+    coarse_channel_high = floor(
+        (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
+    )
+    coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
+    return coarse_channels
+
+
+def get_end_frequency(
+    start_freq: int, channel_width: int, channel_count: int
+) -> int:
+    """
+    Determine the end frequency of the processing region (Hz)
+
+    :param start_freq:  Start frequency of the processing region (Hz)
+    :param channel_width: Width of a fine frequency channel (Hz)
+    :param channel_count: Number of fine frequency channels
+    :return: End frequency of the processing region (Hz)
+    """
+
+    end_freq = ((channel_count * channel_width) + start_freq) - channel_width
+    return end_freq

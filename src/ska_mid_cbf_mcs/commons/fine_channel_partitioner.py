@@ -13,59 +13,17 @@
 # Copyright (c) 2024 National Research Council of Canada
 
 import json
-import math
 
 from ska_mid_cbf_mcs.commons.global_enum import (
     calculate_dish_sample_rate,
     const,
     freq_band_dict,
+    get_coarse_frequency_slice_channels,
+    get_end_frequency,
 )
 
 # HELPER FUNCTIONS
 ##############################################################################
-
-
-def get_coarse_frequency_slice_channels(
-    start_freq: int, end_freq: int, wb_shift: int
-) -> list[int]:
-    """
-    Determine the coarse frequency Slices that contain the processing region
-
-    :param start_freq: Start frequency of the processing region (Hz)
-    :param end_freq: End frequency of the processing region (Hz)
-    :praam wb_shift: Wideband shift (Hz)
-    :return: A list of coarse frequency slice id's
-
-    :raise AssertionError: if start_freq is greater than end_freq
-    """
-    if start_freq > end_freq:
-        raise ValueError("start_freq must be <= end_freq")
-
-    # coarse_channel = floor [(Frequency + WB_shift + 99090432Hz) / 198180864 Hz]
-    coarse_channel_low = math.floor(
-        (start_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
-    )
-    coarse_channel_high = math.floor(
-        (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
-    )
-    coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
-    return coarse_channels
-
-
-def _get_end_frequency(
-    start_freq: int, channel_width: int, channel_count: int
-) -> int:
-    """
-    Determine the end frequency of the processing region (Hz)
-
-    :param start_freq:  Start frequency of the processing region (Hz)
-    :param channel_width: Width of a fine frequency channel (Hz)
-    :param channel_count: Number of fine frequency channels
-    :return: End frequency of the processing region (Hz)
-    """
-
-    end_freq = ((channel_count * channel_width) + start_freq) - channel_width
-    return end_freq
 
 
 def _find_fine_channel(
@@ -388,7 +346,7 @@ if __name__ == "__main__":
     # Derived from inputs
     TOTAL_BWIDTH = FINE_CHANNEL_COUNT * const.FINE_CHANNEL_WIDTH
     STREAMS = TOTAL_BWIDTH / const.NUM_CHANNELS_PER_SPEAD_STREAM
-    END_FREQ = _get_end_frequency(
+    END_FREQ = get_end_frequency(
         START_FREQ, const.FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
     )
 
