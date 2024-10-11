@@ -118,10 +118,10 @@ class FspScanConfigurationBuilder:
         # freq_align_shift - the shift to align channels between FSs
         # freq_wb_shift    - the wideband shift
         # freq_scfo_shift  - the frequency shift required due to SCFO sampling
-
-        # loops in the below code are hard to understand, but I'm moving from a
-        # per-vcc config in vcc_to_fs_infos to a per-fsp config, as well as
-        # rename the fields to match what HPS wants.
+        #
+        # to explain the loops below, I'm moving from a per-vcc config in 
+        # vcc_to_fs_infos to a per-fsp config, as well as rename the fields to
+        # match what HPS wants.
         #
         # essentially I have in vcc_to_fs_infos:
         # vcc1:
@@ -145,7 +145,7 @@ class FspScanConfigurationBuilder:
         #     vcc 1:
         #          shift values B
         #     vcc 2:
-        #          shift values C
+        #          shift values D
 
         vcc_id_to_rdt_freq_shifts = {}
         for fsp_id in calculated_fsp_ids:
