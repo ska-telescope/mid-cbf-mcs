@@ -527,25 +527,6 @@ class TalonDxComponentManager(CbfComponentManager):
 
         target = talon_cfg["target"]
 
-        # TalonBoard devices default to SimulationMode.TRUE, simulating hardware monitoring.
-        # Now we set TalonBoard devices to SimulationMode.FALSE if they have been assigned a
-        # live hardware target to monitor by the deployment configuration JSON.
-
-        if not self.simulation_mode:
-            target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
-            try:
-                talon_board_proxy = context.DeviceProxy(
-                    device_name=target_talon_fqdn
-                )
-                talon_board_proxy.simulationMode = SimulationMode.FALSE
-                self.logger.info(
-                    f"simulationMode set to FALSE for talon{target}"
-                )
-            except tango.DevFailed as df:
-                log_msg = f"Failed to set simulationMode to FALSE for talon{target}; {df}"
-                self.logger(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
         self.logger.info(f"Completed configuring talon board {target}")
         return (ResultCode.OK, "_configure_talon_thread completed OK")
 
