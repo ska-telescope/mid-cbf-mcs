@@ -1284,16 +1284,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager, configuration: dict[any]
     ) -> list[dict[any]]:
         """
-        go through the different supported functions processing regions and
-        convert to individual FSP configurations.
+        go through the different function modes' (CORR, PST, etc.) processing
+        regions and convert to individual FSP configurations.
 
         :param configuration: The Mid.CSP Function specific configurations
-
         :return: list of Individual FSP configurations
         """
 
         all_fsp_configs = []
 
+        # CORR
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
 
