@@ -10,6 +10,12 @@ UNRELEASED CHANGES
 * CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
 * CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
 * CIP-2911 fixed bad error message appending in controller Off command
+* CIP-2840 talon fans monitoring
+  * added hasFanControl attribute to talon board devices to indicate if the board has control over fans
+  * added fansRpm attribute to talon board devices
+  * fixed bugs affecting talon board device initialization and influxdb queries
+  * updated FPGA die voltage labels to be more descriptive
+  * updated FPGA die voltage warning and alarm range according to stratix10 documentation
 * CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
