@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import tango
 from ska_control_model import PowerState
@@ -523,7 +523,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
             return self.talon_board_simulator.fpga_die_temperature
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
         t, val = self._telemetry[field]
@@ -541,7 +540,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[0]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-0"
         t, val = self._telemetry[field]
@@ -559,7 +557,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[1]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-1"
         t, val = self._telemetry[field]
@@ -577,7 +574,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[2]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-2"
         t, val = self._telemetry[field]
@@ -595,7 +591,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[3]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-3"
         t, val = self._telemetry[field]
@@ -613,7 +608,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[4]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-4"
         t, val = self._telemetry[field]
@@ -631,7 +625,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[5]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-5"
         t, val = self._telemetry[field]
@@ -649,7 +642,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             die_voltages = self.talon_board_simulator.fpga_die_voltages
             return die_voltages[6]
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-6"
         t, val = self._telemetry[field]
@@ -657,7 +649,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def humidity_sensor_temperature(self) -> float:
-        self._throw_if_device_off()
         self._query_if_needed()
         field = "temperature-sensors_humidity-temp"
         t, val = self._telemetry[field]
@@ -665,7 +656,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def dimm_temperatures(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -680,7 +670,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_temperatures(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -695,7 +684,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_vcc_voltages(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -710,7 +698,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_fault_status(self) -> bool:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -725,7 +712,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_lol_status(self) -> bool:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -740,7 +726,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_los_status(self) -> bool:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -755,7 +740,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_vcc_voltages(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -770,7 +754,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_lol_status(self) -> bool:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -785,7 +768,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_los_status(self) -> bool:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -799,8 +781,15 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
+    def has_fan_control(self) -> bool:
+        # the fan*_input in the fans' MAX31790 driver will return 0
+        # if tachometers cannot be read, which either means reading tachometers
+        # is not yet enabled, or there is no fan control on this board. Either
+        # way the values returned from the fan module should not be used.
+        fans_input = self.fans_input()
+        return any(x > 0 for x in fans_input)
+
     def fans_pwm(self) -> list[int]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -816,7 +805,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_pwm_enable(self) -> list[int]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -831,8 +819,22 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(-1)
         return res
 
+    def fans_input(self) -> list[int]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"fans_fan-input_{i}"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(int(val))
+            else:
+                msg = f"{field} cannot be read."
+                self.logger.error(msg)
+                res.append(-1)
+        return res
+
     def fans_fault(self) -> list[bool]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -848,7 +850,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_voltage(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -866,7 +867,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_1(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -884,7 +884,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_2(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -902,7 +901,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_current(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -920,7 +918,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_1(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -938,7 +935,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_2(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -956,7 +952,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_1(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -974,7 +969,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_2(self) -> list[float]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -992,7 +986,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_voltage_warning(self) -> list[bool]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1014,7 +1007,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_current_warning(self) -> list[bool]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1036,7 +1028,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_warning(self) -> list[bool]:
-        self._throw_if_device_off()
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1059,15 +1050,6 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------
     # Helper Functions
     # ----------------
-
-    def _throw_if_device_off(self) -> None:
-        if self.power_state != PowerState.ON:
-            tango.Except.throw_exception(
-                "Talon_Board_Off",
-                "Talon Board is OFF",
-                "throw_if_device_off()",
-            )
-        return
 
     def _query_if_needed(self) -> None:
         td = datetime.now() - self._last_check
@@ -1093,7 +1075,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :param record: a record from Influxdb query result
         """
-        td = datetime.now() - t
+        td = datetime.now(timezone.utc) - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
