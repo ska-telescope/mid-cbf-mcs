@@ -126,7 +126,9 @@ def _k_dependent_fs_center(fs_id: int, band_name: str, k: int) -> int:
     # Center frequency of FS n = (sample rate / 20) x n
     freq_band_info = freq_band_dict()[band_name]
     dish_sample_rate = calculate_dish_sample_rate(freq_band_info, k)
-    center_frequency = (dish_sample_rate // 20) * fs_id
+    center_frequency = (
+        dish_sample_rate // freq_band_info["total_num_FSs"]
+    ) * fs_id
     return center_frequency
 
 
