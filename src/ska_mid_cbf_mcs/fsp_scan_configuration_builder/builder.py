@@ -97,7 +97,7 @@ class FspScanConfigurationBuilder:
 
         vcc_to_fs_infos = {}
         for dish_id in dish_ids:
-            calculated_fs_infos = partition_spectrum_to_frequency_slices(
+            calculated_fsp_infos = partition_spectrum_to_frequency_slices(
                 fsp_ids=fsp_ids,
                 start_freq=processing_region_config["start_freq"],
                 channel_width=processing_region_config["channel_width"],
@@ -107,9 +107,9 @@ class FspScanConfigurationBuilder:
             )
             vcc_to_fs_infos[
                 self.dish_utils.dish_id_to_vcc_id[dish_id]
-            ] = calculated_fs_infos
+            ] = calculated_fsp_infos
 
-        calculated_fsp_ids = list(calculated_fs_infos.keys())
+        calculated_fsp_ids = list(calculated_fsp_infos.keys())
 
         # vcc_id_to_rdt_freq_shifts are the shift values needed by the
         # Resampler Delay Tracker (rdt) for each vcc of the FSP:
@@ -181,8 +181,8 @@ class FspScanConfigurationBuilder:
             # Split up the PR output ports according to the start channel ids of
             # the FSPs
             sdp_start_channel_ids = [
-                fs_info["sdp_start_channel_id"]
-                for fs_info in calculated_fs_infos.values()
+                fsp_info["sdp_start_channel_id"]
+                for fsp_info in calculated_fsp_infos.values()
             ]
             sdp_start_channel_ids.append(
                 processing_region_config["sdp_start_channel_id"]
@@ -204,20 +204,20 @@ class FspScanConfigurationBuilder:
         # Build individual fsp configs
         fsp_configs = []
 
-        for fsp_id in calculated_fs_infos.keys():
+        for fsp_id in calculated_fsp_infos.keys():
             fsp_config = {}
             # Required values
             fsp_config["fsp_id"] = fsp_id
             fsp_config["function_mode"] = self.function_mode.name
-            fsp_config["frequency_slice_id"] = calculated_fs_infos[fsp_id][
+            fsp_config["frequency_slice_id"] = calculated_fsp_infos[fsp_id][
                 "fs_id"
             ]
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
             fsp_config["channel_offset"] = (
-                calculated_fs_infos[fsp_id]["sdp_start_channel_id"]
-                - calculated_fs_infos[fsp_id]["fsp_start_ch"]
+                calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
+                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
             )
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
