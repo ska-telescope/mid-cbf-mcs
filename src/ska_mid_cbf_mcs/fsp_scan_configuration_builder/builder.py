@@ -27,6 +27,7 @@ class FspScanConfigurationBuilder:
     dish_utils: DISHUtils
     wideband_shift: int
     subarray_dish_ids: set
+    frequency_band: str
 
     def __init__(
         self: FspScanConfigurationBuilder,
@@ -35,6 +36,7 @@ class FspScanConfigurationBuilder:
         dish_utils: DISHUtils,
         subarray_dish_ids: set,
         wideband_shift: int,
+        frequency_band: str,
     ):
         self.function_mode = function_mode
         if "processing_regions" not in function_configuration:
@@ -45,6 +47,7 @@ class FspScanConfigurationBuilder:
         self.dish_utils = dish_utils
         self.subarray_dish_ids = subarray_dish_ids
         self.wideband_shift = wideband_shift
+        self.frequency_band = frequency_band
 
     def _fsp_config_from_processing_regions(
         self: FspScanConfigurationBuilder, processing_regions: list[dict]
@@ -104,6 +107,7 @@ class FspScanConfigurationBuilder:
                 channel_count=processing_region_config["channel_count"],
                 k_value=self.dish_utils.dish_id_to_k[dish_id],
                 wideband_shift=self.wideband_shift,
+                band_name=self.frequency_band,
             )
             vcc_to_fs_infos[
                 self.dish_utils.dish_id_to_vcc_id[dish_id]

@@ -45,6 +45,7 @@ valid_start_freq = int(350e6)
 valid_wb_shift = int(52.7e6)
 valid_channel_count = 58980
 valid_k_value = 1000
+valid_frequency_band_name = "1"
 
 
 def test_get_coarse_channels_invalid_args():
@@ -87,6 +88,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 600,
             "fsp_ids": [1],
             "wideband_shift": 0,
+            "band_name": "1"
         },
         {
             "description": "within single FS with wideband shift",
@@ -94,6 +96,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 600,
             "fsp_ids": [1],
             "wideband_shift": int(52.7e6),
+            "band_name": "1"
         },
         {
             "description": "full single FS with wideband shift",
@@ -101,6 +104,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 14740,
             "fsp_ids": [2],
             "wideband_shift": 0,
+            "band_name": "1"
         },
         {
             "description": "two FSP worth",
@@ -108,6 +112,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 29480,
             "fsp_ids": [3, 4],
             "wideband_shift": 0,
+            "band_name": "1"
         },
         {
             "description": "multiple fsp with wideband",
@@ -115,6 +120,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 44220,
             "fsp_ids": [5, 6, 7, 8],
             "wideband_shift": int(52.7e6),
+            "band_name": "1"
         },
         {
             "description": "working spectrum (FS 0 - 9)",
@@ -122,6 +128,7 @@ def test_get_coarse_channels_valid():
             "channel_count": 140080,
             "fsp_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "wideband_shift": 0,
+            "band_name": "1"
         },
     ],
 )
@@ -133,6 +140,8 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
         channel_count=parameters["channel_count"],
         k_value=1000,
         wideband_shift=parameters["wideband_shift"],
+        band_name=parameters["band_name"]
+        
     )
 
     # assert we get the same number of fsp configs for the given fsp ids
@@ -184,7 +193,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
 
 
 @pytest.mark.parametrize(
-    "fsp_ids, start_freq, channel_width, channel_count, k_value, wideband_shift",
+    "fsp_ids, start_freq, channel_width, channel_count, k_value, wideband_shift, band_name",
     [
         (
             None,
@@ -193,6 +202,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             [],
@@ -201,6 +211,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -209,6 +220,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -217,6 +229,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -225,6 +238,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             None,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -233,6 +247,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             0,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -241,6 +256,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             None,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -249,6 +265,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             0,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             valid_fsp_ids,
@@ -257,6 +274,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             2223,
             valid_wb_shift,
+            valid_frequency_band_name,
         ),
         (
             [1],
@@ -265,11 +283,36 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_channel_count,
             valid_k_value,
             valid_wb_shift,
+            valid_frequency_band_name,
+        ),
+        (
+            valid_fsp_ids,
+            valid_start_freq,
+            valid_channel_width,
+            valid_channel_count,
+            valid_k_value,
+            valid_wb_shift,
+            None,
+        ),
+        (
+            valid_fsp_ids,
+            valid_start_freq,
+            valid_channel_width,
+            valid_channel_count,
+            valid_k_value,
+            valid_wb_shift,
+            "invalid_freq_band",
         ),
     ],
 )
 def test_partition_spectrum_to_frequency_slices_invalid_args(
-    fsp_ids, start_freq, channel_width, channel_count, k_value, wideband_shift
+    fsp_ids,
+    start_freq,
+    channel_width,
+    channel_count,
+    k_value,
+    wideband_shift,
+    band_name,
 ):
     with pytest.raises(ValueError):
         partition_spectrum_to_frequency_slices(
@@ -279,4 +322,5 @@ def test_partition_spectrum_to_frequency_slices_invalid_args(
             channel_count=channel_count,
             k_value=k_value,
             wideband_shift=wideband_shift,
+            band_name=band_name,
         )

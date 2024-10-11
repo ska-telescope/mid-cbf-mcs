@@ -15,14 +15,10 @@
 import json
 import math
 
-from ska_mid_cbf_mcs.commons.global_enum import const
-
-(
-    const.NUM_CHANNELS_PER_SPEAD_STREAM,
-    const.FS_BW,
-    const.HALF_FS_BW,
-    const.SAMPLE_RATE_BASE,
-    const.K_VALUE_RANGE,
+from ska_mid_cbf_mcs.commons.global_enum import (
+    calculate_dish_sample_rate,
+    const,
+    freq_band_dict,
 )
 
 # HELPER FUNCTIONS
@@ -119,7 +115,7 @@ def _nominal_fs_spacing(fs_id: int) -> int:
     return fs_id * const.FS_BW
 
 
-def _k_dependent_fs_center(fs_id: int, k: int) -> int:
+def _k_dependent_fs_center(fs_id: int, band_name: str, k: int) -> int:
     """
     find the K-dpendent center frequency for a given frequency slice
 
@@ -128,8 +124,9 @@ def _k_dependent_fs_center(fs_id: int, k: int) -> int:
     :return: the k-dependent frequency slice center frequency (Hz)
     """
     # Center frequency of FS n = (sample rate / 20) x n
-    sample_rate = const.SAMPLE_RATE_BASE + 1800 * k
-    center_frequency = (sample_rate // 20) * fs_id
+    freq_band_info = freq_band_dict()[band_name]
+    dish_sample_rate = calculate_dish_sample_rate(freq_band_info, k)
+    center_frequency = (dish_sample_rate // 20) * fs_id
     return center_frequency
 
 
@@ -188,6 +185,7 @@ def partition_spectrum_to_frequency_slices(
     channel_count: int,
     k_value: int,
     wideband_shift: int,
+    band_name: str,
 ) -> dict:
     """
     determine the channelization information based on the calculations in
@@ -221,6 +219,7 @@ def partition_spectrum_to_frequency_slices(
     :param channel_count: the number of channels in the processing region
     :param k_value: the channelization coefficient value
     :param wideband_shift: the wideband shift (Hz) to apply to the processing region
+    :param band_name: the name of the frequency band
     :return: structure with information about fsp boundaries, see:
         https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
 
@@ -244,6 +243,9 @@ def partition_spectrum_to_frequency_slices(
         raise ValueError("fsp_ids cannot be None")
     if len(fsp_ids) == 0:
         raise ValueError("fsp_ids cannot be empty")
+    band_names = list(freq_band_dict().keys())
+    if band_name not in band_names:
+        raise ValueError(f"band_name not in {band_names}")
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
     coarse_channels = get_coarse_frequency_slice_channels(
@@ -266,7 +268,7 @@ def partition_spectrum_to_frequency_slices(
         # vcc_downshift_freq = nominal_fsn_center_freq - k_dependent_fs_center_freq
         fs_info["vcc_downshift_freq"] = _nominal_fs_spacing(
             fs
-        ) - _k_dependent_fs_center(fs, k_value)
+        ) - _k_dependent_fs_center(fs, band_name, k_value)
 
         if index == 0:
             # need to base our start from the starting frequency
@@ -414,6 +416,7 @@ if __name__ == "__main__":
         channel_count=FINE_CHANNEL_COUNT,
         k_value=K_VALUE,
         wideband_shift=WB_SHIFT,
+        band_name="1",
     )
 
     sum_of_result_channels = 0

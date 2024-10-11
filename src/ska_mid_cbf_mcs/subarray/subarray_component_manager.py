@@ -39,9 +39,9 @@ from ska_telmodel.schema import validate as telmodel_validate
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
+    calculate_dish_sample_rate,
     const,
     freq_band_dict,
-    mhz_to_hz,
 )
 from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.obs_component_manager import (
@@ -1028,25 +1028,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         return True
 
-    def _calculate_dish_sample_rate(
-        self: CbfSubarrayComponentManager,
-        freq_band_info: dict,
-        freq_offset_k: int,
-    ) -> int:
-        """
-        Calculate frequency slice sample rate
-
-        :param freq_band_info: constants pertaining to a given frequency band
-        :param freq_offset_k: DISH frequency offset k value
-        :return: DISH sample rate
-        """
-        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
-        sample_rate_const = freq_band_info["sample_rate_const"]
-
-        return (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * const.DELTA_F
-        )
-
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, dish: str
     ) -> dict:
@@ -1071,7 +1052,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         total_num_fs = freq_band_info["total_num_FSs"]
 
-        dish_sample_rate = self._calculate_dish_sample_rate(
+        dish_sample_rate = calculate_dish_sample_rate(
             freq_band_info, freq_offset_k
         )
 
@@ -1126,7 +1107,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy = self._all_vcc_proxies[vcc_id]
 
             # Fetch K-value based on dish_id, calculate dish sample rate
-            dish_sample_rate = self._calculate_dish_sample_rate(
+            dish_sample_rate = calculate_dish_sample_rate(
                 freq_band_info=freq_band_dict()[
                     configuration["frequency_band"]
                 ],
@@ -1281,7 +1262,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         return True
 
     def _convert_pr_configs_to_fsp_configs(
-        self: CbfSubarrayComponentManager, configuration: dict[any]
+        self: CbfSubarrayComponentManager,
+        configuration: dict[any],
+        common_configuration: dict[any],
     ) -> list[dict[any]]:
         """
         go through the different function modes' (CORR, PST, etc.) processing
@@ -1304,6 +1287,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 dish_utils=self._dish_utils,
                 subarray_dish_ids=self.dish_ids,
                 wideband_shift=0,
+                frequency_band=common_configuration["frequency_band"],
             )
             corr_fsp_configs = fsp_config_builder.build()
 
@@ -1761,7 +1745,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # --- Convert Processing Regions to FSP configs --- #
         fsp_configs = self._convert_pr_configs_to_fsp_configs(
-            configuration=configuration
+            configuration=configuration,
+            common_configuration=common_configuration,
         )
 
         # --- Configure VCC --- #

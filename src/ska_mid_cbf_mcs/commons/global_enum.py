@@ -49,7 +49,6 @@ class Const:
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
 
-        self.SAMPLE_RATE_BASE = 3960000000
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING_FACTOR = 10 / 9
         self.FS_BW = int(
@@ -204,3 +203,22 @@ cc_oversampling_factor/total_num_FSs .
 defined in this file into the corresponding band_info
 dictionary entries.
 """
+
+
+def calculate_dish_sample_rate(
+    freq_band_info: dict,
+    freq_offset_k: int,
+) -> int:
+    """
+    Calculate frequency slice sample rate
+
+    :param freq_band_info: constants pertaining to a given frequency band
+    :param freq_offset_k: DISH frequency offset k value
+    :return: DISH sample rate
+    """
+    base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+    sample_rate_const = freq_band_info["sample_rate_const"]
+
+    return (base_dish_sample_rate_MH * mhz_to_hz) + (
+        sample_rate_const * freq_offset_k * const.DELTA_F
+    )
