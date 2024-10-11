@@ -690,7 +690,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command.
+        Test CbfSubarrays's GoToIdle command.
 
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
@@ -803,7 +803,7 @@ class TestCbfSubarray:
         vcc: dict[int, context.DeviceProxy],
     ) -> None:
         """
-        Test CbfSubarrays's EndScan command.
+        Test CbfSubarrays's RemoveAllReceptors command.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
