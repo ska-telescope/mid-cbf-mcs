@@ -340,8 +340,10 @@ class VccComponentManager(CbfObsComponentManager):
             is_cmd_allowed=self.is_configure_band_allowed,
             task_callback=task_callback,
         )
-        
-    def _update_expected_dish_id(self: VccComponentManager) -> tuple[bool, str]:
+
+    def _update_expected_dish_id(
+        self: VccComponentManager,
+    ) -> tuple[bool, str]:
         """
         Update HPS WIB's ExpectedDishID with this VCC's dish_id attr.
 
@@ -353,7 +355,7 @@ class VccComponentManager(CbfObsComponentManager):
                 "WidebandInputBufferFQDN"
             )["WidebandInputBufferFQDN"][0]
             wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-            
+
             # Get property, then update with vcc_proxy.dishID.
             old_expDishID = wib_proxy.ExpectedDishID
             wib_proxy.ExpectedDishID = self.dish_id
