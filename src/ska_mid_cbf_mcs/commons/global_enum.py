@@ -54,15 +54,15 @@ class Const:
         # modes except VLBI
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING_FACTOR = 10 / 9
-        
+
         # Frequency Slice Bandwidth [Hz]
         self.FS_BW = int(
             self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING_FACTOR
         )
         self.HALF_FS_BW = self.FS_BW // 2
-        
+
         # Fine channel width for the Correlation function mode [Hz]
-        self.FINE_CHANNEL_WIDTH = 13440 
+        self.FINE_CHANNEL_WIDTH = 13440
         self.K_VALUE_RANGE = (1, 2222)
 
 
