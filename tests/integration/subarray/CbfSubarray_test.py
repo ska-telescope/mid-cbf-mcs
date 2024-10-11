@@ -59,12 +59,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -93,12 +93,12 @@ class TestCbfSubarray:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=subarray[sub_id],
             attribute_name="sysParam",
             attribute_value=sys_param_str,
             previous_value=None,
-            target_n_events=1,
+            min_n_events=1,
         )
 
     @pytest.mark.dependency(
@@ -130,7 +130,7 @@ class TestCbfSubarray:
         # --- VCC checks --- #
 
         expected_events = [
-            ("subarrayMembership", subarray_params["sub_id"], 0, 1),
+            ("subarrayMembership", sub_id, 0, 1),
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
             ("state", DevState.ON, DevState.DISABLE, 1),
         ]
@@ -138,12 +138,12 @@ class TestCbfSubarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- Subarray checks --- #
@@ -165,12 +165,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -230,12 +230,12 @@ class TestCbfSubarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- FSP checks --- #
@@ -250,20 +250,27 @@ class TestCbfSubarray:
 
         for fsp_id, function_mode in fsp_to_function_mode.items():
             expected_events = [
-                ("subarrayMembership", [sub_id], None, 1),
-                ("functionMode", function_mode, FspModes.IDLE.value, 1),
-                ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-                ("state", DevState.ON, DevState.DISABLE, 1),
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [sub_id],
+                    None,
+                    None,
+                    1,
+                ),
+                ("functionMode", None, function_mode, FspModes.IDLE.value, 1),
+                ("adminMode", None, AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+                ("state", None, DevState.ON, DevState.DISABLE, 1),
             ]
-            for name, value, previous, n in expected_events:
+            for name, custom, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
+                    custom_matcher=custom,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
             expected_events = [
@@ -275,12 +282,12 @@ class TestCbfSubarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- Subarray checks --- #
@@ -301,12 +308,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -349,16 +356,16 @@ class TestCbfSubarray:
         expected_events = [
             ("delayModel", json.dumps(delay_model), None, 1),
         ]
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
     @pytest.mark.dependency(
@@ -397,25 +404,25 @@ class TestCbfSubarray:
         for vcc_id in subarray_params["vcc_ids"]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=vcc[vcc_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.SCANNING,
                 previous_value=ObsState.READY,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         # --- FSP checks --- #
 
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=fsp_corr[fsp_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.SCANNING,
                 previous_value=ObsState.READY,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         # --- Subarray checks --- #
@@ -435,12 +442,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -488,16 +495,16 @@ class TestCbfSubarray:
         expected_events = [
             ("delayModel", json.dumps(delay_model), None, 1),
         ]
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
     @pytest.mark.dependency(
@@ -532,25 +539,25 @@ class TestCbfSubarray:
         for vcc_id in subarray_params["vcc_ids"]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=vcc[vcc_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.READY,
                 previous_value=ObsState.SCANNING,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         # --- FSP checks --- #
 
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=fsp_corr[fsp_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.READY,
                 previous_value=ObsState.SCANNING,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         # --- Subarray checks --- #
@@ -570,12 +577,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -617,37 +624,56 @@ class TestCbfSubarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- FSP checks --- #
 
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
             expected_events = [
-                # TODO: this check fails, even though an event is received; test logs below
-                # ReceivedEvent(device_name='mid_csp_cbf/fsp/01', attribute_name='subarraymembership', attribute_value=[], reception_time=2024-08-06 19:12:45.976597)
-                # TANGO_TRACER Query arguments: device_name='mid_csp_cbf/fsp/01', attribute_name='subarrayMembership', attribute_value=[],
-                # Query start time: 2024-08-06 19:12:46.064362
-                # Query end time: 2024-08-06 19:13:46.065521
-                # ("subarrayMembership", [], [sub_id], 1),
-                ("functionMode", FspModes.IDLE.value, None, 1),
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [],
+                    None,
+                    None,
+                    1,
+                ),
+                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
+                ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+                ("state", None, DevState.DISABLE, DevState.ON, 1),
+            ]
+            for name, custom, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    custom_matcher=custom,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+            expected_events = [
+                ("obsState", ObsState.IDLE, ObsState.READY, 1),
                 ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
                 ("state", DevState.DISABLE, DevState.ON, 1),
             ]
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
+                    custom_matcher=custom,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
             expected_events = [
@@ -663,8 +689,12 @@ class TestCbfSubarray:
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
+
+        # Issue GotoIdle command
+        [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
+        assert result_code == ResultCode.QUEUED
 
         # --- Subarray checks --- #
 
@@ -683,12 +713,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -750,13 +780,14 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
 
         controller.validateSupportedConfiguration = False
 
@@ -775,12 +806,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
         # Issue GotoIdle command
@@ -801,15 +832,16 @@ class TestCbfSubarray:
                 1,
             ),
         ]
+
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -848,12 +880,12 @@ class TestCbfSubarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- Subarray checks --- #
@@ -875,12 +907,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -914,12 +946,12 @@ class TestCbfSubarray:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -1208,36 +1240,36 @@ class TestCbfSubarray:
             for name, value, previous, n in vcc_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- FSP checks --- #
 
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             for name, value, previous, n in fsp_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
             for name, value, previous, n in fsp_corr_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- Subarray checks --- #
@@ -1245,13 +1277,15 @@ class TestCbfSubarray:
         for name, value, previous, n in subarray_expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
+        # --- Cleanup --- #
 
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
@@ -1555,36 +1589,36 @@ class TestCbfSubarray:
             for name, value, previous, n in vcc_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- FSP checks --- #
 
-        for fsp_id in subarray_params["fsp_ids"]:
+        for fsp_id in subarray_params["fsp_modes"].keys():
             for name, value, previous, n in fsp_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
             for name, value, previous, n in fsp_corr_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # --- Subarray checks --- #
@@ -1592,12 +1626,223 @@ class TestCbfSubarray:
         for name, value, previous, n in subarray_expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=subarray[sub_id],
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
+        # --- Cleanup --- #
+
+        self.test_Offline(event_tracer, subarray, subarray_params)
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_Offline_1"],
+        name="CbfSubarray_Reconfigure_1",
+    )
+    def test_ConfigureScan_from_ready(
+        self: TestCbfSubarray,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        vcc: dict[int, context.DeviceProxy],
+    ) -> None:
+        """
+        Test re-configuring CbfSubarray from READY
+
+        :param controller: DeviceProxy to CbfController device
+        :param event_tracer: TangoEventTracer
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        :param vcc: dict of DeviceProxy to Vcc devices
+        """
+        if "alt_params" not in subarray_params:
+            pytest.skip("No alternate configuration provided.")
+
+        alt_params = subarray_params["alt_params"]
+        sub_id = subarray_params["sub_id"]
+
+        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_sysParam(event_tracer, subarray, subarray_params)
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+        self.test_ConfigureScan(
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
+        )
+
+        # ------------------------
+        # ConfigureScan from READY
+        # ------------------------
+
+        # Prepare test data
+        with open(test_data_path + alt_params["configure_scan_file"]) as f:
+            alt_configuration = json.load(f)
+
+        # Issue ConfigureScan command
+        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+            json.dumps(alt_configuration)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        # -------------------
+        # Event tracer checks
+        # -------------------
+
+        # --- FSP checks --- #
+
+        # First we check the original FSPs are IDLE
+        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
+            expected_events = [
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [],
+                    None,
+                    None,
+                    1,
+                ),
+                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
+                ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+                ("state", None, DevState.DISABLE, DevState.ON, 1),
+            ]
+            for name, custom, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    custom_matcher=custom,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+            expected_events = [
+                ("obsState", ObsState.IDLE, ObsState.READY, 1),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+                ("state", DevState.DISABLE, DevState.ON, 1),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+        # Now we check the new FSPs are READY
+        for fsp_id, fsp_mode in alt_params["fsp_modes"].items():
+            expected_events = [
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [sub_id],
+                    None,
+                    None,
+                    1,
+                ),
+                ("functionMode", None, fsp_mode, FspModes.IDLE.value, 1),
+                ("adminMode", None, AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+                ("state", None, DevState.ON, DevState.DISABLE, 1),
+            ]
+            for name, custom, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp[fsp_id],
+                    custom_matcher=custom,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+            expected_events = [
+                ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+                ("state", DevState.ON, DevState.DISABLE, 1),
+                ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
+                ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+        # --- VCC events --- #
+
+        # Assigned VCCs will be the same when configuring from READY
+        for vcc_id in alt_params["vcc_ids"]:
+            expected_events = [
+                (
+                    "frequencyBand",
+                    alt_params["freq_band"],
+                    subarray_params["freq_band"],
+                    1,
+                ),
+                ("obsState", ObsState.CONFIGURING, ObsState.READY, 1),
+                ("obsState", ObsState.READY, ObsState.CONFIGURING, 2),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.CONFIGURING, ObsState.READY, 1),
+            ("obsState", ObsState.READY, ObsState.CONFIGURING, 2),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
+                ),
+                None,
+                1,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                min_n_events=n,
+            )
+
+        # --- Cleanup --- #
+        self.test_GoToIdle(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+        self.test_RemoveAllReceptors(
+            event_tracer, subarray, subarray_params, vcc
+        )
         self.test_Offline(event_tracer, subarray, subarray_params)

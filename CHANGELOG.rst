@@ -16,6 +16,7 @@ UNRELEASED CHANGES
   * fixed bugs affecting talon board device initialization and influxdb queries
   * updated FPGA die voltage labels to be more descriptive
   * updated FPGA die voltage warning and alarm range according to stratix10 documentation
+* CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
 * CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
