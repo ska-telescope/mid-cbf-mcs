@@ -328,7 +328,7 @@ class TestScanConfigurationValidator:
         assert success is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
-    def test_Invalid_fsp_ids_amount_too_many_for_requested_bandwidth(
+    def test_Invalid_fsp_ids_amount_too_few_for_requested_bandwidth(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: list[int],
@@ -353,7 +353,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     @pytest.mark.parametrize("fsp_ids", [[1, 2], [1, 2, 3], [1, 2, 3, 4]])
-    def test_Invalid_fsp_ids_amount_too_few_for_requested_bandwidth(
+    def test_Invalid_fsp_ids_amount_too_many_for_requested_bandwidth(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: list[int],
