@@ -52,7 +52,7 @@ def get_coarse_frequency_slice_channels(
     return coarse_channels
 
 
-def _get_end_freqeuency(
+def _get_end_frequency(
     start_freq: int, channel_width: int, channel_count: int
 ) -> int:
     """
@@ -388,7 +388,7 @@ if __name__ == "__main__":
     # Derived from inputs
     TOTAL_BWIDTH = FINE_CHANNEL_COUNT * const.FINE_CHANNEL_WIDTH
     STREAMS = TOTAL_BWIDTH / const.NUM_CHANNELS_PER_SPEAD_STREAM
-    END_FREQ = _get_end_freqeuency(
+    END_FREQ = _get_end_frequency(
         START_FREQ, const.FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
     )
 
