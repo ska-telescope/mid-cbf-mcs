@@ -282,12 +282,13 @@ class SubarrayScanConfigurationValidator:
             return (False, msg)
 
         # Checks Subarray ID Against Current MCS Supported Values
-        if int(subarray_id) not in scan_configuration_supported_value(
+        supported_subarray_ids = scan_configuration_supported_value(
             "subarray_id"
-        ):
+        )
+        if int(subarray_id) not in supported_subarray_ids:
             msg = (
                 f"subarray_id {subarray_id} not supported. "
-                f"MCS currently only supports [{1}]"
+                f"MCS currently only supports {supported_subarray_ids}"
             )
             self.logger.error(msg)
             return (False, msg)
