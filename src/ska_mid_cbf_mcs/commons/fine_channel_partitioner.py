@@ -154,7 +154,8 @@ def _find_end_channel_for_spead_stream(start: int, end: int) -> int:
 
     :param start: the starting channel id
     :param end: the last channel
-    :return: the new end channel that results in the channel count being a mulitple of the const.NUM_CHANNELS_PER_SPEAD_STREAM
+    :return: the new end channel that results in the channel count being a
+             multiple of the const.NUM_CHANNELS_PER_SPEAD_STREAM
     """
     num_channels = end - start + 1
     remainder = num_channels % const.NUM_CHANNELS_PER_SPEAD_STREAM

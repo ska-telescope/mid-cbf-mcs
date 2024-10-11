@@ -119,7 +119,7 @@ class FspScanConfigurationBuilder:
         # freq_wb_shift    - the wideband shift
         # freq_scfo_shift  - the frequency shift required due to SCFO sampling
         #
-        # to explain the loops below, I'm moving from a per-vcc config in 
+        # to explain the loops below, I'm moving from a per-vcc config in
         # vcc_to_fs_infos to a per-fsp config, as well as rename the fields to
         # match what HPS wants.
         #
