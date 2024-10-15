@@ -105,7 +105,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.source_init_sys_param = ""
         self._talondx_component_manager = talondx_component_manager
         self._proxies = {}
-        self._talon_board_proxies = {}
 
     # -------------
     # Communication
@@ -751,35 +750,31 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Initialize TalonBoard devices.
         """
+        for fqdn in self._talon_board_fqdns_all:
+            if not self._init_device_proxy(
+                fqdn=fqdn, hw_device_type="talon_board"
+            ):
+                self.logger.error(f"Failed to initialize {fqdn}")
+
         for fqdn in self._talon_board_fqdn:
-            if fqdn not in self._talon_board_proxies:
+            if fqdn not in self._proxies:
                 try:
                     self.logger.debug(f"Trying connection to {fqdn}")
                     proxy = context.DeviceProxy(device_name=fqdn)
                 except tango.DevFailed as df:
                     self.logger.error(f"Failure in connection to {fqdn}: {df}")
                     continue
-                self._talon_board_proxies[fqdn] = proxy
+                self._proxies[fqdn] = proxy
             else:
-                proxy = self._talon_board_proxies[fqdn]
+                proxy = self._proxies[fqdn]
 
-            if not self._write_hw_config(fqdn, proxy, "talon_board"):
-                self.logger.error(f"Failed to update HW config for {fqdn}")
-                continue
-
-            self.logger.info(
-                f"Setting {fqdn} to SimulationMode {self.simulation_mode} and AdminMode.ONLINE"
-            )
             try:
-                proxy.simulationMode = self.simulation_mode
-                proxy.adminMode = AdminMode.ONLINE
-
                 board_ip = proxy.get_property("TalonDxBoardAddress")[
                     "TalonDxBoardAddress"
                 ][0]
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failed to set AdminMode of {fqdn} to ONLINE: {df}"
+                    f"Falied to get TalonDxBoardAddress property from {fqdn}: {df}"
                 )
 
             # Update talon board HW config. The VCC ID to IP address mapping comes
@@ -1149,7 +1144,9 @@ class ControllerComponentManager(CbfComponentManager):
         # NOTE: This is separated from the subelements_fast group call because
         #       a failure shouldn't cause Controller.Off() to fail.
         try:
-            for proxy in self._talon_board_proxies.values():
+            for proxy in [
+                self._proxies[fqdn] for fqdn in self._talon_board_fqdn
+            ]:
                 proxy.adminMode = AdminMode.OFFLINE
         except tango.DevFailed as df:
             # Log a warning, but continue when the talon board fails to turn off
