@@ -151,28 +151,6 @@ def partition_spectrum_to_frequency_slices(
     determine the channelization information based on the calculations in
     https://confluence.skatelescope.org/pages/viewpage.action?pageId=265843120
 
-    example output:
-    {
-        "1": {    # the fsp_id
-            "alignment_shift_freq": 125472,
-            "b_width": 198105600,
-            "end_ch": 7359,
-            "end_ch_exact": 7363.464285714285,
-            "end_ch_freq": 495392160,
-            "start_ch_freq": 297174528,
-            "fs_id": 2,
-            "fsp_end_ch": 14799,
-            "fsp_id": 1,
-            "fsp_start_ch": 60,
-            "num_channels": 14740,
-            "sdp_channel_id": 0,
-            "sdp_channel_id_end": 14739,
-            "start_ch": -7380,
-            "total_shift_freq": 307200,
-            "vcc_downshift_freq": 181728
-        }
-    }
-
     :param fsp_ids: list of available fsp's to assign fs channels to
     :param start_freq: the center frequency (Hz) of the first channel
     :param channel_width: the width (Hz) of a fine channel
@@ -183,6 +161,28 @@ def partition_spectrum_to_frequency_slices(
     :return: structure with information about fsp boundaries, see:
         https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
 
+    example output:
+    {
+        "1": {    # the fsp_id
+            "alignment_shift_freq": 125472,
+            "b_width": 198105600,
+            "end_ch": 7359,
+            "end_ch_exact": 7363.464285714285,
+            "end_ch_freq": 495392160,
+            "fs_id": 2,
+            "fsp_end_ch": 14799,
+            "fsp_id": 1,
+            "fsp_start_ch": 60,
+            "num_channels": 14740,
+            "sdp_start_channel_id": 0,
+            "sdp_end_channel_id": 14739,
+            "start_ch": -7380,
+            "start_ch_exact": -7383,
+            "start_ch_freq": 297174528,
+            "total_shift_freq": 307200,
+            "vcc_downshift_freq": 181728
+        }
+    }
     """
 
     if channel_width is None:
