@@ -211,6 +211,15 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
             valid_frequency_band_name,
         ),
         (
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            valid_start_freq,
+            valid_channel_width,
+            valid_channel_count,
+            valid_k_value,
+            valid_wb_shift,
+            valid_frequency_band_name,
+        ),
+        (
             valid_fsp_ids,
             valid_start_freq,
             None,

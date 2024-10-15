@@ -214,9 +214,10 @@ def partition_spectrum_to_frequency_slices(
     coarse_channels = get_coarse_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
-    if len(fsp_ids) < len(coarse_channels):
+    if len(fsp_ids) != len(coarse_channels):
         raise ValueError(
-            "Too few FSP's assigned for required processing region"
+            f"Number of fsp_ids does not match the number of required coarse "
+            f"channels: {len(fsp_ids)} ids provided, require {len(coarse_channels)}"
         )
 
     freq_band_info = freq_band_dict()[band_name]
@@ -342,7 +343,7 @@ def partition_spectrum_to_frequency_slices(
 # EXAMPLE INPUTS
 ##############################################################################
 if __name__ == "__main__":
-    fsp_ids = [5, 6, 7, 8, 9]
+    fsp_ids = [5, 6, 7, 8]
     START_FREQ = int(297271296)
     # WB_SHIFT = int(
     #    52.7e6
