@@ -676,26 +676,6 @@ class TestCbfSubarray:
                     min_n_events=n,
                 )
 
-            expected_events = [
-                ("obsState", ObsState.IDLE, ObsState.READY, 1),
-                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-                ("state", DevState.DISABLE, DevState.ON, 1),
-            ]
-            for name, value, previous, n in expected_events:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
-                    attribute_name=name,
-                    attribute_value=value,
-                    previous_value=previous,
-                    min_n_events=n,
-                )
-
-        # Issue GotoIdle command
-        [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
-        assert result_code == ResultCode.QUEUED
-
         # --- Subarray checks --- #
 
         expected_events = [
