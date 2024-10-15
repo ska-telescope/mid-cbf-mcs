@@ -359,6 +359,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._eth_100g_thread_event,
                     ],
                 )
+                self._read_eth_100g_thread.start()
 
                 self._subscribe_change_events()
             except tango.DevFailed as df:
