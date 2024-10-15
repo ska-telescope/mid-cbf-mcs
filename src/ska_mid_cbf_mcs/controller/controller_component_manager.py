@@ -158,7 +158,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in all_fqdns.items():
-            self.logger.debug(f"All {name} FQDNs: {value}")
+            self.logger.info(f"All {name} FQDNs: {value}")
 
     def _set_used_fqdns(self: ControllerComponentManager) -> None:
         """
@@ -218,7 +218,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in used_fqdns.items():
-            self.logger.debug(f"Used {name} FQDNs: {value}")
+            self.logger.info(f"Used {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -389,6 +389,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         for fqdn in self._subarray_fqdns_all:
             if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
+                init_success = False
+
+        for fqdn in self._vcc_fqdns_all:
+            if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
 
         for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
@@ -566,8 +570,6 @@ class ControllerComponentManager(CbfComponentManager):
         for fqdn in self._vcc_fqdn:
             try:
                 self.logger.debug(f"Trying connection to {fqdn}")
-                self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
-
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
