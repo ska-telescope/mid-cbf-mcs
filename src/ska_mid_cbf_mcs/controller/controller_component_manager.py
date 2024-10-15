@@ -395,6 +395,10 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
 
+        for fqdn in self._fsp_fqdns_all:
+            if not self._init_device_proxy(fqdn=fqdn):
+                init_success = False
+
         for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
             if not self._init_device_proxy(fqdn=fqdn, subscribe=True):
                 init_success = False
@@ -569,7 +573,6 @@ class ControllerComponentManager(CbfComponentManager):
         # Set VCC values
         for fqdn in self._vcc_fqdn:
             try:
-                self.logger.debug(f"Trying connection to {fqdn}")
                 proxy = self._proxies[fqdn]
                 vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
