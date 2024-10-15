@@ -668,8 +668,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp[fsp_id],
-                    custom_matcher=custom,
+                    device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
