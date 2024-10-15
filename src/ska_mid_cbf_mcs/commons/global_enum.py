@@ -232,7 +232,7 @@ def calculate_dish_sample_rate(
     )
 
 
-def get_coarse_frequency_slice_channels(
+def get_coarse_channels(
     start_freq: int, end_freq: int, wb_shift: int
 ) -> list[int]:
     """

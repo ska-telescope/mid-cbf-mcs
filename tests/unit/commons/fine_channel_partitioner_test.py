@@ -15,7 +15,7 @@ import os
 import pytest
 
 from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
-    get_coarse_frequency_slice_channels,
+    get_coarse_channels,
     partition_spectrum_to_frequency_slices,
 )
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -50,7 +50,7 @@ valid_frequency_band_name = "1"
 
 def test_get_coarse_channels_invalid_args():
     with pytest.raises(Exception):
-        get_coarse_frequency_slice_channels(
+        get_coarse_channels(
             start_freq=1, end_freq=0, wb_shift=0
         )
 
@@ -66,7 +66,7 @@ def test_get_coarse_channels_valid():
             expected_number_of_channels = (
                 end_channel_index - start_channel_index + 1
             )
-            actual_coarse_channels = get_coarse_frequency_slice_channels(
+            actual_coarse_channels = get_coarse_channels(
                 start_channel[0], end_channel[1], 0
             )
             print(

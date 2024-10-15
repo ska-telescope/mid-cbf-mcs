@@ -8,7 +8,7 @@ from collections import defaultdict
 from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
     const,
-    get_coarse_frequency_slice_channels,
+    get_coarse_channels,
     get_end_frequency,
     scan_configuration_supported_value,
 )
@@ -722,7 +722,7 @@ class SubarrayScanConfigurationValidator:
         """
         # check if we have enough FSP for the given Frequency Band
         end_freq = get_end_frequency(start_freq, channel_width, channel_count)
-        coarse_channels = get_coarse_frequency_slice_channels(
+        coarse_channels = get_coarse_channels(
             start_freq, end_freq, wb_shift=0
         )
 

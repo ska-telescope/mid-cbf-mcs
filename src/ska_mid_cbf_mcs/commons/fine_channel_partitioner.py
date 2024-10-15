@@ -18,7 +18,7 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     calculate_dish_sample_rate,
     const,
     freq_band_dict,
-    get_coarse_frequency_slice_channels,
+    get_coarse_channels,
     get_end_frequency,
 )
 
@@ -208,7 +208,7 @@ def partition_spectrum_to_frequency_slices(
         raise ValueError(f"band_name not in {band_names}")
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
-    coarse_channels = get_coarse_frequency_slice_channels(
+    coarse_channels = get_coarse_channels(
         start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift
     )
     if len(fsp_ids) < len(coarse_channels):
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     print(f"total bandwidth          : {TOTAL_BWIDTH} Hz")
     print(f"total streams            : {STREAMS}")
 
-    coarse_channels = get_coarse_frequency_slice_channels(
+    coarse_channels = get_coarse_channels(
         START_FREQ, END_FREQ, WB_SHIFT
     )
 
