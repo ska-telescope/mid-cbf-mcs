@@ -219,7 +219,6 @@ def partition_spectrum_to_frequency_slices(
     fs_infos = {}
     first_sdp_channel_id = 0
     for index, fs in enumerate(coarse_channels):
-        # determine center frequency of first channel
         fs_info = {}
         fs_info["fs_id"] = fs
         fs_info["fsp_id"] = fsp_ids[index]
@@ -231,6 +230,7 @@ def partition_spectrum_to_frequency_slices(
         ) - _k_dependent_fs_center(fs, band_name, k_value)
 
         if index == 0:
+            # determine center frequency of first coarse channel
             # need to base our start from the starting frequency
             fs_info["start_ch"] = _round_to_nearest(
                 _find_fine_channel(
