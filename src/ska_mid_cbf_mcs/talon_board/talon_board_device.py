@@ -21,6 +21,7 @@ from tango import (
     DevVarBooleanArray,
     DevVarFloatArray,
     DevVarShortArray,
+    DevVarULongArray,
     TimeVal,
 )
 from tango.server import attribute, device_property
@@ -870,6 +871,90 @@ class TalonBoard(CbfDevice):
         :return: True if any temperature warning is set
         """
         return self.component_manager.ltm_temperature_warning()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_0 counters",
+        doc="a list of counters at the 100g ethernet input",
+    )
+    def eth100g0Counters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of counters at the 100g ethernet input
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
+        """
+        return self.component_manager.eth100g_0_counters()
+
+    @attribute(
+        dtype=bool,
+        label="100g_eth_0 data flow active",
+        doc="True if there is data flowing at the 100g ethernet input",
+    )
+    def eth100g0DataFlowActive(self: TalonBoard) -> DevBoolean:
+        """
+        Returns True if there is data flowing at the 100g ethernet
+        input.
+        """
+        return self.component_manager.eth100g_0_data_flow_active()
+
+    @attribute(
+        dtype=bool,
+        label="100g_eth_0 has data error",
+        doc="True if any error counter is non-zero at the 100g ethernet input",
+    )
+    def eth100g0HasDataError(self: TalonBoard) -> DevBoolean:
+        """
+        Returns True if any error counter is non-zero at the 100g
+        ethernet input. Error counters include CRC error,
+        oversized packets, and fragmented packets.
+        """
+        return self.component_manager.eth100g_0_has_data_error()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_1 counters",
+        doc="a list of counters at the 100g ethernet output",
+    )
+    def eth100g1Counters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of counters at the 100g ethernet output
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
+        """
+        return self.component_manager.eth100g_1_counters()
+
+    @attribute(
+        dtype=bool,
+        label="100g_eth_1 data flow active",
+        doc="True if there is data flowing at the 100g ethernet output",
+    )
+    def eth100g1DataFlowActive(self: TalonBoard) -> DevBoolean:
+        """
+        Returns True if there is data flowing at the 100g ethernet
+        output.
+        """
+        return self.component_manager.eth100g_1_data_flow_active()
+
+    @attribute(
+        dtype=bool,
+        label="100g_eth_1 has data error",
+        doc="True if any error counter is non-zero at the 100g ethernet output",
+    )
+    def eth100g1HasDataError(self: TalonBoard) -> DevBoolean:
+        """
+        Returns True if any error counter is non-zero at the 100g
+        ethernet input. Error counters include CRC error,
+        oversized packets, and fragmented packets.
+        """
+        return self.component_manager.eth100g_1_has_data_error()
 
     # --------------
     # Initialization
