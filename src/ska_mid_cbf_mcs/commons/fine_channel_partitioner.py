@@ -50,7 +50,7 @@ def _find_fine_channel(
             -const.NUM_FINE_CHANNELS // 2
             + const.NUM_CHANNELS_PER_SPEAD_STREAM * n
         )
-        center_f = _nominal_fs_spacing(fs) + channel_width * n2
+        center_f = _nominal_fs_center_freq(fs) + channel_width * n2
         diff = abs(shifted_target_freq - center_f)
         if last is None or diff < last:
             channel = n2
@@ -63,7 +63,7 @@ def _find_fine_channel(
 
 
 # Used for getting the Center Frequency in Digitized Bandwidth
-def _nominal_fs_spacing(fs_id: int) -> int:
+def _nominal_fs_center_freq(fs_id: int) -> int:
     """
     Find the nomninal center frequency slice for a given frequency slice
 
@@ -73,7 +73,7 @@ def _nominal_fs_spacing(fs_id: int) -> int:
     return fs_id * const.FS_BW
 
 
-def _k_dependent_fs_center(fs_id: int, band_name: str, k: int) -> int:
+def _dish_dependent_fs_center_freq(fs_id: int, band_name: str, k: int) -> int:
     """
     find the K-dpendent center frequency for a given frequency slice
 
@@ -225,9 +225,9 @@ def partition_spectrum_to_frequency_slices(
 
         # Determine major shift
         # vcc_downshift_freq = nominal_fsn_center_freq - k_dependent_fs_center_freq
-        fs_info["vcc_downshift_freq"] = _nominal_fs_spacing(
+        fs_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
             fs
-        ) - _k_dependent_fs_center(fs, band_name, k_value)
+        ) - _dish_dependent_fs_center_freq(fs, band_name, k_value)
 
         if index == 0:
             # determine center frequency of first coarse channel
@@ -238,7 +238,7 @@ def partition_spectrum_to_frequency_slices(
                 )
             )
             fs_info["start_ch_freq"] = (
-                _nominal_fs_spacing(fs) + fs_info["start_ch"] * channel_width
+                _nominal_fs_center_freq(fs) + fs_info["start_ch"] * channel_width
             )
 
             # determine minor shift
@@ -253,14 +253,14 @@ def partition_spectrum_to_frequency_slices(
 
             # determine start channel
             fs_info["start_ch_exact"] = (
-                fs_info["start_ch_freq"] - _nominal_fs_spacing(fs)
+                fs_info["start_ch_freq"] - _nominal_fs_center_freq(fs)
             ) / channel_width
             # round to nearest group of const.NUM_CHANNELS_PER_SPEAD_STREAM
             fs_info["start_ch"] = _round_to_nearest(
                 round(fs_info["start_ch_exact"])
             )
 
-            nearest_to_start_ch = _nominal_fs_spacing(fs) + (
+            nearest_to_start_ch = _nominal_fs_center_freq(fs) + (
                 fs_info["start_ch"] * channel_width
             )
 
@@ -301,7 +301,7 @@ def partition_spectrum_to_frequency_slices(
 
         fs_info["end_ch_freq"] = (
             (fs_info["end_ch"] * channel_width)
-            + _nominal_fs_spacing(fs)
+            + _nominal_fs_center_freq(fs)
             + fs_info["alignment_shift_freq"]
         )
         # determine other things, (bandwidth, etc)
