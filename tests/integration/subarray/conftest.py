@@ -36,7 +36,7 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
                 1: FspModes.CORR.value
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
             "alt_params": {
-                "configure_scan_file": "ConfigureScan_basic_CORR_alt.json",
+                "configure_scan_file": "ConfigureScan_basic_CORR_alt2.json",
                 "dish_ids": ["SKA001"],
                 "vcc_ids": [
                     1
