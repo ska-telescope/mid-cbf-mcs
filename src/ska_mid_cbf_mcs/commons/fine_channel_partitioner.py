@@ -75,10 +75,10 @@ def _nominal_fs_center_freq(fs_id: int) -> int:
 
 def _dish_dependent_fs_center_freq(fs_id: int, band_name: str, k: int) -> int:
     """
-    find the K-dpendent center frequency for a given frequency slice
+    find the dish-dependent center frequency for a given frequency slice
 
     :param fs_id: the frequency slice id
-    :param k: the channelisation coefficient
+    :param k: non-negative integer used in the calculation of the dish sample rate.
     :return: the k-dependent frequency slice center frequency (Hz)
     """
     # Center frequency of FS n = (sample rate / 20) x n
