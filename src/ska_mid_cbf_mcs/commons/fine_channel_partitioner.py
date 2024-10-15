@@ -73,7 +73,12 @@ def _nominal_fs_center_freq(fs_id: int) -> int:
     return fs_id * const.FS_BW
 
 
-def _dish_dependent_fs_center_freq(fs_id: int, band_name: str, k: int) -> int:
+def _get_dish_sample_rate(freq_band_info: dict, k: int) -> dict:
+    dish_sample_rate = calculate_dish_sample_rate(freq_band_info, k)
+    return dish_sample_rate
+
+
+def _dish_dependent_fs_center_freq(fs_id: int, total_num_fs_for_band: int, dish_sample_rate: dict) -> int:
     """
     find the dish-dependent center frequency for a given frequency slice
 
@@ -82,10 +87,8 @@ def _dish_dependent_fs_center_freq(fs_id: int, band_name: str, k: int) -> int:
     :return: the k-dependent frequency slice center frequency (Hz)
     """
     # Center frequency of FS n = (sample rate / 20) x n
-    freq_band_info = freq_band_dict()[band_name]
-    dish_sample_rate = calculate_dish_sample_rate(freq_band_info, k)
     center_frequency = (
-        dish_sample_rate // freq_band_info["total_num_FSs"]
+        dish_sample_rate // total_num_fs_for_band
     ) * fs_id
     return center_frequency
 
@@ -216,6 +219,9 @@ def partition_spectrum_to_frequency_slices(
             "Too few FSP's assigned for required processing region"
         )
 
+    freq_band_info = freq_band_dict()[band_name]
+    dish_sample_rate = _get_dish_sample_rate(freq_band_info, k_value)
+
     fs_infos = {}
     first_sdp_channel_id = 0
     for index, fs in enumerate(coarse_channels):
@@ -227,7 +233,7 @@ def partition_spectrum_to_frequency_slices(
         # vcc_downshift_freq = nominal_fsn_center_freq - k_dependent_fs_center_freq
         fs_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
             fs
-        ) - _dish_dependent_fs_center_freq(fs, band_name, k_value)
+        ) - _dish_dependent_fs_center_freq(fs, freq_band_info["total_num_FSs"], dish_sample_rate)
 
         if index == 0:
             # determine center frequency of first coarse channel
