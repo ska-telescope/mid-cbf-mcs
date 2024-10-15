@@ -50,9 +50,7 @@ valid_frequency_band_name = "1"
 
 def test_get_coarse_channels_invalid_args():
     with pytest.raises(Exception):
-        get_coarse_channels(
-            start_freq=1, end_freq=0, wb_shift=0
-        )
+        get_coarse_channels(start_freq=1, end_freq=0, wb_shift=0)
 
 
 def test_get_coarse_channels_valid():

@@ -78,7 +78,9 @@ def _get_dish_sample_rate(freq_band_info: dict, k: int) -> dict:
     return dish_sample_rate
 
 
-def _dish_dependent_fs_center_freq(fs_id: int, total_num_fs_for_band: int, dish_sample_rate: dict) -> int:
+def _dish_dependent_fs_center_freq(
+    fs_id: int, total_num_fs_for_band: int, dish_sample_rate: dict
+) -> int:
     """
     find the dish-dependent center frequency for a given frequency slice
 
@@ -87,9 +89,7 @@ def _dish_dependent_fs_center_freq(fs_id: int, total_num_fs_for_band: int, dish_
     :return: the k-dependent frequency slice center frequency (Hz)
     """
     # Center frequency of FS n = (sample rate / 20) x n
-    center_frequency = (
-        dish_sample_rate // total_num_fs_for_band
-    ) * fs_id
+    center_frequency = (dish_sample_rate // total_num_fs_for_band) * fs_id
     return center_frequency
 
 
@@ -233,7 +233,9 @@ def partition_spectrum_to_frequency_slices(
         # vcc_downshift_freq = nominal_fsn_center_freq - k_dependent_fs_center_freq
         fs_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
             fs
-        ) - _dish_dependent_fs_center_freq(fs, freq_band_info["total_num_FSs"], dish_sample_rate)
+        ) - _dish_dependent_fs_center_freq(
+            fs, freq_band_info["total_num_FSs"], dish_sample_rate
+        )
 
         if index == 0:
             # determine center frequency of first coarse channel
@@ -244,7 +246,8 @@ def partition_spectrum_to_frequency_slices(
                 )
             )
             fs_info["start_ch_freq"] = (
-                _nominal_fs_center_freq(fs) + fs_info["start_ch"] * channel_width
+                _nominal_fs_center_freq(fs)
+                + fs_info["start_ch"] * channel_width
             )
 
             # determine minor shift
@@ -362,9 +365,7 @@ if __name__ == "__main__":
     print(f"total bandwidth          : {TOTAL_BWIDTH} Hz")
     print(f"total streams            : {STREAMS}")
 
-    coarse_channels = get_coarse_channels(
-        START_FREQ, END_FREQ, WB_SHIFT
-    )
+    coarse_channels = get_coarse_channels(START_FREQ, END_FREQ, WB_SHIFT)
 
     # Use fs_ids to validate we have enough FSP's for the bandwidth
     print(f"coarse_channels = {coarse_channels}")

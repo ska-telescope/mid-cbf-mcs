@@ -722,9 +722,7 @@ class SubarrayScanConfigurationValidator:
         """
         # check if we have enough FSP for the given Frequency Band
         end_freq = get_end_frequency(start_freq, channel_width, channel_count)
-        coarse_channels = get_coarse_channels(
-            start_freq, end_freq, wb_shift=0
-        )
+        coarse_channels = get_coarse_channels(start_freq, end_freq, wb_shift=0)
 
         if len(fsp_given) < len(coarse_channels):
             msg = (
