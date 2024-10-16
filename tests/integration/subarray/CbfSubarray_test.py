@@ -766,7 +766,7 @@ class TestCbfSubarray:
             )
 
         controller.validateSupportedConfiguration = False
-        try: 
+        try:
             # Issue ConfigureScan command
             # ConfigureScan should work with less restrictive checking
             [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
