@@ -188,9 +188,9 @@ configurescan_validation_rules_data = {
 
                 * Entire processing region must fall within 0 Hz to 1,981,808,640 Hz
 
-                * Required bandwidth [``start_freq`` - (1/2 * ``start_freq``) +
-                (``channel_width`` * ``channel_count``)] must require the exact
-                number of FSP's provided in ``fsp_ids``
+                * Required bandwidth [``start_freq`` - (1/2 * ``start_freq``) + 
+                  (``channel_width`` * ``channel_count``)] must require the
+                  exact number of FSP's provided in ``fsp_ids``
 
                 """),
             "Comment": cleandoc(
