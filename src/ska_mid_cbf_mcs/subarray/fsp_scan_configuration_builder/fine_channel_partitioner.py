@@ -344,7 +344,12 @@ def partition_spectrum_to_frequency_slices(
         #
         # See technote on these calculations:
         # "Derivation of First Order Delay Polynomials... .docx" attatched to
-        # epic: CIP-2145
+        # epic: CIP-2145 in JIRA
+        # https://jira.skatelescope.org/browse/CIP-2145
+        #
+        # Also note: that the freq_down_shift sign changes from the
+        # calculations in the technote (negative shift value) vs the firmware
+        # Jupiter Notebooks (positive shift value)
         #
         fsp_info["freq_scfo_shift"] = _dish_dependent_fs_center_freq(
             fs, freq_band_info["total_num_FSs"], dish_sample_rate
