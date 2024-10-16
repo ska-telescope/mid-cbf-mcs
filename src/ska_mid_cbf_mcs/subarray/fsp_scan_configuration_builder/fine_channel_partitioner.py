@@ -263,7 +263,7 @@ def partition_spectrum_to_frequency_slices(
         else:
             # center frequency first ch FSn = one channel up from the previous
             fsp_info["start_ch_freq"] = (
-                fsp_infos[fsp_ids[index] - 1]["end_ch_freq"] + channel_width
+                fsp_infos[fsp_ids[index - 1]]["end_ch_freq"] + channel_width
             )
 
             # determine start channel
@@ -372,7 +372,7 @@ def partition_spectrum_to_frequency_slices(
 # EXAMPLE INPUTS
 ##############################################################################
 if __name__ == "__main__":
-    fsp_ids = [5, 6, 7, 8]
+    fsp_ids = [1, 3, 5, 7]
     START_FREQ = int(297271296)
     # WB_SHIFT = int(
     #    52.7e6
