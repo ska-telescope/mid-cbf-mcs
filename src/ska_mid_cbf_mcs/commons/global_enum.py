@@ -240,7 +240,7 @@ def get_coarse_channels(
 
     :param start_freq: Start frequency of the processing region (Hz)
     :param end_freq: End frequency of the processing region (Hz)
-    :praam wb_shift: Wideband shift (Hz)
+    :param wb_shift: Wideband shift (Hz)
     :return: A list of coarse frequency slice id's
 
     :raise ValueError: if start_freq is greater than end_freq

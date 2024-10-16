@@ -134,7 +134,7 @@ configurescan_validation_rules_data = {
                 
                 * ``start_channel_id``'s must be multiples of 20
                 
-                * At most 20 chanels can be sent to the same port per host
+                * At most 20 channels can be sent to the same port per host
 
                 """),
             "Comment": "",
