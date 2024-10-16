@@ -226,16 +226,16 @@ def partition_spectrum_to_frequency_slices(
     freq_band_info = freq_band_dict()[band_name]
     dish_sample_rate = _get_dish_sample_rate(freq_band_info, k_value)
 
-    fs_infos = {}
+    fsp_infos = {}
     first_sdp_channel_id = 0
     for index, fs in enumerate(coarse_channels):
-        fs_info = {}
-        fs_info["fs_id"] = fs
-        fs_info["fsp_id"] = fsp_ids[index]
+        fsp_info = {}
+        fsp_info["fs_id"] = fs
+        fsp_info["fsp_id"] = fsp_ids[index]
 
         # Determine major shift
-        # vcc_downshift_freq = nominal_fsn_center_freq - k_dependent_fs_center_freq
-        fs_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
+        # vcc_downshift_freq = nominal_fsn_center_freq - _dish_dependent_fs_center_freq
+        fsp_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
             fs
         ) - _dish_dependent_fs_center_freq(
             fs, freq_band_info["total_num_FSs"], dish_sample_rate
@@ -244,103 +244,106 @@ def partition_spectrum_to_frequency_slices(
         if index == 0:
             # determine center frequency of first coarse channel
             # need to base our start from the starting frequency
-            fs_info["start_ch"] = _round_to_nearest(
+            fsp_info["start_ch"] = _round_to_nearest(
                 _find_fine_channel(
                     start_freq, channel_width, wideband_shift, fs
                 )
             )
-            fs_info["start_ch_freq"] = (
+            fsp_info["start_ch_freq"] = (
                 _nominal_fs_center_freq(fs)
-                + fs_info["start_ch"] * channel_width
+                + fsp_info["start_ch"] * channel_width
             )
 
             # determine minor shift
-            fs_info["alignment_shift_freq"] = (
-                start_freq - wideband_shift - fs_info["start_ch_freq"]
+            fsp_info["alignment_shift_freq"] = (
+                start_freq - wideband_shift - fsp_info["start_ch_freq"]
             )
         else:
             # center frequency first ch FSn = one channel up from the previous
-            fs_info["start_ch_freq"] = (
-                fs_infos[fsp_ids[index] - 1]["end_ch_freq"] + channel_width
+            fsp_info["start_ch_freq"] = (
+                fsp_infos[fsp_ids[index] - 1]["end_ch_freq"] + channel_width
             )
 
             # determine start channel
-            fs_info["start_ch_exact"] = (
-                fs_info["start_ch_freq"] - _nominal_fs_center_freq(fs)
+            fsp_info["start_ch_exact"] = (
+                fsp_info["start_ch_freq"] - _nominal_fs_center_freq(fs)
             ) / channel_width
             # round to nearest group of const.NUM_CHANNELS_PER_SPEAD_STREAM
-            fs_info["start_ch"] = _round_to_nearest(
-                round(fs_info["start_ch_exact"])
+            fsp_info["start_ch"] = _round_to_nearest(
+                round(fsp_info["start_ch_exact"])
             )
 
             nearest_to_start_ch = _nominal_fs_center_freq(fs) + (
-                fs_info["start_ch"] * channel_width
+                fsp_info["start_ch"] * channel_width
             )
 
             # Determine minor shift
-            fs_info["alignment_shift_freq"] = (
-                fs_info["start_ch_freq"] - nearest_to_start_ch
+            fsp_info["alignment_shift_freq"] = (
+                fsp_info["start_ch_freq"] - nearest_to_start_ch
             )
 
         # Combine shift
-        fs_info["total_shift_freq"] = (
-            fs_info["vcc_downshift_freq"] + fs_info["alignment_shift_freq"]
+        fsp_info["total_shift_freq"] = (
+            fsp_info["vcc_downshift_freq"] + fsp_info["alignment_shift_freq"]
         )
 
         # determine end channel
         if index == (len(coarse_channels) - 1):
-            # end channel is based off of the remaining channels we requested
-            # for the processing region
-            fs_info["end_ch"] = (
+            # very last end channel is based off of the remaining channels we
+            # requested for the processing region
+            fsp_info["end_ch"] = (
                 channel_count
-                - (_sum_of_channels(fs_infos) - fs_info["start_ch"])
+                - (_sum_of_channels(fsp_infos) - fsp_info["start_ch"])
                 - 1
             )
         else:
             # We go to the end of the FS slice
-            fs_info["end_ch_exact"] = (
-                const.HALF_FS_BW - fs_info["alignment_shift_freq"]
+            fsp_info["end_ch_exact"] = (
+                const.HALF_FS_BW - fsp_info["alignment_shift_freq"]
             ) / channel_width
-            fs_info["end_ch"] = round(fs_info["end_ch_exact"])
+            fsp_info["end_ch"] = round(fsp_info["end_ch_exact"])
 
         # Change end channel so our number of channels will be a multiple of
         # the const.NUM_CHANNELS_PER_SPEAD_STREAM
-        fs_info["end_ch"] = _find_end_channel_for_spead_stream(
-            fs_info["start_ch"], fs_info["end_ch"]
+        fsp_info["end_ch"] = _find_end_channel_for_spead_stream(
+            fsp_info["start_ch"], fsp_info["end_ch"]
         )
 
-        # Determine number of channels
-        fs_info["num_channels"] = fs_info["end_ch"] - fs_info["start_ch"] + 1
+        # Determine number of channels for this FS
+        fsp_info["num_channels"] = (
+            fsp_info["end_ch"] - fsp_info["start_ch"] + 1
+        )
 
-        fs_info["end_ch_freq"] = (
-            (fs_info["end_ch"] * channel_width)
+        # the last channel frequency
+        fsp_info["end_ch_freq"] = (
+            (fsp_info["end_ch"] * channel_width)
             + _nominal_fs_center_freq(fs)
-            + fs_info["alignment_shift_freq"]
+            + fsp_info["alignment_shift_freq"]
         )
         # determine other things, (bandwidth, etc)
-        fs_info["b_width"] = fs_info["num_channels"] * channel_width
+        fsp_info["b_width"] = fsp_info["num_channels"] * channel_width
 
         # determine first SDP channels
         # Sequential from 0 from all channels for all processed fs's
-        fs_info["sdp_start_channel_id"] = first_sdp_channel_id
-        first_sdp_channel_id += fs_info["num_channels"]
-        fs_info["sdp_end_channel_id"] = first_sdp_channel_id - 1
+        fsp_info["sdp_start_channel_id"] = first_sdp_channel_id
+        first_sdp_channel_id += fsp_info["num_channels"]
+        fsp_info["sdp_end_channel_id"] = first_sdp_channel_id - 1
 
-        fs_info["fsp_start_ch"] = (
-            fs_info["start_ch"] + const.NUM_FINE_CHANNELS // 2
+        fsp_info["fsp_start_ch"] = (
+            fsp_info["start_ch"] + const.NUM_FINE_CHANNELS // 2
         )
-        fs_info["fsp_end_ch"] = (
-            fs_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
+        fsp_info["fsp_end_ch"] = (
+            fsp_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
         )
 
         # sort the keys
-        fs_info_Keys = list(fs_info.keys())
+        fs_info_Keys = list(fsp_info.keys())
         fs_info_Keys.sort()
-        sorted_fs_info = {i: fs_info[i] for i in fs_info_Keys}
+        sorted_fs_info = {i: fsp_info[i] for i in fs_info_Keys}
 
-        fs_infos.update({fsp_ids[index]: sorted_fs_info})
+        fsp_infos.update({fsp_ids[index]: sorted_fs_info})
 
-    return fs_infos
+    return fsp_infos
 
 
 # EXAMPLE INPUTS
@@ -392,31 +395,33 @@ if __name__ == "__main__":
 
     sum_of_result_channels = 0
     expect_start_f = START_FREQ
-    for fsp_id, fs_info in results.items():
-        coarse_ch = fs_info["fs_id"]
+    for fsp_id, fsp_info in results.items():
+        coarse_ch = fsp_info["fs_id"]
         sum_of_result_channels = (
-            sum_of_result_channels + fs_info["num_channels"]
+            sum_of_result_channels + fsp_info["num_channels"]
         )
 
         start_f = (
             WB_SHIFT
             + coarse_ch * const.FS_BW
-            + fs_info["alignment_shift_freq"]
-            + fs_info["start_ch"] * const.FINE_CHANNEL_WIDTH
+            + fsp_info["alignment_shift_freq"]
+            + fsp_info["start_ch"] * const.FINE_CHANNEL_WIDTH
         )
         end_f = (
             WB_SHIFT
             + coarse_ch * const.FS_BW
-            + fs_info["alignment_shift_freq"]
-            + fs_info["end_ch"] * const.FINE_CHANNEL_WIDTH
+            + fsp_info["alignment_shift_freq"]
+            + fsp_info["end_ch"] * const.FINE_CHANNEL_WIDTH
         )
         print(
-            f'fsp_id:{fsp_id} {coarse_ch:2}: start = ch {fs_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fs_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
+            f'fsp_id:{fsp_id} {coarse_ch:2}: start = ch {fsp_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fsp_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
         )
 
-        assert (fs_info["start_ch"]) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
         assert (
-            fs_info["end_ch"] + 1
+            fsp_info["start_ch"]
+        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        assert (
+            fsp_info["end_ch"] + 1
         ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
 
         expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
