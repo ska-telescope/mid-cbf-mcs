@@ -34,7 +34,7 @@ def _find_fine_channel(
     given channel width
 
     :param target_center_freq: Frequency of the center of the channel we
-    want to locate
+    want to locate (Hz)
     :param channel_width: Width of a fine channel
     :param fs: Frequency Slice ID
     :raises ValueError: if the function cannot find a fine channel close to the
@@ -156,7 +156,7 @@ def partition_spectrum_to_frequency_slices(
     determine the channelization information based on the calculations in
     https://confluence.skatelescope.org/pages/viewpage.action?pageId=265843120
 
-    :param fsp_ids: list of available fsp's to assign fs channels to
+    :param fsp_ids: list of available fsp's to assign fs channels to (1-based index)
     :param start_freq: the center frequency (Hz) of the first channel
     :param channel_width: the width (Hz) of a fine channel
     :param channel_count: the number of channels in the processing region
@@ -177,9 +177,9 @@ def partition_spectrum_to_frequency_slices(
             "end_ch_freq": 495392160,
             "freq_down_shift": -181728
             "freq_scfo_shift": 10.2
-            "fs_id": 2,
+            "fs_id": 2,   # frequency slice id, 0-based index
             "fsp_end_ch": 14799,
-            "fsp_id": 1,
+            "fsp_id": 1,  # frequency slice processor id, 1-based index
             "fsp_start_ch": 60,
             "num_channels": 14740,
             "sdp_start_channel_id": 0,
