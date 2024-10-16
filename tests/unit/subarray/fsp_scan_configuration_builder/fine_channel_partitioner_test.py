@@ -14,10 +14,10 @@ import os
 
 import pytest
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
-from ska_mid_cbf_mcs.commons.global_enum import const
 
 # Paths
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -30,6 +30,7 @@ valid_wb_shift = int(52.7e6)
 valid_channel_count = 58980
 valid_k_value = 1000
 valid_frequency_band_name = "1"
+
 
 @pytest.mark.parametrize(
     "parameters",

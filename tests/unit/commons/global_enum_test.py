@@ -16,6 +16,7 @@ coarse_channel_boundaries = [
     (1684537344, 1882718207),
 ]
 
+
 def test_get_coarse_channels_invalid_args():
     with pytest.raises(ValueError):
         get_coarse_channels(start_freq=1, end_freq=0, wb_shift=0)
@@ -43,4 +44,3 @@ def test_get_coarse_channels_valid():
             assert actual_coarse_channels == list(
                 range(start_channel_index, end_channel_index + 1)
             )
-
