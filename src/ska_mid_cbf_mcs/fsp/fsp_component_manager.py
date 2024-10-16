@@ -286,9 +286,6 @@ class FspComponentManager(CbfComponentManager):
             self.logger.error(f"FSP already belongs to subarray {subarray_id}")
             return False
 
-        self.logger.info(
-            f"Adding subarray {subarray_id} to subarray membership"
-        )
         return True
 
     def _function_mode_subarray_online(
@@ -398,6 +395,8 @@ class FspComponentManager(CbfComponentManager):
                 status=TaskStatus.FAILED,
             )
             return
+
+        self.logger.info(f"Adding subarray {argin} to subarray membership.")
 
         self.subarray_membership.append(argin)
         self.device_attr_change_callback(
@@ -556,10 +555,10 @@ class FspComponentManager(CbfComponentManager):
 
         self.subarray_membership.remove(argin)
         self.device_attr_change_callback(
-            "subarrayMembership", self.subarray_membership
+            "subarrayMembership", list(self.subarray_membership)
         )
         self.device_attr_archive_callback(
-            "subarrayMembership", self.subarray_membership
+            "subarrayMembership", list(self.subarray_membership)
         )
 
         # If no current subarray membership, reset function mode to IDLE
