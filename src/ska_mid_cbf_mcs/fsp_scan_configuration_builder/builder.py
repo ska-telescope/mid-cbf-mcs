@@ -125,7 +125,7 @@ class FspScanConfigurationBuilder:
         # vcc_id_to_rdt_freq_shifts are the shift values needed by the
         # Resampler Delay Tracker (rdt) for each vcc of the FSP:
         # freq_down_shift  - the the shift to move the FS into the center of the
-        #                    digitized requency (k dependent)
+        #                    digitized frequency
         # freq_align_shift - the shift to align channels between FSs
         # freq_wb_shift    - the wideband shift
         # freq_scfo_shift  - the frequency shift required due to SCFO sampling
@@ -169,18 +169,16 @@ class FspScanConfigurationBuilder:
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str] = {}
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_down_shift"
-                ] = vcc_to_fs_infos[vcc_id][fsp_id]["vcc_downshift_freq"]
+                ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_down_shift"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_align_shift"
                 ] = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_wb_shift"
                 ] = self.wideband_shift
-                # Note: don't have the info to calculate freq_scfo_shift here,
-                # will be added further in processing at
-                # fsp_corr_subarry_component_manager._build_hps_fsp_config
-                # because fsp_corr has
-                # resampler_delay_tracker.output_sample_rate value
+                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
+                    "freq_scfo_shift"
+                ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
 
         output_port = (
             processing_region_config["output_port"]

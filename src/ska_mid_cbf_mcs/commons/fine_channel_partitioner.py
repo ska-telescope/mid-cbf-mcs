@@ -75,13 +75,13 @@ def _nominal_fs_center_freq(fs_id: int) -> int:
     return fs_id * const.FS_BW
 
 
-def _get_dish_sample_rate(freq_band_info: dict, k: int) -> dict:
+def _get_dish_sample_rate(freq_band_info: dict, k: int) -> int:
     dish_sample_rate = calculate_dish_sample_rate(freq_band_info, k)
     return dish_sample_rate
 
 
 def _dish_dependent_fs_center_freq(
-    fs_id: int, total_num_fs_for_band: int, dish_sample_rate: dict
+    fs_id: int, total_num_fs_for_band: int, dish_sample_rate: int
 ) -> int:
     """
     find the dish-dependent center frequency for a given frequency slice
@@ -175,6 +175,8 @@ def partition_spectrum_to_frequency_slices(
             "end_ch": 7359,
             "end_ch_exact": 7363.464285714285,
             "end_ch_freq": 495392160,
+            "freq_down_shift": -181728
+            "freq_scfo_shift": 10.2
             "fs_id": 2,
             "fsp_end_ch": 14799,
             "fsp_id": 1,
@@ -334,6 +336,22 @@ def partition_spectrum_to_frequency_slices(
         )
         fsp_info["fsp_end_ch"] = (
             fsp_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
+        )
+
+        # freq_scfo_shift  - the frequency shift required due to SCFO sampling
+        # freq_down_shift  - the the shift to move the FS into the center of the
+        #                    digitized frequency
+        #
+        # See technote on these calculations:
+        # "Derivation of First Order Delay Polynomials... .docx" attatched to
+        # epic: CIP-2145
+        #
+        fsp_info["freq_scfo_shift"] = _dish_dependent_fs_center_freq(
+            fs, freq_band_info["total_num_FSs"], dish_sample_rate
+        ) - _nominal_fs_center_freq(fs)
+
+        fsp_info["freq_down_shift"] = (
+            -fs * dish_sample_rate / freq_band_info["total_num_FSs"]
         )
 
         # sort the keys
