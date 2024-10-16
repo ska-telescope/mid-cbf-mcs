@@ -167,7 +167,7 @@ configurescan_validation_rules_data = {
         },
         {
             "Scan Configuration Parameter": "search_window",
-            "AA4 Ranges (see TM)": "",
+            "AA4 Ranges (see TM)": "See TM",
             "Supported": "None",
             "Comment": cleandoc(
                 """
@@ -203,7 +203,7 @@ configurescan_validation_rules_data = {
         },
         {
             "Scan Configuration Parameter": "vlbi",
-            "AA4 Ranges (see TM)": "",
+            "AA4 Ranges (see TM)": "TBD",
             "Supported": "None",
             "Comment": cleandoc(
                 """
