@@ -183,7 +183,19 @@ class FspScanConfigurationBuilder:
 
         if len(output_port) > 0:
             # Split up the PR output ports according to the start channel ids of
-            # the FSPs
+            # the FSPs.
+            #
+            # fsp_info["sdp_start_channel_id"] is the continuous start channel 
+            # id of the fsp's in a processing region
+            #
+            # Example: PR is sdp_start_channel_id = 0, and num_channels = 100,
+            # we have have 3 FSPs (fsp_ids = [3, 4, 5]), the partition gives us:
+            # FSP 3 - sdp_start_channeld_id = 0
+            # FSP 4 - sdp_start_channeld_id = 40
+            # FSP 5 - sdp_start_channeld_id = 80
+            #
+            # the lines of code below collects these into an array ([0, 40, 80])
+            # as well as the last channel + 1 of the PR ([0, 40, 80, 100])
             sdp_start_channel_ids = [
                 fsp_info["sdp_start_channel_id"]
                 for fsp_info in calculated_fsp_infos.values()
@@ -193,12 +205,46 @@ class FspScanConfigurationBuilder:
                 + processing_region_config["channel_count"]
             )
 
+            # We use the array of sdp_start_channel_ids, and split up the 
+            # processing region output_port at the given start_channel_ids,
+            #
+            # continuing from the previous example:
+            #
+            # if processing_region_config["output_port"] = 
+            # [
+            #    [0, 14000],
+            #    [20, 14001],
+            #    [40, 14002],
+            #    [60, 14003],
+            #    [80, 14004],
+            # ]
+            # 
+            # running channel_map.split_channel_map_at() with 
+            # sdp_start_channel_ids = [0, 40, 80, 100] will result in the array:
+            #
+            # [
+            #     [ [0, 14000], [20, 14001] ],
+            #     [ [40, 14002], [60, 14003] ],
+            #     [ [80, 14004] ],
+            # ]
+            #
+            #
             split_output_ports = channel_map.split_channel_map_at(
                 channel_map=processing_region_config["output_port"],
                 channel_groups=sdp_start_channel_ids,
                 rebase_groups=None,
             )
 
+            # Use zip to create a dictionary that maps the fsp to the output map
+            # list above, so the result will be fsp_to_output_port_map =
+            #
+            # {
+            #    3: [ [0, 14000], [20, 14001] ],
+            #    4: [ [40, 14002], [60, 14003] ],
+            #    5: [ [80, 14004] ],
+            # }
+            #
+            # We can then use this dictionary later when building the fsp config
             fsp_to_output_port_map = {}
             for fsp_id, fsp_output_ports in zip(
                 calculated_fsp_ids, split_output_ports
