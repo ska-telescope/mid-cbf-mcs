@@ -48,7 +48,6 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn_dict: dict[str, list[str]],
         config_path_dict: dict[str, str],
         max_capabilities: dict[str, int],
-        lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
         **kwargs: any,
     ) -> None:
@@ -58,15 +57,12 @@ class ControllerComponentManager(CbfComponentManager):
         :param fqdn_dict: dictionary containing FQDNs for the controller's sub-elements
         :param config_path_dict: dictionary containing paths to configuration files
         :param max_capabilities: dictionary containing maximum number of sub-elements
-        :param lru_timeout: timeout in seconds for LRU commands
         :param talondx_component_manager: instance of TalonDxComponentManager
         """
 
         super().__init__(*args, **kwargs)
 
         self.validate_supported_configuration = True
-
-        self._lru_timeout = lru_timeout
 
         (
             self._vcc_fqdn,
@@ -195,9 +191,6 @@ class ControllerComponentManager(CbfComponentManager):
             device_config = tango.utils.obj_2_property(device_config)
             proxy.put_property(device_config)
             proxy.Init()
-
-            if device_type == "talon_lru":
-                proxy.set_timeout_millis(self._lru_timeout * 1000)
 
         except tango.DevFailed as df:
             self.logger.error(
