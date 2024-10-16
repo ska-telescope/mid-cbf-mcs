@@ -186,14 +186,18 @@ configurescan_validation_rules_data = {
                 """
                 Checks:
 
-                * Entire processing region must fall inside specified band
-                
+                * Entire processing region must fall within 0 Hz to 1,981,808,640 Hz
+
                 * Required bandwidth [``start_freq`` - (1/2 * ``start_freq``) +
-                (``channel_width`` * ``channel_count``)] must not require more
-                FSP's than provided in ``fsp_ids``
+                (``channel_width`` * ``channel_count``)] must require the exact
+                number of FSP's provided in ``fsp_ids``
 
                 """),
-            "Comment": "",
+            "Comment": cleandoc(
+                """
+                A warning will be logged when the processing region is outside 
+                the bounds of band 1 and 2 (350,000,000 Hz to 1,760,000,000 Hz)
+                """)
         },
         {
             "Scan Configuration Parameter": "subarray_id",
