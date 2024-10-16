@@ -83,6 +83,14 @@ valid_frequency_band_name = "1"
             "wideband_shift": 0,
             "band_name": "1",
         },
+        {
+            "description": "multiple fsp, non-sequential ids",
+            "start_freq": 693633024,
+            "channel_count": 44220,
+            "fsp_ids": [1, 3, 6, 8],
+            "wideband_shift": int(52.7e6),
+            "band_name": "1",
+        },
     ],
 )
 def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
