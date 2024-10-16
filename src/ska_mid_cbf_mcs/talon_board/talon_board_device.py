@@ -292,7 +292,10 @@ class TalonBoard(CbfDevice):
         return res
 
     @attribute(
-        dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature"
+        dtype=float,
+        label="FPGA Die Temperature",
+        doc="FPGA Die Temperature",
+        format=".3f",
     )
     def fpgaDieTemperature(self: TalonBoard) -> float:
         """
@@ -316,6 +319,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die 12V sensor",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=11.2,
         max_warning=12.8,
         min_alarm=11.0,
@@ -341,6 +345,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die 2.5V sensor",
         doc="Value of the 2.5V FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=2.404,
         max_warning=2.596,
         min_alarm=2.38,
@@ -366,6 +371,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die VCC sensor",
         doc="Value of the VCC FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=0.77,
         max_warning=0.97,
         min_alarm=-0.5,
@@ -388,6 +394,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die VCCIO_SDM sensor",
         doc="Value of the VCCIO_SDM FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=1.71,
         max_warning=1.89,
         min_alarm=-0.50,
@@ -410,6 +417,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die VCCPT sensor",
         doc="Value of the VCCPT FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=1.71,
         max_warning=1.89,
         min_alarm=-0.50,
@@ -432,6 +440,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die VCCERAM sensor",
         doc="Value of the VCCERAM FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=0.87,
         max_warning=0.93,
         min_alarm=-0.50,
@@ -454,6 +463,7 @@ class TalonBoard(CbfDevice):
         label="FPGA Die VCCADC sensor",
         doc="Value of the VCCADC FPGA Die Voltage Sensor",
         unit="V",
+        format=".3f",
         min_warning=1.71,
         max_warning=1.89,
         min_alarm=-0.50,
@@ -475,6 +485,7 @@ class TalonBoard(CbfDevice):
         dtype=float,
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
+        format=".3f",
     )
     def humiditySensorTemperature(self: TalonBoard) -> float:
         """
@@ -489,6 +500,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
+        format=".3f",
     )
     def dimmTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -503,6 +515,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=5,
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
+        format=".3f",
     )
     def mboTxTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -519,6 +532,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=5,
         label="MBO Tx VCC 3.3 Voltages",
         doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
+        format=".3f",
     )
     def mboTxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -583,6 +597,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=5,
         label="MBO Rx VCC 3.3 Voltages",
         doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
+        format=".3f",
     )
     def mboRxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -723,6 +738,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
+        format=".3f",
     )
     def ltmInputVoltage(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -737,6 +753,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
+        format=".3f",
     )
     def ltmOutputVoltage1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -751,6 +768,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
+        format=".3f",
     )
     def ltmOutputVoltage2(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -765,6 +783,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
+        format=".3f",
     )
     def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -779,6 +798,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
+        format=".3f",
     )
     def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -793,6 +813,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
+        format=".3f",
     )
     def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -807,6 +828,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
+        format=".3f",
     )
     def ltmTemperature1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -821,6 +843,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
+        format=".3f",
     )
     def ltmTemperature2(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -876,17 +899,34 @@ class TalonBoard(CbfDevice):
         dtype=[int],
         max_dim_x=4,
         label="100g_eth_0 counters",
-        doc="a list of counters at the 100g ethernet input",
+        doc=(
+            "a list of counters at the 100g ethernet input "
+            "in the following order:\n"
+            "[0] cntr_tx_1519tomaxb\n"
+            "[1] TxFrameOctetsOK\n"
+            "[2] cntr_rx_1519tomaxb\n"
+            "[3] RxFrameOctetsOK\n"
+        ),
     )
     def eth100g0Counters(self: TalonBoard) -> DevVarULongArray:
-        """
-        Returns a list of counters at the 100g ethernet input
-        in the following order:
-        [0] cntr_tx_1519tomaxb
-        [1] TxFrameOctetsOK
-        [2] cntr_rx_1519tomaxb
-        [3] RxFrameOctetsOK
-        """
+        return self.component_manager.eth100g_0_counters()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_0 error counters",
+        doc=(
+            "a list of error counters at the 100g ethernet input "
+            "in the following order:\n"
+            "[0]: number of transmitted frames less than 64 bytes\n"
+            "[1]: number of transmitted oversized frames\n"
+            "[2]: number of transmitted CRC errors\n"
+            "[3]: number of received frames less than 64 bytes\n"
+            "[4]: number of received oversized frames\n"
+            "[5]: number of received CRC errors\n"
+        ),
+    )
+    def eth100g0ErrorCounters(self: TalonBoard) -> DevVarULongArray:
         return self.component_manager.eth100g_0_counters()
 
     @attribute(
@@ -895,40 +935,32 @@ class TalonBoard(CbfDevice):
         doc="True if there is data flowing at the 100g ethernet input",
     )
     def eth100g0DataFlowActive(self: TalonBoard) -> DevBoolean:
-        """
-        Returns True if there is data flowing at the 100g ethernet
-        input.
-        """
         return self.component_manager.eth100g_0_data_flow_active()
 
     @attribute(
         dtype=bool,
         label="100g_eth_0 has data error",
-        doc="True if any error counter is non-zero at the 100g ethernet input",
+        doc=(
+            "True if any error counter is non-zero at the 100g ethernet input"
+        ),
     )
     def eth100g0HasDataError(self: TalonBoard) -> DevBoolean:
-        """
-        Returns True if any error counter is non-zero at the 100g
-        ethernet input. Error counters include CRC error,
-        oversized packets, and fragmented packets.
-        """
         return self.component_manager.eth100g_0_has_data_error()
 
     @attribute(
         dtype=[int],
         max_dim_x=4,
         label="100g_eth_1 counters",
-        doc="a list of counters at the 100g ethernet output",
+        doc=(
+            "a list of counters at the 100g ethernet output "
+            "in the following order:\n"
+            "[0] cntr_tx_1519tomaxb\n"
+            "[1] TxFrameOctetsOK\n"
+            "[2] cntr_rx_1519tomaxb\n"
+            "[3] RxFrameOctetsOK\n"
+        ),
     )
     def eth100g1Counters(self: TalonBoard) -> DevVarULongArray:
-        """
-        Returns a list of counters at the 100g ethernet output
-        in the following order:
-        [0] cntr_tx_1519tomaxb
-        [1] TxFrameOctetsOK
-        [2] cntr_rx_1519tomaxb
-        [3] RxFrameOctetsOK
-        """
         return self.component_manager.eth100g_1_counters()
 
     @attribute(

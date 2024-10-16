@@ -678,6 +678,9 @@ class TalonBoardComponentManager(CbfComponentManager):
     def eth100g_0_counters(self) -> list[int]:
         return self._eth_100g_0_client.get_data_counters()
 
+    def eth100g_0_error_counters(self) -> list[int]:
+        return self._eth_100g_0_client.get_error_counters()
+
     def eth100g_0_data_flow_active(self) -> bool:
         return self._eth_100g_0_client.has_data_flow()
 
@@ -686,6 +689,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def eth100g_1_counters(self) -> list[int]:
         return self._eth_100g_1_client.get_data_counters()
+
+    def eth100g_1_error_counters(self) -> list[int]:
+        return self._eth_100g_1_client.get_error_counters()
 
     def eth100g_1_data_flow_active(self) -> bool:
         return self._eth_100g_1_client.has_data_flow()
