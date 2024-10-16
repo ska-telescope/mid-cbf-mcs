@@ -157,7 +157,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in all_fqdns.items():
-            self.logger.info(f"All {name} FQDNs: {value}")
+            self.logger.debug(f"All {name} FQDNs: {value}")
 
     def _set_used_fqdns(self: ControllerComponentManager) -> None:
         """
@@ -217,7 +217,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in used_fqdns.items():
-            self.logger.info(f"Used {name} FQDNs: {value}")
+            self.logger.debug(f"Used {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -351,8 +351,7 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._write_hw_config(fqdn, proxy, hw_device_type):
                 return False
 
-        # TODO: O(n) device runtime, can optimize?
-        if fqdn in (
+        used_fqdns = set(
             self._vcc_fqdn
             + self._fsp_fqdn
             + self._subarray_fqdn
@@ -360,7 +359,9 @@ class ControllerComponentManager(CbfComponentManager):
             + self._talon_board_fqdn
             + self._power_switch_fqdn
             + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-        ):
+        )
+
+        if fqdn in used_fqdns:
             return self._set_proxy_online(fqdn)
         else:
             return self._set_proxy_not_fitted(fqdn)
