@@ -1271,6 +1271,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         regions and convert to individual FSP configurations.
 
         :param configuration: The Mid.CSP Function specific configurations
+        :raises ValueError: if there is an exception processing any processing
+        regions
         :return: list of Individual FSP configurations
         """
 
@@ -1289,7 +1291,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 wideband_shift=0,
                 frequency_band=common_configuration["frequency_band"],
             )
-            corr_fsp_configs = fsp_config_builder.build()
+            try:
+                corr_fsp_configs = fsp_config_builder.build()
+            except ValueError as ve:
+                msg = f"Failure processing correlation configuration: {ve}"
+                self.logger.error(msg)
+                raise ValueError(msg)
 
             all_fsp_configs.extend(corr_fsp_configs)
 
@@ -1744,10 +1751,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.config_id = str(common_configuration["config_id"])
 
         # --- Convert Processing Regions to FSP configs --- #
-        fsp_configs = self._convert_pr_configs_to_fsp_configs(
-            configuration=configuration,
-            common_configuration=common_configuration,
-        )
+        try:
+            fsp_configs = self._convert_pr_configs_to_fsp_configs(
+                configuration=configuration,
+                common_configuration=common_configuration,
+            )
+        except ValueError as ve:
+            msg = f"Failure to build FSP configurations from processing regions: {ve}"
+            self.logger.error(msg)
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    msg,
+                ),
+            )
+            return
 
         # --- Configure VCC --- #
 

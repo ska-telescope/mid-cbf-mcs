@@ -56,16 +56,22 @@ class FspScanConfigurationBuilder:
 
         :param processing_regions: a list of processing regions to generate configurations from
         :param function_mode: the function mode of the processing regions
+        :raises ValueError: if the list of processing regions contains at least one invalid
+        processing region or other configuration values are not valid
         :return: list of individual FSP configurations for the processing regions
         """
 
         fsp_configurations = []
 
-        for processing_region in processing_regions:
+        for index, processing_region in enumerate(processing_regions):
             # Calculate the fsp configs for the processing region
-            fsp_configuration = self._fsp_config_from_processing_region(
-                processing_region
-            )
+            try:
+                fsp_configuration = self._fsp_config_from_processing_region(
+                    processing_region
+                )
+            except ValueError as ve:
+                msg = f"Failure processing processing region at index {index}: {ve}"
+                raise ValueError(msg)
 
             fsp_configurations.extend(fsp_configuration)
 
@@ -80,6 +86,7 @@ class FspScanConfigurationBuilder:
         :param processing_region_config: The processing region configuration, see telescope model for details
         :param wideband_shift: The wideband shift to apply to the region
         :param function_mode: the function mode to configure the FSP's
+        :raises ValueError: if the processing region or other configuration values are not valid
         :return: list of individual FSP configurations for a processing region
         """
 
@@ -299,9 +306,12 @@ class FspScanConfigurationBuilder:
         return fsp_configs
 
     def build(self: FspScanConfigurationBuilder) -> list[dict]:
-        """_summary_
+        """Builds the individual FSP configurations based on the provided
+        processing region configuration and other necessary config values
+        provided in the initialization of this class.
 
-        :return: _description_
+        :raises ValueError: if values in the configuration are invalid
+        :return: a list of FSP configurations
         """
         fsp_config = self._fsp_config_from_processing_regions(
             self.function_configuration["processing_regions"]

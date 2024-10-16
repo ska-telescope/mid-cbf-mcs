@@ -37,6 +37,8 @@ def _find_fine_channel(
     want to locate
     :param channel_width: Width of a fine channel
     :param fs: Frequency Slice ID
+    :raises ValueError: if the function cannot find a fine channel close to the
+    target_center_freq within the channedl_width
     :return: The channel number (relative to the center of the FS) closest to
     the target frequency.
     """
@@ -161,6 +163,7 @@ def partition_spectrum_to_frequency_slices(
     :param k_value: the channelization coefficient value
     :param wideband_shift: the wideband shift (Hz) to apply to the processing region
     :param band_name: the name of the frequency band
+    :raises ValueError: if input values are not provided or valid
     :return: structure with information about fsp boundaries, see:
         https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
 
