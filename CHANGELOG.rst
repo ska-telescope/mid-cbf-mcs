@@ -16,6 +16,7 @@ UNRELEASED CHANGES
   * fixed bugs affecting talon board device initialization and influxdb queries
   * updated FPGA die voltage labels to be more descriptive
   * updated FPGA die voltage warning and alarm range according to stratix10 documentation
+* CIP-2780 added 100g ethernet monitoring on talon board devices
 
 1.0.0
 ******

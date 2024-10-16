@@ -696,6 +696,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="Fan RPM",
         doc="Fan RPM.",
+        min_alarm=500,
     )
     def fansRpm(self: TalonBoard) -> DevVarShortArray:
         """
@@ -949,6 +950,24 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_0 all Tx counters",
+        doc="the full list of Tx counters at the 100g ethernet input",
+    )
+    def eth100g0AllTxCounters(self: TalonBoard) -> DevVarULongArray:
+        return self.component_manager.eth100g_0_all_tx_counters()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_0 all Rx counters",
+        doc="the full list of Rx counters at the 100g ethernet input",
+    )
+    def eth100g0AllRxCounters(self: TalonBoard) -> DevVarULongArray:
+        return self.component_manager.eth100g_0_all_rx_counters()
+
+    @attribute(
+        dtype=[int],
         max_dim_x=4,
         label="100g_eth_1 counters",
         doc=(
@@ -987,6 +1006,24 @@ class TalonBoard(CbfDevice):
         oversized packets, and fragmented packets.
         """
         return self.component_manager.eth100g_1_has_data_error()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_1 all Tx counters",
+        doc="the full list of Tx counters at the 100g ethernet output",
+    )
+    def eth100g1AllTxCounters(self: TalonBoard) -> DevVarULongArray:
+        return self.component_manager.eth100g_1_all_tx_counters()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_1 all Rx counters",
+        doc="the full list of Rx counters at the 100g ethernet output",
+    )
+    def eth100g1AllRxCounters(self: TalonBoard) -> DevVarULongArray:
+        return self.component_manager.eth100g_1_all_rx_counters()
 
     # --------------
     # Initialization

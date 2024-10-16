@@ -70,6 +70,11 @@ class Eth100gClient:
     def read_eth_100g_stats(self):
         """
         Reads counters from the HPS 100g ethernet device.
+
+        The get_tx_stats and get_rx_stats commands will take a snapshot
+        of the statistics counters and return in a list. The counters are
+        then reset and increment from 0. Therefore the counters are
+        accumulated over the period between consecutive calls.
         """
         try:
             self._tx_stats = self._dp_eth_100g.get_tx_stats()
@@ -90,12 +95,7 @@ class Eth100gClient:
         """
         returns true if the board is receiving data at 100g ethernet input
         """
-        if len(self._tx_stats) == 0 or len(self._rx_stats) == 0:
-            tango.Except.throw_exception(
-                "100g_get_data_counters_failed",
-                f"100g stats are not available for {self._eth_100g_fqdn}.",
-                "get_data_counters()",
-            )
+        self._throw_if_stats_not_available()
         if self._eth_100g_id == 0:  # eth_100g_0
             return (
                 self._tx_stats[self._stats_idx["1519tomaxb"]] > 0
@@ -114,12 +114,7 @@ class Eth100gClient:
         [2]: number of received frames between 1519 to max bytes
         [3]: number of received bytes in frames with no FCS, undersized, oversized, or payload length errors
         """
-        if len(self._tx_stats) == 0 or len(self._rx_stats) == 0:
-            tango.Except.throw_exception(
-                "100g_get_data_counters_failed",
-                f"100g stats are not available for {self._eth_100g_fqdn}.",
-                "get_data_counters()",
-            )
+        self._throw_if_stats_not_available()
         data_counters = [
             self._tx_stats[self._stats_idx["1519tomaxb"]],
             self._txframeoctetsok,
@@ -142,12 +137,7 @@ class Eth100gClient:
         [4]: number of received oversized frames
         [5]: number of received CRC errors
         """
-        if len(self._tx_stats) == 0 or len(self._rx_stats) == 0:
-            tango.Except.throw_exception(
-                "100g_get_error_counters_failed",
-                f"100g stats are not available for {self._eth_100g_fqdn}.",
-                "get_error_counters()",
-            )
+        self._throw_if_stats_not_available()
         err_counters = [
             self._tx_stats[self._stats_idx["fragments"]],
             self._tx_stats[self._stats_idx["oversize"]],
@@ -157,6 +147,31 @@ class Eth100gClient:
             self._rx_stats[self._stats_idx["crcerr"]],
         ]
         return err_counters
+
+    def get_all_tx_counters(self) -> list[int]:
+        """
+        Returns the full list of Tx stats from 100g eth device's
+        get_tx_stats() command.
+        """
+        self._throw_if_stats_not_available()
+        return self._tx_stats
+
+    def get_all_rx_counters(self) -> list[int]:
+        """
+        Returns the full list of Rx stats from 100g eth device's
+        get_rx_stats() command.
+        """
+        self._throw_if_stats_not_available()
+        return self._rx_stats
+
+    def _throw_if_stats_not_available(self) -> None:
+        if len(self._tx_stats) == 0 or len(self._rx_stats) == 0:
+            tango.Except.throw_exception(
+                "100g_get_error_counters_failed",
+                f"100g stats are not available for {self._eth_100g_fqdn}.",
+                "get_error_counters()",
+            )
+        return
 
 
 class TalonBoardComponentManager(CbfComponentManager):
@@ -419,6 +434,8 @@ class TalonBoardComponentManager(CbfComponentManager):
 
             self._eth_100g_thread_event.set()
             self._read_eth_100g_thread.join()
+            self._eth_100g_0_client = None
+            self._eth_100g_1_client = None
 
         self._proxies = {}
         self._talon_sysid_attrs = {}
@@ -687,6 +704,12 @@ class TalonBoardComponentManager(CbfComponentManager):
     def eth100g_0_has_data_error(self) -> bool:
         return self._eth_100g_0_client.has_error()
 
+    def eth100g_0_all_tx_counters(self) -> list[int]:
+        return self._eth_100g_0_client.get_all_tx_counters()
+
+    def eth100g_0_all_rx_counters(self) -> list[int]:
+        return self._eth_100g_0_client.get_all_rx_counters()
+
     def eth100g_1_counters(self) -> list[int]:
         return self._eth_100g_1_client.get_data_counters()
 
@@ -698,6 +721,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def eth100g_1_has_data_error(self) -> bool:
         return self._eth_100g_1_client.has_error()
+
+    def eth100g_1_all_tx_counters(self) -> list[int]:
+        return self._eth_100g_1_client.get_all_tx_counters()
+
+    def eth100g_1_all_rx_counters(self) -> list[int]:
+        return self._eth_100g_1_client.get_all_rx_counters()
 
     # ----------------------------------------------
     # Talon Board Telemetry and Status from Influxdb
