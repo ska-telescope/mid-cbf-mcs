@@ -22,12 +22,12 @@ from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partit
 
 
 class FspScanConfigurationBuilder:
-    function_mode: FspModes
-    function_configuration: dict
-    dish_utils: DISHUtils
-    wideband_shift: int
-    subarray_dish_ids: set
-    frequency_band: str
+    _function_mode: FspModes
+    _function_configuration: dict
+    _dish_utils: DISHUtils
+    _wideband_shift: int
+    _subarray_dish_ids: set
+    _frequency_band: str
 
     def __init__(
         self: FspScanConfigurationBuilder,
@@ -38,16 +38,28 @@ class FspScanConfigurationBuilder:
         wideband_shift: int,
         frequency_band: str,
     ):
-        self.function_mode = function_mode
+        """Constructor for the FspScanConfigurationBuilder. Constructs FSP
+        Configurations from a fuction modes (CORR, PST, etc.) configuration.
+
+        :param self: FspScanConfigurationBuilder object
+        :param function_mode: FSP function mode enum
+        :param function_configuration: dictionary of the Function mode configuration from the input ConfigureScan configuration
+        :param dish_utils: DISHUtils that contains the dish_id, vcc_id, and k_value information
+        :param subarray_dish_ids: List of dish_ids that are a member of the subarray
+        :param wideband_shift: Wideband shift (Hz)
+        :param frequency_band: The name of the frequency band ("1", "2", "5a", etc.)
+        :raises ValueError: If the function_configuration does not contain a "proccessing_regions" key in
+        """
+        self._function_mode = function_mode
         if "processing_regions" not in function_configuration:
             raise ValueError(
                 "Function configuration is missing processing_regions parameter"
             )
-        self.function_configuration = copy.deepcopy(function_configuration)
-        self.dish_utils = dish_utils
-        self.subarray_dish_ids = subarray_dish_ids
-        self.wideband_shift = wideband_shift
-        self.frequency_band = frequency_band
+        self._function_configuration = copy.deepcopy(function_configuration)
+        self._dish_utils = dish_utils
+        self._subarray_dish_ids = subarray_dish_ids
+        self._wideband_shift = wideband_shift
+        self._frequency_band = frequency_band
 
     def _fsp_config_from_processing_regions(
         self: FspScanConfigurationBuilder, processing_regions: list[dict]
@@ -84,7 +96,7 @@ class FspScanConfigurationBuilder:
         """Create a list of FSP configurations for a given processing region config
 
         :param processing_region_config: The processing region configuration, see telescope model for details
-        :param wideband_shift: The wideband shift to apply to the region
+        :param wideband_shift: The wideband shift to apply to the region (Hz)
         :param function_mode: the function mode to configure the FSP's
         :raises ValueError: if the processing region or other configuration values are not valid
         :return: list of individual FSP configurations for a processing region
@@ -99,7 +111,7 @@ class FspScanConfigurationBuilder:
             "receptors" not in processing_region_config
             or len(processing_region_config["receptors"]) == 0
         ):
-            for dish_id in self.subarray_dish_ids:
+            for dish_id in self._subarray_dish_ids:
                 dish_ids.append(dish_id)
         else:
             for dish_id in processing_region_config["receptors"]:
@@ -112,12 +124,12 @@ class FspScanConfigurationBuilder:
                 start_freq=processing_region_config["start_freq"],
                 channel_width=processing_region_config["channel_width"],
                 channel_count=processing_region_config["channel_count"],
-                k_value=self.dish_utils.dish_id_to_k[dish_id],
-                wideband_shift=self.wideband_shift,
-                band_name=self.frequency_band,
+                k_value=self._dish_utils.dish_id_to_k[dish_id],
+                wideband_shift=self._wideband_shift,
+                band_name=self._frequency_band,
             )
             vcc_to_fs_infos[
-                self.dish_utils.dish_id_to_vcc_id[dish_id]
+                self._dish_utils.dish_id_to_vcc_id[dish_id]
             ] = calculated_fsp_infos
 
         calculated_fsp_ids = list(calculated_fsp_infos.keys())
@@ -125,10 +137,10 @@ class FspScanConfigurationBuilder:
         # vcc_id_to_rdt_freq_shifts are the shift values needed by the
         # Resampler Delay Tracker (rdt) for each vcc of the FSP:
         # freq_down_shift  - the the shift to move the FS into the center of the
-        #                    digitized frequency
-        # freq_align_shift - the shift to align channels between FSs
-        # freq_wb_shift    - the wideband shift
-        # freq_scfo_shift  - the frequency shift required due to SCFO sampling
+        #                    digitized frequency (Hz)
+        # freq_align_shift - the shift to align channels between FSs (Hz)
+        # freq_wb_shift    - the wideband shift (Hz)
+        # freq_scfo_shift  - the frequency shift required due to SCFO sampling (Hz)
         #
         # See CIP-2622, or parent epic CIP-2145
         #
@@ -175,7 +187,7 @@ class FspScanConfigurationBuilder:
                 ] = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_wb_shift"
-                ] = self.wideband_shift
+                ] = self._wideband_shift
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_scfo_shift"
                 ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
@@ -263,7 +275,7 @@ class FspScanConfigurationBuilder:
             fsp_config = {}
             # Required values
             fsp_config["fsp_id"] = fsp_id
-            fsp_config["function_mode"] = self.function_mode.name
+            fsp_config["function_mode"] = self._function_mode.name
             fsp_config["frequency_slice_id"] = calculated_fsp_infos[fsp_id][
                 "fs_id"
             ]
@@ -312,6 +324,6 @@ class FspScanConfigurationBuilder:
         :return: a list of FSP configurations
         """
         fsp_config = self._fsp_config_from_processing_regions(
-            self.function_configuration["processing_regions"]
+            self._function_configuration["processing_regions"]
         )
         return fsp_config
