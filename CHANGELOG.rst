@@ -17,6 +17,7 @@ UNRELEASED CHANGES
   * updated FPGA die voltage labels to be more descriptive
   * updated FPGA die voltage warning and alarm range according to stratix10 documentation
 * CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
+* CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
 
 1.0.0
 ******

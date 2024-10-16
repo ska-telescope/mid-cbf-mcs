@@ -36,7 +36,7 @@ class CbfController(CbfDevice):
     CbfController TANGO device class.
 
     Primary point of contact for monitoring and control of Mid.CBF.
-    Implements state and mode indicators, and a set of state transition commmands.
+    Implements state and mode indicators, and a set of state transition commands.
     """
 
     # -----------------
@@ -73,7 +73,7 @@ class CbfController(CbfDevice):
 
     # --- General properties --- #
 
-    LruTimeout = device_property(dtype=("str"))
+    LRCTimeout = device_property(dtype=("str"))
 
     MaxCapabilities = device_property(dtype=("str",))
 
@@ -150,7 +150,7 @@ class CbfController(CbfDevice):
     )
     def maxCapabilities(self: CbfController) -> list[str]:
         """
-        Read maximum number of instances of each capability type, as definied in charts.
+        Read maximum number of instances of each capability type, as defined in charts.
         By default, these include VCC, FSP, and Subarray.
 
         :return: list of maximum number of instances of each capability type
@@ -297,6 +297,7 @@ class CbfController(CbfDevice):
         self._talondx_component_manager = TalonDxComponentManager(
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
@@ -328,9 +329,9 @@ class CbfController(CbfDevice):
             fqdn_dict=fqdn_dict,
             config_path_dict=config_path_dict,
             max_capabilities=self._max_capabilities,
-            lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,
+            lrc_timeout=int(self.LRCTimeout),
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
