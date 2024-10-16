@@ -198,8 +198,6 @@ class TestCbfSubarray:
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
         """
-        # Reset validateSupportedConfiguration
-        controller.validateSupportedConfiguration = True
 
         sub_id = subarray_params["sub_id"]
 
@@ -768,29 +766,33 @@ class TestCbfSubarray:
             )
 
         controller.validateSupportedConfiguration = False
-
-        # Issue ConfigureScan command
-        # ConfigureScan should work with less restrictive checking
-        [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
-            json.dumps(invalid_configuration)
-        )
-        assert result_code == ResultCode.QUEUED
-
-        expected_events = [
-            ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
-            ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
-        ]
-
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                min_n_events=n,
+        try: 
+            # Issue ConfigureScan command
+            # ConfigureScan should work with less restrictive checking
+            [[result_code], [command_id]] = subarray[sub_id].ConfigureScan(
+                json.dumps(invalid_configuration)
             )
+            assert result_code == ResultCode.QUEUED
+
+            expected_events = [
+                ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 2),
+                ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
+            ]
+
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=subarray[sub_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+        except AssertionError as ae:
+            raise ae
+        finally:
+            controller.validateSupportedConfiguration = True
 
         # Issue GotoIdle command
         [[result_code], [command_id]] = subarray[sub_id].GoToIdle()
