@@ -15,7 +15,7 @@ import copy
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.fine_channel_partitioner import (
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
 from ska_mid_cbf_mcs.commons.global_enum import FspModes

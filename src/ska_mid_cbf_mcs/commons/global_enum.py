@@ -243,7 +243,7 @@ def get_coarse_channels(
     :praam wb_shift: Wideband shift (Hz)
     :return: A list of coarse frequency slice id's
 
-    :raise AssertionError: if start_freq is greater than end_freq
+    :raise ValueError: if start_freq is greater than end_freq
     """
     if start_freq > end_freq:
         raise ValueError("start_freq must be <= end_freq")

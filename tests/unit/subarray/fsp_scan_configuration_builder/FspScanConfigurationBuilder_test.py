@@ -19,7 +19,7 @@ import pytest
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.fsp_scan_configuration_builder.builder import (
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder import (
     FspScanConfigurationBuilder as fsp_builder,
 )
 

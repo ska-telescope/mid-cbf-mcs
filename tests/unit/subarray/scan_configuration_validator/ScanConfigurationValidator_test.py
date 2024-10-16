@@ -8,7 +8,7 @@ from logging import getLogger
 import pytest
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 
