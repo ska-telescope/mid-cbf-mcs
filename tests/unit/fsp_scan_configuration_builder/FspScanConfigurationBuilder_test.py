@@ -190,6 +190,4 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_down_shift" in vcc_id_shift_config
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config
-
-                    # Builder does not set this because it doesn't have the info do do so
-                    assert "freq_scfo_shift" not in vcc_id_shift_config
+                    assert "freq_scfo_shift" in vcc_id_shift_config
