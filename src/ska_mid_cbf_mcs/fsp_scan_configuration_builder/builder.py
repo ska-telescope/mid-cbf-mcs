@@ -185,7 +185,7 @@ class FspScanConfigurationBuilder:
             # Split up the PR output ports according to the start channel ids of
             # the FSPs.
             #
-            # fsp_info["sdp_start_channel_id"] is the continuous start channel 
+            # fsp_info["sdp_start_channel_id"] is the continuous start channel
             # id of the fsp's in a processing region
             #
             # Example: PR is sdp_start_channel_id = 0, and num_channels = 100,
@@ -205,12 +205,12 @@ class FspScanConfigurationBuilder:
                 + processing_region_config["channel_count"]
             )
 
-            # We use the array of sdp_start_channel_ids, and split up the 
+            # We use the array of sdp_start_channel_ids, and split up the
             # processing region output_port at the given start_channel_ids,
             #
             # continuing from the previous example:
             #
-            # if processing_region_config["output_port"] = 
+            # if processing_region_config["output_port"] =
             # [
             #    [0, 14000],
             #    [20, 14001],
@@ -218,8 +218,8 @@ class FspScanConfigurationBuilder:
             #    [60, 14003],
             #    [80, 14004],
             # ]
-            # 
-            # running channel_map.split_channel_map_at() with 
+            #
+            # running channel_map.split_channel_map_at() with
             # sdp_start_channel_ids = [0, 40, 80, 100] will result in the array:
             #
             # [
@@ -265,10 +265,19 @@ class FspScanConfigurationBuilder:
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
+
+            # channel_offset flows down to firmware into value channel_id.
+            # channel_id needs to be set such that the 'start' is s
+            # sdp_start_channel_id.
+            #
+            # So channel_id = sdp_start_channel_id - fsp_start_ch,
+            # because the FW will add the channel number (0 to 744)*20  to this
+            # value and put it in the SPEAD packets.
             fsp_config["channel_offset"] = (
                 calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
                 - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
             )
+
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
             ]
@@ -277,7 +286,7 @@ class FspScanConfigurationBuilder:
                 "vcc_id_to_rdt_freq_shifts"
             ] = vcc_id_to_rdt_freq_shifts[fsp_id]
 
-            # Optional values
+            # Optional values:
             if "output_host" in processing_region_config:
                 fsp_config["output_host"] = processing_region_config[
                     "output_host"
