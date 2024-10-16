@@ -341,35 +341,35 @@ class VccComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    def _update_expected_dish_id(
-        self: VccComponentManager,
-    ) -> tuple[bool, str]:
-        """
-        Update HPS WIB's ExpectedDishID with this VCC's dish_id attr.
+    # def _update_expected_dish_id(
+    #     self: VccComponentManager,
+    # ) -> tuple[bool, str]:
+    #     """
+    #     Update HPS WIB's ExpectedDishID with this VCC's dish_id attr.
 
-        :return: A tuple indicating if the update was successful, and an error message if not.
-        """
-        try:
-            # Get WIB FQDN, then proxy.
-            wib_fqdn = self._band_proxies[0].get_property(
-                "WidebandInputBufferFQDN"
-            )["WidebandInputBufferFQDN"][0]
-            wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
+    #     :return: A tuple indicating if the update was successful, and an error message if not.
+    #     """
+    #     try:
+    #         # Get WIB FQDN, then proxy.
+    #         wib_fqdn = self._band_proxies[0].get_property(
+    #             "WidebandInputBufferFQDN"
+    #         )["WidebandInputBufferFQDN"][0]
+    #         wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
 
-            # Get property, then update with vcc_proxy.dishID.
-            old_expDishID = wib_proxy.ExpectedDishID
-            wib_proxy.ExpectedDishID = self.dish_id
-            self.logger.debug(
-                f"Updated ExpectedDishID from [{old_expDishID}] to [{wib_proxy.ExpectedDishID}]"
-            )
-        except tango.DevFailed as df:
-            msg = f"Failed to update ExpectedDishID device property of {wib_fqdn}; {df}"
-            self.logger.error(msg)
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return False, msg
-        return True, ""
+    #         # Get property, then update with vcc_proxy.dishID.
+    #         old_expDishID = wib_proxy.ExpectedDishID
+    #         wib_proxy.ExpectedDishID = self.dish_id
+    #         self.logger.debug(
+    #             f"Updated ExpectedDishID from [{old_expDishID}] to [{wib_proxy.ExpectedDishID}]"
+    #         )
+    #     except tango.DevFailed as df:
+    #         msg = f"Failed to update ExpectedDishID device property of {wib_fqdn}; {df}"
+    #         self.logger.error(msg)
+    #         self._update_communication_state(
+    #             communication_state=CommunicationStatus.NOT_ESTABLISHED
+    #         )
+    #         return False, msg
+    #     return True, ""
 
     def _configure_scan(
         self: VccComponentManager,
@@ -391,21 +391,24 @@ class VccComponentManager(CbfObsComponentManager):
         ):
             return
 
-        # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
-        if not self.simulation_mode:
-            updated, msg = self._update_expected_dish_id()
-            if not updated:
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        msg,
-                    ),
-                )
-                return
+        # # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
+        # if not self.simulation_mode:
+        #     updated, msg = self._update_expected_dish_id()
+        #     if not updated:
+        #         task_callback(
+        #             status=TaskStatus.FAILED,
+        #             result=(
+        #                 ResultCode.FAILED,
+        #                 msg,
+        #             ),
+        #         )
+        #         return
 
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
+
+        # Add expected_dish_id to HPS configuration arg
+        configuration["expected_dish_id"] = self.dish_id
 
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used
@@ -430,10 +433,14 @@ class VccComponentManager(CbfObsComponentManager):
         fb_index = self._freq_band_index[self._freq_band_name]
 
         if self.simulation_mode:
-            self._band_simulators[fb_index].ConfigureScan(argin)
+            self._band_simulators[fb_index].ConfigureScan(
+                json.dumps(configuration)
+            )
         else:
             try:
-                self._band_proxies[fb_index].ConfigureScan(argin)
+                self._band_proxies[fb_index].ConfigureScan(
+                    json.dumps(configuration)
+                )
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
