@@ -76,9 +76,9 @@ server:
           - name: "VisSLIM"
             values:
             - "mid_csp_cbf/slim/slim-vis"
-          - name: "LruTimeout"
+          - name: "LRCTimeout"
             values:
-            - "30"
+            - "{{ .Values.controllerTimeout }}"
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"

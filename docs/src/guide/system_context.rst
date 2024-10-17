@@ -27,6 +27,6 @@ In MCS there is one VCC device and one FSP device for each VCC/FSP in the system
 These devices communicate directly with the top level HPS application for the
 reconfiguration of the Talon-DX functionality (VCC Controller / HPS FSP Controller)
 
-.. figure:: ../diagrams/mid-cbf-sw-control.png
+.. figure:: ../diagrams/CBF_AA0.5_SW_control_design.png
 
 

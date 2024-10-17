@@ -7,11 +7,63 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
+* CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
+* CIP-2911 fixed bad error message appending in controller Off command
+* CIP-2840 talon fans monitoring
+  * added hasFanControl attribute to talon board devices to indicate if the board has control over fans
+  * added fansRpm attribute to talon board devices
+  * fixed bugs affecting talon board device initialization and influxdb queries
+  * updated FPGA die voltage labels to be more descriptive
+  * updated FPGA die voltage warning and alarm range according to stratix10 documentation
+* CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
+* CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
+
+1.0.0
+******
+* CIP-1924 Upgrade to ska-tango-base v1.0.0
+  * Created base classes for observing and non-observing devices (CbfObsDevice, CbfDevice) and component managers (CbfObsComponentManager, CbfComponentManager)
+    * CbfObsDevice implements reduced subarray ObsState model, removing EMPTY and RESOURCING states for non-subarray devices.
+  * Converted base component managers to inherit from TaskExecutorComponentManager
+  * Converted the following commands/methods to queued LRCs/submitted tasks:
+    * start_communicating
+    * CbfController: On, Off, InitSysParam
+    * CbfSubarray: update_sys_param, AddReceptors, RemoveReceptors, RemoveAllReceptors, ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset, Restart
+    * Vcc: ConfigureBand, ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset
+    * Fsp: SetFunctionMode, AddSubarrayMembership, RemoveSubarrayMembership
+    * FspCorrSubarray: ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset
+    * Slim: On, Off, Configure
+    * SlimLink: ConnectTxRx, DisconnectTxRx
+    * TalonLRU: On, Off
+    * PowerSwitch: TurnOnOutlet, TurnOffOutlet
+  * Removed the following commands:
+    * Standby command removed across the board
+    * CbfSubarray: On, Off
+    * Vcc: On, Off
+    * Fsp: On, Off
+    * FspCorrSubarray: On, Off
+    * TalonBoard: On, Off
+  * Improvements in control flow:
+    * Only Tango Devices that are directly controlling hardware can receive ON/OFF commands e.g. TalonLRU, and not Vcc
+    * In  Tango Devices that do not receive ON/OFF commands, once communication with the component is established the OpState becomes ON. This is all achieved when start_communicating method is called as part of setting the Tango Device's AdminMode to ONLINE. In these cases, essentially ON means the device is communicating with it's subordinate device.
+    * Moved AdminMode control of obs devices (Vcc, Fsp, FspCorrSubarray) from CbfController to CbfSubarray, during the following subarray commands:
+      * Vcc AdminMode ONLINE/OFFLINE during AddReceptors/RemoveReceptors
+      * Fsp AdminMode ONLINE/OFFLINE during ConfigureScan/GoToIdle
+      * FspCorrSubarray ONLINE/OFFLINE set by Fsp during ConfigureScan/GoToIdle
+    * State changing callbacks consistently use locks to avoid race conditions.
+      * Component managers do not update state machines directly; only callbacks (implemented at the device level) are passed to the component managers.
+  * Improvements in tests:
+    * More thorough unit tests provide better low-level coverage for individual devices, including failure mechanisms.
+    * Redundant subordinate device integration tests deprecated in favour of more comprehensive and holistic tests only at the highest levels of MCS (Controller and Subarray).
+    * ska-tango-testing better leveraged to align our testing framework with the rest of the SKAO:
+      * ska_tango_testing.context basis for unit testing harness
+      * TangoEventTracer used along with custom defined change event assertions to validate event-driven device behaviour.
+
 * CIP-2732 Added supported interface validation and documentation updates
   * Added validation for supported schema versions specified in the interface parameter for commands in MCS.
   * Added sphinx directive to generate tables for documentation
 * CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
-  * Abstracted out the Scan Configuration Validation in Subarray into a seperate class  
+  * Abstracted out the Scan Configuration Validation in Subarray into a separate class  
   * Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
   * Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
 
@@ -24,8 +76,8 @@ UNRELEASED CHANGES
 
     * Removed from telescope model
     * Class properties remain, to be removed in base class update
-    * zoom_factor set to 0 for downstream HPS configscan, this will be set later
-      when zoom is implemented from the channel_width parameter indroduced in 
+    * zoom_factor set to 0 for downstream HPS config, this will be set later
+      when zoom is implemented from the channel_width parameter introduced in 
       ADR-99
 
   * Added cross validation for cbf.fsp.output_port for the incoming ConfigureScan
@@ -93,7 +145,7 @@ UNRELEASED CHANGES
 
 0.12.26
 *******
-* CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.
+* CIP-2105: Fixed FSP error from trying to remove group proxy from IDLE state.
 
 0.12.25
 *******
@@ -123,7 +175,7 @@ Development
 
 0.12.20
 *******
-* CIP-2050 Added additional logging for apsc_smnp_driver
+* CIP-2050 Added additional logging for apc_snmp_driver
 
 0.12.19
 *******
@@ -169,7 +221,7 @@ Development
 
 0.12.9
 ******
-* CIP-1674 Logconsumer logs every message twice
+* CIP-1674 LogConsumer logs every message twice
 * CIP-1853 Enhance system-tests to check ResultCode
 * CIP-2012 MCS k8s test pipeline job output no longer includes code coverage table
 

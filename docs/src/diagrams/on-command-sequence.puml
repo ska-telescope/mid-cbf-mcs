@@ -1,0 +1,125 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title On Command Sequence - Correlation\n
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "Talon\nDX" as tdx
+  participant "Talon\nLRU" as lru
+  participant "Talon\nBoard" as talon_board
+  participant "Power\nSwitch" as ps
+  collections "SLIM" as slim
+  collections "SLIM\nLink" as slimlink
+end box
+participant "PDU\n" as pdu #Orange
+box "\nHPS\n"
+  participant "Linux\nOS" as os #LightGreen
+  participant "HPS\nMaster" as hpsmaster
+  collections "HPS\nDevices" as hpsdevices
+end box
+
+note over controller            : AdminMode: ON\nOpState: OFF
+lmc -> controller               : On()
+
+group #LightCyan For each Talon LRU in configuration:
+  controller    ->  lru         : On()
+  lru           ->  ps          : outlet1_state = GetOutletPowerState(outlet1)
+  ps            ->  pdu         : GetOutletPowerState(outlet1)
+  group #SeaShell If using single outlet:
+    lru         ->  lru         : outlet2_state = outlet1_state
+  else using both outlets
+    lru         ->  ps          : outlet2_state = GetOutletPowerState(outlet2)
+    ps          ->  pdu         : GetOutletPowerState(outlet2)
+  end group
+
+  note over lru                 : OpState: UNKNOWN
+  group #SeaShell If outlet1_state OR outlet2_state == ON:
+    note over lru               : OpState: ON
+  else If outlet1_state AND outlet2_state == OFF:
+    note over lru               : OpState: OFF
+  end group
+
+  lru           ->  ps          : TurnOnOutlet(outlet1)
+  ps            ->  pdu         : TurnOnOutlet(outlet1)
+  pdu           --> lru         : result1
+  group #SeaShell If using both outlets:
+    lru         ->  ps          : TurnOnOutlet(outlet2)
+    ps          ->  pdu         : TurnOnOutlet(outlet2)
+    pdu         --> lru         : result2
+  else
+    lru         ->  lru         : result2 = result1
+  end group
+
+  group #SeaShell If result1 OR result2 == ResultCode.OK:
+    note over lru               : OpState: ON
+end group
+
+group #LightCyan For each Talon board in configuration:
+  controller    ->  tdx         : ConfigureTalons()
+  tdx           ->  tdx         : Read config files,\nSetup tango host file
+  tdx           ->  os          : Clear processes
+  tdx           ->  os          : Configure Talon networking
+  tdx           ->  os          : Copy binaries and bitstream
+  tdx           ->  os          : Start HPS Master
+  note over hpsmaster           : OpState: INIT
+  tdx           ->  hpsmaster   : Configure(json_str)
+  hpsmaster     ->  hpsmaster   : ConfigureBitstream()
+  group #LightCyan For each HPS device server:
+    hpsmaster  -> hpsdevices    : SpawnTangoDS()
+  end group
+  hpsmaster     ->  hpsmaster   : HealthCheck()
+  note over hpsmaster           : OpState: ON
+
+  controller    ->  talon_board : Set device properties
+  controller    ->  talon_board : Init()
+  controller    ->  talon_board : Set SimulationMode
+  controller    ->  talon_board : Set AdminMode.ONLINE
+  note over talon_board         : OpState: ON
+  controller    ->  talon_board : Update dishID, vccID\nattributes from hw_config
+end group
+
+group #LightCyan For each SLIM:
+  controller      ->  slim      : Set SimulationMode
+  controller      ->  slim      : On()
+  note over slim                : OpState: ON
+  controller      ->  slim      : Configure(yaml_str)
+  group #SeaShell If mesh_configured == True
+    group #LightCyan For each active SlimLink:
+      slimlink    -> hpsdevices : DisconnectTxRx()
+    end group
+    slim          ->  slim      : mesh_configured = False
+  end group
+
+  group #LightCyan For each active SlimLink:
+    slim        ->  slimlink    : Set Tx and Rx device FQDNs
+    slim        ->  slimlink    : ConnectTxRx()
+    slimlink    ->  slimlink    : Sync idle control words
+    slimlink    ->  hpsdevices  : InitializeConnection(serial_loopback=False)
+    slimlink    ->  slimlink    : ClearCounters(),\nSet linkName
+    slim        ->  slimlink    : Start polling VerifyConnection()
+  end group
+  slim          ->  slim        : mesh_configured = True
+end group
+
+note over controller            : OpState: ON
+
+lmc           <--  controller   : Success
+
+@enduml

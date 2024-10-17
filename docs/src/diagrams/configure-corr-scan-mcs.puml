@@ -3,74 +3,102 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
 }
 
 title MCS Correlation Configure Scan\n
 
-participant "TMC\n" as tmc
-participant "CSP_Mid\n.LMC" as lmc
-
-box "MCS"
-participant "Mid.CBF\nController" as controller
-participant "Mid.CBF\nSubarray" as subarray
-participant "VCC\n" as vcc
-participant "FSP\n" as fsp
-participant "FspCorr\nSubarray" as fspcorr
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+    participant "Mid.CBF\nController" as controller
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "VCC\n" as vcc
+    collections "FSP\n" as fsp
+    collections "FSP Corr\nSubarray" as fspcorr
+    participant "Visibility\nTransport" as vis_trans
+end box
+box "\nHPS\n" 
+    participant "VCC\nController" as vcc_cont
+    participant "VCC\nBand1&2" as vcc_band
+    participant "FSP\nController" as fsp_cont
+    participant "FSP Corr\nController" as fspcorr_cont
 end box
 
-participant "HPS\nDevices" as hps
-
 lmc         -> subarray     : ConfigureScan(json_str)
-subarray    -> subarray     : validateInput
+subarray    -> subarray     : Validate JSON against schema,\nLoad new configuration
 
-group Each FSP
-subarray    -> fsp          : Unsubscribe to state/healthstate
+group #LightCyan For each FSP:
+    subarray    -> fsp          : RemoveSubarrayMembership
+    group #SeaShell If len(subarrayMembership) == 0:
+        fsp         -> fspcorr      : AdminMode.OFFLINE
+        note over fspcorr           : OpState: DISABLE
+        fsp         -> fsp_cont     : Set function mode to IDLE
+        note over fsp_cont          : functionMode: IDLE
+        note over fsp               : functionMode: IDLE
+        subarray    -> fsp          : AdminMode.OFFLINE
+        note over fsp             : OpState: DISABLE
+    end group
 end group
 
-subarray    -> tmc          : Unsubscribe all events
-subarray    -> vcc          : GoToIdle
-subarray    -> fspcorr      : GoToIdle
-subarray    -> fsp          : RemoveSubarrayMembership(subarrayID)
-subarray    -> vcc          : ConfigureBand(int)
-subarray    -> vcc          : ConfigureScan(json_str)
-vcc         -> hps          : configure HPS VCC
-
-group Delay model subscription point
-subarray    -> tmc          : subscribe delay model
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc          : Unsubscribe all events
 end group
 
-group Doppler subscription point
-subarray    -> tmc          : subscribe Doppler phase correction
+subarray    -> subarray     : Clear old configuration
+
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc          : Subscribe delay model
 end group
 
-group Jones matrix subscription point
-subarray    -> tmc          : subscribe Jones matrix
+group #LightCyan For each assigned receptor:
+    subarray    -> vcc          : ConfigureBand(json_str)
+    vcc         -> vcc_cont     : ConfigureBand(int)
+    vcc         -> vcc_band     : SetInternalParameters(json_str)
+    subarray    -> vcc          : ConfigureScan(json_str)
+    vcc         -> vcc_band     : ConfigureScan(json_str)
+    note over vcc               : ObsState: READY
 end group
 
-group Timing beam subscription point
-subarray    -> tmc          : subscribe timing beam weights
+group #LightCyan For each FSP in use:
+    subarray    -> subarray     : Build FSP\nconfiguration
+
+    group #SeaShell If functionMode == IDLE:
+        subarray    -> fsp          : Update simulationMode
+        subarray    -> fsp          : AdminMode.ONLINE
+        note over fsp               : OpState: ON
+        subarray    -> fsp          : SetFunctionMode(str)
+        fsp         -> fsp          : Validate functionMode
+        fsp         -> fsp_cont     : SetFunctionMode(int)
+        note over fsp_cont          : functionMode: CORR
+        note over fsp               : functionMode: CORR 
+    end group
+
+    subarray    -> fsp          : AddSubarrayMembership(int)
+    fsp         -> fsp          : Validate subarrayID
+    fsp         -> fspcorr      : Update simulationMode
+    fsp         -> fspcorr      : AdminMode.ONLINE
+    note over fspcorr           : OpState: ON
+    fsp         -> fsp          : Update subarrayMembership
+
+    subarray    -> fspcorr      : ConfigureScan(json_str)
+    fspcorr     -> fspcorr      : Reset old configuration,\nRelease all VCCs,\nLoad FSP configuration,\nAssign new VCCs,\nBuild HPS FSP CORR configuration
+    fspcorr     -> fspcorr_cont : ConfigureScan(json_str)
+    note over fspcorr           : ObsState: READY
 end group
 
-group SearchWindow
-subarray    ->vcc           : ConfigureSearchWindow(data)
-end group
+subarray    -> vis_trans    : Configure(json_str, yaml_str)
 
-group Each FSP
-subarray    -> fsp          : AddSubarrayMembership(subarrayID)
-subarray    -> fsp          : SetFunctionMode(str)
-subarray    -> fsp          : subscribe to state/healthstate changes
-fsp         -> hps          : configure HPS FSP
-end group
-
-group Each FSP Corr
-subarray    -> fspcorr          : ConfigureScan(json_str)
-fspcorr         -> hps          : configure HPS FSP Corr
-end group
+note over subarray          : ObsState: READY
+lmc        <-- subarray     : Success
 
 @enduml

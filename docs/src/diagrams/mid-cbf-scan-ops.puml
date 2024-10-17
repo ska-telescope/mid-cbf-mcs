@@ -11,52 +11,85 @@ BoxBorderColor LightBlue
 BoxBackgroundColor #F0FFFF
 }
 
-title TMC and Mid_CBF.LMC Scan Sequence\nHigh Level
+title TMC and Mid_CBF.LMC Scan Sequence - High Level
 
-participant "\nTMC" as tmc
-participant "CSP_Mid\n.LMC" as lmc
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
 
-box "MCS"
+box "\nMCS\n"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 end box
 
+note over controller        : OpState: DISABLE
+note over subarray          : OpState: DISABLE
+group #LemonChiffon If setting SimulationMode to FALSE
+    lmc         -> controller   : Update simulationMode
+end group
+lmc         -> controller   : AdminMode.ONLINE
+controller  -> subarray     : SimulationMode
+controller  -> subarray     : AdminMode.ONLINE
+note over subarray          : OpState: ON
+note over controller        : OpState: OFF
+
+lmc         -> controller   : InitSysParam(json_str)
+controller --> lmc          : Success
+
+lmc         -> controller   : On()
 note over controller        : OpState: ON
-lmc         -> subarray     : AddReceptors(strs)
-subarray    -> subarray     : ObsState: IDLE
-subarray   --> lmc          : success
+controller --> lmc          : Success
+
+lmc         -> subarray     : AddReceptors(list[str])
+note over lmc               : Note: adds receptors without duplicates
+note over subarray          : ObsState: IDLE
+subarray   --> lmc          : Success
+
 lmc         -> subarray     : ConfigureScan(json_str)
-subarray    -> tmc          : unsubscribe all events
 
-group Delay model subscription point
-subarray    -> tmc          : subscribe delay model
+
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc          : Unsubscribe all events
+    subarray    -> tmc          : Subscribe delay model
 end group
 
-group Doppler subscription point
-subarray    -> tmc          : subscribe Doppler phase correction
-end group
+' group Doppler subscription point
+' subarray    -> tmc          : subscribe Doppler phase correction
+' end group
 
-group Jones matrix subscription point
-subarray    -> tmc          : subscribe Jones matrix
-end group
+' group Jones matrix subscription point
+' subarray    -> tmc          : subscribe Jones matrix
+' end group
 
-group Timing beam subscription point
-subarray    -> tmc          : subscribe timing beam weights
-end group
+' group Timing beam subscription point
+' subarray    -> tmc          : subscribe timing beam weights
+' end group
 
-subarray    -> subarray     : ObsState: READY
-subarray   --> lmc          : success
+note over subarray          : ObsState: READY
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : Scan()
-subarray    -> subarray     : ObsState: SCANNING
-subarray   --> lmc          : success
+note over subarray          : ObsState: SCANNING
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : EndScan()
-subarray    -> subarray     : ObsState: READY
-subarray   --> lmc          : success
+note over subarray          : ObsState: READY
+subarray   --> lmc          : Success
+
+lmc         -> subarray     : GoToIdle()
+note over subarray          : ObsState: IDLE
+subarray   --> lmc          : Success
 
 lmc         -> subarray     : RemoveAllReceptors()
-subarray    -> subarray     : ObsState: EMPTY
-subarray   --> lmc          : success
+note over subarray          : ObsState: EMPTY
+subarray   --> lmc          : Success
+
+lmc         -> controller   : Off()
+note over controller        : OpState: OFF
+controller --> lmc          : Success
+
+lmc         -> controller   : AdminMode.OFFLINE
+controller  -> subarray     : AdminMode.OFFLINE
+note over subarray          : OpState: DISABLE
+note over controller        : OpState: DISABLE
 
 @enduml
