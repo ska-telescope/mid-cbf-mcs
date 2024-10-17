@@ -914,7 +914,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        max_dim_x=4,
+        max_dim_x=6,
         label="100g_eth_0 error counters",
         doc=(
             "a list of error counters at the 100g ethernet input "
@@ -984,7 +984,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        max_dim_x=4,
+        max_dim_x=6,
         label="100g_eth_1 error counters",
         doc=(
             "a list of error counters at the 100g ethernet output "
