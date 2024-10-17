@@ -34,7 +34,7 @@ class Eth100gClient:
     def __init__(self, eth_100g_fqdn: str):
         self._eth_100g_fqdn = eth_100g_fqdn
         self._eth_100g_id = 0 if "100g_0" in eth_100g_fqdn else 1
-        self._dp_eth_100g = DeviceProxy(eth_100g_fqdn)
+        self._dp_eth_100g = context.DeviceProxy(device_name=eth_100g_fqdn)
         self._tx_stats = []
         self._rx_stats = []
         self._stats_idx = {
@@ -271,10 +271,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                 f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
             )
 
-    # TODO: need for list of dicts? or can convert to flat dict, e.g.
-    # {
-    #     "attr_name": event_id
-    # }
     def _subscribe_change_events(self) -> None:
         """
         Subscribe to attribute change events from HPS device proxies

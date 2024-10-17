@@ -906,7 +906,7 @@ class TalonBoard(CbfDevice):
             "[0] cntr_tx_1519tomaxb\n"
             "[1] TxFrameOctetsOK\n"
             "[2] cntr_rx_1519tomaxb\n"
-            "[3] RxFrameOctetsOK\n"
+            "[3] RxFrameOctetsOK"
         ),
     )
     def eth100g0Counters(self: TalonBoard) -> DevVarULongArray:
@@ -924,11 +924,11 @@ class TalonBoard(CbfDevice):
             "[2]: number of transmitted CRC errors\n"
             "[3]: number of received frames less than 64 bytes\n"
             "[4]: number of received oversized frames\n"
-            "[5]: number of received CRC errors\n"
+            "[5]: number of received CRC errors"
         ),
     )
     def eth100g0ErrorCounters(self: TalonBoard) -> DevVarULongArray:
-        return self.component_manager.eth100g_0_counters()
+        return self.component_manager.eth100g_0_error_counters()
 
     @attribute(
         dtype=bool,
@@ -982,6 +982,24 @@ class TalonBoard(CbfDevice):
     def eth100g1Counters(self: TalonBoard) -> DevVarULongArray:
         return self.component_manager.eth100g_1_counters()
 
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_1 error counters",
+        doc=(
+            "a list of error counters at the 100g ethernet output "
+            "in the following order:\n"
+            "[0]: number of transmitted frames less than 64 bytes\n"
+            "[1]: number of transmitted oversized frames\n"
+            "[2]: number of transmitted CRC errors\n"
+            "[3]: number of received frames less than 64 bytes\n"
+            "[4]: number of received oversized frames\n"
+            "[5]: number of received CRC errors"
+        ),
+    )
+    def eth100g1ErrorCounters(self: TalonBoard) -> DevVarULongArray:
+        return self.component_manager.eth100g_1_error_counters()
+    
     @attribute(
         dtype=bool,
         label="100g_eth_1 data flow active",
