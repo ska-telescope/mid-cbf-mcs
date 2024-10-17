@@ -18,6 +18,7 @@ UNRELEASED CHANGES
   * updated FPGA die voltage warning and alarm range according to stratix10 documentation
 * CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
 * CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
+* CIP-2780 added 100g ethernet monitoring on talon board devices
 * CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
