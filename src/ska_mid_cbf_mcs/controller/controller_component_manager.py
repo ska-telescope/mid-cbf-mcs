@@ -63,7 +63,6 @@ class ControllerComponentManager(CbfComponentManager):
         super().__init__(*args, **kwargs)
 
         self.validate_supported_configuration = True
-        self._lru_timeout = lru_timeout
 
         # --- Max Capabilities --- #
         self._count_vcc = max_capabilities["VCC"]
