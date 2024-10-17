@@ -68,8 +68,8 @@ class TestCbfController:
         :param event_tracer: The event tracer for the controller
         :param controller_params: Input parameters for running different instances of the suite.
         """
-        # Deployer Innitialization
-        deployer.targetTalons = [1, 2, 3, 4]
+        # Generate config JSON with deployer for controller use
+        deployer.targetTalons = [1, 2, 3, 4, 5, 6, 7, 8]
         deployer.generate_config_jsons()
 
         # Trigger start_communicating by setting the AdminMode to ONLINE
