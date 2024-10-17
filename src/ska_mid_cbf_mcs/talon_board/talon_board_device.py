@@ -999,7 +999,7 @@ class TalonBoard(CbfDevice):
     )
     def eth100g1ErrorCounters(self: TalonBoard) -> DevVarULongArray:
         return self.component_manager.eth100g_1_error_counters()
-    
+
     @attribute(
         dtype=bool,
         label="100g_eth_1 data flow active",

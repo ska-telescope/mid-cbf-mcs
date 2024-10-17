@@ -16,7 +16,7 @@ from threading import Event, Thread
 import tango
 from ska_control_model import PowerState
 from ska_tango_testing import context
-from tango import AttrQuality, DeviceProxy
+from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
