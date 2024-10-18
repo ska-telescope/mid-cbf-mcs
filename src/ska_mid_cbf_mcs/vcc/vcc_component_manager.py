@@ -341,36 +341,6 @@ class VccComponentManager(CbfObsComponentManager):
             task_callback=task_callback,
         )
 
-    # def _update_expected_dish_id(
-    #     self: VccComponentManager,
-    # ) -> tuple[bool, str]:
-    #     """
-    #     Update HPS WIB's ExpectedDishID with this VCC's dish_id attr.
-
-    #     :return: A tuple indicating if the update was successful, and an error message if not.
-    #     """
-    #     try:
-    #         # Get WIB FQDN, then proxy.
-    #         wib_fqdn = self._band_proxies[0].get_property(
-    #             "WidebandInputBufferFQDN"
-    #         )["WidebandInputBufferFQDN"][0]
-    #         wib_proxy = context.DeviceProxy(device_name=wib_fqdn)
-
-    #         # Get property, then update with vcc_proxy.dishID.
-    #         old_expDishID = wib_proxy.ExpectedDishID
-    #         wib_proxy.ExpectedDishID = self.dish_id
-    #         self.logger.debug(
-    #             f"Updated ExpectedDishID from [{old_expDishID}] to [{wib_proxy.ExpectedDishID}]"
-    #         )
-    #     except tango.DevFailed as df:
-    #         msg = f"Failed to update ExpectedDishID device property of {wib_fqdn}; {df}"
-    #         self.logger.error(msg)
-    #         self._update_communication_state(
-    #             communication_state=CommunicationStatus.NOT_ESTABLISHED
-    #         )
-    #         return False, msg
-    #     return True, ""
-
     def _configure_scan(
         self: VccComponentManager,
         argin: str,
@@ -390,19 +360,6 @@ class VccComponentManager(CbfObsComponentManager):
             "ConfigureScan", task_callback, task_abort_event
         ):
             return
-
-        # # Update ExpectedDishID property of HPS WIB (only Band 1/2 for AA0.5)
-        # if not self.simulation_mode:
-        #     updated, msg = self._update_expected_dish_id()
-        #     if not updated:
-        #         task_callback(
-        #             status=TaskStatus.FAILED,
-        #             result=(
-        #                 ResultCode.FAILED,
-        #                 msg,
-        #             ),
-        #         )
-        #         return
 
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
