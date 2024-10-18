@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+
+1.1.0-rc.1
+**********
 * CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
 * CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
 * CIP-2911 fixed bad error message appending in controller Off command
