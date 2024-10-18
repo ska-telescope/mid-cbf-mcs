@@ -205,16 +205,21 @@ class FspScanConfigurationBuilder:
             # fsp_info["sdp_start_channel_id"] is the continuous start channel
             # id of the fsp's in a processing region
             #
-            # Example: PR is sdp_start_channel_id = 0, and num_channels = 100,
+            # Example: PR is sdp_start_channel_id = 100, and num_channels = 100,
             # we have have 3 FSPs (fsp_ids = [3, 4, 5]), the partition gives us:
             # FSP 3 - sdp_start_channeld_id = 0
             # FSP 4 - sdp_start_channeld_id = 40
             # FSP 5 - sdp_start_channeld_id = 80
             #
-            # the lines of code below collects these into an array ([0, 40, 80])
-            # as well as the last channel + 1 of the PR ([0, 40, 80, 100])
+            # The partitioner doesn't know about the processing regions
+            # sdp_start_channel_id so it always starts at 0, add the PR
+            # sdp_start_channel_id to the values.
+            #
+            # The lines of code below collects these into an array ([100, 140, 180])
+            # as well as the last channel + 1 of the PR ([10, 140, 180, 200])
             sdp_start_channel_ids = [
-                fsp_info["sdp_start_channel_id"]
+                processing_region_config["sdp_start_channel_id"]
+                + fsp_info["sdp_start_channel_id"]
                 for fsp_info in calculated_fsp_infos.values()
             ]
             sdp_start_channel_ids.append(
@@ -229,20 +234,21 @@ class FspScanConfigurationBuilder:
             #
             # if processing_region_config["output_port"] =
             # [
-            #    [0, 14000],
-            #    [20, 14001],
-            #    [40, 14002],
-            #    [60, 14003],
-            #    [80, 14004],
+            #    [100, 14000],
+            #    [120, 14001],
+            #    [140, 14002],
+            #    [160, 14003],
+            #    [180, 14004],
             # ]
             #
             # running channel_map.split_channel_map_at() with
-            # sdp_start_channel_ids = [0, 40, 80, 100] will result in the array:
+            # sdp_start_channel_ids = [100, 140, 180, 200] will result in
+            # the array:
             #
             # [
-            #     [ [0, 14000], [20, 14001] ],
-            #     [ [40, 14002], [60, 14003] ],
-            #     [ [80, 14004] ],
+            #     [ [100, 14000], [120, 14001] ],
+            #     [ [140, 14002], [160, 14003] ],
+            #     [ [180, 14004] ],
             # ]
             #
             #
@@ -256,9 +262,9 @@ class FspScanConfigurationBuilder:
             # list above, so the result will be fsp_to_output_port_map =
             #
             # {
-            #    3: [ [0, 14000], [20, 14001] ],
-            #    4: [ [40, 14002], [60, 14003] ],
-            #    5: [ [80, 14004] ],
+            #    3: [ [100, 14000], [120, 14001] ],
+            #    4: [ [140, 14002], [160, 14003] ],
+            #    5: [ [180, 14004] ],
             # }
             #
             # We can then use this dictionary later when building the fsp config

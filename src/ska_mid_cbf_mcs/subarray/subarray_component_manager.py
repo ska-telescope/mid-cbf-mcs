@@ -1684,6 +1684,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         full_configuration = json.loads(argin)
+
+        self.logger.debug(
+            f"Subarray ConfigureScan Configuration: {full_configuration}"
+        )
+
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["midcbf"])
 

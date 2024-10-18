@@ -62,6 +62,8 @@ class TestFspScanConfigurationBuilder:
             "ConfigureScan_basic_CORR.json",
             "ConfigureScan_4_1_CORR.json",
             "ConfigureScan_AA4_values.json",
+            "ConfigureScan_CORR_2_non_overlapping_band_2_PRs.json",
+            "ConfigureScan_CORR_2_overlapping_band_2_PRs.json",
         ],
     )
     def test_build_corr(self: TestFspScanConfigurationBuilder, config_name):
@@ -152,7 +154,9 @@ class TestFspScanConfigurationBuilder:
             corr_config["processing_regions"]
         ), "There are PRs that didn't get any configured FSP"
 
-        for index, pr_config in enumerate(corr_config["processing_regions"]):
+        for pr_index, pr_config in enumerate(
+            corr_config["processing_regions"]
+        ):
             # Assert all ports accounted for in configured FSP's
             if "output_port" in pr_config:
                 expected_output_port = copy.deepcopy(pr_config["output_port"])
