@@ -11,30 +11,30 @@ ska-mid-cbf-mcs:
       "008": 192.168.8.8
     talon_lru:
       "001":
-        PDU1: "002"
+        PDU1: "001"
         PDU1PowerOutlet: "AA1"
-        PDU2: "002"
+        PDU2: "001"
         PDU2PowerOutlet: "AA1"
         TalonDxBoard1: "001"
         TalonDxBoard2: "002"
       "002":
-        PDU1: "002"
+        PDU1: "001"
         PDU1PowerOutlet: "AA2"
-        PDU2: "002"
+        PDU2: "001"
         PDU2PowerOutlet: "AA2"
         TalonDxBoard1: "003"
         TalonDxBoard2: "004"
       "003":
-        PDU1: "002"
+        PDU1: "001"
         PDU1PowerOutlet: "AA33"
-        PDU2: "002"
+        PDU2: "001"
         PDU2PowerOutlet: "AA33"
         TalonDxBoard1: "005"
         TalonDxBoard2: "006"
       "004":
-        PDU1: "002"
+        PDU1: "001"
         PDU1PowerOutlet: "AA34"
-        PDU2: "002"
+        PDU2: "001"
         PDU2PowerOutlet: "AA34"
         TalonDxBoard1: "007"
         TalonDxBoard2: "008"
