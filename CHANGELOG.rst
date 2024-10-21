@@ -19,6 +19,7 @@ UNRELEASED CHANGES
 * CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
 * CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
 * CIP-2780 added 100g ethernet monitoring on talon board devices
+* CIP-3028 Removed APC SSH (previously PDU3) from powerswitch charts after removing the PDU from the systems room.
 
 1.0.0
 ******
