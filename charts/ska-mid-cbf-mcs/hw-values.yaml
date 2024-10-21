@@ -50,11 +50,6 @@ ska-mid-cbf-mcs:
         PowerSwitchLogin: "admn"
         PowerSwitchPassword: "admn-1-Psi"
       "003":
-        PowerSwitchModel: "APC AP8681 SSH"
-        PowerSwitchIp: "192.168.1.253"
-        PowerSwitchLogin: "apc"
-        PowerSwitchPassword: "apc"
-      "004":
         PowerSwitchModel: "APC AP8681 SNMP"
         PowerSwitchIp: "192.168.1.253"
         PowerSwitchLogin: "apcsnmp"
