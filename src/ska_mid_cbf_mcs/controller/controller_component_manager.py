@@ -181,6 +181,7 @@ class ControllerComponentManager(CbfComponentManager):
                         f"mid_csp_cbf/talon_board/{int(target):03d}"
                     )
                     fqdn_vcc.add(f"mid_csp_cbf/vcc/{int(target):03d}")
+                    # TODO: refactor post AA1, once Talon/FPGA indices out-scale FSP indices
                     fqdn_fsp.add(f"mid_csp_cbf/fsp/{int(target):02d}")
 
                     fqdn_talon_lru.add(
@@ -769,7 +770,7 @@ class ControllerComponentManager(CbfComponentManager):
                 ][0]
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Falied to get TalonDxBoardAddress property from {fqdn}: {df}"
+                    f"Failed to get TalonDxBoardAddress property for {fqdn}: {df}"
                 )
 
             # Update talon board HW config. The VCC ID to IP address mapping comes
