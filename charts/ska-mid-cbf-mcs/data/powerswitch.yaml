@@ -56,20 +56,6 @@ server:
         properties:
           - name: "PowerSwitchModel"
             values:
-            - "APC AP8681 SSH"
-          - name: "PowerSwitchIp"
-            values:
-            - "192.168.1.253"
-          - name: "PowerSwitchLogin"
-            values: 
-            - "apc"
-          - name: "PowerSwitchPassword"
-            values:
-            - "apc"
-      - name: "mid_csp_cbf/power_switch/004"
-        properties:
-          - name: "PowerSwitchModel"
-            values:
             - "APC AP8681 SNMP"
           - name: "PowerSwitchIp"
             values:
