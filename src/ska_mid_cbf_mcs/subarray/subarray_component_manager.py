@@ -477,7 +477,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.debug(
                     f"Skipping {vcc_proxy.dev_name()}, AdminMode is NOT_FITTED"
                 )
-                return True
+                return False
 
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
             vcc_fqdn = vcc_proxy.dev_name()
