@@ -1349,7 +1349,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.debug(
                     f"{fsp_proxy.dev_name()} is not fitted; skipping assignment."
                 )
-                return True
+                return False
             # Only set function mode if FSP is both IDLE and not configured for
             # another mode
             current_function_mode = fsp_proxy.functionMode
