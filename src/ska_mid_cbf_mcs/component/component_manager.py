@@ -37,10 +37,6 @@ from ska_mid_cbf_mcs.commons.global_enum import const
 
 __all__ = ["CbfComponentManager"]
 
-
-# Default timeout per blocking command during wait_for_blocking_results in seconds
-DEFAULT_TIMEOUT_PER_COMMAND_SEC = 10.0
-
 # 10 ms resolution
 TIMEOUT_RESOLUTION = 0.01
 
@@ -68,6 +64,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: Any,
+        lrc_timeout: int = 15,
         attr_change_callback: Callable[[str, Any], None] | None = None,
         attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
@@ -83,6 +80,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         longRunningCommandStatus and longRunningCommandProgress attributes used
         to track LRCs, a current limitation of the SKABaseDevice class.
 
+        :param lrc_timeout: timeout (in seconds) per LRC when waiting for blocking results;
+            defaults to 10.0 seconds
         :param attr_change_callback: callback to be called when
             an attribute change event needs to be pushed from the component manager
         :param attr_archive_callback: callback to be called when
@@ -115,6 +114,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._results_lock = Lock()
         self._received_lrc_results = {}
         self.blocking_command_ids = set()
+        self._lrc_timeout = lrc_timeout
 
         # dict and lock to store latest sub-device state attribute values
         self._op_states = {}
@@ -522,7 +522,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def wait_for_blocking_results(
         self: CbfComponentManager,
-        timeout_sec: float = 0.0,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -554,22 +553,16 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # Then wait for all of their longRunningCommandResult attributes to update
         lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
-            # LRC timeout_sec/abort handling
+            # LRC timeout/abort handling
 
         # --- #
 
-        :param timeout_sec: Time to wait, in seconds. If default value of 0.0 is set,
-            timeout_sec = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND_SEC
         :param task_abort_event: Check for abort, defaults to None
 
         :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
             TaskStatus.ABORTED if aborted
         """
-        if timeout_sec == 0.0:
-            timeout_sec = (
-                len(self.blocking_command_ids)
-                * DEFAULT_TIMEOUT_PER_COMMAND_SEC
-            )
+        timeout_sec = float(len(self.blocking_command_ids) * self._lrc_timeout)
         ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
 
         # Loop is exited when no blocking command IDs remain

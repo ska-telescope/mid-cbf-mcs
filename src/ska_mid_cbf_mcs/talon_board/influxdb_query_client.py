@@ -71,6 +71,8 @@ class InfluxdbQueryClient:
     # --- InfluxDB Query Methods --- #
 
     async def _query_common(self, client, query: str):
+        # For each matching record returned from the query, add
+        # the field name, time, and value to the result list.
         query_api = client.query_api()
         result = await query_api.query(org=self._influx_org, query=query)
         results = []
@@ -132,7 +134,15 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-5]/)\
+        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-3]/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_fans_input(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /fans_fan-input_[0-3]/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -140,7 +150,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-5]/)\
+        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-3]/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -187,6 +197,7 @@ class InfluxdbQueryClient:
                 self._query_mbo_temperatures(client),
                 self._query_mbo_voltages(client),
                 self._query_fans_pwm(client),
+                self._query_fans_input(client),
                 self._query_fans_fault(client),
                 self._query_ltm_voltages(client),
                 self._query_ltm_currents(client),
