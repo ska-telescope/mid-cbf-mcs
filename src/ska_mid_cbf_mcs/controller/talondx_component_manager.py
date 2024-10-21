@@ -99,7 +99,7 @@ class TalonDxComponentManager(CbfComponentManager):
 
         self.logger.info(f"Sending configure command to {hps_master_fqdn}")
         try:
-            hps_master.set_timeout_millis(60000)
+            hps_master.set_timeout_millis(self._lrc_timeout * 1000)
             cmd_ret = hps_master.configure(json.dumps(talon_cfg))
             if cmd_ret != 0:
                 self.logger.error(
@@ -526,25 +526,6 @@ class TalonDxComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, "_configure_hps_master FAILED")
 
         target = talon_cfg["target"]
-
-        # TalonBoard devices default to SimulationMode.TRUE, simulating hardware monitoring.
-        # Now we set TalonBoard devices to SimulationMode.FALSE if they have been assigned a
-        # live hardware target to monitor by the deployment configuration JSON.
-
-        if not self.simulation_mode:
-            target_talon_fqdn = f"mid_csp_cbf/talon_board/{target}"
-            try:
-                talon_board_proxy = context.DeviceProxy(
-                    device_name=target_talon_fqdn
-                )
-                talon_board_proxy.simulationMode = SimulationMode.FALSE
-                self.logger.info(
-                    f"simulationMode set to FALSE for talon{target}"
-                )
-            except tango.DevFailed as df:
-                log_msg = f"Failed to set simulationMode to FALSE for talon{target}; {df}"
-                self.logger(log_msg)
-                return (ResultCode.FAILED, log_msg)
 
         self.logger.info(f"Completed configuring talon board {target}")
         return (ResultCode.OK, "_configure_talon_thread completed OK")

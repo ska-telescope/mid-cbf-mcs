@@ -25,7 +25,6 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
 )
 
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
-HPS_FSP_CORR_TIMEOUT = 12000  # HPS device timeout in ms
 
 
 class FspCorrSubarrayComponentManager(CbfObsComponentManager):
@@ -274,7 +273,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:
                 self._proxy_hps_fsp_corr_controller.set_timeout_millis(
-                    HPS_FSP_CORR_TIMEOUT
+                    self._lrc_timeout * 1000
                 )
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration

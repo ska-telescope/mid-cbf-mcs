@@ -100,7 +100,7 @@ class TestCbfController:
             HWConfigPath="mnt/hw_config/hw_config.yaml",
             FsSLIMConfigPath="mnt/slim/fs/slim_config.yaml",
             VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
-            LruTimeout="30",
+            LRCTimeout="30",
             MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
         )
 
