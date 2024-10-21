@@ -731,6 +731,43 @@ class TalonBoardComponentManager(CbfComponentManager):
     def eth100g_1_all_rx_counters(self) -> list[int]:
         return self._eth_100g_1_client.get_all_rx_counters()
 
+    # ----------------
+    # Helper Functions
+    # ----------------
+
+    def _query_if_needed(self) -> None:
+        if not self.simulation_mode:
+            td = datetime.now() - self._last_check
+            if td.total_seconds() > 10:
+                try:
+                    res = asyncio.run(self._db_client.do_queries())
+                    self._last_check = datetime.now()
+                    for result in res:
+                        for r in result:
+                            # each result is a tuple of (field, time, value)
+                            self._telemetry[r[0]] = (r[1], r[2])
+                except Exception as e:
+                    msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
+                    self.logger.error(msg)
+                    tango.Except.throw_exception(
+                        "Query_Influxdb_Error", msg, "query_if_needed()"
+                    )
+
+    def _validate_time(self, field, t) -> None:
+        """
+        Checks if the query result is too old. When this happens, it means
+        Influxdb hasn't received a new entry in the time series recently.
+
+        :param record: a record from Influxdb query result
+        """
+        td = datetime.now(timezone.utc) - t
+        if td.total_seconds() > 240:
+            msg = f"Time of record {field} is too old. Currently not able to monitor device."
+            self.logger.error(msg)
+            tango.Except.throw_exception(
+                "No new record available", msg, "validate_time()"
+            )
+
     # ----------------------------------------------
     # Talon Board Telemetry and Status from Influxdb
     # ----------------------------------------------
@@ -1262,39 +1299,3 @@ class TalonBoardComponentManager(CbfComponentManager):
                         break
             res.append(flag)
         return res
-
-    # ----------------
-    # Helper Functions
-    # ----------------
-
-    def _query_if_needed(self) -> None:
-        td = datetime.now() - self._last_check
-        if td.total_seconds() > 10:
-            try:
-                res = asyncio.run(self._db_client.do_queries())
-                self._last_check = datetime.now()
-                for result in res:
-                    for r in result:
-                        # each result is a tuple of (field, time, value)
-                        self._telemetry[r[0]] = (r[1], r[2])
-            except Exception as e:
-                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
-                self.logger.error(msg)
-                tango.Except.throw_exception(
-                    "Query_Influxdb_Error", msg, "query_if_needed()"
-                )
-
-    def _validate_time(self, field, t) -> None:
-        """
-        Checks if the query result is too old. When this happens, it means
-        Influxdb hasn't received a new entry in the time series recently.
-
-        :param record: a record from Influxdb query result
-        """
-        td = datetime.now(timezone.utc) - t
-        if td.total_seconds() > 240:
-            msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self.logger.error(msg)
-            tango.Except.throw_exception(
-                "No new record available", msg, "validate_time()"
-            )
