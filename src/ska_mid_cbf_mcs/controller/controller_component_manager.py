@@ -85,7 +85,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._talon_lru_fqdn,
             self._talon_board_fqdn,
             self._power_switch_fqdn,
-        ) = ([] for _ in range(6))
+        ) = (set() for _ in range(6))
 
         # NOTE: Hard coded to look at first index to handle FsSLIM and VisSLIM as single device
         self._fs_slim_fqdn = fqdn_dict["FsSLIM"][0]
