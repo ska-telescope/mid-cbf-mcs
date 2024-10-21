@@ -40,17 +40,12 @@ ska-mid-cbf-mcs:
         TalonDxBoard2: "008"
     power_switch:
       "001":
-        PowerSwitchModel: "DLI LPC9"
-        PowerSwitchIp: "192.168.0.100"
-        PowerSwitchLogin: "admin"
-        PowerSwitchPassword: "1234"
-      "002":
         PowerSwitchModel: "Server Technology Switched PRO2"
         PowerSwitchIp: "192.168.1.254"
         PowerSwitchLogin: "admn"
         PowerSwitchPassword: "admn-1-Psi"
-      "003":
-        PowerSwitchModel: "APC AP8681 SNMP"
-        PowerSwitchIp: "192.168.1.253"
-        PowerSwitchLogin: "apcsnmp"
-        PowerSwitchPassword: "testingapcsnmp"
+      "002":
+        PowerSwitchModel: "APC AP8681 SSH"
+        PowerSwitchIp: "192.168.1.252"
+        PowerSwitchLogin: "apc"
+        PowerSwitchPassword: "apc"
