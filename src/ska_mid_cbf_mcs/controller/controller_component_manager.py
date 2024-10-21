@@ -175,25 +175,15 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.info(
                 f"Writing hardware configuration properties to {fqdn}"
             )
-
+            proxy = self._proxies[fqdn]
             device_id = fqdn.split("/")[-1]
+
             if device_type == "talon_board":
                 device_config = {
                     "TalonDxBoardAddress": self._hw_config[device_type][
                         device_id
                     ]
                 }
-            else:
-                device_config = self._hw_config[device_type][device_id]
-
-            proxy = self._proxies[fqdn]
-            device_config = tango.utils.obj_2_property(device_config)
-            proxy.put_property(device_config)
-            proxy.Init()
-
-            if device_type == "talon_lru":
-                proxy.set_timeout_millis(self._lru_timeout * 1000)
-            elif device_type == "talon_board":
                 # Update board's VCC and DISH IDs
                 # VCC ID maps one-to-one with Talon board ID
                 vcc_id = int(device_id)
@@ -214,6 +204,11 @@ class ControllerComponentManager(CbfComponentManager):
                         f"DISH ID for Talon {device_id} not found in DISH-VCC mapping; "
                         f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
                     )
+            else:
+                device_config = self._hw_config[device_type][device_id]
+            device_config = tango.utils.obj_2_property(device_config)
+            proxy.put_property(device_config)
+            proxy.Init()
 
         except tango.DevFailed as df:
             self.logger.error(

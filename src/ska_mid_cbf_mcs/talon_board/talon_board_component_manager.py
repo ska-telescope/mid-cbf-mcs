@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from threading import Event, Thread
-from time import sleep
 
 import tango
 from ska_control_model import PowerState
@@ -31,7 +30,7 @@ from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
 )
 
 # HPS Master polling period in seconds
-POLLING_PERIOD = 3
+POLLING_PERIOD = 2
 
 
 class Eth100gClient:
@@ -240,8 +239,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = {}
         self._talon_status_events = {}
 
-        self._poll_hps_master = False
-        self._hps_master_thread = None
+        self._hps_master_thread = False
+        self._thread_event = None
 
         self._eth_100g_0_client = None
         self._eth_100g_0_client = None
@@ -317,16 +316,6 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         return
 
-    def _hps_master_polling_thread(self: TalonBoardComponentManager) -> None:
-        """
-        Threaded method to poll HPS Master health state.
-        """
-        while self._poll_hps_master:
-            self.update_device_health_state(
-                self._proxies[self._hps_master_fqdn].healthState
-            )
-            sleep(POLLING_PERIOD)
-
     def _start_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
     ) -> None:
@@ -364,27 +353,43 @@ class TalonBoardComponentManager(CbfComponentManager):
 
                 def read_100g_counters_thread(
                     eth0: Eth100gClient, eth1: Eth100gClient, event: Event
-                ):
-                    wait_t = 2  # seconds
+                ) -> None:
                     while True:
                         eth0.read_eth_100g_stats()
                         eth1.read_eth_100g_stats()
-                        # polls every 2 seconds until event is set
-                        if event.wait(timeout=wait_t):
+                        # polls until event is set
+                        if event.wait(timeout=POLLING_PERIOD):
                             break
 
-                self._eth_100g_thread_event = Event()
+                self._thread_event = Event()
                 self._read_eth_100g_thread = Thread(
                     target=read_100g_counters_thread,
                     args=[
                         self._eth_100g_0_client,
                         self._eth_100g_1_client,
-                        self._eth_100g_thread_event,
+                        self._thread_event,
                     ],
                 )
                 self._read_eth_100g_thread.start()
 
+                def hps_master_polling_thread(
+                    self: TalonBoardComponentManager, event: Event
+                ) -> None:
+                    while True:
+                        self.update_device_health_state(
+                            self._proxies[self._hps_master_fqdn].healthState
+                        )
+                        if event.wait(timeout=POLLING_PERIOD):
+                            break
+
+                self._hps_master_thread = Thread(
+                    target=hps_master_polling_thread,
+                    args=[self._thread_event],
+                )
+                self._hps_master_thread.start()
+
                 self._subscribe_change_events()
+
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
@@ -400,12 +405,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
                 )
                 return
-
-            self._poll_hps_master = True
-            self._hps_master_thread = Thread(
-                target=self._hps_master_polling_thread
-            )
-            self._hps_master_thread.start()
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
@@ -435,11 +434,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self.logger.error(f"{df}")
                         continue
 
-            self._poll_hps_master = False
+            self._thread_event.set()
             self._hps_master_thread.join()
-            self._hps_master_thread = None
-
-            self._eth_100g_thread_event.set()
             self._read_eth_100g_thread.join()
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None

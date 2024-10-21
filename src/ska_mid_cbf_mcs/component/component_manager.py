@@ -626,7 +626,6 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def wait_for_blocking_results_partial_success(
         self: CbfComponentManager,
-        timeout_sec: float = 0.0,
         task_abort_event: Optional[Event] = None,
     ) -> TaskStatus:
         """
@@ -634,18 +633,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
         one blocking command is successful.
         See documentation for wait_for_blocking_results for more details.
 
-        :param timeout_sec: Time to wait, in seconds. If default value of 0.0 is set,
-            timeout_sec = current number of blocking commands * DEFAULT_TIMEOUT_PER_COMMAND_SEC
         :param task_abort_event: Check for abort, defaults to None
 
         :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
             TaskStatus.ABORTED if aborted
         """
-        if timeout_sec == 0.0:
-            timeout_sec = (
-                len(self.blocking_command_ids)
-                * DEFAULT_TIMEOUT_PER_COMMAND_SEC
-            )
+        timeout_sec = float(len(self.blocking_command_ids) * self._lrc_timeout)
         ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
 
         # Loop is exited when no blocking command IDs remain
