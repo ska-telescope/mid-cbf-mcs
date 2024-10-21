@@ -163,11 +163,11 @@ class ControllerComponentManager(CbfComponentManager):
         :update: self._talon_lru_fqdn, self._talon_board_fqdn
         """
         # Make these sets so as not to add duplicates
-        fqdn_talon_board = set()
-        fqdn_vcc = set()
-        fqdn_fsp = set()
-        fqdn_talon_lru = set()
-        fqdn_power_switch = set()
+        self._talon_board_fqdn = set()
+        self._vcc_fqdn = set()
+        self._fsp_fqdn = set()
+        self._talon_lru_fqdn = set()
+        self._power_switch_fqdn = set()
 
         # Find used talon from talondx config, then find corresponding sub-element FQDNs from HW config
         for config_command in self.talondx_config_json["config_commands"]:
@@ -177,30 +177,24 @@ class ControllerComponentManager(CbfComponentManager):
                     lru_config["TalonDxBoard1"],
                     lru_config["TalonDxBoard2"],
                 ]:
-                    fqdn_talon_board.add(
+                    self._talon_board_fqdn.add(
                         f"mid_csp_cbf/talon_board/{int(target):03d}"
                     )
-                    fqdn_vcc.add(f"mid_csp_cbf/vcc/{int(target):03d}")
+                    self._vcc_fqdn.add(f"mid_csp_cbf/vcc/{int(target):03d}")
                     # TODO: refactor post AA1, once Talon/FPGA indices out-scale FSP indices
-                    fqdn_fsp.add(f"mid_csp_cbf/fsp/{int(target):02d}")
+                    self._fsp_fqdn.add(f"mid_csp_cbf/fsp/{int(target):02d}")
 
-                    fqdn_talon_lru.add(
+                    self._talon_lru_fqdn.add(
                         f"mid_csp_cbf/talon_lru/{int(lru_id):03d}"
                     )
                     for power_switch_id in [
                         lru_config["PDU1"],
                         lru_config["PDU2"],
                     ]:
-                        fqdn_power_switch.add(
+                        self._power_switch_fqdn.add(
                             f"mid_csp_cbf/power_switch/{int(power_switch_id):03d}"
                         )
 
-        self._talon_lru_fqdn = list(fqdn_talon_lru)
-        self._power_switch_fqdn = list(fqdn_power_switch)
-
-        self._talon_board_fqdn = list(fqdn_talon_board)
-        self._vcc_fqdn = list(fqdn_vcc)
-        self._fsp_fqdn = list(fqdn_fsp)
         self._subarray_fqdn = self._subarray_fqdns_all
 
         used_fqdns = {
@@ -420,20 +414,31 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # Read the talondx config JSON
-        try:
-            with open(f"{self._talondx_config_path}/talondx-config.json") as f:
-                self.talondx_config_json = json.load(f)
-        except FileNotFoundError as e:
-            self.logger.error(
-                f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
-            )
-            return
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Failed to decode talondx-config JSON: {e}")
-            return
-
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
+
+        # Read the talondx config JSON
+        if not self.simulation_mode:
+            try:
+                with open(
+                    f"{self._talondx_config_path}/talondx-config.json"
+                ) as f:
+                    self.talondx_config_json = json.load(f)
+            except FileNotFoundError as e:
+                self.logger.error(
+                    f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
+                )
+                return
+            except json.JSONDecodeError as e:
+                self.logger.error(f"Failed to decode talondx-config JSON: {e}")
+                return
+        else:
+            self.talondx_config_json = {
+                "config_commands": [
+                    {"target": f"{t+1:03d}"}
+                    for t in range(len(self._talon_board_fqdns_all))
+                ]
+            }
+
         self._set_used_fqdns()  # Set the used FQDNs by talondx config
 
         if not self._init_device_proxies():
