@@ -737,16 +737,17 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-            self.logger.info(message)
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event
+            )
+            if lrc_status != TaskStatus.COMPLETED:
+                message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+                self.logger.error(message)
+                success = False
+                break
+            else:
+                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+                self.logger.info(message)
 
         return (success, message)
 
