@@ -217,7 +217,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             try:
                 outlet_state = proxy_power_switch.GetOutletPowerState(outlet)
             except tango.DevFailed as df:
-                self.logger.error(f"Failed to read outlet {outlet}'s power state: {df}")
+                self.logger.error(
+                    f"Failed to read outlet {outlet}'s power state: {df}"
+                )
                 outlet_state = PowerState.UNKNOWN
         else:
             outlet_state = PowerState.UNKNOWN
