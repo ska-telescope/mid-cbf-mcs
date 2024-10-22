@@ -737,6 +737,9 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
+            # TODO: This section was indented for CIP-3034. If running the On
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
             lrc_status = self.wait_for_blocking_results(
                 task_abort_event=task_abort_event
             )
@@ -1159,6 +1162,9 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
+            # TODO: This section was indented for CIP-3034. If running the Off
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
             lrc_status = self.wait_for_blocking_results(
                 task_abort_event=task_abort_event
             )
@@ -1167,6 +1173,7 @@ class ControllerComponentManager(CbfComponentManager):
                 message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
                 self.logger.error(message)
                 success = False
+                break
             else:
                 message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
                 self.logger.info(message)

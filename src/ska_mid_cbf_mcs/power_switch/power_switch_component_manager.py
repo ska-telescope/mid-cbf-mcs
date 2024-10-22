@@ -266,7 +266,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             outlet_state = self.power_switch_driver.get_outlet_power_state(
                 outlet
             )
-            self.logger.info(
+            self.logger.debug(
                 f"PowerSwitch outlet {outlet}'s state: {outlet_state}"
             )
             return outlet_state
