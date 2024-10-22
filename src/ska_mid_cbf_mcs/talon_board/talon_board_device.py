@@ -489,7 +489,7 @@ class TalonBoard(CbfDevice):
         doc="Humidity Sensor Temperature",
         format=".3f",
         min_warning=15.0,
-        max_warning=30.0,
+        max_warning=45.0,
     )
     def humiditySensorTemperature(self: TalonBoard) -> float:
         """
