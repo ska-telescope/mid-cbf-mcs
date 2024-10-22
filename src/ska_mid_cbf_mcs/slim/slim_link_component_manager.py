@@ -602,11 +602,11 @@ class SlimLinkComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 task_callback(
-                    exception=df.desc,
+                    exception=df.args[0].desc,
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.desc,
+                        df.args[0].desc,
                     ),
                 )
                 return
@@ -712,11 +712,11 @@ class SlimLinkComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 task_callback(
-                    exception=df.desc,
+                    exception=df.args[0].desc,
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df.desc,
+                        df.args[0].desc,
                     ),
                 )
                 return
