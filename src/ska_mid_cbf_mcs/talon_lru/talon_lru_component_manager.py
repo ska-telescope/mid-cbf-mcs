@@ -218,9 +218,16 @@ class TalonLRUComponentManager(CbfComponentManager):
             proxy_power_switch is not None
             and proxy_power_switch.numOutlets != 0
         ):
-            return proxy_power_switch.GetOutletPowerState(outlet)
+            try:
+                outlet_state = proxy_power_switch.GetOutletPowerState(outlet)
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to read outlet {outlet}'s power state: {df}"
+                )
+                outlet_state = PowerState.UNKNOWN
         else:
-            return PowerState.UNKNOWN
+            outlet_state = PowerState.UNKNOWN
+        return outlet_state
 
     def _update_pdu_power_states(self: TalonLRUComponentManager) -> None:
         """
