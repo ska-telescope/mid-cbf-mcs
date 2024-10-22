@@ -1271,7 +1271,11 @@ class TalonBoardComponentManager(CbfComponentManager):
                     for r in result:
                         # each result is a tuple of (field, time, value)
                         self._telemetry[r[0]] = (r[1], r[2])
-            except Exception as e:
+            except (
+                asyncio.exceptions.TimeoutError,
+                asyncio.exceptions.CancelledError,
+                Exception,
+            ) as e:
                 msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
                 # avoid repeated error logs
                 if self.power_state != PowerState.UNKNOWN:

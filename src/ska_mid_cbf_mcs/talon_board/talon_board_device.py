@@ -730,7 +730,6 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="Fan Fault status",
         doc="Fan Fault status.",
-        max_alarm=True,
     )
     def fansFault(self: TalonBoard) -> DevVarBooleanArray:
         """
