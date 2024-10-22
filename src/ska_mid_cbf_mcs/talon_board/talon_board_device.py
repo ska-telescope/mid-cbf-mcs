@@ -33,7 +33,7 @@ from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
 
 __all__ = ["TalonBoard", "main"]
 
-# Global Varibale for polling period of Attributes, in ms
+# Global Variable for polling period of Attributes, in ms
 ATTR_POLLING_PERIOD = 10000
 
 
@@ -301,7 +301,7 @@ class TalonBoard(CbfDevice):
         """
         Read the FPGA die temperature of the Talon-DX board.
 
-        :return: the FPGA die temperature in deg Celcius
+        :return: the FPGA die temperature in deg Celsius
         """
         res = self.component_manager.fpga_die_temperature()
         return res
@@ -491,7 +491,7 @@ class TalonBoard(CbfDevice):
         """
         Read the humidity sensor temperature of the Talon-DX board.
 
-        :return: the humidity sensor temperature in deg Celcius
+        :return: the humidity sensor temperature in deg Celsius
         """
         return self.component_manager.humidity_sensor_temperature()
 
@@ -506,7 +506,7 @@ class TalonBoard(CbfDevice):
         """
         Read the DIMM temperatures of the Talon-DX board.
 
-        :return: the DIMM temperatures in deg Celcius
+        :return: the DIMM temperatures in deg Celsius
         """
         return self.component_manager.dimm_temperatures()
 
@@ -523,7 +523,7 @@ class TalonBoard(CbfDevice):
         MBO i2c addresses can be read, in which case a 0 will be
         returned for the MBO.
 
-        :return: the MBO Tx temperatures in deg Celcius.
+        :return: the MBO Tx temperatures in deg Celsius.
         """
         return self.component_manager.mbo_tx_temperatures()
 

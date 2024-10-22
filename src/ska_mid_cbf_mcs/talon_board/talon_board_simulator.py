@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
+from random import randint, uniform
 
 __all__ = ["TalonBoardSimulator"]
 
@@ -32,10 +34,6 @@ class TalonBoardSimulator:
 
         self.logger = logger
 
-        # Init FPGA sensor attr
-        self._fpga_die_voltages = [12.0, 2.5, 0.87, 1.8, 1.8, 0.9, 1.8]
-        self._fpga_die_temperature = 50.0
-
         # Init TalonSysId attr
         self._sysid_version = "test"
         self._bitstream_version = 0xBEEFBABE
@@ -53,29 +51,213 @@ class TalonBoardSimulator:
         self._slim_pll_fault = False
 
     @property
-    def fpga_die_temperature(self: TalonBoardSimulator) -> float:
-        """
-        Simulates value for fpga_die_temperature in degrees celcius
-
-        :return : a float value representing the temperature reading from the sensor
-        """
-        return self._fpga_die_temperature
-
-    @property
-    def fpga_die_voltages(self: TalonBoardSimulator) -> list[float]:
-        """
-        Simulates value for fpga_die_voltage in volts
-
-        :return : a list of float values representing the various voltage readings from the sensor
-        """
-        return self._fpga_die_voltages
+    def simulated_telemetry_results(
+        self: TalonBoardSimulator,
+    ) -> list[tuple[str, datetime, any]]:
+        telemetry = [
+            (field, datetime.now(timezone.utc), value)
+            for field, value in [
+                (
+                    "temperature-sensors_fpga-die-temp",
+                    round(uniform(20.0, 50.0), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-0",
+                    round(uniform(11.2, 12.8), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-1",
+                    round(uniform(2.404, 2.596), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-2",
+                    round(uniform(0.77, 0.97), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-3",
+                    round(uniform(1.71, 1.89), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-4",
+                    round(uniform(1.71, 1.89), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-5",
+                    round(uniform(0.87, 0.93), 3),
+                ),
+                (
+                    "voltage-sensors_fpga-die-voltage-6",
+                    round(uniform(1.71, 1.89), 3),
+                ),
+                (
+                    "temperature-sensors_humidity-temp",
+                    round(uniform(20.0, 50.0), 3),
+                ),
+            ]
+        ]
+        telemetry.extend(
+            [
+                (
+                    f"MBOs_{i}_TX_temperature",
+                    datetime.now(timezone.utc),
+                    round(uniform(20.0, 50.0), 3),
+                ),
+                (
+                    f"MBOs_{i}_TX_vcc-3.3-voltage",
+                    datetime.now(timezone.utc),
+                    round(uniform(3.19, 3.41), 3),
+                ),
+                (
+                    f"MBOs_{i}_TX_tx-fault-status",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"MBOs_{i}_TX_tx-lol-status",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"MBOs_{i}_TX_tx-los-status",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"MBOs_{i}_RX_vcc-3.3-voltage",
+                    datetime.now(timezone.utc),
+                    round(uniform(3.19, 3.41), 3),
+                ),
+                (
+                    f"MBOs_{i}_RX_rx-lol-status",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"MBOs_{i}_RX_rx-los-status",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+            ]
+            for i in range(5)
+        )
+        telemetry.extend(
+            [
+                (
+                    f"temperature-sensors_dimm-temps_{i}_temp",
+                    datetime.now(timezone.utc),
+                    round(uniform(20.0, 50.0), 3),
+                ),
+                (
+                    f"fans_fan-input_{i}",
+                    datetime.now(timezone.utc),
+                    randint(1, 499),
+                ),
+                (
+                    f"fans_pwm_{i}",
+                    datetime.now(timezone.utc),
+                    randint(0, 255),
+                ),
+                (
+                    f"fans_pwm-enable_{i}",
+                    datetime.now(timezone.utc),
+                    randint(0, 2),
+                ),
+                (
+                    f"fans_fan-fault_{i}",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-input",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-output-1",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-output-2",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-input",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-output-1",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-output-2",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_temperature-1",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_temperature-2",
+                    datetime.now(timezone.utc),
+                    round(uniform(0.0, 1.0), 3),
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-output-max-alarm-1",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-output-max-alarm-2",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_voltage-input-crit-alarm",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-output-max-alarm-1",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-output-max-alarm-2",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_current-input-max-alarm",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_temperature-max-alarm-1",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+                (
+                    f"LTMs_{i}_LTM_temperature-max-alarm-2",
+                    datetime.now(timezone.utc),
+                    False,
+                ),
+            ]
+            for i in range(4)
+        )
+        return telemetry
 
     @property
     def sysid_version(self: TalonBoardSimulator) -> str:
         """
-        The bitsream version as a string.
+        The bitstream version as a string.
 
-        :return: the bitsream version.
+        :return: the bitstream version.
         :rtype: str
         """
         return self._bitstream_version
@@ -83,9 +265,9 @@ class TalonBoardSimulator:
     @property
     def sysid_bitstream(self: TalonBoardSimulator) -> int:
         """
-        The bitsream checksum as a string.
+        The bitstream checksum as a string.
 
-        :return: the bitsream checksum.
+        :return: the bitstream checksum.
         :rtype: int
         """
         return self._bitstream_version
