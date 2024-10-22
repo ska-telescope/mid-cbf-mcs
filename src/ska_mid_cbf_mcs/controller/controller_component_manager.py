@@ -737,16 +737,20 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-            self.logger.info(message)
+            # TODO: This section was indented for CIP-3034. If running the On
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event
+            )
+            if lrc_status != TaskStatus.COMPLETED:
+                message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+                self.logger.error(message)
+                success = False
+                break
+            else:
+                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+                self.logger.info(message)
 
         return (success, message)
 
@@ -1158,17 +1162,21 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
+            # TODO: This section was indented for CIP-3034. If running the Off
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event
+            )
 
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-            self.logger.info(message)
+            if lrc_status != TaskStatus.COMPLETED:
+                message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
+                self.logger.error(message)
+                success = False
+                break
+            else:
+                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
+                self.logger.info(message)
 
         return (success, message)
 
