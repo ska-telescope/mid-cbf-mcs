@@ -296,6 +296,8 @@ class TalonBoard(CbfDevice):
         label="FPGA Die Temperature",
         doc="FPGA Die Temperature",
         format=".3f",
+        max_warning=90.0,
+        max_alarm=100.0,
     )
     def fpgaDieTemperature(self: TalonBoard) -> float:
         """
@@ -486,6 +488,8 @@ class TalonBoard(CbfDevice):
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
         format=".3f",
+        min_warning=15.0,
+        max_warning=30.0,
     )
     def humiditySensorTemperature(self: TalonBoard) -> float:
         """
@@ -501,6 +505,8 @@ class TalonBoard(CbfDevice):
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
         format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
     def dimmTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -516,6 +522,8 @@ class TalonBoard(CbfDevice):
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
         format=".3f",
+        max_warning=65.0,
+        max_alarm=70.0,
     )
     def mboTxTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -533,6 +541,8 @@ class TalonBoard(CbfDevice):
         label="MBO Tx VCC 3.3 Voltages",
         doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
         format=".3f",
+        min_alarm=3.2,
+        max_alarm=3.4,
     )
     def mboTxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -598,6 +608,8 @@ class TalonBoard(CbfDevice):
         label="MBO Rx VCC 3.3 Voltages",
         doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
         format=".3f",
+        min_alarm=3.2,
+        max_alarm=3.4,
     )
     def mboRxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -718,6 +730,7 @@ class TalonBoard(CbfDevice):
         max_dim_x=4,
         label="Fan Fault status",
         doc="Fan Fault status.",
+        max_alarm=True,
     )
     def fansFault(self: TalonBoard) -> DevVarBooleanArray:
         """
@@ -740,6 +753,7 @@ class TalonBoard(CbfDevice):
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmInputVoltage(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -755,6 +769,7 @@ class TalonBoard(CbfDevice):
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmOutputVoltage1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -770,6 +785,7 @@ class TalonBoard(CbfDevice):
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmOutputVoltage2(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -830,6 +846,8 @@ class TalonBoard(CbfDevice):
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
         format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
     def ltmTemperature1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -845,6 +863,8 @@ class TalonBoard(CbfDevice):
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
         format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
     def ltmTemperature2(self: TalonBoard) -> DevVarFloatArray:
         """
