@@ -19,7 +19,8 @@ UNRELEASED CHANGES
 * CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
 * CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
 * CIP-2780 added 100g ethernet monitoring on talon board devices
-* CIP-3028: Updated hw config after systems room re-organization.
+* CIP-3028 Updated hw config after systems room re-organization.
+* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
 
 1.0.0
 ******

@@ -158,6 +158,8 @@ class STSwitchedPRO2Driver:
         url = self.outlet_state_url.replace("REPLACE_OUTLET", outlet)
         outlet_idx = self.outlet_id_list.index(outlet)
 
+        self.logger.debug(f"Checking outlet state @ {url}")
+
         try:
             response = requests.get(
                 url=url,
