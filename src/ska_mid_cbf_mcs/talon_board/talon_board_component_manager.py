@@ -347,10 +347,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                         )
                         return
 
-                # init eth 100g proxies and start monitoring
-                self._eth_100g_0_client = Eth100gClient(self._eth_100g_0_fqdn)
-                self._eth_100g_1_client = Eth100gClient(self._eth_100g_1_fqdn)
-
                 def read_100g_counters_thread(
                     eth0: Eth100gClient, eth1: Eth100gClient, event: Event
                 ) -> None:
@@ -361,6 +357,18 @@ class TalonBoardComponentManager(CbfComponentManager):
                         if event.wait(timeout=POLLING_PERIOD):
                             break
 
+                def hps_master_polling_thread(event: Event) -> None:
+                    while True:
+                        self.update_device_health_state(
+                            self._proxies[self._hps_master_fqdn].healthState
+                        )
+                        if event.wait(timeout=POLLING_PERIOD):
+                            break
+
+                # Initialize eth 100g and HPS Master monitoring
+                self._eth_100g_0_client = Eth100gClient(self._eth_100g_0_fqdn)
+                self._eth_100g_1_client = Eth100gClient(self._eth_100g_1_fqdn)
+
                 self._thread_event = Event()
                 self._read_eth_100g_thread = Thread(
                     target=read_100g_counters_thread,
@@ -370,24 +378,14 @@ class TalonBoardComponentManager(CbfComponentManager):
                         self._thread_event,
                     ],
                 )
-                self._read_eth_100g_thread.start()
-
-                def hps_master_polling_thread(
-                    self: TalonBoardComponentManager, event: Event
-                ) -> None:
-                    while True:
-                        self.update_device_health_state(
-                            self._proxies[self._hps_master_fqdn].healthState
-                        )
-                        if event.wait(timeout=POLLING_PERIOD):
-                            break
-
                 self._hps_master_thread = Thread(
                     target=hps_master_polling_thread,
                     args=[self._thread_event],
                 )
+                self._read_eth_100g_thread.start()
                 self._hps_master_thread.start()
 
+                # Subscribe to Talon System ID and Status events
                 self._subscribe_change_events()
 
             except tango.DevFailed as df:
