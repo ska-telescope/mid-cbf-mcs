@@ -159,17 +159,22 @@ class TestFspScanConfigurationBuilder:
         ):
             # Assert all ports accounted for in configured FSP's
             if "output_port" in pr_config:
-                expected_output_port = copy.deepcopy(pr_config["output_port"])
+                expected_output_ports = copy.deepcopy(pr_config["output_port"])
+                expected_ports = [
+                    output_port[1] for output_port in expected_output_ports
+                ]
                 for fsp_config in fsp_to_pr[pr_index]:
                     actual_output_ports = fsp_config["output_port"]
+
                     for port in actual_output_ports:
                         fsp_id = fsp_config["fsp_id"]
                         assert (
-                            port in expected_output_port
+                            port[1] in expected_ports
                         ), f"Assigned output_port in FSP: {fsp_id}, was not expected for PR index {index}, or was duplicated from another FSP"
-                        expected_output_port.remove(port)
+                        index_of_port = expected_ports.index(port[1])
+                        expected_ports.pop(index_of_port)
                 assert (
-                    len(expected_output_port) == 0
+                    len(expected_ports) == 0
                 ), f"There are unassigned output_ports for PR index {index}"
 
             # Assert vcc to rdt shift values set for all receptors

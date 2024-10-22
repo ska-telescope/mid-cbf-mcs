@@ -251,20 +251,34 @@ class FspScanConfigurationBuilder:
             #     [ [180, 14004] ],
             # ]
             #
+            # BUT we will also rebase the maps to 0, so it becomes
+            # [
+            #     [ [0, 14000], [20, 14001] ],
+            #     [ [0, 14002], [20, 14003] ],
+            #     [ [0, 14004] ],
+            # ]
+            # with a channel offset set from the fsp_start_ch
+            #
             #
             split_output_ports = channel_map.split_channel_map_at(
                 channel_map=processing_region_config["output_port"],
                 channel_groups=sdp_start_channel_ids,
-                rebase_groups=None,
+                rebase_groups=0,
+            )
+
+            split_output_hosts = channel_map.split_channel_map_at(
+                channel_map=processing_region_config["output_host"],
+                channel_groups=sdp_start_channel_ids,
+                rebase_groups=0,
             )
 
             # Use zip to create a dictionary that maps the fsp to the output map
             # list above, so the result will be fsp_to_output_port_map =
             #
             # {
-            #    3: [ [100, 14000], [120, 14001] ],
-            #    4: [ [140, 14002], [160, 14003] ],
-            #    5: [ [180, 14004] ],
+            #    3: [ [0, 14000], [20, 14001] ],
+            #    4: [ [0, 14002], [20, 14003] ],
+            #    5: [ [0, 14004] ],
             # }
             #
             # We can then use this dictionary later when building the fsp config
@@ -273,6 +287,12 @@ class FspScanConfigurationBuilder:
                 calculated_fsp_ids, split_output_ports
             ):
                 fsp_to_output_port_map[fsp_id] = fsp_output_ports
+
+            fsp_to_output_host_map = {}
+            for fsp_id, fsp_output_hosts in zip(
+                calculated_fsp_ids, split_output_hosts
+            ):
+                fsp_to_output_host_map[fsp_id] = fsp_output_hosts
 
         # Build individual fsp configs
         fsp_configs = []
@@ -289,17 +309,25 @@ class FspScanConfigurationBuilder:
                 "integration_factor"
             ]
 
+            # spead channel_offset
             # channel_offset flows down to firmware into value channel_id.
-            # channel_id needs to be set such that the 'start' is s
+            # channel_id needs to be set such that the 'start' is
             # sdp_start_channel_id.
             #
             # So channel_id = sdp_start_channel_id - fsp_start_ch,
             # because the FW will add the channel number (0 to 744)*20  to this
             # value and put it in the SPEAD packets.
-            fsp_config["channel_offset"] = (
+            fsp_config["spead_channel_offset"] = (
                 calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
                 - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
             )
+
+            # the hps_fsp and host_lut channel_offset differs from the one
+            # needed by SPEAD it it simply the 0-14880 value, which is just the
+            # fsp_start_ch value
+            fsp_config["channel_offset"] = calculated_fsp_infos[fsp_id][
+                "fsp_start_ch"
+            ]
 
             fsp_config["output_link_map"] = processing_region_config[
                 "output_link_map"
@@ -311,9 +339,7 @@ class FspScanConfigurationBuilder:
 
             # Optional values:
             if "output_host" in processing_region_config:
-                fsp_config["output_host"] = processing_region_config[
-                    "output_host"
-                ]
+                fsp_config["output_host"] = fsp_to_output_host_map[fsp_id]
             if "output_port" in processing_region_config:
                 fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
 
