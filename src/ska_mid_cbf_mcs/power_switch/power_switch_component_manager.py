@@ -228,6 +228,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         False,
                         f"Outlet {outlet} failed to power on after sleep.",
                     )
+                else:
+                    return True, "TurnOnOutlet completed OK"
         elif mode == "off":
             if power_state == PowerState.OFF:
                 return True, "TurnOffOutlet completed OK"
@@ -243,6 +245,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         False,
                         f"Outlet {outlet} failed to power off after sleep.",
                     )
+                else:
+                    return True, "TurnOnOutlet completed OK"
 
     # -------------
     # Fast Commands
