@@ -346,7 +346,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._talon_lru_fqdn,
             self._talon_board_fqdn,
             self._power_switch_fqdn,
-            {self._fs_slim_fqdn, self._vis_slim_fqdn}
+            {self._fs_slim_fqdn, self._vis_slim_fqdn},
         )
 
         if fqdn in used_fqdns:
