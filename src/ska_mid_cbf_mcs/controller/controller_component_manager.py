@@ -154,7 +154,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in all_fqdns.items():
-            self.logger.info(f"All {name} FQDNs: {value}")
+            self.logger.debug(f"All {name} FQDNs: {value}")
 
     def _set_used_fqdns(self: ControllerComponentManager) -> None:
         """
@@ -209,7 +209,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in used_fqdns.items():
-            self.logger.info(f"Used {name} FQDNs: {value}")
+            self.logger.debug(f"Used {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -324,7 +324,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         if fqdn not in self._proxies:
             try:
-                self.logger.info(f"Trying connection to {fqdn}")
+                self.logger.debug(f"Trying connection to {fqdn}")
                 dp = context.DeviceProxy(device_name=fqdn)
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}: {df}")
@@ -340,14 +340,13 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._write_hw_config(fqdn, proxy, hw_device_type):
                 return False
 
-        used_fqdns = set(
-            self._vcc_fqdn
-            + self._fsp_fqdn
-            + self._subarray_fqdn
-            + self._talon_lru_fqdn
-            + self._talon_board_fqdn
-            + self._power_switch_fqdn
-            + [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        used_fqdns = self._vcc_fqdn.union(
+            self._fsp_fqdn,
+            self._subarray_fqdn,
+            self._talon_lru_fqdn,
+            self._talon_board_fqdn,
+            self._power_switch_fqdn,
+            {self._fs_slim_fqdn, self._vis_slim_fqdn}
         )
 
         if fqdn in used_fqdns:
@@ -400,7 +399,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager._start_communicating"
         )
 
