@@ -439,7 +439,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = {}
         self._talon_status_events = {}
 
-        self._update_component_state(power=PowerState.UNKNOWN)
         super()._stop_communicating()
 
     # -------------
@@ -1277,14 +1276,10 @@ class TalonBoardComponentManager(CbfComponentManager):
                 Exception,
             ) as e:
                 msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
-                # avoid repeated error logs
-                if self.power_state != PowerState.UNKNOWN:
-                    self.logger.error(msg)
-                self._update_component_state(power=PowerState.UNKNOWN)
+                self.logger.error(msg)
                 tango.Except.throw_exception(
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
-            self._update_component_state(power=PowerState.ON)
 
     def _validate_time(self, field, t) -> None:
         """
