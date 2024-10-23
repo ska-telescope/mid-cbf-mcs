@@ -699,17 +699,19 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
+        lru_fqdns: list[str],
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn on all of the Talon LRUs
+        Turn on a given list of Talon LRUs
 
+        :param lru_fqdns: List of Talon LRU FQDNs to turn on.
         :param task_abort_event: Event to signal task abort.
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
         """
         success = True
         self.blocking_command_ids = set()
-        for fqdn in self._talon_lru_fqdn:
+        for fqdn in lru_fqdns:
             self.logger.info(f"Turning on LRU {fqdn}")
             lru = self._proxies[fqdn]
             try:
@@ -729,20 +731,21 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-            # TODO: This section was indented for CIP-3034. If running the On
-            # commands in serial leads to significant performance hits, revert
-            # this and make PDU's GetOutletPowerState() an LRC instead.
-            lrc_status = self.wait_for_blocking_results(
-                task_abort_event=task_abort_event
-            )
-            if lrc_status != TaskStatus.COMPLETED:
-                message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
-                self.logger.error(message)
-                success = False
-                break
-            else:
-                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-                self.logger.info(message)
+        lrc_status = self.wait_for_blocking_results_partial_success(
+            task_abort_event=task_abort_event
+        )
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "All TalonLru.On() LRC calls failed/timed out. Check TalonLru logs."
+            self.logger.error(message)
+            success = False
+        else:
+            num_lru = 0
+            with self._attr_event_lock:
+                for fqdn, state in self._op_states.items():
+                    if fqdn in lru_fqdns and state == tango.DevState.ON:
+                        num_lru += 1
+            message = f"{num_lru} TalonLru devices successfully turned on"
+            self.logger.info(message)
 
         return (success, message)
 
@@ -868,7 +871,15 @@ class ControllerComponentManager(CbfComponentManager):
         self._get_talon_fqdns()
 
         # Turn on all the LRUs with the boards we need
-        lru_on_status, msg = self._turn_on_lrus(task_abort_event)
+        lru_list = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if (
+                    fqdn in self._talon_lru_fqdn
+                    and state == tango.DevState.OFF
+                ):
+                    lru_list.append(fqdn)
+        lru_on_status, msg = self._turn_on_lrus(lru_list, task_abort_event)
         if not lru_on_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -881,14 +892,18 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Configure all the Talon boards
         # Clears process inside the Talon Board to make it a clean state
-        # Also sets the simulation mode of the Talon Boards based on TalonDx Component Manager's SimulationMode Attribute
-        talon_list = []
+        available_talon_targets = []
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
                 if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
-                    talon_list.append(fqdn.split("/")[-1])
+                    lru_id = fqdn.split("/")[-1]
+                    lru_config = self._hw_config["talon_lru"][lru_id]
+                    available_talon_targets.append(lru_config["TalonDxBoard1"])
+                    available_talon_targets.append(lru_config["TalonDxBoard2"])
         if (
-            self._talondx_component_manager.configure_talons(talon_list)
+            self._talondx_component_manager.configure_talons(
+                available_talon_targets
+            )
             == ResultCode.FAILED
         ):
             msg = "Failed to configure Talon boards"
@@ -1059,14 +1074,15 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Turn off TalonBoard devices.
         # NOTE: a failure here won't cause Controller.Off() to fail.
-        try:
-            for proxy in self._talon_board_proxies.values():
-                proxy.adminMode = AdminMode.OFFLINE
-        except tango.DevFailed as df:
-            # Log a warning, but continue when the talon board fails to turn off
-            log_msg = f"Failed to turn off Talon proxy; {df}"
-            self.logger.warning(log_msg)
-            message.append(log_msg)
+        for fqdn in self._talon_board_fqdn:
+            try:
+                self._proxies[fqdn].adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                # Log a warning, but continue when the talon board fails to turn off
+                log_msg = f"Failed to turn off Talon proxy; {df}"
+                self.logger.warning(log_msg)
+                message.append(log_msg)
+                continue
 
         if success:
             message.append("Successfully issued Off() to all subelements.")
@@ -1128,17 +1144,19 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
+        lru_fqdns: list[str],
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn off all of the Talon LRUs
+        Turn off a given list of Talon LRUs
 
-        :param task_abort_event: Event to signal task abort
+        :param lru_fqdns: List of Talon LRU FQDNs to turn on.
+        :param task_abort_event: Event to signal task abort.
         :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
         """
         success = True
         self.blocking_command_ids = set()
-        for fqdn in self._talon_lru_fqdn:
+        for fqdn in lru_fqdns:
             lru = self._proxies[fqdn]
             self.logger.info(f"Turning off LRU {fqdn}")
             try:
@@ -1158,21 +1176,21 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-            # TODO: This section was indented for CIP-3034. If running the Off
-            # commands in serial leads to significant performance hits, revert
-            # this and make PDU's GetOutletPowerState() an LRC instead.
-            lrc_status = self.wait_for_blocking_results(
-                task_abort_event=task_abort_event
-            )
-
-            if lrc_status != TaskStatus.COMPLETED:
-                message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
-                self.logger.error(message)
-                success = False
-                break
-            else:
-                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-                self.logger.info(message)
+        lrc_status = self.wait_for_blocking_results_partial_success(
+            task_abort_event=task_abort_event
+        )
+        if lrc_status != TaskStatus.COMPLETED:
+            message = "All TalonLru.Off() LRC calls failed/timed out. Check TalonLru logs."
+            self.logger.error(message)
+            success = False
+        else:
+            num_lru = 0
+            with self._attr_event_lock:
+                for fqdn, state in self._op_states.items():
+                    if fqdn in lru_fqdns and state == tango.DevState.OFF:
+                        num_lru += 1
+            message = f"{num_lru} TalonLru devices successfully turned off"
+            self.logger.info(message)
 
         return (success, message)
 
@@ -1239,7 +1257,14 @@ class ControllerComponentManager(CbfComponentManager):
             message.append(log_msg)
 
         # TalonLRU Off
-        lru_off_status, log_msg = self._turn_off_lrus(task_abort_event)
+        lru_list = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
+                    lru_list.append(fqdn)
+        lru_off_status, log_msg = self._turn_off_lrus(
+            lru_list, task_abort_event
+        )
         if not lru_off_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED

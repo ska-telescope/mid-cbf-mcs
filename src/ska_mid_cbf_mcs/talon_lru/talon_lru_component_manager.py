@@ -201,7 +201,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super()._stop_communicating()
 
-
     # ---------------------
     # Long Running Commands
     # ---------------------
