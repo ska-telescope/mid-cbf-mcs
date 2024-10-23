@@ -25,9 +25,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
-from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
-    TalonBoardSimulator,
-)
+from ska_mid_cbf_mcs.talon_board.talon_board_simulator import SimulatedValues
 
 
 class Eth100gClient:
@@ -239,8 +237,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._eth_100g_0_client = None
         self._eth_100g_0_client = None
         self._read_eth_100g_thread = None
-
-        self.talon_board_simulator = TalonBoardSimulator(self.logger)
 
     # -------------
     # Communication
@@ -462,7 +458,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_sysid_version(self) -> str:
         """Returns the bitstream version string"""
         if self.simulation_mode:
-            return self.talon_board_simulator.sysid_version
+            return SimulatedValues.get("talon_sysid_version")
 
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
@@ -481,7 +477,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_sysid_bitstream(self) -> int:
         """Returns the least 32 bits of md5 checksum of the bitstream name"""
         if self.simulation_mode:
-            return self.talon_board_simulator.sysid_bitstream
+            return SimulatedValues.get("talon_sysid_bitstream")
 
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
@@ -500,7 +496,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_iopll_locked_fault
+            return SimulatedValues.get("talon_status_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -519,7 +515,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_fs_iopll_locked_fault
+            return SimulatedValues.get("talon_status_fs_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -538,7 +534,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_comms_iopll_locked_fault
+            return SimulatedValues.get("talon_status_comms_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -557,7 +553,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_system_clk_fault
+            return SimulatedValues.get("talon_status_system_clk_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -576,7 +572,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_bl_fault
+            return SimulatedValues.get("talon_status_emif_bl_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -595,7 +591,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_br_fault
+            return SimulatedValues.get("talon_status_emif_br_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -614,7 +610,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_tr_fault
+            return SimulatedValues.get("talon_status_emif_tr_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -633,7 +629,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_e100g_0_pll_fault
+            return SimulatedValues.get("talon_status_e100g_0_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -652,7 +648,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_e100g_1_pll_fault
+            return SimulatedValues.get("talon_status_e100g_1_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -671,7 +667,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_slim_pll_fault
+            return SimulatedValues.get("talon_status_slim_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -689,39 +685,63 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     # 100g Ethernet
     def eth100g_0_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_counters")
         return self._eth_100g_0_client.get_data_counters()
 
     def eth100g_0_error_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_error_counters")
         return self._eth_100g_0_client.get_error_counters()
 
     def eth100g_0_data_flow_active(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_data_flow_active")
         return self._eth_100g_0_client.has_data_flow()
 
     def eth100g_0_has_data_error(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_has_data_error")
         return self._eth_100g_0_client.has_error()
 
     def eth100g_0_all_tx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_all_tx_counters")
         return self._eth_100g_0_client.get_all_tx_counters()
 
     def eth100g_0_all_rx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_all_rx_counters")
         return self._eth_100g_0_client.get_all_rx_counters()
 
     def eth100g_1_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_counters")
         return self._eth_100g_1_client.get_data_counters()
 
     def eth100g_1_error_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_error_counters")
         return self._eth_100g_1_client.get_error_counters()
 
     def eth100g_1_data_flow_active(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_data_flow_active")
         return self._eth_100g_1_client.has_data_flow()
 
     def eth100g_1_has_data_error(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_has_data_error")
         return self._eth_100g_1_client.has_error()
 
     def eth100g_1_all_tx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_all_tx_counters")
         return self._eth_100g_1_client.get_all_tx_counters()
 
     def eth100g_1_all_rx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_all_rx_counters")
         return self._eth_100g_1_client.get_all_rx_counters()
 
     # ----------------------------------------------
@@ -729,9 +749,8 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------------------------------------
 
     def fpga_die_temperature(self) -> float:
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_temperature
+            return SimulatedValues.get("fpga_die_temperature")
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
         t, val = self._telemetry[field]
@@ -745,10 +764,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[0]
+            return SimulatedValues.get("fpga_die_voltage_0")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-0"
         t, val = self._telemetry[field]
@@ -762,10 +779,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[1]
+            return SimulatedValues.get("fpga_die_voltage_1")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-1"
         t, val = self._telemetry[field]
@@ -779,10 +794,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[2]
+            return SimulatedValues.get("fpga_die_voltage_2")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-2"
         t, val = self._telemetry[field]
@@ -796,10 +809,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[3]
+            return SimulatedValues.get("fpga_die_voltage_3")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-3"
         t, val = self._telemetry[field]
@@ -813,10 +824,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[4]
+            return SimulatedValues.get("fpga_die_voltage_4")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-4"
         t, val = self._telemetry[field]
@@ -830,10 +839,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[5]
+            return SimulatedValues.get("fpga_die_voltage_5")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-5"
         t, val = self._telemetry[field]
@@ -847,10 +854,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[6]
+            return SimulatedValues.get("fpga_die_voltage_6")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-6"
         t, val = self._telemetry[field]
@@ -858,6 +863,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def humidity_sensor_temperature(self) -> float:
+        if self.simulation_mode:
+            return SimulatedValues.get("humidity_sensor_temperature")
         self._query_if_needed()
         field = "temperature-sensors_humidity-temp"
         t, val = self._telemetry[field]
@@ -865,6 +872,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def dimm_temperatures(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("dimm_temperatures")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -879,6 +888,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_temperatures(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_temperatures")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -893,6 +904,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_vcc_voltages(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_vcc_voltages")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -907,6 +920,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_fault_status(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_fault_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -921,6 +936,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_lol_status(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_lol_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -935,6 +952,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_los_status(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_los_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -949,6 +968,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_vcc_voltages(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_vcc_voltages")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -963,6 +984,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_lol_status(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_lol_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -977,6 +1000,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_los_status(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_los_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -991,6 +1016,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def has_fan_control(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("has_fan_control")
         # the fan*_input in the fans' MAX31790 driver will return 0
         # if tachometers cannot be read, which either means reading tachometers
         # is not yet enabled, or there is no fan control on this board. Either
@@ -999,6 +1026,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return any(x > 0 for x in fans_input)
 
     def fans_pwm(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_pwm")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1014,6 +1043,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_pwm_enable(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_pwm_enable")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1029,6 +1060,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_input(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_input")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1044,6 +1077,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_fault(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_fault")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1059,6 +1094,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_voltage(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_input_voltage")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1076,6 +1113,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_voltage_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1093,6 +1132,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_voltage_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1110,6 +1151,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_current(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_input_current")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1127,6 +1170,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_current_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1144,6 +1189,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_current_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1161,6 +1208,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1178,6 +1227,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1195,6 +1246,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_voltage_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_voltage_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1216,6 +1269,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_current_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_current_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1237,6 +1292,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
