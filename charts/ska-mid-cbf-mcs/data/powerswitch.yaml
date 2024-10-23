@@ -28,20 +28,6 @@ server:
         properties:
           - name: "PowerSwitchModel"
             values:
-            - "DLI LPC9"
-          - name: "PowerSwitchIp"
-            values:
-            - "192.168.0.100"
-          - name: "PowerSwitchLogin"
-            values: 
-            - "admin"
-          - name: "PowerSwitchPassword"
-            values:
-            - "1234"
-      - name: "mid_csp_cbf/power_switch/002"
-        properties:
-          - name: "PowerSwitchModel"
-            values:
             - "Server Technology Switched PRO2"
           - name: "PowerSwitchIp"
             values:
@@ -52,28 +38,14 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "admn-1-Psi"
-      - name: "mid_csp_cbf/power_switch/003"
-        properties:
-          - name: "PowerSwitchModel"
-            values:
-            - "APC AP8681 SSH"
-          - name: "PowerSwitchIp"
-            values:
-            - "192.168.1.253"
-          - name: "PowerSwitchLogin"
-            values: 
-            - "apc"
-          - name: "PowerSwitchPassword"
-            values:
-            - "apc"
-      - name: "mid_csp_cbf/power_switch/004"
+      - name: "mid_csp_cbf/power_switch/002"
         properties:
           - name: "PowerSwitchModel"
             values:
             - "APC AP8681 SNMP"
           - name: "PowerSwitchIp"
             values:
-            - "192.168.1.253"
+            - "192.168.1.252"
           - name: "PowerSwitchLogin"
             values:
             - "apcsnmp"

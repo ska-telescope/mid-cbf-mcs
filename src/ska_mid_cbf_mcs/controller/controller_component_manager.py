@@ -572,11 +572,14 @@ class ControllerComponentManager(CbfComponentManager):
         # Set VCC values
         for fqdn in self._vcc_fqdn:
             try:
-                proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
+                self.logger.debug(f"Trying connection to {fqdn}")
+                self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
+
+                vcc_proxy = self._proxies[fqdn]
+                vcc_id = int(vcc_proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    proxy.dishID = dish_id
+                    vcc_proxy.dishID = dish_id
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
@@ -589,7 +592,6 @@ class ControllerComponentManager(CbfComponentManager):
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}; {df}")
                 return False
-
         return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
@@ -832,16 +834,20 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
-            self.logger.info(message)
+            # TODO: This section was indented for CIP-3034. If running the On
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event
+            )
+            if lrc_status != TaskStatus.COMPLETED:
+                message = "One or more calls to nested LRC TalonLru.On() failed/timed out. Check TalonLru logs."
+                self.logger.error(message)
+                success = False
+                break
+            else:
+                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned on"
+                self.logger.info(message)
 
         return (success, message)
 
@@ -1243,17 +1249,21 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 success = False
 
-        lrc_status = self.wait_for_blocking_results(
-            task_abort_event=task_abort_event
-        )
+            # TODO: This section was indented for CIP-3034. If running the Off
+            # commands in serial leads to significant performance hits, revert
+            # this and make PDU's GetOutletPowerState() an LRC instead.
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event
+            )
 
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
-        else:
-            message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
-            self.logger.info(message)
+            if lrc_status != TaskStatus.COMPLETED:
+                message = "One or more calls to nested LRC TalonLru.Off() failed/timed out. Check TalonLru logs."
+                self.logger.error(message)
+                success = False
+                break
+            else:
+                message = f"{len(self._talon_lru_fqdn)} TalonLru devices successfully turned off"
+                self.logger.info(message)
 
         return (success, message)
 
