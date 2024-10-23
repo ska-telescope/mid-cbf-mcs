@@ -183,6 +183,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
                 "PowerSwitch outlets reported None after initialization. Communication not established."
             )
             return
+
+        self.logger.debug(
+            f"PowerSwitch numOutlets reported {self.power_switch_driver.num_outlets} after initialization."
+        )
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
