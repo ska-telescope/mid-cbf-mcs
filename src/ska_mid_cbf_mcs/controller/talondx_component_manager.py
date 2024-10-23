@@ -619,7 +619,7 @@ class TalonDxComponentManager(CbfComponentManager):
         hps_master.set_timeout_millis(const.DEFAULT_TIMEOUT * 1000)
         try:
             hps_master.shutdown(3)
-        except tango.DevFailed :
+        except tango.DevFailed:
             pass
             # shutdown command to HPS master will timeout because it
             # terminates the HPS master DS. Ignore the exception.
