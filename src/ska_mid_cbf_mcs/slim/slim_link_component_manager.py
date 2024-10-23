@@ -606,7 +606,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df,
+                        f"{df}",
                     ),
                 )
                 return
@@ -716,7 +716,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df,
+                        f"{df}",
                     ),
                 )
                 return
