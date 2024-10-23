@@ -333,18 +333,18 @@ class FspScanConfigurationBuilder:
             ]
 
             # spead channel_offset
-            # channel_offset flows down to firmware into value channel_id.
+            # this offset flows down to SPEAD into value channel_id.
             # channel_id needs to be set such that the 'start' is
             # sdp_start_channel_id of the fsp.
-            #
-            # again, the fsp.sdp_start_channel_id is only relative to the
-            # assigned fsps, and not to the pr.sdp_start_channel_id, so the
-            # "absolute" sdp_start_channel_id is to add the fsp and pr
-            # sdp_start_channel_ids together.
             #
             # So channel_id = sdp_start_channel_id - fsp_start_ch,
             # because the FW will add the channel number (0 to 744)*20  to this
             # value and put it in the SPEAD packets.
+            #
+            # The fsp.sdp_start_channel_id is only relative to the
+            # assigned fsps, and not to the pr.sdp_start_channel_id, so the
+            # "absolute" sdp_start_channel_id is to add the fsp and pr
+            # sdp_start_channel_ids together.
             fsp_config["spead_channel_offset"] = (
                 processing_region_config["sdp_start_channel_id"]
                 + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
@@ -352,7 +352,7 @@ class FspScanConfigurationBuilder:
             )
 
             # the hps_fsp and host_lut channel_offset differs from the one
-            # needed by SPEAD it it simply the 0-14880 value, which is just the
+            # needed by SPEAD. It is simply the 0-14880 value which is just the
             # fsp_start_ch value
             fsp_config["channel_offset"] = calculated_fsp_infos[fsp_id][
                 "fsp_start_ch"
