@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
+  * fix sending proper channel offset values to SPEAD and Host-LUT
+  * fix splitting up output_port, output_host, and output_link_map and rebase channels to 0 in fsp configs
 
 1.1.0-rc.1
 **********
