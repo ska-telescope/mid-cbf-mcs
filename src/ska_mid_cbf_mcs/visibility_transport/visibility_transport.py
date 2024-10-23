@@ -208,8 +208,9 @@ class VisibilityTransport:
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
 
-            # SPEAD sometimes wants a negative number, but expect DevULong
-            # (uint32) we'll cast it to a uint32 just in case.
+            # SPEAD channel_id sometimes produces a negative number, but FW 
+            # expects a DevULong (uint32) we'll cast it to a uint32 
+            # as advised by Will K.
             dest_info = [
                 subarray_id,
                 (
