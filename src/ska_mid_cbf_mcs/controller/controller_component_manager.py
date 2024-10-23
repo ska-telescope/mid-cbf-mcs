@@ -154,7 +154,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in all_fqdns.items():
-            self.logger.debug(f"All {name} FQDNs: {value}")
+            self.logger.info(f"All {name} FQDNs: {value}")
 
     def _set_used_fqdns(self: ControllerComponentManager) -> None:
         """
@@ -209,7 +209,7 @@ class ControllerComponentManager(CbfComponentManager):
         }
 
         for name, value in used_fqdns.items():
-            self.logger.debug(f"Used {name} FQDNs: {value}")
+            self.logger.info(f"Used {name} FQDNs: {value}")
 
     def _write_hw_config(
         self: ControllerComponentManager,
@@ -324,7 +324,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         if fqdn not in self._proxies:
             try:
-                self.logger.debug(f"Trying connection to {fqdn}")
+                self.logger.info(f"Trying connection to {fqdn}")
                 dp = context.DeviceProxy(device_name=fqdn)
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}: {df}")
@@ -400,7 +400,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.debug(
+        self.logger.info(
             "Entering ControllerComponentManager._start_communicating"
         )
 
