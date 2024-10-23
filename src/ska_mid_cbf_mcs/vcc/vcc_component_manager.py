@@ -178,7 +178,7 @@ class VccComponentManager(CbfObsComponentManager):
             )
             try:
                 with open(
-                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                    f"{VCC_PARAM_PATH}internal_params_default_FNF.json", "r"
                 ) as f:
                     json_string = f.read()
             except FileNotFoundError:
