@@ -389,8 +389,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
                 return
 
-        self._update_component_state(power=PowerState.ON)
         super()._start_communicating()
+        self._update_component_state(power=PowerState.ON)
 
     def _stop_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
