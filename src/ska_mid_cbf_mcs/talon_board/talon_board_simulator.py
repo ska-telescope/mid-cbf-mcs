@@ -53,7 +53,7 @@ class TalonBoardSimulator:
     @property
     def simulated_telemetry_results(
         self: TalonBoardSimulator,
-    ) -> list[tuple[str, datetime, any]]:
+    ) -> list[list[tuple[str, datetime, any]]]:
         telemetry = [
             (field, datetime.now(timezone.utc), value)
             for field, value in [
@@ -250,7 +250,7 @@ class TalonBoardSimulator:
             ]
             for i in range(4)
         )
-        return telemetry
+        return [telemetry]
 
     @property
     def sysid_version(self: TalonBoardSimulator) -> str:

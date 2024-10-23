@@ -201,9 +201,12 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super()._stop_communicating()
 
-    # -------------
-    # Fast Commands
-    # -------------
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- Helper Methods --- #
 
     def _get_outlet_power_state(
         self: TalonLRUComponentManager, proxy_power_switch, outlet
@@ -269,10 +272,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             lru_power_state = PowerState.OFF
 
         return lru_power_state
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
 
     # --- On Command --- #
 

@@ -234,8 +234,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_status_attrs = {}
 
         self._last_check = datetime.now() - timedelta(hours=1)
-        self._telemetry = dict()
-        self._proxies = dict()
+        self._telemetry = {}
+        self._proxies = {}
         self._talon_sysid_events = {}
         self._talon_status_events = {}
 
@@ -736,6 +736,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def _query_if_needed(self: TalonBoardComponentManager) -> None:
         td = datetime.now() - self._last_check
         if td.total_seconds() > 10:
+            self._telemetry = {}
             if self.simulation_mode:
                 res = self.talon_board_simulator.simulated_telemetry_results
             else:
