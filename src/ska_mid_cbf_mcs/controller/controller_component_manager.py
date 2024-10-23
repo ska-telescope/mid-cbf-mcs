@@ -446,11 +446,11 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.debug(f"Trying connection to {fqdn}")
                 self._proxies[fqdn] = context.DeviceProxy(device_name=fqdn)
 
-                proxy = self._proxies[fqdn]
-                vcc_id = int(proxy.get_property("DeviceID")["DeviceID"][0])
+                vcc_proxy = self._proxies[fqdn]
+                vcc_id = int(vcc_proxy.get_property("DeviceID")["DeviceID"][0])
                 if vcc_id in self.dish_utils.vcc_id_to_dish_id:
                     dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                    proxy.dishID = dish_id
+                    vcc_proxy.dishID = dish_id
                     self.logger.info(
                         f"Assigned DISH ID {dish_id} to VCC {vcc_id}"
                     )
@@ -463,7 +463,6 @@ class ControllerComponentManager(CbfComponentManager):
             except tango.DevFailed as df:
                 self.logger.error(f"Failure in connection to {fqdn}; {df}")
                 return False
-
         return True
 
     def is_init_sys_param_allowed(self: ControllerComponentManager) -> bool:
