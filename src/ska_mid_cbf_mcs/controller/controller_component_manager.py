@@ -1175,10 +1175,9 @@ class ControllerComponentManager(CbfComponentManager):
             # and in DevState.DISABLE when not (AdminMode.OFFLINE).
 
             # The following devices implement power On/Off commands:
-            if fqdn in self._talon_lru_fqdn + [
-                self._fs_slim_fqdn,
-                self._vis_slim_fqdn,
-            ]:
+            if fqdn in self._talon_lru_fqdn | {self._fs_slim_fqdn} | {
+                self._vis_slim_fqdn
+            }:
                 try:
                     # TODO: CIP-1899 The controller is sometimes
                     # unable to read the State() of the talon_lru
