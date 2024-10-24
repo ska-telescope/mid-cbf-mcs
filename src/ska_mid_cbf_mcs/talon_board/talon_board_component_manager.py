@@ -369,7 +369,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 # Begin the polling thread
                 self._poll_thread_event = Event()
                 self._poll_thread = Thread(
-                    target=self._poll_thread,
+                    target=self._internal_polling_thread,
                     args=[
                         self._eth_100g_0_client,
                         self._eth_100g_1_client,
