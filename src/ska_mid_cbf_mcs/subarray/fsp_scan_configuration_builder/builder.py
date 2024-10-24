@@ -12,6 +12,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 import copy
 
+import numpy
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -345,18 +346,20 @@ class FspScanConfigurationBuilder:
             # assigned fsps, and not to the pr.sdp_start_channel_id, so the
             # "absolute" sdp_start_channel_id is to add the fsp and pr
             # sdp_start_channel_ids together.
-            fsp_config["spead_channel_offset"] = (
-                processing_region_config["sdp_start_channel_id"]
-                + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
-                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
+            fsp_config["channel_offset"] = numpy.uint32(
+                numpy.int32(
+                    processing_region_config["sdp_start_channel_id"]
+                    + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
+                    - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
+                )
             )
 
             # the hps_fsp and host_lut channel_offset differs from the one
             # needed by SPEAD. It is simply the 0-14880 value which is just the
             # fsp_start_ch value
-            fsp_config["channel_offset"] = calculated_fsp_infos[fsp_id][
-                "fsp_start_ch"
-            ]
+            fsp_config["host_lut_channel_offset"] = calculated_fsp_infos[
+                fsp_id
+            ]["fsp_start_ch"]
 
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"

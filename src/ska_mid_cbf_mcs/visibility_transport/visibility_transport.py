@@ -7,7 +7,6 @@ supporting up to 8 boards.
 """
 import logging
 
-import numpy
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -56,7 +55,9 @@ class VisibilityTransport:
         self.logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
-        self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
+        self._channel_offsets = [
+            fc["host_lut_channel_offset"] for fc in fsp_config
+        ]
 
         if len(self._channel_offsets) == 0:
             self._channel_offsets = [0]
@@ -122,12 +123,12 @@ class VisibilityTransport:
         self.logger.info("Enable visibility output")
 
         spead_desc_host_data = self._parse_visibility_transport_info(
-            subarray_id, self._fsp_config, "spead_channel_offset"
+            subarray_id, self._fsp_config, "channel_offset"
         )
         self.logger.debug(f"sped_desc_host_data: {spead_desc_host_data}")
 
         host_lut_host_data = self._parse_visibility_transport_info(
-            subarray_id, self._fsp_config, "channel_offset"
+            subarray_id, self._fsp_config, "host_lut_channel_offset"
         )
         self.logger.debug(f"host_lut_host_data: {host_lut_host_data}")
 
@@ -208,19 +209,7 @@ class VisibilityTransport:
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
 
-            # SPEAD channel_id sometimes produces a negative number, but FW
-            # expects a DevULong (uint32) we'll cast it to a uint32
-            # as advised by Will K.
-            dest_info = [
-                subarray_id,
-                (
-                    p[0]
-                    if offset_param != "spead_channel_offset"
-                    else numpy.uint32(numpy.int32(p[0]))
-                ),
-                host_int,
-                p[1],
-            ]
+            dest_info = [subarray_id, p[0], host_int, p[1]]
             out += dest_info
         return out
 
