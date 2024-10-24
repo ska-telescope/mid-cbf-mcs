@@ -79,15 +79,9 @@ class Eth100gClient:
             self._rx_stats = self._dp_eth_100g.get_rx_stats()
             self._txframeoctetsok = self._dp_eth_100g.TxFrameOctetsOK
             self._rxframeoctetsok = self._dp_eth_100g.RxFrameOctetsOK
-        except tango.DevFailed as df:
+        except tango.DevFailed:
             self._tx_stats = []
             self._rx_stats = []
-            tango.Except.re_throw_exception(
-                df,
-                "100g_get_stats_failed",
-                f"failed to read counters from {self._eth_100g_fqdn}.",
-                "get_stats()",
-            )
 
     def has_data_flow(self) -> bool:
         """
@@ -236,7 +230,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         self._eth_100g_0_client = None
         self._eth_100g_0_client = None
-        self._read_eth_100g_thread = None
+        self._poll_thread = None
 
     # -------------
     # Communication
@@ -308,8 +302,31 @@ class TalonBoardComponentManager(CbfComponentManager):
                     callback=self._attr_change_callback,
                     stateless=True,
                 )
-
         return
+
+    def _internal_polling_thread(
+        self: TalonBoardComponentManager,
+        eth0: Eth100gClient,
+        eth1: Eth100gClient,
+        db_client: InfluxdbQueryClient,
+        event: Event,
+    ):
+        wait_t = 2  # seconds
+        while True:
+            res = db_client.ping()
+            if res:
+                self._update_component_state(power=PowerState.ON)
+                eth0.read_eth_100g_stats()
+                eth1.read_eth_100g_stats()
+            else:
+                if self.power_state == PowerState.ON:
+                    self.logger.error(
+                        "Failed to ping Influxdb. Talon board may be down."
+                    )
+                self._update_component_state(power=PowerState.UNKNOWN)
+            # polls every 2 seconds until event is set
+            if event.wait(timeout=wait_t):
+                break
 
     def _start_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
@@ -342,31 +359,21 @@ class TalonBoardComponentManager(CbfComponentManager):
                         )
                         return
 
-                # init eth 100g proxies and start monitoring
                 self._eth_100g_0_client = Eth100gClient(self._eth_100g_0_fqdn)
                 self._eth_100g_1_client = Eth100gClient(self._eth_100g_1_fqdn)
 
-                def read_100g_counters_thread(
-                    eth0: Eth100gClient, eth1: Eth100gClient, event: Event
-                ):
-                    wait_t = 2  # seconds
-                    while True:
-                        eth0.read_eth_100g_stats()
-                        eth1.read_eth_100g_stats()
-                        # polls every 2 seconds until event is set
-                        if event.wait(timeout=wait_t):
-                            break
-
-                self._eth_100g_thread_event = Event()
-                self._read_eth_100g_thread = Thread(
-                    target=read_100g_counters_thread,
+                # Begin the polling thread
+                self._poll_thread_event = Event()
+                self._poll_thread = Thread(
+                    target=self._poll_thread,
                     args=[
                         self._eth_100g_0_client,
                         self._eth_100g_1_client,
-                        self._eth_100g_thread_event,
+                        self._db_client,
+                        self._poll_thread_event,
                     ],
                 )
-                self._read_eth_100g_thread.start()
+                self._poll_thread.start()
 
                 self._subscribe_change_events()
             except tango.DevFailed as df:
@@ -375,18 +382,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 return
-
-            ping_res = asyncio.run(self._db_client.ping())
-
-            if not ping_res:
-                self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
-
         super()._start_communicating()
-        self._update_component_state(power=PowerState.ON)
 
     def _stop_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
@@ -424,8 +420,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                     self.logger.error(f"{df}")
                     continue
 
-            self._eth_100g_thread_event.set()
-            self._read_eth_100g_thread.join()
+            self._poll_thread_event.set()
+            self._poll_thread.join()
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None
 
@@ -1401,13 +1397,10 @@ class TalonBoardComponentManager(CbfComponentManager):
                 Exception,
             ) as e:
                 msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"  # avoid repeated error logs
-                if self.power_state != PowerState.UNKNOWN:
-                    self.logger.error(msg)
-                self._update_component_state(power=PowerState.UNKNOWN)
+                self.logger.error(msg)
                 tango.Except.throw_exception(
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
-            self._update_component_state(power=PowerState.ON)
 
     def _validate_time(self, field, t) -> None:
         """
