@@ -79,9 +79,12 @@ class Eth100gClient:
             self._rx_stats = self._dp_eth_100g.get_rx_stats()
             self._txframeoctetsok = self._dp_eth_100g.TxFrameOctetsOK
             self._rxframeoctetsok = self._dp_eth_100g.RxFrameOctetsOK
-        except tango.DevFailed:
+        except tango.DevFailed as df:
+            self.logger.warning(f"Error reading 100g ethernet stats: {df}")
             self._tx_stats = []
             self._rx_stats = []
+            self._txframeoctetsok = 0
+            self._rxframeoctetsok = 0
 
     def has_data_flow(self) -> bool:
         """
@@ -1380,7 +1383,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------
 
     def _throw_if_not_communicating(self):
-        if self.is_communicating:
+        if not self.is_communicating:
             tango.Except.throw_exception(
                 "Talon_Board_Not_Communicating",
                 "Not communicating with the talon board currently",
