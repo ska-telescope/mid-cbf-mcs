@@ -465,11 +465,10 @@ class ControllerComponentManager(CbfComponentManager):
         )
         for fqdn, proxy in self._proxies.items():
             try:
-                if fqdn in (
-                    self._subarray_fqdn
-                    + self._talon_lru_fqdn
-                    + [self._fs_slim_fqdn, self._vis_slim_fqdn]
-                ):
+                if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
+                    self._fs_slim_fqdn,
+                    self._vis_slim_fqdn,
+                }:
                     self.unsubscribe_command_results(proxy)
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
                 proxy.adminMode = AdminMode.OFFLINE
