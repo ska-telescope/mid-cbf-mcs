@@ -157,6 +157,14 @@ class TalonBoard(CbfDevice):
         """
         return self.TalonDxBoardAddress
 
+    @attribute(
+        dtype=bool,
+        label="Ping Result",
+        doc="True if the last ping to the board was successful. False otherwise",
+    )
+    def pingResult(self: TalonBoard) -> bool:
+        return self.component_manager.ping_ok
+
     # TalonSysID Attr
     @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"

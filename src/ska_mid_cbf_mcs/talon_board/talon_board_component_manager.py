@@ -230,7 +230,9 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         self._eth_100g_0_client = None
         self._eth_100g_0_client = None
+
         self._poll_thread = None
+        self.ping_ok = False
 
     # -------------
     # Communication
@@ -311,22 +313,24 @@ class TalonBoardComponentManager(CbfComponentManager):
         db_client: InfluxdbQueryClient,
         event: Event,
     ):
+        self.logger.info("Started polling")
         wait_t = 2  # seconds
         while True:
             res = db_client.ping()
             if res:
-                self._update_component_state(power=PowerState.ON)
                 eth0.read_eth_100g_stats()
                 eth1.read_eth_100g_stats()
             else:
-                if self.power_state == PowerState.ON:
+                if self.ping_ok:
                     self.logger.error(
                         "Failed to ping Influxdb. Talon board may be down."
                     )
-                self._update_component_state(power=PowerState.UNKNOWN)
+            self.ping_ok = res
+
             # polls every 2 seconds until event is set
             if event.wait(timeout=wait_t):
                 break
+        self.logger.info("Stopped polling")
 
     def _start_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
@@ -383,6 +387,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 )
                 return
         super()._start_communicating()
+        self._update_component_state(power=PowerState.ON)
 
     def _stop_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
