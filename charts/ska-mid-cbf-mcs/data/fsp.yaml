@@ -34,6 +34,11 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/01_01"
             - "mid_csp_cbf/fspCorrSubarray/01_02"
             - "mid_csp_cbf/fspCorrSubarray/01_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/01_01"
+            - "mid_csp_cbf/fspPstSubarray/01_02"
+            - "mid_csp_cbf/fspPstSubarray/01_03"
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-controller"
@@ -57,6 +62,26 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
+    
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/01_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/01_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/01_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
 
   - name: "fsp-02"
     classes:
@@ -72,6 +97,11 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/02_01"
             - "mid_csp_cbf/fspCorrSubarray/02_02"
             - "mid_csp_cbf/fspCorrSubarray/02_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/02_01"
+            - "mid_csp_cbf/fspPstSubarray/02_02"
+            - "mid_csp_cbf/fspPstSubarray/02_03"
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-controller"
@@ -96,6 +126,26 @@ server:
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
 
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/02_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/02_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/02_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
   - name: "fsp-03"
     classes:
     - name: "Fsp"
@@ -110,6 +160,11 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/03_01"
             - "mid_csp_cbf/fspCorrSubarray/03_02"
             - "mid_csp_cbf/fspCorrSubarray/03_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/03_01"
+            - "mid_csp_cbf/fspPstSubarray/03_02"
+            - "mid_csp_cbf/fspPstSubarray/03_03"
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-controller"
@@ -133,6 +188,26 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
+    
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/03_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/03_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/03_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
 
   - name: "fsp-04"
     classes:
@@ -148,6 +223,11 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/04_01"
             - "mid_csp_cbf/fspCorrSubarray/04_02"
             - "mid_csp_cbf/fspCorrSubarray/04_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/04_01"
+            - "mid_csp_cbf/fspPstSubarray/04_02"
+            - "mid_csp_cbf/fspPstSubarray/04_03"
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-controller"
@@ -171,6 +251,26 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
+          
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/04_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/04_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
+
+      - name: "mid_csp_cbf/fspPstSubarray/04_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-pst-controller"
 
 image:
   registry: "{{.Values.midcbf.image.registry}}"

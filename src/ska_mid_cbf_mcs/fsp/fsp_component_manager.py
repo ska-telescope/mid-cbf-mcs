@@ -36,6 +36,7 @@ class FspComponentManager(CbfComponentManager):
         *args: any,
         fsp_id: int,
         all_fsp_corr_subarray_fqdn: list[str],
+        all_fsp_pst_subarray_fqdn: list[str],
         # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20),
         # one entry for each Talon board in the FSP_UNIT
         hps_fsp_controller_fqdn: str,
@@ -46,8 +47,8 @@ class FspComponentManager(CbfComponentManager):
 
         :param logger: a logger for this object to use
         :param fsp_id: the fsp id
-        :param all_fsp_corr_subarray_fqdn: list of all
-            fsp corr subarray fqdns
+        :param all_fsp_corr_subarray_fqdn: list of all fsp corr subarray fqdns
+        :param all_fsp_pst_subarray_fqdn: list of all fsp pst subarray fqdns
         # TODO: for Mid.CBF, param hps_fsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_controller_fqdn: FQDN of the HPS FSP controller device
         """
@@ -55,10 +56,12 @@ class FspComponentManager(CbfComponentManager):
 
         self._fsp_id = fsp_id
         self._all_fsp_corr_subarray_fqdn = all_fsp_corr_subarray_fqdn
+        self._all_fsp_pst_subarray_fqdn = all_fsp_pst_subarray_fqdn
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
 
-        # Contains proxies to all FSP CORR devices
+        # Proxies to all FSP function mode devices
         self._all_fsp_corr = {}
+        self._all_fsp_pst = {}
 
         self._proxy_hps_fsp_controller = None
 
@@ -68,6 +71,20 @@ class FspComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
+    
+    def _create_function_mode_proxies(self: FspComponentManager, fqdns: list[str], proxies: dict[str, context.DeviceProxy]) -> None:
+        """
+        Helper function to create dict of proxies for differnt function modes.
+        """
+        for fqdn in fqdns:
+            try:
+                proxies[fqdn] = context.DeviceProxy(fqdn)
+            except tango.DevFailed as df:
+                self.logger.error(f"Failure in connecting to {fqdn}; {df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
 
     def _start_communicating(
         self: FspComponentManager, *args, **kwargs
@@ -75,15 +92,8 @@ class FspComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        for fqdn in self._all_fsp_corr_subarray_fqdn:
-            try:
-                self._all_fsp_corr[fqdn] = context.DeviceProxy(fqdn)
-            except tango.DevFailed as df:
-                self.logger.error(f"Failure in connecting to {fqdn}; {df}")
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
+        self._create_function_mode_proxies(self._all_fsp_corr_subarray_fqdn, self._all_fsp_corr)
+        self._create_function_mode_proxies(self._all_fsp_pst_subarray_fqdn, self._all_fsp_pst)
 
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
@@ -144,7 +154,6 @@ class FspComponentManager(CbfComponentManager):
         # TODO: remove these conditions as new function modes are implemented
         if function_mode not in FspModes._member_names_ or function_mode in [
             "PSS-BF",
-            "PST-BF",
             "VLBI",
         ]:
             self.logger.error(
@@ -308,7 +317,7 @@ class FspComponentManager(CbfComponentManager):
                 fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._all_fsp_corr[fqdn]
-                    # set FSP devices simulationMode attributes
+                    # set FSP devices simulationMode and adminMode attributes
                     proxy.simulationMode = self.simulation_mode
                     proxy.adminMode = AdminMode.ONLINE
                 except KeyError as ke:
@@ -327,9 +336,21 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.PST_BF.value:
-                self.logger.error(
-                    f"Error in adding subarray {subarray_id}; PST-BF not currently implemented"
-                )
+                fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
+                try:
+                    proxy = self._all_fsp_pst[fqdn]
+                    # set FSP devices simulationMode and adminMode attributes
+                    proxy.simulationMode = self.simulation_mode
+                    proxy.adminMode = AdminMode.ONLINE
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn on {fqdn}; {df}")
+                    return False
+                return True
 
             case FspModes.VLBI.value:
                 self.logger.error(
@@ -478,9 +499,19 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.PST_BF.value:
-                self.logger.error(
-                    f"Error in removing subarray {subarray_id}; PST-BF not currently implemented"
-                )
+                fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
+                try:
+                    proxy = self._all_fsp_pst[fqdn]
+                    proxy.adminMode = AdminMode.OFFLINE
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn off {fqdn}; {df}")
+                    return False
+                return True
 
             case FspModes.VLBI.value:
                 self.logger.error(
