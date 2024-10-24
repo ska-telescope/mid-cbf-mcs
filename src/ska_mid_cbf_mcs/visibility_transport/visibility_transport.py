@@ -124,19 +124,19 @@ class VisibilityTransport:
         spead_desc_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config, "spead_channel_offset"
         )
+        self.logger.debug(f"sped_desc_host_data: {spead_desc_host_data}")
 
-        host_lut_desc_host_data = self._parse_visibility_transport_info(
+        host_lut_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config, "channel_offset"
         )
+        self.logger.debug(f"host_lut_host_data: {host_lut_host_data}")
 
         try:
             self._dp_spead_desc.command_inout(
                 "StartScan", spead_desc_host_data
             )
 
-            self._dp_host_lut_s2.command_inout(
-                "Program", host_lut_desc_host_data
-            )
+            self._dp_host_lut_s2.command_inout("Program", host_lut_host_data)
 
             for dp in self._dp_host_lut_s1:
                 dp.command_inout("Program")
@@ -208,8 +208,8 @@ class VisibilityTransport:
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
 
-            # SPEAD channel_id sometimes produces a negative number, but FW 
-            # expects a DevULong (uint32) we'll cast it to a uint32 
+            # SPEAD channel_id sometimes produces a negative number, but FW
+            # expects a DevULong (uint32) we'll cast it to a uint32
             # as advised by Will K.
             dest_info = [
                 subarray_id,
