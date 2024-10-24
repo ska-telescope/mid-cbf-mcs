@@ -463,23 +463,26 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             "Entering ControllerComponentManager._stop_communicating"
         )
-        for fqdn, proxy in self._proxies.items():
-            try:
-                if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
-                    self._fs_slim_fqdn
-                } | {self._vis_slim_fqdn}:
-                    self.unsubscribe_command_results(proxy)
+        try:
+            for fqdn, proxy in self._proxies.items():
+                try:
+                    if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
+                        self._fs_slim_fqdn
+                    } | {self._vis_slim_fqdn}:
+                        self.unsubscribe_command_results(proxy)
 
-                self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
-                proxy.adminMode = AdminMode.OFFLINE
-            except tango.DevFailed as df:
-                self.logger.error(
-                    f"Failed to stop communications with {fqdn}; {df}"
-                )
-                continue
-        self.blocking_commands = set()
+                    self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
+                    proxy.adminMode = AdminMode.OFFLINE
+                except tango.DevFailed as df:
+                    self.logger.error(
+                        f"Failed to stop communications with {fqdn}; {df}"
+                    )
+                    continue
+            self.blocking_commands = set()
 
-        super()._stop_communicating()
+            super()._stop_communicating()
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
 
     # -------------
     # Fast Commands
