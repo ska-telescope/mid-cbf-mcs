@@ -316,17 +316,16 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.logger.info("Started polling")
         wait_t = 2  # seconds
         while True:
-            res = db_client.ping()
-            if res:
-                eth0.read_eth_100g_stats()
-                eth1.read_eth_100g_stats()
-            else:
+            res = asyncio.run(db_client.ping())
+            if not res:
                 if self.ping_ok:
                     self.logger.error(
                         "Failed to ping Influxdb. Talon board may be down."
                     )
             self.ping_ok = res
 
+            eth0.read_eth_100g_stats()
+            eth1.read_eth_100g_stats()
             # polls every 2 seconds until event is set
             if event.wait(timeout=wait_t):
                 break
