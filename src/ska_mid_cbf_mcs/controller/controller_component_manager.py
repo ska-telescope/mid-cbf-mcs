@@ -460,16 +460,16 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self.logger.debug(
+        self.logger.info(
             "Entering ControllerComponentManager._stop_communicating"
         )
         for fqdn, proxy in self._proxies.items():
             try:
                 if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
-                    self._fs_slim_fqdn,
-                    self._vis_slim_fqdn,
-                }:
+                    self._fs_slim_fqdn
+                } | {self._vis_slim_fqdn}:
                     self.unsubscribe_command_results(proxy)
+
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
                 proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
