@@ -276,6 +276,10 @@ class CbfController(CbfDevice):
                     self.logger.warning(
                         f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
                     )
+                    self.logger.error(
+                        f"{capability} capabilities not defined; look into updating charts to define this capability"
+                    )
+                    # TODO: Exit this command
                     max_capabilities[capability] = default_values[capability]
         else:
             max_capabilities = default_values
