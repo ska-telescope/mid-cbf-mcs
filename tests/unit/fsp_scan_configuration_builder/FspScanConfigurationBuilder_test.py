@@ -134,7 +134,7 @@ class TestFspScanConfigurationBuilder:
                 # Given MCS only supports 1 link mapping of link = 1, we should
                 # always get [[0,1]] for all fsp output_link_maps
                 fsp["output_link_map"]
-                == [[0, 1]]
+                == [[fsp["fsp_start_channel_offset"], 1]]
             )
 
             assert fsp["fsp_id"] in all_fsp_ids
@@ -177,10 +177,10 @@ class TestFspScanConfigurationBuilder:
 
                             # trick, we want the absolute sdp_start_channel_id,
                             # but we can get it from the channel_offset
-                            # and the host_lut_channel_offset
+                            # and the fsp_start_channel
                             fsp_sdp_start_channel_id = (
                                 fsp_config["channel_offset"]
-                                + fsp_config["host_lut_channel_offset"]
+                                + fsp_config["fsp_start_channel_offset"]
                             )
 
                             # shift the channel by the absolute sdp_start_channel_id

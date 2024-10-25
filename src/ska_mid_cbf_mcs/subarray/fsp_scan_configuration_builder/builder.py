@@ -16,7 +16,7 @@ import numpy
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
@@ -87,6 +87,15 @@ class FspScanConfigurationBuilder:
                 raise ValueError(msg)
 
             fsp_configurations.extend(fsp_configuration)
+
+        host_lut_channel_offsets = [
+            index * const.NUM_FINE_CHANNELS
+            for index in range(0, len(fsp_configurations))
+        ]
+        for host_lut_channel_offset, fsp_config in zip(
+            host_lut_channel_offsets, fsp_configurations
+        ):
+            fsp_config["host_lut_channel_offset"] = host_lut_channel_offset
 
         return fsp_configurations
 
@@ -276,7 +285,10 @@ class FspScanConfigurationBuilder:
             for fsp_id, fsp_output_ports in zip(
                 calculated_fsp_ids, split_output_ports
             ):
-                fsp_to_output_port_map[fsp_id] = fsp_output_ports
+                fsp_to_output_port_map[fsp_id] = channel_map.shift_channel_map(
+                    channel_map=fsp_output_ports,
+                    channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+                )
 
         # do the same as output_port for output_hosts
         if "output_host" in processing_region_config:
@@ -289,7 +301,10 @@ class FspScanConfigurationBuilder:
             for fsp_id, fsp_output_hosts in zip(
                 calculated_fsp_ids, split_output_hosts
             ):
-                fsp_to_output_host_map[fsp_id] = fsp_output_hosts
+                fsp_to_output_host_map[fsp_id] = channel_map.shift_channel_map(
+                    channel_map=fsp_output_hosts,
+                    channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+                )
 
         # And again the same for output_link_map
         #
@@ -316,7 +331,10 @@ class FspScanConfigurationBuilder:
         for fsp_id, fsp_output_link_map in zip(
             calculated_fsp_ids, split_output_link_maps
         ):
-            fsp_to_output_link_map[fsp_id] = fsp_output_link_map
+            fsp_to_output_link_map[fsp_id] = channel_map.shift_channel_map(
+                channel_map=fsp_output_link_map,
+                channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+            )
 
         # Build individual fsp configs
         fsp_configs = []
@@ -333,7 +351,7 @@ class FspScanConfigurationBuilder:
                 "integration_factor"
             ]
 
-            # spead channel_offset
+            # spead / fsp channel_offset
             # this offset flows down to SPEAD into value channel_id.
             # channel_id needs to be set such that the 'start' is
             # sdp_start_channel_id of the fsp.
@@ -354,10 +372,9 @@ class FspScanConfigurationBuilder:
                 )
             )
 
-            # the hps_fsp and host_lut channel_offset differs from the one
-            # needed by SPEAD. It is simply the 0-14880 value which is just the
-            # fsp_start_ch value
-            fsp_config["host_lut_channel_offset"] = calculated_fsp_infos[
+            # The 0-14880 channel number where we want to start processing in
+            # the FS, which is the fsp_start_ch value
+            fsp_config["fsp_start_channel_offset"] = calculated_fsp_infos[
                 fsp_id
             ]["fsp_start_ch"]
 
