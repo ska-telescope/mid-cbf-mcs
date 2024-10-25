@@ -185,6 +185,46 @@ class TestFsp:
                 target_n_events=n,
             )
 
+    # Once all function modes are implemented, it is not clear how an invalid
+    # mode should be tested; perhaps an invalid mode would not be possible
+    # due to our use of enums?
+    @pytest.mark.parametrize("function_mode", [FspModes.VLBI])
+    def test_SetFunctionMode_invalid_function_mode(
+        self: TestFsp,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        function_mode: FspModes,
+    ) -> None:
+        """
+        Test the SetFunctionMode() with un-implemented function modes.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param function_mode: the function mode to be set
+        """
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
+
+        # test issuing SetFunctionMode from ON
+        (return_value, command_id) = device_under_test.SetFunctionMode(
+            function_mode.name
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.FAILED.value}, "Failed to validate FSP function mode {function_mode.name}"]',
+            ),
+        )
+
     @pytest.mark.parametrize("function_mode", [FspModes.CORR])
     def test_SetFunctionMode_not_allowed_from_off(
         self: TestFsp,
