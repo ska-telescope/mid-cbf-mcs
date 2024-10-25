@@ -134,7 +134,7 @@ class TestFspScanConfigurationBuilder:
                 # Given MCS only supports 1 link mapping of link = 1, we should
                 # always get [[0,1]] for all fsp output_link_maps
                 fsp["output_link_map"]
-                == [[fsp["fsp_start_channel_offset"], 1]]
+                == [[fsp["fs_start_channel_offset"], 1]]
             )
 
             assert fsp["fsp_id"] in all_fsp_ids
