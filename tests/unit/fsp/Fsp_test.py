@@ -50,7 +50,8 @@ class TestFsp:
         harness.add_device(
             device_name="mid_csp_cbf/fsp/01",
             device_class=Fsp,
-            FspCorrSubarray=list(initial_mocks.keys()),
+            FspCorrSubarray=list(filter(lambda item: "fspCorrSubarray" in item, initial_mocks.keys())),
+            FspPstSubarray=list(filter(lambda item: "fspPstSubarray" in item, initial_mocks.keys())),
             HpsFspControllerAddress="talondx-001/fsp-app/fsp-controller",
             HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
             DeviceID="1",
@@ -125,7 +126,7 @@ class TestFsp:
 
         return device_under_test.adminMode == AdminMode.ONLINE
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
     def test_SetFunctionMode(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
