@@ -21,6 +21,7 @@ UNRELEASED CHANGES
 * CIP-2780 added 100g ethernet monitoring on talon board devices
 * CIP-3028 Updated hw config after systems room re-organization.
 * CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 
 1.0.0
 ******
