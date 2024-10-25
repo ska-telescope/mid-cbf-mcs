@@ -87,6 +87,9 @@ class FspScanConfigurationBuilder:
 
             fsp_configurations.extend(fsp_configuration)
 
+
+        # the Host-LUT channel offset is based on the number of fine channels 
+        # in the FSP, as well as the number of FSP in the configuration
         host_lut_channel_offsets = [
             index * const.NUM_FINE_CHANNELS
             for index in range(0, len(fsp_configurations))
@@ -279,6 +282,20 @@ class FspScanConfigurationBuilder:
             #    5: [ [0, 14004] ],
             # }
             #
+            # We also shift the maps by the fsp_start_ch of the fsp. we do this
+            # because we'll be adding the channel_id with the channel_offset
+            # when we send the channel_id to IP and port mapping to the SPEAD
+            # Descriptor or Host-LUT.
+            #
+            # if the fsp_start_ch for the FSPs are [4400, 60, 80], then the
+            # final mapping is:
+            #
+            # {
+            #    3: [ [4400, 14000], [4420, 14001] ],
+            #    4: [ [60, 14002], [80, 14003] ],
+            #    5: [ [80, 14004] ],
+            # }
+            #
             # We can then use this dictionary later when building the fsp config
             fsp_to_output_port_map = {}
             for fsp_id, fsp_output_ports in zip(
@@ -313,9 +330,9 @@ class FspScanConfigurationBuilder:
         #
         # we will get:
         # [
-        #   [[0,1]],
-        #   [[0,1]],
-        #   [[0,1]],
+        #   [[100,1]],
+        #   [[100,1]],
+        #   [[100,1]],
         # ]
         #
         # seems a bit extra, but this will support if/when output_link_map
