@@ -374,7 +374,7 @@ class FspScanConfigurationBuilder:
 
             # The 0-14880 channel number where we want to start processing in
             # the FS, which is the fsp_start_ch value
-            fsp_config["fsp_start_channel_offset"] = calculated_fsp_infos[
+            fsp_config["fs_start_channel_offset"] = calculated_fsp_infos[
                 fsp_id
             ]["fsp_start_ch"]
 

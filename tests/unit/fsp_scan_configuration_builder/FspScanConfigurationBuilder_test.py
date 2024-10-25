@@ -177,10 +177,10 @@ class TestFspScanConfigurationBuilder:
 
                             # trick, we want the absolute sdp_start_channel_id,
                             # but we can get it from the channel_offset
-                            # and the fsp_start_channel
+                            # and the fs_start_channel_offset
                             fsp_sdp_start_channel_id = (
                                 fsp_config["channel_offset"]
-                                + fsp_config["fsp_start_channel_offset"]
+                                + fsp_config["fs_start_channel_offset"]
                             )
 
                             # shift the channel by the absolute sdp_start_channel_id
