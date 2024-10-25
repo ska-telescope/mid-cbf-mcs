@@ -7,6 +7,7 @@ supporting up to 8 boards.
 """
 import logging
 
+import numpy
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -209,7 +210,16 @@ class VisibilityTransport:
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
 
-            dest_info = [subarray_id, p[0], host_int, p[1]]
+            dest_info = [
+                subarray_id,
+                (
+                    numpy.uint32(numpy.int32(p[0]))
+                    if offset_param == "channel_offset"
+                    else p[0]
+                ),
+                host_int,
+                p[1],
+            ]
             out += dest_info
         return out
 

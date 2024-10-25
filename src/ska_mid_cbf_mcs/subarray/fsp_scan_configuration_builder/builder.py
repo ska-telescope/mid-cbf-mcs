@@ -12,7 +12,6 @@ from __future__ import annotations  # allow forward references in type hints
 
 import copy
 
-import numpy
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
@@ -364,12 +363,10 @@ class FspScanConfigurationBuilder:
             # assigned fsps, and not to the pr.sdp_start_channel_id, so the
             # "absolute" sdp_start_channel_id is to add the fsp and pr
             # sdp_start_channel_ids together.
-            fsp_config["channel_offset"] = numpy.uint32(
-                numpy.int32(
-                    processing_region_config["sdp_start_channel_id"]
-                    + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
-                    - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
-                )
+            fsp_config["channel_offset"] = (
+                processing_region_config["sdp_start_channel_id"]
+                + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
+                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
             )
 
             # The 0-14880 channel number where we want to start processing in
