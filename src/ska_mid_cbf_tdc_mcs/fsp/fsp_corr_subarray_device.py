@@ -29,6 +29,7 @@ from ska_mid_cbf_tdc_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_tdc_mcs.fsp.fsp_corr_subarray_component_manager import (
     FspCorrSubarrayComponentManager,
 )
+from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,7 +37,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ["FspCorrSubarray", "main"]
 
 
-class FspCorrSubarray(CbfObsDevice):
+class FspCorrSubarray(FspModeSubarray):
     """
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
@@ -53,6 +54,8 @@ class FspCorrSubarray(CbfObsDevice):
     # Attributes
     # ----------
 
+    # Note: VCC ID in FspModeSubarray
+
     @attribute(
         dtype="str",
         doc="Differential off-boresight beam delay model",
@@ -65,20 +68,6 @@ class FspCorrSubarray(CbfObsDevice):
         :rtype: string
         """
         return self.component_manager.delay_model
-
-    @attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        doc="Assigned VCC IDs",
-    )
-    def vccIDs(self: FspCorrSubarray) -> list[int]:
-        """
-        Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
-
-        :return: the list of assigned VCC IDs
-        :rtype: list[int]
-        """
-        return self.component_manager.vcc_ids
 
     @attribute(
         dtype=tango.DevEnum,
@@ -122,7 +111,7 @@ class FspCorrSubarray(CbfObsDevice):
     # Initialization
     # --------------
 
-    class InitCommand(CbfObsDevice.InitCommand):
+    class InitCommand(FspModeSubarray.InitCommand):
         """
         A class for the FspCorrSubarray's init_device() "command".
         """
