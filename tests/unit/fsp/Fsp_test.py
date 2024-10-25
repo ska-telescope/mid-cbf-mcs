@@ -50,8 +50,17 @@ class TestFsp:
         harness.add_device(
             device_name="mid_csp_cbf/fsp/01",
             device_class=Fsp,
-            FspCorrSubarray=list(filter(lambda item: "fspCorrSubarray" in item, initial_mocks.keys())),
-            FspPstSubarray=list(filter(lambda item: "fspPstSubarray" in item, initial_mocks.keys())),
+            FspCorrSubarray=list(
+                filter(
+                    lambda item: "fspCorrSubarray" in item,
+                    initial_mocks.keys(),
+                )
+            ),
+            FspPstSubarray=list(
+                filter(
+                    lambda item: "fspPstSubarray" in item, initial_mocks.keys()
+                )
+            ),
             HpsFspControllerAddress="talondx-001/fsp-app/fsp-controller",
             HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
             DeviceID="1",
@@ -328,14 +337,14 @@ class TestFsp:
 
                 # assert subarrayMembership attribute updated
                 sub_ids_added.append(sub_id)
-                # TODO: currently not working due to assertion converting attribute value to numpy array
-                # assert_that(event_tracer).within_timeout(
-                #     test_utils.EVENT_TIMEOUT
-                # ).has_change_event_occurred(
-                #     device_name=device_under_test,
-                #     attribute_name="subarrayMembership",
-                #     attribute_value=sub_ids_added,
-                # )
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device_under_test,
+                    attribute_name="subarrayMembership",
+                    custom_matcher=lambda e: list(e.attribute_value)
+                    == sub_ids_added,
+                )
 
     def test_AddSubarrayMembership_not_allowed_from_idle_mode(
         self: TestFsp,
@@ -434,14 +443,14 @@ class TestFsp:
                 ),
             )
 
-            # TODO: currently not working due to assertion converting attribute value to numpy array
-            # assert_that(event_tracer).within_timeout(
-            #     test_utils.EVENT_TIMEOUT
-            # ).has_change_event_occurred(
-            #     device_name=device_under_test,
-            #     attribute_name="subarrayMembership",
-            #     attribute_value=sub_ids_remaining,
-            # )
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="subarrayMembership",
+                custom_matcher=lambda e: list(e.attribute_value)
+                == sub_ids_remaining,
+            )
 
         # assert functionMode attribute updated to IDLE
         assert_that(event_tracer).within_timeout(

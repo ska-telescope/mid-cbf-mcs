@@ -71,8 +71,12 @@ class FspComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
-    
-    def _create_function_mode_proxies(self: FspComponentManager, fqdns: list[str], proxies: dict[str, context.DeviceProxy]) -> None:
+
+    def _create_function_mode_proxies(
+        self: FspComponentManager,
+        fqdns: list[str],
+        proxies: dict[str, context.DeviceProxy],
+    ) -> None:
         """
         Helper function to create dict of proxies for differnt function modes.
         """
@@ -92,8 +96,12 @@ class FspComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self._create_function_mode_proxies(self._all_fsp_corr_subarray_fqdn, self._all_fsp_corr)
-        self._create_function_mode_proxies(self._all_fsp_pst_subarray_fqdn, self._all_fsp_pst)
+        self._create_function_mode_proxies(
+            self._all_fsp_corr_subarray_fqdn, self._all_fsp_corr
+        )
+        self._create_function_mode_proxies(
+            self._all_fsp_pst_subarray_fqdn, self._all_fsp_pst
+        )
 
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
