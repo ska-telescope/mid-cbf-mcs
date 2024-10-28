@@ -71,6 +71,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         self.output_link_map = [[0, 0] for _ in range(40)]
 
+        self.last_hps_scan_configuration = ""
+
     # -------------
     # Communication
     # -------------
@@ -269,6 +271,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._assign_vcc(configuration["corr_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP Corr controller
+        self.last_hps_scan_configuration = configuration
+
         if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:

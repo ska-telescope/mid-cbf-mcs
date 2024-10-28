@@ -82,6 +82,8 @@ class VccComponentManager(CbfObsComponentManager):
 
         self._vcc_controller_proxy = None
 
+        self.last_hps_scan_configuration = ""
+
         # --- Simulators --- #
         self._band_simulators = [
             VccBandSimulator(vcc_band[0]),
@@ -387,6 +389,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         # Send the ConfigureScan command to the HPS
+        self.last_hps_scan_configuration = configuration
         fb_index = self._freq_band_index[self._freq_band_name]
 
         if self.simulation_mode:
