@@ -172,20 +172,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def _unsubscribe_from_subdevices(self: TalonLRUComponentManager) -> None:
-        """
-        Unsubscribe to command results of the subdevices (power switches).
-        """
-        device_proxies = [
-            self._proxy_power_switch1,
-        ]
-
-        if self._proxy_power_switch1 != self._proxy_power_switch2:
-            device_proxies.append(self._proxy_power_switch2)
-
-        for dp in device_proxies:
-            self.unsubscribe_all_events(dp)
-
     def _stop_communicating(
         self: TalonLRUComponentManager, *args, **kwargs
     ) -> None:
@@ -195,9 +181,14 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering TalonLRUComponentManager.stop_communicating"
         )
+        device_proxies = [
+            self._proxy_power_switch1,
+        ]
+        if self._proxy_power_switch1 != self._proxy_power_switch2:
+            device_proxies.append(self._proxy_power_switch2)
 
-        self._unsubscribe_from_subdevices()
-        self.blocking_commands = set()
+        for dp in device_proxies:
+            self.unsubscribe_all_events(dp)
 
         super()._stop_communicating()
 

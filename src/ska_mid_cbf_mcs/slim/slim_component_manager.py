@@ -113,7 +113,6 @@ class SlimComponentManager(CbfComponentManager):
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
         for proxy in self._dp_links:
             self.unsubscribe_all_events(proxy)
-        self.blocking_commands = set()
 
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE

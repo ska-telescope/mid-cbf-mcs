@@ -515,7 +515,6 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 continue
 
-        self.blocking_commands = set()
         super()._stop_communicating()
 
     # -------------
