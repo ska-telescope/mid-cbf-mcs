@@ -343,8 +343,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self.logger.info(
-            "Entering TalonBoardComponentManager.start_communicating"
+        self.logger.debug(
+            "Entering TalonBoardComponentManager._start_communicating"
         )
 
         if not self.simulation_mode:
@@ -400,8 +400,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         Thread for stop_communicating operation.
         """
-        self.logger.info(
-            "Entering TalonBoardComponentManager.stop_communicating"
+        self.logger.debug(
+            "Entering TalonBoardComponentManager._stop_communicating"
         )
         if not self.simulation_mode:
             for attr_name, event_id in self._talon_sysid_events.items():
@@ -442,7 +442,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_events = {}
         self._talon_status_events = {}
 
-        self._update_component_state(power=PowerState.UNKNOWN)
         super()._stop_communicating()
 
     # -------------
@@ -927,7 +926,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_tx_fault_status(self) -> bool:
+    def mbo_tx_fault_status(self) -> list[bool]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_tx_fault_status")
         self._query_if_needed()
@@ -943,7 +942,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_lol_status(self) -> bool:
+    def mbo_tx_lol_status(self) -> list[bool]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_tx_lol_status")
         self._query_if_needed()
@@ -959,7 +958,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_los_status(self) -> bool:
+    def mbo_tx_los_status(self) -> list[bool]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_tx_los_status")
         self._query_if_needed()
@@ -991,7 +990,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_rx_lol_status(self) -> bool:
+    def mbo_rx_lol_status(self) -> list[bool]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_rx_lol_status")
         self._query_if_needed()
@@ -1007,7 +1006,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_rx_los_status(self) -> bool:
+    def mbo_rx_los_status(self) -> list[bool]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_rx_los_status")
         self._query_if_needed()
