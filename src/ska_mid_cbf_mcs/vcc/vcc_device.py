@@ -123,8 +123,10 @@ class Vcc(CbfObsDevice):
         :rtype: tango.DevEnum
         """
         return self.component_manager.frequency_band
-    
-    @attribute(dtype="str", doc="The last valid scan configuration sent to HPS.")
+
+    @attribute(
+        dtype="str", doc="The last valid scan configuration sent to HPS."
+    )
     def lastHpsScanConfiguration(self: Vcc) -> str:
         """
         Read the last valid scan configuration of the device sent to HPS.
