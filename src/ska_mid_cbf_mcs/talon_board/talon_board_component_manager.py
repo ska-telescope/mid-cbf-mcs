@@ -12,11 +12,11 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from threading import Event, Thread
+from typing import Optional
 
 import tango
 from ska_control_model import PowerState
 from ska_tango_testing import context
-from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -243,74 +243,75 @@ class TalonBoardComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
-
-    # TODO: Refactor to push change events for TalonBoard attributes?
-    def _attr_change_callback(
-        self, fqdn: str, name: str, value: any, quality: AttrQuality
+    def _talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
     ) -> None:
         """
-        Callback for attribute change.
+        Thread to update latest state attribute events.
 
-        :param fqdn: The FQDN of the device
-        :param name: attribute name
-        :param value: attribute value
+        :param event_data: Tango attribute change event data
         """
+        value = event_data.attr_value.value
         if value is None:
-            self.logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-        self.logger.debug(f"Attr Change callback: {name} -> {value}")
-        if fqdn == self._talon_sysid_fqdn:
-            self._talon_sysid_attrs[name] = value
-        elif fqdn == self._talon_status_fqdn:
-            self._talon_status_attrs[name] = value
-        else:
-            self.logger.warning(
-                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
-            )
+            return
 
-    def _subscribe_change_events(self) -> None:
+        attr_name = event_data.attr_name
+        dev_name = event_data.device.dev_name()
+        self.logger.debug(
+            f"{dev_name}/{attr_name} EventData attr_value: {value}"
+        )
+
+        with self._attr_event_lock:
+            if dev_name == self._talon_sysid_fqdn:
+                self._talon_sysid_attrs[attr_name] = value
+            elif dev_name == self._talon_status_fqdn:
+                self._talon_status_attrs[attr_name] = value
+            else:
+                self.logger.warning(
+                    f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
+                )
+
+    def talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Callback for state attribute events.
+
+        :param event_data: Tango attribute change event data
+        """
+        Thread(
+            target=self._talon_attr_change_callback, args=(event_data,)
+        ).start()
+
+    def _subscribe_change_events(self: TalonBoardComponentManager) -> None:
         """
         Subscribe to attribute change events from HPS device proxies
         """
-
-        # Talon System ID attributes
-        self._talon_sysid_events = {}
-
-        if self._talon_sysid_fqdn is not None:
-            for attr_name in ["version", "Bitstream"]:
-                self._talon_sysid_events[attr_name] = self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-
-        # Talon Status attributes
-        self._talon_status_events = {}
-
-        if self._talon_status_fqdn is not None:
-            for attr_name in [
-                "iopll_locked_fault",
-                "fs_iopll_locked_fault",
-                "comms_iopll_locked_fault",
-                "system_clk_fault",
-                "emif_bl_fault",
-                "emif_br_fault",
-                "emif_tr_fault",
-                "e100g_0_pll_fault",
-                "e100g_1_pll_fault",
-                "slim_pll_fault",
-            ]:
-                self._talon_status_events[attr_name] = self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-        return
+        for fqdn, attr_list in [
+            (self._talon_sysid_fqdn, ["version", "Bitstream"]),
+            (
+                self._talon_status_fqdn,
+                [
+                    "iopll_locked_fault",
+                    "fs_iopll_locked_fault",
+                    "comms_iopll_locked_fault",
+                    "system_clk_fault",
+                    "emif_bl_fault",
+                    "emif_br_fault",
+                    "emif_tr_fault",
+                    "e100g_0_pll_fault",
+                    "e100g_1_pll_fault",
+                    "slim_pll_fault",
+                ],
+            ),
+        ]:
+            if fqdn is not None:
+                for attr_name in attr_list:
+                    self.attr_event_subscribe(
+                        proxy=self._proxies[fqdn],
+                        attr_name=attr_name,
+                        callback=self.talon_attr_change_callback,
+                    )
 
     def _internal_polling_thread(
         self: TalonBoardComponentManager,

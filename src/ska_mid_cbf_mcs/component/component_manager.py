@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Event, Lock, Thread
 from time import sleep
-from typing import Any, Callable, Optional, cast
+from typing import Callable, Optional, cast
 
 import tango
 from pydantic.utils import deep_update
@@ -63,13 +63,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
     def __init__(
         self: CbfComponentManager,
-        *args: Any,
+        *args: any,
         lrc_timeout: int = 15,
-        attr_change_callback: Callable[[str, Any], None] | None = None,
-        attr_archive_callback: Callable[[str, Any], None] | None = None,
+        attr_change_callback: Callable[[str, any], None] | None = None,
+        attr_archive_callback: Callable[[str, any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
-        **kwargs: Any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new CbfComponentManager instance.
@@ -247,9 +247,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _issue_command_thread(
         self: CbfComponentManager,
         proxy: context.DeviceProxy,
-        argin: Any,
+        argin: any,
         command_name: str,
-    ) -> Any:
+    ) -> any:
         """
         Helper function to issue command to a DeviceProxy
 
@@ -274,7 +274,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         command_name: str,
         proxies: list[context.DeviceProxy],
-        argin: Any = None,
+        argin: any = None,
         max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
@@ -314,7 +314,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         proxy: context.DeviceProxy,
         attr_name: str,
-    ) -> Any:
+    ) -> any:
         """
         Helper function to read attribute from a DeviceProxy
 
@@ -335,7 +335,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         proxies: list[context.DeviceProxy],
         max_workers: int = const.DEFAULT_COUNT_VCC,
-    ) -> list[Any]:
+    ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
         Returns list of attribute values in the same order as the input proxies list.
@@ -363,7 +363,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         proxy: context.DeviceProxy,
         attr_name: str,
-        value: Any,
+        value: any,
     ) -> bool:
         """
         Helper function to write attribute from a DeviceProxy
@@ -385,7 +385,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def _write_group_attribute(
         self: CbfComponentManager,
         attr_name: str,
-        value: Any,
+        value: any,
         proxies: list[context.DeviceProxy],
         max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> bool:
@@ -499,7 +499,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             return
 
         dev_name = event_data.device.dev_name()
-        self.logger.debug(f"{dev_name} EventData attr_value: {value}")
+        self.logger.debug(f"{dev_name} state EventData attr_value: {value}")
 
         with self._attr_event_lock:
             self._op_states[dev_name] = value
@@ -711,6 +711,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         proxy: context.DeviceProxy,
         attr_name: str,
         callback: Callable,
+        stateless: bool = True,
     ) -> None:
         """
         Subscribe to a given proxy's attribute.
@@ -718,6 +719,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         :param proxy: DeviceProxy
         :param attr_name: name of attribute for change event subscription
         :param callback: change event callback
+        :param stateless: If False, an exception will be thrown if the event subscription
+            encounters a problem; if True, the event subscription will always succeed,
+            even if the corresponding device server is not running
         """
         dev_name = proxy.dev_name()
 
@@ -733,6 +737,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             attr_name=attr_name,
             event_type=tango.EventType.CHANGE_EVENT,
             cb_or_queuesize=callback,
+            stateless=stateless,
         )
 
         self.event_ids = deep_update(
