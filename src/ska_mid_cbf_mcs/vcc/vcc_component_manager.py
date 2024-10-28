@@ -389,7 +389,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         # Send the ConfigureScan command to the HPS
-        self.last_hps_scan_configuration = configuration
+        self.last_hps_scan_configuration = json.dumps(configuration)
         fb_index = self._freq_band_index[self._freq_band_name]
 
         if self.simulation_mode:
