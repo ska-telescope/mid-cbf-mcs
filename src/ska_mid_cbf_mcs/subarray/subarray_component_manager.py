@@ -471,6 +471,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :return: True if successfully assigned VCC proxy, otherwise False
         """
         try:
+            # Guard against AdminMode.NOT_FITTED VCCs
+            if vcc_proxy.adminMode == AdminMode.NOT_FITTED:
+                self.logger.debug(
+                    f"Skipping {vcc_proxy.dev_name()}, AdminMode is NOT_FITTED"
+                )
+                return False
+
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
             vcc_fqdn = vcc_proxy.dev_name()
             self.logger.info(
@@ -1341,6 +1348,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
         try:
+            if fsp_proxy.adminMode == AdminMode.NOT_FITTED:
+                self.logger.debug(
+                    f"{fsp_proxy.dev_name()} is not fitted; skipping assignment."
+                )
+                return False
             # Only set function mode if FSP is both IDLE and not configured for
             # another mode
             current_function_mode = fsp_proxy.functionMode

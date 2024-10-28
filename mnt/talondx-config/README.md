@@ -7,4 +7,3 @@ configuration, including;
 * The HPS Master, Talon LRU and RDMA Rx device FQDNs
 * Path and names of FPGA and HPS device server files to use
 
-The talondx-config JSON is only used in non-simulation mode and overwritten at runtime.
