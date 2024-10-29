@@ -21,6 +21,9 @@ UNRELEASED CHANGES
 * CIP-2780 added 100g ethernet monitoring on talon board devices
 * CIP-3028 Updated hw config after systems room re-organization.
 * CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
+* CIP-2965 talondx-config generates in the beginning of integration test
+* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
 
 1.0.0
 ******

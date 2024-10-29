@@ -1,0 +1,9 @@
+{{- if .Values.talondx_config }}
+apiVersion: v1
+data:
+  talondx-config.json: | 
+{{ toYaml .Values.talondx_config | indent 4 }}
+kind: ConfigMap
+metadata:
+  name: talondx-config-configmap
+{{- end }}

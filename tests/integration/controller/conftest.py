@@ -71,6 +71,16 @@ def controller_proxy() -> context.DeviceProxy:
     return context.DeviceProxy(device_name="mid_csp_cbf/sub_elt/controller")
 
 
+@pytest.fixture(name="deployer", scope="module", autouse=True)
+def deployer_proxy() -> context.DeviceProxy:
+    """
+    Fixture that returns a proxy to the EC deployer device.
+
+    :return: DeviceProxy to CbfDeployer device
+    """
+    return context.DeviceProxy(device_name="mid_csp_cbf/ec/deployer")
+
+
 @pytest.fixture(name="subarray", scope="module", autouse=True)
 def subarray_proxies() -> list[context.DeviceProxy]:
     """
