@@ -132,19 +132,19 @@ server:
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-002/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_02"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-002/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_03"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-002/fsp-app/fsp-pst-controller"
 
   - name: "fsp-03"
     classes:
@@ -195,19 +195,19 @@ server:
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-003/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_02"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-003/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_03"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-003/fsp-app/fsp-pst-controller"
 
   - name: "fsp-04"
     classes:
@@ -258,19 +258,19 @@ server:
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-004/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_02"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-004/fsp-app/fsp-pst-controller"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_03"
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller"
+            - "talondx-004/fsp-app/fsp-pst-controller"
 
 image:
   registry: "{{.Values.midcbf.image.registry}}"

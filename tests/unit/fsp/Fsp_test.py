@@ -50,7 +50,17 @@ class TestFsp:
         harness.add_device(
             device_name="mid_csp_cbf/fsp/01",
             device_class=Fsp,
-            FspCorrSubarray=list(initial_mocks.keys()),
+            FspCorrSubarray=list(
+                filter(
+                    lambda item: "fspCorrSubarray" in item,
+                    initial_mocks.keys(),
+                )
+            ),
+            FspPstSubarray=list(
+                filter(
+                    lambda item: "fspPstSubarray" in item, initial_mocks.keys()
+                )
+            ),
             HpsFspControllerAddress="talondx-001/fsp-app/fsp-controller",
             HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
             DeviceID="1",
@@ -125,7 +135,7 @@ class TestFsp:
 
         return device_under_test.adminMode == AdminMode.ONLINE
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
     def test_SetFunctionMode(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -174,6 +184,46 @@ class TestFsp:
                 previous_value=previous,
                 target_n_events=n,
             )
+
+    # Once all function modes are implemented, it is not clear how an invalid
+    # mode should be tested; perhaps an invalid mode would not be possible
+    # due to our use of enums?
+    @pytest.mark.parametrize("function_mode", [FspModes.VLBI])
+    def test_SetFunctionMode_invalid_function_mode(
+        self: TestFsp,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        function_mode: FspModes,
+    ) -> None:
+        """
+        Test the SetFunctionMode() with un-implemented function modes.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param function_mode: the function mode to be set
+        """
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
+
+        # test issuing SetFunctionMode from ON
+        (return_value, command_id) = device_under_test.SetFunctionMode(
+            function_mode.name
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.FAILED.value}, "Failed to validate FSP function mode {function_mode.name}"]',
+            ),
+        )
 
     @pytest.mark.parametrize("function_mode", [FspModes.CORR])
     def test_SetFunctionMode_not_allowed_from_off(
@@ -327,14 +377,14 @@ class TestFsp:
 
                 # assert subarrayMembership attribute updated
                 sub_ids_added.append(sub_id)
-                # TODO: currently not working due to assertion converting attribute value to numpy array
-                # assert_that(event_tracer).within_timeout(
-                #     test_utils.EVENT_TIMEOUT
-                # ).has_change_event_occurred(
-                #     device_name=device_under_test,
-                #     attribute_name="subarrayMembership",
-                #     attribute_value=sub_ids_added,
-                # )
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device_under_test,
+                    attribute_name="subarrayMembership",
+                    custom_matcher=lambda e: list(e.attribute_value)
+                    == sub_ids_added,
+                )
 
     def test_AddSubarrayMembership_not_allowed_from_idle_mode(
         self: TestFsp,
@@ -433,14 +483,14 @@ class TestFsp:
                 ),
             )
 
-            # TODO: currently not working due to assertion converting attribute value to numpy array
-            # assert_that(event_tracer).within_timeout(
-            #     test_utils.EVENT_TIMEOUT
-            # ).has_change_event_occurred(
-            #     device_name=device_under_test,
-            #     attribute_name="subarrayMembership",
-            #     attribute_value=sub_ids_remaining,
-            # )
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="subarrayMembership",
+                custom_matcher=lambda e: list(e.attribute_value)
+                == sub_ids_remaining,
+            )
 
         # assert functionMode attribute updated to IDLE
         assert_that(event_tracer).within_timeout(
