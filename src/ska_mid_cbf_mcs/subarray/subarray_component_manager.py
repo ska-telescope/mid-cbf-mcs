@@ -38,7 +38,6 @@ from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
-    FspModes,
     const,
     freq_band_dict,
     mhz_to_hz,
