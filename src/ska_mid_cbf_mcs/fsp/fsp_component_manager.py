@@ -60,8 +60,7 @@ class FspComponentManager(CbfComponentManager):
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
 
         # Proxies to all FSP function mode devices
-        self._all_fsp_corr = {}
-        self._all_fsp_pst = {}
+        self._function_mode_proxies = {}
 
         self._proxy_hps_fsp_controller = None
 
@@ -71,8 +70,12 @@ class FspComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
-    
-    def _create_function_mode_proxies(self: FspComponentManager, fqdns: list[str], proxies: dict[str, context.DeviceProxy]) -> None:
+
+    def _create_function_mode_proxies(
+        self: FspComponentManager,
+        fqdns: list[str],
+        proxies: dict[str, context.DeviceProxy],
+    ) -> None:
         """
         Helper function to create dict of proxies for differnt function modes.
         """
@@ -92,8 +95,13 @@ class FspComponentManager(CbfComponentManager):
         """
         Establish communication with the component, then start monitoring.
         """
-        self._create_function_mode_proxies(self._all_fsp_corr_subarray_fqdn, self._all_fsp_corr)
-        self._create_function_mode_proxies(self._all_fsp_pst_subarray_fqdn, self._all_fsp_pst)
+        self._create_function_mode_proxies(
+            [
+                self._all_fsp_corr_subarray_fqdn,
+                self._all_fsp_pst_subarray_fqdn,
+            ],
+            self._function_mode_proxies,
+        )
 
         # Try to connect to HPS devices, which are deployed during the
         # CbfController OnCommand sequence
@@ -316,7 +324,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.CORR.value:
                 fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_corr[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     # set FSP devices simulationMode and adminMode attributes
                     proxy.simulationMode = self.simulation_mode
                     proxy.adminMode = AdminMode.ONLINE
@@ -338,7 +346,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.PST_BF.value:
                 fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_pst[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     # set FSP devices simulationMode and adminMode attributes
                     proxy.simulationMode = self.simulation_mode
                     proxy.adminMode = AdminMode.ONLINE
@@ -481,7 +489,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.CORR.value:
                 fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_corr[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
                 except KeyError as ke:
                     self.logger.error(
@@ -501,7 +509,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.PST_BF.value:
                 fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_pst[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
                 except KeyError as ke:
                     self.logger.error(

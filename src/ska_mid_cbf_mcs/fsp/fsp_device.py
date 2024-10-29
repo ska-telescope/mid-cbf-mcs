@@ -36,7 +36,7 @@ class Fsp(CbfDevice):
     # -----------------
 
     FspCorrSubarray = device_property(dtype=("str",))
-    
+
     FspPstSubarray = device_property(dtype=("str",))
 
     HpsFspControllerAddress = device_property(dtype="str")
