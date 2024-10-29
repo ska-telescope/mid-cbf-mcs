@@ -19,13 +19,7 @@ from typing import Callable, Optional
 import tango
 import yaml
 from polling2 import TimeoutException, poll
-from ska_control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerState,
-    TaskStatus,
-)
+from ska_control_model import AdminMode, ObsState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_telmodel.data import TMData
