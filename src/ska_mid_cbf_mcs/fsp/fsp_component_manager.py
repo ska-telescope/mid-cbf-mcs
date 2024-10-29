@@ -96,10 +96,7 @@ class FspComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         self._create_function_mode_proxies(
-            [
-                self._all_fsp_corr_subarray_fqdn,
-                self._all_fsp_pst_subarray_fqdn,
-            ],
+            self._all_fsp_corr_subarray_fqdn + self._all_fsp_pst_subarray_fqdn,
             self._function_mode_proxies,
         )
 
