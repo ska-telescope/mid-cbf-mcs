@@ -333,8 +333,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param event_data: the received change event data (delay model JSON string)
         """
+        if event_data.attr_value is None:
+            return
         model = event_data.attr_value.value
-
         if not self.is_communicating or model is None or model == "":
             return
 

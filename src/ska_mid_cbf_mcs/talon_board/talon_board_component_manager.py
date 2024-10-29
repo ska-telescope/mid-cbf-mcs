@@ -251,6 +251,8 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :param event_data: Tango attribute change event data
         """
+        if event_data.attr_value is None:
+            return
         value = event_data.attr_value.value
         if value is None:
             return

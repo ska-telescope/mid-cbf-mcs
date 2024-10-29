@@ -443,6 +443,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         with self._health_state_lock:
             if self._health_state != health_state:
+                self.logger.info(f"Updating healthState to {health_state}")
                 self._health_state = health_state
                 self._push_health_state_update(health_state)
 
@@ -454,6 +455,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param event_data: Tango attribute change event data
         """
+        if event_data.attr_value is None:
+            return
         value = event_data.attr_value.value
         if value is None or value == ("", ""):
             return
