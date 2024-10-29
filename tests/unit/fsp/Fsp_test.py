@@ -185,9 +185,6 @@ class TestFsp:
                 target_n_events=n,
             )
 
-    # Once all function modes are implemented, it is not clear how an invalid
-    # mode should be tested; perhaps an invalid mode would not be possible
-    # due to our use of enums?
     @pytest.mark.parametrize("function_mode", [FspModes.VLBI])
     def test_SetFunctionMode_invalid_function_mode(
         self: TestFsp,
