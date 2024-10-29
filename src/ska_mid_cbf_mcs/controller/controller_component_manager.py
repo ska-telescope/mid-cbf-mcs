@@ -26,7 +26,7 @@ from ska_telmodel.data import TMData
 from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -392,6 +392,47 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
+    def _assign_fsp(self: ControllerComponentManager) -> bool:
+        """
+        Set FSP function mode
+
+        :return: True if the FSP function mode is successfully set, False otherwise.
+        """
+        fsp_mode = self.talondx_config_json["config_commands"][
+            "fpga_bitstream_fsp_mode"
+        ].upper()
+        self.logger.info(f"Setting FSP function mode to {fsp_mode}")
+
+        for fsp in self._fsp_fqdn:
+            try:
+                # Only set function mode if FSP is both IDLE and not configured for another mode
+                fsp_proxy = self._proxies[fsp].functionMode
+                current_function_mode = fsp_proxy.functionMode
+                if current_function_mode != FspModes[fsp_mode].value:
+                    if current_function_mode != FspModes.IDLE.value:
+                        self.logger.error(
+                            f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {fsp_mode}, as it is currently configured for function mode {current_function_mode}"
+                        )
+                        return False
+
+                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
+                    fsp_mode
+                )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
+                    )
+                    return False
+                self.blocking_command_ids.add(command_id)
+
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to set function mode for {fsp}: {df}"
+                )
+                return False
+
+        return True
+
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
@@ -412,7 +453,8 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
+        # Filter all FQDNs by hw config and max capabilities
+        self._filter_all_fqdns()
 
         # Read the talondx config JSON
         if not self.simulation_mode:
@@ -437,8 +479,10 @@ class ControllerComponentManager(CbfComponentManager):
                 ]
             }
 
-        self._set_used_fqdns()  # Set the used FQDNs by talondx config
+        # Set the used FQDNs by talondx config
+        self._set_used_fqdns()
 
+        # Initialize device proxies
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
             self._update_communication_state(
@@ -449,6 +493,14 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
+
+        # Set FSP function mode
+        if not self._assign_fsp():
+            self.logger.error("Failed to send SetFunctionMode to FSP")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
