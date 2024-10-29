@@ -60,8 +60,7 @@ class FspComponentManager(CbfComponentManager):
         self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
 
         # Proxies to all FSP function mode devices
-        self._all_fsp_corr = {}
-        self._all_fsp_pst = {}
+        self._function_mode_proxies = {}
 
         self._proxy_hps_fsp_controller = None
 
@@ -97,10 +96,8 @@ class FspComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         self._create_function_mode_proxies(
-            self._all_fsp_corr_subarray_fqdn, self._all_fsp_corr
-        )
-        self._create_function_mode_proxies(
-            self._all_fsp_pst_subarray_fqdn, self._all_fsp_pst
+            self._all_fsp_corr_subarray_fqdn + self._all_fsp_pst_subarray_fqdn,
+            self._function_mode_proxies,
         )
 
         # Try to connect to HPS devices, which are deployed during the
@@ -324,7 +321,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.CORR.value:
                 fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_corr[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     # set FSP devices simulationMode and adminMode attributes
                     proxy.simulationMode = self.simulation_mode
                     proxy.adminMode = AdminMode.ONLINE
@@ -344,21 +341,20 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.PST_BF.value:
-                # TODO: CIP-2660
-                # fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
-                # try:
-                #     proxy = self._all_fsp_pst[fqdn]
-                #     # set FSP devices simulationMode and adminMode attributes
-                #     proxy.simulationMode = self.simulation_mode
-                #     proxy.adminMode = AdminMode.ONLINE
-                # except KeyError as ke:
-                #     self.logger.error(
-                #         f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
-                #     )
-                #     return False
-                # except tango.DevFailed as df:
-                #     self.logger.error(f"Failed to turn on {fqdn}; {df}")
-                #     return False
+                fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
+                try:
+                    proxy = self._function_mode_proxies[fqdn]
+                    # set FSP devices simulationMode and adminMode attributes
+                    proxy.simulationMode = self.simulation_mode
+                    proxy.adminMode = AdminMode.ONLINE
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn on {fqdn}; {df}")
+                    return False
                 return True
 
             case FspModes.VLBI.value:
@@ -490,7 +486,7 @@ class FspComponentManager(CbfComponentManager):
             case FspModes.CORR.value:
                 fqdn = self._all_fsp_corr_subarray_fqdn[subarray_id - 1]
                 try:
-                    proxy = self._all_fsp_corr[fqdn]
+                    proxy = self._function_mode_proxies[fqdn]
                     proxy.adminMode = AdminMode.OFFLINE
                 except KeyError as ke:
                     self.logger.error(
@@ -508,19 +504,18 @@ class FspComponentManager(CbfComponentManager):
                 )
 
             case FspModes.PST_BF.value:
-                # TODO: CIP-2660
-                # fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
-                # try:
-                #     proxy = self._all_fsp_pst[fqdn]
-                #     proxy.adminMode = AdminMode.OFFLINE
-                # except KeyError as ke:
-                #     self.logger.error(
-                #         f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
-                #     )
-                #     return False
-                # except tango.DevFailed as df:
-                #     self.logger.error(f"Failed to turn off {fqdn}; {df}")
-                #     return False
+                fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
+                try:
+                    proxy = self._function_mode_proxies[fqdn]
+                    proxy.adminMode = AdminMode.OFFLINE
+                except KeyError as ke:
+                    self.logger.error(
+                        f"FSP {self._fsp_id} PST-BF subarray {subarray_id} FQDN not found in properties; {ke}"
+                    )
+                    return False
+                except tango.DevFailed as df:
+                    self.logger.error(f"Failed to turn off {fqdn}; {df}")
+                    return False
                 return True
 
             case FspModes.VLBI.value:

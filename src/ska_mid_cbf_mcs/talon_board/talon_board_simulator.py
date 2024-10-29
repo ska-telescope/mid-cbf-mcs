@@ -5,187 +5,65 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
 
+__all__ = ["SimulatedValues"]
 
-from __future__ import annotations
-
-import logging
-
-__all__ = ["TalonBoardSimulator"]
-
-
-class TalonBoardSimulator:
-    """
-    Simulator for the Talon Board Device Class
-    """
-
-    def __init__(
-        self: TalonBoardSimulator,
-        logger: logging.Logger,
-    ) -> None:
-        """
-        Initialize A Talon Board Component Manager Simulator
-
-        Current usage is to retrieve simulated values for Talon Board Device attributes
-
-        :param logger: a logger for this object to use
-        """
-
-        self.logger = logger
-
-        # Init FPGA sensor attr
-        self._fpga_die_voltages = [12.0, 2.5, 0.87, 1.8, 1.8, 0.9, 1.8]
-        self._fpga_die_temperature = 50.0
-
-        # Init TalonSysId attr
-        self._sysid_version = "test"
-        self._bitstream_version = 0xBEEFBABE
-
-        # Init TalonStatus attr
-        self._iopll_locked_fault = False
-        self._fs_iopll_locked_fault = False
-        self._comms_iopll_locked_fault = False
-        self._system_clk_fault = False
-        self._emif_bl_fault = False
-        self._emif_br_fault = False
-        self._emif_tr_fault = False
-        self._e100g_0_pll_fault = False
-        self._e100g_1_pll_fault = False
-        self._slim_pll_fault = False
-
-    @property
-    def fpga_die_temperature(self: TalonBoardSimulator) -> float:
-        """
-        Simulates value for fpga_die_temperature in degrees celcius
-
-        :return : a float value representing the temperature reading from the sensor
-        """
-        return self._fpga_die_temperature
-
-    @property
-    def fpga_die_voltages(self: TalonBoardSimulator) -> list[float]:
-        """
-        Simulates value for fpga_die_voltage in volts
-
-        :return : a list of float values representing the various voltage readings from the sensor
-        """
-        return self._fpga_die_voltages
-
-    @property
-    def sysid_version(self: TalonBoardSimulator) -> str:
-        """
-        The bitsream version as a string.
-
-        :return: the bitsream version.
-        :rtype: str
-        """
-        return self._bitstream_version
-
-    @property
-    def sysid_bitstream(self: TalonBoardSimulator) -> int:
-        """
-        The bitsream checksum as a string.
-
-        :return: the bitsream checksum.
-        :rtype: int
-        """
-        return self._bitstream_version
-
-    @property
-    def status_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The iopll locked fault status.
-
-        :return: iopll locked fault status.
-        :rtype: bool
-        """
-        return self._iopll_locked_fault
-
-    @property
-    def status_fs_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The fs iopll locked fault status.
-
-        :return: fs iopll locked fault status.
-        :rtype: bool
-        """
-        return self._fs_iopll_locked_fault
-
-    @property
-    def status_comms_iopll_locked_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The comms iopll locked fault status.
-
-        :return: comms iopll locked fault status.
-        :rtype: bool
-        """
-        return self._comms_iopll_locked_fault
-
-    @property
-    def status_system_clk_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The system clock fault status.
-
-        :return: system clock fault status.
-        :rtype: bool
-        """
-        return self._system_clk_fault
-
-    @property
-    def status_emif_bl_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The emif bl fault status.
-
-        :return: emif bl fault status.
-        :rtype: bool
-        """
-        return self._emif_bl_fault
-
-    @property
-    def status_emif_br_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The emif br fault status.
-
-        :return: emif br fault status.
-        :rtype: bool
-        """
-        return self._emif_br_fault
-
-    @property
-    def status_emif_tr_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The emif tr fault status.
-
-        :return: emif tr fault status.
-        :rtype: bool
-        """
-        return self._emif_tr_fault
-
-    @property
-    def status_e100g_0_pll_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The ethernet100g_0 pll fault status.
-
-        :return: e100g_0 pll fault status.
-        :rtype: bool
-        """
-        return self._e100g_0_pll_fault
-
-    @property
-    def status_e100g_1_pll_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The ethernet100g_1 pll fault status.
-
-        :return: e100g_1 pll fault status.
-        :rtype: bool
-        """
-        return self._e100g_1_pll_fault
-
-    @property
-    def status_slim_pll_fault(self: TalonBoardSimulator) -> bool:
-        """
-        The slim pll fault status.
-
-        :return: slim pll fault status.
-        :rtype: bool
-        """
-        return self._slim_pll_fault
+# Simulate some typical values for an idle board
+SimulatedValues = {
+    "talon_sysid_version": "test",
+    "talon_sysid_bitstream": 0xBEEFBABE,
+    "talon_status_iopll_locked_fault": False,
+    "talon_status_fs_iopll_locked_fault": False,
+    "talon_status_comms_iopll_locked_fault": False,
+    "talon_status_system_clk_fault": False,
+    "talon_status_emif_bl_fault": False,
+    "talon_status_emif_br_fault": False,
+    "talon_status_emif_tr_fault": False,
+    "talon_status_e100g_0_pll_fault": False,
+    "talon_status_e100g_1_pll_fault": False,
+    "eth100g_0_counters": [0] * 4,
+    "eth100g_0_error_counters": [0] * 6,
+    "eth100g_0_data_flow_active": False,
+    "eth100g_0_has_data_error": False,
+    "eth100g_0_all_tx_counters": [0] * 27,
+    "eth100g_0_all_rx_counters": [0] * 27,
+    "eth100g_1_counters": [0] * 4,
+    "eth100g_1_error_counters": [0] * 6,
+    "eth100g_1_data_flow_active": False,
+    "eth100g_1_has_data_error": False,
+    "eth100g_1_all_tx_counters": [0] * 27,
+    "eth100g_1_all_rx_counters": [0] * 27,
+    "fpga_die_temperature": 40.0,
+    "fpga_die_voltage_0": 12.0,
+    "fpga_die_voltage_1": 2.5,
+    "fpga_die_voltage_2": 0.87,
+    "fpga_die_voltage_3": 1.8,
+    "fpga_die_voltage_4": 1.8,
+    "fpga_die_voltage_5": 0.9,
+    "fpga_die_voltage_6": 1.8,
+    "humidity_sensor_temperature": 35.0,
+    "dimm_temperatures": [40.0] * 4,
+    "mbo_tx_temperatures": [40.0] * 5,
+    "mbo_tx_vcc_voltages": [3.3] * 5,
+    "mbo_tx_fault_status": [False] * 5,
+    "mbo_tx_lol_status": [False] * 5,
+    "mbo_tx_los_status": [False] * 5,
+    "mbo_rx_vcc_voltages": [3.3] * 5,
+    "mbo_rx_lol_status": [False] * 5,
+    "mbo_rx_los_status": [False] * 5,
+    "has_fan_control": True,
+    "fans_pwm": [200] * 4,
+    "fans_pwm_enable": [1] * 4,
+    "fans_input": [8000] * 4,
+    "fans_fault": [False] * 4,
+    "ltm_input_voltage": [12.0] * 4,
+    "ltm_output_voltage_1": [3.3, 1.0, 0.9, 0.9],
+    "ltm_output_voltage_2": [3.3, 1.0, 0.9, 0.9],
+    "ltm_input_current": [1.9, 1.9, 0.55, 0.55],
+    "ltm_output_current_1": [3.6, 2.5, 3.0, 3.0],
+    "ltm_output_current_2": [3.6, 2.5, 3.0, 3.0],
+    "ltm_temperature_1": [50.0] * 4,
+    "ltm_temperature_2": [50.0] * 4,
+    "ltm_voltage_warning": [False] * 4,
+    "ltm_current_warning": [False] * 4,
+    "ltm_temperature_warning": [False] * 4,
+}
