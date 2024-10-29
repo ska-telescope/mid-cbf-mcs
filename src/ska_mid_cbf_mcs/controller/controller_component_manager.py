@@ -19,7 +19,13 @@ from typing import Callable, Optional
 import tango
 import yaml
 from polling2 import TimeoutException, poll
-from ska_control_model import AdminMode, ObsState, PowerState, TaskStatus
+from ska_control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    PowerState,
+    TaskStatus,
+)
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_telmodel.data import TMData
@@ -839,17 +845,24 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_on_lrus(
         self: ControllerComponentManager,
-        lru_fqdns: list[str],
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn on a given list of Talon LRUs
+        Turn the Talon LRUs
 
-        :param lru_fqdns: List of Talon LRU FQDNs to turn on.
         :param task_abort_event: Event to signal task abort.
-        :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn on
+        :return: True if any LRUs were successfully turned on, otherwise False
         """
-        success = True
+        # Determine which LRUs must be turned on
+        lru_fqdns = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if (
+                    fqdn in self._talon_lru_fqdn
+                    and state == tango.DevState.OFF
+                ):
+                    lru_fqdns.append(fqdn)
+
         self.blocking_command_ids = set()
         for fqdn in lru_fqdns:
             self.logger.info(f"Turning on LRU {fqdn}")
@@ -858,51 +871,49 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC TalonLru.On() to {fqdn} rejected"
-                    self.logger.error(message)
-                    success = False
-                    continue
+                    raise tango.DevFailed("On command rejected")
                 self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                message = f"Nested LRC TalonLru.On() to {fqdn} failed: {df}"
-                self.logger.error(message)
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                self.logger.error(
+                    f"Nested LRC TalonLru.On() to {fqdn} failed: {df}"
                 )
-                success = False
+                continue
 
-        lrc_status = self.wait_for_blocking_results_partial_success(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "All TalonLru.On() LRC calls failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
+        if len(self.blocking_command_ids) == 0:
+            lrc_status == TaskStatus.FAILED
         else:
-            num_lru = 0
-            with self._attr_event_lock:
-                for fqdn, state in self._op_states.items():
-                    if fqdn in lru_fqdns and state == tango.DevState.ON:
-                        num_lru += 1
-            message = f"{num_lru} TalonLru devices successfully turned on"
-            self.logger.info(message)
+            lrc_status = self.wait_for_blocking_results_partial_success(
+                task_abort_event=task_abort_event
+            )
+        if lrc_status != TaskStatus.COMPLETED:
+            self.logger.error(
+                "All TalonLru.On() LRC calls failed/timed out. Check TalonLru logs."
+            )
+            self.update_device_health_state(HealthState.FAILED)
+            return False
 
-        return (success, message)
+        num_lru = 0
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if fqdn in lru_fqdns and state == tango.DevState.ON:
+                    num_lru += 1
+        self.logger.info(f"{num_lru} TalonLru devices successfully turned on")
+        self.update_device_health_state(HealthState.OK)
+
+        return True
 
     def _configure_slim_devices(
         self: ControllerComponentManager,
         task_abort_event: Optional[Event] = None,
-    ) -> bool:
+    ) -> None:
         """
         Configure the SLIM devices
 
         :param task_abort_event: Event to signal task abort.
-        :return: True if the SLIM devices were successfully configured, False otherwise
         """
         self.logger.info(
             f"Setting SLIM simulation mode to {self.simulation_mode}"
         )
-        success = True
         slim_config_paths = [
             self._fs_slim_config_path,
             self._vis_slim_config_path,
@@ -914,10 +925,7 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = self._proxies[fqdn].On()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC Slim.On() to {fqdn} rejected"
-                    self.logger.error(message)
-                    success = False
-                    continue
+                    raise tango.DevFailed("On command rejected")
                 self.blocking_command_ids.add(command_id)
 
                 with open(slim_config_paths[i]) as f:
@@ -928,37 +936,31 @@ class ControllerComponentManager(CbfComponentManager):
                 )
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC Slim.Configure() to {fqdn} rejected"
-                    self.logger.error(message)
-                    success = False
-                    continue
+                    raise tango.DevFailed("Configure command rejected")
                 self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                message = f"Failed to configure SLIM: {df}"
-                self.logger.error(message)
-                success = False
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
+                self.logger.error(f"Failed to configure SLIM: {df}")
+                continue
             except (OSError, FileNotFoundError) as e:
-                message = f"Failed to read SLIM configuration file: {e}"
-                self.logger.error(message)
-                success = False
-                # TODO: healthState instead of fault
-                self._update_component_state(fault=True)
+                self.logger.error(
+                    f"Failed to read SLIM configuration file: {e}"
+                )
+                continue
 
-        lrc_status = self.wait_for_blocking_results_partial_success(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "All Slim.Configure() LRC calls failed/timed out. Check Slim logs."
-            self.logger.error(message)
-            success = False
+        if len(self.blocking_command_ids) == 0:
+            lrc_status == TaskStatus.FAILED
         else:
-            message = "Some/all Slim devices successfully configured."
-            self.logger.info(message)
-
-        return (success, message)
+            lrc_status = self.wait_for_blocking_results_partial_success(
+                task_abort_event=task_abort_event
+            )
+        if lrc_status != TaskStatus.COMPLETED:
+            self.logger.error(
+                "All Slim.Configure() LRC calls failed/timed out. Check Slim logs."
+            )
+            self.update_device_health_state(HealthState.DEGRADED)
+        else:
+            self.logger.info("Some/all Slim devices successfully configured.")
+            self.update_device_health_state(HealthState.OK)
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         """
@@ -1006,21 +1008,14 @@ class ControllerComponentManager(CbfComponentManager):
         # 4. Configure SLIM Mesh devices
 
         # Turn on all the LRUs with the boards we need
-        lru_list = []
-        with self._attr_event_lock:
-            for fqdn, state in self._op_states.items():
-                if (
-                    fqdn in self._talon_lru_fqdn
-                    and state == tango.DevState.OFF
-                ):
-                    lru_list.append(fqdn)
-        lru_on_status, msg = self._turn_on_lrus(lru_list, task_abort_event)
-        if not lru_on_status:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
+        lru_on_status = self._turn_on_lrus(task_abort_event)
+        if lru_on_status:
+            # Update state to ON if at least one LRU succeeded in powering on
+            self._update_component_state(power=PowerState.ON)
+        else:
+            # If no LRU succeeds in turning on, this will fail the command
             task_callback(
-                result=(ResultCode.FAILED, msg),
+                result=(ResultCode.FAILED, "Failed to turn on Talon LRU(s)"),
                 status=TaskStatus.FAILED,
             )
             return
@@ -1041,16 +1036,10 @@ class ControllerComponentManager(CbfComponentManager):
             )
             == ResultCode.FAILED
         ):
-            msg = "Failed to configure Talon boards"
-            self.logger.error(msg)
-            task_callback(
-                result=(ResultCode.FAILED, msg),
-                status=TaskStatus.FAILED,
-            )
-            return
+            self.logger.error("Failed to configure Talon boards")
+            self.update_device_health_state(HealthState.DEGRADED)
 
         # Start monitoring talon board telemetries and fault status
-        # Failure here won't cause On command failure
         for fqdn in self._talon_board_fqdn:
             self._init_device_proxy(
                 fqdn=fqdn,
@@ -1058,20 +1047,8 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
         # Configure SLIM Mesh devices
-        slim_configure_status, msg = self._configure_slim_devices(
-            task_abort_event
-        )
-        if not slim_configure_status:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                result=(ResultCode.FAILED, msg),
-                status=TaskStatus.FAILED,
-            )
-            return
+        self._configure_slim_devices(task_abort_event)
 
-        self._update_component_state(power=PowerState.ON)
         task_callback(
             result=(ResultCode.OK, "On completed OK"),
             status=TaskStatus.COMPLETED,
@@ -1132,26 +1109,23 @@ class ControllerComponentManager(CbfComponentManager):
             ]:
                 [[result_code], [command_id]] = subarray.Abort()
                 if result_code == ResultCode.REJECTED:
-                    success = False
-                    message = f"{subarray.dev_name()} Abort command rejected."
-                    self.logger.error(message)
-                else:
-                    self.blocking_command_ids.add(command_id)
+                    raise tango.DevFailed("Abort command rejected")
+                self.blocking_command_ids.add(command_id)
 
             # Restart subarray to send to EMPTY
             [[result_code], [command_id]] = subarray.Restart()
             if result_code == ResultCode.REJECTED:
-                success = False
-                message = f"{subarray.dev_name()} Restart command rejected."
-                self.logger.error(message)
-            else:
-                self.blocking_command_ids.add(command_id)
+                raise tango.DevFailed("Restart command rejected")
+            self.blocking_command_ids.add(command_id)
         except tango.DevFailed as df:
             message = f"Failed to communicate with subarray {dev_name}; {df}"
             self.logger.error(message)
             success = False
 
-        lrc_status = self.wait_for_blocking_results()
+        if len(self.blocking_command_ids) == 0:
+            lrc_status == TaskStatus.FAILED
+        else:
+            lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
             success = False
             message = "One or more calls to subarray LRC failed/timed out; check subarray logs."
@@ -1183,11 +1157,7 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = slim.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    log_msg = f"Nested LRC Slim.Off() to {fqdn} rejected"
-                    self.logger.error(log_msg)
-                    message.append(log_msg)
-                    success = False
-                    continue
+                    raise tango.DevFailed("Off command rejected")
                 self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
                 log_msg = f"Nested LRC Slim.Off() to {fqdn} failed: {df}"
@@ -1279,17 +1249,21 @@ class ControllerComponentManager(CbfComponentManager):
 
     def _turn_off_lrus(
         self: ControllerComponentManager,
-        lru_fqdns: list[str],
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
         Turn off a given list of Talon LRUs
 
-        :param lru_fqdns: List of Talon LRU FQDNs to turn on.
         :param task_abort_event: Event to signal task abort.
-        :return: A tuple containing a boolean indicating success and a string with the FQDN of the LRUs that failed to turn off
+        :return: True if any LRUs were successfully turned off, otherwise False
         """
-        success = True
+        # Determine which LRUs must be turned off
+        lru_fqdns = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
+                    lru_fqdns.append(fqdn)
+
         self.blocking_command_ids = set()
         for fqdn in lru_fqdns:
             lru = self._proxies[fqdn]
@@ -1298,36 +1272,36 @@ class ControllerComponentManager(CbfComponentManager):
                 [[result_code], [command_id]] = lru.Off()
                 # Guard incase LRC was rejected.
                 if result_code == ResultCode.REJECTED:
-                    message = f"Nested LRC TalonLru.Off() to {fqdn} rejected"
-                    self.logger.error(message)
-                    success = False
-                    continue
+                    raise tango.DevFailed("Off command rejected")
                 self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                message = f"Nested LRC TalonLru.Off() to {fqdn} failed: {df}"
-                self.logger.error(message)
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                self.logger.error(
+                    f"Nested LRC TalonLru.Off() to {fqdn} failed: {df}"
                 )
-                success = False
+                continue
 
-        lrc_status = self.wait_for_blocking_results_partial_success(
-            task_abort_event=task_abort_event
-        )
-        if lrc_status != TaskStatus.COMPLETED:
-            message = "All TalonLru.Off() LRC calls failed/timed out. Check TalonLru logs."
-            self.logger.error(message)
-            success = False
+        if len(self.blocking_command_ids) == 0:
+            lrc_status == TaskStatus.FAILED
         else:
-            num_lru = 0
-            with self._attr_event_lock:
-                for fqdn, state in self._op_states.items():
-                    if fqdn in lru_fqdns and state == tango.DevState.OFF:
-                        num_lru += 1
-            message = f"{num_lru} TalonLru devices successfully turned off"
-            self.logger.info(message)
+            lrc_status = self.wait_for_blocking_results_partial_success(
+                task_abort_event=task_abort_event
+            )
+        if lrc_status != TaskStatus.COMPLETED:
+            self.logger.error(
+                "All TalonLru.Off() LRC calls failed/timed out. Check TalonLru logs."
+            )
+            self.update_device_health_state(HealthState.DEGRADED)
+            return False
 
-        return (success, message)
+        num_lru = 0
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if fqdn in lru_fqdns and state == tango.DevState.OFF:
+                    num_lru += 1
+        self.logger.info(f"{num_lru} TalonLru devices successfully turned off")
+        self.update_device_health_state(HealthState.OK)
+
+        return True
 
     def is_off_allowed(self: ControllerComponentManager) -> bool:
         """
@@ -1392,18 +1366,10 @@ class ControllerComponentManager(CbfComponentManager):
             message.append(log_msg)
 
         # TalonLRU Off
-        lru_list = []
-        with self._attr_event_lock:
-            for fqdn, state in self._op_states.items():
-                if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
-                    lru_list.append(fqdn)
-        lru_off_status, log_msg = self._turn_off_lrus(
-            lru_list, task_abort_event
-        )
+        lru_off_status = self._turn_off_lrus(task_abort_event)
         if not lru_off_status:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
+            self.update_device_health_state(HealthState.DEGRADED)
+            log_msg = "LRU Off failed."
             message.append(log_msg)
             result_code = ResultCode.FAILED
 
