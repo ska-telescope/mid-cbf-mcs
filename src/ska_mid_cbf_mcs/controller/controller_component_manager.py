@@ -880,7 +880,7 @@ class ControllerComponentManager(CbfComponentManager):
                 continue
 
         if len(self.blocking_command_ids) == 0:
-            lrc_status == TaskStatus.FAILED
+            lrc_status = TaskStatus.FAILED
         else:
             lrc_status = self.wait_for_blocking_results_partial_success(
                 task_abort_event=task_abort_event
@@ -889,7 +889,6 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error(
                 "All TalonLru.On() LRC calls failed/timed out. Check TalonLru logs."
             )
-            self.update_device_health_state(HealthState.FAILED)
             return False
 
         num_lru = 0
@@ -898,7 +897,6 @@ class ControllerComponentManager(CbfComponentManager):
                 if fqdn in lru_fqdns and state == tango.DevState.ON:
                     num_lru += 1
         self.logger.info(f"{num_lru} TalonLru devices successfully turned on")
-        self.update_device_health_state(HealthState.OK)
 
         return True
 
@@ -948,7 +946,7 @@ class ControllerComponentManager(CbfComponentManager):
                 continue
 
         if len(self.blocking_command_ids) == 0:
-            lrc_status == TaskStatus.FAILED
+            lrc_status = TaskStatus.FAILED
         else:
             lrc_status = self.wait_for_blocking_results_partial_success(
                 task_abort_event=task_abort_event
@@ -957,10 +955,8 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error(
                 "All Slim.Configure() LRC calls failed/timed out. Check Slim logs."
             )
-            self.update_device_health_state(HealthState.DEGRADED)
         else:
             self.logger.info("Some/all Slim devices successfully configured.")
-            self.update_device_health_state(HealthState.OK)
 
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         """
@@ -1037,7 +1033,6 @@ class ControllerComponentManager(CbfComponentManager):
             == ResultCode.FAILED
         ):
             self.logger.error("Failed to configure Talon boards")
-            self.update_device_health_state(HealthState.DEGRADED)
 
         # Start monitoring talon board telemetries and fault status
         for fqdn in self._talon_board_fqdn:
@@ -1123,7 +1118,7 @@ class ControllerComponentManager(CbfComponentManager):
             success = False
 
         if len(self.blocking_command_ids) == 0:
-            lrc_status == TaskStatus.FAILED
+            lrc_status = TaskStatus.FAILED
         else:
             lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
@@ -1281,7 +1276,7 @@ class ControllerComponentManager(CbfComponentManager):
                 continue
 
         if len(self.blocking_command_ids) == 0:
-            lrc_status == TaskStatus.FAILED
+            lrc_status = TaskStatus.FAILED
         else:
             lrc_status = self.wait_for_blocking_results_partial_success(
                 task_abort_event=task_abort_event
@@ -1290,7 +1285,6 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error(
                 "All TalonLru.Off() LRC calls failed/timed out. Check TalonLru logs."
             )
-            self.update_device_health_state(HealthState.DEGRADED)
             return False
 
         num_lru = 0
@@ -1299,7 +1293,6 @@ class ControllerComponentManager(CbfComponentManager):
                 if fqdn in lru_fqdns and state == tango.DevState.OFF:
                     num_lru += 1
         self.logger.info(f"{num_lru} TalonLru devices successfully turned off")
-        self.update_device_health_state(HealthState.OK)
 
         return True
 
@@ -1368,7 +1361,6 @@ class ControllerComponentManager(CbfComponentManager):
         # TalonLRU Off
         lru_off_status = self._turn_off_lrus(task_abort_event)
         if not lru_off_status:
-            self.update_device_health_state(HealthState.DEGRADED)
             log_msg = "LRU Off failed."
             message.append(log_msg)
             result_code = ResultCode.FAILED
