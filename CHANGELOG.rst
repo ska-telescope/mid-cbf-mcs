@@ -11,6 +11,7 @@ UNRELEASED CHANGES
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
 * CIP-3065: fix setting receptors in fsp config
+* CIP-2240: ExpectedDishID field is added to the ConfigureScan
 
 1.1.0-rc.1
 **********
