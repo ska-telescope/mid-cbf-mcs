@@ -15,7 +15,7 @@ import copy
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
@@ -86,6 +86,17 @@ class FspScanConfigurationBuilder:
                 raise ValueError(msg)
 
             fsp_configurations.extend(fsp_configuration)
+
+        # the Host-LUT channel offset is based on the number of fine channels
+        # in the FSP, as well as the number of FSP in the configuration
+        host_lut_channel_offsets = [
+            index * const.NUM_FINE_CHANNELS
+            for index in range(0, len(fsp_configurations))
+        ]
+        for host_lut_channel_offset, fsp_config in zip(
+            host_lut_channel_offsets, fsp_configurations
+        ):
+            fsp_config["host_lut_channel_offset"] = host_lut_channel_offset
 
         return fsp_configurations
 
@@ -192,41 +203,37 @@ class FspScanConfigurationBuilder:
                     "freq_scfo_shift"
                 ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
 
-        output_port = (
-            processing_region_config["output_port"]
-            if "output_port" in processing_region_config
-            else []
+        # fsp_info["sdp_start_channel_id"] is the continuous start channel
+        # id of the fsp's in a processing region
+        #
+        # Example: PR has sdp_start_channel_id = 100, and num_channels = 100,
+        # we have have 3 FSPs (fsp_ids = [3, 4, 5]), the partition gives us:
+        # FSP 3 - sdp_start_channeld_id = 0
+        # FSP 4 - sdp_start_channeld_id = 40
+        # FSP 5 - sdp_start_channeld_id = 80
+        #
+        # The partitioner doesn't know about the processing regions
+        # sdp_start_channel_id so it always starts at 0, add the PR
+        # sdp_start_channel_id to the values.
+        #
+        # The lines of code below collects these into an array ([100, 140, 180])
+        # as well as the last channel + 1 of the PR ([10, 140, 180, 200])
+        #
+        # We will be using these values to split up the output_host, output_port
+        # and output_link map values for the fsps.
+        sdp_start_channel_ids = [
+            processing_region_config["sdp_start_channel_id"]
+            + fsp_info["sdp_start_channel_id"]
+            for fsp_info in calculated_fsp_infos.values()
+        ]
+        sdp_start_channel_ids.append(
+            processing_region_config["sdp_start_channel_id"]
+            + processing_region_config["channel_count"]
         )
 
-        if len(output_port) > 0:
+        if "output_port" in processing_region_config:
             # Split up the PR output ports according to the start channel ids of
             # the FSPs.
-            #
-            # fsp_info["sdp_start_channel_id"] is the continuous start channel
-            # id of the fsp's in a processing region
-            #
-            # Example: PR is sdp_start_channel_id = 100, and num_channels = 100,
-            # we have have 3 FSPs (fsp_ids = [3, 4, 5]), the partition gives us:
-            # FSP 3 - sdp_start_channeld_id = 0
-            # FSP 4 - sdp_start_channeld_id = 40
-            # FSP 5 - sdp_start_channeld_id = 80
-            #
-            # The partitioner doesn't know about the processing regions
-            # sdp_start_channel_id so it always starts at 0, add the PR
-            # sdp_start_channel_id to the values.
-            #
-            # The lines of code below collects these into an array ([100, 140, 180])
-            # as well as the last channel + 1 of the PR ([10, 140, 180, 200])
-            sdp_start_channel_ids = [
-                processing_region_config["sdp_start_channel_id"]
-                + fsp_info["sdp_start_channel_id"]
-                for fsp_info in calculated_fsp_infos.values()
-            ]
-            sdp_start_channel_ids.append(
-                processing_region_config["sdp_start_channel_id"]
-                + processing_region_config["channel_count"]
-            )
-
             # We use the array of sdp_start_channel_ids, and split up the
             # processing region output_port at the given start_channel_ids,
             #
@@ -251,20 +258,41 @@ class FspScanConfigurationBuilder:
             #     [ [180, 14004] ],
             # ]
             #
-            #
+            # BUT we will also set rebase_groups to 0 to shift the channel_ids
+            # such that the first channel_id is 0, so it becomes:
+            # [
+            #     [ [0, 14000], [20, 14001] ],
+            #     [ [0, 14002], [20, 14003] ],
+            #     [ [0, 14004] ],
+            # ]
+
             split_output_ports = channel_map.split_channel_map_at(
                 channel_map=processing_region_config["output_port"],
                 channel_groups=sdp_start_channel_ids,
-                rebase_groups=None,
+                rebase_groups=0,
             )
 
             # Use zip to create a dictionary that maps the fsp to the output map
             # list above, so the result will be fsp_to_output_port_map =
             #
             # {
-            #    3: [ [100, 14000], [120, 14001] ],
-            #    4: [ [140, 14002], [160, 14003] ],
-            #    5: [ [180, 14004] ],
+            #    3: [ [0, 14000], [20, 14001] ],
+            #    4: [ [0, 14002], [20, 14003] ],
+            #    5: [ [0, 14004] ],
+            # }
+            #
+            # We also shift the maps by the fsp_start_ch of the fsp. we do this
+            # because we'll be adding the channel_id with the channel_offset
+            # when we send the channel_id to IP and port mapping to the SPEAD
+            # Descriptor or Host-LUT.
+            #
+            # if the fsp_start_ch for the FSPs are [4400, 60, 80], then the
+            # final mapping is:
+            #
+            # {
+            #    3: [ [4400, 14000], [4420, 14001] ],
+            #    4: [ [60, 14002], [80, 14003] ],
+            #    5: [ [80, 14004] ],
             # }
             #
             # We can then use this dictionary later when building the fsp config
@@ -272,7 +300,56 @@ class FspScanConfigurationBuilder:
             for fsp_id, fsp_output_ports in zip(
                 calculated_fsp_ids, split_output_ports
             ):
-                fsp_to_output_port_map[fsp_id] = fsp_output_ports
+                fsp_to_output_port_map[fsp_id] = channel_map.shift_channel_map(
+                    channel_map=fsp_output_ports,
+                    channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+                )
+
+        # do the same as output_port for output_hosts
+        if "output_host" in processing_region_config:
+            split_output_hosts = channel_map.split_channel_map_at(
+                channel_map=processing_region_config["output_host"],
+                channel_groups=sdp_start_channel_ids,
+                rebase_groups=0,
+            )
+            fsp_to_output_host_map = {}
+            for fsp_id, fsp_output_hosts in zip(
+                calculated_fsp_ids, split_output_hosts
+            ):
+                fsp_to_output_host_map[fsp_id] = channel_map.shift_channel_map(
+                    channel_map=fsp_output_hosts,
+                    channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+                )
+
+        # And again the same for output_link_map
+        #
+        # when we split the output_link map, which has a fewer mappings
+        # than our sdp_start_channel_ids, like:
+        # [[100, 1]]
+        #
+        # we will get:
+        # [
+        #   [[100,1]],
+        #   [[100,1]],
+        #   [[100,1]],
+        # ]
+        #
+        # seems a bit extra, but this will support if/when output_link_map
+        # contains more than one link.
+        split_output_link_maps = channel_map.split_channel_map_at(
+            channel_map=processing_region_config["output_link_map"],
+            channel_groups=sdp_start_channel_ids,
+            rebase_groups=0,
+        )
+
+        fsp_to_output_link_map = {}
+        for fsp_id, fsp_output_link_map in zip(
+            calculated_fsp_ids, split_output_link_maps
+        ):
+            fsp_to_output_link_map[fsp_id] = channel_map.shift_channel_map(
+                channel_map=fsp_output_link_map,
+                channel_shift=calculated_fsp_infos[fsp_id]["fsp_start_ch"],
+            )
 
         # Build individual fsp configs
         fsp_configs = []
@@ -289,31 +366,40 @@ class FspScanConfigurationBuilder:
                 "integration_factor"
             ]
 
-            # channel_offset flows down to firmware into value channel_id.
-            # channel_id needs to be set such that the 'start' is s
-            # sdp_start_channel_id.
+            # spead / fsp channel_offset
+            # this offset flows down to SPEAD into value channel_id.
+            # channel_id needs to be set such that the 'start' is
+            # sdp_start_channel_id of the fsp.
             #
             # So channel_id = sdp_start_channel_id - fsp_start_ch,
             # because the FW will add the channel number (0 to 744)*20  to this
             # value and put it in the SPEAD packets.
+            #
+            # The fsp.sdp_start_channel_id is only relative to the
+            # assigned fsps, and not to the pr.sdp_start_channel_id, so the
+            # "absolute" sdp_start_channel_id is to add the fsp and pr
+            # sdp_start_channel_ids together.
             fsp_config["channel_offset"] = (
-                calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
+                processing_region_config["sdp_start_channel_id"]
+                + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
                 - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
             )
 
-            fsp_config["output_link_map"] = processing_region_config[
-                "output_link_map"
-            ]
+            # The 0-14880 channel number where we want to start processing in
+            # the FS, which is the fsp_start_ch value
+            fsp_config["fs_start_channel_offset"] = calculated_fsp_infos[
+                fsp_id
+            ]["fsp_start_ch"]
 
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"
             ] = vcc_id_to_rdt_freq_shifts[fsp_id]
 
+            fsp_config["output_link_map"] = fsp_to_output_link_map[fsp_id]
+
             # Optional values:
             if "output_host" in processing_region_config:
-                fsp_config["output_host"] = processing_region_config[
-                    "output_host"
-                ]
+                fsp_config["output_host"] = fsp_to_output_host_map[fsp_id]
             if "output_port" in processing_region_config:
                 fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
 

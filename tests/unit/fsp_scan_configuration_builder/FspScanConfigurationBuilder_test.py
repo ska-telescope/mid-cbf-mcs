@@ -16,6 +16,7 @@ import json
 import os
 
 import pytest
+from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
@@ -130,19 +131,11 @@ class TestFspScanConfigurationBuilder:
                 ]
             )
             assert (
+                # Given MCS only supports 1 link mapping of link = 1, we should
+                # always get [[0,1]] for all fsp output_link_maps
                 fsp["output_link_map"]
-                == corr_config["processing_regions"][pr_index][
-                    "output_link_map"
-                ]
+                == [[fsp["fs_start_channel_offset"], 1]]
             )
-
-            if "output_host" in corr_config["processing_regions"][pr_index]:
-                assert (
-                    fsp["output_host"]
-                    == corr_config["processing_regions"][pr_index][
-                        "output_host"
-                    ]
-                )
 
             assert fsp["fsp_id"] in all_fsp_ids
             all_fsp_ids.remove(fsp["fsp_id"])
@@ -159,17 +152,50 @@ class TestFspScanConfigurationBuilder:
         ):
             # Assert all ports accounted for in configured FSP's
             if "output_port" in pr_config:
-                expected_output_port = copy.deepcopy(pr_config["output_port"])
+                expected_output_ports = copy.deepcopy(pr_config["output_port"])
+                expected_ports = [
+                    output_port[1] for output_port in expected_output_ports
+                ]
                 for fsp_config in fsp_to_pr[pr_index]:
                     actual_output_ports = fsp_config["output_port"]
+
                     for port in actual_output_ports:
+                        # we expect the port in the PR config ports
                         fsp_id = fsp_config["fsp_id"]
                         assert (
-                            port in expected_output_port
+                            port[1] in expected_ports
                         ), f"Assigned output_port in FSP: {fsp_id}, was not expected for PR index {index}, or was duplicated from another FSP"
-                        expected_output_port.remove(port)
+                        index_of_port = expected_ports.index(port[1])
+                        expected_ports.pop(index_of_port)
+
+                        # the port is assigned to an output host
+                        # and matches the pr output_host config
+                        if "output_host" in fsp_config:
+                            fsp_ip = channel_map.channel_map_at(
+                                fsp_config["output_host"], port[0]
+                            )
+
+                            # trick, we want the absolute sdp_start_channel_id,
+                            # but we can get it from the channel_offset
+                            # and the fs_start_channel_offset
+                            fsp_sdp_start_channel_id = (
+                                fsp_config["channel_offset"]
+                                + fsp_config["fs_start_channel_offset"]
+                            )
+
+                            # shift the channel by the absolute sdp_start_channel_id
+                            # and look up the channel_id in the pr.output_host map
+                            pr_ip = channel_map.channel_map_at(
+                                pr_config["output_host"],
+                                port[0] + fsp_sdp_start_channel_id,
+                            )
+
+                            # They should result in the same mapped ip value
+                            assert (
+                                fsp_ip == pr_ip
+                            ), f"output_port {port} of fsp_id: {fsp_id} does not map to the same fsp ip {fsp_ip} as the processing region ip {fsp_ip}"
                 assert (
-                    len(expected_output_port) == 0
+                    len(expected_ports) == 0
                 ), f"There are unassigned output_ports for PR index {index}"
 
             # Assert vcc to rdt shift values set for all receptors
