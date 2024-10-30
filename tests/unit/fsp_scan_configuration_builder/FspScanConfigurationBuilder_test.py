@@ -221,3 +221,14 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config
                     assert "freq_scfo_shift" in vcc_id_shift_config
+                
+                # assert the receptors are set if they are set in the PR, else
+                # they are the subarrya receptors
+                assert "receptors" in fsp_config
+                if "receptors" in pr_config:
+                    for receptor in pr_config["receptors"]:
+                        assert receptor in fsp_config["receptors"]
+                else:
+                    for receptor in subarray_dish_ids:
+                        assert receptor in fsp_config["receptors"]
+                    
