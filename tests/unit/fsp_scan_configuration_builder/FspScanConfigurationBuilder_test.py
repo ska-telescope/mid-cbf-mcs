@@ -57,6 +57,36 @@ class TestFspScanConfigurationBuilder:
                 frequency_band="1",
             )
 
+    def test_build_invalid_receptor_not_in_subarray_receptors(self: TestFspScanConfigurationBuilder):
+        # Setup configuration
+        with open(json_file_path + "ConfigureScan_basic_CORR.json") as file:
+            json_str = file.read().replace("\n", "")
+            full_configuration = json.loads(json_str)
+
+        corr_config = full_configuration["midcbf"]["correlation"]
+        
+        # add bad receptor
+        corr_config["processing_regions"][0]["receptors"] = ["SKA999"]
+        
+        # Setup subarray & dish_utils
+        with open(json_file_path + "sys_param_4_boards.json") as file:
+            json_str = file.read().replace("\n", "")
+            sys_param_configuration = json.loads(json_str)
+        subarray_dish_ids = list(
+            sys_param_configuration["dish_parameters"].keys()
+        )
+        dish_util = DISHUtils(sys_param_configuration)
+
+        with pytest.raises(ValueError):
+            fsp_builder(
+                function_mode=FspModes.CORR,
+                function_configuration=corr_config,
+                dish_utils=dish_util,
+                subarray_dish_ids=subarray_dish_ids,
+                wideband_shift=0,
+                frequency_band="1",
+            ).build()
+
     @pytest.mark.parametrize(
         "config_name",
         [

@@ -130,7 +130,7 @@ class FspScanConfigurationBuilder:
                     dish_ids.append(dish_id)
                 else:
                     raise ValueError(
-                        f"receptor {dish_id} is not in the set"
+                        f"receptor {dish_id} is not in the set "
                         + f"of subarray receptors {self._subarray_dish_ids}"
                     )
 
