@@ -24,6 +24,7 @@ UNRELEASED CHANGES
 * CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
 * CIP-2965 talondx-config generates in the beginning of integration test
 * SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 
 1.0.0
 ******
