@@ -426,7 +426,9 @@ class ControllerComponentManager(CbfComponentManager):
                         return False
                     self.blocking_command_ids.add(command_id)
                 except Exception as e:
-                    self.logger.error(f"Error configuring FSP {fsp}: {e}", exc_info=True)
+                    self.logger.error(
+                        f"Error configuring FSP {fsp}: {e}", exc_info=True
+                    )
                     return False
 
             return True
