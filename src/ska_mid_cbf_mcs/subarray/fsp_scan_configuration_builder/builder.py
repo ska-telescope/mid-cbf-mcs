@@ -131,7 +131,7 @@ class FspScanConfigurationBuilder:
                 else:
                     raise ValueError(
                         f"receptor {dish_id} is not in the set"
-                        + "of subarray receptors {self._subarray_dish_ids}"
+                        + f"of subarray receptors {self._subarray_dish_ids}"
                     )
 
         vcc_to_fs_infos = {}
