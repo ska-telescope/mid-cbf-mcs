@@ -11,7 +11,6 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import copy
-import logging
 
 from ska_telmodel import channel_map
 
@@ -130,8 +129,10 @@ class FspScanConfigurationBuilder:
                 if dish_id in self._subarray_dish_ids:
                     dish_ids.append(dish_id)
                 else:
-                    raise ValueError(f"receptor {dish_id} is not in the set" + \
-                        "of subarray receptors {self._subarray_dish_ids}")
+                    raise ValueError(
+                        f"receptor {dish_id} is not in the set"
+                        + "of subarray receptors {self._subarray_dish_ids}"
+                    )
 
         vcc_to_fs_infos = {}
         for dish_id in dish_ids:
