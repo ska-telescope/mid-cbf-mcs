@@ -12,20 +12,20 @@ from __future__ import annotations
 
 import json
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 
 import tango
 from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.component.obs_component_manager import (
-    CbfObsComponentManager,
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
 )
 
 
-class FspPstSubarrayComponentManager(CbfObsComponentManager):
+class FspPstSubarrayComponentManager(CbfComponentManager):
     """A component manager for the FspPstSubarray device."""
 
     def __init__(
@@ -37,8 +37,8 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         """
         Initialise a new instance.
 
-        # TODO: for Mid.CBF, param hps_fsp_pst_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
-        :param hps_fsp_pst_controller_fqdn: FQDN of the HPS FSP PST controller device
+        # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         """
 
         super().__init__(*args, **kwargs)
@@ -55,7 +55,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         self._vcc_ids = []
         self._timing_beams = []
         self._timing_beam_id = []
-        self.scan_id = 0
+        self._scan_id = 0
         self._output_enable = 0
 
         # TODO: Remove
@@ -109,6 +109,16 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         return self._vcc_ids
 
     @property
+    def scan_id(self: FspPstSubarrayComponentManager) -> int:
+        """
+        Scan ID
+
+        :return: the scan id
+        :rtype: int
+        """
+        return self._scan_id
+
+    @property
     def output_enable(self: FspPstSubarrayComponentManager) -> bool:
         """
         Output Enable
@@ -132,7 +142,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         # CbfController OnCommand sequence
         if not self.simulation_mode:
             try:
-                self._proxy_hps_fsp_pst_controller = context.DeviceProxy(
+                self._proxy_hps_fsp_corr_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_pst_controller_fqdn
                 )
             except tango.DevFailed as df:
@@ -188,21 +198,22 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
                     f"VCC {vccID} not assigned to FSP PST subarray. Skipping."
                 )
                 self.logger.warning(log_msg)
-
+    
     def _deconfigure(
         self: FspPstSubarrayComponentManager,
     ) -> None:
         self._timing_beams = []
         self._timing_beam_id = []
-        self.scan_id = 0
+        self._scan_id = 0
         self._output_enable = 0
+    
 
     # ---------------------
     # Long Running Commands
     # ---------------------
 
     def _configure_scan(
-        self: FspPstSubarrayComponentManager,
+        self: FspPstSubarrayComponentManager, 
         argin: str,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
@@ -214,14 +225,8 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
 
         :return: None
         """
-
-        # Set task status in progress, check for abort event
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        if self.task_abort_event_is_set(
-            "ConfigureScan", task_callback, task_abort_event
-        ):
-            return
         self._deconfigure()
+
 
         configuration = json.loads(argin)
 
@@ -231,17 +236,19 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             self._timing_beams.append(json.dumps(timingBeam))
             self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
 
-        # Issue ConfigureScan to HPS FSP PST controller
+        # Issue ConfigureScan to HPS FSP Corr controller
         if not self.simulation_mode:
             # hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:
                 self._proxy_hps_fsp_pst_controller.set_timeout_millis(
                     self._lrc_timeout * 1000
                 )
-                self._proxy_hps_fsp_psr_controller.ConfigureScan(configuration)
+                self._proxy_hps_fsp_psr_controller.ConfigureScan(
+                    configuration
+                )
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failure in issuing ConfigureScan to HPS FSP PST; {df}"
+                    f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
                 )
                 self._update_communication_state(
                     communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -263,7 +270,6 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
     def _scan(
         self: FspPstSubarrayComponentManager,
         argin: int,
@@ -286,9 +292,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             "Scan", task_callback, task_abort_event
         ):
             return
-
-        self.scan_id = argin
-
+        
+        self._scan_id = argin
+        
         if not self.simulation_mode:
             try:
                 self._proxy_hps_fsp_pst_controller.Scan(self.scan_id)
@@ -313,7 +319,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
-
+    
     def _end_scan(
         self: FspPstSubarrayComponentManager,
         task_callback: Optional[Callable] = None,
@@ -333,7 +339,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             "EndScan", task_callback, task_abort_event
         ):
             return
-
+        
         if not self.simulation_mode:
             try:
                 self._proxy_hps_fsp_pst_controller.EndScan()
@@ -346,7 +352,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to issue EndScan command to HPS FSP PST controller device.",
+                        "Failed to issue EndScan command to HPS FSP Corr controller device.",
                     ),
                 )
                 return
@@ -359,6 +365,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             status=TaskStatus.COMPLETED,
         )
         return
+
 
     def _go_to_idle(
         self: FspPstSubarrayComponentManager,
@@ -379,7 +386,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             "GoToIdle", task_callback, task_abort_event
         ):
             return
-
+        
         if not self.simulation_mode:
             try:
                 self._proxy_hps_fsp_pst_controller.GoToIdle()
@@ -392,7 +399,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to issue Unconfigure command to HPS FSP PST controller device.",
+                        "Failed to issue Unconfigure command to HPS FSP Corr controller device.",
                     ),
                 )
                 return
@@ -425,7 +432,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             "Abort", task_callback, task_abort_event
         ):
             return
-
+        
         try:
             # TODO: Abort command not implemented for the HPS FSP application
             pass
@@ -443,14 +450,6 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Update obsState callback
-        self._update_component_state(scanning=False)
-
-        task_callback(
-            result=(ResultCode.OK, "Abort completed OK"),
-            status=TaskStatus.COMPLETED,
-        )
-        return
 
     def _obs_reset(
         self: FspPstSubarrayComponentManager,
@@ -471,12 +470,12 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
             "ObsReset", task_callback, task_abort_event
         ):
             return
-
+        
         if not self.simulation_mode:
             try:
                 pass
                 # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-                # self._proxy_hps_fsp_pst_controller.ObsReset()
+                # self._proxy_hps_fsp_corr_controller.ObsReset()
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
@@ -486,7 +485,7 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        "Failed to issue ObsReset to HPS FSP PST controller device.",
+                        "Failed to issue ObsReset to HPS FSP Corr controller device.",
                     ),
                 )
                 return
