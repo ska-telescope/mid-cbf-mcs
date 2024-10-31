@@ -10,6 +10,12 @@ UNRELEASED CHANGES
 * CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
+* CIP-3028 Updated hw config after systems room re-organization.
+* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
+* CIP-2965 talondx-config generates in the beginning of integration test
+* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 
 1.1.0-rc.1
 **********
@@ -29,6 +35,7 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
+
 
 1.0.0
 ******
