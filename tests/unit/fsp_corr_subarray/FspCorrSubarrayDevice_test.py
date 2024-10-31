@@ -190,7 +190,7 @@ class TestFspCorrSubarray:
                 )
             )
             if command_name is "ConfigureScan":
-                assert(device_under_test.lastScanConfiguration == json_str)
+                assert device_under_test.lastScanConfiguration == json_str
 
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
