@@ -16,6 +16,8 @@ UNRELEASED CHANGES
 * CIP-2965 talondx-config generates in the beginning of integration test
 * SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
 * CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
+* CIP-3065: fix setting receptors in fsp config
+* CIP-2240: ExpectedDishID field is added to the ConfigureScan
 
 1.1.0-rc.1
 **********

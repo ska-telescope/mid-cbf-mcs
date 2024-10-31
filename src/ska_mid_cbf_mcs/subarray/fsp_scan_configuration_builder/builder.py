@@ -126,7 +126,13 @@ class FspScanConfigurationBuilder:
                 dish_ids.append(dish_id)
         else:
             for dish_id in processing_region_config["receptors"]:
-                dish_ids.append(dish_id)
+                if dish_id in self._subarray_dish_ids:
+                    dish_ids.append(dish_id)
+                else:
+                    raise ValueError(
+                        f"receptor {dish_id} is not in the set "
+                        + f"of subarray receptors {self._subarray_dish_ids}"
+                    )
 
         vcc_to_fs_infos = {}
         for dish_id in dish_ids:
@@ -365,6 +371,7 @@ class FspScanConfigurationBuilder:
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
+            fsp_config["receptors"] = copy.copy(dish_ids)
 
             # spead / fsp channel_offset
             # this offset flows down to SPEAD into value channel_id.
