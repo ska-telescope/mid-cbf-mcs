@@ -333,7 +333,7 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
-            if command_name is "ConfigureScan":
+            if command_name == "ConfigureScan":
                 assert device_under_test.lastScanConfiguration == json.dumps(
                     configuration
                 )
