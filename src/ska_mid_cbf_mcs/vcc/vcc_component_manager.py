@@ -364,6 +364,9 @@ class VccComponentManager(CbfObsComponentManager):
         configuration = json.loads(argin)
         self.config_id = configuration["config_id"]
 
+        # Add expected_dish_id to HPS configuration arg
+        configuration["expected_dish_id"] = self.dish_id
+
         # TODO: The frequency band attribute is optional but
         # if not specified the previous frequency band set should be used
         # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency
@@ -387,10 +390,14 @@ class VccComponentManager(CbfObsComponentManager):
         fb_index = self._freq_band_index[self._freq_band_name]
 
         if self.simulation_mode:
-            self._band_simulators[fb_index].ConfigureScan(argin)
+            self._band_simulators[fb_index].ConfigureScan(
+                json.dumps(configuration)
+            )
         else:
             try:
-                self._band_proxies[fb_index].ConfigureScan(argin)
+                self._band_proxies[fb_index].ConfigureScan(
+                    json.dumps(configuration)
+                )
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
