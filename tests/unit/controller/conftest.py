@@ -84,8 +84,10 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("longRunningCommandResult", ("", ""))
+    builder.add_attribute("functionMode", 1)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_result_command("SetFunctionMode", [[ResultCode.OK], [1]])
     return builder()
 
 
