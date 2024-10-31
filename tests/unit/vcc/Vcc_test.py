@@ -333,6 +333,10 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
+            if command_name is "ConfigureScan":
+                assert(device_under_test.lastScanConfiguration == json.dumps(configuration))
+                configuration["expected_dish_id"] = device_under_test.dishID
+                assert(device_under_test.lastHpsScanConfiguration == json.dumps(configuration))
 
         # Check all obsState transitions
         previous_state = ObsState.IDLE
@@ -361,6 +365,8 @@ class TestVcc:
             attribute_name="frequencyBand",
             attribute_value=0,
         )
+
+
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
