@@ -148,6 +148,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._freq_band_name = ""
         self.config_id = ""
         self.scan_id = 0
+        self.last_hps_scan_configuration = ""
 
     def _load_internal_params(
         self: VccComponentManager,
