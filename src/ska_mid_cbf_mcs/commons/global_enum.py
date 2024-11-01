@@ -169,10 +169,13 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 "fsp_id": [1, 2, 3, 4],
                 "channel_width": {13440},
                 "channel_count": {"range": (1, 58982), "multiple": 20},
-                "output_host": {"multiple": 20, "max_channel_per": 20},
+                "output_host": {
+                    "difference_multiple": 20,
+                    "max_channel_per": 20,
+                },
                 "output_port": {"increment": 20, "max_channel_per": 20},
                 "output_link_map": {
-                    "multiple": 20,
+                    "difference_multiple": 20,
                     "max_channel_per": 20,
                     "values": [1],
                 },

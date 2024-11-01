@@ -12,6 +12,8 @@ UNRELEASED CHANGES
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
 * CIP-3065: fix setting receptors in fsp config
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
+* CIP-3068: fix validation output_host
+  * difference between channel_ids is a multiple of 20, not the value itself
 
 1.1.0-rc.1
 **********
