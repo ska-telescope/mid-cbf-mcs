@@ -18,6 +18,8 @@ UNRELEASED CHANGES
 * CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 * CIP-3065: fix setting receptors in fsp config
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
+* CIP-3068: fix validation output_host
+  * difference between channel_ids is a multiple of 20, not the value itself
 
 1.1.0-rc.1
 **********

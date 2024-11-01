@@ -879,13 +879,17 @@ class SubarrayScanConfigurationValidator:
         # check that channels are multiple of map_type_increment for output_host
         # and in ascending order
         if map_type == "output_host":
-            output_host_multiple = valid_map_type_value["multiple"]
+            output_host_difference_multiple = valid_map_type_value[
+                "difference_multiple"
+            ]
             prev = -1
             for channel, value in map_pairs:
-                if channel % output_host_multiple != 0:
+                if (
+                    channel - map_pairs[0][0]
+                ) % output_host_difference_multiple != 0:
                     msg = (
                         f"{map_type} channel map pair [{channel},{value}]:",
-                        "channel must be in multiples of 20",
+                        f"difference between {map_type} values must be a multiple of 20",
                         "For AA 0.5 and AA 1.0",
                     )
                     self.logger.error(msg)
