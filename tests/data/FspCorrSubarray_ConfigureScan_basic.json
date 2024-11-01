@@ -4,7 +4,8 @@
     "corr_vcc_ids": [1], 
     "subarray_vcc_ids": [1, 4, 2],
     "frequency_slice_id": 1, 
-    "integration_factor": 1, 
+    "integration_factor": 1,
+    "spead_channel_offset": -14880,
     "channel_offset": 14880, 
     "channel_averaging_map": 
         [[0, 8], [744, 8], [1488, 8], [2232, 8], 
@@ -210,5 +211,13 @@
             "vcc_id": 1,
             "fs_sample_rate": 220011300
         }
-    ]
+    ],
+    "vcc_id_to_rdt_freq_shifts": {
+        "1": {
+            "freq_down_shift": 10.10,
+            "freq_align_shift": 20.10,
+            "freq_wb_shift": 30.10,
+            "freq_scfo_shift": 40.10
+        }
+    }
 }
