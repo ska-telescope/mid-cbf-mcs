@@ -342,7 +342,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # Subscription starts during the configure scan command. Need to include the
         # CONFIGURING state or we risk throwing away the first polynomial. Subscription should
         # also be done after FSPs have been configured so that RDTs are ready to receive them.
-        if self.obs_state not in [ObsState.CONFIGURING, ObsState.READY, ObsState.SCANNING]:
+        if self.obs_state not in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+        ]:
             log_msg = f"Ignoring delay model received in {self.obs_state} (must be READY or SCANNING)."
             self.logger.warning(log_msg)
             return
@@ -1782,7 +1786,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-        
+
         # Configure delayModel subscription point
         delay_model_success = self._subscribe_tm_event(
             subscription_point=configuration["delay_model_subscription_point"],
