@@ -57,11 +57,15 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.config_id = ""
         self.channel_averaging_map = [
             [
-                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
+                int(
+                    i
+                    * const.NUM_FINE_CHANNELS
+                    / const.NUM_CHANNELS_PER_SPEAD_STREAM
+                )
                 + 1,
                 0,
             ]
-            for i in range(const.NUM_CHANNEL_GROUPS)
+            for i in range(const.NUM_CHANNELS_PER_SPEAD_STREAM)
         ]
         self.vis_destination_address = {
             "outputHost": [],
@@ -169,14 +173,19 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         hps_fsp_configuration["fs_sample_rates"] = configuration[
             "fs_sample_rates"
         ]
-        self.logger.debug(
-            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
-        )
+
+        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
+            "vcc_id_to_rdt_freq_shifts"
+        ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
+
+        self.logger.debug(
+            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
+        )
 
         return json.dumps(hps_fsp_configuration)
 
