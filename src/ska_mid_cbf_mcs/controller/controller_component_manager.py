@@ -497,12 +497,15 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         # Set FSP function mode
-        if not self._assign_fsp():
-            self.logger.error("Failed to send SetFunctionMode to FSP")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
+        try:
+            if not self._assign_fsp():
+                self.logger.error("Failed to send SetFunctionMode to FSP")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return
+        except Exception as e:
+            self.logger.error("Exception caught: " + e)
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
