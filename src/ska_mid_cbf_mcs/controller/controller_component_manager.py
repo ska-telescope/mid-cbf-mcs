@@ -398,11 +398,15 @@ class ControllerComponentManager(CbfComponentManager):
 
         :return: True if the FSP function mode is successfully set, False otherwise.
         """
+        try:
+            fsp_mode = self.talondx_config_json["config_commands"][0][
+                "fpga_bitstream_fsp_mode"
+            ].upper()
 
-        fsp_mode = self.talondx_config_json["config_commands"][0][
-            "fpga_bitstream_fsp_mode"
-        ].upper()
-        self.logger.info(f"Setting FSP function mode to {fsp_mode}")
+            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
+        except Exception as e:
+            self.logger.error(f"Error FSP mode {fsp}: {e}", exc_info=True)
+            return False
 
         for fsp in self._fsp_fqdn:
             try:
@@ -496,16 +500,12 @@ class ControllerComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
-        # Set FSP function mode
-        try:
-            if not self._assign_fsp():
-                self.logger.error("Failed to send SetFunctionMode to FSP")
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
-        except Exception as e:
-            self.logger.error("Exception caught: " + e)
+        if not self._assign_fsp():
+            self.logger.error("Failed to send SetFunctionMode to FSP")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
