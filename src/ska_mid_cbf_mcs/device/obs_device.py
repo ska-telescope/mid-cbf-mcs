@@ -20,12 +20,12 @@ from __future__ import annotations
 from typing import Any, Callable, Optional, cast
 
 from ska_control_model import (
+    AdminMode,
     ObsState,
     ObsStateModel,
     PowerState,
     ResultCode,
     SimulationMode,
-    AdminMode,
 )
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -337,8 +337,7 @@ class CbfObsDevice(SKAObsDevice):
         self.logger.debug(f"Writing simulationMode to {value}")
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
-    
-    # AdminMode Override
+
     @attribute(dtype=AdminMode, memorized=True, hw_memorized=True)
     def adminMode(self: CbfObsDevice) -> AdminMode:
         """
@@ -373,7 +372,6 @@ class CbfObsDevice(SKAObsDevice):
             self.admin_mode_model.perform_action("to_reserved")
         else:
             raise ValueError(f"Unknown adminMode {value}")
-
 
     # ----------
     # Callbacks
@@ -439,7 +437,7 @@ class CbfObsDevice(SKAObsDevice):
         super()._update_obs_state(obs_state=obs_state)
         if hasattr(self, "component_manager"):
             self.component_manager.obs_state = obs_state
-    
+
     def _perform_action(self: CbfObsDevice, action: str) -> None:
         """
         Callback provided to perform an action on the state model from

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from ska_control_model import ResultCode, SimulationMode, AdminMode
+from ska_control_model import AdminMode, ResultCode, SimulationMode
 from ska_tango_base.base.base_component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
@@ -108,7 +108,6 @@ class CbfDevice(SKABaseDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
-    # AdminMode Override
     @attribute(dtype=AdminMode, memorized=True, hw_memorized=True)
     def adminMode(self: CbfDevice) -> AdminMode:
         """
@@ -211,7 +210,7 @@ class CbfDevice(SKABaseDevice):
                 "Reset command rejected, as it is unimplemented for this device."
             ],
         )
-    
+
     # ----------
     # Callbacks
     # ----------
@@ -221,7 +220,7 @@ class CbfDevice(SKABaseDevice):
         """
         Callback provided to perform an action on the state model from
         component manager.
-        
+
         :param action: an action, as given in the transitions table
         """
         self.admin_mode_model.perform_action(action)
