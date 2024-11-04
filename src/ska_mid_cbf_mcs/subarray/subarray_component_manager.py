@@ -38,15 +38,19 @@ from ska_telmodel.schema import validate as telmodel_validate
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import (
+    FspModes,
+    calculate_dish_sample_rate,
     const,
     freq_band_dict,
-    mhz_to_hz,
 )
 from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder import (
+    FspScanConfigurationBuilder,
+)
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 from ska_mid_cbf_mcs.visibility_transport.visibility_transport import (
@@ -993,7 +997,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 config=full_configuration,
                 strictness=2,
             )
-            self.logger.info("Scan configuration is valid!")
+            self.logger.info("Scan configuration is valid against telmodel!")
         except json.JSONDecodeError as je:  # argument not a valid JSON object
             self.logger.error(
                 f"Scan configuration object is not a valid JSON object; {je}"
@@ -1024,27 +1028,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             else:
                 self.logger.error(msg)
             return success
+        else:
+            self.logger.info(
+                "Skipping MCS supported configuration validation."
+            )
 
         return True
-
-    def _calculate_dish_sample_rate(
-        self: CbfSubarrayComponentManager,
-        freq_band_info: dict,
-        freq_offset_k: int,
-    ) -> int:
-        """
-        Calculate frequency slice sample rate
-
-        :param freq_band_info: constants pertaining to a given frequency band
-        :param freq_offset_k: DISH frequency offset k value
-        :return: DISH sample rate
-        """
-        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
-        sample_rate_const = freq_band_info["sample_rate_const"]
-
-        return (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * const.DELTA_F
-        )
 
     def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, dish: str
@@ -1070,7 +1059,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         total_num_fs = freq_band_info["total_num_FSs"]
 
-        dish_sample_rate = self._calculate_dish_sample_rate(
+        dish_sample_rate = calculate_dish_sample_rate(
             freq_band_info, freq_offset_k
         )
 
@@ -1125,7 +1114,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             vcc_proxy = self._all_vcc_proxies[vcc_id]
 
             # Fetch K-value based on dish_id, calculate dish sample rate
-            dish_sample_rate = self._calculate_dish_sample_rate(
+            dish_sample_rate = calculate_dish_sample_rate(
                 freq_band_info=freq_band_dict()[
                     configuration["frequency_band"]
                 ],
@@ -1174,13 +1163,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
+        fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue Vcc ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param fsp_configurations: FSP configuration list
 
         :return: True if VCC ConfigureScan was successful, otherwise False
         """
@@ -1241,7 +1231,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Add subset of FSP configuration to the VCC configure scan argument
         reduced_fsp = []
-        for fsp in configuration["fsp"]:
+        for fsp in fsp_configurations:
             function_mode = fsp["function_mode"]
             fsp_cfg = {"fsp_id": fsp["fsp_id"], "function_mode": function_mode}
             if function_mode == "CORR":
@@ -1277,6 +1267,49 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return False
 
         return True
+
+    def _convert_pr_configs_to_fsp_configs(
+        self: CbfSubarrayComponentManager,
+        configuration: dict[any],
+        common_configuration: dict[any],
+    ) -> list[dict[any]]:
+        """
+        go through the different function modes' (CORR, PST, etc.) processing
+        regions and convert to individual FSP configurations.
+
+        :param configuration: The Mid.CSP Function specific configurations
+        :raises ValueError: if there is an exception processing any processing
+        regions
+        :return: list of Individual FSP configurations
+        """
+
+        all_fsp_configs = []
+
+        # CORR
+        if "correlation" in configuration:
+            corr_config = configuration["correlation"]
+
+            # TODO: set wideband shift when ready for implementation
+            fsp_config_builder = FspScanConfigurationBuilder(
+                function_mode=FspModes.CORR,
+                function_configuration=corr_config,
+                dish_utils=self._dish_utils,
+                subarray_dish_ids=self.dish_ids,
+                wideband_shift=0,
+                frequency_band=common_configuration["frequency_band"],
+            )
+            try:
+                corr_fsp_configs = fsp_config_builder.build()
+            except ValueError as ve:
+                msg = f"Failure processing correlation configuration: {ve}"
+                self.logger.error(msg)
+                raise ValueError(msg)
+
+            all_fsp_configs.extend(corr_fsp_configs)
+
+        # TODO: build PST fsp configs and add to all_fsp_configs
+
+        return all_fsp_configs
 
     def _build_fsp_config(
         self: CbfSubarrayComponentManager,
@@ -1369,12 +1402,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
         configuration: dict[any],
+        fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
         :param configuration: Mid.CBF scan configuration dict
+        :param fsp_configuration: FSP scan configuration dict
 
         :return: True if successfully configured all FSP devices, otherwise False
         """
@@ -1384,7 +1419,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         all_fsp_config = []
         self._vis_fsp_config = []
         self.blocking_command_ids = set()
-        for config in configuration["fsp"]:
+
+        for config in fsp_configurations:
             fsp_config = self._build_fsp_config(
                 fsp_config=copy.deepcopy(config),
                 common_configuration=copy.deepcopy(common_configuration),
@@ -1404,16 +1440,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         return False
 
                     # Parameter named "corr_vcc_ids" used by HPS contains the
-                    # subset of the subarray VCCs for which the correlation results
-                    # are requested to be used in Mid.CBF output products (visibilities);
-                    # dishes may not be specified in the configuration at all,
-                    # or the list may be empty
+                    # subset of the subarray VCCs for which the correlation
+                    # results are requested to be used in Mid.CBF output
+                    # products (visibilities); dishes may not be specified in
+                    # the configuration at all, or the list may be empty
                     fsp_config["corr_vcc_ids"] = []
                     if (
                         "receptors" not in fsp_config
                         or len(fsp_config["receptors"]) == 0
                     ):
-                        # In this case by the ICD, all subarray allocated resources should be used.
+                        # In this case by the ICD, all subarray allocated
+                        # resources should be used.
                         fsp_config["corr_vcc_ids"] = fsp_config[
                             "subarray_vcc_ids"
                         ].copy()
@@ -1633,23 +1670,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         full_configuration = json.loads(argin)
-        common_configuration = copy.deepcopy(full_configuration["common"])
-        # Pre 4.0
-        if "cbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["cbf"])
-        # Post 4.0
-        elif "midcbf" in full_configuration:
-            configuration = copy.deepcopy(full_configuration["midcbf"])
 
-            # TODO: remove this return when Configure Scan supports >v4.0
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "> v4.0 Configure Scan Interfaces Currently not supported",
-                ),
-            )
-            return
+        self.logger.debug(
+            f"Subarray ConfigureScan Configuration: {full_configuration}"
+        )
+
+        common_configuration = copy.deepcopy(full_configuration["common"])
+        configuration = copy.deepcopy(full_configuration["midcbf"])
 
         # When configuring from READY, send any function mode subarrays in READY to IDLE
         self.blocking_command_ids = set()
@@ -1714,6 +1741,24 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # store configID
         self.config_id = str(common_configuration["config_id"])
 
+        # --- Convert Processing Regions to FSP configs --- #
+        try:
+            fsp_configs = self._convert_pr_configs_to_fsp_configs(
+                configuration=configuration,
+                common_configuration=common_configuration,
+            )
+        except ValueError as ve:
+            msg = f"Failure to build FSP configurations from processing regions: {ve}"
+            self.logger.error(msg)
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    msg,
+                ),
+            )
+            return
+
         # --- Configure VCC --- #
 
         # TODO: think about what to do about abort events here
@@ -1733,6 +1778,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         vcc_configure_scan_success = self._vcc_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            fsp_configurations=fsp_configs,
         )
         if not vcc_configure_scan_success:
             task_callback(
@@ -1749,6 +1795,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         fsp_configure_scan_success = self._fsp_configure_scan(
             common_configuration=common_configuration,
             configuration=configuration,
+            fsp_configurations=fsp_configs,
         )
         if not fsp_configure_scan_success:
             # If unsuccessful, reset all assigned FSP devices

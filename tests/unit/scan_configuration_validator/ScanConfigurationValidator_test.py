@@ -8,7 +8,7 @@ from logging import getLogger
 import pytest
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.scan_configuration_validator.validator import (
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 
@@ -50,32 +50,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize(
         "config_file_name",
-        [("ConfigureScan_1_0_CORR.json"), ("ConfigureScan_19_0_CORR.json")],
-    )
-    def test_Invalid_Configuration_Version(
-        self: TestScanConfigurationValidator,
-        validator_params: dict[any],
-        config_file_name: str,
-    ):
-        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
-        with open(path_to_test_json) as file:
-            json_str = file.read().replace("\n", "")
-        validator: SubarrayScanConfigurationValidator = (
-            SubarrayScanConfigurationValidator(
-                scan_configuration=json_str,
-                dish_ids=validator_params["dish_ids"],
-                subarray_id=validator_params["sub_id"],
-                logger=self.logger,
-            )
-        )
-        success, msg = validator.validate_input()
-        print(msg)
-        assert "Error: The version defined in the Scan Configuration" in msg
-        assert success is False
-
-    @pytest.mark.parametrize(
-        "config_file_name",
-        ["ConfigureScan_4_1_CORR.json", "ConfigureScan_basic_CORR.json"],
+        ["ConfigureScan_4_1_CORR.json"],
     )
     def test_Valid_Configuration_Version(
         self: TestScanConfigurationValidator,
@@ -149,7 +124,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     @pytest.mark.parametrize("fsp_ids", [[5, 6, 7, 8], [15, 19, 23, 27]])
-    def test_Invalid_FSP_IDs_CORR_post_v4(
+    def test_Invalid_FSP_IDs_CORR(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: int,
@@ -219,7 +194,7 @@ class TestScanConfigurationValidator:
             ("frequency_band", "5b"),
         ],
     )
-    def test_Invalid_Common_Keys_post_v4(
+    def test_Invalid_Common_Keys(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         common_key: str,
@@ -248,7 +223,7 @@ class TestScanConfigurationValidator:
             ("rfi_flagging_mask", {}),
         ],
     )
-    def test_Invalid_MidCBF_Keys_post_v4(
+    def test_Invalid_MidCBF_Keys(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         midcbf_key: str,
@@ -274,7 +249,7 @@ class TestScanConfigurationValidator:
     @pytest.mark.parametrize(
         "start_freq_value", [0, 6719, 1981815360, 1281860161]
     )
-    def test_Invalid_start_freq_post_v4(
+    def test_Invalid_start_freq(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         start_freq_value: int,
@@ -299,18 +274,29 @@ class TestScanConfigurationValidator:
         assert success is False
 
     @pytest.mark.parametrize(
-        "start_freq_value,channel_count_value",
-        [(6720, 3000), (6721, 3000), (1281860160, 3000), (1281860159, 3000)],
+        "start_freq_value,channel_count_value,fsp_ids",
+        [
+            (6720, 3000, [1]),
+            (6721, 3000, [1]),
+            (1281860160, 3000, [1, 2]),
+            (1281860159, 3000, [1, 2]),
+        ],
     )
-    def test_Valid_start_freq_post_v4(
+    def test_Valid_start_freq(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         start_freq_value: int,
         channel_count_value: int,
+        fsp_ids: list[int],
     ):
+        sdp_start_channel_id = self.full_configuration["midcbf"][
+            "correlation"
+        ]["processing_regions"][0]["sdp_start_channel_id"]
         port = 10000
         output_ports_map = []
-        for channel in range(0, channel_count_value - 20 + 1, 20):
+        for channel in range(
+            4242, sdp_start_channel_id + channel_count_value - 20 + 1, 20
+        ):
             temp = [channel, port]
             output_ports_map.append(temp)
             port += 1
@@ -320,6 +306,9 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["channel_count"] = channel_count_value
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = fsp_ids
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_port"] = output_ports_map
@@ -344,7 +333,7 @@ class TestScanConfigurationValidator:
         assert success is True
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
-    def test_Invalid_fsp_ids_amount_for_requested_bandwidth_post_v4(
+    def test_Invalid_fsp_ids_amount_too_few_for_requested_bandwidth(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         fsp_ids: list[int],
@@ -364,6 +353,34 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
+        print(msg)
+        assert expected_msg in msg
+        assert success is False
+
+    @pytest.mark.parametrize("fsp_ids", [[1, 2], [1, 2, 3], [1, 2, 3, 4]])
+    def test_Invalid_fsp_ids_amount_too_many_for_requested_bandwidth(
+        self: TestScanConfigurationValidator,
+        validator_params: dict[any],
+        fsp_ids: list[int],
+    ):
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = fsp_ids
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["channel_count"] = 200
+        json_str = json.dumps(self.full_configuration)
+
+        validator: SubarrayScanConfigurationValidator = (
+            SubarrayScanConfigurationValidator(
+                scan_configuration=json_str,
+                dish_ids=validator_params["dish_ids"],
+                subarray_id=validator_params["sub_id"],
+                logger=self.logger,
+            )
+        )
+        success, msg = validator.validate_input()
+        expected_msg = "Too many FSP assigned in the processing region to process the range of the requested spectrum"
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -392,7 +409,7 @@ class TestScanConfigurationValidator:
             645120,
         ],
     )
-    def test_Invalid_channel_width_post_v4(
+    def test_Invalid_channel_width(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         channel_width: list[int],
@@ -418,7 +435,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30, 58982, 59000])
-    def test_Invalid_channel_count_post_v4(
+    def test_Invalid_channel_count(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         channel_count: int,
@@ -443,7 +460,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is False
 
-    def test_Invalid_sdp_start_channel_id_post_v4(
+    def test_Invalid_sdp_start_channel_id(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
@@ -452,6 +469,9 @@ class TestScanConfigurationValidator:
         config_file_name = "ConfigureScan_4_1_CORR.json"
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
+        sdp_start_channel_id = self.full_configuration["midcbf"][
+            "correlation"
+        ]["processing_regions"][0]["sdp_start_channel_id"]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_host"][0][0] = 20
@@ -467,7 +487,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_host"
+        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_host"
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -489,7 +509,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_port"
+        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_port"
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -511,7 +531,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = "Start Channel ID (0) must be the same must match the first channel entry of output_link_map"
+        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_link_map"
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -520,14 +540,14 @@ class TestScanConfigurationValidator:
         "output_host",
         [
             [
-                [20, "1.22.3.4"],
-                [21, "1.22.3.5"],
-                [22, "1.22.3.6"],
-                [42, "1.22.3.7"],
+                [4242, "1.22.3.4"],
+                [5242, "1.22.3.5"],
+                [6544, "1.22.3.6"],
+                [8242, "1.22.3.7"],
             ],
         ],
     )
-    def test_Invalid_output_host_non_multiple_20_post_v4(
+    def test_Invalid_output_host_non_multiple_20(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_host: list[list[int, str]],
@@ -549,7 +569,9 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = "channel must be in multiples of 20"
+        expected_msg = (
+            "difference between output_host values must be a multiple of 20"
+        )
         print(msg)
         assert expected_msg in msg[1]
         assert success is False
@@ -571,7 +593,7 @@ class TestScanConfigurationValidator:
             ],
         ],
     )
-    def test_Invalid_output_host_post_v4(
+    def test_Invalid_output_host(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_host: list[list[int, str]],
@@ -605,7 +627,7 @@ class TestScanConfigurationValidator:
             [[20, 10000], [21, 10001], [22, 1650], [42, 40000]],
         ],
     )
-    def test_Invalid_output_port_increment_post_v4(
+    def test_Invalid_output_port_increment(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         output_port: list[list[int, int]],
@@ -639,7 +661,7 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is False
 
-    def test_Valid_channel_map_increment_post_v4(
+    def test_Valid_channel_map_increment(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
@@ -649,6 +671,9 @@ class TestScanConfigurationValidator:
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["channel_count"] = 80
+        self.full_configuration["midcbf"]["correlation"]["processing_regions"][
+            0
+        ]["fsp_ids"] = [1]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_port"] = [[20, 10000], [40, 10001], [60, 1650], [80, 40000]]
@@ -674,12 +699,19 @@ class TestScanConfigurationValidator:
         assert expected_msg in msg
         assert success is True
 
-    def test_invalid_channel_map_count_to_single_host_post_v4(
+    def test_invalid_channel_map_count_to_single_host(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
     ):
-        test_output_port_map = [[i, 10000] for i in range(0, 421, 20)]
-
+        sdp_start_channel_id = self.full_configuration["midcbf"][
+            "correlation"
+        ]["processing_regions"][0]["sdp_start_channel_id"]
+        test_output_port_map = [
+            [i, 10000]
+            for i in range(
+                sdp_start_channel_id, sdp_start_channel_id + 421, 20
+            )
+        ]
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
             0
         ]["output_port"]

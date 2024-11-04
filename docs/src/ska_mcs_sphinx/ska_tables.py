@@ -1,216 +1,27 @@
-import os.path
-import json
-from traceback import format_exception, format_exception_only
-import yaml
-from collections import OrderedDict
-import pathlib
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA Mid.CBF MCS project
+#
+#
+#
+# Distributed under the terms of the GPL license.
+# See LICENSE.txt for more info.
 
-from inspect import cleandoc
-from docutils import nodes, utils
-from docutils.parsers.rst import Directive, DirectiveError
-from docutils.parsers.rst import directives
-from docutils.utils import SystemMessagePropagation
+# Copyright (c) 2024 National Research Council of Canada
 
-from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
-
+from docutils import nodes
+from docutils.statemachine import ViewList
+from docutils.parsers.rst import Directive
 from sphinx.util.nodes import nested_parse_with_titles
 
-import importlib
-
-HEADER_LIST = ['Command', 'Parameters', 'Long Running Command', 'Return type', 'Action', 'Supported Interface(s)']
-
-controller_commands = [
-    { 
-        "Command": "Off",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Set power state to OFF for controller and
-            subordinate devices (subarrays, VCCs, FSPs)
-            Turn off power to all hardware
-            See also :ref:`Off Sequence`
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
-        "Command": "InitSysParam",
-        "Parameters": "JSON str*",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Initialize Dish ID to VCC ID mapping and k values
-            See also :ref:`InitSysParam Sequence`
-            """),   
-        "Supported Interface(s)": supported_interfaces['initsysparam'],
-    },
-    { 
-        "Command": "On",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Turn on the controller and subordinate devices
-            """),   
-        "Supported Interface(s)": '',
-    },
-]
-
-subarray_commands = [
-    { 
-        "Command": "Abort",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Change observing state to ABORTED
-            Send Abort to VCC
-            Send Abort to FSP <function mode> Subarrays
-            No action on hardware
-            See also :ref:`Abort Sequence`
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
-        "Command": "AddReceptors",
-        "Parameters": "List[str]",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Assign receptors to this subarray
-            Turn subarray to ObsState = IDLE if no
-            receptor was previously assigned
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
-        "Command": "ConfigureScan",
-        "Parameters": "JSON str*",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Change observing state to READY
-            Configure attributes from input JSON
-            Subscribe events
-            Configure VCC, VCC subarray, FSP, FSP Subarray
-            Publish output links.
-            See also :ref:`Configure Scan Sequence`
-            """),   
-        "Supported Interface(s)": supported_interfaces['configurescan'],
-    },
-    { 
-        "Command": "EndScan",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            End the scan
-            """),   
-        "Supported Interface(s)": '',
-    },
-    { 
-        "Command": "ObsReset",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Reset subarray scan configuration
-            Keep assigned receptors
-            Reset observing state to IDLE
-            If in FAULT, send Abort/ObsReset to VCC
-            If in FAULT, send Abort/ObsReset to
-            FSP <function mode> subarrays
-            No action on hardware
-            See also :ref:`ObsReset Sequence`
-            """    
-        ),
-        "Supported Interface(s)": "",
-    },
-    { 
-        "Command": "RemoveAllReceptors",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Remove all receptors
-            Turn Subarray off if no receptors are
-            assigned
-            """),   
-        "Supported Interface(s)": "",
-    },
-    { 
-        "Command": "RemoveReceptors",
-        "Parameters": "List[str]",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Remove receptors in input list
-            Change observing state to EMPTY if no
-            receptors assigned
-            """),   
-        "Supported Interface(s)": "",
-    },
-    { 
-        "Command": "Restart",
-        "Parameters": "None",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Reset subarray scan configuration
-            Remove assigned receptors
-            Restart observing state model to EMPTY
-            If in FAULT, send Abort/ObsReset to VCC
-            If in FAULT, send Abort/ObsReset to
-            FSP <function mode> subarrays
-            No action on hardware
-            See also :ref:`Restart Sequence`
-            """),   
-        "Supported Interface(s)": "",
-    },
-    { 
-        "Command": "Scan",
-        "Parameters": "JSON str*",
-        "Long Running Command": "Yes",
-        "Return Type": "(ResultCode, str)",
-        "Action": cleandoc(
-            """
-            Start scanning
-            """),   
-        "Supported Interface(s)": supported_interfaces['scan'],
-    },
-]
-
-sub_table_commands = [
-    { 
-        "Command": "Delay Model",
-        "Parameters": "JSON str*",
-        "Long Running Command": "N/A",
-        "Return Type": "None",
-        "Action": cleandoc(
-            """
-            Pass DISH ID as VCC ID integer to FSPs and VCCs
-            Update VCC Delay Model
-            Update FSP Delay Model
-            """),   
-        "Supported Interface(s)": supported_interfaces["delaymodel"],
-    },
-]
+# import table data
+import ska_mcs_sphinx.table_data as table_data
 
 table_data_mapping = {
-    'Controller': controller_commands,
-    'Subarray': subarray_commands,
-    'Subscriptions': sub_table_commands,
+    'Supported_Validation': table_data.configurescan_validation_rules_data,
+    'Controller': table_data.controller_commands_data,
+    'Subarray': table_data.subarray_commands_data,
+    'Subscriptions': table_data.subscription_commands_data
 }
 
 class CommandTable(Directive):
@@ -219,17 +30,17 @@ class CommandTable(Directive):
 
     def run(self):
         table_name = self.arguments[0]
-        table_data = table_data_mapping[table_name]
+        table_data :list[dict] = table_data_mapping[table_name]["data"]
+        headers_data = table_data_mapping[table_name]["headers"]
         table = nodes.table()
-
-        tgroup = nodes.tgroup(cols = 6)
+        tgroup = nodes.tgroup(cols = len(headers_data))
 
         header = nodes.thead()
         header_row = nodes.row()
 
-        for i in range(6):
+        for header_value in headers_data:
             colspec_list = nodes.colspec(colwidth = 10)
-            header_list = nodes.entry('', nodes.paragraph(text=HEADER_LIST[i]))
+            header_list = nodes.entry('', nodes.paragraph(text=header_value))
             header_row += header_list
             tgroup += colspec_list
 
@@ -237,44 +48,52 @@ class CommandTable(Directive):
 
         table_body = nodes.tbody()
 
-        for index, command in enumerate(table_data):
+        for index, row_data in enumerate(table_data):
             row_class = 'row-even' if index % 2 == 0 else 'row-odd'
             row = nodes.row("", classes=[row_class])
-            row.append(nodes.entry('', nodes.paragraph(text=command['Command'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Parameters'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Long Running Command'])))
-            row.append(nodes.entry('', nodes.paragraph(text=command['Return Type'])))
-            action_entry = nodes.entry('')
-            action_entry.append(self._parse_line_block(command['Action']))
-            row.append(action_entry)
-            supported_entry = nodes.entry('')
-            if("https://schema.skao.int/ska-csp-configurescan/4.1" in command['Supported Interface(s)']):
-                supported_entry.append(self._create_line_block_from_list(["https://schema.skao.int/ska-csp-configurescan/3.0"]))
-            else:
-                supported_entry.append(self._create_line_block_from_list(command['Supported Interface(s)']))
-            row.append(supported_entry)
+            for header_value in headers_data:
+                col_data = row_data.get(header_value,'')
+                # Special cases for some column names
+                if header_value == 'Action':
+                    action_entry = nodes.entry('')
+                    action_entry.append(self._parse_line_block(col_data))
+                    row.append(action_entry)
+                elif header_value == 'Supported Interface(s)':
+                    supported_entry = nodes.entry('')
+                    supported_entry.append(self._create_line_block_from_list(col_data))
+                    row.append(supported_entry)
+                else:
+                    col_entry = nodes.entry()
+                    col_entry.children = self._parse_text(col_data)
+                    row.append(col_entry)
+
             table_body.append(row)
 
-        table  +=  (tgroup)
+        table   +=  (tgroup)
         tgroup  +=  (header)
         tgroup  +=  (table_body)
-
-
         return [table]
-    
+
     def _parse_text(self, text_to_parse: str):
-        p_node = nodes.paragraph(text=text_to_parse,)
+        lines = text_to_parse.split('\n')
+        view_list_to_parse = ViewList()
+        for index, line in enumerate(lines):
+            # Need to provide a source to report in warnings
+            view_list_to_parse.append(line, 
+                                      source="ska_mcs_sphinx.ska_tables",
+                                      offset=index)
         # Create a node.
         node = nodes.section()
         node.document = self.state.document
-        nested_parse_with_titles(self.state, p_node, node)
+        
+        nested_parse_with_titles(self.state, view_list_to_parse, node)
         return node.children
-    
+
     def _parse_paragraph(self, text_to_parse: str):
         paragraph = nodes.paragraph()
         paragraph.children = self._parse_text(text_to_parse)
         return paragraph
-    
+
     def _parse_line_block(self, text_to_parse: str):
         lines = text_to_parse.split('\n')
         line_block = nodes.line_block()
@@ -292,11 +111,10 @@ class CommandTable(Directive):
             list_item.append(nodes.paragraph(text=item))
             unordered_list.append(list_item)
         return unordered_list
-    
+
     def _create_line_block_from_list(self, list_items: list[str]):
         line_block = nodes.line_block()
         for item in list_items:
             line = nodes.line(text=item)
             line_block.append(line)
         return line_block
-    

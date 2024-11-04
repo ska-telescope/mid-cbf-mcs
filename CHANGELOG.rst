@@ -7,6 +7,22 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
+  * fix sending proper channel offset values to SPEAD and Host-LUT
+  * fix splitting up output_port, output_host, and output_link_map in fsp configs
+* CIP-3028 Updated hw config after systems room re-organization.
+* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
+* CIP-2965 talondx-config generates in the beginning of integration test
+* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
+* CIP-3065: fix setting receptors in fsp config
+* CIP-2240: ExpectedDishID field is added to the ConfigureScan
+* CIP-3068: fix validation output_host
+  * difference between channel_ids is a multiple of 20, not the value itself
+
+1.1.0-rc.1
+**********
 * CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
 * CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
 * CIP-2911 fixed bad error message appending in controller Off command
@@ -19,10 +35,11 @@ UNRELEASED CHANGES
 * CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
 * CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
 * CIP-2780 added 100g ethernet monitoring on talon board devices
-* CIP-3028 Updated hw config after systems room re-organization.
-* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
-* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
-* CIP-2965 talondx-config generates in the beginning of integration test
+* CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
+  * Removes support for configurescan 3.0
+  * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
+  * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
+* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 
 1.0.0
 ******

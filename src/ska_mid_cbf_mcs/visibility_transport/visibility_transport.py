@@ -7,6 +7,7 @@ supporting up to 8 boards.
 """
 import logging
 
+import numpy
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -55,7 +56,9 @@ class VisibilityTransport:
         self.logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
-        self._channel_offsets = [fc["channel_offset"] for fc in fsp_config]
+        self._channel_offsets = [
+            fc["host_lut_channel_offset"] for fc in fsp_config
+        ]
 
         if len(self._channel_offsets) == 0:
             self._channel_offsets = [0]
@@ -120,14 +123,22 @@ class VisibilityTransport:
         """
         self.logger.info("Enable visibility output")
 
-        dest_host_data = self._parse_visibility_transport_info(
-            subarray_id, self._fsp_config
+        spead_desc_host_data = self._parse_visibility_transport_info(
+            subarray_id, self._fsp_config, "channel_offset"
         )
+        self.logger.debug(f"sped_desc_host_data: {spead_desc_host_data}")
+
+        host_lut_host_data = self._parse_visibility_transport_info(
+            subarray_id, self._fsp_config, "host_lut_channel_offset"
+        )
+        self.logger.debug(f"host_lut_host_data: {host_lut_host_data}")
 
         try:
-            self._dp_spead_desc.command_inout("StartScan", dest_host_data)
+            self._dp_spead_desc.command_inout(
+                "StartScan", spead_desc_host_data
+            )
 
-            self._dp_host_lut_s2.command_inout("Program", dest_host_data)
+            self._dp_host_lut_s2.command_inout("Program", host_lut_host_data)
 
             for dp in self._dp_host_lut_s1:
                 dp.command_inout("Program")
@@ -156,11 +167,13 @@ class VisibilityTransport:
             )
 
     def _parse_visibility_transport_info(
-        self, subarray_id: int, fsp_config: list
+        self, subarray_id: int, fsp_config: list, offset_param: str
     ):
         """
         output_hosts are in format [[channel_id, ip_addr]]
         output_ports are in format [[channel_id, port]]
+        offset_param is the name of the fsp_config parameter that holds the
+        channel offset value to add to the channel_id's
 
         Need to match the two by channel_id to get a list of [[ip_addr, port]]
 
@@ -174,16 +187,16 @@ class VisibilityTransport:
         for fsp in fsp_config:
             # the channel IDs are relative to the channel offset of the FSP entry
             if (
-                "channel_offset" in fsp
+                offset_param in fsp
                 and "output_host" in fsp
                 and "output_port" in fsp
             ):
                 output_hosts += [
-                    [h[0] + fsp["channel_offset"], h[1]]
+                    [h[0] + fsp[offset_param], h[1]]
                     for h in fsp["output_host"]
                 ]
                 output_ports += [
-                    [p[0] + fsp["channel_offset"], p[1]]
+                    [p[0] + fsp[offset_param], p[1]]
                     for p in fsp["output_port"]
                 ]
 
@@ -197,7 +210,16 @@ class VisibilityTransport:
                 host_int = self._ip_to_int(output_hosts[next_host_idx][1])
                 next_host_idx += 1
 
-            dest_info = [subarray_id, p[0], host_int, p[1]]
+            dest_info = [
+                subarray_id,
+                (
+                    numpy.uint32(numpy.int32(p[0]))
+                    if offset_param == "channel_offset"
+                    else p[0]
+                ),
+                host_int,
+                p[1],
+            ]
             out += dest_info
         return out
 
