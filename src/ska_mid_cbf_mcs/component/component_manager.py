@@ -67,6 +67,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_change_callback: Callable[[str, Any], None] | None = None,
         attr_archive_callback: Callable[[str, Any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
+        admin_mode_callback: Callable[[str], None] | None = None,
         simulation_mode: SimulationMode = SimulationMode.TRUE,
         **kwargs: Any,
     ) -> None:
@@ -102,6 +103,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         self.device_attr_change_callback = attr_change_callback
         self.device_attr_archive_callback = attr_archive_callback
+        self.device_admin_mode_callback = admin_mode_callback
         self._device_health_state_callback = health_state_callback
         self._health_state_lock = Lock()
         self._health_state = HealthState.UNKNOWN
@@ -133,6 +135,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.ESTABLISHED
         )
+        self.device_admin_mode_callback("to_online")
 
     def start_communicating(
         self: CbfComponentManager,
@@ -169,6 +172,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(
             communication_state=CommunicationStatus.DISABLED
         )
+        self.device_admin_mode_callback("to_offline")
 
     def stop_communicating(
         self: CbfComponentManager,

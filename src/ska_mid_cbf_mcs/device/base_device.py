@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from ska_control_model import ResultCode, SimulationMode
+from ska_control_model import ResultCode, SimulationMode, AdminMode
 from ska_tango_base.base.base_component_manager import BaseComponentManager
 from ska_tango_base.base.base_device import (
     DevVarLongStringArrayType,
@@ -108,6 +108,42 @@ class CbfDevice(SKABaseDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
+    # AdminMode Override
+    @attribute(dtype=AdminMode, memorized=True, hw_memorized=True)
+    def adminMode(self: CbfDevice) -> AdminMode:
+        """
+        Read the Admin Mode of the device.
+
+        It may interpret the current device condition and condition of all managed
+         devices to set this. Most possibly an aggregate attribute.
+
+        :return: Admin Mode of the device
+        """
+        return self._admin_mode
+
+    @adminMode.write  # type: ignore[no-redef]
+    def adminMode(self: CbfDevice, value: AdminMode) -> None:
+        """
+        Set the Admin Mode of the device.
+
+        :param value: Admin Mode of the device.
+
+        :raises ValueError: for unknown adminMode
+        """
+        if value == AdminMode.NOT_FITTED:
+            self.admin_mode_model.perform_action("to_notfitted")
+        elif value == AdminMode.OFFLINE:
+            self.component_manager.stop_communicating()
+        elif value == AdminMode.ENGINEERING:
+            self.admin_mode_model.perform_action("to_engineering")
+            self.component_manager.start_communicating()
+        elif value == AdminMode.ONLINE:
+            self.component_manager.start_communicating()
+        elif value == AdminMode.RESERVED:
+            self.admin_mode_model.perform_action("to_reserved")
+        else:
+            raise ValueError(f"Unknown adminMode {value}")
+
     # ----------------------
     # Unimplemented Commands
     # ----------------------
@@ -175,6 +211,20 @@ class CbfDevice(SKABaseDevice):
                 "Reset command rejected, as it is unimplemented for this device."
             ],
         )
+    
+    # ----------
+    # Callbacks
+    # ----------
+
+    # Separated from adminMode write function for callback in component manager
+    def _perform_action(self: CbfDevice, action: str) -> None:
+        """
+        Callback provided to perform an action on the state model from
+        component manager.
+        
+        :param action: an action, as given in the transitions table
+        """
+        self.admin_mode_model.perform_action(action)
 
 
 # ----------
