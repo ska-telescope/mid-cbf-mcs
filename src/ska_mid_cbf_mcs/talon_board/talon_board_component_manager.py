@@ -15,7 +15,7 @@ from threading import Event, Thread
 from typing import Optional
 
 import tango
-from ska_control_model import PowerState
+from ska_control_model import HealthState, PowerState
 from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -437,6 +437,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self._poll_thread.join()
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None
+            self.update_device_health_state(HealthState.UNKNOWN)
 
         self._proxies = {}
         self._talon_sysid_attrs = {}
