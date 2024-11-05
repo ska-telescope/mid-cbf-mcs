@@ -82,7 +82,6 @@ class TalonDxLogConsumer(SKABaseDevice):
             logger=self.logger,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
-            admin_mode_callback=self._perform_action,
         )
 
     def set_logging_level(
