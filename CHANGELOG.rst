@@ -39,7 +39,7 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
-
+* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 
 1.0.0
 ******
