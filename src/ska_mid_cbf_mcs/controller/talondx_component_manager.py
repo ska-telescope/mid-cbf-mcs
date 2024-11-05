@@ -591,11 +591,20 @@ class TalonDxComponentManager(CbfComponentManager):
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        talon_config = []
+        for config in self.talondx_config["config_commands"]:
+            target = config["target"]
+            if target in available_talon_targets:
+                talon_config.append(config)
+            else:
+                self.logger.warning(
+                    f"Talon target {target} requested in talondx_config.json but is not powered on/available for configuration."
+                )
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(self._configure_talon_thread, talon_cfg)
-                for talon_cfg in self.talondx_config["config_commands"]
-                if talon_cfg["target"] in available_talon_targets
+                executor.submit(self._configure_talon_thread, config)
+                for config in talon_config
             ]
             results = [f.result() for f in futures]
 

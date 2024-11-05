@@ -839,7 +839,9 @@ class ControllerComponentManager(CbfComponentManager):
             for fqdn, state in self._op_states.items():
                 if fqdn in lru_fqdns and state == tango.DevState.ON:
                     num_lru += 1
-        self.logger.info(f"{num_lru} TalonLru devices successfully turned on")
+        self.logger.info(
+            f"{num_lru} out of {len(lru_fqdns)} TalonLru devices successfully turned on"
+        )
 
         return True
 
@@ -1238,7 +1240,9 @@ class ControllerComponentManager(CbfComponentManager):
             for fqdn, state in self._op_states.items():
                 if fqdn in lru_fqdns and state == tango.DevState.OFF:
                     num_lru += 1
-        self.logger.info(f"{num_lru} TalonLru devices successfully turned off")
+        self.logger.info(
+            f"{num_lru} out of {len(lru_fqdns)} TalonLru devices successfully turned off"
+        )
 
         return True
 

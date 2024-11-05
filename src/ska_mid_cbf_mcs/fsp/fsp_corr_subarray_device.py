@@ -47,6 +47,8 @@ class FspCorrSubarray(CbfObsDevice):
 
     HpsFspCorrControllerAddress = device_property(dtype="str")
 
+    LRCTimeout = device_property(dtype=("str"))
+
     # ----------
     # Attributes
     # ----------
@@ -158,6 +160,7 @@ class FspCorrSubarray(CbfObsDevice):
 
         return FspCorrSubarrayComponentManager(
             hps_fsp_corr_controller_fqdn=self.HpsFspCorrControllerAddress,
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,

@@ -44,6 +44,8 @@ class Vcc(CbfObsDevice):
 
     Band5Address = device_property(dtype="str")
 
+    LRCTimeout = device_property(dtype=("str"))
+
     # ----------
     # Attributes
     # ----------
@@ -155,6 +157,7 @@ class Vcc(CbfObsDevice):
                 self.Band4Address,
                 self.Band5Address,
             ],
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,

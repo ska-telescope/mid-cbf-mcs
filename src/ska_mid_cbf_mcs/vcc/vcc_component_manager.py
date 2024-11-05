@@ -117,10 +117,15 @@ class VccComponentManager(CbfObsComponentManager):
                 self._vcc_controller_proxy = context.DeviceProxy(
                     device_name=self._vcc_controller_fqdn
                 )
-                self._band_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._vcc_band_fqdn
-                ]
+                self._vcc_controller_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
+
+                self._band_proxies = []
+                for fqdn in self._vcc_band_fqdn:
+                    band_proxy = context.DeviceProxy(device_name=fqdn)
+                    band_proxy.set_timeout_millis(self._lrc_timeout * 1000)
+                    self._band_proxies.append(band_proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(

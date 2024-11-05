@@ -92,6 +92,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 self._proxy_hps_fsp_corr_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_corr_controller_fqdn
                 )
+                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to connect to {self._hps_fsp_corr_controller_fqdn}; {df}"
@@ -281,9 +284,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             try:
-                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
-                    self._lrc_timeout * 1000
-                )
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
