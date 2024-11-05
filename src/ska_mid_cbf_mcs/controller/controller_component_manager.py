@@ -880,7 +880,7 @@ class ControllerComponentManager(CbfComponentManager):
                     raise tango.DevFailed("Configure command rejected")
                 self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
-                self.logger.error(f"Failed to configure SLIM: {df}")
+                self.logger.error(f"Failed to configure {fqdn}: {df}")
                 continue
             except (OSError, FileNotFoundError) as e:
                 self.logger.error(
