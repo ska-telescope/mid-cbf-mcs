@@ -80,6 +80,7 @@ class TestVcc:
     def device_online(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer
     ) -> bool:
         """
         Helper function to start up and turn on the DUT.
@@ -87,8 +88,15 @@ class TestVcc:
         :param device_under_test: DeviceProxy to the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
         return device_under_test.adminMode == AdminMode.ONLINE
 
     def test_State(
@@ -159,7 +167,7 @@ class TestVcc:
                              events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
 
         assert_that(event_tracer).within_timeout(
@@ -208,7 +216,7 @@ class TestVcc:
         :param success: A parameterized value used to test success and failure conditions.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Setting band configuration with invalid frequency band
 
@@ -281,7 +289,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -383,7 +391,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -543,7 +551,7 @@ class TestVcc:
         :param config_file_name: file name for the configuration.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -694,7 +702,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
