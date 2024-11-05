@@ -80,7 +80,7 @@ class TestVcc:
     def device_online(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
-        event_tracer: TangoEventTracer
+        event_tracer: TangoEventTracer,
     ) -> bool:
         """
         Helper function to start up and turn on the DUT.

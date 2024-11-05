@@ -80,6 +80,7 @@ def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
     builder.add_attribute("vccIDs", [1, 2, 3, 4])
     return builder()
 
+
 @pytest.fixture()
 def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
@@ -91,7 +92,7 @@ def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
 def initial_mocks(
     mock_fsp_corr_subarray_device: unittest.mock.Mock,
     mock_fsp_pst_subarray_device: unittest.mock.Mock,
-    mock_hps_fsp_corr_controller: unittest.mock.Mock
+    mock_hps_fsp_corr_controller: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
