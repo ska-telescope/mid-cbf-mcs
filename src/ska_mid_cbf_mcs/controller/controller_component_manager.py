@@ -361,7 +361,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
         if subscribe_state:
-            # Init device op state to UNKNOWN
+            # Set latest stored sub-device state values to UNKNOWN prior to subscription
             with self._attr_event_lock:
                 self._op_states[fqdn] = tango.DevState.UNKNOWN
             self.attr_event_subscribe(
@@ -401,6 +401,8 @@ class ControllerComponentManager(CbfComponentManager):
             ):
                 init_success = False
 
+        # We subscribe to Talon LRU state in order to check the complete/partial success
+        # of the On/Off commands
         for fqdn in self._talon_lru_fqdns_all:
             if not self._init_device_proxy(
                 fqdn=fqdn,
@@ -783,71 +785,17 @@ class ControllerComponentManager(CbfComponentManager):
 
     # --- On Command --- #
 
-    def _init_talon_boards(self: ControllerComponentManager):
-        """
-        Initialize TalonBoard devices.
-        """
-        for fqdn in self._talon_board_fqdns_all:
-            if not self._init_device_proxy(
-                fqdn=fqdn, hw_device_type="talon_board"
-            ):
-                self.logger.error(f"Failed to initialize {fqdn}")
-
-        for fqdn in self._talon_board_fqdn:
-            if fqdn not in self._proxies:
-                try:
-                    self.logger.debug(f"Trying connection to {fqdn}")
-                    proxy = context.DeviceProxy(device_name=fqdn)
-                except tango.DevFailed as df:
-                    self.logger.error(f"Failure in connection to {fqdn}: {df}")
-                    continue
-                self._proxies[fqdn] = proxy
-            else:
-                proxy = self._proxies[fqdn]
-
-            try:
-                board_ip = proxy.get_property("TalonDxBoardAddress")[
-                    "TalonDxBoardAddress"
-                ][0]
-            except tango.DevFailed as df:
-                self.logger.error(
-                    f"Failed to get TalonDxBoardAddress property for {fqdn}: {df}"
-                )
-
-            # Update talon board HW config. The VCC ID to IP address mapping comes
-            # from hw_config.yaml
-            for vcc_id_str, ip in self._hw_config["talon_board"].items():
-                if board_ip == ip:
-                    vcc_id = int(vcc_id_str)
-                    if vcc_id in self.dish_utils.vcc_id_to_dish_id:
-                        dish_id = self.dish_utils.vcc_id_to_dish_id[vcc_id]
-                        try:
-                            proxy.vccID = vcc_id_str
-                            proxy.dishID = dish_id
-                            self.logger.info(
-                                f"Assigned DISH ID {dish_id} and VCC ID {vcc_id} to {fqdn}"
-                            )
-                        except tango.DevFailed as df:
-                            self.logger.error(
-                                f"Failed to update {fqdn} with VCC ID and DISH ID; {df}"
-                            )
-                    else:
-                        self.logger.warning(
-                            f"DISH ID for VCC {vcc_id} not found in DISH-VCC mapping; "
-                            f"current mapping: {self.dish_utils.vcc_id_to_dish_id}"
-                        )
-
     def _turn_on_lrus(
         self: ControllerComponentManager,
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn the Talon LRUs
+        Turn on the Talon LRUs
 
         :param task_abort_event: Event to signal task abort.
         :return: True if any LRUs were successfully turned on, otherwise False
         """
-        # Determine which LRUs must be turned on
+        # Determine which LRUs must be turned on by checking which current states are OFF
         lru_fqdns = []
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
@@ -876,8 +824,8 @@ class ControllerComponentManager(CbfComponentManager):
         if len(self.blocking_command_ids) == 0:
             lrc_status = TaskStatus.FAILED
         else:
-            lrc_status = self.wait_for_blocking_results_partial_success(
-                task_abort_event=task_abort_event
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event, partial_success=True
             )
         if lrc_status != TaskStatus.COMPLETED:
             self.logger.error(
@@ -885,6 +833,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return False
 
+        # Determine which LRUs were successfully turned on by verifying latest states
         num_lru = 0
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
@@ -942,8 +891,8 @@ class ControllerComponentManager(CbfComponentManager):
         if len(self.blocking_command_ids) == 0:
             lrc_status = TaskStatus.FAILED
         else:
-            lrc_status = self.wait_for_blocking_results_partial_success(
-                task_abort_event=task_abort_event
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event, partial_success=True
             )
         if lrc_status != TaskStatus.COMPLETED:
             self.logger.error(
@@ -1010,8 +959,8 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        # Configure all the Talon boards
-        # Clears process inside the Talon Board to make it a clean state
+        # Determine which boards are successfully turned on and ready to configure
+        # by checking latest LRU states
         available_talon_targets = []
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
@@ -1020,6 +969,9 @@ class ControllerComponentManager(CbfComponentManager):
                     lru_config = self._hw_config["talon_lru"][lru_id]
                     available_talon_targets.append(lru_config["TalonDxBoard1"])
                     available_talon_targets.append(lru_config["TalonDxBoard2"])
+
+        # Configure all the Talon boards; first clears any currently running
+        # device processes on the HPS
         if (
             self._talondx_component_manager.configure_talons(
                 available_talon_targets
@@ -1272,8 +1224,8 @@ class ControllerComponentManager(CbfComponentManager):
         if len(self.blocking_command_ids) == 0:
             lrc_status = TaskStatus.FAILED
         else:
-            lrc_status = self.wait_for_blocking_results_partial_success(
-                task_abort_event=task_abort_event
+            lrc_status = self.wait_for_blocking_results(
+                task_abort_event=task_abort_event, partial_success=True
             )
         if lrc_status != TaskStatus.COMPLETED:
             self.logger.error(

@@ -497,6 +497,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param event_data: Tango attribute change event data
         """
+        if event_data.attr_value is None:
+            return
         value = event_data.attr_value.value
         if value is None:
             return
@@ -526,6 +528,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def wait_for_blocking_results(
         self: CbfComponentManager,
         task_abort_event: Optional[Event] = None,
+        partial_success: bool = False,
     ) -> TaskStatus:
         """
         Wait for the number of anticipated results to be pushed by subordinate devices.
@@ -561,83 +564,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # --- #
 
         :param task_abort_event: Check for abort, defaults to None
-
-        :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
-            TaskStatus.ABORTED if aborted
-        """
-        timeout_sec = float(len(self.blocking_command_ids) * self._lrc_timeout)
-        ticks_10ms = int(timeout_sec / TIMEOUT_RESOLUTION)
-
-        # Loop is exited when no blocking command IDs remain
-        command_failed = False
-        while len(self.blocking_command_ids):
-            if task_abort_event and task_abort_event.is_set():
-                self.logger.warning(
-                    "Task aborted while waiting for blocking results."
-                )
-                with self._results_lock:
-                    self._received_lrc_results = {}
-                return TaskStatus.ABORTED
-
-            # Remove any successful results from blocking command IDs
-            command_id_list = list(self.blocking_command_ids)
-            for command_id in command_id_list:
-                with self._results_lock:
-                    result = self._received_lrc_results.pop(command_id, None)
-                if result is None:
-                    continue
-
-                try:
-                    result_code = int(result.split(",")[0].split("[")[1])
-                except IndexError as ie:
-                    self.logger.error(
-                        f"IndexError in parsing {command_id} event result code; {ie}"
-                    )
-                    command_failed = True
-                    continue
-
-                if result_code != ResultCode.OK:
-                    self.logger.error(
-                        f"Blocking command failure; {command_id}: {result}"
-                    )
-                    command_failed = True
-                    continue
-
-                self.blocking_command_ids.remove(command_id)
-
-            sleep(TIMEOUT_RESOLUTION)
-            ticks_10ms -= 1
-            if ticks_10ms <= 0:
-                self.logger.error(
-                    f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
-                    f"Blocking commands remaining: {self.blocking_command_ids}"
-                )
-                with self._results_lock:
-                    self._received_lrc_results = {}
-                return TaskStatus.FAILED
-
-        self.logger.debug(
-            f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
-        )
-        with self._results_lock:
-            self._received_lrc_results = {}
-
-        if command_failed:
-            return TaskStatus.FAILED
-
-        return TaskStatus.COMPLETED
-
-    def wait_for_blocking_results_partial_success(
-        self: CbfComponentManager,
-        task_abort_event: Optional[Event] = None,
-    ) -> TaskStatus:
-        """
-        Variant of wait_for_blocking_results that will report success if at least
-        one blocking command is successful.
-        See documentation for wait_for_blocking_results for more details.
-
-        :param task_abort_event: Check for abort, defaults to None
-
+        :param partial_success: set to True if we only need at least 1 of the blocking
+            LRCs to be successful; defaults to False, in which case all LRCs must succeed
         :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
             TaskStatus.ABORTED if aborted
         """
@@ -685,13 +613,13 @@ class CbfComponentManager(TaskExecutorComponentManager):
             sleep(TIMEOUT_RESOLUTION)
             ticks_10ms -= 1
             if ticks_10ms <= 0:
-                self.logger.warning(
+                self.logger.error(
                     f"{len(self.blocking_command_ids)} blocking result(s) remain after {timeout_sec}s.\n"
                     f"Blocking commands remaining: {self.blocking_command_ids}"
                 )
                 with self._results_lock:
                     self._received_lrc_results = {}
-                break
+                return TaskStatus.FAILED
 
         self.logger.debug(
             f"Waited for {timeout_sec - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
@@ -699,10 +627,15 @@ class CbfComponentManager(TaskExecutorComponentManager):
         with self._results_lock:
             self._received_lrc_results = {}
 
-        if any(successes):
+        if not partial_success and all(successes):
+            self.logger.debug("All blocking commands succeeded.")
+            return TaskStatus.COMPLETED
+
+        if partial_success and any(successes):
             self.logger.debug("Partial/complete blocking command success.")
             return TaskStatus.COMPLETED
 
+        self.logger.error("All blocking commands failed.")
         return TaskStatus.FAILED
 
     # -----------------------
