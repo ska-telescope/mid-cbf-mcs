@@ -83,12 +83,12 @@ class TestCbfController:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=device,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         expected_events = [
@@ -99,12 +99,12 @@ class TestCbfController:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=device,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
     @pytest.mark.dependency(
@@ -114,6 +114,7 @@ class TestCbfController:
     def test_InitSysParam(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        subarray: list[context.DeviceProxy],
         vcc: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
@@ -125,6 +126,7 @@ class TestCbfController:
         Send the InitSysParam command with the sys_param_file.
 
         :param controller: The controller device proxy
+        :param subarray: The list of subarray device proxies
         :param vcc: The list of VCC device proxies
         :param event_tracer: The event tracer for the controller
         :param controller_params: Input parameters for running different instances of the suite.
@@ -137,13 +139,22 @@ class TestCbfController:
         result_code, command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
-        # TODO: cannot check VCC dishID if sys params downloaded from CAR
+        # TODO: cannot check subarray/VCC dishID if sys params downloaded from CAR
         if controller_params["sys_param_from_file"]:
+            for device in subarray:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name="sysParam",
+                    attribute_value=sys_param_str,
+                )
+
             dish_utils = DISHUtils(json.loads(sys_param_str))
             for vcc_id, dish_id in dish_utils.vcc_id_to_dish_id.items():
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=vcc[vcc_id - 1],
                     attribute_name="dishID",
                     attribute_value=dish_id,
@@ -151,7 +162,7 @@ class TestCbfController:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=controller,
             attribute_name="longRunningCommandResult",
             attribute_value=(
@@ -201,12 +212,12 @@ class TestCbfController:
         for device in talon_lru + [slim_fs, slim_vis]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device,
                 attribute_name="state",
                 attribute_value=DevState.ON,
                 previous_value=DevState.OFF,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         # TODO: cannot check VCC dishID if sys params downloaded from CAR
@@ -225,12 +236,12 @@ class TestCbfController:
                 for name, value, previous, n in expected_events:
                     assert_that(event_tracer).within_timeout(
                         test_utils.EVENT_TIMEOUT
-                    ).cbf_has_change_event_occurred(
+                    ).has_change_event_occurred(
                         device_name=talon_board[board_id],
                         attribute_name=name,
                         attribute_value=value,
                         previous_value=previous,
-                        target_n_events=n,
+                        min_n_events=n,
                     )
 
         expected_events = [
@@ -245,12 +256,12 @@ class TestCbfController:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=controller,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.dependency(
@@ -284,7 +295,7 @@ class TestCbfController:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=controller,
             attribute_name="longRunningCommandResult",
             attribute_value=(
@@ -331,12 +342,12 @@ class TestCbfController:
         for device in [slim_fs, slim_vis] + talon_lru:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device,
                 attribute_name="state",
                 attribute_value=DevState.OFF,
                 previous_value=DevState.ON,
-                target_n_events=1,
+                min_n_events=1,
             )
 
         expected_events = [
@@ -347,12 +358,12 @@ class TestCbfController:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=device,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         expected_events = [
@@ -367,12 +378,12 @@ class TestCbfController:
         for name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=controller,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     # @pytest.mark.parametrize(
@@ -566,12 +577,12 @@ class TestCbfController:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=device,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )
 
         # check adminMode and state changes
@@ -583,10 +594,10 @@ class TestCbfController:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
-                ).cbf_has_change_event_occurred(
+                ).has_change_event_occurred(
                     device_name=device,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
-                    target_n_events=n,
+                    min_n_events=n,
                 )

@@ -20,6 +20,11 @@ UNRELEASED CHANGES
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
 * CIP-3068: fix validation output_host
   * difference between channel_ids is a multiple of 20, not the value itself
+* CIP-2659: CbfController On/Off command partial success
+  * On command succeeds if one or more LRUs are powered on; Off command succeeds if one or more LRUs are powered off
+  * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
+  * wait_for_blocking_results allows partial success of blocking LRCs
+  * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 
 1.1.0-rc.1

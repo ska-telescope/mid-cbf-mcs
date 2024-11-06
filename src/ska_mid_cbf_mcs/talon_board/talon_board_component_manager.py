@@ -12,11 +12,11 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from threading import Event, Thread
+from typing import Optional
 
 import tango
-from ska_control_model import PowerState
+from ska_control_model import HealthState, PowerState
 from ska_tango_testing import context
-from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -26,6 +26,9 @@ from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
 from ska_mid_cbf_mcs.talon_board.talon_board_simulator import SimulatedValues
+
+# Eth100g, HPS Master polling period in seconds
+POLLING_PERIOD = 2
 
 
 class Eth100gClient:
@@ -240,74 +243,77 @@ class TalonBoardComponentManager(CbfComponentManager):
     # -------------
     # Communication
     # -------------
-
-    # TODO: Refactor to push change events for TalonBoard attributes?
-    def _attr_change_callback(
-        self, fqdn: str, name: str, value: any, quality: AttrQuality
+    def _talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
     ) -> None:
         """
-        Callback for attribute change.
+        Thread to update latest state attribute events.
 
-        :param fqdn: The FQDN of the device
-        :param name: attribute name
-        :param value: attribute value
+        :param event_data: Tango attribute change event data
         """
+        if event_data.attr_value is None:
+            return
+        value = event_data.attr_value.value
         if value is None:
-            self.logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-        self.logger.debug(f"Attr Change callback: {name} -> {value}")
-        if fqdn == self._talon_sysid_fqdn:
-            self._talon_sysid_attrs[name] = value
-        elif fqdn == self._talon_status_fqdn:
-            self._talon_status_attrs[name] = value
-        else:
-            self.logger.warning(
-                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
-            )
+            return
 
-    def _subscribe_change_events(self) -> None:
+        attr_name = event_data.attr_name
+        dev_name = event_data.device.dev_name()
+        self.logger.debug(
+            f"{dev_name}/{attr_name} EventData attr_value: {value}"
+        )
+
+        with self._attr_event_lock:
+            if dev_name == self._talon_sysid_fqdn:
+                self._talon_sysid_attrs[attr_name] = value
+            elif dev_name == self._talon_status_fqdn:
+                self._talon_status_attrs[attr_name] = value
+            else:
+                self.logger.warning(
+                    f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
+                )
+
+    def talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Callback for state attribute events.
+
+        :param event_data: Tango attribute change event data
+        """
+        Thread(
+            target=self._talon_attr_change_callback, args=(event_data,)
+        ).start()
+
+    def _subscribe_change_events(self: TalonBoardComponentManager) -> None:
         """
         Subscribe to attribute change events from HPS device proxies
         """
-
-        # Talon System ID attributes
-        self._talon_sysid_events = {}
-
-        if self._talon_sysid_fqdn is not None:
-            for attr_name in ["version", "Bitstream"]:
-                self._talon_sysid_events[attr_name] = self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-
-        # Talon Status attributes
-        self._talon_status_events = {}
-
-        if self._talon_status_fqdn is not None:
-            for attr_name in [
-                "iopll_locked_fault",
-                "fs_iopll_locked_fault",
-                "comms_iopll_locked_fault",
-                "system_clk_fault",
-                "emif_bl_fault",
-                "emif_br_fault",
-                "emif_tr_fault",
-                "e100g_0_pll_fault",
-                "e100g_1_pll_fault",
-                "slim_pll_fault",
-            ]:
-                self._talon_status_events[attr_name] = self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-        return
+        for fqdn, attr_list in [
+            (self._talon_sysid_fqdn, ["version", "Bitstream"]),
+            (
+                self._talon_status_fqdn,
+                [
+                    "iopll_locked_fault",
+                    "fs_iopll_locked_fault",
+                    "comms_iopll_locked_fault",
+                    "system_clk_fault",
+                    "emif_bl_fault",
+                    "emif_br_fault",
+                    "emif_tr_fault",
+                    "e100g_0_pll_fault",
+                    "e100g_1_pll_fault",
+                    "slim_pll_fault",
+                ],
+            ),
+        ]:
+            if fqdn is not None:
+                for attr_name in attr_list:
+                    self.attr_event_subscribe(
+                        proxy=self._proxies[fqdn],
+                        attr_name=attr_name,
+                        callback=self.talon_attr_change_callback,
+                    )
 
     def _internal_polling_thread(
         self: TalonBoardComponentManager,
@@ -317,11 +323,12 @@ class TalonBoardComponentManager(CbfComponentManager):
         event: Event,
     ):
         self.logger.info("Started polling")
-        wait_t = 2  # seconds
         while True:
-            # polls every 2 seconds until event is set
-            if event.wait(timeout=wait_t):
+            # polls until event is set
+            if event.wait(timeout=POLLING_PERIOD):
                 break
+
+            # Ping InfluxDB
             res = asyncio.run(db_client.ping())
             if not res:
                 if self.ping_ok:
@@ -333,8 +340,14 @@ class TalonBoardComponentManager(CbfComponentManager):
                     self.logger.info("Pinged influxdb successfully.")
             self.ping_ok = res
 
+            # Poll eth100g stats
             eth0.read_eth_100g_stats()
             eth1.read_eth_100g_stats()
+
+            # Poll HPS Master healthState
+            self.update_device_health_state(
+                self._proxies[self._hps_master_fqdn].healthState
+            )
         self.logger.info("Stopped polling")
 
     def _start_communicating(
@@ -404,37 +417,27 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager._stop_communicating"
         )
         if not self.simulation_mode:
-            for attr_name, event_id in self._talon_sysid_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_sysid_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_sysid_fqdn].unsubscribe_event(
-                        event_id
+            for fqdn, events in [
+                (self._talon_sysid_fqdn, self._talon_sysid_events),
+                (self._talon_status_fqdn, self._talon_status_events),
+            ]:
+                for attr_name, event_id in events.items():
+                    self.logger.info(
+                        f"Unsubscribing from {fqdn}/{attr_name} event ID {event_id}"
                     )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
-
-            for attr_name, event_id in self._talon_status_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_status_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_status_fqdn].unsubscribe_event(
-                        event_id
-                    )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
+                    try:
+                        self._proxies[fqdn].unsubscribe_event(event_id)
+                    except tango.DevFailed as df:
+                        # Log exception but allow stop_communicating to continue
+                        self.logger.error(f"{df}")
+                        continue
 
             if self._poll_thread is not None:
                 self._poll_thread_event.set()
                 self._poll_thread.join()
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None
+            self.update_device_health_state(HealthState.UNKNOWN)
 
         self._proxies = {}
         self._talon_sysid_attrs = {}
@@ -750,6 +753,46 @@ class TalonBoardComponentManager(CbfComponentManager):
         if self.simulation_mode:
             return SimulatedValues.get("eth100g_1_all_rx_counters")
         return self._eth_100g_1_client.get_all_rx_counters()
+
+    # ----------------
+    # Helper Functions
+    # ----------------
+
+    def _query_if_needed(self) -> None:
+        td = datetime.now() - self._last_check
+        if td.total_seconds() > 10:
+            try:
+                res = asyncio.run(self._db_client.do_queries())
+                self._last_check = datetime.now()
+                for result in res:
+                    for r in result:
+                        # each result is a tuple of (field, time, value)
+                        self._telemetry[r[0]] = (r[1], r[2])
+            except (
+                asyncio.exceptions.TimeoutError,
+                asyncio.exceptions.CancelledError,
+                Exception,
+            ) as e:
+                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"  # avoid repeated error logs
+                self.logger.error(msg)
+                tango.Except.throw_exception(
+                    "Query_Influxdb_Error", msg, "query_if_needed()"
+                )
+
+    def _validate_time(self, field, t) -> None:
+        """
+        Checks if the query result is too old. When this happens, it means
+        Influxdb hasn't received a new entry in the time series recently.
+
+        :param record: a record from Influxdb query result
+        """
+        td = datetime.now(timezone.utc) - t
+        if td.total_seconds() > 240:
+            msg = f"Time of record {field} is too old. Currently not able to monitor device."
+            self.logger.error(msg)
+            tango.Except.throw_exception(
+                "No new record available", msg, "validate_time()"
+            )
 
     # ----------------------------------------------
     # Talon Board Telemetry and Status from Influxdb
@@ -1319,43 +1362,3 @@ class TalonBoardComponentManager(CbfComponentManager):
                         break
             res.append(flag)
         return res
-
-    # ----------------
-    # Helper Functions
-    # ----------------
-
-    def _query_if_needed(self) -> None:
-        td = datetime.now() - self._last_check
-        if td.total_seconds() > 10:
-            try:
-                res = asyncio.run(self._db_client.do_queries())
-                self._last_check = datetime.now()
-                for result in res:
-                    for r in result:
-                        # each result is a tuple of (field, time, value)
-                        self._telemetry[r[0]] = (r[1], r[2])
-            except (
-                asyncio.exceptions.TimeoutError,
-                asyncio.exceptions.CancelledError,
-                Exception,
-            ) as e:
-                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"  # avoid repeated error logs
-                self.logger.error(msg)
-                tango.Except.throw_exception(
-                    "Query_Influxdb_Error", msg, "query_if_needed()"
-                )
-
-    def _validate_time(self, field, t) -> None:
-        """
-        Checks if the query result is too old. When this happens, it means
-        Influxdb hasn't received a new entry in the time series recently.
-
-        :param record: a record from Influxdb query result
-        """
-        td = datetime.now(timezone.utc) - t
-        if td.total_seconds() > 240:
-            msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self.logger.error(msg)
-            tango.Except.throw_exception(
-                "No new record available", msg, "validate_time()"
-            )

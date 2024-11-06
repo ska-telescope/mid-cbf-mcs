@@ -70,6 +70,7 @@ class TestVcc:
             SW1Address="mid_csp_cbf/vcc_sw1/001",
             SW2Address="mid_csp_cbf/vcc_sw2/001",
             DeviceID="1",
+            LRCTimeout="3",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
