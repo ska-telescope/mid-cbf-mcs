@@ -57,11 +57,15 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.config_id = ""
         self.channel_averaging_map = [
             [
-                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
+                int(
+                    i
+                    * const.NUM_FINE_CHANNELS
+                    / const.NUM_CHANNELS_PER_SPEAD_STREAM
+                )
                 + 1,
                 0,
             ]
-            for i in range(const.NUM_CHANNEL_GROUPS)
+            for i in range(const.NUM_CHANNELS_PER_SPEAD_STREAM)
         ]
         self.vis_destination_address = {
             "outputHost": [],
@@ -70,6 +74,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.fsp_channel_offset = 0
 
         self.output_link_map = [[0, 0] for _ in range(40)]
+
+        self.last_hps_scan_configuration = ""
 
     # -------------
     # Communication
@@ -87,6 +93,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self._proxy_hps_fsp_corr_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_corr_controller_fqdn
+                )
+                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
+                    self._lrc_timeout * 1000
                 )
             except tango.DevFailed as df:
                 self.logger.error(
@@ -169,14 +178,19 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         hps_fsp_configuration["fs_sample_rates"] = configuration[
             "fs_sample_rates"
         ]
-        self.logger.debug(
-            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
-        )
+
+        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
+            "vcc_id_to_rdt_freq_shifts"
+        ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
+
+        self.logger.debug(
+            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
+        )
 
         return json.dumps(hps_fsp_configuration)
 
@@ -188,6 +202,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.frequency_slice_id = 0
         self.scan_id = 0
         self.config_id = ""
+        self.last_hps_scan_configuration = ""
 
         # release all assigned VCC to reset to IDLE state
         self._release_vcc(self.vcc_ids.copy())
@@ -269,12 +284,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self._assign_vcc(configuration["corr_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP Corr controller
+
         if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
+            self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
-                    self._lrc_timeout * 1000
-                )
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )

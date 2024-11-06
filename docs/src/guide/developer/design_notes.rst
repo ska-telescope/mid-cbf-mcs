@@ -87,6 +87,12 @@ The device’s On command triggers a call to ``TalonDxComponentManager.configure
 the device server binaries and FPGA bitstream to the Talon-DX boards, starts the HPS master 
 device servers, and sends the configure command to each DsHpsMaster device.
 
+The ``CbfController``'s operational ON and OFF states (Tango DevState) represent the current powered state of
+the Talon LRU hardware; the controller turns ON if it is able to power on at least one LRU successfully, and will
+only turn OFF it is able to power off all LRUs successfully. The controller subscribes to the ``TalonLRU`` devices'
+``state`` attribute change events and stores the latest values to determine the hardware's current powered state,
+the ``TalonLRU`` devices in turn getting their state from the actual PDU, through the ``PowerSwitch`` devices.
+
 Cbf Subarray 
 ======================================================
 

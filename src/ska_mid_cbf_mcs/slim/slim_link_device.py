@@ -17,7 +17,7 @@ from ska_control_model import HealthState, SimulationMode
 # tango imports
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt
-from tango.server import attribute, command
+from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import (
     CbfDevice,
@@ -39,6 +39,8 @@ class SlimLink(CbfDevice):
     # -----------------
     # Device Properties
     # -----------------
+
+    LRCTimeout = device_property(dtype=("str"))
 
     # ----------
     # Attributes
@@ -207,6 +209,7 @@ class SlimLink(CbfDevice):
         """
         self.logger.debug("Entering create_component_manager()")
         return SlimLinkComponentManager(
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,

@@ -34,7 +34,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 1.0.0
+    tag: 1.1.0-rc.1
     pullPolicy: IfNotPresent
 
 resources:
@@ -88,6 +88,9 @@ deviceServers:
     file: "data/talondxlogconsumer.yaml"
 
 controllerTimeout: 60
+fspTimeout: 15
+slimLinkTimeout: 10
+vccTimeout: 3
 
 nodeSelector: {}
 

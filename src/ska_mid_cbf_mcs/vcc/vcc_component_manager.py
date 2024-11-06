@@ -82,6 +82,8 @@ class VccComponentManager(CbfObsComponentManager):
 
         self._vcc_controller_proxy = None
 
+        self.last_hps_scan_configuration = ""
+
         # --- Simulators --- #
         self._band_simulators = [
             VccBandSimulator(vcc_band[0]),
@@ -117,10 +119,15 @@ class VccComponentManager(CbfObsComponentManager):
                 self._vcc_controller_proxy = context.DeviceProxy(
                     device_name=self._vcc_controller_fqdn
                 )
-                self._band_proxies = [
-                    context.DeviceProxy(device_name=fqdn)
-                    for fqdn in self._vcc_band_fqdn
-                ]
+                self._vcc_controller_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
+
+                self._band_proxies = []
+                for fqdn in self._vcc_band_fqdn:
+                    band_proxy = context.DeviceProxy(device_name=fqdn)
+                    band_proxy.set_timeout_millis(self._lrc_timeout * 1000)
+                    self._band_proxies.append(band_proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
@@ -146,6 +153,7 @@ class VccComponentManager(CbfObsComponentManager):
         self._freq_band_name = ""
         self.config_id = ""
         self.scan_id = 0
+        self.last_hps_scan_configuration = ""
 
     def _load_internal_params(
         self: VccComponentManager,
@@ -387,6 +395,7 @@ class VccComponentManager(CbfObsComponentManager):
             return
 
         # Send the ConfigureScan command to the HPS
+        self.last_hps_scan_configuration = json.dumps(configuration)
         fb_index = self._freq_band_index[self._freq_band_name]
 
         if self.simulation_mode:
