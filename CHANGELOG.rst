@@ -20,6 +20,7 @@ UNRELEASED CHANGES
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
 * CIP-3068: fix validation output_host
   * difference between channel_ids is a multiple of 20, not the value itself
+* CIP-2899: Refactored adminMode push event to be changed after communication has been established
 
 1.1.0-rc.1
 **********
