@@ -297,13 +297,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         sys_param = json.loads(sys_param_str)
         self._dish_utils = DISHUtils(sys_param)
-        self.logger.info(
-            "Updated DISH ID to VCC ID and frequency offset k mapping"
-        )
-
         self._sys_param_str = sys_param_str
         self.device_attr_change_callback("sysParam", self._sys_param_str)
         self.device_attr_archive_callback("sysParam", self._sys_param_str)
+        self.logger.info(
+            f"Updated DISH ID to VCC ID and frequency offset k mapping {self._sys_param_str}"
+        )
 
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
@@ -337,8 +336,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param event_data: the received change event data (delay model JSON string)
         """
+        if event_data.attr_value is None:
+            return
         model = event_data.attr_value.value
-
         if not self.is_communicating or model is None or model == "":
             return
 
@@ -602,7 +602,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # subscribe to LRC results during the VCC scan operation
         for vcc_proxy in vcc_proxies:
-            self.subscribe_command_results(vcc_proxy)
+            self.attr_event_subscribe(
+                proxy=vcc_proxy,
+                attr_name="longRunningCommandResult",
+                callback=self.results_callback,
+            )
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
@@ -746,7 +750,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # unsubscribe from VCC LRC results
         for vcc_proxy in vcc_proxies:
-            self.unsubscribe_command_results(vcc_proxy)
+            self.unsubscribe_all_events(vcc_proxy)
 
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
@@ -1457,7 +1461,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 case "CORR":
                     # set function mode and add subarray membership
                     fsp_proxy = self._all_fsp_proxies[fsp_id]
-                    self.subscribe_command_results(fsp_proxy)
+                    self.attr_event_subscribe(
+                        proxy=fsp_proxy,
+                        attr_name="longRunningCommandResult",
+                        callback=self.results_callback,
+                    )
                     self._assigned_fsp_proxies.add(fsp_proxy)
                     self._fsp_ids.add(fsp_id)
 
@@ -1511,7 +1519,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.blocking_command_ids = set()
         for fsp_mode_proxy, fsp_config_str in all_fsp_config:
             try:
-                self.subscribe_command_results(fsp_mode_proxy)
+                self.attr_event_subscribe(
+                    proxy=fsp_mode_proxy,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
 
                 self.logger.debug(f"fsp_config: {fsp_config_str}")
                 [[result_code], [command_id]] = fsp_mode_proxy.ConfigureScan(
@@ -1608,14 +1620,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         for proxy in self._assigned_fsp_corr_proxies:
             try:
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 return False
 
         for proxy in self._assigned_fsp_proxies:
             try:
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
                 # If FSP subarrayMembership is empty, set it OFFLINE
                 if len(proxy.subarrayMembership) == 0:
                     proxy.adminMode = AdminMode.OFFLINE
@@ -1828,7 +1840,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             for proxy in (
                 self._assigned_fsp_corr_proxies | self._assigned_fsp_proxies
             ):
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
             self._fsp_ids = set()
             self._assigned_fsp_corr_proxies = set()
             self._assigned_fsp_proxies = set()

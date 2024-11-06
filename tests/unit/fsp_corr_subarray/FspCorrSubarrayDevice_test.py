@@ -58,6 +58,7 @@ class TestFspCorrSubarray:
             device_class=FspCorrSubarray,
             HpsFspCorrControllerAddress="mid_csp_cbf/talon_lru/001",
             DeviceID="1",
+            LRCTimeout="15",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)

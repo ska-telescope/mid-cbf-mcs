@@ -47,6 +47,9 @@ server:
           - name: "DeviceID"
             values:
             - "1"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
       - name: "mid_csp_cbf/vcc/002"
         properties:
           - name: "TalonLRUAddress"
@@ -70,6 +73,9 @@ server:
           - name: "DeviceID"
             values:
             - "2"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
       - name: "mid_csp_cbf/vcc/003"
         properties:
           - name: "TalonLRUAddress"
@@ -93,6 +99,9 @@ server:
           - name: "DeviceID"
             values:
             - "3"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
       - name: "mid_csp_cbf/vcc/004"
         properties:
           - name: "TalonLRUAddress"
@@ -116,6 +125,9 @@ server:
           - name: "DeviceID"
             values:
             - "4"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

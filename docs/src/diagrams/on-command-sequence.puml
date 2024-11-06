@@ -71,7 +71,14 @@ group #LightCyan For each Talon LRU in configuration:
     note over lru               : OpState: ON
 end group
 
-group #LightCyan For each Talon board in configuration:
+group #SeaShell If one or more LRUs turn on successfully:
+  note over controller               : OpState: ON
+else If no LRU is successfully turned on:
+  note over controller               : OpState: OFF
+  lmc           <--  controller   : Failure
+end group
+
+group #LightCyan For each Talon board successfully powered on and in configuration:
   controller    ->  tdx         : ConfigureTalons()
   tdx           ->  tdx         : Read config files,\nSetup tango host file
   tdx           ->  os          : Clear processes
@@ -117,8 +124,6 @@ group #LightCyan For each SLIM:
   end group
   slim          ->  slim        : mesh_configured = True
 end group
-
-note over controller            : OpState: ON
 
 lmc           <--  controller   : Success
 
