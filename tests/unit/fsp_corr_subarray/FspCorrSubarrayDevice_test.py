@@ -157,14 +157,6 @@ class TestFspCorrSubarray:
         # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
-        # Test happy path observing command sequence
-        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
-            json_str
-        )
-        command_dict["Scan"] = device_under_test.Scan(scan_id)
-        command_dict["EndScan"] = device_under_test.EndScan()
-        command_dict["GoToIdle"] = device_under_test.GoToIdle()
-
         attr_values = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
@@ -172,10 +164,39 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.READY, ObsState.SCANNING, 1),
             ("obsState", ObsState.IDLE, ObsState.READY, 1),
         ]
+        # Test happy path observing command sequence
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+
+        # Test last input scan configuration is correct, must be done before GoToIdle
+        command_name, return_value = (
+            "ConfigureScan",
+            command_dict["ConfigureScan"],
+        )
+        assert return_value[0] == ResultCode.QUEUED
+        attr_values.append(
+            (
+                "longRunningCommandResult",
+                (
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+                None,
+                1,
+            )
+        )
+        assert device_under_test.lastScanConfiguration == json_str
+
+        command_dict["Scan"] = device_under_test.Scan(scan_id)
+        command_dict["EndScan"] = device_under_test.EndScan()
+        command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
         # assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # check that the command was successfully queued
+            if command_name == "ConfigureScan":
+                pass
             assert return_value[0] == ResultCode.QUEUED
 
             attr_values.append(
@@ -189,6 +210,8 @@ class TestFspCorrSubarray:
                     1,
                 )
             )
+        assert device_under_test.lastScanConfiguration == ""
+        assert device_under_test.lastHpsScanConfiguration == ""
 
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(

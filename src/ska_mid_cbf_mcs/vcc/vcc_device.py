@@ -124,6 +124,17 @@ class Vcc(CbfObsDevice):
         """
         return self.component_manager.frequency_band
 
+    @attribute(
+        dtype="str", doc="The last valid scan configuration sent to HPS."
+    )
+    def lastHpsScanConfiguration(self: Vcc) -> str:
+        """
+        Read the last valid scan configuration of the device sent to HPS.
+
+        :return: the current last_hps_scan_configuration value
+        """
+        return self.component_manager.last_hps_scan_configuration
+
     # --------------
     # Initialization
     # --------------
