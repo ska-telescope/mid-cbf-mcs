@@ -1,4 +1,5 @@
 from enum import IntEnum
+from math import floor
 
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
@@ -16,7 +17,10 @@ class Const:
         self.FREQUENCY_BAND_5b_TUNING_BOUNDS = (9.55, 14.05)  # GHz
         self.BAND_5_STREAM_BANDWIDTH = 2.5  # GHz
         self.NUM_FINE_CHANNELS = 14880
-        self.NUM_CHANNEL_GROUPS = 20
+
+        # Number of Fine channels per SPEAD stream;
+        # TODO: NUM_CHANNELS_PER_SPEAD_STREAM = 20 for TDC (AA0.5, AA1) only; for Mid.CBF (AA2+) it will be set to 1
+        self.NUM_CHANNELS_PER_SPEAD_STREAM = 20
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
         self.DELTA_F = 1800  # Hz
@@ -46,11 +50,21 @@ class Const:
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
 
+        # Common sample rate for all receptor data streams, achieved after
+        # Resampling & Delay Tracking  (RDT) [Hz]; applies for all function
+        # modes except VLBI
         self.COMMON_SAMPLE_RATE = 220200960
         self.VCC_OVERSAMPLING_FACTOR = 10 / 9
+
+        # Frequency Slice Bandwidth [Hz]
         self.FS_BW = int(
             self.COMMON_SAMPLE_RATE / self.VCC_OVERSAMPLING_FACTOR
         )
+        self.HALF_FS_BW = self.FS_BW // 2
+
+        # Fine channel width for the Correlation function mode [Hz]
+        self.FINE_CHANNEL_WIDTH = 13440
+        self.K_VALUE_RANGE = (1, 2222)
 
 
 const = Const()
@@ -155,10 +169,13 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 "fsp_id": [1, 2, 3, 4],
                 "channel_width": {13440},
                 "channel_count": {"range": (1, 58982), "multiple": 20},
-                "output_host": {"multiple": 20, "max_channel_per": 20},
+                "output_host": {
+                    "difference_multiple": 20,
+                    "max_channel_per": 20,
+                },
                 "output_port": {"increment": 20, "max_channel_per": 20},
                 "output_link_map": {
-                    "multiple": 20,
+                    "difference_multiple": 20,
                     "max_channel_per": 20,
                     "values": [1],
                 },
@@ -173,12 +190,6 @@ def scan_configuration_supported_value(parameter: str) -> any:
 
 
 mhz_to_hz = 1000000
-
-
-class AcceptedScanConfigurationVersion:
-    # {major versions : {minor versions...}}
-    # For Interface Versions with Correlator Processing Regions Configuration
-    versions = {3: {0}, 4: {0, 1}}
 
 
 """
@@ -203,3 +214,65 @@ cc_oversampling_factor/total_num_FSs .
 defined in this file into the corresponding band_info
 dictionary entries.
 """
+
+
+def calculate_dish_sample_rate(
+    freq_band_info: dict,
+    freq_offset_k: int,
+) -> int:
+    """
+    Calculate frequency slice sample rate
+
+    :param freq_band_info: constants pertaining to a given frequency band
+    :param freq_offset_k: DISH frequency offset k value
+    :return: DISH sample rate
+    """
+    base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+    sample_rate_const = freq_band_info["sample_rate_const"]
+
+    return (base_dish_sample_rate_MH * mhz_to_hz) + (
+        sample_rate_const * freq_offset_k * const.DELTA_F
+    )
+
+
+def get_coarse_channels(
+    start_freq: int, end_freq: int, wb_shift: int
+) -> list[int]:
+    """
+    Determine the coarse frequency Slices that contain the processing region
+
+    :param start_freq: Start frequency of the processing region (Hz)
+    :param end_freq: End frequency of the processing region (Hz)
+    :param wb_shift: Wideband shift (Hz)
+    :return: A list of coarse frequency slice id's
+
+    :raise ValueError: if start_freq is greater than end_freq
+    """
+    if start_freq > end_freq:
+        raise ValueError("start_freq must be <= end_freq")
+
+    # coarse_channel = floor [(Frequency + WB_shift + 99090432Hz) / 198180864 Hz]
+    coarse_channel_low = floor(
+        (start_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
+    )
+    coarse_channel_high = floor(
+        (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
+    )
+    coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
+    return coarse_channels
+
+
+def get_end_frequency(
+    start_freq: int, channel_width: int, channel_count: int
+) -> int:
+    """
+    Determine the end frequency of the processing region (Hz)
+
+    :param start_freq:  Start frequency of the processing region (Hz)
+    :param channel_width: Width of a fine frequency channel (Hz)
+    :param channel_count: Number of fine frequency channels
+    :return: End frequency of the processing region (Hz)
+    """
+
+    end_freq = ((channel_count * channel_width) + start_freq) - channel_width
+    return end_freq

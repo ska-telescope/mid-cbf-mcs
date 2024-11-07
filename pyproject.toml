@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-cbf-mcs"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
@@ -49,6 +49,7 @@ polling2 = "^0.5.0"
 pysnmp = "4.4.12"
 pyasn1 = "0.4.8"
 beautifultable = "^1.1.0"
+pydantic = "^2.9.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"

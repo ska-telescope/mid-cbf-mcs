@@ -571,12 +571,15 @@ class TalonDxComponentManager(CbfComponentManager):
             self.logger.error(e)
             return ResultCode.FAILED
 
-    def configure_talons(self: TalonDxComponentManager) -> ResultCode:
+    def configure_talons(
+        self: TalonDxComponentManager, available_talon_targets: list[str]
+    ) -> ResultCode:
         """
         Performs all actions to configure the Talon boards after power on. This includes: copying the device server
         binaries and FPGA bitstream to the Talon boards, starting the HPS master
         device server, and sending the configure command to each DsHpsMaster, which starts the HPS device servers.
 
+        :param available_talon_targets: list of Talon board indices that are turned on and ready to configure
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
         if self.simulation_mode == SimulationMode.TRUE:
@@ -588,10 +591,20 @@ class TalonDxComponentManager(CbfComponentManager):
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        talon_config = []
+        for config in self.talondx_config["config_commands"]:
+            target = config["target"]
+            if target in available_talon_targets:
+                talon_config.append(config)
+            else:
+                self.logger.warning(
+                    f"Talon target {target} requested in talondx_config.json but is not powered on/available for configuration."
+                )
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(self._configure_talon_thread, talon_cfg)
-                for talon_cfg in self.talondx_config["config_commands"]
+                executor.submit(self._configure_talon_thread, config)
+                for config in talon_config
             ]
             results = [f.result() for f in futures]
 
@@ -616,16 +629,13 @@ class TalonDxComponentManager(CbfComponentManager):
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
+        hps_master.set_timeout_millis(const.DEFAULT_TIMEOUT * 1000)
         try:
             hps_master.shutdown(3)
-        except tango.DevFailed as df:
-            self.logger.warning(
-                f"Exception while sending shutdown command to {hps_master_fqdn} device: {df}"
-            )
-            # TODO: determine behaviour here; the shutdown command will
-            # inevitably throw an exception, as the device is shut off
-            # there may be a more elegant way to handle the expected shutdown
-            # for CIP-1673 just logging a warning here
+        except tango.DevFailed:
+            pass
+            # shutdown command to HPS master will timeout because it
+            # terminates the HPS master DS. Ignore the exception.
 
         # wait for linux shutdown
         time.sleep(const.DEFAULT_TIMEOUT)

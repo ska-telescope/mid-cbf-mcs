@@ -56,16 +56,11 @@ class InfluxdbQueryClient:
                 url=f"http://{self._hostname}:{self._influx_port}",
                 token=self._influx_auth_token,
                 org=self._influx_org,
+                timeout=300,
             ) as client:
                 ready = await client.ping()
-                self.logger.info(
-                    f"Ping InfluxDB at {self._hostname}:{self._influx_port}: {ready}"
-                )
                 return ready
-        except Exception as e:
-            self.logger.error(
-                f"Unexpected error when pinging InfluxDB at {self._hostname}:{self._influx_port}: {e}"
-            )
+        except Exception:
             return False
 
     # --- InfluxDB Query Methods --- #
