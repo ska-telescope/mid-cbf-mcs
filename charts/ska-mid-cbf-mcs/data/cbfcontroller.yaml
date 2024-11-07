@@ -37,10 +37,14 @@ server:
             - "mid_csp_cbf/fsp/02"
             - "mid_csp_cbf/fsp/03"
             - "mid_csp_cbf/fsp/04"
+            - "mid_csp_cbf/fsp/05"
+            - "mid_csp_cbf/fsp/06"
+            - "mid_csp_cbf/fsp/07"
+            - "mid_csp_cbf/fsp/08"
           - name: "MaxCapabilities"
             values:
-            - "VCC:4"
-            - "FSP:4"
+            - "VCC:8"
+            - "FSP:8"
             - "Subarray:1"
           - name: "VCC"
             values:
@@ -48,6 +52,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "TalonLRU"
             values:
             - "mid_csp_cbf/talon_lru/001"
