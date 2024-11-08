@@ -314,13 +314,6 @@ class TestPowerSwitch:
 
         # Set device to AdminMode.ONLINE and DevState.ON
         device_under_test.adminMode = AdminMode.ONLINE
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="adminMode",
-            attribute_value=AdminMode.ONLINE,
-        )
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT

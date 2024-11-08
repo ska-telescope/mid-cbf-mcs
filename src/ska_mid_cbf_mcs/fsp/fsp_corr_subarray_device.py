@@ -179,6 +179,7 @@ class FspCorrSubarray(CbfObsDevice):
             communication_state_callback=self._communication_state_changed,
             obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     # -------------
