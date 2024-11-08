@@ -40,6 +40,7 @@ TIMEOUT_RESOLUTION = 0.01
 # Maximum number worker threads for group commands set to DEFAULT_COUNT_VCC for now
 DEFAULT_COUNT_VCC = 4
 
+
 class CbfComponentManager(TaskExecutorComponentManager):
     """
     A base component manager for SKA Mid.CBF MCS
@@ -334,7 +335,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         proxies: list[context.DeviceProxy],
         max_workers: int = DEFAULT_COUNT_VCC,
-    ) -> list[Any]:
+    ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
         Returns list of attribute values in the same order as the input proxies list.

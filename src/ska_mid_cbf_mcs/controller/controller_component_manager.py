@@ -69,6 +69,13 @@ class ControllerComponentManager(CbfComponentManager):
         self._count_fsp = max_capabilities["FSP"]
         self._count_subarray = max_capabilities["Subarray"]
 
+        # TODO: Check if this is necessary, I think tests will fail if
+        # max_capabilities is empty even without this
+        if max_capabilities == {}:
+            raise tango.DevFailed(
+                "MaxCapabilities device property not defined"
+            )
+
         # --- All FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]

@@ -20,6 +20,9 @@ from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 
+DEFAULT_COUNT_SUBARRAY = 1
+DEFAULT_COUNT_VCC = 4
+
 
 @pytest.fixture(
     name="controller_params",
@@ -90,7 +93,7 @@ def subarray_proxies() -> list[context.DeviceProxy]:
     """
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/sub_elt/subarray_{i:02}")
-        for i in range(1, const.DEFAULT_COUNT_SUBARRAY + 1)
+        for i in range(1, DEFAULT_COUNT_SUBARRAY + 1)
     ]
 
 
@@ -103,7 +106,7 @@ def vcc_proxies() -> list[context.DeviceProxy]:
     """
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/vcc/{i:03}")
-        for i in range(1, const.DEFAULT_COUNT_VCC + 1)
+        for i in range(1, DEFAULT_COUNT_VCC + 1)
     ]
 
 

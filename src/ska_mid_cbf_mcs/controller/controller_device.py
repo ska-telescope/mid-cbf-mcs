@@ -18,7 +18,6 @@ from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.utils import convert_dict_to_list
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
 )
@@ -254,11 +253,6 @@ class CbfController(CbfDevice):
         :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
         """
         capabilities = ["VCC", "FSP", "Subarray"]
-        default_values = {
-            "VCC": const.DEFAULT_COUNT_VCC,
-            "FSP": const.DEFAULT_COUNT_FSP,
-            "Subarray": const.DEFAULT_COUNT_SUBARRAY,
-        }
         max_capabilities = {}
 
         if self.MaxCapabilities:
@@ -273,19 +267,13 @@ class CbfController(CbfDevice):
 
             for capability in capabilities:
                 if capability not in max_capabilities:
-                    self.logger.warning(
-                        f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
-                    )
                     self.logger.error(
                         f"{capability} capabilities not defined; look into updating charts to define this capability"
                     )
                     # TODO: Exit this command
-                    max_capabilities[capability] = default_values[capability]
+                    return {}
         else:
-            max_capabilities = default_values
-            self.logger.warning(
-                "MaxCapabilities device property not defined - using default value"
-            )
+            self.logger.warning("MaxCapabilities device property not defined")
 
         return max_capabilities
 
