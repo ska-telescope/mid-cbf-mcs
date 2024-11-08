@@ -399,17 +399,12 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if the FSP function mode is successfully set, False otherwise.
         """
         try:
-            fsp_mode = self.talondx_config_json["config_commands"][0][
-                "fpga_bitstream_fsp_mode"
-            ].upper()
-
+            config = self.talondx_config_json["config_commands"][0]
+            self.logger.info(f"config: {config}")
+            fsp_mode = config["fpga_bitstream_fsp_mode"].upper()
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
-        except Exception as e:
-            self.logger.error(f"Error in getting fsp mode: {e}", exc_info=True)
-            return False
 
-        for fsp in self._fsp_fqdn:
-            try:
+            for fsp in self._fsp_fqdn:
                 # Only set function mode if FSP is both IDLE and not configured for another mode
                 fsp_proxy = self._proxies[fsp]
                 current_function_mode = fsp_proxy.functionMode
@@ -431,11 +426,10 @@ class ControllerComponentManager(CbfComponentManager):
                     return False
 
                 self.blocking_command_ids.add(command_id)
-            except Exception as e:
-                self.logger.error(
-                    f"Error configuring FSP {fsp}: {e}", exc_info=True
-                )
-                return False
+
+        except Exception as e:
+            self.logger.error(f"Error in setting FSP Mode: {e}")
+            return False
 
         return True
 
