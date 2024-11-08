@@ -37,14 +37,10 @@ server:
             - "mid_csp_cbf/fsp/02"
             - "mid_csp_cbf/fsp/03"
             - "mid_csp_cbf/fsp/04"
-            - "mid_csp_cbf/fsp/05"
-            - "mid_csp_cbf/fsp/06"
-            - "mid_csp_cbf/fsp/07"
-            - "mid_csp_cbf/fsp/08"
           - name: "MaxCapabilities"
             values:
             - "VCC:8"
-            - "FSP:8"
+            - "FSP:4"
             - "Subarray:1"
           - name: "VCC"
             values:
