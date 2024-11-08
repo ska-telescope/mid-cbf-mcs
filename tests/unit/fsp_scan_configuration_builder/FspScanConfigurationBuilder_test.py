@@ -231,13 +231,8 @@ class TestFspScanConfigurationBuilder:
                 ), f"There are unassigned output_ports for PR index {index}"
 
             # Assert vcc to rdt shift values set for all receptors
-            if "receptors" in pr_config:
-                receptor_list = pr_config["receptors"]
-            else:
-                receptor_list = subarray_dish_ids
-
             for fsp_config in fsp_to_pr[pr_index]:
-                for receptor in receptor_list:
+                for receptor in subarray_dish_ids:
                     vcc_id = dish_util.dish_id_to_vcc_id[receptor]
 
                     # Note, hps wants vcc in the vcc_id_to_rdt_freq_shifts dict

@@ -135,7 +135,7 @@ class FspScanConfigurationBuilder:
                     )
 
         vcc_to_fs_infos = {}
-        for dish_id in dish_ids:
+        for dish_id in self._subarray_dish_ids:
             calculated_fsp_infos = partition_spectrum_to_frequency_slices(
                 fsp_ids=fsp_ids,
                 start_freq=processing_region_config["start_freq"],
