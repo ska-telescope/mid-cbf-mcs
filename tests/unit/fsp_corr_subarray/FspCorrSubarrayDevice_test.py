@@ -58,6 +58,7 @@ class TestFspCorrSubarray:
             device_class=FspCorrSubarray,
             HpsFspCorrControllerAddress="mid_csp_cbf/talon_lru/001",
             DeviceID="1",
+            LRCTimeout="15",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
@@ -108,7 +109,7 @@ class TestFspCorrSubarray:
                              events from the device under test.
         """
         # Set the DUT to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT

@@ -148,6 +148,7 @@ class Slim(CbfDevice):
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     def init_command_objects(self: Slim) -> None:

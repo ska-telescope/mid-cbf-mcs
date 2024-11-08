@@ -86,7 +86,11 @@ class SlimComponentManager(CbfComponentManager):
             try:
                 dp = context.DeviceProxy(device_name=fqdn)
                 dp.adminMode = AdminMode.ONLINE
-                self.subscribe_command_results(dp)
+                self.attr_event_subscribe(
+                    proxy=dp,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
                 self._dp_links.append(dp)
             except (tango.DevFailed, AttributeError) as err:
                 self._update_communication_state(
@@ -108,8 +112,7 @@ class SlimComponentManager(CbfComponentManager):
         """Stop communication with the component."""
         self.logger.debug("Entering SlimComponentManager.stop_communicating")
         for proxy in self._dp_links:
-            self.unsubscribe_command_results(proxy)
-        self.blocking_commands = set()
+            self.unsubscribe_all_events(proxy)
 
         for dp in self._dp_links:
             dp.adminMode = AdminMode.OFFLINE
@@ -135,7 +138,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Returns a list of SLIM Link FQDNs.
 
-        :return: the SLIM links assosiated with the mesh.
+        :return: the SLIM links associated with the mesh.
         :rtype: list[str]
         """
         fqdns = []
@@ -148,7 +151,7 @@ class SlimComponentManager(CbfComponentManager):
         """
         Returns a list of SLIM Link names, formatted 'tx_device_name->rx_device_name'.
 
-        :return: the names of SLIM links assosiated with the mesh.
+        :return: the names of SLIM links associated with the mesh.
         :rtype: list[str]
         """
         names = []
@@ -551,7 +554,7 @@ class SlimComponentManager(CbfComponentManager):
         Configure command. Parses the mesh configuration.
 
         :param config_str: a string in YAML format describing the links to be created.
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         """
         self.logger.debug("Entering SlimComponentManager.configure()")
