@@ -274,7 +274,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         command_name: str,
         proxies: list[context.DeviceProxy],
         argin: any = None,
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
@@ -333,7 +333,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         attr_name: str,
         proxies: list[context.DeviceProxy],
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> list[Any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
