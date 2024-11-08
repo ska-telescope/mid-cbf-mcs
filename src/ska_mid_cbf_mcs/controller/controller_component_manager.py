@@ -405,7 +405,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
         except Exception as e:
-            self.logger.error(f"Error FSP mode {fsp}: {e}", exc_info=True)
+            self.logger.error(f"Error in getting fsp mode: {e}", exc_info=True)
             return False
 
         for fsp in self._fsp_fqdn:
