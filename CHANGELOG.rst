@@ -25,6 +25,7 @@ UNRELEASED CHANGES
   * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
   * wait_for_blocking_results allows partial success of blocking LRCs
   * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
+* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 
 1.1.0-rc.1
@@ -45,7 +46,6 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
-* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 
 1.0.0
 ******
