@@ -216,7 +216,7 @@ class CbfDevice(SKABaseDevice):
     # ----------
 
     # Separated from adminMode write function for callback in component manager
-    def _perform_action(self: CbfDevice, action: str) -> None:
+    def _admin_mode_perform_action(self: CbfDevice, action: str) -> None:
         """
         Callback provided to perform an action on the state model from
         component manager.

@@ -438,7 +438,7 @@ class CbfObsDevice(SKAObsDevice):
         if hasattr(self, "component_manager"):
             self.component_manager.obs_state = obs_state
 
-    def _perform_action(self: CbfObsDevice, action: str) -> None:
+    def _admin_mode_perform_action(self: CbfObsDevice, action: str) -> None:
         """
         Callback provided to perform an action on the state model from
         component manager.
