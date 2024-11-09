@@ -162,6 +162,8 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"].sort()
         hps_fsp_configuration["configure_scan"]["corr_vcc_ids"].sort()
 
+        hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"] = hps_fsp_configuration["configure_scan"]["corr_vcc_ids"]
+
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
         with open(internal_params_file_name) as f:
