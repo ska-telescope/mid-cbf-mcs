@@ -1059,7 +1059,7 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         # Send SetFunctionMode to FSP
-        assign_fsp_status, msg = self._assign_fsp(task_abort_event)
+        assign_fsp_status, msg = self._assign_fsp()
         if not assign_fsp_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
