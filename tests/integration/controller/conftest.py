@@ -230,6 +230,7 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
         tracer.subscribe_event(proxy, "obsState")
+        tracer.subscribe_event(proxy, "sysParam")
 
     for proxy in vcc + talon_board:
         tracer.subscribe_event(proxy, "adminMode")

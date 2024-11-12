@@ -91,7 +91,12 @@ group #LightCyan For each Talon LRU in configuration:
   end group
 end group
 
-note over controller           : OpState: OFF
-lmc        <--  controller     : Success
+group #SeaShell If all LRUs turned off successfully:
+  note over controller               : OpState: OFF
+  lmc           <--  controller   : Success
+else If one or more LRUs still powered on:
+  note over controller               : OpState: ON
+  lmc           <--  controller   : Failure
+end group
 
 @enduml
