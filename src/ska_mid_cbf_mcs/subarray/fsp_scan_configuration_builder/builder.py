@@ -135,7 +135,9 @@ class FspScanConfigurationBuilder:
                     )
 
         vcc_to_fs_infos = {}
-        for dish_id in dish_ids:
+        # Need to send vcc shift values for all subarray vcc's not just those
+        # specified in the `receptors` property
+        for dish_id in self._subarray_dish_ids:
             calculated_fsp_infos = partition_spectrum_to_frequency_slices(
                 fsp_ids=fsp_ids,
                 start_freq=processing_region_config["start_freq"],
