@@ -382,6 +382,10 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
+            # Skip FSP, should set online during On sequence
+            if fqdn in self._fsp_fqdn:
+                return True
+
             return self._set_proxy_online(fqdn)
         else:
             return self._set_proxy_not_fitted(fqdn)
@@ -923,11 +927,14 @@ class ControllerComponentManager(CbfComponentManager):
 
             for fsp in self._fsp_fqdn:
                 # Only set function mode if FSP is both IDLE and not configured for another mode
-                fsp_proxy = self._proxies[fsp]
+                if not self._set_proxy_online(fsp):
+                    message = (
+                        f"Failed to set {fsp} simulationMode and adminMode"
+                    )
+                    self.logger.error(message)
+                    return (False, message)
 
-                # TODO: Find a better way to do this without messing with NOT_FITTED in start communication
-                fsp_proxy.adminMode = AdminMode.OFFLINE
-                fsp_proxy.adminMode = AdminMode.ONLINE
+                fsp_proxy = self._proxies[fsp]
 
                 current_function_mode = fsp_proxy.functionMode
                 if current_function_mode != FspModes[fsp_mode].value:
