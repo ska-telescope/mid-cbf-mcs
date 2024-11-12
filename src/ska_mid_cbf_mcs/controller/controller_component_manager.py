@@ -944,7 +944,7 @@ class ControllerComponentManager(CbfComponentManager):
                 # Only set function mode if FSP is both IDLE and not configured for another mode
                 fsp_proxy = self._proxies[fsp]
 
-                # TODO: Find a better way to do this without messing with NOT_FITTED in start communication 
+                # TODO: Find a better way to do this without messing with NOT_FITTED in start communication
                 fsp_proxy.adminMode = AdminMode.OFFLINE
                 fsp_proxy.adminMode = AdminMode.ONLINE
 
