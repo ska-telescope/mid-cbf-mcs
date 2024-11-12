@@ -392,47 +392,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
-    def _assign_fsp(self: ControllerComponentManager) -> bool:
-        """
-        Set FSP function mode
-
-        :return: True if the FSP function mode is successfully set, False otherwise.
-        """
-        try:
-            config = self.talondx_config_json["config_commands"][0]
-            self.logger.info(f"config: {config}")
-            fsp_mode = config["fpga_bitstream_fsp_mode"].upper()
-            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
-
-            for fsp in self._fsp_fqdn:
-                # Only set function mode if FSP is both IDLE and not configured for another mode
-                fsp_proxy = self._proxies[fsp]
-                current_function_mode = fsp_proxy.functionMode
-                if current_function_mode != FspModes[fsp_mode].value:
-                    if current_function_mode != FspModes.IDLE.value:
-                        self.logger.error(
-                            f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {fsp_mode}, as it is currently configured for function mode {current_function_mode}"
-                        )
-                        return False
-
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    fsp_mode
-                )
-
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
-                    )
-                    return False
-
-                self.blocking_command_ids.add(command_id)
-
-        except Exception as e:
-            self.logger.error(f"Error in setting FSP Mode: {e}")
-            return False
-
-        return True
-
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
@@ -474,7 +433,10 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             self.talondx_config_json = {
                 "config_commands": [
-                    {"target": f"{t+1:03d}"}
+                    {
+                        "target": f"{t+1:03d}",
+                        "fpga_bitstream_fsp_mode": "corr",
+                    }
                     for t in range(len(self._talon_board_fqdns_all))
                 ]
             }
@@ -493,13 +455,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
-
-        if not self._assign_fsp():
-            self.logger.error("Failed to send SetFunctionMode to FSP")
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
@@ -973,6 +928,48 @@ class ControllerComponentManager(CbfComponentManager):
 
         return (success, message)
 
+    def _assign_fsp(self: ControllerComponentManager) -> bool:
+        """
+        Set FSP function mode
+
+        :return: True if the FSP function mode is successfully set, False otherwise.
+        """
+        try:
+            fsp_mode = self.talondx_config_json["config_commands"][0][
+                "fpga_bitstream_fsp_mode"
+            ].upper()
+            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
+
+            for fsp in self._fsp_fqdn:
+                # Only set function mode if FSP is both IDLE and not configured for another mode
+                fsp_proxy = self._proxies[fsp]
+                fsp_proxy.adminMode = AdminMode.ONLINE
+
+                current_function_mode = fsp_proxy.functionMode
+                if current_function_mode != FspModes[fsp_mode].value:
+                    if current_function_mode != FspModes.IDLE.value:
+                        message = f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {fsp_mode}, as it is currently configured for function mode {current_function_mode}"
+                        self.logger.error(message)
+                        return (False, message)
+
+                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
+                    fsp_mode
+                )
+
+                if result_code == ResultCode.REJECTED:
+                    message = f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
+                    self.logger.error(message)
+                    return (False, message)
+
+                self.blocking_command_ids.add(command_id)
+
+        except Exception as e:
+            message = f"Error in assigning FSP Mode: {e}"
+            self.logger.error(message)
+            return (False, message)
+
+        return (True, "Completed _assign_fsp completed OK")
+
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         """
         Check if the On command is allowed.
@@ -1052,6 +1049,18 @@ class ControllerComponentManager(CbfComponentManager):
             task_abort_event
         )
         if not slim_configure_status:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            task_callback(
+                result=(ResultCode.FAILED, msg),
+                status=TaskStatus.FAILED,
+            )
+            return
+
+        # Send SetFunctionMode to FSP
+        assign_fsp_status, msg = self._assign_fsp(task_abort_event)
+        if not assign_fsp_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
