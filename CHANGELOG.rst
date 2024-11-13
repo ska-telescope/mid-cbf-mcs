@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+
+1.1.0-rc.2
+**********
 * CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
@@ -14,6 +17,7 @@ UNRELEASED CHANGES
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
 * CIP-3068: fix validation output_host
   * difference between channel_ids is a multiple of 20, not the value itself
+* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.1.0-rc.1
 **********
@@ -33,7 +37,6 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
-* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.0.0
 ******
